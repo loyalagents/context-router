@@ -16,6 +16,7 @@
     "start:prod": "node dist/main",
     "local-identity": "node --no-global-search-paths dist/local-identity.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "pretest": "pnpm prisma:generate && pnpm build",
     "test": "jest --runInBand",
     "test:unit": "jest --selectProjects unit",
     "pretest:local-database": "pnpm prisma:generate && pnpm build",

@@ -57,6 +57,171 @@ describe("local database bootstrap and admission", () => {
     expect(fs.existsSync(options.databaseRoot)).toBe(false);
   });
 
+  it.each(["replaced-stage", "stage-sidecar", "linked-stage", "replaced-root"])(
+    "preserves ambiguous loser artifacts for %s",
+    (kind) => {
+      fs.mkdirSync(options.databaseRoot, { mode: 0o700 });
+      const readDirectory = fs.readdirSync;
+      let reads = 0;
+      let stageName = "";
+      let observed: Array<{ name: string; ino: number; bytes: Buffer }> = [];
+      const snapshot = () =>
+        readDirectory(options.databaseRoot)
+          .sort()
+          .map((name) => ({
+            name,
+            ino: fs.lstatSync(path.join(options.databaseRoot, name)).ino,
+            bytes: fs.readFileSync(path.join(options.databaseRoot, name)),
+          }));
+      const spy = jest
+        .spyOn(require("node:fs"), "readdirSync")
+        .mockImplementation(((file: any, ...args: any[]) => {
+          if (file === options.databaseRoot && ++reads === 2) {
+            stageName = readDirectory(options.databaseRoot)[0];
+            const stage = path.join(options.databaseRoot, stageName);
+            if (kind === "replaced-stage") {
+              fs.renameSync(stage, path.join(parent, "original-stage"));
+              fs.copyFileSync(path.join(parent, "original-stage"), stage);
+            } else if (kind === "stage-sidecar") {
+              fs.writeFileSync(stage + "-journal", "preserve sidecar", {
+                mode: 0o600,
+              });
+            } else if (kind === "linked-stage") {
+              fs.linkSync(stage, path.join(parent, "original-link"));
+            } else {
+              fs.renameSync(
+                options.databaseRoot,
+                path.join(parent, "original-root"),
+              );
+              fs.mkdirSync(options.databaseRoot, { mode: 0o700 });
+              fs.copyFileSync(
+                path.join(parent, "original-root", stageName),
+                stage,
+              );
+            }
+            fs.writeFileSync(
+              path.join(options.databaseRoot, "foreign-entry"),
+              "preserve foreign",
+              { mode: 0o600 },
+            );
+            observed = snapshot();
+          }
+          return (readDirectory as any)(file, ...args);
+        }) as typeof fs.readdirSync);
+      try {
+        expect(() => SqliteDatabase.bootstrap(options)).toThrow(
+          StorageUnavailableError,
+        );
+        expect(stageName).toMatch(/^bootstrap-[a-f0-9]{32}\.sqlite$/);
+        expect(snapshot()).toEqual(observed);
+        if (kind === "replaced-root")
+          expect(readDirectory(path.join(parent, "original-root"))).toEqual([
+            stageName,
+          ]);
+      } finally {
+        spy.mockRestore();
+      }
+    },
+  );
+
+  it.each(["commit", "after-link", "post-close-sync"])(
+    "preserves bootstrap artifacts after a thrown %s failure",
+    (boundary) => {
+      const actualExec = DatabaseSync.prototype.exec;
+      const actualLink = fs.linkSync;
+      const actualSync = fs.fsyncSync;
+      let reached = false;
+      let stageName = "";
+      let observed: Array<{
+        name: string;
+        ino: number;
+        links: number;
+        bytes: Buffer;
+      }>;
+      const record = () => {
+        observed = fs
+          .readdirSync(options.databaseRoot)
+          .sort()
+          .map((name) => {
+            const file = path.join(options.databaseRoot, name),
+              stat = fs.lstatSync(file);
+            return {
+              name,
+              ino: stat.ino,
+              links: stat.nlink,
+              bytes: fs.readFileSync(file),
+            };
+          });
+      };
+      const exec = jest
+        .spyOn(DatabaseSync.prototype, "exec")
+        .mockImplementation(function (this: DatabaseSync, sql: string) {
+          if (boundary === "commit" && sql === "COMMIT") {
+            reached = true;
+            stageName = fs
+              .readdirSync(options.databaseRoot)
+              .find((name) => /^bootstrap-.*\.sqlite$/.test(name));
+            throw new Error("fixture commit failure");
+          }
+          return actualExec.call(this, sql);
+        });
+      const link = jest
+        .spyOn(require("node:fs"), "linkSync")
+        .mockImplementation((source: string, target: string) => {
+          actualLink(source, target);
+          if (boundary === "after-link") {
+            reached = true;
+            record();
+            throw new Error("fixture link acknowledgement failure");
+          }
+        });
+      const sync = jest
+        .spyOn(require("node:fs"), "fsyncSync")
+        .mockImplementation((fd: number) => {
+          actualSync(fd);
+          if (boundary === "post-close-sync" && fs.fstatSync(fd).isFile()) {
+            reached = true;
+            record();
+            throw new Error("fixture sync acknowledgement failure");
+          }
+        });
+      try {
+        expect(() => SqliteDatabase.bootstrap(options)).toThrow(
+          StorageUnavailableError,
+        );
+        expect(reached).toBe(true);
+        if (boundary === "commit") {
+          expect(stageName).toMatch(/^bootstrap-[a-f0-9]{32}\.sqlite$/);
+          expect(fs.readdirSync(options.databaseRoot)).toEqual([stageName]);
+          const raw = new DatabaseSync(
+            path.join(options.databaseRoot, stageName),
+          );
+          try {
+            expect(
+              raw.prepare("SELECT count(*) n FROM sqlite_schema").get().n,
+            ).toBe(0);
+          } finally {
+            raw.close();
+          }
+        } else {
+          const before = observed;
+          record();
+          expect(observed).toEqual(before);
+          expect(observed.length).toBe(boundary === "after-link" ? 2 : 1);
+          expect(
+            observed.every(
+              (item) => item.links === (boundary === "after-link" ? 2 : 1),
+            ),
+          ).toBe(true);
+        }
+      } finally {
+        exec.mockRestore();
+        link.mockRestore();
+        sync.mockRestore();
+      }
+    },
+  );
+
   it("never replaces a missing database when identity state already exists", () => {
     fs.mkdirSync(options.identityRoot, { mode: 0o700 });
     fs.writeFileSync(

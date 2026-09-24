@@ -28,7 +28,7 @@ Successful quiescent identity state is exactly `identity.json` (`0600`) inside i
 
 The four identity administration commands remain `initialize`, `rotate`, `recover-initialize`, and `recover-rotation`. Successful output is one fixed JSON record containing only type, version, operation, `ok` status and generation. `preview` emits the fixed readiness record and waits for a signal. Failures use fixed diagnostics without credentials, principals, paths, SQL or causes.
 
-Initialization creates one random principal and credential, then seeds the canonical catalog only. Preview verifies the same identity and repeats catalog seeding, preserving active catalog IDs and per-entry partial progress. Neither path creates sample users. **An initialization error during catalog seeding can occur after identity was committed.** Preserve the database and identity artifacts. Once the catalog failure is corrected, run verified `preview` to finish the catalog; do not delete state or initialize a new principal. Failed startup never emits readiness.
+Initialization creates one random principal and credential, then seeds the canonical catalog only. Every preview startup verifies the same identity and repeats catalog seeding, preserving active catalog IDs and per-entry partial progress. Neither path creates sample users. **An initialization error during catalog seeding can occur after identity was committed.** Preserve the database and identity artifacts. Once the catalog failure is corrected, run verified `preview` to finish the catalog; do not delete state or initialize a new principal. Failed startup never emits readiness. Catalog entries are separate committed operations; startup does not hold one catalog-wide transaction or promise that concurrent previews all succeed. Ordinary database lock contention fails immediately with zero native busy wait and no hidden adapter retry; this is not a total native or filesystem I/O deadline.
 
 The SQLite-only command `recover-database-bootstrap` handles interrupted creation of the database before identity initialization:
 
@@ -37,6 +37,8 @@ pnpm --filter backend local-identity recover-database-bootstrap
 ```
 
 It emits its own fixed database-bootstrap result (`none` or `recovered`), not an identity generation record. It requires all original preview/admin processes terminated and reaped, plus empty identity state. With no bootstrap residue it performs no initialization. It can complete a single valid closed bootstrap stage or reconcile its proven same-inode published pair; partial, multiple, unrelated, unsafe or incompatible stages remain untouched and fail. It never opens a canonical file while a transient publication hard link remains, never invents a principal, and never repairs arbitrary empty or unknown databases.
+
+Concurrent fresh initializers can both fail, or one can publish first. An invocation that has committed and normally closed its own complete unpublished bootstrap stage removes only that original private one-link stage when it discovers a competing entry, then reports fixed failure. It does not require the winner's identity root to remain empty. Partial, replaced, linked, sidecar-bearing or uncertain stages are preserved; failed publication does not authorize cleanup. After all original processes exit and are reaped, retry a clean empty root or verify the published winner; use named recovery for retained bootstrap residue.
 
 ## Recovery Requires Termination And Reaping
 
@@ -65,6 +67,8 @@ The SQLite administrator owns a dedicated worker connection with an actual main-
 ## Engine Admission And Files
 
 The selected mode is rollback `DELETE` with `FULL` synchronization. A safe ordinary hot rollback journal may be replayed by SQLite before logical schema/target admission; this intrinsic crash recovery can change physical bytes without being application reset authority. Unsafe journal metadata and a possible embedded super-journal footer are rejected before open, without following any embedded path. Unknown/non-recovery negative states are preserved.
+
+A rollback journal that disappears between directory enumeration and metadata inspection is accepted as an absent optional entry. All other journal metadata errors and changes during strict descriptor/content inspection remain failures; this does not add SQL retries or hot-journal deletion authority.
 
 Existing WAL/SHM files are rejected. A sidecar-free foreign WAL-format header can cause SQLite's first schema read to create empty engine WAL/SHM files before its mode is known. The adapter rejects non-DELETE mode before configured settings and never converts the file. Normal actual close removes those engine-created empty sidecars, preserving main/identity bytes and the final entry set. Crash or uncertain close may leave them; later admission preserves and rejects them. Do not manually remove journals or sidecars.
 

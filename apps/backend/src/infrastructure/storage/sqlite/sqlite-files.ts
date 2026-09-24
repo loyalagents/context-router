@@ -191,8 +191,14 @@ export function assertEntries(
   assertRoot(root);
   for (const name of fs.readdirSync(root.path)) {
     if (name !== basename && name !== basename + "-journal") unavailable();
-    regular(path.join(root.path, name));
+    try {
+      regular(path.join(root.path, name));
+    } catch (error) {
+      // A competing DELETE-journal commit may remove this optional entry after enumeration.
+      if (name !== basename + "-journal" || !missing(error)) throw error;
+    }
   }
+  assertRoot(root);
 }
 export function assertDatabase(
   root: RootPin,

@@ -301,7 +301,7 @@ or model assets.
 
 The runner validates the merge base and caller whitespace, then copies tracked
 and nonignored inputs into a private disposable workspace with its own Git
-repository. Ignored environment files and credentials are not copied. Installed
+repository. Ignored untracked environment files and credentials are not copied; tracked inputs remain included even if ignore rules now match them. Installed
 dependency trees and the Corepack cache are cloned into private workspace-owned
 copies, using copy-on-write file cloning when the filesystem supports it, and
 no installer runs. Generators and build tools therefore have no write path
@@ -317,6 +317,10 @@ generation/typecheck/production-build/unit, isolated-database integration/e2e, d
 orchestrator, deterministic eval verification and scenarios, web production
 build, Harbor static checks, hosted restart smoke, staged packaged-composition
 smoke, and final generated-output/caller integrity.
+
+Full and smoke-only summaries include `source.headSha` (the actual caller Git HEAD), `source.dirty` (observed porcelain status), and `source.copiedInputsSha256`. The digest hashes the exact deduplicated sorted copied input list from the destination before Git setup, dependencies or builds: versioned records bind relative path, file kind, regular-file permission bits and content SHA-256, or literal symlink target. Random ownership markers, Git home, absolute paths and timestamps are excluded by input-list membership. A disposable synthetic commit is never reported as caller HEAD. Caller HEAD/status are rechecked around copying; these observations do not promise an atomic working-tree snapshot. The digest identifies the inputs actually copied, including tracked-but-ignored files. Unknown pre-capture fields are `null`, and known fields survive failed preparation and finalization.
+
+When external summary export is configured (`MIGRATION_GATE_CI_SUMMARY_PATH` or `RUNNER_TEMP`), both modes persist nonterminal external evidence before removing owned diagnostics and publish `passed` only after cleanup. Summary `callerIntegrity` retains its narrower meaning: selected generated Prisma, GraphQL SDL and web-generated paths are unchanged in the caller; it does not certify every source file or Git state. Final review evidence separately binds a frozen clean candidate and the actual CI checkout.
 
 Run the production-process proof independently with:
 

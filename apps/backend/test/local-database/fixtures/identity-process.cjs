@@ -129,13 +129,35 @@ const filesystem = {
   },
 };
 (async () => {
-  if (action === "bootstrap") {
+  if (action === "bootstrap" || action === "bootstrapInitialize") {
     const { DatabaseSync } = require("node:sqlite");
     const freeze = (label) => {
       if (boundary !== label) return;
       process.send({ kind: "paused", boundary: label });
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0);
     };
+    if (boundary === "bootstrap.race") {
+      const readDirectory = fs.readdirSync;
+      let reads = 0;
+      const stop = (label, entries) => {
+        process.send({
+          kind: "paused",
+          boundary: label,
+          ...(entries === undefined ? {} : { entries }),
+        });
+        process.kill(process.pid, "SIGSTOP");
+      };
+      fs.readdirSync = function (file, ...args) {
+        if (file !== databaseRoot)
+          return readDirectory.call(this, file, ...args);
+        reads++;
+        if (reads === 2) stop("bootstrap.closed-stage");
+        const names = readDirectory.call(this, file, ...args);
+        if (reads === 1) stop("bootstrap.empty-observed", names.length);
+        if (reads === 2) stop("bootstrap.entries-observed", names.length);
+        return names;
+      };
+    }
     const exec = DatabaseSync.prototype.exec;
     DatabaseSync.prototype.exec = function (sql) {
       if (sql === "COMMIT") freeze("bootstrap.before-commit");
@@ -157,6 +179,46 @@ const filesystem = {
       return result;
     };
     SqliteDatabase.bootstrap({ databaseRoot, identityRoot });
+    if (action === "bootstrapInitialize") {
+      process.env.LOCAL_DATABASE_ROOT = databaseRoot;
+      process.env.LOCAL_IDENTITY_STATE_ROOT = identityRoot;
+      const { runLocalDatabaseAdminCli } = from(
+        "modules/auth/local-identity-admin.cli.js",
+      );
+      let output = "",
+        failure = "";
+      const code = await runLocalDatabaseAdminCli({
+        argv: ["initialize"],
+        writeStdout: (value) => {
+          output += value;
+        },
+        writeStderr: (value) => {
+          failure += value;
+        },
+      });
+      if (
+        code !== 0 ||
+        failure ||
+        output !==
+          '{"type":"context-router.local-identity.admin","version":1,"operation":"initialize","status":"ok","generation":1}\n'
+      )
+        throw new Error("Owned initialize failed");
+      const database = SqliteDatabase.open({ databaseRoot, identityRoot });
+      const connection = database.connect();
+      try {
+        const principal = connection.get("SELECT user_id FROM users").user_id;
+        connection.run("UPDATE users SET email=? WHERE user_id=?", [
+          "preserved@local.invalid",
+          principal,
+        ]);
+        connection.run(
+          "INSERT INTO locations VALUES(?,?,'HOME',?,'preserved address',1,1)",
+          ["bootstrap-sentinel", principal, "preserved label"],
+        );
+      } finally {
+        connection.close();
+      }
+    }
     outcome = 0;
     process.exitCode = 0;
     process.send({ kind: "done" }, () => process.disconnect());

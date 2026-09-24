@@ -288,6 +288,8 @@ Backend tests live under `apps/backend` and are split into:
 - E2E tests for GraphQL, MCP, health, and preference-related flows
 - `pnpm --filter backend test:local-database` for file-backed SQLite contracts, actual application/auth/reset, owned process/recovery and matching-pair backup; its build prerequisite needs no `DATABASE_URL` or PostgreSQL setup
 
+The default `pnpm test:backend` (also reached by workspace `pnpm test`) generates the Prisma client and builds the backend once before running all four Jest projects. The dedicated local command has the same prerequisite; unit-only and hosted integration commands remain independently selectable. Default all-project runs still require the configured PostgreSQL test database.
+
 Test database details:
 
 - `apps/backend/docker-compose.test.yml` starts PostgreSQL on `localhost:5433`

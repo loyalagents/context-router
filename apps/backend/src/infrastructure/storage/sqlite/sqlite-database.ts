@@ -303,8 +303,13 @@ export class SqliteDatabase {
           fs.constants.O_NOFOLLOW,
         0o600,
       );
-      fs.closeSync(fd);
-      regular(stage);
+      let stagePin: FilePin;
+      try {
+        stagePin = pin(fs.fstatSync(fd));
+      } finally {
+        fs.closeSync(fd);
+      }
+      if (!samePin(regular(stage), stagePin)) unavailable();
       let db: DatabaseSync | undefined;
       const release = reserveSqliteOwner();
       try {
@@ -325,8 +330,20 @@ export class SqliteDatabase {
         release();
       }
       assertRoot(root);
-      if (fs.readdirSync(root.path).join() !== path.basename(stage))
+      if (fs.readdirSync(root.path).join() !== path.basename(stage)) {
+        // Only this complete, confirmed-closed, never-published stage is ours to discard.
+        assertRoot(root);
+        if (
+          !samePin(regular(stage), stagePin) ||
+          ["-journal", "-wal", "-shm"].some((suffix) => exists(stage + suffix))
+        )
+          unavailable();
+        assertRoot(root);
+        if (!samePin(regular(stage), stagePin)) unavailable();
+        fs.unlinkSync(stage);
+        syncDirectory(root);
         unavailable();
+      }
       syncClosedFile(stage);
       syncDirectory(root);
       fs.linkSync(stage, canonical);

@@ -1604,6 +1604,7 @@ test("production gate orchestration bounds cleanup and preserves settlement erro
 
 test("late gate evidence failure leaves retained summary and lifecycle failed", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "gate-finalizer-failure-test-"));
+  const source = { headSha: "a".repeat(40), dirty: false, copiedInputsSha256: "b".repeat(64) };
   try {
     const ownership = await prepareGateDiagnosticsRoot(path.join(root, "diagnostics-"));
     assert.equal(
@@ -1618,7 +1619,7 @@ test("late gate evidence failure leaves retained summary and lifecycle failed", 
       diagnosticsDirectory: ownership.directory,
       diagnosticsOwnership: ownership,
       lifecycle,
-      summary: { status: "passed", phases: [] },
+      summary: { status: "passed", phases: [], source },
       wallStartedAt: Date.now(),
       callerIntegrityVerified: true,
       cleanupErrors: [],
@@ -1634,6 +1635,7 @@ test("late gate evidence failure leaves retained summary and lifecycle failed", 
       await readFile(path.join(ownership.directory, "summary.json"), "utf8"),
     );
     const persistedLifecycle = JSON.parse(await readFile(lifecycle.filePath, "utf8"));
+    assert.deepEqual(result.summary.source, source);
     assert.equal(result.summary.status, "failed");
     assert.equal(summary.status, "failed");
     assert.equal(persistedLifecycle.status, "failed");
@@ -1645,6 +1647,7 @@ test("late gate evidence failure leaves retained summary and lifecycle failed", 
 
 test("partial gate diagnostics removal leaves only non-pass internal evidence and never recreates ownership", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "gate-finalizer-removal-test-"));
+  const source = { headSha: "a".repeat(40), dirty: false, copiedInputsSha256: "b".repeat(64) };
   try {
     const ownership = await prepareGateDiagnosticsRoot(path.join(root, "diagnostics-"));
     const lifecycle = await createResourceLifecycleJournal(ownership.directory, {
@@ -1656,12 +1659,13 @@ test("partial gate diagnostics removal leaves only non-pass internal evidence an
       diagnosticsDirectory: ownership.directory,
       diagnosticsOwnership: ownership,
       lifecycle,
-      summary: { status: "passed", phases: [] },
+      summary: { status: "passed", phases: [], source },
       wallStartedAt: Date.now(),
       callerIntegrityVerified: true,
       cleanupErrors: [],
       signals: [],
       async persistExternal(_environment, value) {
+        assert.deepEqual(value.source, source);
         externalStatuses.push(value.status);
       },
       async removeDiagnostics() {
@@ -1673,6 +1677,7 @@ test("partial gate diagnostics removal leaves only non-pass internal evidence an
       await readFile(path.join(ownership.directory, "summary.json"), "utf8"),
     );
     const persistedLifecycle = JSON.parse(await readFile(lifecycle.filePath, "utf8"));
+    assert.deepEqual(result.summary.source, source);
     assert.equal(result.summary.status, "failed");
     assert.equal(summary.status, "running");
     assert.equal(summary.cleanupPending, "automatic-diagnostics-removal");
@@ -1725,6 +1730,7 @@ test("gate success publishes nonterminal evidence, removes diagnostics, then pub
 
 test("gate finalization observes cancellation raised by external persistence", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "gate-finalizer-cancel-test-"));
+  const source = { headSha: "a".repeat(40), dirty: false, copiedInputsSha256: "b".repeat(64) };
   try {
     const ownership = await prepareGateDiagnosticsRoot(path.join(root, "diagnostics-"));
     const lifecycle = await createResourceLifecycleJournal(ownership.directory, {
@@ -1739,12 +1745,13 @@ test("gate finalization observes cancellation raised by external persistence", a
       diagnosticsDirectory: ownership.directory,
       diagnosticsOwnership: ownership,
       lifecycle,
-      summary: { status: "running", phases: [] },
+      summary: { status: "running", phases: [], source },
       wallStartedAt: Date.now(),
       callerIntegrityVerified: true,
       cleanupErrors: [],
       signals: [controller.signal],
       async persistExternal(_environment, value) {
+        assert.deepEqual(value.source, source);
         externalStatuses.push(value.status);
         if (value.status === "running") controller.abort(reason);
       },
@@ -1753,6 +1760,7 @@ test("gate finalization observes cancellation raised by external persistence", a
       },
     });
     assert.equal(removalRan, false);
+    assert.deepEqual(result.summary.source, source);
     assert.equal(result.summary.status, "cancelled");
     assert.ok(result.evidenceErrors.includes(reason));
     assert.deepEqual(externalStatuses, ["running", "cancelled"]);
@@ -1808,5 +1816,438 @@ test("replacement evidence is typed, resolvable, and cannot be a free-form compl
     validatePhaseManifest(dangling).some((error) =>
       error.includes("replacement evidence"),
     ),
+  );
+});
+
+async function sourceFixture(t) {
+  const { execFileSync } = await import("node:child_process");
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-source-test-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const caller = path.join(root, "caller");
+  await mkdir(caller);
+  const git = (...args) =>
+    execFileSync("git", ["-c", "core.hooksPath=/dev/null", ...args], {
+      cwd: caller,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        GIT_CONFIG_GLOBAL: "/dev/null",
+        GIT_CONFIG_NOSYSTEM: "1",
+      },
+    }).trim();
+  git("init", "--quiet");
+  git("config", "user.name", "Fixture");
+  git("config", "user.email", "fixture@invalid.local");
+  await writeFile(path.join(caller, "tracked"), "first\n");
+  await writeFile(path.join(caller, "deleted"), "remove later\n");
+  await writeFile(
+    path.join(caller, "ignored-tracked"),
+    "tracked despite ignore\n",
+  );
+  git("add", "--all");
+  git("commit", "--quiet", "--no-gpg-sign", "-m", "source");
+  await writeFile(path.join(caller, ".gitignore"), "ignored-*\n");
+  git("add", ".gitignore");
+  git("commit", "--quiet", "--no-gpg-sign", "-m", "ignore");
+  const gate = await import("./migration-gate.mjs");
+  return { root, caller, git, gate };
+}
+
+test("source provenance binds copied inputs, not disposable Git or random harness metadata", async (t) => {
+  const { root, caller, git, gate } = await sourceFixture(t);
+  const head = git("rev-parse", "HEAD");
+  const capture = async (name) => {
+    const destination = path.join(root, name);
+    await mkdir(destination);
+    await mkdir(path.join(destination, ".git"));
+    await writeFile(path.join(destination, ".git", "random-marker"), name);
+    const result = await gate.copyGateSourceInputs(caller, destination);
+    return { ...result, destination };
+  };
+  const a = await capture("a"),
+    b = await capture("b");
+  assert.equal(a.source.headSha, head);
+  assert.equal(a.source.dirty, false);
+  assert.match(a.source.copiedInputsSha256, /^[a-f0-9]{64}$/);
+  assert.deepEqual(a.source, b.source);
+  assert.ok(a.files.includes("ignored-tracked"));
+  assert.equal(
+    a.files.some((file) => file.startsWith(".git/")),
+    false,
+  );
+  await writeFile(path.join(caller, "ignored-untracked"), "excluded");
+  const ignored = await capture("ignored");
+  assert.deepEqual(ignored.source, a.source);
+  await writeFile(path.join(caller, "tracked"), "staged\n");
+  git("add", "tracked");
+  await writeFile(path.join(caller, "tracked"), "unstaged\n");
+  await writeFile(path.join(caller, "new-input"), "untracked\n");
+  await rm(path.join(caller, "deleted"));
+  const dirty = await capture("dirty");
+  assert.equal(dirty.source.headSha, head);
+  assert.equal(dirty.source.dirty, true);
+  assert.notEqual(dirty.source.copiedInputsSha256, a.source.copiedInputsSha256);
+  assert.equal(dirty.files.includes("deleted"), false);
+  assert.ok(dirty.files.includes("new-input"));
+  assert.equal(dirty.files.includes("ignored-untracked"), false);
+  assert.equal(
+    await readFile(path.join(dirty.destination, "tracked"), "utf8"),
+    "unstaged\n",
+  );
+  const original = dirty.source.copiedInputsSha256;
+  await writeFile(
+    path.join(dirty.destination, "tracked"),
+    "generated after capture",
+  );
+  assert.equal(dirty.source.copiedInputsSha256, original);
+  // A downstream synthetic commit identifies another Git history; it cannot become caller HEAD.
+  const { execFileSync } = await import("node:child_process");
+  for (const args of [
+    ["init", "--quiet"],
+    ["add", "--all"],
+    [
+      "-c",
+      "user.name=Fixture",
+      "-c",
+      "user.email=fixture@invalid.local",
+      "commit",
+      "--quiet",
+      "--no-gpg-sign",
+      "-m",
+      "synthetic",
+    ],
+  ]) {
+    execFileSync("git", ["-c", "core.hooksPath=/dev/null", ...args], {
+      cwd: dirty.destination,
+      env: {
+        ...process.env,
+        GIT_CONFIG_GLOBAL: "/dev/null",
+        GIT_CONFIG_NOSYSTEM: "1",
+      },
+    });
+  }
+  assert.notEqual(
+    execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: dirty.destination,
+      encoding: "utf8",
+    }).trim(),
+    dirty.source.headSha,
+  );
+});
+
+test("source digest distinguishes copied bytes, paths, mode and literal symlink target", async (t) => {
+  const { root, caller, gate } = await sourceFixture(t);
+  const capture = async (label) =>
+    (await gate.copyGateSourceInputs(caller, path.join(root, label))).source
+      .copiedInputsSha256;
+  const original = await capture("original");
+  await chmod(path.join(caller, "tracked"), 0o755);
+  const mode = await capture("mode");
+  assert.notEqual(mode, original);
+  await chmod(path.join(caller, "tracked"), 0o644);
+  assert.equal(await capture("mode-restored"), original);
+  await writeFile(path.join(caller, "tracked"), "new bytes");
+  assert.notEqual(await capture("bytes"), original);
+  await writeFile(path.join(caller, "tracked"), "first\n");
+  await symlink("tracked", path.join(caller, "link"));
+  const targetA = await capture("link-a");
+  await rm(path.join(caller, "link"));
+  await symlink("deleted", path.join(caller, "link"));
+  assert.notEqual(await capture("link-b"), targetA);
+  await rm(path.join(caller, "link"));
+  await writeFile(path.join(caller, "renamed"), "first\n");
+  await rm(path.join(caller, "tracked"));
+  assert.notEqual(await capture("renamed"), original);
+});
+
+test("source observations remain available before later preparation failure and explicitly unknown before capture", async (t) => {
+  const { root, caller, gate } = await sourceFixture(t);
+  const observed = [];
+  await assert.rejects(
+    gate.copyGateSourceInputs(caller, path.join(root, "destination"), {
+      onSourceCaptured(source) {
+        observed.push(source);
+        if (source.copiedInputsSha256)
+          throw new Error("later preparation failure");
+      },
+    }),
+    /later preparation failure/,
+  );
+  assert.deepEqual(observed[0], {
+    headSha: null,
+    dirty: null,
+    copiedInputsSha256: null,
+  });
+  assert.match(observed.at(-1).headSha, /^[a-f0-9]{40}$/);
+  assert.equal(observed.at(-1).dirty, false);
+  assert.match(observed.at(-1).copiedInputsSha256, /^[a-f0-9]{64}$/);
+  const unavailable = [];
+  await assert.rejects(
+    gate.copyGateSourceInputs(
+      path.join(root, "missing"),
+      path.join(root, "failed"),
+      {
+        onSourceCaptured(source) {
+          unavailable.push(source);
+        },
+      },
+    ),
+  );
+  assert.deepEqual(unavailable, [
+    { headSha: null, dirty: null, copiedInputsSha256: null },
+  ]);
+});
+
+for (const mode of ["full", "smoke-only"])
+  for (const outcome of [
+    "success",
+    "failure",
+    "preparation-failure",
+    "cleanup-failure",
+  ]) {
+    test(`${mode} ${outcome} preserves source provenance through final evidence and cleanup`, async (t) => {
+      const root = await mkdtemp(path.join(os.tmpdir(), "gate-source-final-"));
+      t.after(() => rm(root, { recursive: true, force: true }));
+      const ownership = await prepareGateDiagnosticsRoot(
+        path.join(root, "diagnostics-"),
+      );
+      const source = {
+        headSha: "a".repeat(40),
+        dirty: true,
+        copiedInputsSha256:
+          outcome === "preparation-failure" ? null : "b".repeat(64),
+      };
+      const external = [];
+      const result = await finalizeGateAttemptEvidence({
+        timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+        mode,
+        source,
+        diagnosticsDirectory: ownership.directory,
+        diagnosticsOwnership: ownership,
+        summary: { status: "running" },
+        wallStartedAt: Date.now(),
+        callerIntegrityVerified: true,
+        attemptError: ["failure", "preparation-failure"].includes(outcome)
+          ? new Error("owned attempt failure")
+          : undefined,
+        cleanupErrors:
+          outcome === "cleanup-failure"
+            ? [new Error("owned cleanup failure")]
+            : [],
+        async persistExternal(_environment, value) {
+          external.push(structuredClone(value));
+        },
+      });
+      assert.deepEqual(result.summary.source, source);
+      assert.equal(result.summary.mode, mode);
+      assert.ok(external.length);
+      for (const value of external) {
+        assert.deepEqual(value.source, source);
+        assert.equal(value.mode, mode);
+      }
+      if (outcome === "success") {
+        assert.deepEqual(
+          external.map((value) => value.status),
+          ["running", "passed"],
+        );
+        assert.equal(result.diagnosticsDirectory, null);
+      } else {
+        assert.equal(result.summary.status, "failed");
+        assert.deepEqual(
+          JSON.parse(
+            await readFile(
+              path.join(ownership.directory, "summary.json"),
+              "utf8",
+            ),
+          ).source,
+          source,
+        );
+        assert.equal(
+          external.some((value) => value.status === "passed"),
+          false,
+        );
+      }
+    });
+  }
+
+test("source capture rejects observed caller HEAD/status changes without inventing snapshot atomicity", async (t) => {
+  const { root, caller, git, gate } = await sourceFixture(t);
+  let captured;
+  await assert.rejects(
+    gate.copyGateSourceInputs(caller, path.join(root, "changing"), {
+      onSourceCaptured(source) {
+        captured = source;
+        if (source.copiedInputsSha256)
+          git(
+            "commit",
+            "--quiet",
+            "--allow-empty",
+            "--no-gpg-sign",
+            "-m",
+            "concurrent head",
+          );
+      },
+    }),
+    /caller source HEAD or status changed/,
+  );
+  assert.match(captured.copiedInputsSha256, /^[a-f0-9]{64}$/);
+  assert.notEqual(captured.headSha, git("rev-parse", "HEAD"));
+});
+
+test("gate summaries use one monotonic attempt timeline for full and smoke finalization", async () => {
+  const source = await readFile(
+    new URL("./migration-gate.mjs", import.meta.url),
+    "utf8",
+  );
+  const execute = source.slice(
+    source.indexOf("async function executeGate("),
+    source.indexOf("export async function runWithToolchainPreflight("),
+  );
+  assert.match(
+    execute,
+    /const timeline = suppliedTimeline \?\? createGateTimeline\(\);/,
+  );
+  assert.doesNotMatch(
+    execute,
+    /createGateTimeline\(\{ startedAt: wallStartedAt/,
+  );
+  assert.equal(
+    (execute.match(/finalizeGateAttemptEvidence\(\{\s*timeline,/g) ?? [])
+      .length,
+    2,
+  );
+});
+
+test("workspace preparation surfaces copied provenance before later setup fails", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-prepare-source-"));
+  const diagnostics = path.join(root, "diagnostics");
+  await mkdir(diagnostics);
+  let ownership, source;
+  t.after(async () => {
+    if (ownership) {
+      await assertDisposableWorkspaceOwnership(ownership);
+      await rm(ownership.workspace, { recursive: true });
+    }
+    await rm(root, { recursive: true, force: true });
+  });
+  await assert.rejects(
+    prepareDisposableWorkspace(diagnostics, undefined, {
+      onWorkspaceCreated(value) {
+        ownership = value;
+      },
+      onSourceCaptured(value) {
+        source = value;
+        if (source.copiedInputsSha256)
+          throw new Error("injected later setup failure");
+      },
+    }),
+    /injected later setup failure/,
+  );
+  assert.match(source.headSha, /^[a-f0-9]{40}$/);
+  assert.equal(typeof source.dirty, "boolean");
+  assert.match(source.copiedInputsSha256, /^[a-f0-9]{64}$/);
+  await assert.rejects(
+    lstat(path.join(ownership.workspace, ".lmbg-git-home")),
+    /ENOENT/,
+  );
+});
+
+test("early finalization emits explicit unavailable source fields", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-unknown-source-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const ownership = await prepareGateDiagnosticsRoot(
+    path.join(root, "diagnostics-"),
+  );
+  let persisted;
+  const result = await finalizeGateAttemptEvidence({
+    timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+    diagnosticsDirectory: ownership.directory,
+    diagnosticsOwnership: ownership,
+    summary: { status: "failed" },
+    wallStartedAt: Date.now(),
+    callerIntegrityVerified: false,
+    attemptError: new Error("failure before source capture"),
+    async persistExternal(_env, summary) {
+      persisted = structuredClone(summary);
+    },
+  });
+  assert.deepEqual(result.summary.source, {
+    headSha: null,
+    dirty: null,
+    copiedInputsSha256: null,
+  });
+  assert.deepEqual(persisted.source, result.summary.source);
+});
+
+test("smoke cancellation listeners survive through asynchronous evidence finalization", async () => {
+  const source = await readFile(
+    new URL("./migration-gate.mjs", import.meta.url),
+    "utf8",
+  );
+  const execute = source.slice(
+    source.indexOf("async function executeGate("),
+    source.indexOf("export async function runWithToolchainPreflight("),
+  );
+  assert.equal((execute.match(/cancellation\.dispose\(\)/g) ?? []).length, 1);
+  assert.ok(
+    execute.indexOf("cancellation.dispose()") >
+      execute.lastIndexOf("await finalizeGateAttemptEvidence("),
+  );
+  assert.match(execute, /finally\s*\{\s*cancellation\.dispose\(\);/);
+});
+
+test("each dirty category independently changes the copied snapshot and observed status", async (t) => {
+  const { root, caller, git, gate } = await sourceFixture(t);
+  let count = 0;
+  const capture = async () =>
+    gate.copyGateSourceInputs(caller, path.join(root, `capture-${count++}`));
+  const baseline = await capture();
+  for (const kind of [
+    "staged",
+    "unstaged",
+    "untracked",
+    "deleted",
+    "tracked-but-ignored",
+  ]) {
+    const file =
+      kind === "untracked"
+        ? "new"
+        : kind === "deleted"
+          ? "deleted"
+          : kind === "tracked-but-ignored"
+            ? "ignored-tracked"
+            : "tracked";
+    const original =
+      kind === "untracked" ? null : await readFile(path.join(caller, file));
+    if (kind === "deleted") await rm(path.join(caller, file));
+    else await writeFile(path.join(caller, file), `${kind} new content`);
+    if (kind === "staged") git("add", file);
+    const changed = await capture();
+    assert.equal(changed.source.headSha, baseline.source.headSha, kind);
+    assert.equal(changed.source.dirty, true, kind);
+    assert.notEqual(
+      changed.source.copiedInputsSha256,
+      baseline.source.copiedInputsSha256,
+      kind,
+    );
+    assert.equal(changed.files.includes(file), kind !== "deleted", kind);
+    if (original === null) await rm(path.join(caller, file));
+    else await writeFile(path.join(caller, file), original);
+    if (kind === "staged") git("add", file);
+    assert.deepEqual(
+      (await capture()).source,
+      baseline.source,
+      `${kind} restored`,
+    );
+  }
+  await writeFile(path.join(caller, "same-path"), "tracked");
+  const regular = await capture();
+  await rm(path.join(caller, "same-path"));
+  await symlink("tracked", path.join(caller, "same-path"));
+  const linked = await capture();
+  assert.deepEqual(linked.files, regular.files);
+  assert.notEqual(
+    linked.source.copiedInputsSha256,
+    regular.source.copiedInputsSha256,
   );
 });
