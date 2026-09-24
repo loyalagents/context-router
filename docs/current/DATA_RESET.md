@@ -6,9 +6,10 @@
 - Source of truth: `apps/backend/src/modules/reset/**`,
   `apps/backend/test/e2e/reset.e2e-spec.ts`, and
   `apps/backend/test/contracts/local-identity-application.spec.ts`,
+  `apps/backend/test/local-database/application.spec.ts`,
   `apps/backend/prisma/migrations/step03_20260922_external_identity_issuer/migration.sql`,
   and `apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx`
-- Last reviewed: 2026-09-22
+- Last reviewed: 2026-09-23
 
 ## Reset modes and safety semantics
 
@@ -40,7 +41,7 @@ The local preview does not expose an account-deletion surface. Step 09 owns an
 explicit destructive local-identity reset and its backup/recovery policy.
 
 Every mode runs in one application-owned unit of work, implemented by a
-PostgreSQL transaction, and deletes preferences before owned
+PostgreSQL transaction for hosted/reference composition or SQLite transaction for the local composition, and deletes preferences before owned
 definitions. Before an advanced reset deletes definitions, it checks for a
 reference from another user's preference. A cross-user reference raises a
 conflict and rolls back the entire reset, including preference deletion.

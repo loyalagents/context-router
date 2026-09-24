@@ -85,3 +85,46 @@ test("CI provisions the PostgreSQL image required by offline TLS fixtures", asyn
     );
   }
 });
+
+test("standard CI discovers the standalone SQLite suite and its compiled-worker prerequisite without a database URL", async () => {
+  const workflow = parse(await readFile(ciPath, "utf8"));
+  const steps = workflow.jobs["backend-tests"].steps;
+  const local = steps.filter((step) => step.run === "pnpm test:local-database");
+  assert.equal(local.length, 1);
+  assert.equal(local[0].env?.DATABASE_URL, undefined);
+  const manifest = JSON.parse(
+    await readFile(
+      new URL("../../apps/backend/package.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  assert.equal(
+    manifest.scripts["pretest:local-database"],
+    "pnpm prisma:generate && pnpm build",
+  );
+  assert.match(
+    manifest.scripts["test:local-database"],
+    /--selectProjects local-database/,
+  );
+});
+
+test("default backend test routes build compiled CLI and workers without dropping projects", async () => {
+  const manifest = JSON.parse(
+    await readFile(
+      new URL("../../apps/backend/package.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const root = JSON.parse(
+    await readFile(new URL("../../package.json", import.meta.url), "utf8"),
+  );
+  const { default: jest } = await import("../../apps/backend/jest.config.js");
+  assert.equal(manifest.scripts.pretest, "pnpm prisma:generate && pnpm build");
+  assert.equal(manifest.scripts.test, "jest --runInBand");
+  assert.equal(root.scripts.test, "pnpm -r test");
+  assert.equal(root.scripts["test:backend"], "pnpm --filter backend test");
+  assert.deepEqual(
+    jest.projects.map((project) => project.displayName),
+    ["unit", "local-database", "integration", "e2e"],
+  );
+});

@@ -3,7 +3,7 @@
 - Status: important
 - Read when: startup
 - Source of truth: `apps/backend/src/**`, `apps/backend/test/**`, `apps/web/app/dashboard/**`, `README.md`
-- Last reviewed: 2026-09-22
+- Last reviewed: 2026-09-23
 
 ## What This Is
 
@@ -12,14 +12,7 @@ A pnpm monorepo with a NestJS backend (`apps/backend/`) and a Next.js frontend
 JWTs at an edge adapter, calls Vertex AI for AI-backed features, and exposes
 HTTP GraphQL, REST, OAuth/DCR, and MCP surfaces.
 
-Step 03 also implements an explicit `local-identity-preview`. It keeps one
-stable random principal and independent bearer in a private state file, uses
-the temporary Step 03 PostgreSQL adapter against an operator-supplied literal-
-loopback database over verified TLS, initializes the real local Nest
-composition, and never opens a listener. It excludes Auth0/JWKS,
-the web app, MCP transport, and provider/model I/O; both AI ports fail with a
-fixed unavailable result. See
-[`LOCAL_IDENTITY_ADMIN.md`](../useful/LOCAL_IDENTITY_ADMIN.md).
+The explicit `local-database-preview` now uses SQLite through pinned Node 24.21.0 and the default `local-identity` command. It keeps a stable random principal and independent bearer in a separate private identity root, seeds catalog definitions only, and initializes the real local Nest composition without a listener. It needs no PostgreSQL, Docker, Auth0/JWKS or model runtime. The previous `local-identity-preview` remains an explicit PostgreSQL reference command with its own original state. Hosted defaults stay unchanged. Both previews exclude the web app and MCP transport, and both AI ports return a fixed unavailable result. See [local identity administration](../useful/LOCAL_IDENTITY_ADMIN.md) for roots, recovery, backup constraints and reference commands.
 
 Run `./print-repo-structure.sh` for the full layout. See `README.md` for setup and dev workflows.
 

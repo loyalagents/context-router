@@ -9,6 +9,7 @@ import {
   GRAPHQL_SCHEMA_STALE_MESSAGE,
   buildApplicationGraphqlSchemaSdl,
   buildLocalApplicationGraphqlSchemaSdl,
+  buildPostgresReferenceLocalApplicationGraphqlSchemaSdl,
   checkGraphqlSchemaFixture,
   createGraphqlSchemaBuildEnvironment,
   writeGraphqlSchemaFixture,
@@ -67,25 +68,49 @@ describe("GraphQL schema fixture tool", () => {
     );
   });
 
-  it("builds the local application schema byte-for-byte equal to hosted and tracked SDL", async () => {
-    const hosted = await buildApplicationGraphqlSchemaSdl();
-    const local = await buildLocalApplicationGraphqlSchemaSdl();
+  it.each([
+    ["SQLite", buildLocalApplicationGraphqlSchemaSdl],
+    [
+      "PostgreSQL reference",
+      buildPostgresReferenceLocalApplicationGraphqlSchemaSdl,
+    ],
+  ] as const)(
+    "builds the %s local schema byte-for-byte equal to hosted and tracked SDL",
+    async (_name, build) => {
+      const originalEnvironment = process.env;
+      const originalValues = { ...process.env };
+      const hosted = await buildApplicationGraphqlSchemaSdl();
+      const local = await build();
 
-    expect(local).toBe(hosted);
-    expect(local).toBe(trackedSchema);
-    expect(local).toContain("mcpAccessHistory");
-  });
+      expect(local).toBe(hosted);
+      expect(local).toBe(trackedSchema);
+      expect(local).toContain("mcpAccessHistory");
+      expect(process.env).toBe(originalEnvironment);
+      expect(process.env).toEqual(originalValues);
+    },
+  );
 
-  it("initializes the local schema composition without DNS or socket I/O", async () => {
-    const lookup = jest.spyOn(dns, "lookup");
-    const connect = jest.spyOn(Socket.prototype, "connect");
+  it.each([
+    ["SQLite", buildLocalApplicationGraphqlSchemaSdl],
+    [
+      "PostgreSQL reference",
+      buildPostgresReferenceLocalApplicationGraphqlSchemaSdl,
+    ],
+  ] as const)(
+    "initializes the %s local schema without DNS or socket I/O",
+    async (_name, build) => {
+      const lookup = jest.spyOn(dns, "lookup");
+      const connect = jest.spyOn(Socket.prototype, "connect");
+      const originalEnvironment = process.env;
+      const originalValues = { ...process.env };
 
-    await expect(buildLocalApplicationGraphqlSchemaSdl()).resolves.toBe(
-      trackedSchema,
-    );
-    expect(lookup).not.toHaveBeenCalled();
-    expect(connect).not.toHaveBeenCalled();
-  });
+      await expect(build()).resolves.toBe(trackedSchema);
+      expect(lookup).not.toHaveBeenCalled();
+      expect(connect).not.toHaveBeenCalled();
+      expect(process.env).toBe(originalEnvironment);
+      expect(process.env).toEqual(originalValues);
+    },
+  );
 
   it("checks without changing a stale fixture and reports the supported producer", async () => {
     const root = await mkdtemp(resolve(tmpdir(), "schema-fixture-check-"));

@@ -799,14 +799,19 @@ export function createGatedNodeChild({
   cwd,
   env,
   signal,
+  preload,
 }) {
-  if (!path.isAbsolute(entrypoint)) {
+  if (
+    !path.isAbsolute(entrypoint) ||
+    (preload !== undefined && !path.isAbsolute(preload))
+  ) {
     throw fixedError("local identity child entrypoint must be absolute");
   }
   return createCapturedChild({
     executable: process.execPath,
     args: [
       "--no-global-search-paths",
+      ...(preload ? ["--require", preload] : []),
       "--eval",
       JOURNALED_NODE_GATE_SOURCE,
       entrypoint,
@@ -984,7 +989,7 @@ export async function captureUtility(executable, args, options = {}) {
   throw combineFailures(primaryError, cleanupErrors, "listener inspection");
 }
 
-async function countListeningSockets(pid, options = {}) {
+export async function countListeningSockets(pid, options = {}) {
   if (process.platform === "linux") {
     const fdDirectory = `/proc/${pid}/fd`;
     const socketInodes = new Set();

@@ -1,9 +1,4 @@
-import { createLocalIdentityConfiguration } from '@config/local-identity.config';
-
-import { LocalIdentityFileStore } from './local-identity-filesystem';
-import { PostgresLocalIdentityCoordination } from '@/infrastructure/storage/postgres/postgres-local-identity-coordination';
-import type { OpenLocalIdentityState } from './local-identity-filesystem';
-import { LocalIdentityStateService } from './local-identity-state.service';
+import type { OpenLocalIdentityState } from "./local-identity-filesystem";
 
 export interface LocalIdentityAdminService {
   initialize(): Promise<OpenLocalIdentityState>;
@@ -13,29 +8,42 @@ export interface LocalIdentityAdminService {
 }
 
 export type LocalIdentityCommand =
-  | 'initialize'
-  | 'recover-initialize'
-  | 'rotate'
-  | 'recover-rotation';
+  | "initialize"
+  | "recover-initialize"
+  | "rotate"
+  | "recover-rotation";
 
 const COMMANDS = new Set<LocalIdentityCommand>([
-  'initialize',
-  'recover-initialize',
-  'rotate',
-  'recover-rotation',
+  "initialize",
+  "recover-initialize",
+  "rotate",
+  "recover-rotation",
 ]);
 
-export function createLocalIdentityAdminService(): LocalIdentityStateService {
-  const configuration = createLocalIdentityConfiguration();
-  return new LocalIdentityStateService({
-    fileStore: new LocalIdentityFileStore({
-      stateRoot: configuration.stateRoot,
-      databaseTargetId: configuration.databaseTargetId,
-    }),
-    repository: new PostgresLocalIdentityCoordination({
-      clientConfig: configuration.clientConfig,
-    }),
-  });
+export async function createLocalIdentityAdminService(
+  initialize = false,
+): Promise<LocalIdentityAdminService> {
+  const [
+    { createLocalDatabaseConfiguration },
+    { createSqliteIdentityRuntime, seedLocalCatalog },
+  ] = await Promise.all([
+    import("../../config/local-database.config"),
+    import("../../infrastructure/storage/sqlite/sqlite-local-runtime"),
+  ]);
+  const { database, service } = createSqliteIdentityRuntime(
+    createLocalDatabaseConfiguration(),
+    initialize,
+  );
+  return {
+    initialize: async () => {
+      const ready = await service.initialize();
+      await seedLocalCatalog(database);
+      return ready;
+    },
+    recoverInitialize: () => service.recoverInitialize(),
+    rotate: () => service.rotate(),
+    recoverRotation: () => service.recoverRotation(),
+  };
 }
 
 function parseCommand(argv: readonly string[]): LocalIdentityCommand | null {
@@ -50,10 +58,10 @@ function successRecord(
   result: OpenLocalIdentityState | null,
 ): string {
   return `${JSON.stringify({
-    type: 'context-router.local-identity.admin',
+    type: "context-router.local-identity.admin",
     version: 1,
     operation,
-    status: 'ok',
+    status: "ok",
     generation: result?.state.generation ?? null,
   })}\n`;
 }
@@ -70,32 +78,69 @@ export async function runLocalIdentityAdminCli(options: {
   const writeStderr =
     options.writeStderr ?? ((value) => process.stderr.write(value));
   if (!command) {
-    writeStderr('Invalid local identity command\n');
+    writeStderr("Invalid local identity command\n");
     return 2;
   }
 
   try {
     const service =
-      options.createService?.() ?? createLocalIdentityAdminService();
+      options.createService?.() ??
+      (await createLocalIdentityAdminService(command === "initialize"));
     let result: OpenLocalIdentityState | null;
     switch (command) {
-      case 'initialize':
+      case "initialize":
         result = await service.initialize();
         break;
-      case 'recover-initialize':
+      case "recover-initialize":
         result = await service.recoverInitialize();
         break;
-      case 'rotate':
+      case "rotate":
         result = await service.rotate();
         break;
-      case 'recover-rotation':
+      case "recover-rotation":
         result = await service.recoverRotation();
         break;
     }
     writeStdout(successRecord(command, result));
     return 0;
   } catch {
-    writeStderr('Local identity command failed\n');
+    writeStderr("Local identity command failed\n");
+    return 1;
+  }
+}
+
+/** SQLite-only pre-acquire bootstrap recovery; the reference dispatcher above keeps its four commands. */
+export async function runLocalDatabaseAdminCli(
+  options: Parameters<typeof runLocalIdentityAdminCli>[0],
+): Promise<number> {
+  if (
+    options.argv.length !== 1 ||
+    options.argv[0] !== "recover-database-bootstrap"
+  )
+    return runLocalIdentityAdminCli(options);
+  try {
+    const [{ createLocalDatabaseConfiguration }, { SqliteDatabase }] =
+      await Promise.all([
+        import("../../config/local-database.config"),
+        import("../../infrastructure/storage/sqlite/sqlite-database"),
+      ]);
+    const configuration = createLocalDatabaseConfiguration();
+    const status = SqliteDatabase.recoverBootstrap({
+      databaseRoot: configuration.databaseRoot,
+      identityRoot: configuration.stateRoot,
+    });
+    (options.writeStdout ?? ((value) => process.stdout.write(value)))(
+      JSON.stringify({
+        type: "context-router.local-database.bootstrap-recovery",
+        version: 1,
+        status,
+      }) + "\n",
+    );
+    return 0;
+  } catch {
+    (options.writeStderr ?? ((value) => process.stderr.write(value)))(
+      "Local identity command failed\n",
+    );
     return 1;
   }
 }

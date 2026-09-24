@@ -6,6 +6,7 @@ import {
   lstat,
   mkdir,
   readFile,
+  readlink,
   realpath,
   rm,
   writeFile,
@@ -16,6 +17,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
+import { assertLocalDatabaseSmokeSuccessResources } from "./local-database-lifecycle.mjs";
 import {
   assertCallerIntegrity,
   assertCompletedResourceLifecycle,
@@ -501,6 +503,8 @@ export async function finalizeGateAttemptEvidence({
   diagnosticsOwnership,
   lifecycle,
   summary,
+  mode = "full",
+  source = summary.source ?? emptyGateSource(),
   wallStartedAt,
   callerIntegrityVerified,
   attemptError,
@@ -512,6 +516,7 @@ export async function finalizeGateAttemptEvidence({
   removeDiagnostics = (directory) =>
     rm(directory, { recursive: true, force: true }),
 }) {
+  summary.source = structuredClone(source);
   const evidenceErrors = [];
   const recordError = (error) => {
     const normalized = error ?? new Error("gate evidence operation failed");
@@ -538,7 +543,7 @@ export async function finalizeGateAttemptEvidence({
     signals.some((signal) => signal?.aborted) ? "cancelled" : "failed";
   const refresh = (status) => {
     summary.elapsedMs = Date.now() - wallStartedAt;
-    summary.mode = "full";
+    summary.mode = mode;
     summary.callerIntegrity = callerIntegrityVerified;
     summary.status = status;
     summary.cleanupErrors = allErrors().map((error) =>
@@ -785,15 +790,16 @@ async function selectAndValidateBaseSha(environment, { signal } = {}) {
   return validateMergeBase(candidate, (args) => gitCapture(args, { signal }));
 }
 
-async function listWorkspaceFiles({ signal } = {}) {
+async function listWorkspaceFiles({ signal, cwd = repositoryRoot } = {}) {
   const [output, deletedOutput] = await Promise.all([
     requireGitSuccess(
       ["ls-files", "-co", "--exclude-standard", "-z"],
-      { encoding: "buffer", signal },
+      { encoding: "buffer", signal, cwd },
     ),
     requireGitSuccess(["ls-files", "--deleted", "-z"], {
       encoding: "buffer",
       signal,
+      cwd,
     }),
   ]);
   const deleted = new Set(
@@ -808,6 +814,78 @@ async function listWorkspaceFiles({ signal } = {}) {
       const parts = relativePath.split("/");
       return !parts.some((part) => [".git", "node_modules", "dist", ".next"].includes(part));
     });
+}
+
+function emptyGateSource() {
+  return { headSha: null, dirty: null, copiedInputsSha256: null };
+}
+
+/** Identify the actual copied source inputs before generated files or harness setup can change them. */
+export async function copyGateSourceInputs(
+  callerRoot,
+  workspace,
+  { signal, onSourceCaptured = () => {} } = {},
+) {
+  const source = emptyGateSource();
+  const publish = () => onSourceCaptured(Object.freeze({ ...source }));
+  await publish();
+  source.headSha = (
+    await requireGitSuccess(["rev-parse", "HEAD"], { cwd: callerRoot, signal })
+  ).trim();
+  if (!/^[a-f0-9]{40,64}$/.test(source.headSha))
+    throw new Error("caller source HEAD is unavailable");
+  await publish();
+  const statusArgs = [
+    "status",
+    "--porcelain=v1",
+    "--untracked-files=all",
+    "-z",
+  ];
+  const beforeStatus = await requireGitSuccess(statusArgs, {
+    cwd: callerRoot,
+    signal,
+  });
+  source.dirty = beforeStatus.length !== 0;
+  await publish();
+  const files = [
+    ...new Set(await listWorkspaceFiles({ cwd: callerRoot, signal })),
+  ].sort();
+  await copyWorkspaceFiles(callerRoot, workspace, files, { signal });
+  const digest = createHash("sha256").update(
+    "context-router-gate-copied-inputs-v1\n",
+  );
+  for (const relativePath of files) {
+    if (signal?.aborted) throw signal.reason;
+    const file = path.join(workspace, relativePath),
+      info = await lstat(file);
+    let record;
+    if (info.isFile()) {
+      record = [
+        relativePath,
+        "file",
+        info.mode & 0o777,
+        createHash("sha256")
+          .update(await readFile(file, { signal }))
+          .digest("hex"),
+      ];
+    } else if (info.isSymbolicLink()) {
+      record = [relativePath, "symlink", await readlink(file)];
+    } else throw new Error("copied source input changed kind");
+    digest.update(JSON.stringify(record)).update("\n");
+  }
+  source.copiedInputsSha256 = digest.digest("hex");
+  await publish();
+  // These are observations, not an atomic working-tree snapshot or a global source lock.
+  const afterHead = (
+    await requireGitSuccess(["rev-parse", "HEAD"], { cwd: callerRoot, signal })
+  ).trim();
+  const afterStatus = await requireGitSuccess(statusArgs, {
+    cwd: callerRoot,
+    signal,
+  });
+  if (source.headSha !== afterHead || beforeStatus !== afterStatus)
+    throw new Error("caller source HEAD or status changed during copy");
+  return { files, source: Object.freeze({ ...source }) };
 }
 
 export async function assertDisposableWorkspaceOwnership(ownership) {
@@ -921,6 +999,7 @@ export async function prepareDisposableWorkspace(
   {
     onWorkspaceCreated = () => {},
     beforeWorkspacePreparation = () => {},
+    onSourceCaptured = () => {},
   } = {},
 ) {
   let workspaceOwnership;
@@ -928,8 +1007,9 @@ export async function prepareDisposableWorkspace(
     path.join(os.tmpdir(), "context-router-lmbg-workspace-"),
     async (workspace) => {
       await beforeWorkspacePreparation(workspaceOwnership);
-      const files = await listWorkspaceFiles({ signal });
-      await copyWorkspaceFiles(repositoryRoot, workspace, files, { signal });
+      const { files, source } = await copyGateSourceInputs(
+        repositoryRoot, workspace, { signal, onSourceCaptured },
+      );
       const setupLog = (name) => path.join(diagnosticsDirectory, `workspace-${name}.log`);
       const gitHome = path.join(workspace, ".lmbg-git-home");
       await mkdir(gitHome, { recursive: true, mode: 0o700 });
@@ -967,6 +1047,7 @@ export async function prepareDisposableWorkspace(
       );
       return {
         files,
+        source,
         corepackHome,
         cachedPnpmVersions,
         ownershipMarker: workspaceOwnership.ownershipMarker,
@@ -1516,6 +1597,7 @@ export async function assertRestartSmokeLifecycleEvidence(
   }
   if (commandSucceeded) {
     assertLocalIdentitySmokeSuccessResources(state, smokeLabel);
+    assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }
@@ -1537,6 +1619,7 @@ export async function assertPackagedSmokeLifecycleEvidence(
   if (commandSucceeded) {
     assertPackagedSmokeSuccessResources(state);
     assertLocalIdentitySmokeSuccessResources(state, smokeLabel);
+    assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }
@@ -1604,6 +1687,7 @@ async function sha256(filePath) {
 
 async function executeFullGate({
   workspace,
+  source,
   diagnosticsDirectory,
   baseSha,
   baseDirectory,
@@ -1622,6 +1706,7 @@ async function executeFullGate({
 }) {
   const summary = {
     status: "running",
+    source,
     baseSha,
     versions: {
       node: "pending",
@@ -1971,6 +2056,7 @@ async function executeFullGate({
 
 async function executeSmokeOnly({
   workspace,
+  source,
   diagnosticsDirectory,
   sourceEnvironment,
   corepackHome,
@@ -2007,16 +2093,16 @@ async function executeSmokeOnly({
         { commandSucceeded },
       ),
   });
-  return { status: "passed", mode: "smoke-only" };
+  return markGateSuccessCandidate({
+    status: "running", mode: "smoke-only", source,
+  });
 }
 
 async function executeGate({ timeline: suppliedTimeline } = {}) {
   const cancellation = createSignalAbortController();
   const smokeOnly = process.argv.includes("--smoke-only");
   const wallStartedAt = Date.now();
-  const timeline = smokeOnly
-    ? null
-    : suppliedTimeline ?? createGateTimeline();
+  const timeline = suppliedTimeline ?? createGateTimeline();
   let diagnosticsDirectory;
   let diagnosticsOwnership;
   let callerIntegrity;
@@ -2026,6 +2112,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
   let primaryError;
   let cleanupErrors = [];
   let finalSummary;
+  let source = emptyGateSource();
   let gateLifecycle;
   const summaryCanaries = buildAdministrationCanaries(
     process.env.MIGRATION_TEST_ADMIN_URL,
@@ -2078,6 +2165,9 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       diagnosticsDirectory,
       preflightSignal,
       {
+        onSourceCaptured(value) {
+          source = value;
+        },
         onWorkspaceCreated(workspaceOwnership) {
           disposable = {
             workspace: workspaceOwnership.workspace,
@@ -2087,6 +2177,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       },
     );
     return executeFullGate({
+      source,
       workspace: disposable.workspace,
       diagnosticsDirectory,
       baseSha,
@@ -2155,6 +2246,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       diagnosticsOwnership,
       lifecycle: gateLifecycle,
       summary,
+      source,
       wallStartedAt,
       callerIntegrityVerified,
       attemptError,
@@ -2196,6 +2288,9 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       diagnosticsDirectory,
       cancellation.signal,
       {
+          onSourceCaptured(value) {
+            source = value;
+          },
           onWorkspaceCreated(workspaceOwnership) {
             disposable = {
               workspace: workspaceOwnership.workspace,
@@ -2205,6 +2300,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
         },
       );
       result = await executeSmokeOnly({
+        source,
         workspace: disposable.workspace,
         diagnosticsDirectory,
         sourceEnvironment: process.env,
@@ -2242,60 +2338,29 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
     primaryError = outcome.primaryError;
     cleanupErrors = outcome.secondaryErrors;
   }
-  cancellation.dispose();
-
-  if (smokeOnly) {
-    finalSummary = primaryError?.gateSummary ?? result ?? {
-      status: "failed",
-      mode: "smoke-only",
-    };
-    finalSummary.elapsedMs = Date.now() - wallStartedAt;
-    finalSummary.mode = "smoke-only";
-    finalSummary.callerIntegrity = callerIntegrityVerified;
-    if (primaryError || cleanupErrors.length) {
-      finalSummary.status = cancellation.signal.aborted ? "cancelled" : "failed";
-      finalSummary.failure ??= primaryError
-        ? {
-            message: redactSecrets(primaryError.message, summaryCanaries),
-            exitCode: primaryError.exitCode ?? 1,
-          }
-        : null;
-      finalSummary.cleanupErrors = cleanupErrors.map((error) =>
-        redactSecrets(error.message, summaryCanaries),
-      );
-      if (diagnosticsDirectory) {
-        try {
-          await assertGateDiagnosticsOwnership(diagnosticsOwnership);
-          await writeSanitizedJson(
-            path.join(diagnosticsDirectory, "summary.json"),
-            finalSummary,
-            summaryCanaries,
-          );
-        } catch (error) {
-          cleanupErrors.push(error);
-        }
-      }
-    } else if (diagnosticsDirectory) {
-      try {
-        await assertGateDiagnosticsOwnership(diagnosticsOwnership);
-        await rm(diagnosticsDirectory, { recursive: true, force: true });
-        diagnosticsDirectory = null;
-      } catch (error) {
-        cleanupErrors.push(error);
-        finalSummary.status = "failed";
-        finalSummary.cleanupErrors = cleanupErrors.map((cleanupError) =>
-          redactSecrets(cleanupError.message, summaryCanaries),
-        );
-        try {
-          await assertGateDiagnosticsOwnership(diagnosticsOwnership);
-          await writeSanitizedJson(
-            path.join(diagnosticsDirectory, "summary.json"),
-            finalSummary,
-            summaryCanaries,
-          );
-        } catch {}
-      }
+  try {
+    if (smokeOnly) {
+      const finalized = await finalizeGateAttemptEvidence({
+        timeline,
+        mode: "smoke-only",
+        source,
+        diagnosticsDirectory,
+        diagnosticsOwnership,
+        summary: primaryError?.gateSummary ?? result ?? { status: "failed" },
+        wallStartedAt,
+        callerIntegrityVerified,
+        attemptError: primaryError,
+        cleanupErrors,
+        signals: [cancellation.signal],
+        summaryCanaries,
+        externalEnvironment: process.env,
+      });
+      diagnosticsDirectory = finalized.diagnosticsDirectory;
+      finalSummary = finalized.summary;
+      cleanupErrors.push(...finalized.evidenceErrors);
     }
+  } finally {
+    cancellation.dispose();
   }
 
   if (primaryError || cleanupErrors.length) {

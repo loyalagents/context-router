@@ -8,6 +8,8 @@ import { readFile, writeFile } from "fs/promises";
 import { resolve } from "path";
 import { AppModule } from "../src/app.module";
 import { LocalApplicationModule } from "../src/composition/local-application.module";
+import { PostgresReferenceLocalApplicationModule } from "../src/composition/postgres-reference-local-application.module";
+import { SqliteDatabase } from "../src/infrastructure/storage/sqlite/sqlite-database";
 import type { LocalIdentityConfiguration } from "../src/config/local-identity.config";
 import { resolveRuntimeConfiguration } from "../src/config/runtime-config";
 import { HUMAN_AUTH_STRATEGY } from "../src/domains/shared/ports/human-auth.constants";
@@ -116,7 +118,7 @@ export async function buildApplicationGraphqlSchemaSdl(): Promise<string> {
   return schema;
 }
 
-function createLocalSchemaConfiguration(): LocalIdentityConfiguration {
+function createPostgresReferenceSchemaConfiguration(): LocalIdentityConfiguration {
   const connection = {
     host: "127.0.0.1",
     port: 1,
@@ -140,7 +142,17 @@ function createLocalSchemaConfiguration(): LocalIdentityConfiguration {
   };
 }
 
-export async function buildLocalApplicationGraphqlSchemaSdl(): Promise<string> {
+export function buildLocalApplicationGraphqlSchemaSdl(): Promise<string> {
+  return buildLocalSchemaSdl("sqlite");
+}
+
+export function buildPostgresReferenceLocalApplicationGraphqlSchemaSdl(): Promise<string> {
+  return buildLocalSchemaSdl("postgres-reference");
+}
+
+async function buildLocalSchemaSdl(
+  implementation: "sqlite" | "postgres-reference",
+): Promise<string> {
   const inheritedEnvironment = process.env;
   let testingModule: TestingModule | undefined;
   let application: INestApplication | undefined;
@@ -165,10 +177,30 @@ export async function buildLocalApplicationGraphqlSchemaSdl(): Promise<string> {
     try {
       const moduleBuilder = Test.createTestingModule({
         imports: [
-          LocalApplicationModule.register(createLocalSchemaConfiguration()),
+          implementation === "sqlite"
+            ? LocalApplicationModule.register({
+                kind: "sqlite",
+                databaseRoot: "/private/context-router-local-schema-database",
+                stateRoot: "/private/context-router-local-schema-fixture",
+              })
+            : PostgresReferenceLocalApplicationModule.register(
+                createPostgresReferenceSchemaConfiguration(),
+              ),
         ],
       });
-      moduleBuilder.overrideProvider(PrismaService).useValue({});
+      if (implementation === "sqlite") {
+        // Schema construction uses the actual local composition without opening
+        // a database. The file-backed application suite separately proves SDL
+        // equality with real storage and an initialized identity.
+        moduleBuilder.overrideProvider(SqliteDatabase).useValue({
+          targetId: Buffer.alloc(32, 0x41).toString("base64url"),
+          connect() {
+            throw new Error("Schema construction must not access storage");
+          },
+        });
+      } else {
+        moduleBuilder.overrideProvider(PrismaService).useValue({});
+      }
 
       testingModule = await moduleBuilder.compile();
       application = testingModule.createNestApplication({ logger: false });

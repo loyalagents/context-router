@@ -351,6 +351,8 @@ test("phase environments expose database credentials only to their named consume
   assert.equal(database.MIGRATION_TEST_ADMIN_URL, undefined);
   assert.equal(database.MIGRATION_GATE_REQUIRE_BASE_COMPARISON, undefined);
 
+  const local = buildPhaseEnvironment({ ...base, DATABASE_URL: "ambient-private", MIGRATION_TEST_ADMIN_URL: "ambient-admin" }, "backend-database", { ...values, commandArgv: ["pnpm", "--filter", "backend", "test:local-database"] });
+  assert.equal(local.DATABASE_URL, undefined); assert.equal(local.MIGRATION_TEST_ADMIN_URL, undefined); assert.equal(local.NODE_ENV, "test");
   const smoke = buildPhaseEnvironment(base, "restart-smoke", values);
   assert.equal(smoke.DATABASE_URL, undefined);
   assert.equal(smoke.MIGRATION_TEST_ADMIN_URL, values.administrationUrl);
@@ -844,7 +846,7 @@ test("decision replacement evidence resolves only exact accepted repository reco
   }
 });
 
-test("approved command policy rejects modes and phases outside the exact dual-mode matrix", async () => {
+test("approved command policy rejects modes and phases outside the exact three-mode matrix", async () => {
   const manifest = JSON.parse(
     await readFile(
       new URL("./gate-phases.json", import.meta.url),
@@ -868,7 +870,7 @@ test("approved command policy rejects modes and phases outside the exact dual-mo
     predecessors: [injected.phases.at(-1).id],
   });
   const errors = validateApprovedPhaseCommands(injected);
-  assert.ok(errors.some((error) => error.includes("exactly hosted-baseline and local-identity-preview")));
+  assert.ok(errors.some((error) => error.includes("exactly hosted-baseline, local-identity-preview, and local-database-preview")));
   assert.ok(errors.some((error) => error.includes("outside the approved")));
 });
 

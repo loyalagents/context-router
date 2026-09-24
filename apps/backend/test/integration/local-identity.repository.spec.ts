@@ -1628,23 +1628,26 @@ describe('local identity direct-TLS repository', () => {
       );
       const compiledEntrypoint = join(
         deployedBackend,
-        'dist/local-identity.js',
+        'dist/local-identity-postgres-reference.js',
       );
       const deployedManifest = JSON.parse(
         await readFile(join(deployedBackend, 'package.json'), 'utf8'),
       ) as { main?: unknown; scripts?: Record<string, unknown> };
       expect(deployedManifest.main).toBe('dist/main.js');
-      expect(deployedManifest.scripts?.['local-identity']).toBe(
-        'node --no-global-search-paths dist/local-identity.js',
+      expect(deployedManifest.scripts?.['local-identity:postgres-reference']).toBe(
+        'node --no-global-search-paths dist/local-identity-postgres-reference.js',
       );
       await expect(readFile(compiledEntrypoint)).resolves.toEqual(
         expect.any(Buffer),
       );
       for (const relative of [
-        'dist/local-identity.js',
-        'dist/local-identity.js.map',
+        'dist/local-identity-postgres-reference.js',
+        'dist/local-identity-postgres-reference.js.map',
         'dist/bootstrap/local-identity-preview.js',
-        'dist/composition/local-application.module.js',
+        'dist/composition/postgres-reference-local-application.module.js',
+        'dist/composition/postgres-reference-local-identity-infrastructure.module.js',
+        'dist/local-identity.js',
+        'dist/infrastructure/storage/sqlite/sqlite-coordination.worker.js',
         'dist/config/local-identity.config.js',
         'dist/modules/auth/local-identity-admin.cli.js',
         'dist/modules/auth/local-identity-filesystem.js',
@@ -1756,7 +1759,7 @@ describe('local identity direct-TLS repository', () => {
       const incompleteRoot = join(fixtureRoot, 'incomplete-package');
       await mkdir(incompleteRoot, { mode: 0o700 });
       await writeFile(
-        join(incompleteRoot, 'local-identity.js'),
+        join(incompleteRoot, 'local-identity-postgres-reference.js'),
         await readFile(compiledEntrypoint),
         { mode: 0o600 },
       );
@@ -1764,7 +1767,7 @@ describe('local identity direct-TLS repository', () => {
         process.execPath,
         [
           '--no-global-search-paths',
-          join(incompleteRoot, 'local-identity.js'),
+          join(incompleteRoot, 'local-identity-postgres-reference.js'),
           'initialize',
         ],
         {
@@ -1844,7 +1847,7 @@ if (mode === "audit") {
   const sealed = await helpers.sealAndDescribeStage(stage, {
     schemaVersion: 1,
     proof: "local-identity-relocation",
-    backendEntrypoint: "backend/dist/local-identity.js",
+    backendEntrypoint: "backend/dist/local-identity-postgres-reference.js",
   });
   fs.writeFileSync(descriptor, JSON.stringify(sealed), { flag: "wx", mode: 0o600 });
 } else if (mode === "verify") {

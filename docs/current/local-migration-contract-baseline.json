@@ -4,7 +4,8 @@
   "planningBase": "9b56d38fde927d4e643af89ba45665a439613939",
   "supportedModes": [
     "hosted-baseline",
-    "local-identity-preview"
+    "local-identity-preview",
+    "local-database-preview"
   ],
   "contractClasses": [
     "preserved-contract",
@@ -1279,6 +1280,14 @@
           "fingerprints": [
             "const response = await fetch(url, {",
             "redirect: \"manual\""
+          ]
+        },
+        {
+          "path": "scripts/local-migration/local-database-smoke.mjs",
+          "fingerprints": [
+            "createGatedNodeChild",
+            "countListeningSockets",
+            "runLocalDatabaseSmoke"
           ]
         }
       ],

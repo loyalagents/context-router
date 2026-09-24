@@ -30,7 +30,7 @@ const LIVE_PROVIDER_PATTERN =
   /(?:--provider(?:=|\s+)(?:vertex|claude|codex|openrouter)|\blive[-_:]|eval-harbor:smoke|run_smoke|bootstrap_runner|docker\s+pull|pnpm\s+install|npm\s+install)/i;
 const APPROVED_HOSTED_COMMANDS = new Map([
   ["contract-baseline", [
-    ["node", "--test", "scripts/local-migration/check-contract-baseline.test.mjs", "scripts/local-migration/gate-runner.test.mjs", "scripts/local-migration/gate-phases.test.mjs", "scripts/local-migration/restart-smoke.test.mjs", "scripts/local-migration/test-database.test.mjs", "scripts/local-migration/web-support-smoke.test.mjs", "scripts/local-migration/eval-test-discovery.test.mjs", "scripts/local-migration/toolchain-contract.test.mjs", "scripts/local-migration/ci-path-filters.test.mjs", "scripts/local-migration/runtime-process.test.mjs", "scripts/local-migration/web-runtime-config.test.mjs", "scripts/local-migration/runtime-resources.test.mjs", "scripts/local-migration/packaging-smoke.test.mjs"],
+    ["node", "--test", "scripts/local-migration/check-contract-baseline.test.mjs", "scripts/local-migration/gate-runner.test.mjs", "scripts/local-migration/gate-phases.test.mjs", "scripts/local-migration/restart-smoke.test.mjs", "scripts/local-migration/test-database.test.mjs", "scripts/local-migration/web-support-smoke.test.mjs", "scripts/local-migration/eval-test-discovery.test.mjs", "scripts/local-migration/toolchain-contract.test.mjs", "scripts/local-migration/ci-path-filters.test.mjs", "scripts/local-migration/runtime-process.test.mjs", "scripts/local-migration/web-runtime-config.test.mjs", "scripts/local-migration/runtime-resources.test.mjs", "scripts/local-migration/packaging-smoke.test.mjs", "scripts/local-migration/local-database-smoke.test.mjs"],
     ["node", "scripts/local-migration/check-contract-baseline.mjs"],
   ]],
   ["documentation", [
@@ -47,6 +47,7 @@ const APPROVED_HOSTED_COMMANDS = new Map([
     ["pnpm", "--filter", "backend", "exec", "prisma", "migrate", "deploy"],
     ["pnpm", "--filter", "backend", "test:integration"],
     ["pnpm", "--filter", "backend", "test:e2e:tests-only"],
+    ["pnpm", "--filter", "backend", "test:local-database"],
   ]],
   ["local-orchestrator", [
     ["pnpm", "--filter", "local-orchestrator", "test"],
@@ -67,6 +68,7 @@ const APPROVED_HOSTED_COMMANDS = new Map([
 const APPROVED_SUPPORTED_MODES = [
   "hosted-baseline",
   "local-identity-preview",
+  "local-database-preview",
 ];
 const APPROVED_LOCAL_IDENTITY_PHASES = new Set([
   "contract-baseline",
@@ -762,7 +764,7 @@ export function validateApprovedPhaseCommands(manifest) {
   const supportedModeIds = (manifest.supportedModes ?? []).map((mode) => mode?.id);
   if (!jsonArrayEqual(supportedModeIds, APPROVED_SUPPORTED_MODES)) {
     errors.push(
-      "command policy supports exactly hosted-baseline and local-identity-preview",
+      "command policy supports exactly hosted-baseline, local-identity-preview, and local-database-preview",
     );
   }
   const activePhases = (manifest.phases ?? []).filter(
@@ -779,18 +781,13 @@ export function validateApprovedPhaseCommands(manifest) {
   if (!jsonArrayEqual(activePhases.map((phase) => phase.id), hostedIds)) {
     errors.push("active phase exists outside the approved hosted-baseline command policy");
   }
-  const localIdentityIds = activePhases
-    .filter((phase) => phase.modes?.includes("local-identity-preview"))
-    .map((phase) => phase.id);
-  if (
-    !jsonArrayEqual(
-      localIdentityIds,
-      [...APPROVED_LOCAL_IDENTITY_PHASES],
-    )
-  ) {
-    errors.push(
-      "local-identity-preview phase set/order differs from the approved command policy",
-    );
+  for (const mode of ["local-identity-preview", "local-database-preview"]) {
+    const localIds = activePhases
+      .filter((phase) => phase.modes?.includes(mode))
+      .map((phase) => phase.id);
+    if (!jsonArrayEqual(localIds, [...APPROVED_LOCAL_IDENTITY_PHASES])) {
+      errors.push(`${mode} phase set/order differs from the approved command policy`);
+    }
   }
   for (const phase of hostedPhases) {
     const actual = (phase.commands ?? []).map((command) => command.argv);
@@ -919,6 +916,12 @@ export function buildPhaseEnvironment(base, phaseId, values) {
     ]).has(phaseId)
   ) {
     environment.DATABASE_URL = values.databaseUrl;
+  }
+  // The standalone local project must prove it has no PostgreSQL setup dependency,
+  // even when the caller inherited hosted fixture settings.
+  if (jsonArrayEqual(values.commandArgv ?? [], ["pnpm", "--filter", "backend", "test:local-database"])) {
+    delete environment.DATABASE_URL;
+    delete environment.MIGRATION_TEST_ADMIN_URL;
   }
   if (phaseId === "restart-smoke") {
     environment.MIGRATION_TEST_ADMIN_URL = values.administrationUrl;
