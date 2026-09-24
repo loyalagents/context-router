@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Document status: amendment E accuracy deferral approved; first native cancellation failed; bounded batch-size amendment F independently reviewed, user decision pending; no production selection/integration approval
+- Document status: amendment E accuracy deferral approved; first native cancellation failed; amendment F smaller-batch experiment approved by user; affected implementation review precedes measurement; no production selection/integration approval
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -294,7 +294,7 @@ All three affected reviewers independently approved E at `1ad38a88c49a6d4d8dd8bb
 
 ## Proposed Amendment F: Smaller Prefill Batch
 
-Status: proposed after blocking native cancellation evidence; affected independent review and user decision precede execution. E's user-directed accuracy deferral remains accepted, and D prompt tuning remains deferred. No new download or production code is proposed.
+Status: the user explicitly approved F on 2026-09-24: “yes you can test this”. The reviewed bounded experiment may proceed after affected implementation review. E's user-directed accuracy deferral remains accepted, and D prompt tuning remains deferred. No new download or production code is proposed.
 
 At `1eed4814f54de63a01704be8029f05017f5fc754`, the consented 9B/native configuration completed all five short baselines (maximum 396.143 ms). The first prefill cancellation observed 2,048 of 8,029 prompt tokens with zero decoded tokens. Client return took 0.765 ms, but settlement remained unknown after 5,071.786 ms and correctly latched unavailable. The other five required cancellation trials were not run; no followup was attempted after the latch. INFO runtime counters show continuing prompt processing at 4,096 tokens before cleanup, with no observed normal release. Only the exact owned runtime was then stopped/reaped; that cleanup is not cancellation success. Retain the [receipt](evidence/cancellation-9b-first.json) and [source/hash index](evidence/cancellation-run-index.json).
 
@@ -309,3 +309,5 @@ All remaining early post-dispatch cancellation/transport-loss, schema/bounds, co
 Decision requested: approve this exact smaller-batch experiment, or leave Step 06 paused at the cancellation blocker. The user's prior accuracy acceptance is not re-requested and remains in force. The reason for this decision is new blocking runtime evidence and a changed tested configuration under the handoff's pause rule; no additional asset consent is needed.
 
 All three affected reviewers independently approved F at `0a8c8a6e94e90d5fcc3355dad4184d4dda5e84fe` as a concrete proposal for the user decision: `/root/plan_architecture` (Astra Extra High), `/root/plan_compatibility` (Astra High), `/root/plan_safety` (Astra Extra High). No proposal blocker remains. All withheld implementation/execution/selection/CP2 approval pending that decision and affected implementation review, and carried forward unchanged contracts. Read-only reviews; accepted launch settings, serving internals unverified.
+
+F activation: `/root` first added the exact `--batch-size 512` and unchanged `--ubatch-size 512` assertions; the native argument test failed against 2048. The sole runtime edit then changed logical batch size to 512. No other runtime or acceptance setting changed. Original receipts remain intact; the existing live runner binds the tested commit and exact flags.

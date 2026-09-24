@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Status: active primary step; 9B accuracy deferral approved; first native cancellation failed; bounded batch-size experiment independently reviewed, user decision pending
+- Status: active primary step; 9B accuracy deferral approved; first native cancellation failed; user-approved smaller-batch experiment in progress; affected implementation review precedes measurement
 - Branch: `codex/local-migration-06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Coordinator and sole repository writer: `/root`; all other agents read-only
@@ -20,3 +20,5 @@ The [feasibility record](feasibility.md#selection-stop-both-frozen-candidates-fa
 The user subsequently approved moving on with a documented accuracy limitation; see [amendment E](plan.md#amendment-e-user-directed-accuracy-deferral). Keep the original 9B recall failure visible and defer optional D tuning. 9B is provisional pending all remaining CP1 evidence and selection review; no production integration is approved yet.
 
 The first native prefill-cancellation trial failed the unchanged recovery deadline and correctly latched unavailable; see [amendment F](plan.md#proposed-amendment-f-smaller-prefill-batch). The existing quality exception remains accepted. Integration is paused at this separate runtime blocker; no further model run proceeds before the F decision.
+
+The user explicitly approved F (“yes you can test this”). Continue its bounded smaller-batch experiment after affected implementation review; quality deferral E remains accepted. Production selection/integration remain gated on the results and remaining qualification.

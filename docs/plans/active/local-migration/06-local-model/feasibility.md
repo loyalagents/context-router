@@ -1,6 +1,6 @@
 # Step 06 Feasibility Progress
 
-- Status: 9B accuracy deferral approved; first native cancellation failed; bounded smaller-batch proposal independently reviewed, user decision pending; no production integration authorized
+- Status: 9B accuracy deferral approved; first native cancellation failed; user-approved smaller-batch experiment in progress; affected implementation review precedes measurement; no production integration authorized
 - Owner and sole writer: `/root`; investigators/reviewers remain read-only
 - Base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -102,3 +102,5 @@ Safety independently approved `1eed4814f54de63a01704be8029f05017f5fc754` for the
 The [receipt](evidence/cancellation-9b-first.json) retains all measurements, five not-run records, network negative controls and sampled memory; the [index](evidence/cancellation-run-index.json) binds its source/hash. Pressure stayed normal and swap unchanged; the receipt's `memoryPassed` covers only its sampled ledger budget, not the still-missing full allocation qualification. [Proposed F](plan.md#proposed-amendment-f-smaller-prefill-batch) makes the next decision concrete: one smaller logical batch, unchanged limits, same cancellation matrix, then the original quality matrix if cancellation passes. No runtime/framework/lifecycle expansion or new download is proposed.
 
 All three affected reviewers approved proposed F at `0a8c8a6e94e90d5fcc3355dad4184d4dda5e84fe` for the user decision only. The sanitized [native counter projection](evidence/cancellation-9b-first-native-counters.json) retains exact task lifecycle/timing/progress lines and the original private log hash. Final targeted checkpoint validation at that revision passed all 67 deterministic probe tests (`node --test scripts/local-migration/local-model-*.test.mjs`, Node 24.21.0, isolated TLS listeners), Markdown links and diff whitespace. Rehashing confirmed all ten original preparation documents unchanged in the original main workspace. An independent read-only process census found no remaining owned llama runtime. This is checkpoint evidence, not the final aggregate local gate or final-head CI. No production integration or PR is ready.
+
+The user explicitly approved the reviewed F experiment on 2026-09-24. A new fixed-argument assertion failed against the original batch size before the sole runtime flag changed from 2048 to 512; the microbatch stays 512. No new download or other configuration change occurred. Affected implementation review precedes the one authorized cancellation run.

@@ -12,7 +12,7 @@ export function runtimeArgs({ model, port, keyPath, certPath, apiKeyPath }) {
       [model, keyPath, certPath, apiKeyPath].some((path) => typeof path !== 'string' || !path.startsWith('/'))) throw fail();
   return ['--model', model, '--host', '127.0.0.1', '--port', String(port), '--alias', 'step06-qwen35',
     '--ctx-size', '16384', '--parallel', '1', '--gpu-layers', 'all', '--flash-attn', 'on', '--fit', 'off',
-    '--batch-size', '2048', '--ubatch-size', '512', '--load-mode', 'mmap',
+    '--batch-size', '512', '--ubatch-size', '512', '--load-mode', 'mmap',
     '--offline', '--api-key-file', apiKeyPath, '--ssl-key-file', keyPath, '--ssl-cert-file', certPath,
     '--chat-template-kwargs', '{"enable_thinking":false}', '--no-webui', '--slots', '--no-context-shift',
     '--cache-ram', '0', '--no-cache-idle-slots', '--no-cache-prompt', '--log-verbosity', '3', '--threads-http', '4'];

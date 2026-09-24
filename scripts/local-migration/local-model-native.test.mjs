@@ -13,6 +13,8 @@ test('pinned native invocation fixes the manual candidate and exposes no credent
   assert.equal(value('--host'), '127.0.0.1');
   assert.equal(value('--ctx-size'), '16384');
   assert.equal(value('--parallel'), '1');
+  assert.equal(value('--batch-size'), '512');
+  assert.equal(value('--ubatch-size'), '512');
   assert.equal(value('--cache-ram'), '0');
   assert.equal(value('--fit'), 'off');
   assert.equal(value('--chat-template-kwargs'), '{"enable_thinking":false}');
