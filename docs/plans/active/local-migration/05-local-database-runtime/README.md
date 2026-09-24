@@ -1,7 +1,7 @@
 # Step 05: Local Database Runtime
 
-- Status: implementation and CP5 integration complete; fresh complete-diff final review and exact final-head gate/CI pending
-- Step 05 PR: [PR #164](https://github.com/loyalagents/context-router/pull/164) — draft implementation candidate; fresh final review and exact final-head gate/CI pending
+- Status: implementation and CP5 integration complete; review/validation status in PR #164; active pending human merge
+- Step 05 PR: [PR #164](https://github.com/loyalagents/context-router/pull/164) — current review verdicts and exact-head validation evidence; Step 05 remains active pending human merge
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Working branch: `codex/local-migration-05-local-database-runtime`
@@ -34,4 +34,4 @@ Step 05 is the sole active primary step. No local model, MCP/browser/UI cutover,
 
 The actual local runtime, real file-backed contracts/application/process/recovery and matching-pair backup mechanism are implemented. Source and sealed relocated package starts pass on macOS arm64 with Node 24.21.0 / pnpm 10.25.0 / SQLite 3.53.4. Gate/CI discovery adds the local project and independent ten-resource SQLite lifecycle proof while retaining the twelve phases, eight-resource PostgreSQL reference proof and hosted/web coverage. Canonical docs distinguish fresh SQLite roots from preserved PostgreSQL state.
 
-Checkpoint evidence and limitations are recorded in the [plan](plan.md#cp5-integration-and-package-evidence). Fresh complete planning-base-to-candidate review, final exact-base full gate and final pushed-head standard/dedicated CI are still required. This is a review candidate, not merge approval; Step 06 remains inactive.
+Checkpoint evidence and limitations are recorded in the [plan](plan.md#cp5-integration-and-package-evidence). Closeout requires fresh complete planning-base-to-candidate review, the final exact-base full gate and final pushed-head standard/dedicated CI. Current verdicts and exact source-bound results are maintained in PR #164. Human merge remains separate; Step 06 stays inactive.
