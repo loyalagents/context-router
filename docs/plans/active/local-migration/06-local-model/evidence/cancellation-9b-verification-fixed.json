@@ -1,0 +1,2179 @@
+{
+  "run": "native-9b-cancellation-1790291380854",
+  "testedRevision": "c8a3dc128d93639431c9250f290770f59858c74c",
+  "timestamp": "2026-09-24T23:09:40.854Z",
+  "candidate": "9b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "passed": true,
+  "memoryBefore": {
+    "physicalFootprintBytes": 1000192,
+    "lifetimePeakPhysicalFootprintBytes": 1016576,
+    "residentBytes": 1179648,
+    "pressure": 1,
+    "swapUsedBytes": 21155348480
+  },
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 1264.3809170000004
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-9B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "62050",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "512",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "cancellation",
+    "passed": true,
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "baselines": [
+      {
+        "repetition": 0,
+        "elapsedMs": 338.12166600000006,
+        "passed": true
+      },
+      {
+        "repetition": 1,
+        "elapsedMs": 304.9894580000001,
+        "passed": true
+      },
+      {
+        "repetition": 2,
+        "elapsedMs": 338.1680000000001,
+        "passed": true
+      },
+      {
+        "repetition": 3,
+        "elapsedMs": 314.4767079999999,
+        "passed": true
+      },
+      {
+        "repetition": 4,
+        "elapsedMs": 302.4826250000001,
+        "passed": true
+      }
+    ],
+    "baselineP95Ms": 338.1680000000001,
+    "trials": [
+      {
+        "phase": "prefill",
+        "repetition": 0,
+        "notRun": false,
+        "passed": true,
+        "witnessed": true,
+        "cancelled": true,
+        "state": "ready",
+        "clientReturnMs": 1.785541000000194,
+        "settledMs": 3425.221458,
+        "witness": {
+          "admitted": false,
+          "processed": 512,
+          "total": 8029,
+          "decoded": 0,
+          "terminal": false
+        },
+        "terminalObserved": false,
+        "observationOverflow": false,
+        "observations": [
+          {
+            "admitted": false,
+            "processed": 512,
+            "total": 8029,
+            "decoded": 0,
+            "terminal": false,
+            "afterAbortMs": 1.0785409999998592
+          }
+        ],
+        "controlEvidence": {
+          "state": "ready",
+          "overflow": false,
+          "records": [
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "dispatch",
+              "elapsedMs": 0.204,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "idle",
+              "elapsedMs": 2.417,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 1,
+              "event": "start",
+              "elapsedMs": 21.045,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 2,
+              "event": "dispatch",
+              "elapsedMs": 22.328,
+              "remainingMs": 4998.718
+            },
+            {
+              "phase": "settlement",
+              "sequence": 2,
+              "event": "busy",
+              "elapsedMs": 23.202,
+              "remainingMs": 4997.842
+            },
+            {
+              "phase": "settlement",
+              "sequence": 3,
+              "event": "dispatch",
+              "elapsedMs": 274.42,
+              "remainingMs": 4746.626
+            },
+            {
+              "phase": "settlement",
+              "sequence": 3,
+              "event": "busy",
+              "elapsedMs": 275.123,
+              "remainingMs": 4745.921
+            },
+            {
+              "phase": "settlement",
+              "sequence": 4,
+              "event": "dispatch",
+              "elapsedMs": 526.329,
+              "remainingMs": 4494.717
+            },
+            {
+              "phase": "settlement",
+              "sequence": 4,
+              "event": "busy",
+              "elapsedMs": 527.111,
+              "remainingMs": 4493.933
+            },
+            {
+              "phase": "settlement",
+              "sequence": 5,
+              "event": "dispatch",
+              "elapsedMs": 778.237,
+              "remainingMs": 4242.809
+            },
+            {
+              "phase": "settlement",
+              "sequence": 5,
+              "event": "busy",
+              "elapsedMs": 778.909,
+              "remainingMs": 4242.136
+            },
+            {
+              "phase": "settlement",
+              "sequence": 6,
+              "event": "dispatch",
+              "elapsedMs": 1030.772,
+              "remainingMs": 3990.278
+            },
+            {
+              "phase": "settlement",
+              "sequence": 6,
+              "event": "busy",
+              "elapsedMs": 1032.919,
+              "remainingMs": 3988.126
+            },
+            {
+              "phase": "settlement",
+              "sequence": 7,
+              "event": "dispatch",
+              "elapsedMs": 1284.108,
+              "remainingMs": 3736.938
+            },
+            {
+              "phase": "settlement",
+              "sequence": 7,
+              "event": "busy",
+              "elapsedMs": 1285.488,
+              "remainingMs": 3735.557
+            },
+            {
+              "phase": "settlement",
+              "sequence": 8,
+              "event": "dispatch",
+              "elapsedMs": 1536.752,
+              "remainingMs": 3484.293
+            },
+            {
+              "phase": "settlement",
+              "sequence": 8,
+              "event": "busy",
+              "elapsedMs": 1537.661,
+              "remainingMs": 3483.383
+            },
+            {
+              "phase": "settlement",
+              "sequence": 9,
+              "event": "dispatch",
+              "elapsedMs": 1788.843,
+              "remainingMs": 3232.202
+            },
+            {
+              "phase": "settlement",
+              "sequence": 9,
+              "event": "busy",
+              "elapsedMs": 1789.55,
+              "remainingMs": 3231.494
+            },
+            {
+              "phase": "settlement",
+              "sequence": 10,
+              "event": "dispatch",
+              "elapsedMs": 2040.684,
+              "remainingMs": 2980.361
+            },
+            {
+              "phase": "settlement",
+              "sequence": 10,
+              "event": "busy",
+              "elapsedMs": 2041.387,
+              "remainingMs": 2979.657
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "dispatch",
+              "elapsedMs": 2295.627,
+              "remainingMs": 2725.418
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "busy",
+              "elapsedMs": 2296.56,
+              "remainingMs": 2724.485
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "dispatch",
+              "elapsedMs": 2547.768,
+              "remainingMs": 2473.277
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "idle",
+              "elapsedMs": 3445.86,
+              "remainingMs": 1575.184
+            },
+            {
+              "phase": "cleanup",
+              "sequence": 12,
+              "event": "close",
+              "elapsedMs": 3445.987,
+              "remainingMs": 1575.058
+            }
+          ]
+        },
+        "followupMs": 304.36183299999993,
+        "inputTokens": 8029
+      },
+      {
+        "phase": "prefill",
+        "repetition": 1,
+        "notRun": false,
+        "passed": true,
+        "witnessed": true,
+        "cancelled": true,
+        "state": "ready",
+        "clientReturnMs": 0.8212499999999636,
+        "settledMs": 3424.6738750000004,
+        "witness": {
+          "admitted": false,
+          "processed": 512,
+          "total": 8029,
+          "decoded": 0,
+          "terminal": false
+        },
+        "terminalObserved": false,
+        "observationOverflow": false,
+        "observations": [
+          {
+            "admitted": false,
+            "processed": 512,
+            "total": 8029,
+            "decoded": 0,
+            "terminal": false,
+            "afterAbortMs": 0.4538329999995767
+          }
+        ],
+        "controlEvidence": {
+          "state": "ready",
+          "overflow": false,
+          "records": [
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "dispatch",
+              "elapsedMs": 0.211,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "idle",
+              "elapsedMs": 2.333,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 1,
+              "event": "start",
+              "elapsedMs": 14.569,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 2,
+              "event": "dispatch",
+              "elapsedMs": 15.027,
+              "remainingMs": 4999.54
+            },
+            {
+              "phase": "settlement",
+              "sequence": 2,
+              "event": "busy",
+              "elapsedMs": 16.68,
+              "remainingMs": 4997.887
+            },
+            {
+              "phase": "settlement",
+              "sequence": 3,
+              "event": "dispatch",
+              "elapsedMs": 266.934,
+              "remainingMs": 4747.633
+            },
+            {
+              "phase": "settlement",
+              "sequence": 3,
+              "event": "busy",
+              "elapsedMs": 267.685,
+              "remainingMs": 4746.882
+            },
+            {
+              "phase": "settlement",
+              "sequence": 4,
+              "event": "dispatch",
+              "elapsedMs": 518.87,
+              "remainingMs": 4495.698
+            },
+            {
+              "phase": "settlement",
+              "sequence": 4,
+              "event": "busy",
+              "elapsedMs": 519.789,
+              "remainingMs": 4494.778
+            },
+            {
+              "phase": "settlement",
+              "sequence": 5,
+              "event": "dispatch",
+              "elapsedMs": 772.667,
+              "remainingMs": 4241.901
+            },
+            {
+              "phase": "settlement",
+              "sequence": 5,
+              "event": "busy",
+              "elapsedMs": 773.335,
+              "remainingMs": 4241.232
+            },
+            {
+              "phase": "settlement",
+              "sequence": 6,
+              "event": "dispatch",
+              "elapsedMs": 1024.472,
+              "remainingMs": 3990.095
+            },
+            {
+              "phase": "settlement",
+              "sequence": 6,
+              "event": "busy",
+              "elapsedMs": 1025.166,
+              "remainingMs": 3989.401
+            },
+            {
+              "phase": "settlement",
+              "sequence": 7,
+              "event": "dispatch",
+              "elapsedMs": 1275.494,
+              "remainingMs": 3739.074
+            },
+            {
+              "phase": "settlement",
+              "sequence": 7,
+              "event": "busy",
+              "elapsedMs": 1276.19,
+              "remainingMs": 3738.376
+            },
+            {
+              "phase": "settlement",
+              "sequence": 8,
+              "event": "dispatch",
+              "elapsedMs": 1530.528,
+              "remainingMs": 3484.041
+            },
+            {
+              "phase": "settlement",
+              "sequence": 8,
+              "event": "busy",
+              "elapsedMs": 1531.531,
+              "remainingMs": 3483.036
+            },
+            {
+              "phase": "settlement",
+              "sequence": 9,
+              "event": "dispatch",
+              "elapsedMs": 1782.706,
+              "remainingMs": 3231.863
+            },
+            {
+              "phase": "settlement",
+              "sequence": 9,
+              "event": "busy",
+              "elapsedMs": 1784.929,
+              "remainingMs": 3229.639
+            },
+            {
+              "phase": "settlement",
+              "sequence": 10,
+              "event": "dispatch",
+              "elapsedMs": 2036.056,
+              "remainingMs": 2978.511
+            },
+            {
+              "phase": "settlement",
+              "sequence": 10,
+              "event": "busy",
+              "elapsedMs": 2036.776,
+              "remainingMs": 2977.791
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "dispatch",
+              "elapsedMs": 2290.712,
+              "remainingMs": 2723.857
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "busy",
+              "elapsedMs": 2291.906,
+              "remainingMs": 2722.661
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "dispatch",
+              "elapsedMs": 2543.052,
+              "remainingMs": 2471.515
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "idle",
+              "elapsedMs": 3438.956,
+              "remainingMs": 1575.61
+            },
+            {
+              "phase": "cleanup",
+              "sequence": 12,
+              "event": "close",
+              "elapsedMs": 3439.081,
+              "remainingMs": 1575.486
+            }
+          ]
+        },
+        "followupMs": 319.41508299999987,
+        "inputTokens": 8029
+      },
+      {
+        "phase": "prefill",
+        "repetition": 2,
+        "notRun": false,
+        "passed": true,
+        "witnessed": true,
+        "cancelled": true,
+        "state": "ready",
+        "clientReturnMs": 0.34237499999835563,
+        "settledMs": 3433.435916999999,
+        "witness": {
+          "admitted": false,
+          "processed": 512,
+          "total": 8029,
+          "decoded": 0,
+          "terminal": false
+        },
+        "terminalObserved": false,
+        "observationOverflow": false,
+        "observations": [
+          {
+            "admitted": false,
+            "processed": 512,
+            "total": 8029,
+            "decoded": 0,
+            "terminal": false,
+            "afterAbortMs": 0.18891699999949196
+          }
+        ],
+        "controlEvidence": {
+          "state": "ready",
+          "overflow": false,
+          "records": [
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "dispatch",
+              "elapsedMs": 0.168,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "idle",
+              "elapsedMs": 2.281,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 1,
+              "event": "start",
+              "elapsedMs": 14.945,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 2,
+              "event": "dispatch",
+              "elapsedMs": 15.14,
+              "remainingMs": 4999.804
+            },
+            {
+              "phase": "settlement",
+              "sequence": 2,
+              "event": "busy",
+              "elapsedMs": 21.811,
+              "remainingMs": 4993.134
+            },
+            {
+              "phase": "settlement",
+              "sequence": 3,
+              "event": "dispatch",
+              "elapsedMs": 272.299,
+              "remainingMs": 4742.646
+            },
+            {
+              "phase": "settlement",
+              "sequence": 3,
+              "event": "busy",
+              "elapsedMs": 273.03,
+              "remainingMs": 4741.914
+            },
+            {
+              "phase": "settlement",
+              "sequence": 4,
+              "event": "dispatch",
+              "elapsedMs": 524.204,
+              "remainingMs": 4490.742
+            },
+            {
+              "phase": "settlement",
+              "sequence": 4,
+              "event": "busy",
+              "elapsedMs": 525.165,
+              "remainingMs": 4489.799
+            },
+            {
+              "phase": "settlement",
+              "sequence": 5,
+              "event": "dispatch",
+              "elapsedMs": 780.313,
+              "remainingMs": 4234.633
+            },
+            {
+              "phase": "settlement",
+              "sequence": 5,
+              "event": "busy",
+              "elapsedMs": 781.013,
+              "remainingMs": 4233.931
+            },
+            {
+              "phase": "settlement",
+              "sequence": 6,
+              "event": "dispatch",
+              "elapsedMs": 1032.232,
+              "remainingMs": 3982.715
+            },
+            {
+              "phase": "settlement",
+              "sequence": 6,
+              "event": "busy",
+              "elapsedMs": 1035.025,
+              "remainingMs": 3979.92
+            },
+            {
+              "phase": "settlement",
+              "sequence": 7,
+              "event": "dispatch",
+              "elapsedMs": 1285.973,
+              "remainingMs": 3728.972
+            },
+            {
+              "phase": "settlement",
+              "sequence": 7,
+              "event": "busy",
+              "elapsedMs": 1286.64,
+              "remainingMs": 3728.304
+            },
+            {
+              "phase": "settlement",
+              "sequence": 8,
+              "event": "dispatch",
+              "elapsedMs": 1537.803,
+              "remainingMs": 3477.142
+            },
+            {
+              "phase": "settlement",
+              "sequence": 8,
+              "event": "busy",
+              "elapsedMs": 1538.546,
+              "remainingMs": 3476.399
+            },
+            {
+              "phase": "settlement",
+              "sequence": 9,
+              "event": "dispatch",
+              "elapsedMs": 1789.655,
+              "remainingMs": 3225.29
+            },
+            {
+              "phase": "settlement",
+              "sequence": 9,
+              "event": "busy",
+              "elapsedMs": 1790.422,
+              "remainingMs": 3224.522
+            },
+            {
+              "phase": "settlement",
+              "sequence": 10,
+              "event": "dispatch",
+              "elapsedMs": 2041.12,
+              "remainingMs": 2973.826
+            },
+            {
+              "phase": "settlement",
+              "sequence": 10,
+              "event": "busy",
+              "elapsedMs": 2041.845,
+              "remainingMs": 2973.1
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "dispatch",
+              "elapsedMs": 2292.219,
+              "remainingMs": 2722.726
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "busy",
+              "elapsedMs": 2292.91,
+              "remainingMs": 2722.035
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "dispatch",
+              "elapsedMs": 2544.076,
+              "remainingMs": 2470.869
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "idle",
+              "elapsedMs": 3448.137,
+              "remainingMs": 1566.808
+            },
+            {
+              "phase": "cleanup",
+              "sequence": 12,
+              "event": "close",
+              "elapsedMs": 3448.301,
+              "remainingMs": 1566.645
+            }
+          ]
+        },
+        "followupMs": 302.75916700000016,
+        "inputTokens": 8029
+      },
+      {
+        "phase": "decode",
+        "repetition": 0,
+        "notRun": false,
+        "passed": true,
+        "witnessed": true,
+        "cancelled": true,
+        "state": "ready",
+        "clientReturnMs": 0.6789590000043972,
+        "settledMs": 256.77449999999953,
+        "witness": {
+          "admitted": false,
+          "processed": 8029,
+          "total": 8029,
+          "decoded": 8,
+          "terminal": false
+        },
+        "terminalObserved": false,
+        "observationOverflow": false,
+        "observations": [
+          {
+            "admitted": false,
+            "processed": 8029,
+            "total": 8029,
+            "decoded": 8,
+            "terminal": false,
+            "afterAbortMs": 0.4223340000025928
+          }
+        ],
+        "controlEvidence": {
+          "state": "ready",
+          "overflow": false,
+          "records": [
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "dispatch",
+              "elapsedMs": 0.173,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "idle",
+              "elapsedMs": 4.246,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 2,
+              "event": "dispatch",
+              "elapsedMs": 2005.415,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 2,
+              "event": "busy",
+              "elapsedMs": 2006.248,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 3,
+              "event": "dispatch",
+              "elapsedMs": 4010.879,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 3,
+              "event": "busy",
+              "elapsedMs": 4011.629,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 4,
+              "event": "dispatch",
+              "elapsedMs": 6013.158,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 4,
+              "event": "busy",
+              "elapsedMs": 6014.059,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 5,
+              "event": "dispatch",
+              "elapsedMs": 8013.776,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 5,
+              "event": "busy",
+              "elapsedMs": 8014.907,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 6,
+              "event": "dispatch",
+              "elapsedMs": 10015.529,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 6,
+              "event": "busy",
+              "elapsedMs": 10016.241,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 7,
+              "event": "dispatch",
+              "elapsedMs": 12018.008,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 7,
+              "event": "busy",
+              "elapsedMs": 12018.806,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 8,
+              "event": "dispatch",
+              "elapsedMs": 14019.804,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 8,
+              "event": "busy",
+              "elapsedMs": 14020.594,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 9,
+              "event": "dispatch",
+              "elapsedMs": 16021.685,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 9,
+              "event": "busy",
+              "elapsedMs": 16022.424,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 10,
+              "event": "dispatch",
+              "elapsedMs": 18023.513,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 10,
+              "event": "busy",
+              "elapsedMs": 19090.188,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 10,
+              "event": "start",
+              "elapsedMs": 19454.827,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "dispatch",
+              "elapsedMs": 19455.128,
+              "remainingMs": 4999.697
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "busy",
+              "elapsedMs": 19460.206,
+              "remainingMs": 4994.619
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "dispatch",
+              "elapsedMs": 19710.543,
+              "remainingMs": 4744.283
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "idle",
+              "elapsedMs": 19711.246,
+              "remainingMs": 4743.579
+            },
+            {
+              "phase": "cleanup",
+              "sequence": 12,
+              "event": "close",
+              "elapsedMs": 19711.345,
+              "remainingMs": 4743.48
+            }
+          ]
+        },
+        "followupMs": 315.80399999999645,
+        "inputTokens": 8029
+      },
+      {
+        "phase": "decode",
+        "repetition": 1,
+        "notRun": false,
+        "passed": true,
+        "witnessed": true,
+        "cancelled": true,
+        "state": "ready",
+        "clientReturnMs": 0.39079200000560377,
+        "settledMs": 260.0922920000012,
+        "witness": {
+          "admitted": false,
+          "processed": 8029,
+          "total": 8029,
+          "decoded": 8,
+          "terminal": false
+        },
+        "terminalObserved": false,
+        "observationOverflow": false,
+        "observations": [
+          {
+            "admitted": false,
+            "processed": 8029,
+            "total": 8029,
+            "decoded": 8,
+            "terminal": false,
+            "afterAbortMs": 0.2277920000051381
+          }
+        ],
+        "controlEvidence": {
+          "state": "ready",
+          "overflow": false,
+          "records": [
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "dispatch",
+              "elapsedMs": 0.111,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "idle",
+              "elapsedMs": 2.053,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 2,
+              "event": "dispatch",
+              "elapsedMs": 2003.37,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 2,
+              "event": "busy",
+              "elapsedMs": 2004.12,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 3,
+              "event": "dispatch",
+              "elapsedMs": 4005.263,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 3,
+              "event": "busy",
+              "elapsedMs": 4006.246,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 4,
+              "event": "dispatch",
+              "elapsedMs": 6007.222,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 4,
+              "event": "busy",
+              "elapsedMs": 6007.901,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 5,
+              "event": "dispatch",
+              "elapsedMs": 8008.795,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 5,
+              "event": "busy",
+              "elapsedMs": 8009.506,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 6,
+              "event": "dispatch",
+              "elapsedMs": 10010.556,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 6,
+              "event": "busy",
+              "elapsedMs": 10011.442,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 7,
+              "event": "dispatch",
+              "elapsedMs": 12012.29,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 7,
+              "event": "busy",
+              "elapsedMs": 12013.019,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 8,
+              "event": "dispatch",
+              "elapsedMs": 14013.748,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 8,
+              "event": "busy",
+              "elapsedMs": 14014.612,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 9,
+              "event": "dispatch",
+              "elapsedMs": 16015.942,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 9,
+              "event": "busy",
+              "elapsedMs": 16016.608,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 10,
+              "event": "dispatch",
+              "elapsedMs": 18017.611,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 10,
+              "event": "busy",
+              "elapsedMs": 18018.285,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 11,
+              "event": "dispatch",
+              "elapsedMs": 20019.029,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 11,
+              "event": "busy",
+              "elapsedMs": 20414.316,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "start",
+              "elapsedMs": 20692.72,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "dispatch",
+              "elapsedMs": 20692.942,
+              "remainingMs": 4999.778
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "busy",
+              "elapsedMs": 20695.312,
+              "remainingMs": 4997.409
+            },
+            {
+              "phase": "settlement",
+              "sequence": 13,
+              "event": "dispatch",
+              "elapsedMs": 20947.572,
+              "remainingMs": 4745.148
+            },
+            {
+              "phase": "settlement",
+              "sequence": 13,
+              "event": "idle",
+              "elapsedMs": 20952.508,
+              "remainingMs": 4740.212
+            },
+            {
+              "phase": "cleanup",
+              "sequence": 13,
+              "event": "close",
+              "elapsedMs": 20952.714,
+              "remainingMs": 4740.006
+            }
+          ]
+        },
+        "followupMs": 319.69520799999736,
+        "inputTokens": 8029
+      },
+      {
+        "phase": "decode",
+        "repetition": 2,
+        "notRun": false,
+        "passed": true,
+        "witnessed": true,
+        "cancelled": true,
+        "state": "ready",
+        "clientReturnMs": 0.8311249999969732,
+        "settledMs": 256.23850000000675,
+        "witness": {
+          "admitted": false,
+          "processed": 8029,
+          "total": 8029,
+          "decoded": 8,
+          "terminal": false
+        },
+        "terminalObserved": false,
+        "observationOverflow": false,
+        "observations": [
+          {
+            "admitted": false,
+            "processed": 8029,
+            "total": 8029,
+            "decoded": 8,
+            "terminal": false,
+            "afterAbortMs": 0.42658400000073016
+          }
+        ],
+        "controlEvidence": {
+          "state": "ready",
+          "overflow": false,
+          "records": [
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "dispatch",
+              "elapsedMs": 0.158,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "idle",
+              "elapsedMs": 2.144,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 2,
+              "event": "dispatch",
+              "elapsedMs": 2003.818,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 2,
+              "event": "busy",
+              "elapsedMs": 2004.906,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 3,
+              "event": "dispatch",
+              "elapsedMs": 4004.815,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 3,
+              "event": "busy",
+              "elapsedMs": 4005.502,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 4,
+              "event": "dispatch",
+              "elapsedMs": 6006.476,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 4,
+              "event": "busy",
+              "elapsedMs": 6007.193,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 5,
+              "event": "dispatch",
+              "elapsedMs": 8008.476,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 5,
+              "event": "busy",
+              "elapsedMs": 8009.141,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 6,
+              "event": "dispatch",
+              "elapsedMs": 10010.777,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 6,
+              "event": "busy",
+              "elapsedMs": 10011.483,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 7,
+              "event": "dispatch",
+              "elapsedMs": 12012.78,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 7,
+              "event": "busy",
+              "elapsedMs": 12015.793,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 8,
+              "event": "dispatch",
+              "elapsedMs": 14016.943,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 8,
+              "event": "busy",
+              "elapsedMs": 14017.682,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 9,
+              "event": "dispatch",
+              "elapsedMs": 16018.239,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 9,
+              "event": "busy",
+              "elapsedMs": 16019.321,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 10,
+              "event": "dispatch",
+              "elapsedMs": 18020.138,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 10,
+              "event": "busy",
+              "elapsedMs": 18020.868,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 11,
+              "event": "dispatch",
+              "elapsedMs": 20021.448,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "active",
+              "sequence": 11,
+              "event": "busy",
+              "elapsedMs": 20379.106,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "start",
+              "elapsedMs": 20641.744,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "dispatch",
+              "elapsedMs": 20642.259,
+              "remainingMs": 4999.483
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "busy",
+              "elapsedMs": 20644.939,
+              "remainingMs": 4996.802
+            },
+            {
+              "phase": "settlement",
+              "sequence": 13,
+              "event": "dispatch",
+              "elapsedMs": 20897.063,
+              "remainingMs": 4744.679
+            },
+            {
+              "phase": "settlement",
+              "sequence": 13,
+              "event": "idle",
+              "elapsedMs": 20897.718,
+              "remainingMs": 4744.023
+            },
+            {
+              "phase": "cleanup",
+              "sequence": 13,
+              "event": "close",
+              "elapsedMs": 20897.806,
+              "remainingMs": 4743.934
+            }
+          ]
+        },
+        "followupMs": 314.93758399999933,
+        "inputTokens": 8029
+      }
+    ],
+    "shortControls": [
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.338,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 3.991,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 331.91,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.167,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.425,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 299.063,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.13,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.856,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 332.245,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.134,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.421,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 309.274,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.145,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.173,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 297.311,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.12,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 1.792,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 298.361,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.195,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.633,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 315.052,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.12,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.032,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 296.884,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.092,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 1.834,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 310.465,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.153,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.314,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 314.46,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.18,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.16,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 310.354,
+            "remainingMs": 0
+          }
+        ]
+      }
+    ]
+  },
+  "memory": [
+    {
+      "elapsedMs": 6133.985875,
+      "physicalFootprintBytes": 721358976,
+      "lifetimePeakPhysicalFootprintBytes": 721358976,
+      "residentBytes": 815480832,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 8138.777417,
+      "physicalFootprintBytes": 786960704,
+      "lifetimePeakPhysicalFootprintBytes": 786960704,
+      "residentBytes": 893960192,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 10144.384959,
+      "physicalFootprintBytes": 803738048,
+      "lifetimePeakPhysicalFootprintBytes": 803770816,
+      "residentBytes": 914341888,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 12146.191417,
+      "physicalFootprintBytes": 804983232,
+      "lifetimePeakPhysicalFootprintBytes": 804983232,
+      "residentBytes": 915275776,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 14148.142334,
+      "physicalFootprintBytes": 804721088,
+      "lifetimePeakPhysicalFootprintBytes": 805016000,
+      "residentBytes": 915308544,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 16147.715875,
+      "physicalFootprintBytes": 805687744,
+      "lifetimePeakPhysicalFootprintBytes": 805687744,
+      "residentBytes": 916045824,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 18148.707959,
+      "physicalFootprintBytes": 805343680,
+      "lifetimePeakPhysicalFootprintBytes": 805704128,
+      "residentBytes": 916029440,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 20150.042334,
+      "physicalFootprintBytes": 805900736,
+      "lifetimePeakPhysicalFootprintBytes": 805900736,
+      "residentBytes": 916291584,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 22151.226625,
+      "physicalFootprintBytes": 806113728,
+      "lifetimePeakPhysicalFootprintBytes": 806113728,
+      "residentBytes": 916832256,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 24152.269,
+      "physicalFootprintBytes": 808260032,
+      "lifetimePeakPhysicalFootprintBytes": 808260032,
+      "residentBytes": 918978560,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 26153.593875,
+      "physicalFootprintBytes": 809324992,
+      "lifetimePeakPhysicalFootprintBytes": 809324992,
+      "residentBytes": 920043520,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 28155.040167,
+      "physicalFootprintBytes": 811471296,
+      "lifetimePeakPhysicalFootprintBytes": 811471296,
+      "residentBytes": 922189824,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 30155.793084,
+      "physicalFootprintBytes": 813617600,
+      "lifetimePeakPhysicalFootprintBytes": 813617600,
+      "residentBytes": 924336128,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 32156.802334,
+      "physicalFootprintBytes": 814666176,
+      "lifetimePeakPhysicalFootprintBytes": 814666176,
+      "residentBytes": 925384704,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 34157.400625,
+      "physicalFootprintBytes": 816812480,
+      "lifetimePeakPhysicalFootprintBytes": 816812480,
+      "residentBytes": 927547392,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 36161.728625,
+      "physicalFootprintBytes": 817353152,
+      "lifetimePeakPhysicalFootprintBytes": 817353152,
+      "residentBytes": 928088064,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 38163.515125,
+      "physicalFootprintBytes": 871928384,
+      "lifetimePeakPhysicalFootprintBytes": 871928384,
+      "residentBytes": 983007232,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 40164.67325,
+      "physicalFootprintBytes": 819532352,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 983187456,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 42166.341042,
+      "physicalFootprintBytes": 819139136,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 983187456,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 44167.961709,
+      "physicalFootprintBytes": 819139136,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 983187456,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 46168.864167,
+      "physicalFootprintBytes": 819139136,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 983187456,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 48169.495667,
+      "physicalFootprintBytes": 819139136,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 983187456,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 50170.590084,
+      "physicalFootprintBytes": 819139136,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 983187456,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 52170.452584,
+      "physicalFootprintBytes": 830968384,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 907542528,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 54174.646542,
+      "physicalFootprintBytes": 831099456,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 906510336,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 56176.867959,
+      "physicalFootprintBytes": 831115840,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 900628480,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 58177.635042,
+      "physicalFootprintBytes": 831099456,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 899727360,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 60178.073792,
+      "physicalFootprintBytes": 831361600,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 899776512,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 62178.327209,
+      "physicalFootprintBytes": 778670656,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 897581056,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 64179.999042,
+      "physicalFootprintBytes": 778342976,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 897581056,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 66180.705625,
+      "physicalFootprintBytes": 778375744,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 897613824,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 68181.742167,
+      "physicalFootprintBytes": 778441280,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 897744896,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 70182.93175,
+      "physicalFootprintBytes": 778474048,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 897794048,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 72186.401834,
+      "physicalFootprintBytes": 778490432,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 897810432,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 74188.006875,
+      "physicalFootprintBytes": 778457664,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 897810432,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 76188.635334,
+      "physicalFootprintBytes": 777949760,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 897875968,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 78189.160584,
+      "physicalFootprintBytes": 778506816,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 897875968,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 80189.609834,
+      "physicalFootprintBytes": 778342976,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 897875968,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 82098.488334,
+      "physicalFootprintBytes": 778474048,
+      "lifetimePeakPhysicalFootprintBytes": 872354368,
+      "residentBytes": 900169728,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    }
+  ],
+  "memoryPassed": true,
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true,
+  "nativeCancellationAudit": {
+    "passed": true,
+    "calls": [
+      {
+        "taskId": 1,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      },
+      {
+        "taskId": 10,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      },
+      {
+        "taskId": 19,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      },
+      {
+        "taskId": 28,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      },
+      {
+        "taskId": 37,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      },
+      {
+        "taskId": 46,
+        "phase": "prefill",
+        "nTokensAtRelease": 1536,
+        "normalFinalTimings": 0
+      },
+      {
+        "taskId": 63,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      },
+      {
+        "taskId": 72,
+        "phase": "prefill",
+        "nTokensAtRelease": 1536,
+        "normalFinalTimings": 0
+      },
+      {
+        "taskId": 89,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      },
+      {
+        "taskId": 98,
+        "phase": "prefill",
+        "nTokensAtRelease": 1536,
+        "normalFinalTimings": 0
+      },
+      {
+        "taskId": 115,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      },
+      {
+        "taskId": 124,
+        "phase": "decode",
+        "nTokensAtRelease": 8038,
+        "normalFinalTimings": 0
+      },
+      {
+        "taskId": 164,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      },
+      {
+        "taskId": 173,
+        "phase": "decode",
+        "nTokensAtRelease": 8038,
+        "normalFinalTimings": 0
+      },
+      {
+        "taskId": 214,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      },
+      {
+        "taskId": 223,
+        "phase": "decode",
+        "nTokensAtRelease": 8038,
+        "normalFinalTimings": 0
+      },
+      {
+        "taskId": 264,
+        "phase": "successful-short",
+        "nTokensAtRelease": 25,
+        "normalFinalTimings": 4
+      }
+    ],
+    "interpretation": "Early task release and same-runtime capacity recovery; queued context counters are not instantaneous GPU telemetry"
+  }
+}

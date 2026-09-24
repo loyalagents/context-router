@@ -16,6 +16,14 @@
       "disposition": "failed first prefill capacity recovery; native task released at1536/8029 input tokens, but client latched unavailable after2770.492ms; remainingfive trials notrun; exactowned cleanup; no qualification",
       "nativeCounterProjection": "cancellation-9b-batch512-native-counters.json",
       "nativeCounterProjectionSha256": "10aabf5922366c3ff249120ca87d61cd5c270660958fab80b6d5187940a3dbca"
+    },
+    {
+      "file": "cancellation-9b-verification-fixed.json",
+      "testedRevision": "c8a3dc128d93639431c9250f290770f59858c74c",
+      "sha256": "cb3b4cf7453fead7b0ccad02d78bccc38f8aaee9ed42c59c67c02c49a88528bb",
+      "disposition": "passed all three witnessed prefill and three decode cancellations, same-runtime followups and seventeen-call post-reap native audit; early-unwitnessed/manual applicability remain separate",
+      "nativeCounterProjection": "cancellation-9b-verification-fixed-native-counters.json",
+      "nativeCounterProjectionSha256": "3f9e289415f01e1302cfb437703f351e763cd84ea278877f9622ec1423771b3b"
     }
   ]
 }

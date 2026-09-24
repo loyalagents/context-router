@@ -18,6 +18,12 @@
       "testedRevision": "e987e15637851f58a98c3c773e3b5be944b295f3",
       "sha256": "236bf64f21d563a0de9e20834c62acbceb30302388a3a181602b298777be8302",
       "disposition": "complete; extraction recall failed; selection stopped"
+    },
+    {
+      "file": "quality-9b-batch512.json",
+      "testedRevision": "c8a3dc128d93639431c9250f290770f59858c74c",
+      "sha256": "2193cc15c338a756102c3d46a8937e353740d74a45875acdaee38c5e99aa11e4",
+      "disposition": "complete; original quality verdict FAILED solely for the three known injection-case email omissions accepted under E; all other validated utility, negative, critical and structural criteria pass"
     }
   ],
   "originalManifestJsonDigest": "a3b8b625757f98c7d574df7522cf3f627fcd2fb6b885765c19b4e810712e5d33",

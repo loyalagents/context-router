@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Status: active primary step; 9B accuracy deferral approved; first native cancellation failed; G verification correction approved by user; affected implementation review precedes the single native retest
+- Status: active CP1; G witnessed cancellation passed; batch-512 quality has only the E-accepted omission; remaining qualification and selection review in progress
 - Branch: `codex/local-migration-06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Coordinator and sole repository writer: `/root`; all other agents read-only
@@ -28,3 +28,5 @@ F ran once and failed client capacity recovery despite observed native early rel
 [Proposed G](plan.md#proposed-amendment-g-fix-cancellation-verification) addresses a plausible verification timeout while retaining the total five-second limit. All three affected reviewers approved it for the user decision; the observed F failure remains retained and no new execution is authorized.
 
 The user approved G. Its deterministic verification fixes now pass; affected implementation review precedes the authorized retest. F remains failed evidence, and no configuration is selected yet.
+
+G implementation and its six-phase native retest passed review and validation. The batch-512 quality rerun has only the previously accepted E omission. Continue remaining CP1 evidence; see the [current results](feasibility.md#verification-retest-and-changed-configuration-quality).
