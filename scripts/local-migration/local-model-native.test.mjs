@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { runtimeArgs, summarizeProps } from './fixtures/local-model-feasibility/native.mjs';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import * as native from './fixtures/local-model-feasibility/native.mjs';
+const { runtimeArgs, summarizeProps } = native;
 
 test('pinned native invocation fixes the manual candidate and exposes no credential value', () => {
   const args = runtimeArgs({ model: '/private/model.gguf', port: 12345,
@@ -15,6 +19,20 @@ test('pinned native invocation fixes the manual candidate and exposes no credent
   for (const flag of ['--offline', '--no-webui', '--no-context-shift', '--no-cache-idle-slots', '--no-cache-prompt', '--slots']) assert.ok(args.includes(flag));
   assert.ok(!args.includes('--api-key'));
   assert.throws(() => runtimeArgs({ port: 0 }));
+});
+
+test('final diagnostic audit rejects late overflow, unavailable logs and credentials', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'step06-audit-test-'));
+  try {
+    const path = join(root, 'runtime.log');
+    await writeFile(path, 'safe counters only', { mode: 0o600 });
+    assert.equal(typeof native.auditDiagnostics, 'function');
+    await native.auditDiagnostics(path, 'private-test-key', false);
+    await assert.rejects(native.auditDiagnostics(path, 'private-test-key', true), /Native probe diagnostic audit failed/);
+    await assert.rejects(native.auditDiagnostics(join(root, 'missing'), 'private-test-key', false), /Native probe diagnostic audit failed/);
+    await writeFile(path, 'private-test-key');
+    await assert.rejects(native.auditDiagnostics(path, 'private-test-key', false), /Native probe diagnostic audit failed/);
+  } finally { await rm(root, { recursive: true, force: true }); }
 });
 
 test('readiness requires fixed context, slot count and a nonempty template', () => {

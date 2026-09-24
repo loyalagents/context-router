@@ -25,6 +25,13 @@ export function summarizeProps(props) {
     templateSha256: createHash('sha256').update(props.chat_template).digest('hex') };
 }
 
+export async function auditDiagnostics(logPath, secret, overflow) {
+  try {
+    const log = await readFile(logPath);
+    if (overflow || log.includes(Buffer.from(secret))) throw fail();
+  } catch { throw new Error('Native probe diagnostic audit failed'); }
+}
+
 async function vacantPort() {
   const server = createServer();
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
@@ -72,10 +79,8 @@ export async function withNative({ binary, model, logPath, sandboxProfile }, use
     }
     if (stopped) {
       // Do not publish diagnostics containing a secret. Logs remain private even on failure.
-      const log = await readFile(logPath).catch(() => Buffer.alloc(0));
-      const leaked = log.includes(Buffer.from(credentials.apiKey));
-      await credentials.remove();
-      if (leaked) throw new Error('Native probe credential log violation');
+      try { await auditDiagnostics(logPath, credentials.apiKey, child?.logOverflow ?? false); }
+      finally { await credentials.remove(); }
     }
   }
 }
