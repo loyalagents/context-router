@@ -141,6 +141,9 @@ export class ProbeClient {
     const trackSocket = (socket) => {
       if (trackedSockets.has(socket)) return;
       trackedSockets.add(socket);
+      // A malformed final chunk can destroy a socket after Node has detached its request listener.
+      // Requests still reject and control close still latches; retain an owner for late socket errors.
+      socket.on('error', () => {});
       socketClosures.push(new Promise((resolve) => socket.once('close', resolve)));
     };
     const ready = () => { this.#state = this.#closing ? 'unavailable' : 'ready'; };
