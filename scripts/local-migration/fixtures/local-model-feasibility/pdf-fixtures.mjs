@@ -17,7 +17,8 @@ export async function emptyPdfFixture(pages) {
 
 // Fixture only: real glyphs from the pinned package's SIL-OFL Liberation font.
 // Its LICENSE_LIBERATION stays with the asset; no system-font redistribution.
-export async function greekPdfFixture() {
+export async function greekPdfFixture(repetitions = 1) {
+  assert.ok(Number.isInteger(repetitions) && repetitions > 0 && repetitions <= 20000);
   const font = await readFile('/private/tmp/context-router-step06-assets/pdfjs-dist-6.3.289/package/standard_fonts/LiberationSans-Regular.ttf');
   assert.equal(createHash('sha256').update(font).digest('hex'), 'f8ace1f892b2bd9dc1792ba7f097fa7588f84fed48321480e04de5390828221f');
   const u16 = (o) => font.readUInt16BE(o); const i16 = (o) => font.readInt16BE(o); const u32 = (o) => font.readUInt32BE(o);
@@ -65,7 +66,66 @@ export async function greekPdfFixture() {
     CIDSystemInfo: { Registry: PDFString.of('Adobe'), Ordering: PDFString.of('Identity'), Supplement: 0 },
     FontDescriptor: descriptor, CIDToGIDMap: stream(cidToGid), DW: advance(0), W: [1, gids.map(advance)] });
   const composite = dict({ Type: 'Font', Subtype: 'Type0', BaseFont: 'LiberationSans', Encoding: 'Identity-H', DescendantFonts: [descendant], ToUnicode: stream(toUnicode) });
-  const page = doc.addPage([400, 160]); const fontKey = page.node.newFontDictionary('FixtureGreek', composite);
-  page.node.addContentStream(stream(`q\nBT\n${fontKey} 24 Tf\n1 0 0 1 40 90 Tm\n<${chars.map((_, i) => hex(i + 1)).join('')}> Tj\nET\nQ\n`));
-  return { bytes: await doc.save({ useObjectStreams: false }), expectedText: text, glyphIds: gids };
+  const word = chars.map((_, i) => hex(i + 1)).join('');
+  for (let remaining = repetitions; remaining > 0;) {
+    const count = Math.min(remaining, 2250); remaining -= count;
+    const page = doc.addPage(repetitions === 1 ? [400, 160] : [1000, 1000]);
+    const fontKey = page.node.newFontDictionary('FixtureGreek', composite);
+    const rows = [];
+    for (let used = 0, row = 0; used < count; row++) {
+      const words = Math.min(30, count - used); used += words;
+      rows.push(`BT\n${fontKey} ${repetitions === 1 ? 24 : 12} Tf\n1 0 0 1 20 ${repetitions === 1 ? 90 : 980 - row * 13} Tm\n<${word.repeat(words)}> Tj\nET`);
+    }
+    page.node.addContentStream(stream(`q\n${rows.join('\n')}\nQ\n`));
+  }
+  return { bytes: await doc.save({ useObjectStreams: false }), expectedText: text.repeat(repetitions), glyphIds: gids };
+}
+
+export async function imageOnlyPdfFixture() {
+  const doc = await PDFDocument.create(); const ctx = doc.context; const page = doc.addPage([100, 100]);
+  const image = ctx.register(ctx.stream(Buffer.from([255, 0, 0]), { Type: 'XObject', Subtype: 'Image', Width: 1, Height: 1,
+    ColorSpace: 'DeviceRGB', BitsPerComponent: 8 }));
+  const name = page.node.newXObject('FixtureImage', image);
+  page.node.addContentStream(ctx.register(ctx.flateStream(`q\n80 0 0 80 10 10 cm\n${name} Do\nQ\n`)));
+  return Buffer.from(await doc.save());
+}
+
+// Synthetic legacy Standard Security R2 fixture only; never product cryptography.
+// Correct-password decryption and wrong-password rejection are independently checked in PDF.js.
+export function encryptedPdfFixture(password = '') {
+  const padding = Buffer.from('28bf4e5e4e758a4164004e56fffa01082e2e00b6d0683e802f0ca9fe6453697a', 'hex');
+  const padded = (value) => Buffer.concat([Buffer.from(value, 'ascii'), padding]).subarray(0, 32);
+  const md5 = (value) => createHash('md5').update(value).digest();
+  const rc4 = (key, input) => {
+    const state = Uint8Array.from({ length: 256 }, (_, i) => i); let j = 0;
+    for (let i = 0; i < 256; i++) { j = (j + state[i] + key[i % key.length]) & 255; [state[i], state[j]] = [state[j], state[i]]; }
+    const output = Buffer.alloc(input.length); let i = 0; j = 0;
+    for (let k = 0; k < input.length; k++) {
+      i = (i + 1) & 255; j = (j + state[i]) & 255; [state[i], state[j]] = [state[j], state[i]];
+      output[k] = input[k] ^ state[(state[i] + state[j]) & 255];
+    }
+    return output;
+  };
+  const owner = rc4(md5(padded('fixture-distinct-owner')).subarray(0, 5), padded(password));
+  const permissions = Buffer.alloc(4); permissions.writeInt32LE(-4);
+  const id = Buffer.from('00112233445566778899aabbccddeeff', 'hex');
+  const key = md5(Buffer.concat([padded(password), owner, permissions, id])).subarray(0, 5);
+  const user = rc4(key, padding);
+  const objectKey = md5(Buffer.concat([key, Buffer.from([4, 0, 0, 0, 0])])).subarray(0, 10);
+  const content = rc4(objectKey, Buffer.from('BT /F1 12 Tf 10 10 Td (Encrypted fixture) Tj ET', 'ascii'));
+  const objects = [
+    Buffer.from('<< /Type /Catalog /Pages 2 0 R >>'),
+    Buffer.from('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'),
+    Buffer.from('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 100] /Resources << /Font << /F1 6 0 R >> >> /Contents 4 0 R >>'),
+    Buffer.concat([Buffer.from(`<< /Length ${content.length} >>\nstream\n`), content, Buffer.from('\nendstream')]),
+    Buffer.from(`<< /Filter /Standard /V 1 /R 2 /Length 40 /O <${owner.toString('hex')}> /U <${user.toString('hex')}> /P -4 >>`),
+    Buffer.from('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'),
+  ];
+  const parts = [Buffer.from('%PDF-1.4\n')]; const offsets = []; let length = parts[0].length;
+  objects.forEach((object, i) => {
+    offsets.push(length); const bytes = Buffer.concat([Buffer.from(`${i + 1} 0 obj\n`), object, Buffer.from('\nendobj\n')]);
+    parts.push(bytes); length += bytes.length;
+  });
+  parts.push(Buffer.from(`xref\n0 7\n0000000000 65535 f \n${offsets.map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size 7 /Root 1 0 R /Encrypt 5 0 R /ID [<${id.toString('hex')}> <${id.toString('hex')}>] >>\nstartxref\n${length}\n%%EOF\n`));
+  return Buffer.concat(parts);
 }

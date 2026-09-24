@@ -37,15 +37,19 @@ export async function extractPdfText(buffer) {
     for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
       const page = await document.getPage(pageNumber);
       const reader = page.streamTextContent({ includeMarkedContent: false, disableNormalization: false }).getReader();
+      let ended = false;
       try {
         while (true) {
-          const chunk = await reader.read(); if (chunk.done) break;
+          const chunk = await reader.read(); if (chunk.done) { ended = true; break; }
           for (const item of chunk.value.items) {
             if (++items > 100000) throw new Error('PDF_LIMIT');
             if (typeof item.str === 'string') append(item.str + (item.hasEOL ? '\n' : ' '));
           }
         }
-      } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); page.cleanup(); }
+      } finally {
+        try { if (!ended) await reader.cancel(new Error('PDF_PARSE_STOPPED')); }
+        finally { reader.releaseLock(); page.cleanup(); }
+      }
       append('\n');
     }
     if (auxiliaryRequested) throw new Error('PDF_AUXILIARY');
