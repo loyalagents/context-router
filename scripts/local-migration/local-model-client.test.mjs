@@ -3,7 +3,7 @@ import test from 'node:test';
 import https from 'node:https';
 import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
-import { ProbeClient } from './fixtures/local-model-feasibility/client.mjs';
+import { ProbeClient, probeJson } from './fixtures/local-model-feasibility/client.mjs';
 import { createTlsFixture } from './fixtures/local-model-feasibility/tls-fixture.mjs';
 
 const admission = { index: 0, stop: false, content: '', tokens_predicted: 0, tokens_evaluated: 10,
@@ -124,6 +124,17 @@ test('wrong IP SAN and wrong pinned certificate send no HTTP credentials or body
   assert.equal(normal.state.requests.length, 0);
 });
 
+test('readiness negative controls require exact unauthorized status on the pinned peer', async (t) => {
+  const { credentials, server } = await fixture(t, async () => assert.fail('no inference'));
+  const configuration = { port: server.address().port, certificate: credentials.cert, apiKey: credentials.apiKey };
+  for (const key of [null, 'wrong-key']) {
+    const result = await probeJson(configuration, '/slots', undefined, { key, expectedStatus: 401 });
+    assert.equal(result.status, 401);
+    assert.equal(result.value, null);
+  }
+  await assert.rejects(probeJson(configuration, '/slots', undefined, { expectedStatus: 401 }));
+});
+
 test('deadline includes admission and leaves an unwitnessed dispatch latched', async (t) => {
   const { client, state } = await fixture(t, async () => {});
   await assert.rejects(client.complete('synthetic', { deadline: performance.now() + 50 }), /Local model deadline/);
@@ -146,4 +157,49 @@ test('pre-abort outstanding idle poll cannot count as post-abort settlement', as
   await assert.rejects(client.complete('synthetic', { signal: abort.signal }), /Local model cancelled/);
   await client.settled(); assert.equal(client.state, 'unavailable');
   assert.ok(statusCount >= 3);
+});
+
+for (const phase of ['readiness', 'inference']) {
+  test(`close during ${phase} awaits the operation and permanently prevents reuse`, async (t) => {
+    let reached;
+    const atPhase = new Promise((resolve) => { reached = resolve; });
+    const { client, state } = await fixture(t, async (_, res) => {
+      res.setHeader('content-type', 'text/event-stream'); send(res, admission);
+    });
+    if (phase === 'readiness') state.statusHook = async () => { reached(); return true; };
+    let finished = false;
+    const call = client.complete('synthetic', { onProgress: (event) => { if (event.admitted) reached(); } })
+      .catch(() => { finished = true; });
+    await atPhase;
+    await client.close();
+    assert.equal(finished, true);
+    await call; await delay(10);
+    assert.equal(client.state, 'unavailable');
+    const count = state.requests.length;
+    await assert.rejects(client.complete('must not send'), /Local model unavailable/);
+    assert.equal(state.requests.length, count);
+  });
+}
+
+test('absolute deadline is enforced when readiness crosses it before its timer fires', async (t) => {
+  const { client, state } = await fixture(t, async (_, res) => {
+    res.setHeader('content-type', 'text/event-stream'); send(res, admission); send(res, chunk); send(res, terminal); res.end();
+  });
+  let now = performance.now(); const deadline = now + 1000;
+  t.mock.method(performance, 'now', () => now);
+  state.statusHook = async () => { now = deadline + 1; return false; };
+  await assert.rejects(client.complete('synthetic', { deadline }), /Local model deadline/);
+  assert.equal(state.completions, 0);
+});
+
+test('late terminal callback cannot publish success before an overdue timer runs', async (t) => {
+  const { client } = await fixture(t, async (_, res) => {
+    res.setHeader('content-type', 'text/event-stream'); send(res, admission); send(res, chunk); send(res, terminal); res.end();
+  });
+  const deadline = performance.now() + 80;
+  await assert.rejects(client.complete('synthetic', { deadline, onProgress: (event) => {
+    if (event.terminal) while (performance.now() <= deadline + 5) { /* bounded event-loop stall */ }
+  } }), /Local model deadline/);
+  await client.settled();
+  assert.equal(client.state, 'ready');
 });

@@ -32,7 +32,8 @@ function options(configuration, path, body, connectionAgent, key = configuration
 
 // Exported only for the owned CP1 runner's fixed readiness/template/token probes.
 export function probeJson(configuration, path, data, { connectionAgent = false, expectedSocket,
-  onSocket = () => {}, signal, timeoutMs = 5000, key = configuration.apiKey } = {}) {
+  onSocket = () => {}, signal, timeoutMs = 5000, key = configuration.apiKey, expectedStatus = 200 } = {}) {
+  if (![200, 401].includes(expectedStatus)) return Promise.reject(failure());
   const body = data === undefined ? undefined : JSON.stringify(data);
   if (body && Buffer.byteLength(body) > 256 * 1024) return Promise.reject(failure('input limit'));
   return new Promise((resolve, reject) => {
@@ -51,9 +52,10 @@ export function probeJson(configuration, path, data, { connectionAgent = false, 
       response.on('error', () => reject(failure()));
       response.on('end', () => {
         try {
-          if (response.statusCode !== 200) throw failure();
-          const value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)));
-          resolve({ value, socket });
+          if (response.statusCode !== expectedStatus) throw failure();
+          const value = expectedStatus === 200
+            ? JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks))) : null;
+          resolve({ value, socket, status: response.statusCode });
         } catch { reject(failure()); }
       });
     });
@@ -81,6 +83,8 @@ export class ProbeClient {
   #configuration;
   #state = 'ready';
   #settlement = Promise.resolve();
+  #operation = Promise.resolve();
+  #closing = false;
   #abort;
   #pollMs;
   #settleMs;
@@ -90,16 +94,31 @@ export class ProbeClient {
     this.#configuration = { port, certificate, apiKey };
     this.#pollMs = pollMs; this.#settleMs = settleMs; this.#statusTimeoutMs = statusTimeoutMs;
   }
-  get state() { return this.#state; }
+  get state() { return this.#closing ? 'unavailable' : this.#state; }
   async settled() { await this.#settlement; }
-  async close() { this.#abort?.('unavailable'); await this.#settlement; this.#state = 'unavailable'; }
+  async close() {
+    this.#closing = true;
+    this.#abort?.('unavailable');
+    await this.#operation;
+    await this.#settlement;
+    this.#state = 'unavailable';
+  }
 
-  async complete(prompt, { signal, deadline = performance.now() + 120000, schema,
+  complete(prompt, options) {
+    if (this.#closing || this.#state === 'unavailable') return Promise.reject(failure());
+    if (this.#state !== 'ready') return Promise.reject(failure('busy'));
+    const operation = this.#execute(prompt, options);
+    this.#operation = operation.then(() => this.#settlement, () => this.#settlement);
+    return operation;
+  }
+
+  async #execute(prompt, { signal, deadline = performance.now() + 120000, schema,
     onProgress = () => {}, maxTokens = 2048 } = {}) {
     if (this.#state === 'unavailable') throw failure();
     if (this.#state !== 'ready') throw failure('busy');
     if (signal?.aborted) throw failure('cancelled');
-    const remaining = Math.min(120000, deadline - performance.now());
+    const effectiveDeadline = Math.min(deadline, performance.now() + 120000);
+    const remaining = effectiveDeadline - performance.now();
     if (!Number.isFinite(remaining) || remaining <= 0) throw failure('deadline');
     if (typeof prompt !== 'string' || !prompt.length || Buffer.byteLength(prompt) > 128 * 1024 ||
         !Number.isInteger(maxTokens) || maxTokens < 1 || maxTokens > 2048 ||
@@ -117,19 +136,39 @@ export class ProbeClient {
     let controlSocket; let controlLost = false; let dispatched = false; let request;
     let abortKind; let active = true; let pollTimer; let controlRequests = 0;
     let pendingStatus = Promise.resolve();
-    const cleanup = () => {
+    const socketClosures = []; const trackedSockets = new Set();
+    let inferenceClosed = Promise.resolve(); let cleanupPromise; let cleaned = false;
+    const trackSocket = (socket) => {
+      if (trackedSockets.has(socket)) return;
+      trackedSockets.add(socket);
+      socketClosures.push(new Promise((resolve) => socket.once('close', resolve)));
+    };
+    const ready = () => { this.#state = this.#closing ? 'unavailable' : 'ready'; };
+    const cleanup = () => cleanupPromise ??= (async () => {
       active = false; clearTimeout(pollTimer); clearTimeout(deadlineTimer);
       signal?.removeEventListener('abort', externalAbort);
       control.destroy(); inference.destroy(); this.#abort = undefined;
-    };
+      await inferenceClosed;
+      await Promise.all(socketClosures);
+      cleaned = true;
+    })();
     const abort = (kind) => {
       if (abortKind || !active) return;
       abortKind = kind; controller.abort(); request?.destroy(failure(kind));
     };
     const externalAbort = () => abort('cancelled');
+    const checkBudget = () => {
+      if (this.#closing) abort('unavailable');
+      else if (signal?.aborted) abort('cancelled');
+      else if (performance.now() >= effectiveDeadline) abort('deadline');
+      if (this.#closing) { abortKind ??= 'unavailable'; throw failure('unavailable'); }
+      if (signal?.aborted) { abortKind ??= 'cancelled'; throw failure('cancelled'); }
+      if (performance.now() >= effectiveDeadline) { abortKind ??= 'deadline'; throw failure('deadline'); }
+      if (abortKind || controlLost) throw failure(abortKind);
+    };
     this.#abort = abort;
     signal?.addEventListener('abort', externalAbort, { once: true });
-    const deadlineTimer = setTimeout(() => abort('deadline'), remaining);
+    const deadlineTimer = setTimeout(() => abort('deadline'), Math.max(0, effectiveDeadline - performance.now()));
     const status = async (duringSettlement = false) => {
       if (++controlRequests > 90 || controlLost) throw failure();
       const result = await probeJson(this.#configuration, '/slots', undefined, {
@@ -137,6 +176,7 @@ export class ProbeClient {
         signal: duringSettlement ? undefined : controller.signal,
         timeoutMs: duringSettlement ? Math.min(500, this.#statusTimeoutMs) : this.#statusTimeoutMs,
         onSocket: (socket) => {
+          trackSocket(socket);
           if (!controlSocket) {
             controlSocket = socket;
             socket.once('close', () => {
@@ -161,7 +201,7 @@ export class ProbeClient {
 
     try {
       if (!await status()) throw failure('busy');
-      if (abortKind || controlLost) throw failure(abortKind);
+      checkBudget();
       schedulePoll();
       const result = await new Promise((resolve, reject) => {
         request = https.request(options(this.#configuration, '/completion', body, inference), (response) => {
@@ -175,23 +215,29 @@ export class ProbeClient {
           response.on('error', () => reject(failure(abortKind || 'unavailable')));
           response.on('end', () => {
             try {
-              if (abortKind || controlLost) throw failure(abortKind);
+              checkBudget();
               resolve(decoder.finish());
             } catch { reject(failure(abortKind || 'invalid response')); }
           });
         });
+        inferenceClosed = new Promise((resolve) => request.once('close', resolve));
+        request.on('socket', trackSocket);
         request.on('error', () => reject(failure(abortKind || 'unavailable')));
+        checkBudget();
         dispatched = true;
         request.end(body);
       });
-      this.#state = 'ready'; cleanup();
+      checkBudget();
+      await cleanup();
+      checkBudget();
+      ready();
       return result;
     } catch (error) {
       clearTimeout(pollTimer); clearTimeout(deadlineTimer);
       signal?.removeEventListener('abort', externalAbort);
       request?.destroy();
-      if (!dispatched) { this.#state = 'ready'; cleanup(); }
-      else if (!decoder.witnessed || controlLost) { this.#state = 'unavailable'; cleanup(); }
+      if (!dispatched || cleaned) { await cleanup(); ready(); }
+      else if (!decoder.witnessed || controlLost) { this.#state = 'unavailable'; await cleanup(); }
       else {
         this.#state = 'cancel-pending';
         const settlementEnd = performance.now() + this.#settleMs;
@@ -201,13 +247,13 @@ export class ProbeClient {
             while (!controlLost && performance.now() < settlementEnd) {
               if (await status(true)) {
                 if (performance.now() >= settlementEnd || controlLost) throw failure();
-                this.#state = 'ready'; return;
+                ready(); return;
               }
               await delay(Math.min(250, this.#pollMs));
             }
             throw failure();
           } catch { this.#state = 'unavailable'; }
-          finally { cleanup(); }
+          finally { await cleanup(); }
         })();
       }
       throw failure(abortKind || (error.message === 'Local model busy' ? 'busy' : 'unavailable'));
