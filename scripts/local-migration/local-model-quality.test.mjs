@@ -46,6 +46,28 @@ test('strong extraction cannot conceal another task family failing', () => {
   assert.equal(report.families.search.negativeCasesCorrect, 0);
 });
 
+for (const dimension of ['recall', 'precision']) {
+  test(`rejects a family-only ${dimension} failure even when aggregate utility and every negative pass`, () => {
+    const { manifest, trials } = fixture();
+    for (const entry of manifest.cases.filter((entry) => entry.family === 'extraction' && entry.expectedUnits.length)) {
+      entry.expectedUnits = Array.from({ length: 20 }, (_, index) => ({ slug: `synthetic.${index}`, value: '0012' }));
+      for (const trial of trials.filter((trial) => trial.caseId === entry.id)) {
+        trial.proposalUnits = structuredClone(entry.expectedUnits);
+        trial.validatedUnits = structuredClone(entry.expectedUnits);
+      }
+    }
+    const searchTrial = trials.find((trial) => trial.caseId === 'search-0');
+    if (dimension === 'recall') searchTrial.validatedUnits = [];
+    else searchTrial.validatedUnits.push({ slug: 'unexpected', value: 'extra' });
+    const report = scoreQuality(manifest, trials);
+    assert.equal(report.overall.passed, true);
+    assert.equal(report.overall.negativeCasesCorrect, report.overall.negativeTrials);
+    assert.equal(report.families.search.passed, false);
+    assert.equal(report.passed, false);
+    assert.equal(report.families.search.validated[dimension === 'recall' ? 'precision' : 'recall'], 1);
+  });
+}
+
 test('invalid/failed responses remain in denominators and cannot pass negative cases', () => {
   const { manifest, trials } = fixture();
   trials[0].structureValid = false;
@@ -83,6 +105,22 @@ test('missing, duplicate and unknown trials cannot produce selection evidence', 
   assert.throws(() => scoreQuality(manifest, [...trials.slice(1), trials[1]]), /Invalid quality trial/);
   trials[0].caseId = 'unknown';
   assert.throws(() => scoreQuality(manifest, trials), /Invalid quality trial/);
+});
+
+test('rejects sparse trial/semantic arrays instead of silently dropping measurements', () => {
+  const missing = fixture();
+  delete missing.trials[0];
+  assert.throws(() => scoreQuality(missing.manifest, missing.trials), /Invalid quality trial/);
+  for (const stage of ['proposalUnits', 'validatedUnits']) {
+    const { manifest, trials } = fixture();
+    delete trials[0][stage][0];
+    assert.throws(() => scoreQuality(manifest, trials), /Invalid quality trial/);
+    trials[0][stage] = [{ nested: Array(1) }];
+    assert.throws(() => scoreQuality(manifest, trials), /Invalid quality trial/);
+  }
+  const { manifest, trials } = fixture();
+  delete manifest.cases[0].expectedUnits[0];
+  assert.throws(() => scoreQuality(manifest, trials), /Invalid quality manifest/);
 });
 
 test('semantic comparison preserves identifiers, types, and duplicate penalties', () => {

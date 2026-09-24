@@ -3,12 +3,20 @@ import { createHash } from 'node:crypto';
 const FAMILY_COUNTS = Object.freeze({ extraction: 6, search: 4, consolidation: 2, form: 4 });
 const invalid = (kind) => { throw new Error(`Invalid quality ${kind}`); };
 
+function denseArray(value) {
+  if (!Array.isArray(value) || Object.keys(value).length !== value.length) return false;
+  for (let index = 0; index < value.length; index++) {
+    if (!Object.hasOwn(value, index)) return false;
+  }
+  return true;
+}
+
 // Inputs are already semantic units from the actual application validators.
 // This function never coerces values or invents a fuzzy normalization rule.
 function canonical(value) {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
   if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (Array.isArray(value)) return value.map(canonical);
+  if (denseArray(value)) return value.map(canonical);
   if (typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
     return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])]));
   }
@@ -16,7 +24,7 @@ function canonical(value) {
 }
 
 function keys(units, kind) {
-  if (!Array.isArray(units) || units.length > 1000) invalid(kind);
+  if (!denseArray(units) || units.length > 1000) invalid(kind);
   try { return units.map((unit) => JSON.stringify(canonical(unit))); }
   catch { invalid(kind); }
 }
@@ -59,7 +67,7 @@ function summarize(trials) {
 /** Fixed CP1 quality gate. Synthetic self-tests are not model qualification. */
 export function scoreQuality(manifest, trials) {
   if (manifest?.version !== 1 || manifest.repetitions !== 3 ||
-      !Array.isArray(manifest.cases) || manifest.cases.length !== 16) invalid('manifest');
+      !denseArray(manifest.cases) || manifest.cases.length !== 16) invalid('manifest');
   const cases = new Map();
   for (const entry of manifest.cases) {
     if (!entry || typeof entry.id !== 'string' || !/^[a-z0-9-]{1,80}$/.test(entry.id) ||
@@ -74,6 +82,7 @@ export function scoreQuality(manifest, trials) {
         !entries.some((entry) => !entry.expected.length)) invalid('manifest');
   }
   if (!Array.isArray(trials) || trials.length !== 48) throw new Error('Incomplete quality trials');
+  if (!denseArray(trials)) invalid('trial');
   const seen = new Set();
   const scored = trials.map((trial) => {
     const entry = cases.get(trial?.caseId);

@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Status: active primary step; plan B independently approved for bounded feasibility
+- Status: active primary step; plan B approved for bounded feasibility; transport amendment C under affected review
 - Branch: `codex/local-migration-06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Coordinator and sole repository writer: `/root`; all other agents read-only
@@ -14,3 +14,5 @@ Implement one manually provisioned Apple Silicon inference configuration behind 
 The [plan](plan.md) has independent architecture, compatibility and safety approval for bounded CP1 only. Deterministic probe development may proceed; runtime/model download consent and the qualified Mac target remain pending user decisions before live execution. Selection review precedes production integration. Follow the [handoff](../step-06-handoff.md), [orchestration](../orchestration.md), [decisions](../decision-log.md), [agent execution](../agent-execution.md) and [research synthesis](../research/local-model/README.md).
 
 Existing no-model previews remain supported throughout. No product code or model assets have changed at activation. Final live and deterministic evidence, fresh complete-diff review, final local gate and final pushed-head CI remain required before the single PR is ready for human review. Do not merge automatically or activate another step.
+
+The [feasibility record](feasibility.md) tracks deterministic probe progress and the blocking non-streaming cancellation finding. No model has been selected or downloaded.
