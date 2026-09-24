@@ -13,6 +13,21 @@ const terminal = { index: 0, stop: true, content: '', tokens_predicted: 2, token
   stop_type: 'eos', truncated: false };
 const send = (response, value) => response.write(`data: ${JSON.stringify(value)}\n\n`);
 
+test('native output-limit observation rejects one dispatch, publishes no partial result and retains settlement', async (t) => {
+  const seen = [];
+  const { client, state } = await fixture(t, async (_, res) => {
+    res.setHeader('content-type', 'text/event-stream');
+    send(res, admission); send(res, chunk);
+    send(res, { ...terminal, stop_type: 'limit', tokens_predicted: 1 }); res.end();
+  });
+  await assert.rejects(client.complete('synthetic', { maxTokens: 1,
+    onTerminalObservation: (value) => seen.push(value) }), /^Error: Local model unavailable$/);
+  await client.settled();
+  assert.equal(state.completions, 1);
+  assert.equal(client.state, 'ready');
+  assert.deepEqual(seen, [{ stopType: 'limit', truncated: false, inputTokens: 10, outputTokens: 1 }]);
+});
+
 async function fixture(t, completion, { ip, statusTimeoutMs = 100, settleMs = 180 } = {}) {
   const credentials = await createTlsFixture({ ip });
   let server; let client;

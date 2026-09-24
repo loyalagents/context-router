@@ -4,6 +4,7 @@ import { offlineControls } from './offline-controls.mjs';
 import { renderForCompletion } from './protocol.mjs';
 import { runQuality } from './live-quality.mjs';
 import { runCancellationMatrix } from './cancellation-matrix.mjs';
+import { runSchemaProbes } from './schema-probes.mjs';
 const input = JSON.parse(await readFile(process.argv[2], 'utf8'));
 const { configuration } = input;
 const client = new ProbeClient(configuration);
@@ -17,6 +18,8 @@ try {
   } else if (input.mode === 'cancellation') {
     const cancellation = await runCancellationMatrix(configuration, client, { onProgress: (event) => console.log(JSON.stringify(event)) });
     receipt = { ...receipt, ...cancellation };
+  } else if (input.mode === 'schemas') {
+    receipt = { ...receipt, ...await runSchemaProbes(configuration, client, { onProgress: (event) => console.log(JSON.stringify(event)) }) };
   } else {
   const start = performance.now();
   const rendered = await renderForCompletion(configuration,

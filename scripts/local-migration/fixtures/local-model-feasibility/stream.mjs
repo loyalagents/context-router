@@ -13,15 +13,18 @@ export class CompletionStream {
   #outputTokens = 0;
   #processed = 0;
   #terminal = false;
+  #terminalObserved = false;
   #failed = false;
   #witnessed = false;
   #limits;
   #onProgress;
+  #onTerminalObservation;
 
-  constructor({ limits = {}, onProgress = () => {} } = {}) {
+  constructor({ limits = {}, onProgress = () => {}, onTerminalObservation = () => {} } = {}) {
     this.#limits = { wireBytes: 2 * 1024 * 1024, eventBytes: 16 * 1024, events: 8192,
       outputBytes: 256 * 1024, ...limits };
     this.#onProgress = onProgress;
+    this.#onTerminalObservation = onTerminalObservation;
   }
 
   get witnessed() { return this.#witnessed; }
@@ -48,7 +51,7 @@ export class CompletionStream {
 
   #event(event) {
     const lines = event.split(/\r?\n/);
-    if (this.#terminal || !lines.length || lines.some((line) => !line.startsWith('data: '))) fail();
+    if (this.#terminalObserved || !lines.length || lines.some((line) => !line.startsWith('data: '))) fail();
     const value = JSON.parse(lines.map((line) => line.slice(6)).join('\n'));
     if (!value || typeof value !== 'object' || value.error || value.index !== 0 ||
         typeof value.stop !== 'boolean' || typeof value.content !== 'string' ||
@@ -77,7 +80,14 @@ export class CompletionStream {
     if (this.#outputBytes > this.#limits.outputBytes) fail();
     this.#text += value.content;
     if (value.stop) {
-      if (value.truncated !== false || !['eos', 'word'].includes(value.stop_type)) fail();
+      if (typeof value.truncated !== 'boolean' || !['eos', 'word', 'limit'].includes(value.stop_type)) fail();
+      // A stop observation is not proof of clean EOF or of a successful response.
+      // Limit/truncation still fail immediately; no content or arbitrary fields escape.
+      this.#terminalObserved = true;
+      if (value.truncated || value.stop_type === 'limit') this.#failed = true;
+      this.#onTerminalObservation({ stopType: value.stop_type, truncated: value.truncated,
+        inputTokens: this.#inputTokens, outputTokens: this.#outputTokens });
+      if (this.#failed) fail();
       this.#terminal = true;
     }
     this.#onProgress({ admitted, processed: this.#processed, total: this.#inputTokens,

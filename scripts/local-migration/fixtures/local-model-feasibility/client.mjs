@@ -117,7 +117,7 @@ export class ProbeClient {
   }
 
   async #execute(prompt, { signal, deadline = performance.now() + 120000, schema,
-    onProgress = () => {}, maxTokens = 2048 } = {}) {
+    onProgress = () => {}, onTerminalObservation = () => {}, maxTokens = 2048 } = {}) {
     if (this.#state === 'unavailable') throw failure();
     if (this.#state !== 'ready') throw failure('busy');
     if (signal?.aborted) throw failure('cancelled');
@@ -137,7 +137,7 @@ export class ProbeClient {
     this.#state = 'active';
     const control = agent(this.#configuration); const inference = agent(this.#configuration);
     const controller = new AbortController();
-    const decoder = new CompletionStream({ onProgress });
+    const decoder = new CompletionStream({ onProgress, onTerminalObservation });
     let controlSocket; let controlLost = false; let dispatched = false; let request;
     let settlementEnd; let settlementTimer;
     let abortKind; let active = true; let pollTimer; let controlRequests = 0;

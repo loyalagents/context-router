@@ -80,3 +80,61 @@ test('validates bounded progress without treating delayed receipt as a prefill t
   assert.equal(seen[1].admitted, false);
   assert.throws(() => stream.push(encode({ ...initial(), prompt_progress: { total: 10, cache: 0, processed: 4, time_ms: 4 } })), /Invalid local model stream/);
 });
+
+test('observes one validated native limit marker before rejecting without partial-output salvage', () => {
+  const seen = [];
+  const stream = new CompletionStream({ onTerminalObservation: (value) => seen.push(value) });
+  stream.push(encode(initial(), partial('PRIVATE_OUTPUT', 1)));
+  const ending = terminal({ stop_type: 'limit', tokens_predicted: 1, secret: 'PRIVATE_FIELD' });
+  assert.throws(() => stream.push(encode(ending)), /Invalid local model stream/);
+  assert.deepEqual(seen, [{ stopType: 'limit', truncated: false, inputTokens: 10, outputTokens: 1 }]);
+  assert.throws(() => stream.finish(), /Invalid local model stream/);
+  assert.throws(() => stream.push(encode(ending)), /Invalid local model stream/);
+  assert.equal(seen.length, 1);
+  assert.equal(JSON.stringify(seen).includes('PRIVATE'), false);
+});
+
+test('terminal observations require valid admission, counters and fixed stop/truncation fields', () => {
+  for (const ending of [terminal({ stop_type: 'unknown' }), terminal({ truncated: 'false' }),
+    terminal({ tokens_evaluated: 11 }), terminal({ tokens_predicted: 0 }),
+    terminal({ tokens_predicted: 2049 }), terminal({ error: { message: 'PRIVATE_ERROR' } })]) {
+    const seen = [];
+    const stream = new CompletionStream({ onTerminalObservation: (value) => seen.push(value) });
+    stream.push(encode(initial(), partial()));
+    assert.throws(() => stream.push(encode(ending)), /Invalid local model stream/);
+    assert.deepEqual(seen, []);
+  }
+  for (const body of [encode(terminal({ stop_type: 'limit' })), Buffer.from('data: invalid\n\n'), encode(initial(), partial())]) {
+    const seen = [];
+    const stream = new CompletionStream({ onTerminalObservation: (value) => seen.push(value) });
+    assert.throws(() => { stream.push(body); stream.finish(); }, /Invalid local model stream/);
+    assert.deepEqual(seen, []);
+  }
+  for (const stop_type of ['eos', 'word']) {
+    const seen = [];
+    const stream = new CompletionStream({ onTerminalObservation: (value) => seen.push(value) });
+    stream.push(encode(initial(), partial(), terminal({ stop_type })));
+    assert.equal(stream.finish().text, 'hello');
+    assert.deepEqual(seen, [{ stopType: stop_type, truncated: false, inputTokens: 10, outputTokens: 2 }]);
+  }
+});
+
+test('terminal callback reentry or exceptions cannot emit twice or permit success', () => {
+  for (const stop_type of ['eos', 'limit']) {
+    for (const mode of ['throw', 'reenter']) {
+      let seen = 0;
+      const ending = terminal({ stop_type });
+      const stream = new CompletionStream({ onTerminalObservation: () => {
+        if (++seen > 1) throw new Error('Repeated observation');
+        if (mode === 'throw') throw new Error('PRIVATE_CALLBACK_ERROR');
+        assert.throws(() => stream.push(encode(ending)), /Invalid local model stream/);
+      } });
+      stream.push(encode(initial(), partial()));
+      assert.throws(() => stream.push(encode(ending, ending)), /^Error: Invalid local model stream$/);
+      assert.equal(seen, 1);
+      assert.throws(() => stream.finish(), /Invalid local model stream/);
+      assert.throws(() => stream.push(encode(ending)), /Invalid local model stream/);
+      assert.equal(seen, 1);
+    }
+  }
+});
