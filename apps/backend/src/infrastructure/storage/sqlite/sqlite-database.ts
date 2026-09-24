@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import {
   StorageConflictError,
@@ -177,6 +177,21 @@ export class SqliteConnection {
   get inTransaction(): boolean {
     return this.call(() => this.native.isTransaction);
   }
+  /** Fixed observer: hash every persisted identity field without transferring row contents out of the owner. */
+  identityFingerprint(): string {
+    return this.call(() => {
+      const digest = createHash("sha256");
+      for (const sql of [
+        "SELECT user_id,email,created_at,updated_at FROM users ORDER BY user_id",
+        "SELECT id,user_id,provider,issuer,provider_user_id,metadata,created_at,updated_at FROM external_identities ORDER BY id",
+      ]) {
+        digest.update(sql).update("\n");
+        for (const row of this.native.prepare(sql).iterate())
+          digest.update(JSON.stringify(row)).update("\n");
+      }
+      return digest.digest("base64url");
+    });
+  }
   close(): void {
     if (this.closed) return;
     this.closed = true;
@@ -214,8 +229,9 @@ export class SqliteDatabase {
         root,
         mainPin,
       );
-    } catch {
-      unavailable();
+    } catch (error) {
+      if (error instanceof StorageUnavailableError) throw error;
+      throw sqliteFailure(error);
     } finally {
       if (db) {
         try {
@@ -385,6 +401,9 @@ export class SqliteDatabase {
     } catch {
       unavailable();
     }
+  }
+  assertPinned(): void {
+    assertDatabase(this.root, this.mainPin);
   }
   connect(): SqliteConnection {
     let db: DatabaseSync | undefined;

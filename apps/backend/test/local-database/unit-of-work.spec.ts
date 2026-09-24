@@ -361,6 +361,31 @@ describe("real local transaction capability ownership", () => {
     },
   );
 
+  it.each([
+    undefined,
+    NaN,
+    { code: "SQLITE_BUSY", message: "private caller sentinel" },
+  ])(
+    "retains exact callback rejection %p after a caught native failure and rolls back witnessed writes",
+    async (failure) => {
+      let caught = false;
+      try {
+        await unit.run(async (scope) => {
+          await scope.identity.createPrincipal("owner", "first@example.test");
+          await expect(
+            scope.identity.createPrincipal("owner", "duplicate@example.test"),
+          ).rejects.toThrow(StorageConflictError);
+          throw failure;
+        });
+      } catch (error) {
+        caught = true;
+        expect(Object.is(error, failure)).toBe(true);
+      }
+      expect(caught).toBe(true);
+      expect(count()).toBe(0);
+    },
+  );
+
   it("cannot commit earlier writes after a swallowed native transaction failure", async () => {
     let calls = 0;
     const original = db.connect.bind(db);
