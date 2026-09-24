@@ -19,11 +19,13 @@ for await (const chunk of createReadStream(model)) hash.update(chunk);
 if (hash.digest('hex') !== pinned.sha256) throw new Error('Model asset hash mismatch');
 const profile = '(version 1)(allow default)(deny network*)(allow network-bind network-inbound (local tcp "localhost:PORT"))(allow network-outbound (remote tcp "localhost:PORT"))(deny mach-lookup (global-name "com.apple.dnssd.service"))';
 const mode = process.argv[2] ?? 'smoke';
-if (!['smoke', 'quality'].includes(mode)) throw new Error('Unknown probe mode');
+if (!['smoke', 'quality', 'cancellation'].includes(mode)) throw new Error('Unknown probe mode');
+const testedRevision = execFileSync('/usr/bin/git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+if (execFileSync('/usr/bin/git', ['status', '--porcelain'], { encoding: 'utf8' }).trim()) throw new Error('Commit probe inputs before live measurement');
 const run = `native-${candidate}-${mode}-${Date.now()}`;
 const logPath = join(evidence, `${run}.log`);
 const memorySample = (pid) => JSON.parse(execFileSync(join(evidence, 'memory-control'), pid ? [String(pid)] : [], { encoding: 'utf8', timeout: 5000, maxBuffer: 4096, env: { PATH: '/usr/bin:/bin' } }));
-let receipt = { run, timestamp: new Date().toISOString(), candidate, modelSha256: pinned.sha256, passed: false, memoryBefore: memorySample() };
+let receipt = { run, testedRevision, timestamp: new Date().toISOString(), candidate, modelSha256: pinned.sha256, passed: false, memoryBefore: memorySample() };
 try {
   const result = await withNative({ binary: join(assets, 'runtime/llama-b11146/llama-server'), model, logPath, sandboxProfile: profile },
     async ({ configuration, metadata, args, child }) => {
@@ -36,7 +38,7 @@ try {
         await writeFile(configPath, JSON.stringify({ configuration: { ...configuration, certificate: configuration.certificate.toString('utf8') }, mode, outputPath }), { flag: 'wx', mode: 0o600 });
         worker = await spawnOwned({ command: '/usr/bin/sandbox-exec', args: ['-p', profile.replaceAll('PORT', String(configuration.port)), process.execPath,
           resolve('scripts/local-migration/fixtures/local-model-feasibility/live-worker.mjs'), configPath], cwd: root, logPath: join(root, 'worker.log') });
-        const result = await Promise.race([worker.exited, delay(mode === 'quality' ? 48 * 181000 : 180000, null, { ref: false })]);
+        const result = await Promise.race([worker.exited, delay(mode === 'quality' ? 48 * 181000 : mode === 'cancellation' ? 17 * 181000 : 180000, null, { ref: false })]);
         if (!result || worker.logOverflow) throw new Error('Native worker failed');
         const data = JSON.parse(await readFile(outputPath, 'utf8'));
         sample();

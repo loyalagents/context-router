@@ -3,6 +3,7 @@ import { ProbeClient, probeJson } from './client.mjs';
 import { offlineControls } from './offline-controls.mjs';
 import { renderForCompletion } from './protocol.mjs';
 import { runQuality } from './live-quality.mjs';
+import { runCancellationMatrix } from './cancellation-matrix.mjs';
 const input = JSON.parse(await readFile(process.argv[2], 'utf8'));
 const { configuration } = input;
 const client = new ProbeClient(configuration);
@@ -13,6 +14,9 @@ try {
   if (input.mode === 'quality') {
     const quality = await runQuality(configuration, client, { onProgress: (event) => console.log(JSON.stringify(event)) });
     receipt = { ...receipt, passed: quality.score.passed, ...quality };
+  } else if (input.mode === 'cancellation') {
+    const cancellation = await runCancellationMatrix(configuration, client, { onProgress: (event) => console.log(JSON.stringify(event)) });
+    receipt = { ...receipt, ...cancellation };
   } else {
   const start = performance.now();
   const rendered = await renderForCompletion(configuration,
