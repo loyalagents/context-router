@@ -50,15 +50,18 @@ export async function runEarlyBoundary(configuration, client, mode, { render = r
 export function auditEarlyBoundaryLog(bytes, worker) {
   const output = { passed: false, capacityRecoveryQualified: false, tasks: [] };
   try {
-    assert.ok(worker?.passed === true && Buffer.isBuffer(bytes) && bytes.length <= 512 * 1024 && (!bytes.length || bytes.at(-1) === 10));
+    assert.ok(worker?.passed === true && Buffer.isBuffer(bytes) && bytes.length > 0 && bytes.length <= 512 * 1024 && bytes.at(-1) === 10);
     const lines = new TextDecoder('utf-8', { fatal: true }).decode(bytes).split('\n');
-    let task; const timings = new Set();
+    let task; let nativeFraming = false; const timings = new Set();
     for (const line of lines) {
       assert.ok(!/^\d+\.\d+\.\d+\.\d+ E /.test(line));
-      const relevant = /^\d+\.\d+\.\d+\.\d+ I slot\s+(launch_slot_|release|print_timing):/.test(line);
+      if (/^\d+\.\d+\.\d+\.\d+ I srv\s+llama_server: listening on https:\/\/127\.0\.0\.1:\d+$/.test(line)) nativeFraming = true;
+      // A damaged prefix/label must not hide a lifecycle candidate as an unrelated line.
+      const relevant = ['launch_slot', 'release', 'print_timing'].some((marker) => line.includes(marker));
       if (!relevant) continue;
       const match = /^\d+\.\d+\.\d+\.\d+ I slot\s+(launch_slot_|release|print_timing): id\s+0 \| task (\d+) \| (.*)$/.exec(line);
       assert.ok(match); const [, event, rawId, detail] = match; const id = Number(rawId); assert.ok(Number.isSafeInteger(id));
+      nativeFraming = true;
       if (event === 'launch_slot_') {
         assert.ok(!task && detail === 'processing task, is_child = 0');
         task = { taskId: id, released: false, releaseTokens: null, normalFinalTimingCount: 0 }; output.tasks.push(task);
@@ -74,7 +77,7 @@ export function auditEarlyBoundaryLog(bytes, worker) {
         }
       }
     }
-    assert.ok(timings.size === 0 || timings.size === 4);
+    assert.ok(nativeFraming && (timings.size === 0 || timings.size === 4));
     output.nativeTaskState = !task ? 'no-launch-observed' : task.released ? 'release-observed' : 'release-not-observed-before-cleanup';
     output.passed = true;
   } catch { output.failure = 'Bounded early native audit failed'; }

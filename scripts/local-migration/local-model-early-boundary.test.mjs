@@ -39,8 +39,9 @@ test('a missed boundary, missing injection or unexpected recovered capacity cann
 
 const launch = '0.01.000.000 I slot launch_slot_: id  0 | task 1 | processing task, is_child = 0\n';
 const release = '0.01.500.000 I slot      release: id  0 | task 1 | stop processing: n_tokens = 0, truncated = 0\n';
+const startup = '0.00.500.000 I srv  llama_server: listening on https://127.0.0.1:12345\n';
 test('early native projection distinguishes no admission, observed release and unknown-at-cleanup', () => {
-  assert.equal(auditEarlyBoundaryLog(Buffer.from(''), { passed: true }).nativeTaskState, 'no-launch-observed');
+  assert.equal(auditEarlyBoundaryLog(Buffer.from(startup), { passed: true }).nativeTaskState, 'no-launch-observed');
   assert.equal(auditEarlyBoundaryLog(Buffer.from(launch), { passed: true }).nativeTaskState, 'release-not-observed-before-cleanup');
   const result = auditEarlyBoundaryLog(Buffer.from(launch + release), { passed: true });
   assert.equal(result.passed, true);
@@ -50,7 +51,10 @@ test('early native projection distinguishes no admission, observed release and u
 });
 
 test('ambiguous, repeated, invalid or oversized native evidence fails the early-case audit', () => {
-  for (const body of [release, launch.slice(0, -1), launch + launch, launch + release + release, launch + release.replace('task 1', 'task 2'),
+  for (const body of ['', 'unrecognized raw log\n', startup + launch.replace('0.01.000.000', '0.01.'),
+    startup + release.replace('0.01.500.000', '0.01.'), startup + launch.replace('launch_slot_', 'launch_slot_new'),
+    startup + release.replace('release:', 'release_new:'), startup + launch.replace(' I ', ' X '),
+    release, launch.slice(0, -1), launch + launch, launch + release + release, launch + release.replace('task 1', 'task 2'),
     launch + release.replace('truncated = 0', 'truncated = 1'), Buffer.from([0xff]), Buffer.alloc(512 * 1024 + 1)]) {
     assert.equal(auditEarlyBoundaryLog(Buffer.from(body), { passed: true }).passed, false);
   }
