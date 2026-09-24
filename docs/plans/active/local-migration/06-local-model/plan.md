@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Document status: CP1 continuing under the user-directed narrow 9B quality exception proposed in amendment E; affected review pending; no production selection/integration approval
+- Document status: amendment E accuracy deferral approved; first native cancellation failed; bounded batch-size amendment F under review for the required next decision; no production selection/integration approval
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -290,3 +290,20 @@ All remaining cancellation, endpoint/TLS/credential, offline/privacy, resource, 
 Impact: changes CP1/final utility acceptance for one observed noncritical false negative; no code, prompt, schema, validator, flags, capability, authority, ownership or interface changes. All other approved C contracts carry forward subject to affected reviewers' confirmation. `/root` remains the sole repository writer. Existing read-only reviewers retain accepted explicit Astra High (compatibility/evaluation) and Extra High (architecture and safety) configurations; serving internals remain unverified. One cohesive PR and human merge remain the outcome.
 
 All three affected reviewers independently approved E at `1ad38a88c49a6d4d8dd8bb49d44197b430a7a6d4` for continuing CP1 with this acceptance exception: `/root/plan_architecture` (Astra Extra High), `/root/plan_compatibility` (Astra High), `/root/plan_safety` (Astra Extra High). No blocker remained. Each explicitly carried forward unaffected C requirements and withheld production selection/integration/final approval. Read-only review; no reviewer processes or writes.
+
+
+## Proposed Amendment F: Smaller Prefill Batch
+
+Status: proposed after blocking native cancellation evidence; affected independent review and user decision precede execution. E's user-directed accuracy deferral remains accepted, and D prompt tuning remains deferred. No new download or production code is proposed.
+
+At `1eed4814f54de63a01704be8029f05017f5fc754`, the consented 9B/native configuration completed all five short baselines (maximum 396.143 ms). The first prefill cancellation observed 2,048 of 8,029 prompt tokens with zero decoded tokens. Client return took 0.765 ms, but settlement remained unknown after 5,071.786 ms and correctly latched unavailable. The other five required cancellation trials were not run; no followup was attempted after the latch. INFO runtime counters show continuing prompt processing at 4,096 tokens before cleanup, with no observed normal release. Only the exact owned runtime was then stopped/reaped; that cleanup is not cancellation success. Retain the [receipt](evidence/cancellation-9b-first.json) and [source/hash index](evidence/cancellation-run-index.json).
+
+The proposed experiment changes exactly one runtime allocation/scheduling flag: `--batch-size 2048` becomes `--batch-size 512`. Keep `--ubatch-size 512`, the pinned 9B/runtime/Mac, one slot, context/output budgets, non-thinking C framing, sampling, cache settings, TLS/credentials, offline boundary and every cancellation/resource/latency criterion unchanged. Smaller logical batches may allow earlier native progress and disconnect handling; this is a hypothesis, not a result. No timeout increase or recovery/restart workaround is authorized.
+
+Before measurement, update the fixed-argument test first, change only that flag, bind the new committed source/flags in the receipt, and obtain affected implementation review. Run the same five-baseline/six-cancellation matrix once, including actual followups and post-reap native task-log corroboration. Retain every failed trial and stop the matrix at the first failed/unknown result. If cancellation fails again, stop for a new decision; do not tune further or silently weaken the gate.
+
+If the matrix passes, run the original 16-case × three-repetition quality matrix on the changed configuration before selection. Keep the original manifest/oracles/scorer/thresholds unchanged; report it as a separate runtime-configuration experiment. E may accept only the original `extraction-instruction-injection` email omission. Any other quality/negative/structural failure or critical violation blocks further selection. The old quality results remain evidence for the original batch-size configuration and cannot qualify the changed one.
+
+All remaining early post-dispatch cancellation/transport-loss, schema/bounds, complete memory accounting, parser closure, manual-instance contract and independent selection requirements still precede CP2. Actual application/source-package/final local/CI/review/PR gates remain required. This is a bounded qualification correction in the one existing PR, not performance tuning, a second adapter or lifecycle supervision.
+
+Decision requested: approve this exact smaller-batch experiment, or leave Step 06 paused at the cancellation blocker. The user's prior accuracy acceptance is not re-requested and remains in force. The reason for this decision is new blocking runtime evidence and a changed tested configuration under the handoff's pause rule; no additional asset consent is needed.
