@@ -11,7 +11,7 @@ try {
   receipt.offlineControls = await offlineControls(configuration.port);
   await probeJson(configuration, '/props');
   if (input.mode === 'quality') {
-    const quality = await runQuality(configuration, client);
+    const quality = await runQuality(configuration, client, { onProgress: (event) => console.log(JSON.stringify(event)) });
     receipt = { ...receipt, passed: quality.score.passed, ...quality };
   } else {
   const start = performance.now();

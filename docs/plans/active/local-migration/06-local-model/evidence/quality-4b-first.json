@@ -1,0 +1,2104 @@
+{
+  "run": "native-quality-1790243615655",
+  "timestamp": "2026-09-24T09:53:35.655Z",
+  "passed": false,
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 846.9033749999999
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-4B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "61962",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "2048",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "quality",
+    "passed": false,
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "score": {
+      "manifestSha256": "35ea1d822dbb7d32619c384f00da9e26b69cebc37598f36c92413ecf3ae6424a",
+      "passed": false,
+      "families": {
+        "extraction": {
+          "proposal": {
+            "truePositive": 18,
+            "falseNegative": 3,
+            "falsePositive": 3,
+            "recall": 0.8571428571428571,
+            "precision": 0.8571428571428571
+          },
+          "validated": {
+            "truePositive": 18,
+            "falseNegative": 3,
+            "falsePositive": 3,
+            "recall": 0.8571428571428571,
+            "precision": 0.8571428571428571
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 3,
+          "negativeTrials": 6,
+          "passed": false
+        },
+        "search": {
+          "proposal": {
+            "truePositive": 9,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 9,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 6,
+          "negativeTrials": 6,
+          "passed": true
+        },
+        "consolidation": {
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 3,
+            "recall": 1,
+            "precision": 0.5
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 3,
+          "negativeTrials": 3,
+          "passed": true
+        },
+        "form": {
+          "proposal": {
+            "truePositive": 12,
+            "falseNegative": 0,
+            "falsePositive": 3,
+            "recall": 1,
+            "precision": 0.8
+          },
+          "validated": {
+            "truePositive": 12,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 6,
+          "negativeTrials": 6,
+          "passed": true
+        }
+      },
+      "overall": {
+        "proposal": {
+          "truePositive": 42,
+          "falseNegative": 3,
+          "falsePositive": 9,
+          "recall": 0.9333333333333333,
+          "precision": 0.8235294117647058
+        },
+        "validated": {
+          "truePositive": 42,
+          "falseNegative": 3,
+          "falsePositive": 3,
+          "recall": 0.9333333333333333,
+          "precision": 0.9333333333333333
+        },
+        "failedTrials": 0,
+        "criticalViolations": 0,
+        "negativeCasesCorrect": 18,
+        "negativeTrials": 21,
+        "passed": false
+      },
+      "trials": [
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        }
+      ]
+    },
+    "measurements": [
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 0,
+        "workflowMs": 6872.946875000001,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "69560a50b4e4fc28d5f26ca3b8dc86c13b4649646acbc08092f7fe86b2404d5a",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 6872.170999999999,
+            "inputTokens": 861,
+            "outputTokens": 311
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 1,
+        "workflowMs": 7018.148500000001,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "69560a50b4e4fc28d5f26ca3b8dc86c13b4649646acbc08092f7fe86b2404d5a",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 7017.804041,
+            "inputTokens": 861,
+            "outputTokens": 311
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 2,
+        "workflowMs": 6768.201874999999,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "69560a50b4e4fc28d5f26ca3b8dc86c13b4649646acbc08092f7fe86b2404d5a",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 6767.792124999998,
+            "inputTokens": 861,
+            "outputTokens": 311
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 0,
+        "workflowMs": 5993.457541,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 5993.028708000002,
+            "inputTokens": 887,
+            "outputTokens": 271
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 1,
+        "workflowMs": 6033.687084000001,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 6033.3971669999955,
+            "inputTokens": 887,
+            "outputTokens": 271
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 2,
+        "workflowMs": 6099.002375000004,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 6098.715250000001,
+            "inputTokens": 887,
+            "outputTokens": 271
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 0,
+        "workflowMs": 4117.463083000002,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "61871b24196e77a7269523361bff5bcfa8fc7b327dda00f791621b967ca34af9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 4117.090209000002,
+            "inputTokens": 1071,
+            "outputTokens": 143
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 1,
+        "workflowMs": 4274.800374999999,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "61871b24196e77a7269523361bff5bcfa8fc7b327dda00f791621b967ca34af9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 4274.556708000004,
+            "inputTokens": 1071,
+            "outputTokens": 143
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 2,
+        "workflowMs": 4261.982917000001,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "61871b24196e77a7269523361bff5bcfa8fc7b327dda00f791621b967ca34af9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 4261.757665999998,
+            "inputTokens": 1071,
+            "outputTokens": 143
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 0,
+        "workflowMs": 3785.8644579999964,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "0ea8f1b485aff95f796b425006bdf7065f5dc3e04e3060bfa5c030f5f0694c03",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 3785.605209000001,
+            "inputTokens": 828,
+            "outputTokens": 139
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 1,
+        "workflowMs": 3850.2336250000008,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "0ea8f1b485aff95f796b425006bdf7065f5dc3e04e3060bfa5c030f5f0694c03",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 3850.0129579999993,
+            "inputTokens": 828,
+            "outputTokens": 139
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 2,
+        "workflowMs": 3828.0610830000005,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "0ea8f1b485aff95f796b425006bdf7065f5dc3e04e3060bfa5c030f5f0694c03",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 3827.842499999999,
+            "inputTokens": 828,
+            "outputTokens": 139
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 0,
+        "workflowMs": 2545.4038340000043,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "331d8a7a660050020c6bf19e7ea8b818fabc7acdf5bedcaa6f9df47f0fea5b37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 2545.190082999994,
+            "inputTokens": 1028,
+            "outputTokens": 56
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 1,
+        "workflowMs": 2548.453542000003,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "331d8a7a660050020c6bf19e7ea8b818fabc7acdf5bedcaa6f9df47f0fea5b37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 2548.2522080000053,
+            "inputTokens": 1028,
+            "outputTokens": 56
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 2,
+        "workflowMs": 2599.283334000007,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "331d8a7a660050020c6bf19e7ea8b818fabc7acdf5bedcaa6f9df47f0fea5b37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 2599.0595840000024,
+            "inputTokens": 1028,
+            "outputTokens": 56
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 0,
+        "workflowMs": 2363.2089169999963,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "8c405818fb4ff1ff93d41ae4b4fb93b4a5276ccc848f6cf44b1fcda88c9d4a37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 2362.991791999986,
+            "inputTokens": 824,
+            "outputTokens": 62
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 1,
+        "workflowMs": 2352.361957999994,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "8c405818fb4ff1ff93d41ae4b4fb93b4a5276ccc848f6cf44b1fcda88c9d4a37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 2352.1628749999945,
+            "inputTokens": 824,
+            "outputTokens": 62
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 2,
+        "workflowMs": 2345.4317080000037,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "8c405818fb4ff1ff93d41ae4b4fb93b4a5276ccc848f6cf44b1fcda88c9d4a37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 2345.2286659999954,
+            "inputTokens": 824,
+            "outputTokens": 62
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 0,
+        "workflowMs": 1573.2053329999908,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 1572.892458000002,
+            "inputTokens": 427,
+            "outputTokens": 50
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 1,
+        "workflowMs": 1631.8722500000003,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 1629.0417920000036,
+            "inputTokens": 427,
+            "outputTokens": 50
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 2,
+        "workflowMs": 1577.1844159999891,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 1577.0170829999988,
+            "inputTokens": 427,
+            "outputTokens": 50
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 0,
+        "workflowMs": 2138.4704580000107,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 2138.2841670000053,
+            "inputTokens": 490,
+            "outputTokens": 76
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 1,
+        "workflowMs": 2109.307792000007,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 2109.107707999996,
+            "inputTokens": 490,
+            "outputTokens": 76
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 2,
+        "workflowMs": 2090.289082999996,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 2090.09825000001,
+            "inputTokens": 490,
+            "outputTokens": 76
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 0,
+        "workflowMs": 1523.7939590000024,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 1523.655792000005,
+            "inputTokens": 287,
+            "outputTokens": 60
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 1,
+        "workflowMs": 1523.547000000006,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 1523.4282910000038,
+            "inputTokens": 287,
+            "outputTokens": 60
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 2,
+        "workflowMs": 1505.7467909999978,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 1505.6270419999928,
+            "inputTokens": 287,
+            "outputTokens": 60
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 0,
+        "workflowMs": 1834.6262920000008,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 1834.468166999999,
+            "inputTokens": 362,
+            "outputTokens": 71
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 1,
+        "workflowMs": 1847.7951250000042,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 1847.668749999997,
+            "inputTokens": 362,
+            "outputTokens": 71
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 2,
+        "workflowMs": 1879.8543749999953,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 1879.7301250000019,
+            "inputTokens": 362,
+            "outputTokens": 71
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 0,
+        "workflowMs": 3380.219167000003,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 3379.847624999995,
+            "inputTokens": 576,
+            "outputTokens": 136
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 1,
+        "workflowMs": 3316.278542,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 3316.0594580000034,
+            "inputTokens": 576,
+            "outputTokens": 136
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 2,
+        "workflowMs": 3396.479416999995,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 3396.232667000004,
+            "inputTokens": 576,
+            "outputTokens": 136
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 0,
+        "workflowMs": 3222.221749999997,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 3221.9483340000006,
+            "inputTokens": 565,
+            "outputTokens": 130
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 1,
+        "workflowMs": 3230.7214169999934,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 3230.50858400001,
+            "inputTokens": 565,
+            "outputTokens": 130
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 2,
+        "workflowMs": 3292.7848340000055,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 3292.566749999998,
+            "inputTokens": 565,
+            "outputTokens": 130
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 0,
+        "workflowMs": 4566.490042000005,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 4565.941959000003,
+            "inputTokens": 913,
+            "outputTokens": 170
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 1,
+        "workflowMs": 4756.10325,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 4755.755791000003,
+            "inputTokens": 913,
+            "outputTokens": 170
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 2,
+        "workflowMs": 4653.625625000015,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 4653.316540999978,
+            "inputTokens": 913,
+            "outputTokens": 170
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 0,
+        "workflowMs": 4631.910125000024,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 4631.374916999979,
+            "inputTokens": 1187,
+            "outputTokens": 147
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 1,
+        "workflowMs": 4614.217875000002,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 4613.8913750000065,
+            "inputTokens": 1187,
+            "outputTokens": 147
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 2,
+        "workflowMs": 4934.7154579999915,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 4934.393624999997,
+            "inputTokens": 1187,
+            "outputTokens": 147
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 0,
+        "workflowMs": 4186.366750000016,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 4186.114208000014,
+            "inputTokens": 841,
+            "outputTokens": 135
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 1,
+        "workflowMs": 4102.567125000001,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 4102.365334000002,
+            "inputTokens": 841,
+            "outputTokens": 135
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 2,
+        "workflowMs": 4335.082832999993,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 4334.876875000016,
+            "inputTokens": 841,
+            "outputTokens": 135
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 0,
+        "workflowMs": 3423.866249999992,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 3423.5638749999925,
+            "inputTokens": 911,
+            "outputTokens": 90
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 1,
+        "workflowMs": 3271.37049999999,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 3271.1193330000096,
+            "inputTokens": 911,
+            "outputTokens": 90
+          }
+        ],
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 2,
+        "workflowMs": 3365.6044999999867,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 3365.37066700001,
+            "inputTokens": 911,
+            "outputTokens": 90
+          }
+        ],
+        "clientState": "ready"
+      }
+    ]
+  },
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true
+}
