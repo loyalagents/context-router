@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Status: active primary step; 9B accuracy deferral approved; first native cancellation failed; user-approved smaller-batch experiment in progress; affected implementation review precedes measurement
+- Status: active primary step; 9B accuracy deferral approved; first native cancellation failed; smaller-batch experiment failed capacity recovery; paused for next decision
 - Branch: `codex/local-migration-06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Coordinator and sole repository writer: `/root`; all other agents read-only
@@ -22,3 +22,5 @@ The user subsequently approved moving on with a documented accuracy limitation; 
 The first native prefill-cancellation trial failed the unchanged recovery deadline and correctly latched unavailable; see [amendment F](plan.md#proposed-amendment-f-smaller-prefill-batch). The existing quality exception remains accepted. Integration is paused at this separate runtime blocker; no further model run proceeds before the F decision.
 
 The user explicitly approved F (“yes you can test this”). Continue its bounded smaller-batch experiment after affected implementation review; quality deferral E remains accepted. Production selection/integration remain gated on the results and remaining qualification.
+
+F ran once and failed client capacity recovery despite observed native early release. Its stop condition is active; no conditional quality run or integration proceeded. See the [F result](plan.md#f-result-native-release-observed-capacity-recovery-failed).

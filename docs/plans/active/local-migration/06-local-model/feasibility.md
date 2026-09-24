@@ -1,6 +1,6 @@
 # Step 06 Feasibility Progress
 
-- Status: 9B accuracy deferral approved; first native cancellation failed; user-approved smaller-batch experiment in progress; affected implementation review precedes measurement; no production integration authorized
+- Status: 9B accuracy deferral approved; first native cancellation failed; smaller-batch experiment failed capacity recovery; paused for next decision; no production integration authorized
 - Owner and sole writer: `/root`; investigators/reviewers remain read-only
 - Base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -104,3 +104,10 @@ The [receipt](evidence/cancellation-9b-first.json) retains all measurements, fiv
 All three affected reviewers approved proposed F at `0a8c8a6e94e90d5fcc3355dad4184d4dda5e84fe` for the user decision only. The sanitized [native counter projection](evidence/cancellation-9b-first-native-counters.json) retains exact task lifecycle/timing/progress lines and the original private log hash. Final targeted checkpoint validation at that revision passed all 67 deterministic probe tests (`node --test scripts/local-migration/local-model-*.test.mjs`, Node 24.21.0, isolated TLS listeners), Markdown links and diff whitespace. Rehashing confirmed all ten original preparation documents unchanged in the original main workspace. An independent read-only process census found no remaining owned llama runtime. This is checkpoint evidence, not the final aggregate local gate or final-head CI. No production integration or PR is ready.
 
 The user explicitly approved the reviewed F experiment on 2026-09-24. A new fixed-argument assertion failed against the original batch size before the sole runtime flag changed from 2048 to 512; the microbatch stays 512. No new download or other configuration change occurred. Affected implementation review precedes the one authorized cancellation run.
+
+
+## Smaller-Batch Result
+
+The authorized F run used exact reviewed `a12cea7c3c7d7b142c46bba1c6c361fa9d19d69a` with the sole flag change to logical batch 512. All five short baselines passed (p95/max 413.716 ms). First prefill cancellation observed 512/8,029 tokens, returned in 3.118 ms and finished settlement after 2,770.492 ms with state unavailable. No followup or remaining five trials ran. Native task 46 received cancel and released at 1,536 tokens without normal-final timing; this is early release but not recovered client capacity. The [receipt](evidence/cancellation-9b-batch512.json), [counter projection](evidence/cancellation-9b-batch512-native-counters.json) and [index](evidence/cancellation-run-index.json) retain these distinct facts. Full cancellation qualification remains FAILED.
+
+The runtime and worker were stopped/reaped through their retained exact handles and private roots cleaned; no cleanup counts as recovery. Pressure stayed normal and swap unchanged, with full memory accounting still open. F requires a new decision after this failure, so no quality rerun, further native experiment or production integration follows. Read-only diagnosis of the control path is permitted to make the next decision concrete. The previously accepted E accuracy exception remains in force.

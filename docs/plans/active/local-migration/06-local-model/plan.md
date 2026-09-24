@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Document status: amendment E accuracy deferral approved; first native cancellation failed; amendment F smaller-batch experiment approved by user; affected implementation review precedes measurement; no production selection/integration approval
+- Document status: amendment E accuracy deferral approved; first native cancellation failed; amendment F executed and failed capacity recovery; paused for the next decision; no further native runs authorized; no production selection/integration approval
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -311,3 +311,12 @@ Decision requested: approve this exact smaller-batch experiment, or leave Step 0
 All three affected reviewers independently approved F at `0a8c8a6e94e90d5fcc3355dad4184d4dda5e84fe` as a concrete proposal for the user decision: `/root/plan_architecture` (Astra Extra High), `/root/plan_compatibility` (Astra High), `/root/plan_safety` (Astra Extra High). No proposal blocker remains. All withheld implementation/execution/selection/CP2 approval pending that decision and affected implementation review, and carried forward unchanged contracts. Read-only reviews; accepted launch settings, serving internals unverified.
 
 F activation: `/root` first added the exact `--batch-size 512` and unchanged `--ubatch-size 512` assertions; the native argument test failed against 2048. The sole runtime edit then changed logical batch size to 512. No other runtime or acceptance setting changed. Original receipts remain intact; the existing live runner binds the tested commit and exact flags.
+
+
+### F Result: Native Release Observed, Capacity Recovery Failed
+
+Safety approved the exact F implementation at `a12cea7c3c7d7b142c46bba1c6c361fa9d19d69a`, carrying forward prior transport, matrix/audit and owned-process coverage. The clean committed configuration ran once. Five short baselines passed (p95/max 413.716 ms). First prefill cancellation observed 512/8,029 processed tokens, zero decoded tokens and no terminal response. Client return took 3.118 ms; settlement finished after 2,770.492 ms with state unavailable. No followup or remaining five cancellation trials ran. The overall matrix and native corroboration gate therefore FAILED.
+
+The [receipt](evidence/cancellation-9b-batch512.json) and [native counters](evidence/cancellation-9b-batch512-native-counters.json) show a narrower result: the owned runtime received cancellation for task 46 and released it at 1,536 tokens, with no normal-final timing. This demonstrates native early release in this trial, but not verified client recovery/capacity reuse. A later native cancellation record for task 60 does not establish why the client failed; transport/control diagnosis remains pending. Sampled pressure stayed normal and swap unchanged; complete allocation accounting remains unqualified. Exact runtime/worker cleanup succeeded and is not counted as cancellation recovery.
+
+Per F, another failed result stops execution for a new decision. Do not run the conditional quality matrix, further flag tuning or production integration. Retain the changed batch-512 code and both failed receipts; neither configuration is selected. E's accepted email omission and all existing download/storage consent remain in force.

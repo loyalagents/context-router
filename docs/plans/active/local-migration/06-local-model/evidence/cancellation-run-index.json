@@ -8,6 +8,14 @@
       "disposition": "failed first prefill cancellation; returned in 0.765ms, unknown settlement latched unavailable after 5071.786ms; remaining five trials not run; exact owned runtime reaped; no cancellation qualification",
       "nativeCounterProjection": "cancellation-9b-first-native-counters.json",
       "nativeCounterProjectionSha256": "a59834158959fa3730382ddc718aef7b59801d12c80c12ef331bccd96f93638c"
+    },
+    {
+      "file": "cancellation-9b-batch512.json",
+      "testedRevision": "a12cea7c3c7d7b142c46bba1c6c361fa9d19d69a",
+      "sha256": "e2a8d8bd229a6b67994538cb0baf9953e15a6df990de5b0ee01f8b69a721c7ce",
+      "disposition": "failed first prefill capacity recovery; native task released at1536/8029 input tokens, but client latched unavailable after2770.492ms; remainingfive trials notrun; exactowned cleanup; no qualification",
+      "nativeCounterProjection": "cancellation-9b-batch512-native-counters.json",
+      "nativeCounterProjectionSha256": "10aabf5922366c3ff249120ca87d61cd5c270660958fab80b6d5187940a3dbca"
     }
   ]
 }
