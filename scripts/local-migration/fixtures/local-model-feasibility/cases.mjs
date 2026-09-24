@@ -20,7 +20,7 @@ export const cases = [
     expectedUnits: [fact('profile.full_name', 'Elena Sofia Marquez'), fact('identity.middle_initial', 'S'), fact('identity.other_last_names', ['Ruiz'])] },
   { id: 'extraction-work-authorization', family: 'extraction',
     documentText: doc('examples/eval/users/samir-desai/corpora/template-smoke/documents/work-authorization/004-lawful-permanent-resident-note.md'),
-    definitions: [status, uscis], expectedUnits: authPreferences },
+    definitions: [status, uscis], expectedUnits: authPreferences, criticalUnexpected: true },
   { id: 'extraction-stale-title', family: 'extraction',
     documentText: doc('examples/eval/users/maya-chen-newhire/corpora/packet-hard-required-v2/documents/hr-onboarding/035-hr-support-correction-thread.txt'),
     definitions: [title], activePreferences: [preference(title.slug, 'Operations Support Specialist')], expectedUnits: [fact(title.slug, 'Client Operations Associate')] },
@@ -49,7 +49,7 @@ export const cases = [
     fieldPolicies: { schemaVersion: 1, fields: [
       { fieldName: 'Resident', mode: 'fact', factKey: 'workAuthorization.citizenshipStatus', sourceSlugs: [status.slug], when: { factKey: 'workAuthorization.citizenshipStatus', sourceSlugs: [status.slug], equals: 'lawful permanent resident' } },
       { fieldName: 'UscisNumber', mode: 'fact', factKey: 'workAuthorization.uscisANumber', sourceSlugs: [uscis.slug] }] },
-    expectedUnits: [action('Resident', 'CHECK', null, [status.slug]), action('UscisNumber', 'SET_TEXT', '123456789', [uscis.slug])] },
+    expectedUnits: [action('Resident', 'CHECK', null, [status.slug]), action('UscisNumber', 'SET_TEXT', '123456789', [uscis.slug])], criticalUnexpected: true },
   { id: 'form-missing-and-unsupported', family: 'form', definitions: [], fields: [field('Phone'), field('Signature', 'signature', false)], activePreferences: [preference('profile.full_name', 'Elena Sofia Marquez'), preference(email.slug, 'elena.marquez@example.test')], expectedUnits: [], criticalUnexpected: true },
   { id: 'form-conflicting-status', family: 'form', definitions: [], fields: [field('CitizenshipStatus')], activePreferences: [preference(status.slug, 'lawful permanent resident'), preference('work_auth.citizenship_status', 'U.S. citizen')],
     fieldPolicies: { schemaVersion: 1, fields: [{ fieldName: 'CitizenshipStatus', mode: 'fact', factKey: 'workAuthorization.citizenshipStatus', sourceSlugs: [status.slug, 'work_auth.citizenship_status'] }] }, expectedUnits: [], criticalUnexpected: true },

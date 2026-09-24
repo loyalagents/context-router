@@ -18,7 +18,8 @@ export async function freezeManifest() {
     await runConsumer(entry, { generateStructured: (prompt, schema) => invoke(prompt, schema), generateStructuredWithFile: (prompt, file, schema) => invoke(prompt, schema, file) });
     if (calls.length !== 1) throw new Error('Unexpected fixture call count');
     entries.push({ id: entry.id, family: entry.family, expectedUnits: entry.expectedUnits,
-      fixtureSha256: digest(entry), calls, ...(entry.oracleAlternatives ? { oracleAlternatives: entry.oracleAlternatives } : {}) });
+      fixtureSha256: digest(entry), calls, criticalPolicy: entry.criticalUnexpected ? 'each-unexpected-validated-unit' : 'none',
+      ...(entry.oracleAlternatives ? { oracleAlternatives: entry.oracleAlternatives } : {}) });
   }
   return { version: 1, repetitions: 3, applicationBase: '837701b3633eed669dd2c2c518ffebc0e46d55d8', cases: entries };
 }

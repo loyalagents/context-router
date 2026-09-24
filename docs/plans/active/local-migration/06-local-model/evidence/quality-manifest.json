@@ -31,7 +31,8 @@
           "fileSha256": "04c045893b6f1d01734b3c4908aabd4fbdc6b2384058f43ea085e338581d4462",
           "mimeType": "text/plain"
         }
-      ]
+      ],
+      "criticalPolicy": "none"
     },
     {
       "id": "extraction-work-authorization",
@@ -46,7 +47,7 @@
           "value": "123456789"
         }
       ],
-      "fixtureSha256": "d7e657b46b53a472c8f2f5371dfee692ba9f17e8346fc7009a852974732cc848",
+      "fixtureSha256": "bd638c09a1bded0b29857defe16eefbccd04a0c87d61a796a6b886ebf612d7b5",
       "calls": [
         {
           "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
@@ -55,7 +56,8 @@
           "fileSha256": "bc5ad2fafc912df5c627a890d514b596a4523d1b60695756d6f116be3d33f7d1",
           "mimeType": "text/plain"
         }
-      ]
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
     },
     {
       "id": "extraction-stale-title",
@@ -75,7 +77,8 @@
           "fileSha256": "2ec6be879295c928b1c4b502e8526317587695860ddca25e8899d2b9bf44bbd8",
           "mimeType": "text/plain"
         }
-      ]
+      ],
+      "criticalPolicy": "none"
     },
     {
       "id": "extraction-absent-values",
@@ -90,7 +93,8 @@
           "fileSha256": "73441dbb5e304b41ce3e4d766feaef8a44a9e9c8857042df17352c65e6e19e23",
           "mimeType": "text/plain"
         }
-      ]
+      ],
+      "criticalPolicy": "none"
     },
     {
       "id": "extraction-other-person-decoy",
@@ -105,7 +109,8 @@
           "fileSha256": "adfeaf31b355e9d2c8864b2ad1cc1fa6210dafcf46e5fd16cac6e821494faa0a",
           "mimeType": "text/plain"
         }
-      ]
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
     },
     {
       "id": "extraction-instruction-injection",
@@ -125,7 +130,8 @@
           "fileSha256": "706df918286d50cd82d029752c2585c9a9bd64e7676ff9695f0aabe37d2a7b7e",
           "mimeType": "text/plain"
         }
-      ]
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
     },
     {
       "id": "search-personal-email",
@@ -140,7 +146,8 @@
           "messageSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
           "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572"
         }
-      ]
+      ],
+      "criticalPolicy": "none"
     },
     {
       "id": "search-work-authorization",
@@ -156,7 +163,8 @@
           "messageSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
           "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572"
         }
-      ]
+      ],
+      "criticalPolicy": "none"
     },
     {
       "id": "search-inaccessible-email",
@@ -169,7 +177,8 @@
           "messageSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
           "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572"
         }
-      ]
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
     },
     {
       "id": "search-hallucinated-secret",
@@ -182,7 +191,8 @@
           "messageSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
           "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572"
         }
-      ]
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
     },
     {
       "id": "consolidation-channel-alias",
@@ -200,6 +210,7 @@
           "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f"
         }
       ],
+      "criticalPolicy": "none",
       "oracleAlternatives": {
         "suggestions": [
           "MERGE",
@@ -219,7 +230,8 @@
           "messageSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
           "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f"
         }
-      ]
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
     },
     {
       "id": "form-address",
@@ -251,7 +263,8 @@
           "messageSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
           "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d"
         }
-      ]
+      ],
+      "criticalPolicy": "none"
     },
     {
       "id": "form-permanent-resident",
@@ -274,14 +287,15 @@
           ]
         }
       ],
-      "fixtureSha256": "32502af797dcf296628268de9741bc153e0bc508afbb58f94d90310870d83308",
+      "fixtureSha256": "83573f32fd9fb2a9f227b91b0836371c7464ee5510b049d8931d9d01820d14c2",
       "calls": [
         {
           "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
           "messageSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
           "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d"
         }
-      ]
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
     },
     {
       "id": "form-missing-and-unsupported",
@@ -294,7 +308,8 @@
           "messageSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
           "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d"
         }
-      ]
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
     },
     {
       "id": "form-conflicting-status",
@@ -307,7 +322,8 @@
           "messageSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
           "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d"
         }
-      ]
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
     }
   ]
 }

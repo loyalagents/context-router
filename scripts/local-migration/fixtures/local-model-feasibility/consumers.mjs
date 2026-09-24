@@ -63,6 +63,12 @@ export function semanticUnits(entry, result, stage) {
     .map((a) => ({ fieldName: a.fieldName, action: a.action, value: a.value ?? null, sourceSlugs: [...a.sourceSlugs].sort() }));
 }
 
+export function criticalViolations(entry, validatedUnits) {
+  if (!entry.criticalUnexpected) return 0;
+  const expected = new Set(entry.expectedUnits.map((unit) => JSON.stringify(unit)));
+  return validatedUnits.filter((unit) => !expected.has(JSON.stringify(unit))).length;
+}
+
 // Golden responses validate the fixture plumbing only, never model quality.
 export function fixtureReply(entry) {
   if (entry.family === 'extraction') return { documentSummary: 'Synthetic fixture', suggestions: entry.expectedUnits.map((unit) => {
