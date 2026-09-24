@@ -13,7 +13,7 @@ const terminal = { index: 0, stop: true, content: '', tokens_predicted: 2, token
   stop_type: 'eos', truncated: false };
 const send = (response, value) => response.write(`data: ${JSON.stringify(value)}\n\n`);
 
-async function fixture(t, completion, { ip } = {}) {
+async function fixture(t, completion, { ip, statusTimeoutMs = 100 } = {}) {
   const credentials = await createTlsFixture({ ip });
   let server; let client;
   t.after(async () => {
@@ -40,7 +40,7 @@ async function fixture(t, completion, { ip } = {}) {
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   client = new ProbeClient({ port: server.address().port, certificate: credentials.cert, apiKey: credentials.apiKey,
-    pollMs: 20, settleMs: 180, statusTimeoutMs: 100 });
+    pollMs: 20, settleMs: 180, statusTimeoutMs });
   return { client, state, credentials, server };
 }
 
@@ -219,4 +219,22 @@ test('successful terminal result survives intentional cleanup of an outstanding 
   assert.equal((await client.complete('synthetic')).text, 'ok');
   assert.equal(client.state, 'ready');
   assert.equal(statuses, 2);
+});
+
+test('active control polling uses its readiness budget while cancellation polling stays short', async (t) => {
+  let completionResponse;
+  const { client, state } = await fixture(t, async (_, res) => {
+    completionResponse = res;
+    res.setHeader('content-type', 'text/event-stream'); send(res, admission);
+  }, { statusTimeoutMs: 1000 });
+  let statuses = 0;
+  state.statusHook = async (_, res) => {
+    if (++statuses !== 2) return false;
+    await delay(650);
+    res.end(JSON.stringify([{ id: 0, is_processing: true }]));
+    setTimeout(() => { send(completionResponse, chunk); send(completionResponse, terminal); completionResponse.end(); }, 5);
+    return true;
+  };
+  assert.equal((await client.complete('synthetic')).text, 'ok');
+  assert.equal(client.state, 'ready');
 });

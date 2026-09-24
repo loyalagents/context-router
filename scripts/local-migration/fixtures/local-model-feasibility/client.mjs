@@ -169,11 +169,11 @@ export class ProbeClient {
     this.#abort = abort;
     signal?.addEventListener('abort', externalAbort, { once: true });
     const deadlineTimer = setTimeout(() => abort('deadline'), Math.max(0, effectiveDeadline - performance.now()));
-    const status = async (duringSettlement = false) => {
+    const status = async (duringSettlement = false, preserveAtAbort = false) => {
       if (++controlRequests > 90 || controlLost) throw failure();
       const result = await probeJson(this.#configuration, '/slots', undefined, {
         connectionAgent: control, expectedSocket: controlSocket,
-        signal: duringSettlement ? undefined : controller.signal,
+        signal: duringSettlement || preserveAtAbort ? undefined : controller.signal,
         timeoutMs: duringSettlement ? Math.min(500, this.#statusTimeoutMs) : this.#statusTimeoutMs,
         onSocket: (socket) => {
           trackSocket(socket);
@@ -194,7 +194,7 @@ export class ProbeClient {
       pollTimer = setTimeout(() => {
         if (!active || abortKind) return;
         // A status already in flight at abort is awaited, never reused as a settlement witness.
-        pendingStatus = status(true).catch(() => { if (active) { controlLost = true; abort('unavailable'); } });
+        pendingStatus = status(false, true).catch(() => { if (active) { controlLost = true; abort('unavailable'); } });
         pendingStatus.finally(() => { if (active && !abortKind) schedulePoll(); });
       }, this.#pollMs);
     };

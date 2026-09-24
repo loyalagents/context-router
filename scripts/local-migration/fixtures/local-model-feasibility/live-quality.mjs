@@ -25,6 +25,7 @@ export async function runQuality(configuration, client, { render = renderForComp
         const task = attempt === 0 ? prompt : `${prompt}\n\nThe previous response failed JSON/schema validation. Return one complete JSON value satisfying the requested schema. Do not include commentary.`;
         const observation = { attempt, promptSha256: digest(task), schemaSha256: digest(grammar), structureValid: false };
         calls.push(observation);
+        if (client.state !== 'ready') { fatalCall = true; observation.unavailableBeforePreparation = true; throw new Error('Quality transport unavailable'); }
         let rendered; let response;
         try { rendered = await render(configuration, task, file, callDeadline); }
         catch { fatalCall = true; observation.preparationFailed = true; observation.elapsedMs = performance.now() - callStart; throw new Error('Quality preparation failed'); }
