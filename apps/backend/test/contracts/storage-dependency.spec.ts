@@ -5,6 +5,83 @@ import { storageDependencyViolations } from "./storage-dependency-check";
 
 describe("storage dependency graph", () => {
   it.each([
+    "import { DatabaseSync as Db } from 'node:sqlite';",
+    "import type { DatabaseSync } from 'node:sqlite';",
+    "export { DatabaseSync } from 'node:sqlite';",
+    "export type { DatabaseSync } from 'node:sqlite';",
+    "export * from 'node:sqlite';",
+    "export * as sqlite from 'node:sqlite';",
+    "import sqlite = require('node:sqlite');",
+    "type Driver = import('node:sqlite').DatabaseSync;",
+    "const sqlite = require('node:sqlite');",
+    "const sqlite = module.require('node:sqlite');",
+    "const sqlite = import('node:sqlite');",
+  ])("rejects SQLite provider syntax %s", (source) => {
+    expect(
+      storageDependencyViolations(
+        ["/src/application.ts"],
+        () => source,
+        () => undefined,
+      ),
+    ).toEqual(["/src/application.ts -> node:sqlite"]);
+  });
+
+  it.each([
+    "process.getBuiltinModule('node:sqlite');",
+    "process['getBuiltinModule']('node:sqlite');",
+    "import { getBuiltinModule as load } from 'node:process'; load('node:sqlite');",
+    "import * as runtime from 'node:process'; runtime.getBuiltinModule('node:sqlite');",
+    "import runtime from 'process'; runtime['getBuiltinModule']('node:sqlite');",
+    "import runtime = require('node:process'); runtime.getBuiltinModule('node:sqlite');",
+    "const runtime = require('process'); runtime.getBuiltinModule('node:sqlite');",
+    "const { getBuiltinModule: load } = process; load('node:sqlite');",
+    "const { getBuiltinModule: load } = require('node:process'); load('node:sqlite');",
+    "const load = (await import('node:process')).getBuiltinModule; load('node:sqlite');",
+    "export { getBuiltinModule as load } from 'node:process';",
+    "export * from 'node:process';",
+    "export * as runtime from 'process';",
+  ])("rejects builtin-loader capability syntax %s", (source) => {
+    expect(
+      storageDependencyViolations(
+        ["/src/application.ts"],
+        () => source,
+        () => undefined,
+      ),
+    ).toEqual(["/src/application.ts -> getBuiltinModule capability"]);
+  });
+
+  it.each([
+    ["export type { DatabaseSync } from 'node:sqlite';", "node:sqlite"],
+    [
+      "export * from '@infrastructure/storage/sqlite/sqlite-database';",
+      "@infrastructure/storage/sqlite/sqlite-database",
+    ],
+  ])(
+    "traces configured alias to SQLite provider through %s",
+    (barrel, provider) => {
+      const files = {
+        "/src/application.ts": "import type { Hidden } from '@config/barrel';",
+        "/src/config/barrel.ts": barrel,
+      };
+      expect(
+        storageDependencyViolations(
+          ["/src/application.ts"],
+          (file) => files[file],
+          (specifier) =>
+            specifier === "@config/barrel"
+              ? "/src/config/barrel.ts"
+              : specifier.startsWith("@infrastructure/")
+                ? "/src/infrastructure/storage/sqlite/sqlite-database.ts"
+                : undefined,
+          ["@config/*", "@infrastructure/*"],
+        ),
+      ).toEqual([
+        `/src/application.ts -> /src/config/barrel.ts -> ${provider}`,
+      ]);
+    },
+  );
+
+  it.each([
     "import { createRequire } from 'node:module'; const load = createRequire(__filename); load('pg');",
     "import { createRequire as makeLoader } from 'module'; const load = makeLoader(__filename); load('pg');",
     "import * as moduleApi from 'node:module'; const load = moduleApi.createRequire(__filename); load('pg');",
@@ -57,6 +134,8 @@ describe("storage dependency graph", () => {
   });
 
   it.each([
+    "import { platform } from 'node:process'; platform;",
+    "import * as runtime from 'node:process'; runtime.env;",
     "import { isBuiltin } from 'node:module'; isBuiltin('fs');",
     "import * as moduleApi from 'module'; moduleApi.isBuiltin('fs');",
     "const { isBuiltin } = require('node:module'); isBuiltin('fs');",

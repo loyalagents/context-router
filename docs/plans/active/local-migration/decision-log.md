@@ -37,20 +37,27 @@ step plan that resolves them.
 
 ### LM-003: SQLite for local application data
 
-- Status: Provisional
-- Decision: SQLite is the current local persistence candidate. Step 05 must confirm
-  it and choose the access library, schema bootstrap, transaction rules, and
-  backup mechanism before implementation.
+- Status: Accepted — Step 05 CP1 selection reviewed at `0a6cda5af9ec90415792d2813f097e6bce62bfaa`
+- Decision: use SQLite for local application data with the reviewed access,
+  bootstrap, transaction and backup mechanisms below. Production contract and
+  package validation remains required before landing.
 - Consequence: application code must depend on storage behavior rather than
   Prisma/PostgreSQL-specific types or query semantics.
-- Step 05 CP1 proposed selection (affected review pending): Node 24.21.0 built-in
+- Step 05 CP1 accepted selection: Node 24.21.0 built-in
   `node:sqlite` / SQLite 3.53.4, fresh versioned compiled schema plus random logical
   target, closed-stage bootstrap and explicit recovery, DELETE/FULL journals,
   owned one-attempt connections with busy timeout zero and one pre-BEGIN
   scheduling yield, and quiescent matching-pair backup/new-root restore. The
   [feasibility record](05-local-database-runtime/feasibility.md) binds the exact
-  evidence, admission limits and compatibility rules. This proposal does not
-  yet authorize full adapter implementation or mark LM-003 Accepted.
+  evidence, admission limits and compatibility rules. Independent architecture,
+  compatibility and persistence/security reviews approved the frozen selection;
+  the coordinator authorized tests-first production implementation.
+- CP2 admission clarification (affected persistence/security review approved):
+  inspecting a sidecar-free unsupported WAL header can transiently create empty
+  engine WAL/SHM files before rejection. Reject non-DELETE before configured
+  settings; normal close restores the entry set without main/identity conversion.
+  Crash or uncertain close may retain those files; preserve and reject them,
+  never application-unlink or implicitly recover WAL. Native-owner fencing remains.
 
 ### LM-004: No cloud sync in the initial local product
 
@@ -253,7 +260,7 @@ step plan that resolves them.
   Step 09 owns final paths, keychain/process isolation, backup, and destructive
   identity reset. A reachable local listener remains unauthorized without
   Host/Origin/CSRF/DNS-rebinding evidence.
-- Step 05 mechanism proposal (affected review pending): preserve the durable
+- Step 05 accepted mechanism (reviewed at the same CP1 revision): preserve the durable
   operation/candidate, empty/exact reconciliation, terminal ownership and
   terminate-AND-reap recovery contract using a worker-owned main SQLite
   connection retaining an actual EXCLUSIVE lock across COMMIT and filesystem
@@ -261,10 +268,11 @@ step plan that resolves them.
   distinct; no reconnect/takeover follows timeout. PostgreSQL advisory ownership
   remains the explicit reference mode. Database instance identity is persisted
   metadata, independent of movable paths/inodes. The
-  [CP1 record](05-local-database-runtime/feasibility.md) documents proposed
+  [CP1 record](05-local-database-runtime/feasibility.md) documents the reviewed
   bootstrap/journal and matching-pair backup mechanisms without changing the
-  stable principal or credential protocol. Existing LM-015 acceptance does not
-  stand in for approval of this new mechanism.
+  stable principal or credential protocol. The affected independent selection
+  reviews explicitly approved this mechanism; full production recovery and
+  packaged-runtime evidence remains required.
 
 ### LM-016: Risk-weighted agent execution and bounded PR sequencing
 

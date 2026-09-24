@@ -1,6 +1,6 @@
 # Step 05: Local Database Runtime
 
-- Status: CP1 feasibility complete; affected selection review pending before full adapters
+- Status: CP2 storage foundation complete; CP3 held identity coordination in progress
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Working branch: `codex/local-migration-05-local-database-runtime`
@@ -13,7 +13,7 @@
 
 ## Outcome And Entry Evidence
 
-Implement a fresh file-backed local database behind Step 04's application-owned storage contracts, including stable identity, restart, explicit recovery and matching database/identity backup feasibility. The actual local preview remains non-listening and has no PostgreSQL, Docker, Auth0 or hosted-model runtime dependency. SQLite/access-library selection is provisional until the reviewed bounded feasibility checkpoint passes. Preserve hosted and explicit PostgreSQL identity-reference coverage.
+Implement a fresh file-backed local database behind Step 04's application-owned storage contracts, including stable identity, restart, explicit recovery and matching database/identity backup feasibility. The actual local preview remains non-listening and has no PostgreSQL, Docker, Auth0 or hosted-model runtime dependency. SQLite and the built-in node:sqlite library were selected after the reviewed bounded feasibility checkpoint. Preserve hosted and explicit PostgreSQL identity-reference coverage.
 
 Step 04 [PR #163](https://github.com/loyalagents/context-router/pull/163) was human-merged at the planning base from tested head `c83bea0add7039cad814567e05d79f4f8b275aba`. Fresh GitHub verification confirms successful standard CI [35928247258](https://github.com/loyalagents/context-router/actions/runs/35928247258) and dedicated migration gate [35928247421](https://github.com/loyalagents/context-router/actions/runs/35928247421). Fresh origin/main matches, full history/connectivity and prerequisite ancestry pass, and this dedicated worktree was clean.
 
@@ -25,6 +25,6 @@ Read [orchestration](../orchestration.md), [decisions](../decision-log.md), [age
 
 The [initial plan](plan.md) first establishes the durable-state/failure model, then proposes one bounded node:sqlite feasibility candidate. Fresh independent plan reviews and coordinator approval precede executable feasibility. Successful feasibility requires a recorded database/library/bootstrap/transaction/backup decision and affected review before full adapter work. Implementation then proceeds tests first without a generic permission pause, followed by fresh complete-diff reviews and exact final-head evidence.
 
-The [CP1 feasibility and proposed selection](feasibility.md) records the exact runtime, file/process/backup probes and PostgreSQL characterization. LM-003/LM-015 mechanism additions remain proposals until affected independent selection review passes.
+The [CP1 feasibility and accepted selection](feasibility.md) records the exact runtime, file/process/backup probes and PostgreSQL characterization. All affected independent selection reviews approved frozen revision `0a6cda5af9ec90415792d2813f097e6bce62bfaa`, and the coordinator authorized production implementation.
 
 Step 05 is the sole active primary step. No local model, MCP/browser/UI cutover, installer, LAN service, historical importer, cloud sync, automatic merge or Step 06 activation belongs here.

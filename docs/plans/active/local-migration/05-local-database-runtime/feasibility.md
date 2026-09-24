@@ -1,12 +1,12 @@
-# Step 05 CP1 Feasibility And Proposed Selection
+# Step 05 CP1 Feasibility And Accepted Selection
 
-- Status: evidence complete; affected independent selection review pending before full adapters
+- Status: selection approved at frozen `0a6cda5af9ec90415792d2813f097e6bce62bfaa`; production evidence remains required
 - Planning base: `3426dc556fea88d94a360329e7c685bc9acc155e`
 - Authorizing plan C: `b90e1ae45fa6b8dc85f9298d1d511b297535c82a`, SHA-256 `ae2cbb90987a7eeca87a4570a5e2c83539aece3d19e788b4d5e442c46f230893`
 - Sole writer: `/root/step05_writer`, requested Astra Extra High (`xhigh`), explicit request accepted; serving internals unverified
-- Scope: bounded mechanism probes only; no production adapter, CLI cutover or decision-acceptance claim
+- Scope: bounded mechanism probes only; no completed production adapter or CLI-cutover claim
 
-## Proposed Selection For Review
+## Accepted Selection
 
 Select Node 24.21.0's built-in `node:sqlite` and SQLite 3.53.4 for the new local mode, with DELETE rollback journals, FULL synchronization, defensive behavior, foreign keys, extension loading disabled, trusted schema disabled and memory temporary storage. No added native dependency is required. The API remains release-candidate stability; exact pinned runtime and package tests remain required. Existing PostgreSQL modes remain active.
 
@@ -64,4 +64,4 @@ External evidence directory: `/private/tmp/step05-activation-evidence/`. Final s
 
 ## Review Boundary
 
-Affected architecture/maintainability/packaging and persistence/recovery/security review must approve this selection and LM-003/LM-015 additions before full adapters. Bounded compatibility/test review also checks the scheduling and prefix mechanism. Ordinary busy-zero/yield, journal admission, retained worker ownership, intrinsic replay limits, scalar prefix predicate and matching-pair mechanism are explicit review subjects. All Step 03/04 invariant and final-review obligations remain active. No next-step activation or merge is authorized.
+Affected architecture/maintainability/packaging/scope (`/root/selection_architecture`, Astra xhigh), persistence/recovery/security/privacy (`/root/plan_persistence_b`, resumed Astra xhigh), and compatibility/tests (`/root/plan_compatibility`, Astra High) approved the exact frozen selection without blockers. Explicit settings were accepted; internals are unverified. The coordinator then released production implementation. Ordinary busy-zero/yield, journal admission, retained worker ownership, intrinsic replay limits, scalar prefix predicate and matching-pair mechanism are explicit review subjects. All Step 03/04 invariant and final-review obligations remain active. No next-step activation or merge is authorized.
