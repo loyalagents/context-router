@@ -238,3 +238,32 @@ test('active control polling uses its readiness budget while cancellation pollin
   assert.equal((await client.complete('synthetic')).text, 'ok');
   assert.equal(client.state, 'ready');
 });
+
+test('prompt, schema and encoded request-body bounds reject before any HTTP dispatch', async (t) => {
+  const { client, state } = await fixture(t, async () => assert.fail('input limits must not dispatch'));
+  for (const [prompt, options] of [
+    ['x'.repeat(128 * 1024 + 1), {}],
+    ['short', { schema: { description: 'x'.repeat(32 * 1024) } }],
+    ['\u0000'.repeat(64000), {}],
+  ]) {
+    await assert.rejects(client.complete(prompt, options), /Local model input limit/);
+    assert.equal(client.state, 'ready');
+  }
+  assert.deepEqual(state.requests, []);
+});
+
+for (const responseKind of ['http-error', 'malformed-frame', 'truncated-frame']) {
+  test(`TLS ${responseKind} fails without returning partial output or retrying`, async (t) => {
+    const { client, state } = await fixture(t, async (_, res) => {
+      if (responseKind === 'http-error') { res.writeHead(503).end('{"private":"must not escape"}'); return; }
+      res.setHeader('content-type', 'text/event-stream'); send(res, admission); send(res, chunk);
+      if (responseKind === 'malformed-frame') res.end('data: {"private":"must not escape"\n\n');
+      else { send(res, { ...terminal, truncated: true }); res.end(); }
+    });
+    let caught;
+    try { await client.complete('synthetic'); } catch (error) { caught = error; }
+    assert.equal(caught?.message, 'Local model unavailable');
+    await client.settled();
+    assert.equal(state.completions, 1);
+  });
+}
