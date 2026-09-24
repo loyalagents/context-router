@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Document status: amendment C independently approved for bounded CP1; awaiting required asset/target decisions; no production selection/integration approval
+- Document status: amendment C independently approved for bounded CP1; asset/target consent recorded; CP1 executing; no production selection/integration approval
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -68,7 +68,7 @@ The two AI ports return string/Zod-validated data and expose file methods, but n
 
 Five consumers are Vertex test chat, preference extraction (including one additional text call per duplicate group), smart search, schema consolidation and AcroForm fill. Extraction always calls the file method, even for text; JSON/YAML currently remap to text/plain. Its duplicate fallback catches all failures and must not turn cancellation/deadline into success. AcroForm extracts/fills locally and sends metadata and preferences as text. No PDF document-text parser exists; pdf-lib alone is not that capability.
 
-The observed machine is M1 Max, 64 GiB RAM, macOS 15.1.1 arm64. No candidate runtime/weights were found in bounded discovery. Qualification of this exact target and specific asset downloads await user answers; no lower-memory/OS support is inferred. Linux CI is deterministic application evidence, not Mac GPU or native Windows qualification.
+The observed machine is M1 Max, 64 GiB RAM, macOS 15.1.1 arm64. No candidate runtime/weights were found in bounded discovery. The user has approved the pinned runtime and 4B model, optional 9B only if useful, temporary storage under `/private/tmp/context-router-step06-assets`, and initial qualification on the observed M1 Max/64 GiB/macOS 15.1.1. No further initial consent is pending. Lower hardware/other OS versions remain unqualified. Linux CI is deterministic application evidence, not Mac GPU or native Windows qualification.
 
 ## Scope And Non-Goals
 
@@ -148,7 +148,7 @@ Pinned [runtime API](https://github.com/ggml-org/llama.cpp/blob/7fe450e19305b828
 
 Independent plan architecture/scope, compatibility/tests and safety approval precedes executable probes. Approval initially authorizes CP1 only. Asset consent and Mac-target answer remain separate required gates before live execution. After plan approval, deterministic harness development may proceed while those answers are pending; it acquires no runtime/model assets. Build a checked-in bounded probe and deterministic harness tests before live use; behavior-neutral exports of actual private schemas for probing are permitted. No production adapter or composition cutover yet.
 
-Acquire only consented exact assets under `/private/tmp/context-router-step06-assets`, one model loaded at a time. The user has approved this temporary location for now; durable asset storage will be decided later. Keep weights and runtime binaries outside Git; location approval does not select between the outstanding 4B-only and optional-9B download choices. Check published byte counts and SHA-256 before execution, archive entries before extraction, binary version/source, license/provenance, template hash and non-thinking rendering. Do not infer conversion's original checkpoint revision from the current model card. Start with 4B; 9B is a consented challenger only if useful.
+Acquire only consented exact assets under `/private/tmp/context-router-step06-assets`, one model loaded at a time. The user has approved this temporary location for now; durable asset storage will be decided later. Keep weights and runtime binaries outside Git; the user subsequently approved 4B first, with optional 9B if useful. Check published byte counts and SHA-256 before execution, archive entries before extraction, binary version/source, license/provenance, template hash and non-thinking rendering. Do not infer conversion's original checkpoint revision from the current model card. Start with 4B; 9B is a consented challenger only if useful.
 
 Pinned candidates:
 
@@ -231,7 +231,7 @@ Pinned-source investigation by read-only `/root/safety_discovery` at its accepte
 
 All three affected reviewers approved C at `5bcc84feda9c5eb7b0e51d1cc0648b080bc1cf1e`, plan SHA-256 `62578cf563356aa6fb93c42e46ea9c800098a3114a3bdf861ff2189bcb660356`, for the bounded CP1 experiment only. `/root/plan_architecture` approved internal streaming as a buffered adapter detail and carried forward unaffected B architecture/scope/composition/retained-mode/ownership gates. `/root/plan_compatibility` approved new framing/cancellation evidence requirements, carried forward unaffected B consumer/quality/schema/MIME/AcroForm/deadline/hosted/registry/evidence contracts, and independently approved the corrected quality component after both findings were resolved. `/root/plan_safety` approved own-response admission plus fresh post-abort same-owned-instance idle as a candidate to measure, and carried forward unaffected B TLS/credentials/privacy/parser/cleanup/offline/resource criteria. It clarified that the status REQUEST must be dispatched after abort; an earlier outstanding poll is not settlement evidence. The preceding requirement now says this explicitly. All reviewers were read-only, with their accepted High/Extra High configurations, and all retained the unresolved production manual-instance/restart/certificate-reuse gate before CP2. No live evidence or runtime selection was approved.
 
-The [feasibility record](feasibility.md) records eleven passing deterministic scorer tests and the source findings. Required asset consent and Mac-target confirmation are still pending; no runtime/model has been downloaded or started. The next live-dependent work remains paused for those decisions. CP1 harness completion and measurements, selection, integration, fresh final review, final local gate, final pushed-head CI and the single PR remain outstanding.
+The [feasibility record](feasibility.md) records eleven passing deterministic scorer tests and the source findings. The user has approved the pinned runtime and 4B model, optional 9B only if useful, temporary storage under `/private/tmp/context-router-step06-assets`, and initial qualification on the observed M1 Max/64 GiB/macOS 15.1.1. No further initial consent is pending. Lower hardware/other OS versions remain unqualified. Asset acquisition and deterministic harness completion may now proceed before live measurement. CP1 harness completion and measurements, selection, integration, fresh final review, final local gate, final pushed-head CI and the single PR remain outstanding.
 
 ## Parallel Work And Conflict Surfaces
 
@@ -245,7 +245,7 @@ Rollback selects the unchanged no-model preview or restores compatible prior cod
 
 ## Risks And Decision Gates
 
-Required user answers: exact asset consent and qualified Mac target. CP1 selection must prove pinned TLS/server authentication, real schema/template behavior, parser/package closure, model task quality and cancellation/capacity. Failure in any required dimension blocks production selection. Material deviations require affected renewed plan review; continue automatically between approved checkpoints. One PR remains the default.
+Initial user decisions are confirmed: runtime/4B and optional 9B, temporary asset location, and the observed Mac target. CP1 selection must prove pinned TLS/server authentication, real schema/template behavior, parser/package closure, model task quality and cancellation/capacity. Failure in any required dimension blocks production selection. Material deviations require affected renewed plan review; continue automatically between approved checkpoints. One PR remains the default.
 
 ## Exit Criteria And Closeout
 
