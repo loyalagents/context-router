@@ -28,6 +28,7 @@ import { fixtureRows } from "./fixture-rows";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpService } from "@/mcp/mcp.service";
+import { serializeGraphqlSchema } from "@/mcp/resources/graphql-schema-sdl";
 import { McpAuthorizationService } from "@/mcp/auth/mcp-authorization.service";
 import { McpAccessLogService } from "@/mcp/access-log/mcp-access-log.service";
 import { PreferenceMutateTool } from "@/mcp/tools/preference-mutate.tool";
@@ -173,6 +174,12 @@ describe("real SQLite local application", () => {
       expect(req.user.userId).toBe(state.principalId);
     } else await expect(call).rejects.toThrow("Unauthorized");
   }
+  it("serializes the real file-backed local schema exactly as the tracked public SDL", () => {
+    expect(app.get(StorageUnitOfWork)).toBeInstanceOf(SqliteStorageUnitOfWork);
+    expect(serializeGraphqlSchema(schema)).toBe(
+      fs.readFileSync(path.resolve(__dirname, "../../src/schema.gql"), "utf8"),
+    );
+  });
   it("wires real ports, catalog, exact GraphQL/HTTP authentication and self-only lookup without a listener or hosted providers", async () => {
     expect(app.get(StorageUnitOfWork)).toBeInstanceOf(SqliteStorageUnitOfWork);
     expect(() => app.get(PreferenceAuditService)).toThrow();

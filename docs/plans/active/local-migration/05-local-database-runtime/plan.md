@@ -1,6 +1,6 @@
 # Step 05: Local Database Runtime
 
-- Document status: CP2 storage foundation complete; CP3 held identity coordination in progress
+- Document status: implementation and CP5 integration complete; review/validation status in PR #164; active pending human merge
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Planning base commit: `3426dc556fea88d94a360329e7c685bc9acc155e`
@@ -12,7 +12,7 @@
 - Depends on: human-merged Step 04 [PR #163](https://github.com/loyalagents/context-router/pull/163)
 - Risk profile: sensitive / quality-first because newly created durable data, identity, transaction ownership, interruption, recovery and backup must remain correct
 - Intended implementation PR count: one cohesive PR with internal checkpoints
-- Implementation PR: pending
+- Implementation PR: [PR #164](https://github.com/loyalagents/context-router/pull/164) — current review verdicts and exact-head validation evidence
 - Supported modes after merge: retained `hosted-baseline`, explicit PostgreSQL `local-identity-preview` reference, and new non-listening `local-database-preview`
 - Last updated: 2026-09-23
 
