@@ -1,15 +1,13 @@
 # Local-First Migration
 
 - Status: active program index
-- Step 05 PR: [PR #164](https://github.com/loyalagents/context-router/pull/164) — current review verdicts and exact-head validation evidence; Step 05 remains active pending human merge
-- Current step: `05-local-database-runtime` — Step 04 [PR #163](https://github.com/loyalagents/context-router/pull/163) was human-merged at `3426dc556fea88d94a360329e7c685bc9acc155e` from tested head `c83bea0add7039cad814567e05d79f4f8b275aba`
-- Step 04 final evidence: standard CI [35928247258](https://github.com/loyalagents/context-router/actions/runs/35928247258) and dedicated migration gate [35928247421](https://github.com/loyalagents/context-router/actions/runs/35928247421), both successful on that head
-- Step 05 planning base: `3426dc556fea88d94a360329e7c685bc9acc155e`; clean-base full activation gate passed all twelve phases before edits
-- Coordinator: `/root`, repository-read-only
-- Outcome owner and sole repository writer: `/root/step05_writer` on `codex/local-migration-05-local-database-runtime`
-- Concrete next action: complete review and exact-head validation tracked in PR #164; leave merge to a human and keep Step 06 inactive
-- Review date: 2026-10-07 or Step 05 final review, whichever comes first
-- Last reviewed: 2026-09-23
+- Last completed step: `05-local-database-runtime` — [PR #164](https://github.com/loyalagents/context-router/pull/164), human-merged at `837701b3633eed669dd2c2c518ffebc0e46d55d8` from tested head `91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b`
+- Step 05 final evidence: standard CI [35957573071](https://github.com/loyalagents/context-router/actions/runs/35957573071) and dedicated migration gate [35957573023](https://github.com/loyalagents/context-router/actions/runs/35957573023), both successful on that head; reverified 2026-09-24
+- Current primary implementation step: `06-local-model` — [active plan](06-local-model/plan.md), independent plan review pending
+- Coordinator and sole repository writer for Step 06: `/root`; all other agents read-only
+- Concrete next action: independent review of the [Step 06 plan](06-local-model/plan.md), then consented bounded feasibility and affected selection review in the same PR
+- Review date: Step 06 selection review or 2026-10-08, whichever comes first
+- Last reviewed: 2026-09-24
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions
@@ -21,13 +19,15 @@ and overlap candidates. This is execution strategy, not step activation or an
 approved implementation plan. General guidance lives in
 [`AGENT_WORKFLOW.md`](../../../useful/AGENT_WORKFLOW.md).
 
-## Execute Step 05
+## Prepare And Execute Step 06
 
-1. Read the Step 05 [README](05-local-database-runtime/README.md) and [plan](05-local-database-runtime/plan.md), including completed initial/selection review and checkpoint evidence.
-2. Keep the Step 04 [plan](04-storage-boundaries/plan.md) and Step 03 [recovery/R1 plan](03-local-identity/plan.md) while their contracts remain required.
-3. Keep one cohesive PR and `/root/step05_writer` as sole repository writer. The coordinator/reviewers remain read-only.
-4. Preserve the accepted SQLite/library/bootstrap/transaction/backup decisions and reference modes; material mechanism changes require affected review. The actual local implementation and CP5 integration are complete.
-5. Require real file/process/recovery/backup/package evidence, fresh complete-diff final review, exact-base local gate and final pushed-head CI. Leave merge to a human; do not activate Step 06.
+1. Start with the [handoff](step-06-handoff.md) and [research synthesis](research/local-model/README.md). The original GPT/Gemini reports are preserved beside the synthesis with warnings and corrections; they are not approved plans or setup scripts.
+2. Target Apple Silicon first, with manual runtime/model setup now and a managed app later. Native Windows/Linux qualification is an early Step 09 follow-up, not a Step 06 whole-app support promise.
+3. Prefer a bounded pinned `llama.cpp` feasibility candidate; choose the exact runtime/model/capabilities through reviewed evidence, not report benchmarks. Keep one PR with internal feasibility, integration and acceptance checkpoints.
+4. Use Astra Extra High for the orchestrator, role-specific High/Extra High work, one sole writer and fresh independent review. The handoff specifies clean-base activation when these preparation docs are still uncommitted.
+5. Retain the Step 05 [README](05-local-database-runtime/README.md), [plan](05-local-database-runtime/plan.md) and feasibility evidence, plus the Step 04 [plan](04-storage-boundaries/plan.md) and Step 03 [recovery/R1 plan](03-local-identity/plan.md) while required. Preserve identity, storage and supported reference modes.
+
+Step 06 is now the sole active step after its clean-base gate. Activation does not approve executable feasibility or product implementation; the draft plan and required user decisions remain gates.
 
 Only activated steps have detailed directories. Create later step directories
 from the template when they are activated; an explicitly approved overlap may

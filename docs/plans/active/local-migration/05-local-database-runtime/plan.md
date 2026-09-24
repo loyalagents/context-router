@@ -1,6 +1,6 @@
 # Step 05: Local Database Runtime
 
-- Document status: implementation and CP5 integration complete; review/validation status in PR #164; active pending human merge
+- Document status: complete; PR #164 human-merged at `837701b3633eed669dd2c2c518ffebc0e46d55d8`; historical plan/evidence retained for Step 06
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Planning base commit: `3426dc556fea88d94a360329e7c685bc9acc155e`
@@ -14,7 +14,16 @@
 - Intended implementation PR count: one cohesive PR with internal checkpoints
 - Implementation PR: [PR #164](https://github.com/loyalagents/context-router/pull/164) — current review verdicts and exact-head validation evidence
 - Supported modes after merge: retained `hosted-baseline`, explicit PostgreSQL `local-identity-preview` reference, and new non-listening `local-database-preview`
-- Last updated: 2026-09-23
+- Last updated: 2026-09-24 (merge record only; implementation review history unchanged)
+
+Merge verification on 2026-09-24 confirmed final head
+`91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b` passed standard CI
+[35957573071](https://github.com/loyalagents/context-router/actions/runs/35957573071)
+and dedicated migration gate
+[35957573023](https://github.com/loyalagents/context-router/actions/runs/35957573023).
+The checkpoint and review records below describe the implementation at that
+time; their pre-merge instructions are historical, not a current activation.
+Step 06 remains inactive pending its own gate and plan review.
 
 ## Outcome
 
@@ -378,4 +387,4 @@ Named identity recovery runs only after all original admins are terminated and r
 
 ## Exit Criteria And Closeout
 
-One independently reviewed PR provides the actual local runtime, full file-backed contracts/application/process/recovery and backup evidence, compiled staged restart, current canonical docs/registry/gate, final exact-base local gate and final pushed-head standard/dedicated CI. All blocking plan/final findings are resolved. Human review and merge are the only landing action remaining. Step 05 stays the sole active primary step until a later authorized activation records its human merge; Step 06 is not activated. Retain Step 03/04 plans while their contracts remain needed.
+One independently reviewed PR provides the actual local runtime, full file-backed contracts/application/process/recovery and backup evidence, compiled staged restart, current canonical docs/registry/gate, final exact-base local gate and final pushed-head standard/dedicated CI. All blocking plan/final findings are resolved. PR #164 is now human-merged, with final-head CI and merge verified above. Step 06 is not activated by this closeout record. Retain Step 03/04/05 plans while their contracts remain needed; use the [Step 06 handoff](../step-06-handoff.md) for the next activation.
