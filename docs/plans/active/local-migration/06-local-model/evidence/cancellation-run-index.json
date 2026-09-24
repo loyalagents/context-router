@@ -5,7 +5,9 @@
       "file": "cancellation-9b-first.json",
       "testedRevision": "1eed4814f54de63a01704be8029f05017f5fc754",
       "sha256": "2dbd9a1d99d85f3fe6973183f91921c2c7da245be4c11bd598014b22a354365c",
-      "disposition": "failed first prefill cancellation; returned in 0.765ms, unknown settlement latched unavailable after 5071.786ms; remaining five trials not run; exact owned runtime reaped; no cancellation qualification"
+      "disposition": "failed first prefill cancellation; returned in 0.765ms, unknown settlement latched unavailable after 5071.786ms; remaining five trials not run; exact owned runtime reaped; no cancellation qualification",
+      "nativeCounterProjection": "cancellation-9b-first-native-counters.json",
+      "nativeCounterProjectionSha256": "a59834158959fa3730382ddc718aef7b59801d12c80c12ef331bccd96f93638c"
     }
   ]
 }

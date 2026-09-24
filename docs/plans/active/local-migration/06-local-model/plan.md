@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Document status: amendment E accuracy deferral approved; first native cancellation failed; bounded batch-size amendment F under review for the required next decision; no production selection/integration approval
+- Document status: amendment E accuracy deferral approved; first native cancellation failed; bounded batch-size amendment F independently reviewed, user decision pending; no production selection/integration approval
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -307,3 +307,5 @@ If the matrix passes, run the original 16-case × three-repetition quality matri
 All remaining early post-dispatch cancellation/transport-loss, schema/bounds, complete memory accounting, parser closure, manual-instance contract and independent selection requirements still precede CP2. Actual application/source-package/final local/CI/review/PR gates remain required. This is a bounded qualification correction in the one existing PR, not performance tuning, a second adapter or lifecycle supervision.
 
 Decision requested: approve this exact smaller-batch experiment, or leave Step 06 paused at the cancellation blocker. The user's prior accuracy acceptance is not re-requested and remains in force. The reason for this decision is new blocking runtime evidence and a changed tested configuration under the handoff's pause rule; no additional asset consent is needed.
+
+All three affected reviewers independently approved F at `0a8c8a6e94e90d5fcc3355dad4184d4dda5e84fe` as a concrete proposal for the user decision: `/root/plan_architecture` (Astra Extra High), `/root/plan_compatibility` (Astra High), `/root/plan_safety` (Astra Extra High). No proposal blocker remains. All withheld implementation/execution/selection/CP2 approval pending that decision and affected implementation review, and carried forward unchanged contracts. Read-only reviews; accepted launch settings, serving internals unverified.

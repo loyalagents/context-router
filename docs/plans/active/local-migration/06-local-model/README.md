@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Status: active primary step; 9B accuracy deferral approved; first native cancellation failed; bounded batch-size experiment under review before user decision
+- Status: active primary step; 9B accuracy deferral approved; first native cancellation failed; bounded batch-size experiment independently reviewed, user decision pending
 - Branch: `codex/local-migration-06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Coordinator and sole repository writer: `/root`; all other agents read-only
