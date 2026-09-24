@@ -194,7 +194,7 @@ export class ProbeClient {
       pollTimer = setTimeout(() => {
         if (!active || abortKind) return;
         // A status already in flight at abort is awaited, never reused as a settlement witness.
-        pendingStatus = status(true).catch(() => { controlLost = true; abort('unavailable'); });
+        pendingStatus = status(true).catch(() => { if (active) { controlLost = true; abort('unavailable'); } });
         pendingStatus.finally(() => { if (active && !abortKind) schedulePoll(); });
       }, this.#pollMs);
     };

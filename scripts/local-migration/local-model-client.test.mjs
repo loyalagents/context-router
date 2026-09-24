@@ -203,3 +203,20 @@ test('late terminal callback cannot publish success before an overdue timer runs
   await client.settled();
   assert.equal(client.state, 'ready');
 });
+
+test('successful terminal result survives intentional cleanup of an outstanding status poll', async (t) => {
+  let completionResponse;
+  const { client, state } = await fixture(t, async (_, res) => {
+    completionResponse = res;
+    res.setHeader('content-type', 'text/event-stream'); send(res, admission);
+  });
+  let statuses = 0;
+  state.statusHook = async () => {
+    if (++statuses !== 2) return false;
+    send(completionResponse, chunk); send(completionResponse, terminal); completionResponse.end();
+    return true;
+  };
+  assert.equal((await client.complete('synthetic')).text, 'ok');
+  assert.equal(client.state, 'ready');
+  assert.equal(statuses, 2);
+});
