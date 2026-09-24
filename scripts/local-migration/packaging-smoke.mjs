@@ -66,6 +66,7 @@ import {
   prepareTestAdministration,
 } from "./test-database.mjs";
 import { runLocalIdentitySmoke } from "./local-identity-smoke.mjs";
+import { runLocalDatabaseSmoke } from "./local-database-smoke.mjs";
 import {
   assertCatalogState,
   createSignedTestToken,
@@ -81,6 +82,7 @@ const defaultRepositoryRoot = path.resolve(scriptDirectory, "../..");
 const execFileAsync = promisify(execFile);
 const backendEntrypointRelative = "dist/main.js";
 const localIdentityEntrypointRelative = "dist/local-identity-postgres-reference.js";
+const localDatabaseEntrypointRelative = "dist/local-identity.js";
 const expectedCatalogCount = 19;
 const packagingAudience = "urn:context-router:packaging-smoke";
 const aggregateGateWorkspaceMarkerRelativePath = path.join(
@@ -1614,6 +1616,32 @@ async function collectNativeEvidence(
     closure[packageName] = packageManifest.manifest.version;
   }
   backendRequire(path.join(stageBackend, "dist/app.module.js"));
+  backendRequire(
+    path.join(stageBackend, "dist/composition/local-application.module.js"),
+  );
+  backendRequire(
+    path.join(stageBackend, "dist/infrastructure/storage/sqlite/sqlite-database.js"),
+  );
+  const { DatabaseSync } = backendRequire("node:sqlite");
+  const sqliteProbe = new DatabaseSync(":memory:");
+  let sqlite;
+  try {
+    sqlite = {
+      driver: "node:sqlite",
+      node: process.versions.node,
+      version: sqliteProbe.prepare("SELECT sqlite_version() version").get().version,
+      sourceId: sqliteProbe.prepare("SELECT sqlite_source_id() source").get().source,
+      compileOptionsDigest: sha256(Buffer.from(JSON.stringify(
+        sqliteProbe.prepare("PRAGMA compile_options").all(),
+      ))),
+      nativeAddon: false,
+      compiledLocalRootLoaded: true,
+    };
+    assert.equal(sqlite.node, "24.21.0");
+    assert.equal(sqlite.version, "3.53.4");
+  } finally {
+    sqliteProbe.close();
+  }
 
   const swcPackages = [
     "@next/swc-darwin-arm64",
@@ -1669,6 +1697,7 @@ async function collectNativeEvidence(
   }
   return {
     backendDependencyClosure: closure,
+    sqlite,
     webManifestDependencies: {
       "@auth0/nextjs-auth0": sourceWebAuth0Dependency,
     },
@@ -1750,6 +1779,9 @@ async function assembleAndSealStage({
     path.join(stageBackend, localIdentityEntrypointRelative),
     "staged local identity entrypoint",
   );
+  await assertRegularFile(path.join(stageBackend, localDatabaseEntrypointRelative), "staged local database entrypoint");
+  await assertRegularFile(path.join(stageBackend, "dist/infrastructure/storage/sqlite/sqlite-coordination.worker.js"), "staged local database worker");
+  await assertRegularFile(path.join(stageBackend, "dist/infrastructure/storage/sqlite/sqlite-schema.js"), "staged local schema");
   await assertRegularFile(layout.serverEntrypoint, "staged web entrypoint");
   await assertRegularFile(
     path.join(stageBackend, "dist/config/preferences.catalog.json"),
@@ -1819,6 +1851,9 @@ async function assembleAndSealStage({
     appRelativePath: layout.appRelativePath,
     backendEntrypoint: `backend/${backendEntrypointRelative}`,
     localIdentityEntrypoint: `backend/${localIdentityEntrypointRelative}`,
+    localDatabaseEntrypoint: `backend/${localDatabaseEntrypointRelative}`,
+    localDatabaseWorker: "backend/dist/infrastructure/storage/sqlite/sqlite-coordination.worker.js",
+    localDatabaseSchema: "backend/dist/infrastructure/storage/sqlite/sqlite-schema.js",
     webEntrypoint: normalizedRelative(stageRoot, layout.serverEntrypoint),
     publicPresent: Boolean(publicInfo),
     buildTimePublicUrls: {
@@ -1842,6 +1877,7 @@ async function assembleAndSealStage({
     layout,
     sealed,
     native,
+    localDatabaseEntrypoint: path.join(stageBackend, localDatabaseEntrypointRelative),
     localIdentityEntrypoint: path.join(
       stageBackend,
       localIdentityEntrypointRelative,
@@ -4083,6 +4119,23 @@ async function runPackagingSmokeWithPrivateUmask({
         ),
       verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
     });
+    const localDatabase = await runLocalDatabaseSmoke({
+      entrypoint: stage.localDatabaseEntrypoint,
+      cwd: hostileCwd,
+      home: path.join(runtimeRoot, "local-database-home"),
+      temporaryDirectory: path.join(runtimeRoot, "local-database-tmp"),
+      stateParent: secretDirectory,
+      journal,
+      environment,
+      signal,
+      verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
+    });
+    assert.equal(localDatabase.sqlite, stage.native.sqlite.version);
+    assert.equal(localDatabase.sourceId, stage.native.sqlite.sourceId);
+    assert.equal(
+      localDatabase.compileOptionsDigest,
+      stage.native.sqlite.compileOptionsDigest,
+    );
     await verifySealedStage(stage.stageRoot, stage.sealed);
     await assertCallerIntegrity(sourceSnapshot, { signal });
     assert.equal(
@@ -4109,6 +4162,7 @@ async function runPackagingSmokeWithPrivateUmask({
       startupSignals,
       orphanRegression,
       localIdentity,
+      localDatabase,
       seedRuns: 2,
       networkIsolationFailures: isolationFailures,
       generations: generations.map((generation) => ({

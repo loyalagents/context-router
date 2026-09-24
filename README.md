@@ -1,11 +1,11 @@
 # Context Router
 
 Context Router is a `pnpm` workspace monorepo with a retained hosted
-composition and an explicit Step 03 local-identity preview:
+composition and a file-backed, non-listening local database preview:
 
 - `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and a hosted-JWT-protected MCP HTTP endpoint
 - `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens
-- PostgreSQL via Prisma for application data, plus a separate Docker-backed test database for integration and e2e coverage
+- SQLite through the pinned Node builtin for the explicit local runtime; PostgreSQL via Prisma for the retained hosted/reference compositions and Docker-backed integration/e2e coverage
 
 ## Start Here
 
@@ -139,8 +139,8 @@ EOF
 ```
 
 The `localhost` hostname and `?schema=public` query above are for hosted
-development only. The local-identity preview rejects them: it requires literal
-`127.0.0.1`, an explicit port, no URL query, and a verified TLS CA.
+development only. The explicit PostgreSQL reference preview requires literal
+`127.0.0.1`, an explicit port, no URL query, and a verified TLS CA. The default SQLite local command ignores hosted database configuration and requires its two explicit private roots.
 
 ### Hosted Vertex AI Note
 
@@ -196,20 +196,13 @@ the same hosted entrypoint. The tests and staged runtime harnesses inject an
 explicit backend package root and environment so they exercise the same
 configuration contract without depending on the caller's working directory.
 
-### Step 03 Local Identity Preview
+### Local Database Preview
 
-The opt-in `local-identity-preview` is a separate compiled backend entrypoint.
-It stores one random principal and an independent bearer credential in an
-explicit private state root, connects only to literal-loopback PostgreSQL over
-direct verified TLS, initializes the real local Nest composition, and never
-calls `listen()`. It has no web UI, HTTP or MCP endpoint, Auth0/JWKS dependency,
-cloud provider call, or usable AI model; both AI ports are bound to a fixed
-unavailable adapter that performs no model I/O.
+The explicit `local-database-preview` uses the compiled `local-identity` command and a fresh SQLite store. Set separate canonical absolute `LOCAL_DATABASE_ROOT` and `LOCAL_IDENTITY_STATE_ROOT` paths below a private current-user-owned parent. Initialize once, then run preview. It retains one random principal and independent private bearer, seeds catalog definitions only, and starts the real local Nest composition without calling `listen()`.
 
-The preview reads only its explicit state root, database URL, and CA inputs. It
-does not load dotenv files or derive configuration from the working directory
-or home directory. Build, initialize, recover, rotate, and run it only through
-the [local identity administration runbook](docs/useful/LOCAL_IDENTITY_ADMIN.md).
+The local command needs no PostgreSQL, Docker, Auth0 or hosted model, loads no dotenv files and has no hosted fallback. It exposes no web UI, HTTP or MCP endpoint; both AI ports return the fixed unavailable result. Rotation, named recovery, matching database/identity backup constraints and failed-catalog retry are documented in the [local identity administration runbook](docs/useful/LOCAL_IDENTITY_ADMIN.md).
+
+Existing PostgreSQL preview data remains separately usable through `local-identity:postgres-reference`, which preserves the `local-identity-preview` gate mode and its explicit loopback TLS configuration. Do not reuse that identity root for SQLite; no automatic import or data conversion exists. Hosted commands below remain unchanged.
 
 ### Containerized Backend Workflow
 
@@ -293,6 +286,7 @@ Backend tests live under `apps/backend` and are split into:
 - Unit tests for isolated services and utilities
 - Integration tests for Prisma and repository behavior against a real test database
 - E2E tests for GraphQL, MCP, health, and preference-related flows
+- `pnpm --filter backend test:local-database` for file-backed SQLite contracts, actual application/auth/reset, owned process/recovery and matching-pair backup; its build prerequisite needs no `DATABASE_URL` or PostgreSQL setup
 
 Test database details:
 
@@ -305,6 +299,7 @@ CI currently validates:
 - Backend unit tests
 - Backend integration tests
 - Backend e2e tests against the test database
+- Standalone local database tests plus the twelve-phase migration gate, including both PostgreSQL reference and SQLite source/relocated-package restart evidence
 - Frontend production build
 
 ## Docs

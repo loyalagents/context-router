@@ -16,6 +16,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
+import { assertLocalDatabaseSmokeSuccessResources } from "./local-database-lifecycle.mjs";
 import {
   assertCallerIntegrity,
   assertCompletedResourceLifecycle,
@@ -1516,6 +1517,7 @@ export async function assertRestartSmokeLifecycleEvidence(
   }
   if (commandSucceeded) {
     assertLocalIdentitySmokeSuccessResources(state, smokeLabel);
+    assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }
@@ -1537,6 +1539,7 @@ export async function assertPackagedSmokeLifecycleEvidence(
   if (commandSucceeded) {
     assertPackagedSmokeSuccessResources(state);
     assertLocalIdentitySmokeSuccessResources(state, smokeLabel);
+    assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }

@@ -85,3 +85,13 @@ test("CI provisions the PostgreSQL image required by offline TLS fixtures", asyn
     );
   }
 });
+
+test("standard CI discovers the standalone SQLite suite and its compiled-worker prerequisite without a database URL", async () => {
+  const workflow = parse(await readFile(ciPath, "utf8"));
+  const steps = workflow.jobs['backend-tests'].steps;
+  const local = steps.filter(step => step.run === 'pnpm test:local-database');
+  assert.equal(local.length, 1); assert.equal(local[0].env?.DATABASE_URL, undefined);
+  const manifest = JSON.parse(await readFile(new URL('../../apps/backend/package.json', import.meta.url), 'utf8'));
+  assert.equal(manifest.scripts['pretest:local-database'], 'pnpm prisma:generate && pnpm build');
+  assert.match(manifest.scripts['test:local-database'], /--selectProjects local-database/);
+});

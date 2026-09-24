@@ -446,8 +446,8 @@ describe("same-held-connection matching-pair backup and new-root restore", () =>
       where: { id: preference.id },
       data: { value: "large".repeat(250000) },
     });
+    const unsafeCloseCounter = new SharedArrayBuffer(4);
     let injected = false,
-      unsafeClose = false,
       pendingObserved = false,
       owner: Worker;
     const overlapping = new SqliteBackup({
@@ -458,8 +458,12 @@ describe("same-held-connection matching-pair backup and new-root restore", () =>
           "../../dist/infrastructure/storage/sqlite/sqlite-coordination.worker.js",
         );
         owner = new Worker(
-          `const {parentPort}=require('node:worker_threads');const sqlite=require('node:sqlite');const backup=sqlite.backup,close=sqlite.DatabaseSync.prototype.close;let active=false;sqlite.backup=async(db,destination)=>{active=true;parentPort.postMessage({fixtureStarted:true});try{await backup(db,destination,{rate:1});await new Promise(r=>setTimeout(r,40));}finally{active=false}};sqlite.DatabaseSync.prototype.close=function(){if(active){parentPort.postMessage({fixtureUnsafeClose:true});throw new Error('unsafe')}return close.call(this)};require(${JSON.stringify(entry)});`,
-          { ...options, eval: true },
+          `const {parentPort,workerData}=require('node:worker_threads');const unsafeCounter=new Int32Array(workerData.unsafeCloseCounter);const sqlite=require('node:sqlite');const backup=sqlite.backup,close=sqlite.DatabaseSync.prototype.close;let active=false;sqlite.backup=async(db,destination)=>{active=true;parentPort.postMessage({fixtureStarted:true});try{await backup(db,destination,{rate:1});await new Promise(r=>setTimeout(r,40));}finally{active=false}};sqlite.DatabaseSync.prototype.close=function(){if(active){Atomics.add(unsafeCounter,0,1);throw new Error('unsafe')}return close.call(this)};require(${JSON.stringify(entry)});`,
+          {
+            ...options,
+            workerData: { ...options.workerData, unsafeCloseCounter },
+            eval: true,
+          },
         );
         workers.push(owner);
         const emit = owner.emit.bind(owner),
@@ -476,10 +480,6 @@ describe("same-held-connection matching-pair backup and new-root restore", () =>
             post({ id: nextId + 1, command: "close" });
             return true;
           }
-          if (event === "message" && args[0]?.fixtureUnsafeClose) {
-            unsafeClose = true;
-            return true;
-          }
           return emit(event, ...args);
         }) as typeof owner.emit;
         return owner;
@@ -489,10 +489,10 @@ describe("same-held-connection matching-pair backup and new-root restore", () =>
       "Local database backup failed",
     );
     expect(injected && pendingObserved).toBe(true);
-    expect(unsafeClose).toBe(false);
     expect(fs.existsSync(path.join(bundle, "complete.json"))).toBe(false);
     if (owner!.threadId !== -1) await owner!.terminate();
     expect(owner!.threadId).toBe(-1);
+    expect(Atomics.load(new Int32Array(unsafeCloseCounter), 0)).toBe(0);
     const c = db.connect();
     c.exec("BEGIN EXCLUSIVE");
     c.exec("ROLLBACK");

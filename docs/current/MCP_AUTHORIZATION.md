@@ -11,9 +11,9 @@
 
 ## Components
 
-This document describes the hosted MCP transport. The Step 03
-`local-identity-preview` excludes `McpModule`, OAuth/DCR, and every HTTP/MCP
-listener. Its private human bearer is a separate credential and never
+This document describes the hosted MCP transport. Both the SQLite `local-database-preview` and explicit PostgreSQL
+`local-identity-preview` exclude `McpModule`, OAuth/DCR, and every HTTP/MCP
+listener. Each private human bearer is a separate credential and never
 authenticates an MCP client; Step 07 owns local MCP identity and transport.
 
 - `McpController` handles HTTP JSON-RPC requests.

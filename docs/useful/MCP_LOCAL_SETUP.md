@@ -8,8 +8,8 @@
 ## Copy/Paste Summary
 
 Here, "local" means the retained hosted-baseline backend running on a
-development machine. It does not mean the Step 03 `local-identity-preview`,
-which has no listener, excludes `McpModule`, and never accepts its human bearer
+development machine. It does not mean either the SQLite `local-database-preview` or PostgreSQL
+`local-identity-preview`: both have no listener, exclude `McpModule`, and never accept their human bearer
 as an MCP credential.
 
 Use these commands to add the backend as an MCP server. The server name convention is:

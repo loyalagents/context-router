@@ -7,8 +7,9 @@
   `apps/backend/src/modules/preferences/audit/**`,
   `apps/backend/src/mcp/access-log/**`, preference and definition services,
   `apps/backend/test/e2e/audit-history.e2e-spec.ts`, and
-  `apps/backend/test/e2e/mcp-access-log.e2e-spec.ts`
-- Last reviewed: 2026-09-22
+  `apps/backend/test/e2e/mcp-access-log.e2e-spec.ts`, and
+  `apps/backend/test/local-database/application.spec.ts`
+- Last reviewed: 2026-09-23
 
 The application keeps three related but distinct records:
 
@@ -21,10 +22,7 @@ have an access event without a domain audit event, while a GraphQL mutation can
 have a domain audit event without an MCP access event.
 
 The Step 03 destructive fresh-data schema transition intentionally carries no
-historical user's mutation or access history forward. Its local preview
-composes the GraphQL history resolvers over its configured loopback TLS
-database through the temporary Step 03 PostgreSQL adapter but exposes no
-listener or MCP transport, so it creates no local MCP access event.
+historical user's mutation or access history forward. The default local preview composes GraphQL history resolvers over SQLite; the explicit PostgreSQL reference preview retains its loopback TLS database. Both expose no listener or MCP transport, so neither creates local MCP access events through a transport.
 
 ## Mutation audit events and provenance
 
@@ -38,8 +36,7 @@ metadata. Current event types cover:
 - preference-definition creation, update, and archive.
 
 Preference and definition services write the domain change and its audit event
-inside the same application-owned unit of work, implemented by a PostgreSQL
-transaction. If the audit insert fails, the domain write
+inside the same application-owned unit of work, implemented by PostgreSQL for hosted/reference composition and SQLite for local composition. If the audit insert fails, the domain write
 rolls back; if the domain write fails, no corresponding audit row commits.
 Snapshots are normalized application views rather than raw Prisma records, so
 history consumers do not need to reconstruct the live row shape.

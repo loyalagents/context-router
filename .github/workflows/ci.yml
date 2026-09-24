@@ -172,6 +172,9 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5433/context_router_test
 
+      - name: Run standalone local database tests
+        run: pnpm test:local-database
+
   local-orchestrator-checks:
     needs: changes
     if: needs.changes.outputs.local_orchestrator == 'true'

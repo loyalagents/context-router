@@ -46,6 +46,7 @@ import {
   queryDatabase,
 } from "./test-database.mjs";
 import { runLocalIdentitySmoke } from "./local-identity-smoke.mjs";
+import { runLocalDatabaseSmoke } from "./local-database-smoke.mjs";
 import { WEB_SUPPORT_BOUNDED_TERMINATION_BUDGET_MS } from "./web-support-smoke.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -1666,6 +1667,16 @@ export async function runRestartSmoke({
           );
         },
       });
+      const localDatabase = await runLocalDatabaseSmoke({
+        entrypoint: path.join(repositoryRoot, "apps/backend/dist/local-identity.js"),
+        cwd: hostileLocalCwd,
+        home: path.join(secretDirectory, "local-database-home"),
+        temporaryDirectory: path.join(secretDirectory, "local-database-tmp"),
+        stateParent: secretDirectory,
+        journal,
+        environment,
+        signal,
+      });
       return {
         databaseName: database.databaseName,
         administrationSource: administration.source,
@@ -1675,6 +1686,7 @@ export async function runRestartSmoke({
         ],
         jwksFetches: jwksHits.length,
         localIdentity,
+        localDatabase,
         elapsedMs: Date.now() - startedAt,
       };
     });

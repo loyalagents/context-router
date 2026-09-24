@@ -4,15 +4,12 @@ This document is the human-readable companion to the versioned
 [`local-migration-contract-baseline.json`](local-migration-contract-baseline.json)
 registry. The version-two registry and its referenced fixtures are the
 executable baseline. They retain the hosted product characterized at planning
-base `9b56d38fde927d4e643af89ba45665a439613939` and now name two explicit modes:
-`hosted-baseline` and `local-identity-preview`.
+base `9b56d38fde927d4e643af89ba45665a439613939` and now name three explicit modes:
+`hosted-baseline`, `local-identity-preview`, and `local-database-preview`.
 
-`hosted-baseline` remains the NestJS backend and Next.js web app backed by
-PostgreSQL, Auth0, and Vertex AI. `local-identity-preview` is an opt-in,
-non-listening backend composition with a private local principal and bearer,
-the temporary Step 03 PostgreSQL adapter, and a fixed unavailable model adapter.
-The database itself is an explicit operator-supplied loopback TLS target;
-missing configuration never selects one mode as a fallback for the other.
+`hosted-baseline` remains the NestJS backend and Next.js web app backed by PostgreSQL, Auth0, and Vertex AI. `local-identity-preview` retains the non-listening PostgreSQL reference composition through `local-identity:postgres-reference`, with its explicit loopback TLS target and original identity root. `local-database-preview` is the default local command's SQLite composition with separate explicit database/identity roots and no database network dependency. Both previews use a private principal/bearer and fixed unavailable model adapter; neither opens a listener. Missing configuration never selects a fallback.
+
+The third mode is additive: existing capability dispositions, roadmap owners and wire fixtures stay unchanged. All twelve phases remain; seven applicable phases name both previews. The standalone local test command receives no inherited `DATABASE_URL` or administration URL, and its build prerequisite prepares the actual compiled worker. Source and sealed-package smokes require both the exact eight-resource PostgreSQL proof and the independent ten-resource SQLite proof, including two signal-clean preview generations, stable catalog/data/principal, rotation/recovery and actual engine inventory.
 
 ## How To Read The Baseline
 
@@ -156,10 +153,7 @@ Normal hosted operation can contact PostgreSQL, the configured hosted issuer's
 JWKS endpoint, Google Vertex and credential endpoints, and the configured
 web/backend origin. The backend no longer embeds Auth0 Management or
 Authentication SDK clients.
-The local identity preview contacts only literal `127.0.0.1` PostgreSQL over
-direct verified TLS. It performs no Auth0/JWKS, Vertex/model, web, or MCP
-transport call and opens no network listener. Its private bearer authenticates
-only the in-process local human guard; it is not an MCP or browser credential.
+The PostgreSQL reference preview contacts only literal `127.0.0.1` PostgreSQL over direct verified TLS. The SQLite local preview has no database network connection. Neither performs Auth0/JWKS, Vertex/model, web or MCP transport calls or opens a listener. Their private bearer authenticates only the in-process local human guard; it is not an MCP or browser credential.
 Opt-in tooling can additionally contact an arbitrary orchestrator backend,
 spawn commands with inherited environment, and invoke hosted model/evaluation
 providers. The exact data classes, default status, disposition, and owner are

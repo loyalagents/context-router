@@ -7,7 +7,8 @@
 ## Purpose
 
 In this runbook, "local backend" means the hosted-baseline composition running
-on the development machine. The Step 03 `local-identity-preview` has no HTTP or
+on the development machine. Both the SQLite `local-database-preview` and PostgreSQL
+`local-identity-preview` have no HTTP or
 MCP listener, excludes the developer orchestrator, and cannot serve these
 commands.
 

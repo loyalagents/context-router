@@ -6,7 +6,7 @@
 - Last reviewed: 2026-09-23
 
 This hosted-only account gate is configured outside the repo in Auth0 Actions.
-The Step 03 local identity preview has no Auth0 signup, login, or browser
+Both the SQLite local preview and PostgreSQL reference preview have no Auth0 signup, login, or browser
 session. Keep exact invited email addresses in Auth0, not in repo docs.
 
 ## Current Shape

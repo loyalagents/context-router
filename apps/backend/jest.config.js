@@ -1,7 +1,8 @@
 // Jest Configuration with Projects
 //
-// Three test layers:
-// - unit: Fast, parallel tests in src/**/*.spec.ts (no DB, no app boot)
+// Four test layers:
+// - unit: Fast, parallel tests in src/**/*.spec.ts and test/contracts
+// - local-database: Real SQLite files, compiled workers and owned processes (serial)
 // - integration: DB + DI tests in test/integration/**/*.spec.ts (serial)
 // - e2e: Full HTTP boundary tests in test/e2e/**/*.e2e-spec.ts (serial)
 

@@ -12,6 +12,12 @@
       "status": "active",
       "successorModes": [],
       "requiredEvidenceClasses": ["contract", "build", "state", "restart", "integrity"]
+    },
+    {
+      "id": "local-database-preview",
+      "status": "active",
+      "successorModes": [],
+      "requiredEvidenceClasses": ["contract", "build", "state", "restart", "integrity"]
     }
   ],
   "phases": [
@@ -21,7 +27,7 @@
       "ownerStep": "01",
       "status": "active",
       "timeoutMs": 120000,
-      "modes": ["hosted-baseline", "local-identity-preview"],
+      "modes": ["hosted-baseline", "local-identity-preview", "local-database-preview"],
       "evidenceClasses": ["contract"],
       "predecessors": [],
       "replacementEvidence": [],
@@ -44,7 +50,8 @@
             "scripts/local-migration/runtime-process.test.mjs",
             "scripts/local-migration/web-runtime-config.test.mjs",
             "scripts/local-migration/runtime-resources.test.mjs",
-            "scripts/local-migration/packaging-smoke.test.mjs"
+            "scripts/local-migration/packaging-smoke.test.mjs",
+            "scripts/local-migration/local-database-smoke.test.mjs"
           ]
         },
         { "argv": ["node", "scripts/local-migration/check-contract-baseline.mjs"] }
@@ -56,7 +63,7 @@
       "ownerStep": "01",
       "status": "active",
       "timeoutMs": 120000,
-      "modes": ["hosted-baseline", "local-identity-preview"],
+      "modes": ["hosted-baseline", "local-identity-preview", "local-database-preview"],
       "evidenceClasses": ["documentation"],
       "predecessors": ["contract-baseline"],
       "replacementEvidence": [],
@@ -73,7 +80,7 @@
       "ownerStep": "01",
       "status": "active",
       "timeoutMs": 600000,
-      "modes": ["hosted-baseline", "local-identity-preview"],
+      "modes": ["hosted-baseline", "local-identity-preview", "local-database-preview"],
       "evidenceClasses": ["build"],
       "predecessors": ["documentation"],
       "replacementEvidence": [],
@@ -92,7 +99,7 @@
       "ownerStep": "01",
       "status": "active",
       "timeoutMs": 900000,
-      "modes": ["hosted-baseline", "local-identity-preview"],
+      "modes": ["hosted-baseline", "local-identity-preview", "local-database-preview"],
       "evidenceClasses": ["state"],
       "predecessors": ["backend-unit-build"],
       "replacementEvidence": [],
@@ -101,7 +108,8 @@
       "commands": [
         { "argv": ["pnpm", "--filter", "backend", "exec", "prisma", "migrate", "deploy"] },
         { "argv": ["pnpm", "--filter", "backend", "test:integration"] },
-        { "argv": ["pnpm", "--filter", "backend", "test:e2e:tests-only"] }
+        { "argv": ["pnpm", "--filter", "backend", "test:e2e:tests-only"] },
+        { "argv": ["pnpm", "--filter", "backend", "test:local-database"] }
       ]
     },
     {
@@ -187,7 +195,7 @@
       "ownerStep": "01",
       "status": "active",
       "timeoutMs": 600000,
-      "modes": ["hosted-baseline", "local-identity-preview"],
+      "modes": ["hosted-baseline", "local-identity-preview", "local-database-preview"],
       "evidenceClasses": ["restart"],
       "predecessors": ["harbor-static"],
       "replacementEvidence": [],
@@ -202,7 +210,7 @@
       "status": "active",
       "timeoutMs": 900000,
       "terminationGraceMs": 180000,
-      "modes": ["hosted-baseline", "local-identity-preview"],
+      "modes": ["hosted-baseline", "local-identity-preview", "local-database-preview"],
       "evidenceClasses": ["build", "restart", "integrity"],
       "predecessors": ["restart-smoke"],
       "replacementEvidence": [],
@@ -216,7 +224,7 @@
       "ownerStep": "01",
       "status": "active",
       "timeoutMs": 300000,
-      "modes": ["hosted-baseline", "local-identity-preview"],
+      "modes": ["hosted-baseline", "local-identity-preview", "local-database-preview"],
       "evidenceClasses": ["integrity"],
       "predecessors": ["packaged-composition-smoke"],
       "replacementEvidence": [],

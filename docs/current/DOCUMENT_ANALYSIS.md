@@ -28,9 +28,9 @@ active preference values. JSON and YAML uploads are sent to that provider as
 types. In-memory application handling does not mean the document stays local or
 that the model provider has no retention policy.
 
-This describes the hosted composition. The Step 03 local identity preview
-binds the AI ports to a fixed unavailable adapter that performs no model I/O,
-and the preview has no listener. It is composition evidence, not a usable local
+This describes the hosted composition. Both the SQLite local preview and explicit PostgreSQL reference preview
+bind the AI ports to a fixed unavailable adapter that performs no model I/O,
+and neither preview has a listener. They provide composition evidence, not a usable local
 document-analysis surface; Step 06 owns the local model implementation.
 
 The first model response is Zod-validated and capped at

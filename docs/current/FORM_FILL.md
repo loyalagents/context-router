@@ -31,9 +31,9 @@ are included in the structured-model prompt. The current provider is Vertex AI.
 The flow is therefore not fully local or private even though it does not send
 the PDF bytes themselves.
 
-This describes the hosted composition. The Step 03 local identity preview
-binds the AI ports to a fixed unavailable adapter that performs no model I/O,
-and the preview has no listener. It is composition evidence, not a usable local
+This describes the hosted composition. Both the SQLite local preview and explicit PostgreSQL reference preview
+bind the AI ports to a fixed unavailable adapter that performs no model I/O,
+and neither preview has a listener. They provide composition evidence, not a usable local
 form-fill surface; Step 06 owns the local model implementation.
 
 ### Supported fields and policies

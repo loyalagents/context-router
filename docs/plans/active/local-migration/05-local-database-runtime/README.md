@@ -1,6 +1,6 @@
 # Step 05: Local Database Runtime
 
-- Status: CP2–CP3 complete; CP4 application/runtime/backup validated, packaged proof and CP5 closeout in progress
+- Status: implementation and CP5 integration complete; fresh complete-diff final review and exact final-head gate/CI pending
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Working branch: `codex/local-migration-05-local-database-runtime`
@@ -28,3 +28,9 @@ The [initial plan](plan.md) first establishes the durable-state/failure model, t
 The [CP1 feasibility and accepted selection](feasibility.md) records the exact runtime, file/process/backup probes and PostgreSQL characterization. All affected independent selection reviews approved frozen revision `0a6cda5af9ec90415792d2813f097e6bce62bfaa`, and the coordinator authorized production implementation.
 
 Step 05 is the sole active primary step. No local model, MCP/browser/UI cutover, installer, LAN service, historical importer, cloud sync, automatic merge or Step 06 activation belongs here.
+
+## Implementation Candidate
+
+The actual local runtime, real file-backed contracts/application/process/recovery and matching-pair backup mechanism are implemented. Source and sealed relocated package starts pass on macOS arm64 with Node 24.21.0 / pnpm 10.25.0 / SQLite 3.53.4. Gate/CI discovery adds the local project and independent ten-resource SQLite lifecycle proof while retaining the twelve phases, eight-resource PostgreSQL reference proof and hosted/web coverage. Canonical docs distinguish fresh SQLite roots from preserved PostgreSQL state.
+
+Checkpoint evidence and limitations are recorded in the [plan](plan.md#cp5-integration-and-package-evidence). Fresh complete planning-base-to-candidate review, final exact-base full gate and final pushed-head standard/dedicated CI are still required. This is a review candidate, not merge approval; Step 06 remains inactive.

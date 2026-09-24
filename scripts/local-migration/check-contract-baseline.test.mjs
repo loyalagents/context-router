@@ -2899,6 +2899,7 @@ test("registry supported modes must exactly name active executable gate modes", 
     supportedModes: [
       { id: "hosted-baseline", status: "active" },
       { id: "local-identity-preview", status: "active" },
+      { id: "local-database-preview", status: "active" },
       { id: "legacy", status: "retired" },
     ],
   };
@@ -2906,7 +2907,7 @@ test("registry supported modes must exactly name active executable gate modes", 
     validateRegistryMode(
       {
         version: 2,
-        supportedModes: ["hosted-baseline", "local-identity-preview"],
+        supportedModes: ["hosted-baseline", "local-identity-preview", "local-database-preview"],
       },
       manifest,
     ),
@@ -2914,6 +2915,7 @@ test("registry supported modes must exactly name active executable gate modes", 
   );
   for (const supportedModes of [
     ["hosted-baseline"],
+    ["hosted-baseline", "local-identity-preview"],
     ["hosted-baseline", "legacy"],
     ["local-identity-preview", "hosted-baseline"],
     ["hosted-baseline", "local-identity-preview", "hosted"],
