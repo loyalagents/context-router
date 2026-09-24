@@ -1,6 +1,7 @@
 # Local-First Migration
 
 - Status: active program index
+- Step 05 PR: [PR #164](https://github.com/loyalagents/context-router/pull/164) — draft implementation candidate; fresh final review and exact final-head gate/CI pending
 - Current step: `05-local-database-runtime` — Step 04 [PR #163](https://github.com/loyalagents/context-router/pull/163) was human-merged at `3426dc556fea88d94a360329e7c685bc9acc155e` from tested head `c83bea0add7039cad814567e05d79f4f8b275aba`
 - Step 04 final evidence: standard CI [35928247258](https://github.com/loyalagents/context-router/actions/runs/35928247258) and dedicated migration gate [35928247421](https://github.com/loyalagents/context-router/actions/runs/35928247421), both successful on that head
 - Step 05 planning base: `3426dc556fea88d94a360329e7c685bc9acc155e`; clean-base full activation gate passed all twelve phases before edits

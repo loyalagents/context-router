@@ -1,6 +1,7 @@
 # Step 05: Local Database Runtime
 
 - Status: implementation and CP5 integration complete; fresh complete-diff final review and exact final-head gate/CI pending
+- Step 05 PR: [PR #164](https://github.com/loyalagents/context-router/pull/164) — draft implementation candidate; fresh final review and exact final-head gate/CI pending
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Working branch: `codex/local-migration-05-local-database-runtime`

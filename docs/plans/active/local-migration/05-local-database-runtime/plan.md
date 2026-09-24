@@ -321,6 +321,8 @@ The subsequent harness-only outer cleanup-record correction has red regression e
 
 Canonical runbooks cover terminated-and-reaped originals for recovery/backup, partial catalog initialization preserving committed identity, delayed restore identity publication, closed-copy-only raw descriptors, intrinsic engine admission effects, old-backup credential revival and separate PostgreSQL reference commands. Current direct contract/Markdown checks pass; direct contract checking explicitly reports base comparison skipped. Final complete-diff reviews, exact frozen-head full base-comparison gate, applicable standard/dedicated pushed-head CI and ready-for-human-review PR status remain closeout obligations. Neither this checkpoint nor the draft PR substitutes for them.
 
+The single implementation [PR #164](https://github.com/loyalagents/context-router/pull/164) is open as a draft so canonical PR linkage precedes the final review/validation freeze. Its body explicitly retains pending fresh final reviews, full exact-base gate and pushed-head CI; it will be marked ready only after those gates pass. Final source-bound run details belong in the PR evidence, avoiding documentation edits that would invalidate an already frozen tested head.
+
 ## Parallel Work And Conflict Surfaces
 
 `/root/step05_writer` owns every change, including plans/docs, schema, config/composition, state integration, driver, tests, generated output, manifest/lockfile, registry/gate/CI and Git/PR. All other agents remain read-only. Separate test invocations never share writable DB files, roots, ports or build/dependency trees; only a single-owner dedicated concurrency fixture intentionally shares a DB among supervised actors. No implementation lane overlaps Step 05.
