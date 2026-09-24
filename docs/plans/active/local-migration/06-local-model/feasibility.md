@@ -1,6 +1,6 @@
 # Step 06 Feasibility Progress
 
-- Status: selection paused after both candidates failed quality; reviewed amendment D awaits user decision; no production integration authorized
+- Status: CP1 continuing with user-directed narrow 9B accuracy deferral; affected review and remaining qualification pending; no production integration authorized
 - Owner and sole writer: `/root`; investigators/reviewers remain read-only
 - Base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -82,3 +82,7 @@ Before the selection stop, the separate parser algorithm probe acquired and inte
 Paused-checkpoint validation at `f2a7068b033ef9073f9574d185f86dc3498ae65c`: all 52 deterministic `local-model-*.test.mjs` tests passed, with isolated TLS listeners, and all five separate opt-in PDF algorithm checks passed. These are targeted probe checks, not the final migration gate. All ten original preparation files were rehashed against their activation manifest and remain unchanged in the original main workspace at `837701b3633eed669dd2c2c518ffebc0e46d55d8`. The dedicated worktree was clean before this review-record update; the original dirty preparation is preserved. Read-only process census found no remaining owned llama runtime.
 
 All three affected reviewers approved proposed amendment D at `f2a7068b033ef9073f9574d185f86dc3498ae65c` for presentation to the user, with no execution or selection approval implied. User decision is the next required action. A system instruction is model guidance, not an authorization boundary or general prompt-injection defense. The added cases are targeted regression controls, not blind holdouts. No further model run or production implementation occurs until that decision.
+
+## User-Directed Continuation
+
+The user approved moving on and improving performance later if the behavior works generally. The coordinator explained the measured 9B omission, passing validated families, approximately 10-second p95 and the limited synthetic corpus. [Amendment E](plan.md#amendment-e-user-directed-accuracy-deferral) records a narrow accepted accuracy limitation while leaving all original quality evidence and verdicts unchanged. Optional D tuning is deferred, and remaining CP1 qualification continues with C-framed 9B. This is not a safety waiver, selection verdict, completed integration or PR. Affected independent acceptance review remains pending.
