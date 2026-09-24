@@ -15,13 +15,20 @@ const data = workerData as CoordinationWorkerData;
 let connection: SqliteConnection | undefined;
 let terminal = false;
 let lastId = 0;
+let inFlight = false;
 function close(): void {
   connection?.close();
   connection = undefined;
   terminal = true;
 }
-port.on("message", (request: CoordinationRequest) => {
+port.on("message", async (request: CoordinationRequest) => {
   if (terminal) return;
+  if (inFlight) {
+    terminal = true;
+    port.close();
+    return;
+  }
+  inFlight = true;
   const reply: CoordinationReply = { id: request?.id, ok: true };
   try {
     if (!validRequest(request) || request.id <= lastId) throw new Error();
@@ -82,6 +89,9 @@ port.on("message", (request: CoordinationRequest) => {
         case "rollback":
           connection.exec("ROLLBACK");
           break;
+        case "backup":
+          await connection.backupTo(request.destination!);
+          break;
         case "close":
           close();
           break;
@@ -104,11 +114,20 @@ port.on("message", (request: CoordinationRequest) => {
     }
     terminal = true;
   }
+  inFlight = false;
+  if (terminal && reply.ok && request.command !== "close") {
+    try {
+      close();
+    } catch {}
+    port.close();
+    return;
+  }
   port.postMessage(reply);
   if (terminal) port.close();
 });
 port.on("close", () => {
-  if (!terminal) {
+  terminal = true;
+  if (!inFlight) {
     try {
       close();
     } catch {

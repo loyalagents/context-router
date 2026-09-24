@@ -9,22 +9,22 @@ export interface LocalIdentityEntrypointDependencies {
 }
 
 async function loadPreview(): Promise<RunPreview> {
-  const [{ createLocalIdentityConfiguration }, { runLocalIdentityPreview }] =
+  const [{ createLocalDatabaseConfiguration }, { runLocalIdentityPreview }] =
     await Promise.all([
-      import('./config/local-identity.config'),
-      import('./bootstrap/local-identity-preview'),
+      import("./config/local-database.config"),
+      import("./bootstrap/local-identity-preview"),
     ]);
   return () =>
     runLocalIdentityPreview({
-      configuration: createLocalIdentityConfiguration(),
+      configuration: createLocalDatabaseConfiguration(),
     });
 }
 
 async function loadAdmin(): Promise<RunAdmin> {
-  const { runLocalIdentityAdminCli } = await import(
-    './modules/auth/local-identity-admin.cli'
+  const { runLocalDatabaseAdminCli } = await import(
+    "./modules/auth/local-identity-admin.cli"
   );
-  return (argv) => runLocalIdentityAdminCli({ argv });
+  return (argv) => runLocalDatabaseAdminCli({ argv });
 }
 
 export async function main(
@@ -32,10 +32,10 @@ export async function main(
   dependencies: LocalIdentityEntrypointDependencies = {},
 ) {
   const { clearLocalIdentityAmbientDriverSelection } = await import(
-    './config/local-identity.config'
+    "./config/local-identity.config"
   );
   clearLocalIdentityAmbientDriverSelection();
-  if (argv.length === 1 && argv[0] === 'preview') {
+  if (argv.length === 1 && argv[0] === "preview") {
     const runPreview = await (dependencies.loadPreview ?? loadPreview)();
     return runPreview();
   }
@@ -56,7 +56,7 @@ export async function runLocalIdentityEntrypoint(
     );
   } catch {
     (options.writeStderr ?? ((value) => process.stderr.write(value)))(
-      'Local identity command failed\n',
+      "Local identity command failed\n",
     );
     return 1;
   }

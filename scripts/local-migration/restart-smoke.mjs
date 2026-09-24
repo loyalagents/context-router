@@ -1621,7 +1621,7 @@ export async function runRestartSmoke({
         repositoryRoot,
         entrypoint: path.join(
           repositoryRoot,
-          "apps/backend/dist/local-identity.js",
+          "apps/backend/dist/local-identity-postgres-reference.js",
         ),
         cwd: hostileLocalCwd,
         home: path.join(secretDirectory, "local-identity-home"),

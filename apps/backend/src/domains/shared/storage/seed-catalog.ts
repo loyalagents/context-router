@@ -20,8 +20,9 @@ const SCOPE_MAP: Record<string, PreferenceScope> = {
 export async function seedCatalog(
   storage: CatalogStorage,
   catalog: Readonly<Record<string, PreferenceDefinition>> = PREFERENCE_CATALOG,
+  logger: Pick<Console, "log" | "warn"> = console,
 ): Promise<void> {
-  console.log("Seeding preference definitions...");
+  logger.log("Seeding preference definitions...");
   for (const [slug, definition] of Object.entries(catalog)) {
     const existing = await storage.findActiveGlobal(slug);
     const data: CatalogDefinitionData = {
@@ -37,11 +38,11 @@ export async function seedCatalog(
     else {
       const collidingCount = await storage.countActivePersonalCollisions(slug);
       if (collidingCount > 0)
-        console.warn(
+        logger.warn(
           `[seed] GLOBAL slug "${slug}" collides with ${collidingCount} active user definition(s). Global definition created; user defs take precedence for affected users.`,
         );
       await storage.createGlobal(slug, data);
     }
   }
-  console.log(`Seeded ${Object.keys(catalog).length} preference definitions`);
+  logger.log(`Seeded ${Object.keys(catalog).length} preference definitions`);
 }

@@ -3,9 +3,13 @@ import { writeSync } from "node:fs";
 import { ValidationPipe } from "@nestjs/common";
 
 import type { LocalIdentityConfiguration } from "../config/local-identity.config";
-import { LocalIdentityFileStore } from "../modules/auth/local-identity-filesystem";
-import { PostgresLocalIdentityCoordination } from '@/infrastructure/storage/postgres/postgres-local-identity-coordination';
-import { LocalIdentityStateService } from "../modules/auth/local-identity-state.service";
+import {
+  requireLocalDatabaseConfiguration,
+  type LocalDatabaseConfiguration,
+} from "../config/local-database.config";
+type PreviewConfiguration =
+  | LocalDatabaseConfiguration
+  | LocalIdentityConfiguration;
 
 type LocalIdentityPreviewSignal = "SIGINT" | "SIGTERM";
 
@@ -22,10 +26,10 @@ export interface LocalIdentityPreviewProcessController {
 }
 
 export interface LocalIdentityPreviewOptions {
-  configuration: LocalIdentityConfiguration;
+  configuration: PreviewConfiguration;
   verifyReadyState?: () => Promise<unknown>;
   createApplication?: (
-    configuration: LocalIdentityConfiguration,
+    configuration: PreviewConfiguration,
   ) => Promise<LocalIdentityPreviewApplication>;
   processController?: LocalIdentityPreviewProcessController;
   reportReadiness?: (value: string) => void;
@@ -46,28 +50,32 @@ const defaultProcessController: LocalIdentityPreviewProcessController = {
 };
 
 function createDefaultVerifier(
-  configuration: LocalIdentityConfiguration,
+  configuration: PreviewConfiguration,
 ): () => Promise<unknown> {
-  const service = new LocalIdentityStateService({
-    fileStore: new LocalIdentityFileStore({
-      stateRoot: configuration.stateRoot,
-      databaseTargetId: configuration.databaseTargetId,
-    }),
-    repository: new PostgresLocalIdentityCoordination({
-      clientConfig: configuration.clientConfig,
-    }),
-  });
-  return () => service.verifyReadyState();
+  const local = requireLocalDatabaseConfiguration(configuration);
+  return async () => {
+    const { createSqliteIdentityRuntime } = await import(
+      "../infrastructure/storage/sqlite/sqlite-local-runtime"
+    );
+    return createSqliteIdentityRuntime(local).service.verifyReadyState();
+  };
 }
 
 async function createNestLocalIdentityApplication(
-  configuration: LocalIdentityConfiguration,
+  configuration: PreviewConfiguration,
 ): Promise<LocalIdentityPreviewApplication> {
-  const [{ NestFactory }, { LocalApplicationModule }] = await Promise.all([
+  const local = requireLocalDatabaseConfiguration(configuration);
+  const [
+    { NestFactory },
+    { LocalApplicationModule },
+    { createSqliteIdentityRuntime, seedLocalCatalog },
+  ] = await Promise.all([
     import("@nestjs/core"),
     import("../composition/local-application.module"),
+    import("../infrastructure/storage/sqlite/sqlite-local-runtime"),
   ]);
-  return NestFactory.create(LocalApplicationModule.register(configuration), {
+  await seedLocalCatalog(createSqliteIdentityRuntime(local).database);
+  return NestFactory.create(LocalApplicationModule.register(local), {
     abortOnError: false,
     logger: false,
   });

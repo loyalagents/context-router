@@ -88,6 +88,7 @@ class HeldWorker {
   request(
     command: CoordinationCommand,
     principalId?: string,
+    destination?: string,
   ): Promise<IdentityRows | undefined> {
     this.assertHeld();
     if (this.pending) throw fixed("database operation already in progress");
@@ -103,6 +104,7 @@ class HeldWorker {
           id,
           command,
           ...(principalId === undefined ? {} : { principalId }),
+          ...(destination === undefined ? {} : { destination }),
         });
       } catch {
         this.fail();
@@ -239,6 +241,20 @@ export class SqliteLocalIdentitySession implements LocalIdentitySession {
   async inspectIdentityRows(): Promise<IdentityRows> {
     this.assertHeld();
     return this.held.request("inspect") as Promise<IdentityRows>;
+  }
+  /** Adapter-private backup, after verify committed and while the exact owner remains held. */
+  async backupTo(destination: string): Promise<void> {
+    this.assertHeld();
+    if (this.operation) throw fixed("database operation already in progress");
+    this.operation = true;
+    try {
+      await this.held.request("backup", undefined, destination);
+    } catch {
+      this.destroy();
+      throw fixed("recovery required");
+    } finally {
+      this.operation = false;
+    }
   }
   async initialize(
     state: LocalIdentityState,

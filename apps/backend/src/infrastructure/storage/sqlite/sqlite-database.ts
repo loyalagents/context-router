@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 import { randomBytes, createHash } from "node:crypto";
-import { DatabaseSync, type SQLInputValue } from "node:sqlite";
+import { DatabaseSync, backup, type SQLInputValue } from "node:sqlite";
 import {
   StorageConflictError,
   StorageUnavailableError,
@@ -50,7 +50,7 @@ export function reserveSqliteOwner(): () => void {
     }
   };
 }
-function requireNoNativeOwners(): void {
+export function requireNoNativeOwners(): void {
   if (nativeOwners !== 0) unavailable();
 }
 /** Only call at a native provider boundary, never on application callback failures. */
@@ -191,6 +191,44 @@ export class SqliteConnection {
       }
       return digest.digest("base64url");
     });
+  }
+  /** Same source handle; only a precreated, distinct private destination is admitted. */
+  async backupTo(destination: string): Promise<void> {
+    this.assertTransactionHealthy();
+    try {
+      if (
+        this.native.isTransaction ||
+        !path.isAbsolute(destination) ||
+        path.resolve(destination) !== destination ||
+        path.basename(destination) !== DATABASE_BASENAME
+      )
+        unavailable();
+      const destinationRoot = privateRoot(path.dirname(destination));
+      if (
+        destinationRoot.path === this.root.path ||
+        destinationRoot.path.startsWith(this.root.path + path.sep) ||
+        this.root.path.startsWith(destinationRoot.path + path.sep)
+      )
+        unavailable();
+      const before = regular(destination);
+      if (
+        before.size !== 0 ||
+        samePin(before, this.filePin) ||
+        fs.readdirSync(destinationRoot.path).join() !== DATABASE_BASENAME
+      )
+        unavailable();
+      await backup(this.native, `${pathToFileURL(destination).href}?mode=rw`);
+      this.assertPinned();
+      assertRoot(destinationRoot);
+      if (
+        !samePin(regular(destination), pin(before)) ||
+        fs.readdirSync(destinationRoot.path).join() !== DATABASE_BASENAME
+      )
+        unavailable();
+    } catch {
+      this.lost = true;
+      unavailable();
+    }
   }
   close(): void {
     if (this.closed) return;

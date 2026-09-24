@@ -9,11 +9,13 @@ export type CoordinationCommand =
   | "insert-principal"
   | "commit"
   | "rollback"
-  | "close";
+  | "close"
+  | "backup";
 export interface CoordinationRequest {
   id: number;
   command: CoordinationCommand;
   principalId?: string;
+  destination?: string;
 }
 export interface IdentityRows {
   users: Array<{ user_id: string }>;
@@ -89,6 +91,13 @@ export function validReply(
 export function validRequest(value: unknown): value is CoordinationRequest {
   const request = value as CoordinationRequest;
   if (!Number.isSafeInteger(request?.id) || request.id < 1) return false;
+  if (request.command === "backup")
+    return (
+      exactKeys(request, ["id", "command", "destination"]) &&
+      typeof request.destination === "string" &&
+      request.destination.length <= 4096 &&
+      !/[\u0000-\u001f\u007f]/.test(request.destination)
+    );
   if (request.command === "insert-principal")
     return (
       exactKeys(request, ["id", "command", "principalId"]) &&

@@ -19,7 +19,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { ExecutionContextHost } from "@nestjs/core/helpers/execution-context-host";
 import { graphql, type GraphQLSchema } from "graphql";
 
-import { LocalApplicationModule } from "../../src/composition/local-application.module";
+import { PostgresReferenceLocalApplicationModule } from "../../src/composition/postgres-reference-local-application.module";
 import type { LocalIdentityConfiguration } from "../../src/config/local-identity.config";
 import { HUMAN_AUTH_STRATEGY } from "../../src/domains/shared/ports/human-auth.constants";
 import { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
@@ -87,7 +87,7 @@ function authorization(credential: string): string {
   return `Bearer ${credential}`;
 }
 
-describe("real local identity application composition", () => {
+describe("Postgres-reference local identity application composition", () => {
   let temporaryRoot: string;
   let stateRoot: string;
   let statePath: string;
@@ -169,7 +169,11 @@ describe("real local identity application composition", () => {
     };
 
     const builder = Test.createTestingModule({
-      imports: [LocalApplicationModule.register(configuration(stateRoot))],
+      imports: [
+        PostgresReferenceLocalApplicationModule.register(
+          configuration(stateRoot),
+        ),
+      ],
     });
     builder.overrideProvider(PrismaService).useValue(prisma);
     testingModule = await builder.compile();

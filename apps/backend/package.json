@@ -38,7 +38,8 @@
     "schema:generate": "ts-node -r tsconfig-paths/register scripts/graphql-schema-fixture.ts --write",
     "schema:check": "ts-node -r tsconfig-paths/register scripts/graphql-schema-fixture.ts --check",
     "db:push": "pnpm prisma:generate && docker compose exec app npx prisma db push",
-    "db:reset": "docker compose exec app npx prisma migrate reset"
+    "db:reset": "docker compose exec app npx prisma migrate reset",
+    "local-identity:postgres-reference": "node --no-global-search-paths dist/local-identity-postgres-reference.js"
   },
   "repository": {
     "type": "git",

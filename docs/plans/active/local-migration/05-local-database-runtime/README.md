@@ -1,6 +1,6 @@
 # Step 05: Local Database Runtime
 
-- Status: CP2 storage foundation complete; CP3 held identity coordination in progress
+- Status: CP2–CP3 complete; CP4 application/runtime/backup validated, packaged proof and CP5 closeout in progress
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Working branch: `codex/local-migration-05-local-database-runtime`
