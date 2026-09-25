@@ -6,6 +6,7 @@ export async function cancellationTrial({ client, phase, prompt, controller = ne
   const observations = [];
   try {
     await client.complete(prompt, { signal: controller.signal, deadline,
+      onTerminalObservation: () => { terminalObserved = true; },
       onProgress: (event) => {
         terminalObserved ||= event.terminal === true;
         const matched = !event.terminal && (phase === 'prefill'

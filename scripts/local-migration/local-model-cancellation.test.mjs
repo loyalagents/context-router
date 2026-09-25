@@ -66,3 +66,14 @@ test('post-trigger progress retention is bounded and overflow fails measurement'
   assert.equal(result.observationOverflow, true);
   assert.ok(!JSON.stringify(result).includes('must not retain'));
 });
+
+test('a native limit terminal observed without terminal progress prevents a cancellation followup', async () => {
+  let followed=false;
+  const client={state:'ready',get controlEvidence(){return{state:this.state,overflow:false,records:[{phase:'readiness',sequence:1,event:'idle',elapsedMs:0,remainingMs:100}]};},settled:async()=>{},complete:async(_prompt,options)=>{
+    options.onProgress({processed:100,total:100,decoded:8,terminal:false});
+    options.onTerminalObservation?.({stopType:'limit',truncated:false,inputTokens:100,outputTokens:2048});
+    throw new Error('Local model cancelled');
+  }};
+  const result=await cancellationTrial({client,phase:'decode',prompt:'synthetic',followup:async()=>{followed=true;return 1;},baselineP95Ms:10});
+  assert.equal(result.terminalObserved,true);assert.equal(result.passed,false);assert.equal(followed,false);
+});

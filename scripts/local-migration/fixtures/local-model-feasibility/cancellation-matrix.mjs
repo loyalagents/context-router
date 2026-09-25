@@ -2,9 +2,9 @@ import { cancellationTrial } from './cancellation.mjs';
 import { renderForCompletion } from './protocol.mjs';
 import { completeControlEvidence } from './control-evidence.mjs';
 
-const shortPrompt = 'Return exactly {"answer":"ok"}.';
+export const shortPrompt = 'Return exactly {"answer":"ok"}.';
 const shortSchema = { type: 'object', properties: { answer: { const: 'ok' } }, required: ['answer'], additionalProperties: false };
-const longPrompt = `${Array.from({ length: 400 }, (_, index) => `Record ${String(index).padStart(4, '0')}: synthetic inventory item is blue and belongs to sample group alpha.`).join('\n')}\nFor each record output its number and color, one per line. Include every record.`;
+export const longPrompt = `${Array.from({ length: 400 }, (_, index) => `Record ${String(index).padStart(4, '0')}: synthetic inventory item is blue and belongs to sample group alpha.`).join('\n')}\nFor each record output its number and color, one per line. Include every record.`;
 const phases = ['prefill', 'prefill', 'prefill', 'decode', 'decode', 'decode'];
 
 /** One owned-runtime measurement, with no recovery/restart or result-dependent prompt changes. */
