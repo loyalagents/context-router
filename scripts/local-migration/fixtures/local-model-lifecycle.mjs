@@ -6,7 +6,7 @@ export function localModelLifecycleResources(parent) {
   const record = (id, type, status, identity, recovery = {}) => ({ id, type, owned: true, status: 'acquired', acquiredAt: stamp,
     identity, recovery, cleanup: { status, finishedAt: stamp } });
   const resources = [record('local-model-state', 'local-model-private-state', 'removed', {
-    root, generations: 2, parserChildren: 4, identityStable: true, freshCredentials: true, missingWorkerRejected: true,
+    root, generations: 2, parserChildren: 6, identityStable: true, freshCredentials: true, copiedLayoutParsed: true, missingWorkerRejected: true,
   }, { root, instruction: MODEL_ROOT_RECOVERY })];
   let pid = 6200;
   const child = (id, role, operation, extra = {}, exitCode = 0) => {
@@ -20,8 +20,8 @@ export function localModelLifecycleResources(parent) {
       root: path.join(root, `session-${generation}`), generation, pid: 6000, port: 18000 + generation, completions: 3, denied: 8, closed: true, previewRequests: 0, pdfSeen: true, certificateSha256: String(generation).repeat(64),
     }, { root, instruction: MODEL_ROOT_RECOVERY }));
     child(`local-model-preview-${generation}`, 'preview', 'preview-model', { listenerCount: 0, requestedSignal: generation === 1 ? 'SIGTERM' : 'SIGINT' }, generation === 1 ? 143 : 130);
-    const ownerPid = child(`local-model-probe-${generation}`, 'probe', 'probe', { controls: 46, connections: 20, missingWorkerRejected: true, identityDigest: 'a'.repeat(64), sqliteThreads: [{ threadId: 1, controls: 46, code: 0, exited: true }] });
-    for (const ordinal of [1, 2]) resources.push(record(`local-model-parser-${generation}-${ordinal}`, 'local-model-parser-process', 'exited', {
+    const ownerPid = child(`local-model-probe-${generation}`, 'probe', 'probe', { controls: 46, connections: 20, copiedLayoutParsed: true, missingWorkerRejected: true, identityDigest: 'a'.repeat(64), sqliteThreads: [{ threadId: 1, controls: 46, code: 0, exited: true }] });
+    for (const ordinal of [1, 2, 3]) resources.push(record(`local-model-parser-${generation}-${ordinal}`, 'local-model-parser-process', 'exited', {
       generation, ordinal, owner: `local-model-probe-${generation}`, pid: ++pid, ownerPid, code: 0, signal: null, closed: true,
     }, 'Parser belongs to the recorded probe process group; reap that exact group before root cleanup.'));
   }

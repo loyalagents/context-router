@@ -21,17 +21,17 @@ export function decodeLocalModelProbe(output) {
   try {
     if (typeof output !== 'string' || output.length > 4096 || !output.endsWith('\n') || output.trim().includes('\n')) throw fail();
     const v = JSON.parse(output);
-    if (Object.keys(v).sort().join() !== 'calls,connections,controls,identityDigest,missingWorkerRejected,node,parserChildren,sqliteThreads,type,version' ||
+    if (Object.keys(v).sort().join() !== 'calls,connections,controls,copiedLayoutParsed,identityDigest,missingWorkerRejected,node,parserChildren,sqliteThreads,type,version' ||
         v.type !== 'context-router.local-model.probe' || v.version !== 1 || v.controls !== 46 || v.calls !== 3 ||
         !Number.isSafeInteger(v.connections) || v.connections < 1 || v.connections > 64 || v.node !== '24.21.0' ||
-        !/^[a-f0-9]{64}$/u.test(v.identityDigest) || v.missingWorkerRejected !== true ||
+        !/^[a-f0-9]{64}$/u.test(v.identityDigest) || v.copiedLayoutParsed !== true || v.missingWorkerRejected !== true ||
         !Array.isArray(v.sqliteThreads) || v.sqliteThreads.length < 1 || v.sqliteThreads.length > 8 ||
         v.sqliteThreads.some((t) => Object.keys(t).sort().join() !== 'code,controls,exited,threadId' || t.controls !== 46 || t.code !== 0 || t.exited !== true || !Number.isSafeInteger(t.threadId) || t.threadId < 1) ||
         new Set(v.sqliteThreads.map((t) => t.threadId)).size !== v.sqliteThreads.length ||
-        !Array.isArray(v.parserChildren) || v.parserChildren.length !== 2 ||
+        !Array.isArray(v.parserChildren) || v.parserChildren.length !== 3 ||
         v.parserChildren.some((p) => Object.keys(p).sort().join() !== 'closed,code,pid,signal' ||
           p.closed !== true || p.code !== 0 || p.signal !== null || !Number.isSafeInteger(p.pid) || p.pid < 1) ||
-        new Set(v.parserChildren.map((p) => p.pid)).size !== 2) throw fail();
+        new Set(v.parserChildren.map((p) => p.pid)).size !== 3) throw fail();
     return v;
   } catch { throw fail(); }
 }
@@ -136,7 +136,7 @@ export async function runLocalModelSmoke({ entrypoint, cwd, home, temporaryDirec
     await journal.cleanupFinished(id, { status: 'exited' }); await verifyArtifact();
     if (probe) {
       const evidence = decodeLocalModelProbe(result.stdout);
-      await journal.acquired(id, { identity: { controls: evidence.controls, connections: evidence.connections, missingWorkerRejected: evidence.missingWorkerRejected, identityDigest: evidence.identityDigest, sqliteThreads: evidence.sqliteThreads } });
+      await journal.acquired(id, { identity: { controls: evidence.controls, connections: evidence.connections, copiedLayoutParsed: evidence.copiedLayoutParsed, missingWorkerRejected: evidence.missingWorkerRejected, identityDigest: evidence.identityDigest, sqliteThreads: evidence.sqliteThreads } });
       return evidence;
     }
     return result;
@@ -165,7 +165,7 @@ export async function runLocalModelSmoke({ entrypoint, cwd, home, temporaryDirec
       await run(`local-model-preview-${generation}`, 'preview-model', { previewSignal: generation === 1 ? 'SIGTERM' : 'SIGINT', extra: { LOCAL_MODEL_SESSION_ROOT: path.join(root, `absent-preview-session-${generation}`), LOCAL_MODEL_PORT: String(runtime.port) } });
       assert.equal(runtime.counters.requests, 0);
       await assert.rejects(readFile(path.join(root, `absent-preview-session-${generation}`, 'backend-session.claim')), (error) => error.code === 'ENOENT');
-      for (const parser of [1, 2]) await journal.acquiring({ id: `local-model-parser-${generation}-${parser}`, type: 'local-model-parser-process', owned: true,
+      for (const parser of [1, 2, 3]) await journal.acquiring({ id: `local-model-parser-${generation}-${parser}`, type: 'local-model-parser-process', owned: true,
         identity: { generation, ordinal: parser, owner: `local-model-probe-${generation}` }, recovery: 'Parser belongs to the recorded probe process group; reap that exact group before root cleanup.' });
       const probe = await run(`local-model-probe-${generation}`, 'probe', { probe: true, extra: { LOCAL_MODEL_SESSION_ROOT: rootKey, LOCAL_MODEL_PORT: String(runtime.port) } });
       assert.equal(probe.identityDigest, digest(stateBytes)); probes.push(probe);
@@ -183,7 +183,7 @@ export async function runLocalModelSmoke({ entrypoint, cwd, home, temporaryDirec
       assert.deepEqual(await readdir(temporaryDirectory), []);
       await verifyArtifact();
     }
-    await journal.acquired('local-model-state', { identity: { generations: 2, parserChildren: 4, identityStable: true, freshCredentials: true, missingWorkerRejected: true } });
+    await journal.acquired('local-model-state', { identity: { generations: 2, parserChildren: 6, identityStable: true, freshCredentials: true, copiedLayoutParsed: true, missingWorkerRejected: true } });
   } catch (error) { primary = error; }
   for (const owned of children) if (!owned.reaped) {
     const errors = await terminateAndReapJournaledNodeChild(owned.handle, 'model smoke'); cleanup.push(...errors);
@@ -197,5 +197,5 @@ export async function runLocalModelSmoke({ entrypoint, cwd, home, temporaryDirec
   try { await journal.cleanupFinished('local-model-state', { status: cleanup.length ? 'failed' : 'removed', error: cleanup.length ? fail() : undefined }); }
   catch (error) { cleanup.push(error); }
   const combined = combineFailures(primary, cleanup, 'local model smoke'); if (combined) throw combined;
-  return { generations: 2, parserChildren: 4, identityStable: true, freshCredentials: true, controls: probes.map((p) => p.controls) };
+  return { generations: 2, parserChildren: 6, identityStable: true, freshCredentials: true, controls: probes.map((p) => p.controls) };
 }

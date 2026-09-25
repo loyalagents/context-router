@@ -11,6 +11,19 @@ async function copyParserWithoutWorker(source, target) {
   }
 }
 module.exports.copyParserWithoutWorker = copyParserWithoutWorker;
+async function verifyParserWorkerDependency(source, target, pdf, Parser) {
+  await copyParserWithoutWorker(source, target);
+  const vendorWorker = path.join(target, 'pdfjs/pdf.worker.mjs');
+  await fs.writeFile(vendorWorker, await fs.readFile(path.join(source, 'pdfjs/pdf.worker.mjs')), { mode: 0o600, flag: 'wx' });
+  const options = { workerPath: path.join(target, 'pdf-worker.mjs') };
+  const parsed = await new Parser(options).parse(pdf);
+  if (!parsed.text.includes('Employment Eligibility Verification')) throw new Error('Copied parser failed its positive control');
+  await fs.unlink(vendorWorker);
+  try { await new Parser(options).parse(pdf); throw new Error('Unexpected parse'); }
+  catch (error) { if (error.message !== 'PDF_INVALID') throw error; }
+  return { copiedLayoutParsed: true, missingWorkerRejected: true };
+}
+module.exports.verifyParserWorkerDependency = verifyParserWorkerDependency;
 module.exports.runLocalIdentityEntrypoint = async () => {
   let app; let stage = 'load';
   try {
@@ -46,20 +59,18 @@ module.exports.runLocalIdentityEntrypoint = async () => {
     stage = 'missing-worker';
     const engine = path.join(dist, 'infrastructure/local-model/engine');
     const missing = path.join(process.env.LOCAL_MODEL_SMOKE_ROOT, 'missing-engine');
-    await copyParserWithoutWorker(engine, missing);
     try {
       const { PdfProcess } = load('infrastructure/local-model/engine/pdf-process.mjs');
-      try { await new PdfProcess({ workerPath: path.join(missing, 'pdf-worker.mjs') }).parse(pdf); throw new Error('Unexpected parse'); }
-      catch (error) { if (error.message !== 'PDF_INVALID') throw error; }
+      await verifyParserWorkerDependency(engine, missing, pdf, PdfProcess);
     } finally { await fs.rm(missing, { recursive: true, force: true }); }
     stage = 'close';
     await app.close(); app = undefined;
     if (!bytes.equals(await fs.readFile(path.join(configuration.stateRoot, 'identity.json')))) throw new Error();
     const c = globalThis.__localModelSmoke.counters;
-    if (c.sqliteThreads.length < 1 || c.sqliteThreads.some((t) => !t.exited || t.code !== 0 || t.controls !== 46) || c.allowedConnections < 1 || c.parserChildren.length !== 2 || c.parserChildren.some((p) => !p.closed || p.code !== 0 || p.signal !== null || !Number.isSafeInteger(p.pid))) throw new Error();
+    if (c.sqliteThreads.length < 1 || c.sqliteThreads.some((t) => !t.exited || t.code !== 0 || t.controls !== 46) || c.allowedConnections < 1 || c.parserChildren.length !== 3 || c.parserChildren.some((p) => !p.closed || p.code !== 0 || p.signal !== null || !Number.isSafeInteger(p.pid))) throw new Error();
     process.stdout.write(JSON.stringify({ type: 'context-router.local-model.probe', version: 1, controls,
       connections: c.allowedConnections, parserChildren: c.parserChildren, sqliteThreads: c.sqliteThreads, calls: 3,
-      identityDigest: createHash('sha256').update(bytes).digest('hex'), missingWorkerRejected: true, node: process.versions.node }) + '\n');
+      identityDigest: createHash('sha256').update(bytes).digest('hex'), copiedLayoutParsed: true, missingWorkerRejected: true, node: process.versions.node }) + '\n');
     return 0;
   } catch {
     await app?.close(); process.stderr.write(`Local model probe failed during ${stage}\n`); return 1;

@@ -17,6 +17,8 @@ test('model lifecycle rejects missing, duplicate, foreign-owner, unclosed and un
   const valid = { resources: localModelLifecycleResources('/owned') };
   assertLocalModelSmokeSuccessResources(valid, 'fixture');
   const mutations = [
+    (s) => s.resources[0].identity.copiedLayoutParsed = false,
+    (s) => s.resources.find((r) => r.id === 'local-model-probe-1').identity.copiedLayoutParsed = false,
     (s) => s.resources.find((r) => r.id === 'local-model-probe-1').identity.sqliteThreads[0].controls = 0,
     (s) => s.resources.find((r) => r.id === 'local-model-probe-1').identity.sqliteThreads[0].exited = false,
     (s) => s.resources.pop(), (s) => s.resources.push(s.resources[1]),

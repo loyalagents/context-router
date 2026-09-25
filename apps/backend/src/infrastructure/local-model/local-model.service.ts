@@ -71,12 +71,17 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
   async getStatus(options: AiExecutionOptions = {}): Promise<AiStatus> {
     if (this.closing || this.unavailable) return Object.freeze({ state: 'unavailable', configured: !!this.claimed });
     if (this.active) return Object.freeze({ state: 'busy', configured: !!this.claimed });
+    const requested = { ...options };
+    const statusDeadline = performance.now() + 5000;
+    const callerDeadline = requested.deadline;
+    if (callerDeadline !== undefined && !Number.isFinite(callerDeadline)) throw new AiError('deadline');
     try {
-      await this.run({ ...options, deadline: Math.min(options.deadline ?? Infinity, performance.now() + 5000) },
+      await this.run({ ...requested, deadline: Math.min(callerDeadline ?? Infinity, statusDeadline) },
         async (controls, check) => { await this.readiness(controls, check); });
       return Object.freeze({ state: 'available', configured: true });
     } catch (error) {
-      if (error instanceof AiError && ['cancelled', 'deadline'].includes(error.kind)) throw error;
+      if (error instanceof AiError && (error.kind === 'cancelled' || (error.kind === 'deadline' &&
+        callerDeadline !== undefined && (callerDeadline <= statusDeadline || performance.now() >= callerDeadline)))) throw error;
       return Object.freeze({ state: 'unavailable', configured: !!this.claimed });
     }
   }

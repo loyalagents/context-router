@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "prebuild": "node ../../scripts/check-toolchain.mjs",
-    "build": "nest build && node scripts/copy-local-model-assets.mjs",
+    "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

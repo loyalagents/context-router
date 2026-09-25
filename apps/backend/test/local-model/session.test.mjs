@@ -8,6 +8,38 @@ const { LocalModelService } = require('../../dist/infrastructure/local-model/loc
 import { fixture } from './fixtures/session-fixture.mjs';
 const send = (response, value) => response.write(`data: ${JSON.stringify(value)}\n\n`);
 
+for (const callerDeadline of [false, true]) test(`status reports its own readiness timeout as unavailable (later caller deadline: ${callerDeadline})`, { timeout: 15000 }, async (t) => {
+  const { service, state } = await fixture(t);
+  await service.getStatus(); await service.settled();
+  const sockets = []; const probe = service.probe;
+  service.probe = (config, path, body, options) => probe(config, path, body, { ...options,
+    onSocket(socket) { sockets.push(socket); options.onSocket?.(socket); } });
+  state.hook = async req => req.url === '/props';
+  const options = callerDeadline ? { deadline: performance.now() + 12000 } : {};
+  assert.deepEqual(await service.getStatus(options), { state: 'unavailable', configured: true });
+  await service.settled();
+  assert.equal(state.completionBodies.length, 0);
+  assert.ok(sockets.length > 0 && sockets.every(socket => socket.closed));
+  state.hook = null;
+  assert.deepEqual(await service.getStatus(), { state: 'available', configured: true });
+});
+
+test('status preserves caller deadlines, invalid deadline rejection and in-flight cancellation', async (t) => {
+  const { service, state } = await fixture(t);
+  await service.getStatus(); await service.settled();
+  const before = state.calls.length;
+  for (const deadline of [NaN, Infinity, -Infinity]) await assert.rejects(service.getStatus({ deadline }), { kind: 'deadline' });
+  assert.equal(state.calls.length, before);
+  state.hook = async req => req.url === '/props';
+  await assert.rejects(service.getStatus({ deadline: performance.now() + 50 }), { kind: 'deadline' });
+  await service.settled();
+  const controller = new AbortController();
+  state.hook = async req => { if (req.url !== '/props') return false; controller.abort(); return true; };
+  await assert.rejects(service.getStatus({ signal: controller.signal }), { kind: 'cancelled' });
+  await service.settled(); assert.equal(state.completionBodies.length, 0);
+  state.hook = null; assert.equal((await service.getStatus()).state, 'available');
+});
+
 test('actual adapter claims once, reports bounded readiness and serves both ports with actual Zod', async (t) => {
   const { service, state, config } = await fixture(t);
   assert.deepEqual(await service.getStatus(), { state: 'available', configured: true });

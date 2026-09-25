@@ -16,7 +16,7 @@ const {AI_TEXT_GENERATOR_PORT,AI_STRUCTURED_OUTPUT_PORT}=load('domains/shared/po
 const root=await realpath(dirname(process.argv[2])),local={kind:'sqlite',databaseRoot:join(root,'data'),stateRoot:join(root,'identity')};
 let app,receipt={mode:'production-cancellation',passed:false},stage='manifest';
 try{
- const manifest=JSON.parse(await readFile(resolve(repoRoot,'docs/plans/active/local-migration/06-local-model/evidence/production-cancellation-manifest.json'),'utf8'));
+ const manifest=JSON.parse(await readFile(resolve(repoRoot,'docs/plans/active/local-migration/06-local-model/evidence/production-cancellation-manifest-review.json'),'utf8'));
  assert.deepEqual(manifest,{...productionCancellationInputs(),buildSha256:(await buildProductionManifest()).buildSha256});receipt.manifest=manifest;
  stage='offline';receipt.offlineControls=await offlineControls(input.configuration.port);
  stage='application';await createSqliteIdentityRuntime(local,true).service.initialize();const identity=await readFile(join(local.stateRoot,'identity.json'));

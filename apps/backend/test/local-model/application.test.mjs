@@ -126,3 +126,36 @@ test('actual Nest close cancels a pending model preparation, awaits owned work a
   await assert.rejects(model.generateText('later'), { kind: 'unavailable' });
   assert.equal(f.state.completionBodies.length, 0);
 });
+
+for (const postNativeFailure of [false, true]) test(`native duplicate oracle distinguishes post-completion fallback (fault: ${postNativeFailure})`, async (t) => {
+  const { assertNativeDuplicateChain, observeService } = await import('../../../../scripts/local-migration/fixtures/local-model-feasibility/production-quality.mjs');
+  const f = await fixture(t); const { app, state } = await application(f, { root: f.config.root, port: f.config.port });
+  const model = app.get(AI_TEXT_GENERATOR_PORT);
+  let observer; const originalFile = model.generateStructuredWithFile, originalStructured = model.generateStructured;
+  try {
+    await model.getStatus(); await model.settled();
+    const suggestion = { slug: 'profile.last_name', operation: 'CREATE', newValue: 'Lovelace', confidence: 0.99, sourceSnippet: 'Lovelace' };
+    let seededInitialResponses = 0;
+    model.generateStructuredWithFile = async (_prompt, _file, schema) => {
+      seededInitialResponses++; return schema.parse({ documentSummary: 'Synthetic', suggestions: [suggestion, { ...suggestion }] });
+    };
+    f.state.reply = JSON.stringify({ suggestion });
+    model.generateStructured = async (...args) => {
+      const value = await originalStructured.apply(model, args);
+      if (postNativeFailure) throw new Error('synthetic post-native failure');
+      return value;
+    };
+    observer = observeService(model); observer.begin();
+    const result = await app.get(PreferenceExtractionService).extractPreferences(state.principalId,
+      Buffer.from('Lovelace'), 'text/plain', 'synthetic.txt', { deadline: performance.now() + 180000 });
+    await model.settled();
+    assert.equal(observer.current.calls.length, 1); assert.equal(observer.current.calls[0].failed, false);
+    assert.equal(result.suggestions[0].newValue, 'Lovelace');
+    const check = () => assertNativeDuplicateChain({ result, seededInitialResponses, calls: observer.current.calls });
+    if (postNativeFailure) { assert.equal(result.suggestions[0].id, 'candidate:0'); assert.throws(check); }
+    else assert.equal(check().passed, true);
+  } finally {
+    observer?.restore(); model.generateStructuredWithFile = originalFile; model.generateStructured = originalStructured;
+    await app.close();
+  }
+});

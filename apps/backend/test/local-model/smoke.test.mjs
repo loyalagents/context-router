@@ -12,13 +12,36 @@ test('actual source model smoke runs two independent sessions and reaps every ow
   try {
     const result = await runLocalModelSmoke({ entrypoint: new URL('../../dist/local-identity.js', import.meta.url).pathname, cwd: root,
       home: join(root, 'home'), temporaryDirectory: join(root, 'tmp'), stateParent: root, journal });
-    assert.equal(result.generations, 2); assert.equal(result.parserChildren, 4);
+    assert.equal(result.generations, 2); assert.equal(result.parserChildren, 6);
     for (const probe of journal.state.resources.filter((r) => r.type === 'local-model-probe-process')) {
       assert.ok(probe.identity.sqliteThreads.length > 0);
       for (const thread of probe.identity.sqliteThreads) assert.deepEqual(thread, { threadId: thread.threadId, controls: 46, code: 0, exited: true });
     }
     assertLocalModelSmokeSuccessResources(journal.state, 'fixture');
   } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('missing-worker evidence first requires the copied layout to parse successfully', async () => {
+  const fs = await import('node:fs/promises'); const { join } = await import('node:path'); const { tmpdir } = await import('node:os');
+  const { createRequire } = await import('node:module');
+  const { verifyParserWorkerDependency } = createRequire(import.meta.url)('../../../../scripts/local-migration/fixtures/local-model-smoke/probe.cjs');
+  const root = await fs.mkdtemp(join(tmpdir(), 'model-parser-causal-'));
+  const source = new URL('../../dist/infrastructure/local-model/engine', import.meta.url).pathname;
+  let calls = 0;
+  class BrokenParser { async parse() { calls++; throw new Error('PDF_INVALID'); } }
+  try {
+    await assert.rejects(verifyParserWorkerDependency(source, join(root, 'broken'), Buffer.from('synthetic'), BrokenParser), /PDF_INVALID/);
+    assert.equal(calls, 1);
+    class LayoutParser {
+      constructor({ workerPath }) { this.path = join(workerPath, '../pdfjs/pdf.worker.mjs'); }
+      async parse() {
+        try { await fs.access(this.path); } catch { throw new Error('PDF_INVALID'); }
+        return { text: 'Employment Eligibility Verification' };
+      }
+    }
+    assert.deepEqual(await verifyParserWorkerDependency(source, join(root, 'valid'), Buffer.from('synthetic'), LayoutParser),
+      { copiedLayoutParsed: true, missingWorkerRejected: true });
+  } finally { await fs.rm(root, { recursive: true, force: true }); }
 });
 
 test('journal failure during failed-child cleanup still closes the owned listener and cannot report success', { timeout: 60000 }, async () => {

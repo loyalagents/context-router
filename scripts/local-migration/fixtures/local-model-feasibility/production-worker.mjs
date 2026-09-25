@@ -4,7 +4,7 @@ import { readFile, writeFile, realpath } from 'node:fs/promises';
 import { dirname, resolve, join } from 'node:path';
 import { repoRoot } from './cases.mjs';
 import { offlineControls } from './offline-controls.mjs';
-import { runProductionQuality, observeService } from './production-quality.mjs';
+import { runProductionQuality, observeService, assertNativeDuplicateChain } from './production-quality.mjs';
 import { buildSchemaProbes, validateProbeReply } from './schema-probes.mjs';
 const input = JSON.parse(await readFile(process.argv[2], 'utf8'));
 const req = createRequire(resolve(repoRoot,'apps/backend/package.json'));
@@ -43,15 +43,13 @@ try {
   stage='duplicate-chain';
   const suggestion={slug:'profile.last_name',operation:'CREATE',newValue:'Lovelace',confidence:0.99,sourceSnippet:'Lovelace'};
   const generate=model.generateStructuredWithFile;
-  let seeded=0,native=0; const observer=observeService(model); observer.begin();
+  let seeded=0; const observer=observeService(model); observer.begin();
   // Seed only the initial duplicate branch; actual Nest consumer performs the native dynamic-schema consolidation.
   model.generateStructuredWithFile=async (_prompt,_file,schema)=>{seeded++;return schema.parse({documentSummary:'Synthetic',suggestions:[suggestion,{...suggestion}]});};
   try {
     const result=await app.get(PreferenceExtractionService).extractPreferences(state.principalId,Buffer.from('Lovelace'),'text/plain','synthetic.txt',{deadline:performance.now()+180000});
-    await model.settled(); native=observer.current.calls.length;
-    assert.equal(seeded,1); assert.equal(native,1); assert.equal(result.suggestions.length,1);
-    assert.equal(result.suggestions[0].slug,'profile.last_name'); assert.equal(result.suggestions[0].newValue,'Lovelace');
-    receipt.duplicateChain={passed:true,seededInitialResponses:seeded,nativeConsolidations:native,calls:observer.current.calls};
+    await model.settled(); assert.equal(model.client.state,'ready');
+    receipt.duplicateChain=assertNativeDuplicateChain({result,seededInitialResponses:seeded,calls:observer.current.calls});
   } finally {model.generateStructuredWithFile=generate;observer.restore();}
   stage='editable-form';
   const schema=app.get(GraphQLSchemaHost).schema;

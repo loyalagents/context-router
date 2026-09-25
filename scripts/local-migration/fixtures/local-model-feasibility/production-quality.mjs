@@ -10,7 +10,8 @@ const req = createRequire(resolve(repoRoot, 'apps/backend/package.json'));
 const dist = resolve(repoRoot, 'apps/backend/dist');
 const { localJsonSchema } = req(join(dist, 'infrastructure/local-model/schema.js'));
 const { LOCAL_AI_CAPABILITIES } = req(join(dist, 'domains/shared/ports/ai-execution.js'));
-export const productionManifestPath = resolve(repoRoot, 'docs/plans/active/local-migration/06-local-model/evidence/production-quality-manifest.json');
+// Historical manifests remain immutable; current qualification binds the review follow-up build.
+export const productionManifestPath = resolve(repoRoot, 'docs/plans/active/local-migration/06-local-model/evidence/production-quality-manifest-review.json');
 const correction = '\n\nThe previous response did not satisfy the required JSON schema. Return valid JSON only.';
 async function buildDigest(directory = dist, prefix = '') {
   const values = [];
@@ -42,6 +43,23 @@ export async function buildProductionManifest() {
   return { ...original, production: true, originalManifestSha256: digest(original), buildSha256: digest(await buildDigest()), correctionSuffixSha256: digest(correction), cases: entries };
 }
 export function requireFrozenManifest(expected, actual) { assert.deepEqual(actual, expected, 'Frozen production inputs changed'); }
+/** Supplemental acceptance must distinguish a merged result from the retained generic fallback. */
+export function assertNativeDuplicateChain({ result, seededInitialResponses, calls }) {
+  const slug = 'profile.last_name';
+  assert.equal(seededInitialResponses, 1);
+  assert.equal(calls.length, 1); assert.equal(calls[0].failed, false);
+  assert.equal(result.suggestions.length, 1);
+  assert.equal(result.suggestions[0].id, `consolidated:${slug}`);
+  assert.equal(result.suggestions[0].slug, slug); assert.equal(result.suggestions[0].newValue, 'Lovelace');
+  assert.equal(result.filteredSuggestions.length, 2);
+  for (const [index, entry] of result.filteredSuggestions.entries()) {
+    assert.equal(entry.id, `filtered:duplicate:${slug}:${index}`);
+    assert.equal(entry.filterReason, 'DUPLICATE_KEY');
+    assert.equal(entry.filterDetails, `Merged into consolidated suggestion for ${slug}`);
+  }
+  return { passed: true, seededInitialResponses, nativeConsolidations: calls.length,
+    consolidatedResult: true, mergedAuditEntries: 2, calls };
+}
 export function acceptAmendmentE(manifest, trials) {
   const scored = scoreQuality(manifest, trials); // Requires all unique trials and uses original order-independent units.
   return scored.trials.every((trial) => !trial.failed && trial.criticalViolations === 0 && trial.validated.falsePositive === 0 &&

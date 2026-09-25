@@ -119,13 +119,22 @@ export class DocumentAnalysisService {
         };
       }
 
+      const localReasons = {
+        input_limit: 'Document analysis input is too large. Try a smaller document.',
+        context_limit: 'Document analysis exceeds the local model context. Try a smaller document.',
+        busy: 'The local model is busy. Wait for the current operation to finish.',
+        unavailable: 'The local model is unavailable. Check its setup and manual session recovery instructions.',
+        unsafe_configuration: 'The local model configuration is unavailable. Check its setup and manual session recovery instructions.',
+      };
       return {
         analysisId,
         suggestions: [],
         filteredSuggestions: [],
         documentSummary: undefined,
         status: AnalysisStatus.AI_ERROR,
-        statusReason: 'AI service unavailable - please try again later',
+        statusReason: error instanceof AiError && Object.prototype.hasOwnProperty.call(localReasons, error.kind)
+          ? localReasons[error.kind]
+          : 'AI service unavailable - please try again later',
         filteredCount: 0,
       };
     }

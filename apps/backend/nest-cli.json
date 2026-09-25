@@ -6,6 +6,7 @@
     "deleteOutDir": true,
     "webpack": false,
     "tsConfigPath": "tsconfig.json",
+    "plugins": ["../scripts/local-model-assets.plugin.cjs"],
     "assets": [
       {
         "include": "config/preferences.catalog.json",

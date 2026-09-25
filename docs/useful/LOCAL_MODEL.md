@@ -90,3 +90,24 @@ Structured output must pass actual Zod and domain checks. The model proposes ext
 | Correction | At most one for completed invalid JSON/Zod; no transport/auth/limit/cancellation retry |
 
 Output is buffered, never silently truncated or salvaged. Typed errors include unavailable/unsafe configuration, busy, cancellation/deadline, unsupported input, size/context bounds and invalid response; existing public envelopes stay sanitized. The parser's 256-MiB JavaScript heap limit is not a total resident-memory guarantee. Native selection measured footprint below 18 GiB on the stated Mac; engine allocations and mapped weights overlap and are not a universal peak or support claim for smaller hardware.
+
+The ordinary no-model adapter also uses the internal `AiError('unavailable')`
+contract instead of an HTTP exception. Both previews have no listener; a future
+public transport owns its error mapping. This is an intentional in-process
+error-type change, not a promise of an HTTP 503 response. A status check reports
+`unavailable` when its own five-second readiness budget expires; explicit caller
+cancellation, invalid deadlines and an earlier caller deadline still reject.
+It does not clear any unavailable latch or change recovery requirements.
+
+Document analysis gives fixed actionable reasons for input/context limits,
+busy inference and unavailable/unsafe configuration. Smaller documents can
+resolve size limits; a consumed or uncertain session requires the manual
+recovery above. Hosted generic errors stay unchanged. `PDF_INVALID` still
+includes malformed input and parser infrastructure failures; a more precise
+public distinction belongs to Step 08 and must not mislabel all such failures
+as unsupported documents.
+
+The Nest compiler hook verifies and stages pinned PDF assets on build, start,
+development watch and debug watch emits, including after an asset is removed.
+The hook runs before the compiled application starts. Production execution uses
+only the copied closure and does not need the build dependency at runtime.
