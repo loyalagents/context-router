@@ -346,6 +346,8 @@ step plan that resolves them.
 
 PR [#165](https://github.com/loyalagents/context-router/pull/165) implements the independently selected manual llama.cpp b11146 / Qwen3.5-9B Q4_K_M path on the qualified M1 Max/64 GiB/macOS 15.1.1. Actual application quality preserves the FAILED original scorer verdict and applies only human-approved E's known email omission. No other quality threshold changes. Both AI ports share one private claimed session; uncertain work latches unavailable. The explicit `preview-model` composition opens no listener and never owns inference lifecycle. Text and qualified PDF input are supported; images/OCR are unsupported locally, live Harbor comparison was not needed or run. See [selection](06-local-model/selection.md), [implementation evidence](06-local-model/implementation.md) and [manual operation](../../../useful/LOCAL_MODEL.md). Final reviews/gates remain separate; the PR is not merged and later steps are inactive.
 
+The independent-review follow-up passed repeat quality under unchanged E but failed the first native prefill cancellation settlement at `59e03d9`. The application safely latched unavailable. CP3 and ready status are paused pending the [bounded diagnostic decision](06-local-model/plan.md#follow-up-result-and-proposed-diagnostic-decision) and resolution; no timeout, runtime setting or selection exception has been changed. Historical passes remain historical.
+
 ## Deferred Decisions And Owning Steps
 
 | Decision | Owning step |

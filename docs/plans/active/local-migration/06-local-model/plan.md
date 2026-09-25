@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Document status: CP1 selection independently approved; CP2 implemented; CP3 actual application quality passed under E and production cancellation passed; candidate for fresh final review/gates in PR #165. Historical failed runs and amendment chronology remain below.
+- Document status: CP1 selection independently approved; CP2 and review fixes implemented; repeat CP3 quality passed under E, but repeat native cancellation failed. PR #165 remains draft; CP3 is paused pending the bounded diagnostic decision and resolution. Historical approvals, failures and amendment chronology remain below.
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`

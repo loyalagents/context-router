@@ -3,11 +3,11 @@
 - Status: active program index
 - Last completed step: `05-local-database-runtime` — [PR #164](https://github.com/loyalagents/context-router/pull/164), human-merged at `837701b3633eed669dd2c2c518ffebc0e46d55d8` from tested head `91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b`
 - Step 05 final evidence: standard CI [35957573071](https://github.com/loyalagents/context-router/actions/runs/35957573071) and dedicated migration gate [35957573023](https://github.com/loyalagents/context-router/actions/runs/35957573023), both successful on that head; reverified 2026-09-24
-- Current primary implementation step: `06-local-model` — [active plan](06-local-model/plan.md), plan C approved for bounded feasibility; asset/target consent recorded; CP1 executing
+- Current primary implementation step: `06-local-model` — [active plan](06-local-model/plan.md), selection approved; implementation and review fixes complete; CP3 paused on repeat cancellation evidence
 - Coordinator and sole repository writer for Step 06: `/root`; all other agents read-only
-- Concrete next action: deterministic CP1 probe development; complete consented bounded live feasibility, then affected selection review in the same PR
-- Review date: Step 06 selection review or 2026-10-08, whichever comes first
-- Last reviewed: 2026-09-24
+- Concrete next action: decide the [bounded cancellation diagnostic](06-local-model/plan.md#follow-up-result-and-proposed-diagnostic-decision); resolve the failure before renewed final gates and ready status for draft PR #165
+- Review date: Step 06 diagnostic decision or 2026-10-08, whichever comes first
+- Last reviewed: 2026-09-25
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions
