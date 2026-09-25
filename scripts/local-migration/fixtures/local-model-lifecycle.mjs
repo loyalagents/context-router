@@ -20,7 +20,7 @@ export function localModelLifecycleResources(parent) {
       root: path.join(root, `session-${generation}`), generation, pid: 6000, port: 18000 + generation, completions: 3, denied: 8, closed: true, previewRequests: 0, pdfSeen: true, certificateSha256: String(generation).repeat(64),
     }, { root, instruction: MODEL_ROOT_RECOVERY }));
     child(`local-model-preview-${generation}`, 'preview', 'preview-model', { listenerCount: 0, requestedSignal: generation === 1 ? 'SIGTERM' : 'SIGINT' }, generation === 1 ? 143 : 130);
-    const ownerPid = child(`local-model-probe-${generation}`, 'probe', 'probe', { controls: 34, connections: 20, missingWorkerRejected: true, identityDigest: 'a'.repeat(64) });
+    const ownerPid = child(`local-model-probe-${generation}`, 'probe', 'probe', { controls: 42, connections: 20, missingWorkerRejected: true, identityDigest: 'a'.repeat(64), sqliteThreads: [{ threadId: 1, controls: 42, code: 0, exited: true }] });
     for (const ordinal of [1, 2]) resources.push(record(`local-model-parser-${generation}-${ordinal}`, 'local-model-parser-process', 'exited', {
       generation, ordinal, owner: `local-model-probe-${generation}`, pid: ++pid, ownerPid, code: 0, signal: null, closed: true,
     }, 'Parser belongs to the recorded probe process group; reap that exact group before root cleanup.'));

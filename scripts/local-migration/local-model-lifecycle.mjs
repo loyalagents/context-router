@@ -21,12 +21,13 @@ export function assertLocalModelSmokeSuccessResources(state, label) {
   for (const id of expected.filter((id) => /(?:admin|preview|probe)-/u.test(id))) {
     const role = id.split('-')[2], r = get(id, `local-model-${role}-process`, 'exited'), v = r.identity;
     const code = id === 'local-model-preview-1' ? 143 : id === 'local-model-preview-2' ? 130 : 0;
-    if (!keys(v, ['pid', 'operation', 'exitCode', 'childSignal', 'groupGone', ...(role === 'preview' ? ['listenerCount', 'requestedSignal'] : role === 'probe' ? ['controls', 'connections', 'missingWorkerRejected', 'identityDigest'] : [])]) ||
+    if (!keys(v, ['pid', 'operation', 'exitCode', 'childSignal', 'groupGone', ...(role === 'preview' ? ['listenerCount', 'requestedSignal'] : role === 'probe' ? ['controls', 'connections', 'missingWorkerRejected', 'identityDigest', 'sqliteThreads'] : [])]) ||
         v.operation !== (role === 'admin' ? 'initialize' : role === 'probe' ? 'probe' : 'preview-model') ||
         !keys(r.recovery, ['processGroupId', 'instruction']) ||
         r.recovery.instruction !== 'Verify the recorded child PID, then terminate and reap only the process group with that exact numeric ID.' ||
         !Number.isSafeInteger(v.pid) || v.pid < 1 || v.exitCode !== code || v.childSignal !== null || v.groupGone !== true || r.recovery?.processGroupId !== v.pid) fail();
-    if (role === 'probe' && (v.controls !== 34 || !Number.isSafeInteger(v.connections) || v.connections < 1 || v.connections > 64 || v.missingWorkerRejected !== true || !/^[a-f0-9]{64}$/u.test(v.identityDigest))) fail();
+    if (role === 'probe' && (v.controls !== 42 || !Number.isSafeInteger(v.connections) || v.connections < 1 || v.connections > 64 || v.missingWorkerRejected !== true || !/^[a-f0-9]{64}$/u.test(v.identityDigest))) fail();
+    if (role === 'probe' && (!Array.isArray(v.sqliteThreads) || v.sqliteThreads.length < 1 || v.sqliteThreads.length > 8 || v.sqliteThreads.some((t) => !keys(t, ['threadId', 'controls', 'code', 'exited']) || !Number.isSafeInteger(t.threadId) || t.threadId < 1 || t.controls !== 42 || t.code !== 0 || t.exited !== true) || new Set(v.sqliteThreads.map((t) => t.threadId)).size !== v.sqliteThreads.length)) fail();
     if (role === 'preview' && (v.operation !== 'preview-model' || v.listenerCount !== 0 || v.requestedSignal !== (code === 143 ? 'SIGTERM' : 'SIGINT'))) fail();
   }
   const pids = resources.filter((r) => r.type.endsWith('-process')).map((r) => r.identity.pid);

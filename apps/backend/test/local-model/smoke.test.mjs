@@ -13,6 +13,10 @@ test('actual source model smoke runs two independent sessions and reaps every ow
     const result = await runLocalModelSmoke({ entrypoint: new URL('../../dist/local-identity.js', import.meta.url).pathname, cwd: root,
       home: join(root, 'home'), temporaryDirectory: join(root, 'tmp'), stateParent: root, journal });
     assert.equal(result.generations, 2); assert.equal(result.parserChildren, 4);
+    for (const probe of journal.state.resources.filter((r) => r.type === 'local-model-probe-process')) {
+      assert.ok(probe.identity.sqliteThreads.length > 0);
+      for (const thread of probe.identity.sqliteThreads) assert.deepEqual(thread, { threadId: thread.threadId, controls: 42, code: 0, exited: true });
+    }
     assertLocalModelSmokeSuccessResources(journal.state, 'fixture');
   } finally { await rm(root, { recursive: true, force: true }); }
 });
@@ -46,4 +50,39 @@ test('journal failure during failed-child cleanup still closes the owned listene
     }
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test('missing-worker negative closure is removable when its installed source is sealed and stays unchanged', async () => {
+  const fs = await import('node:fs/promises'); const { join } = await import('node:path'); const { tmpdir } = await import('node:os');
+  const { createRequire } = await import('node:module'); const { createHash } = await import('node:crypto');
+  const { copyParserWithoutWorker } = createRequire(import.meta.url)('../../../../scripts/local-migration/fixtures/local-model-smoke/probe.cjs');
+  const root = await fs.mkdtemp(join(tmpdir(), 'model-sealed-negative-')); const source = join(root, 'source'), target = join(root, 'missing');
+  const modes = async (directory, mode) => {
+    await fs.chmod(directory, mode);
+    for (const name of await fs.readdir(directory)) { const file = join(directory, name); if ((await fs.lstat(file)).isDirectory()) await modes(file, mode); }
+  };
+  try {
+    await fs.cp(new URL('../../dist/infrastructure/local-model/engine', import.meta.url), source, { recursive: true });
+    const file = join(source, 'pdfjs/pdf.mjs');
+    const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
+    const before = digest(await fs.readFile(file)); await modes(source, 0o555);
+    await copyParserWithoutWorker(source, target);
+    assert.equal((await fs.stat(target)).mode & 0o777, 0o700);
+    assert.equal((await fs.stat(join(target, 'pdfjs'))).mode & 0o777, 0o700);
+    await assert.rejects(fs.access(join(target, 'pdfjs/pdf.worker.mjs')));
+    assert.equal(digest(await fs.readFile(file)), before);
+    assert.equal((await fs.stat(source)).mode & 0o777, 0o555);
+    await fs.rm(target, { recursive: true });
+  } finally { await modes(source, 0o700); await fs.rm(root, { recursive: true, force: true }); }
+});
+
+test('thread evidence rejects a zero exit before controls, failed controls, termination and incomplete exit', async () => {
+  const { createRequire } = await import('node:module');
+  const { threadResult } = createRequire(import.meta.url)('../../../../scripts/local-migration/fixtures/local-model-smoke/thread-evidence.cjs');
+  const cell = new Int32Array(new SharedArrayBuffer(4));
+  assert.throws(() => threadResult(1, 0, cell));
+  Atomics.store(cell, 0, 41); assert.throws(() => threadResult(1, 0, cell));
+  Atomics.store(cell, 0, 42);
+  for (const code of [1, null, undefined]) assert.throws(() => threadResult(1, code, cell));
+  assert.deepEqual(threadResult(1, 0, cell), { threadId: 1, controls: 42, code: 0, exited: true });
 });

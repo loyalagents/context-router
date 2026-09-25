@@ -21,10 +21,13 @@ export function decodeLocalModelProbe(output) {
   try {
     if (typeof output !== 'string' || output.length > 4096 || !output.endsWith('\n') || output.trim().includes('\n')) throw fail();
     const v = JSON.parse(output);
-    if (Object.keys(v).sort().join() !== 'calls,connections,controls,identityDigest,missingWorkerRejected,node,parserChildren,type,version' ||
-        v.type !== 'context-router.local-model.probe' || v.version !== 1 || v.controls !== 34 || v.calls !== 3 ||
+    if (Object.keys(v).sort().join() !== 'calls,connections,controls,identityDigest,missingWorkerRejected,node,parserChildren,sqliteThreads,type,version' ||
+        v.type !== 'context-router.local-model.probe' || v.version !== 1 || v.controls !== 42 || v.calls !== 3 ||
         !Number.isSafeInteger(v.connections) || v.connections < 1 || v.connections > 64 || v.node !== '24.21.0' ||
         !/^[a-f0-9]{64}$/u.test(v.identityDigest) || v.missingWorkerRejected !== true ||
+        !Array.isArray(v.sqliteThreads) || v.sqliteThreads.length < 1 || v.sqliteThreads.length > 8 ||
+        v.sqliteThreads.some((t) => Object.keys(t).sort().join() !== 'code,controls,exited,threadId' || t.controls !== 42 || t.code !== 0 || t.exited !== true || !Number.isSafeInteger(t.threadId) || t.threadId < 1) ||
+        new Set(v.sqliteThreads.map((t) => t.threadId)).size !== v.sqliteThreads.length ||
         !Array.isArray(v.parserChildren) || v.parserChildren.length !== 2 ||
         v.parserChildren.some((p) => Object.keys(p).sort().join() !== 'closed,code,pid,signal' ||
           p.closed !== true || p.code !== 0 || p.signal !== null || !Number.isSafeInteger(p.pid) || p.pid < 1) ||
@@ -133,7 +136,7 @@ export async function runLocalModelSmoke({ entrypoint, cwd, home, temporaryDirec
     await journal.cleanupFinished(id, { status: 'exited' }); await verifyArtifact();
     if (probe) {
       const evidence = decodeLocalModelProbe(result.stdout);
-      await journal.acquired(id, { identity: { controls: evidence.controls, connections: evidence.connections, missingWorkerRejected: evidence.missingWorkerRejected, identityDigest: evidence.identityDigest } });
+      await journal.acquired(id, { identity: { controls: evidence.controls, connections: evidence.connections, missingWorkerRejected: evidence.missingWorkerRejected, identityDigest: evidence.identityDigest, sqliteThreads: evidence.sqliteThreads } });
       return evidence;
     }
     return result;
