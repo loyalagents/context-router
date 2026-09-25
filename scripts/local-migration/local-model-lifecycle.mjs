@@ -26,8 +26,8 @@ export function assertLocalModelSmokeSuccessResources(state, label) {
         !keys(r.recovery, ['processGroupId', 'instruction']) ||
         r.recovery.instruction !== 'Verify the recorded child PID, then terminate and reap only the process group with that exact numeric ID.' ||
         !Number.isSafeInteger(v.pid) || v.pid < 1 || v.exitCode !== code || v.childSignal !== null || v.groupGone !== true || r.recovery?.processGroupId !== v.pid) fail();
-    if (role === 'probe' && (v.controls !== 42 || !Number.isSafeInteger(v.connections) || v.connections < 1 || v.connections > 64 || v.missingWorkerRejected !== true || !/^[a-f0-9]{64}$/u.test(v.identityDigest))) fail();
-    if (role === 'probe' && (!Array.isArray(v.sqliteThreads) || v.sqliteThreads.length < 1 || v.sqliteThreads.length > 8 || v.sqliteThreads.some((t) => !keys(t, ['threadId', 'controls', 'code', 'exited']) || !Number.isSafeInteger(t.threadId) || t.threadId < 1 || t.controls !== 42 || t.code !== 0 || t.exited !== true) || new Set(v.sqliteThreads.map((t) => t.threadId)).size !== v.sqliteThreads.length)) fail();
+    if (role === 'probe' && (v.controls !== 46 || !Number.isSafeInteger(v.connections) || v.connections < 1 || v.connections > 64 || v.missingWorkerRejected !== true || !/^[a-f0-9]{64}$/u.test(v.identityDigest))) fail();
+    if (role === 'probe' && (!Array.isArray(v.sqliteThreads) || v.sqliteThreads.length < 1 || v.sqliteThreads.length > 8 || v.sqliteThreads.some((t) => !keys(t, ['threadId', 'controls', 'code', 'exited']) || !Number.isSafeInteger(t.threadId) || t.threadId < 1 || t.controls !== 46 || t.code !== 0 || t.exited !== true) || new Set(v.sqliteThreads.map((t) => t.threadId)).size !== v.sqliteThreads.length)) fail();
     if (role === 'preview' && (v.operation !== 'preview-model' || v.listenerCount !== 0 || v.requestedSignal !== (code === 143 ? 'SIGTERM' : 'SIGINT'))) fail();
   }
   const pids = resources.filter((r) => r.type.endsWith('-process')).map((r) => r.identity.pid);

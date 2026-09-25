@@ -28,7 +28,7 @@ export function grammarSchema(schema) {
       }
     } });
 }
-export async function runConsumer(entry, ai) {
+export async function runConsumer(entry, ai, options) {
   const definitions = entry.definitions;
   const allowed = new Set(entry.allowedSlugs ?? definitions.map((d) => d.slug));
   const filterAccessibleSlugs = async (slugs) => slugs.filter((slug) => allowed.has(slug));
@@ -38,14 +38,14 @@ export async function runConsumer(entry, ai) {
   const snapshots = new PreferenceSchemaSnapshotService(definitionRepo, grants);
   const config = { getOrThrow(key) { if (key === 'documentUpload.maxSuggestions') return 25; throw new Error('Unexpected fixture configuration'); } };
   const userId = 'synthetic-quality-user';
-  if (entry.family === 'extraction') return new PreferenceExtractionService(ai, preferences, definitionRepo, snapshots, config).extractPreferences(userId, Buffer.from(entry.documentText), entry.mimeType ?? 'text/plain', `${entry.id}.txt`);
-  if (entry.family === 'search') return new PreferenceSearchWorkflow(ai, snapshots, preferences).run({ userId, clientKey: 'synthetic-quality-client', naturalLanguageQuery: entry.query, filterAccessibleSlugs, includeSuggestions: false, maxResults: 25 });
-  if (entry.family === 'consolidation') return new SchemaConsolidationWorkflow(ai, snapshots).run({ userId, clientKey: 'synthetic-quality-client', scope: 'ALL', filterAccessibleSlugs });
+  if (entry.family === 'extraction') return new PreferenceExtractionService(ai, preferences, definitionRepo, snapshots, config).extractPreferences(userId, Buffer.from(entry.documentText), entry.mimeType ?? 'text/plain', `${entry.id}.txt`, options);
+  if (entry.family === 'search') return new PreferenceSearchWorkflow(ai, snapshots, preferences).run({ userId, clientKey: 'synthetic-quality-client', naturalLanguageQuery: entry.query, filterAccessibleSlugs, includeSuggestions: false, maxResults: 25 }, options);
+  if (entry.family === 'consolidation') return new SchemaConsolidationWorkflow(ai, snapshots).run({ userId, clientKey: 'synthetic-quality-client', scope: 'ALL', filterAccessibleSlugs }, options);
   const activePreferences = entry.activePreferences ?? [];
   const fieldPolicies = entry.fieldPolicies ? FormFillFieldPoliciesSchema.parse(entry.fieldPolicies) : undefined;
   const resolution = resolveFormFacts({ activePreferences, fieldPolicies });
   const prompt = new FormFillPromptBuilderService().buildPrompt(entry.fields, activePreferences, fieldPolicies, resolution.facts);
-  const proposed = await ai.generateStructured(prompt, FormFillAiResponseSchema, { operationName: 'formFill.fillActions' });
+  const proposed = await ai.generateStructured(prompt, FormFillAiResponseSchema, { ...options, operationName: 'formFill.fillActions' });
   return new FormFillValidatorService().validate(proposed.fillActions, entry.fields, new Set(activePreferences.map((p) => p.slug)), 0.7,
     { fieldPolicies, activePreferenceValues: new Map(activePreferences.map((p) => [p.slug, p.value])), resolvedFacts: resolution.facts, resolutionConflicts: resolution.conflicts });
 }

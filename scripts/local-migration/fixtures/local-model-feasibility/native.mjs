@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
-import { readFile } from 'node:fs/promises';
+import { readFile, realpath } from 'node:fs/promises';
 import { createTlsFixture } from './tls-fixture.mjs';
 import { spawnOwned } from './process.mjs';
 import { probeJson, ProbeClient } from './client.mjs';
@@ -69,7 +69,7 @@ export async function withNative({ binary, model, logPath, sandboxProfile }, use
     const coldReadyMs = performance.now() - start;
     if (coldReadyMs > 120000) throw fail();
     client = new ProbeClient(configuration);
-    return await use({ configuration, client, child, metadata: { ...metadata, coldReadyMs },
+    return await use({ configuration, credentialRoot: await realpath(credentials.root), client, child, metadata: { ...metadata, coldReadyMs },
       args: args.map((value) => value.startsWith(credentials.root) ? '<private-credential-file>' : value) });
   } finally {
     try { await client?.close(); }

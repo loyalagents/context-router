@@ -56,7 +56,7 @@ module.exports.runLocalIdentityEntrypoint = async () => {
     await app.close(); app = undefined;
     if (!bytes.equals(await fs.readFile(path.join(configuration.stateRoot, 'identity.json')))) throw new Error();
     const c = globalThis.__localModelSmoke.counters;
-    if (c.sqliteThreads.length < 1 || c.sqliteThreads.some((t) => !t.exited || t.code !== 0 || t.controls !== 42) || c.allowedConnections < 1 || c.parserChildren.length !== 2 || c.parserChildren.some((p) => !p.closed || p.code !== 0 || p.signal !== null || !Number.isSafeInteger(p.pid))) throw new Error();
+    if (c.sqliteThreads.length < 1 || c.sqliteThreads.some((t) => !t.exited || t.code !== 0 || t.controls !== 46) || c.allowedConnections < 1 || c.parserChildren.length !== 2 || c.parserChildren.some((p) => !p.closed || p.code !== 0 || p.signal !== null || !Number.isSafeInteger(p.pid))) throw new Error();
     process.stdout.write(JSON.stringify({ type: 'context-router.local-model.probe', version: 1, controls,
       connections: c.allowedConnections, parserChildren: c.parserChildren, sqliteThreads: c.sqliteThreads, calls: 3,
       identityDigest: createHash('sha256').update(bytes).digest('hex'), missingWorkerRejected: true, node: process.versions.node }) + '\n');

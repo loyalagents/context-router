@@ -15,7 +15,7 @@ test('actual source model smoke runs two independent sessions and reaps every ow
     assert.equal(result.generations, 2); assert.equal(result.parserChildren, 4);
     for (const probe of journal.state.resources.filter((r) => r.type === 'local-model-probe-process')) {
       assert.ok(probe.identity.sqliteThreads.length > 0);
-      for (const thread of probe.identity.sqliteThreads) assert.deepEqual(thread, { threadId: thread.threadId, controls: 42, code: 0, exited: true });
+      for (const thread of probe.identity.sqliteThreads) assert.deepEqual(thread, { threadId: thread.threadId, controls: 46, code: 0, exited: true });
     }
     assertLocalModelSmokeSuccessResources(journal.state, 'fixture');
   } finally { await rm(root, { recursive: true, force: true }); }
@@ -82,7 +82,7 @@ test('thread evidence rejects a zero exit before controls, failed controls, term
   const cell = new Int32Array(new SharedArrayBuffer(4));
   assert.throws(() => threadResult(1, 0, cell));
   Atomics.store(cell, 0, 41); assert.throws(() => threadResult(1, 0, cell));
-  Atomics.store(cell, 0, 42);
+  Atomics.store(cell, 0, 46);
   for (const code of [1, null, undefined]) assert.throws(() => threadResult(1, code, cell));
-  assert.deepEqual(threadResult(1, 0, cell), { threadId: 1, controls: 42, code: 0, exited: true });
+  assert.deepEqual(threadResult(1, 0, cell), { threadId: 1, controls: 46, code: 0, exited: true });
 });

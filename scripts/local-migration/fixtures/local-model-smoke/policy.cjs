@@ -82,7 +82,7 @@ threads.Worker = class extends Worker {
     const keys = (v) => v && typeof v === 'object' ? Object.keys(v).sort().join() : '';
     const paths = options?.workerData?.paths;
     if (parserOnly || threadOnly || file !== sqliteWorker || fs.realpathSync(file) !== file || counters.sqliteThreads.length >= 8 ||
-        keys(options) !== 'env,execArgv,workerData' || keys(options.env) !== '' ||
+        keys(options) !== 'env,execArgv,workerData' || (!options.env || Object.getPrototypeOf(options.env) !== Object.prototype || keys(options.env) !== '') ||
         JSON.stringify(options.execArgv) !== '["--no-global-search-paths"]' || keys(options.workerData) !== 'paths' ||
         keys(paths) !== 'databaseRoot,expectedTarget,identityRoot' ||
         paths.databaseRoot !== path.join(ownedRoot, 'data') || paths.identityRoot !== path.join(ownedRoot, 'identity') ||
@@ -103,7 +103,7 @@ threads.Worker = class extends Worker {
   }
 };
 Module.syncBuiltinESMExports();
-const threadsValid = () => !threadFailure && counters.sqliteThreads.every((v) => v.exited && v.code === 0 && v.controls === 42);
+const threadsValid = () => !threadFailure && counters.sqliteThreads.every((v) => v.exited && v.code === 0 && v.controls === 46);
 const exit = process.exit;
 process.exit = (code) => exit(threadsValid() ? code : 1);
 process.once('beforeExit', () => { if (!threadsValid()) process.exitCode = 1; });
@@ -124,6 +124,8 @@ Object.defineProperty(globalThis, '__localModelSmoke', { value: { counters, asyn
       () => surface(process.env.LOCAL_MODEL_SMOKE_PROVIDER_MODULE), () => surface(path.join(ownedRoot, 'outside.cjs')),
       () => child.spawn(process.execPath, parserArgs, { ...parserOptions, detached: true }),
       () => child.spawn(process.execPath, parserArgs, { ...parserOptions, shell: true }),
+      async () => { const w = new thread.Worker(sqliteWorker, { env: undefined, execArgv: ['--no-global-search-paths'], workerData: { paths: { databaseRoot: path.join(ownedRoot, 'data'), identityRoot: path.join(ownedRoot, 'identity'), expectedTarget: 'synthetic' } } }); await w.terminate(); },
+      async () => { const w = new thread.Worker(sqliteWorker, { env: thread.SHARE_ENV, execArgv: ['--no-global-search-paths'], workerData: { paths: { databaseRoot: path.join(ownedRoot, 'data'), identityRoot: path.join(ownedRoot, 'identity'), expectedTarget: 'synthetic' } } }); await w.terminate(); },
       () => new thread.Worker('process.exit(0)', { eval: true }),
       () => new thread.Worker(path.join(ownedRoot, 'outside.cjs')),
       () => new thread.Worker(sqliteWorker, { env: {}, execArgv: ['--no-global-search-paths'], workerData: { paths: {} } }),
@@ -138,7 +140,7 @@ Object.defineProperty(globalThis, '__localModelSmoke', { value: { counters, asyn
     try { await operation(); throw new Error('Control unexpectedly allowed'); }
     catch (error) { if (error.code !== 'LOCAL_MODEL_SMOKE_DENIED') throw error; count++; }
   }
-  if (count !== 42) throw new Error('Missing denial control');
+  if (count !== 46) throw new Error('Missing denial control');
   return count;
 } } });
 // The child must finish its own CJS and ESM denial controls before successful exit.
