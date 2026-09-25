@@ -1,10 +1,18 @@
+import { realpath } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 let pdfjs;
-async function library() {
+async function packagedLibrary() {
+  const expected = fileURLToPath(new URL('./node_modules/pdfjs-dist/legacy/build/pdf.mjs', import.meta.url));
+  const resolved = import.meta.resolve('pdfjs-dist/legacy/build/pdf.mjs');
+  if (fileURLToPath(resolved) !== expected || await realpath(expected) !== expected) throw new Error('PDF_INVALID');
+  return import(resolved);
+}
+async function library(loadLibrary) {
   if (pdfjs) return pdfjs;
   const previous = console.warn;
   try {
     console.warn = () => {};
-    pdfjs = await import('/private/tmp/context-router-step06-assets/pdfjs-dist-6.3.289/package/legacy/build/pdf.mjs');
+    pdfjs = await loadLibrary();
     if (pdfjs.version !== '6.3.289') throw new Error('PDF_VERSION');
     return pdfjs;
   } finally { console.warn = previous; }
@@ -13,9 +21,10 @@ async function library() {
 // CP1 parser algorithm only. The parent-owned child/timeout boundary is separate.
 export async function extractPdfText(buffer, {
   readerForPage = (page) => page.streamTextContent({ includeMarkedContent: false, disableNormalization: false }).getReader(),
+  loadLibrary = packagedLibrary,
 } = {}) {
   if (!Buffer.isBuffer(buffer) || !buffer.length || buffer.length > 10 * 1024 * 1024) throw new Error('PDF_LIMIT');
-  const api = await library();
+  const api = await library(loadLibrary);
   let auxiliaryRequested = false;
   class DenyBinaryDataFactory { async fetch() { auxiliaryRequested = true; throw new Error('PDF_AUXILIARY'); } }
   class DenyCanvasFactory { create() { throw new Error('PDF_RENDER'); } }

@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { extractPdfText } from './fixtures/local-model-feasibility/pdf.mjs';
+import { extractPdfText as parsePdf } from './fixtures/local-model-feasibility/pdf.mjs';
 import { greekPdfFixture, emptyPdfFixture, standardFontPdfFixture, encryptedPdfFixture, imageOnlyPdfFixture } from './fixtures/local-model-feasibility/pdf-fixtures.mjs';
+
+// Explicit opt-in algorithm-only loader; the qualified child accepts no loader input.
+const extractPdfText = (bytes, options = {}) => parsePdf(bytes, { ...options,
+  loadLibrary: () => import('/private/tmp/context-router-step06-assets/pdfjs-dist-6.3.289/package/legacy/build/pdf.mjs') });
 
 test('pinned PDF text extraction accepts an embedded-font repository form without native canvas', async () => {
   const data = await readFile('examples/eval/forms/i-9/form.pdf');
