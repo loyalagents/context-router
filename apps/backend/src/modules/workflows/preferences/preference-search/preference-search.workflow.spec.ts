@@ -1,4 +1,4 @@
-import { HOSTED_AI_CAPABILITIES } from '../../../../domains/shared/ports/ai-execution';
+import { HOSTED_AI_CAPABILITIES, LOCAL_AI_CAPABILITIES, AiError } from '../../../../domains/shared/ports/ai-execution';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import {
@@ -108,6 +108,24 @@ describe('PreferenceSearchWorkflow', () => {
 
     jest.spyOn(Logger.prototype, 'log').mockImplementation();
     jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+  });
+
+  it('propagates one local deadline and rejects late repository cancellation before success', async () => {
+    Object.defineProperty(mockAiPort, 'capabilities', { value: LOCAL_AI_CAPABILITIES });
+    const controller = new AbortController(); const deadline = performance.now() + 10000;
+    mockAiPort.generateStructured.mockResolvedValue({ relevantSlugs: [], queryInterpretation: 'synthetic' });
+    mockPreferenceService.getActivePreferences.mockImplementation(async () => { controller.abort(); return []; });
+    await expect(workflow.run({ userId: 'user', clientKey: 'test', naturalLanguageQuery: 'synthetic', includeSuggestions: true }, { signal: controller.signal, deadline })).rejects.toMatchObject({ kind: 'cancelled' });
+    expect(mockAiPort.generateStructured.mock.calls[0][2]).toMatchObject({ signal: controller.signal, deadline });
+    expect(mockPreferenceService.getSuggestedPreferences).not.toHaveBeenCalled();
+  });
+
+  it('checks cancellation after catalog loading before inference', async () => {
+    Object.defineProperty(mockAiPort, 'capabilities', { value: LOCAL_AI_CAPABILITIES });
+    const controller = new AbortController();
+    mockSnapshotService.getGrantFilteredSnapshot.mockImplementation(async () => { controller.abort(); return MOCK_SNAPSHOT; });
+    await expect(workflow.run({ userId: 'user', clientKey: 'test', naturalLanguageQuery: 'synthetic' }, { signal: controller.signal })).rejects.toMatchObject({ kind: 'cancelled' });
+    expect(mockAiPort.generateStructured).not.toHaveBeenCalled();
   });
 
   afterEach(() => {

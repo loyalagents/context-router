@@ -9,6 +9,7 @@ req('tsconfig-paths').register({ baseUrl: resolve(backend, 'dist'), paths: {
 } });
 const load = (relative) => req(resolve(backend, 'dist', relative));
 const { z } = req('zod');
+export const fixtureCapabilities = load('domains/shared/ports/ai-execution.js').HOSTED_AI_CAPABILITIES;
 req('@nestjs/common').Logger.overrideLogger(false);
 const { PreferenceSchemaSnapshotService } = load('modules/preferences/preference-definition/preference-schema-snapshot.service.js');
 const { PreferenceExtractionService } = load('modules/preferences/document-analysis/preference-extraction.service.js');

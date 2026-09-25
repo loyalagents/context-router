@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { cases, repoRoot } from './cases.mjs';
-import { runConsumer, grammarSchema, fixtureReply } from './consumers.mjs';
+import { runConsumer, fixtureCapabilities, grammarSchema, fixtureReply } from './consumers.mjs';
 import { digest } from './freeze.mjs';
 import { renderForCompletion } from './protocol.mjs';
 
@@ -26,12 +26,12 @@ export async function buildSchemaProbes() {
   for (const [entry, id, expected] of [[cases[0], 'arbitrary-json', jsonExpected], [cases.find((c) => c.family === 'form'), 'form-defaults', formExpected]]) {
     let captured; let count = 0;
     const capture = async (_, schema) => { captured = schema; count++; return schema.parse(fixtureReply(entry)); };
-    await runConsumer(entry, { generateStructured: capture, generateStructuredWithFile: (prompt, _, schema) => capture(prompt, schema) });
+    await runConsumer(entry, { capabilities: fixtureCapabilities, generateStructured: capture, generateStructuredWithFile: (prompt, _, schema) => capture(prompt, schema) });
     assert.equal(count, 1);
     probes.push({ id, prompt: copyPrompt(expected), schema: captured, grammar: grammarSchema(captured), expected: structuredClone(expected) });
   }
   let captured; let count = 0;
-  await runConsumer(duplicateEntry, {
+  await runConsumer(duplicateEntry, { capabilities: fixtureCapabilities,
     generateStructuredWithFile: async (_, __, schema) => { count++; return schema.parse(duplicateSeed); },
     generateStructured: async (prompt, schema) => {
       count++; captured = { id: 'duplicate-literal', prompt, schema, grammar: grammarSchema(schema), expected: structuredClone(duplicateExpected) };
@@ -103,7 +103,7 @@ export async function runSchemaProbes(configuration, client, { render = renderFo
       if (index < 2) validateProbeReply(probe, await invoke(probe.prompt, probe.grammar));
       else if (index === 2) {
         let fatal = false; result.consumerCalls = 0;
-        const consumerResult = await runConsumer(duplicateEntry, {
+        const consumerResult = await runConsumer(duplicateEntry, { capabilities: fixtureCapabilities,
           generateStructuredWithFile: async (_, __, schema) => { result.consumerCalls++; return schema.parse(duplicateSeed); },
           generateStructured: async (prompt, schema) => {
             result.consumerCalls++;

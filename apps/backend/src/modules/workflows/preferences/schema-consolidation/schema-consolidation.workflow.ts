@@ -1,3 +1,4 @@
+import { AiExecutionOptions, createAiWorkflow } from '../../../../domains/shared/ports/ai-execution';
 import { Injectable, Inject } from '@nestjs/common';
 import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
 import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
@@ -46,7 +47,9 @@ export class SchemaConsolidationWorkflow
 
   async run(
     input: SchemaConsolidationWorkflowInput,
+    options?: AiExecutionOptions,
   ): Promise<SchemaConsolidationWorkflowOutput> {
+    const execution = createAiWorkflow(this.aiStructuredPort.capabilities, options);
     const recorder = new WorkflowStepRecorder('SchemaConsolidationWorkflow');
 
     // Step 1: Load definitions
@@ -59,6 +62,7 @@ export class SchemaConsolidationWorkflow
         input.filterAccessibleSlugs,
       ),
     );
+    execution.check();
 
     // Short-circuit: < 2 definitions means nothing to consolidate
     if (snapshot.definitions.length < 2) {
@@ -102,9 +106,11 @@ export class SchemaConsolidationWorkflow
         this.aiStructuredPort.generateStructured(
           prompt,
           ConsolidationResponseSchema,
-          { operationName: 'schemaConsolidation.analysis' },
+          { ...execution.options, operationName: 'schemaConsolidation.analysis' },
         ),
     );
+
+    execution.check();
 
     // Step 3: Group validation
     const validatedGroups = await recorder.record(
@@ -163,6 +169,7 @@ export class SchemaConsolidationWorkflow
       },
     );
 
+    execution.check();
     recorder.logSummary();
 
     // Override summary if validation dropped every group the AI proposed

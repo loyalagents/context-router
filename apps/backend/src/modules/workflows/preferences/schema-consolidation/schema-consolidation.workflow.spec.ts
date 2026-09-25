@@ -1,4 +1,4 @@
-import { HOSTED_AI_CAPABILITIES } from '../../../../domains/shared/ports/ai-execution';
+import { HOSTED_AI_CAPABILITIES, LOCAL_AI_CAPABILITIES, AiError } from '../../../../domains/shared/ports/ai-execution';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import {
@@ -60,6 +60,14 @@ describe('SchemaConsolidationWorkflow', () => {
 
     jest.spyOn(Logger.prototype, 'log').mockImplementation();
     jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+  });
+
+  it('does not publish even a short-circuit result after caller cancellation', async () => {
+    Object.defineProperty(mockAiPort, 'capabilities', { value: LOCAL_AI_CAPABILITIES });
+    const controller = new AbortController();
+    mockSnapshotService.getGrantFilteredSnapshot.mockImplementation(async () => { controller.abort(); return { definitions: [], promptJson: '[]' }; });
+    await expect(workflow.run({ userId: 'user', clientKey: 'test' }, { signal: controller.signal })).rejects.toMatchObject({ kind: 'cancelled' });
+    expect(mockAiPort.generateStructured).not.toHaveBeenCalled();
   });
 
   afterEach(() => {

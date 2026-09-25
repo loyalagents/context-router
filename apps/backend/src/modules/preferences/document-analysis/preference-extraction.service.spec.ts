@@ -1,4 +1,4 @@
-import { HOSTED_AI_CAPABILITIES } from '../../../domains/shared/ports/ai-execution';
+import { HOSTED_AI_CAPABILITIES, LOCAL_AI_CAPABILITIES, AiError } from '../../../domains/shared/ports/ai-execution';
 import { Test, TestingModule } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
 import { Logger } from "@nestjs/common";
@@ -170,6 +170,37 @@ describe("PreferenceExtractionService", () => {
     jest.spyOn(Logger.prototype, "warn").mockImplementation();
     jest.spyOn(Logger.prototype, "error").mockImplementation();
     jest.spyOn(Logger.prototype, "debug").mockImplementation();
+  });
+
+  it("shares one caller deadline through file extraction and duplicate consolidation", async () => {
+    Object.defineProperty(mockAiStructuredService, 'capabilities', { value: LOCAL_AI_CAPABILITIES });
+    const controller = new AbortController(); const deadline = performance.now() + 10000;
+    mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+    const candidate = { slug: 'profile.full_name', operation: 'CREATE', newValue: 'Elena Marquez', confidence: 0.9, sourceSnippet: 'synthetic' };
+    mockAiStructuredService.generateStructuredWithFile.mockResolvedValue({ suggestions: [candidate, candidate], documentSummary: 'synthetic' });
+    mockAiStructuredService.generateStructured.mockResolvedValue({ suggestion: candidate });
+    await service.extractPreferences('user', Buffer.from('synthetic'), 'text/plain', 'fixture.txt', { signal: controller.signal, deadline });
+    expect(mockAiStructuredService.generateStructuredWithFile.mock.calls[0][3]).toMatchObject({ signal: controller.signal, deadline });
+    expect(mockAiStructuredService.generateStructured.mock.calls[0][2]).toMatchObject({ signal: controller.signal, deadline });
+  });
+
+  it.each(['cancelled', 'deadline', 'unavailable'] as const)("does not turn %s in duplicate consolidation into first-candidate success", async (kind) => {
+    Object.defineProperty(mockAiStructuredService, 'capabilities', { value: LOCAL_AI_CAPABILITIES });
+    mockPreferenceService.getActivePreferences.mockResolvedValue([]);
+    const suggestion = (slug: string) => ({ slug, operation: 'CREATE', newValue: 'synthetic', confidence: 0.9, sourceSnippet: 'synthetic' });
+    mockAiStructuredService.generateStructuredWithFile.mockResolvedValue({ suggestions: [suggestion('profile.full_name'), suggestion('profile.full_name'), suggestion('profile.email'), suggestion('profile.email')], documentSummary: 'synthetic' });
+    mockAiStructuredService.generateStructured.mockRejectedValue(new AiError(kind));
+    await expect(service.extractPreferences('user', Buffer.from('synthetic'), 'text/plain', 'fixture.txt')).rejects.toMatchObject({ kind });
+    expect(mockAiStructuredService.generateStructured).toHaveBeenCalledTimes(1);
+  });
+
+  it("checks cancellation after a repository await before starting extraction", async () => {
+    Object.defineProperty(mockAiStructuredService, 'capabilities', { value: LOCAL_AI_CAPABILITIES });
+    const controller = new AbortController();
+    mockPreferenceService.getActivePreferences.mockImplementation(async () => { controller.abort(); return []; });
+    await expect(service.extractPreferences('user', Buffer.from('synthetic'), 'text/plain', 'fixture.txt', { signal: controller.signal })).rejects.toMatchObject({ kind: 'cancelled' });
+    expect(mockSnapshotService.getSnapshot).not.toHaveBeenCalled();
+    expect(mockAiStructuredService.generateStructuredWithFile).not.toHaveBeenCalled();
   });
 
   afterEach(() => {

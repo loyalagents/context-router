@@ -17,9 +17,11 @@ async function fixture(t) {
   const credentials = await createTlsFixture();
   const roots = await realpath(await mkdtemp(join(tmpdir(), 'local-model-app-test-')));
   await mkdir(join(roots, 'identity')); await mkdir(join(roots, 'database'));
-  const state = { calls: [], completionBodies: [], reply: '{"answer":"ok"}', hook: null, tokens: 10 };
+  const state = { calls: [], completionBodies: [], reply: '{"answer":"ok"}', hook: null, tokens: 10, authBypass: null, auth: [] };
   const server = https.createServer({ key: credentials.key, cert: credentials.cert }, async (request, response) => {
     state.calls.push(request.url);
+    state.auth.push(request.headers.authorization);
+    if (state.authBypass && await state.authBypass(request, response)) return;
     if (request.headers.authorization !== `Bearer ${credentials.apiKey}`) { response.writeHead(401).end('{}'); return; }
     let body = ''; for await (const chunk of request) body += chunk;
     if (state.hook && await state.hook(request, response, body)) return;
@@ -135,7 +137,7 @@ test('standalone readiness/preparation sockets close before the operation releas
   service.probe = (config, path, body, options) => original(config, path, body, { ...options,
     onSocket: (socket) => { sockets.push(socket); options.onSocket?.(socket); } });
   await service.getStatus();
-  assert.equal(sockets.length, 2);
+  assert.equal(sockets.length, 4);
   assert.ok(sockets.every((socket) => socket.closed));
 });
 
@@ -151,4 +153,51 @@ test('native limits and malformed partial output are fixed invalid-response erro
   await assert.rejects(service.generateStructured('synthetic', z.object({ answer: z.string() })), { kind: 'invalid_response' });
   await service.settled();
   assert.equal(state.calls.filter((path) => path === '/completion').length, 1);
+});
+
+for (const accepted of ['absent', 'wrong']) test(`readiness fails closed when runtime accepts ${accepted} credentials`, async (t) => {
+  const { service, state, credentials } = await fixture(t);
+  state.authBypass = async (req, res) => {
+    const matches = accepted === 'absent' ? !req.headers.authorization
+      : req.headers.authorization && req.headers.authorization !== `Bearer ${credentials.apiKey}`;
+    if (!matches) return false;
+    res.end('{}'); return true;
+  };
+  await assert.rejects(service.generateText('private-user-data'), { kind: 'unsafe_configuration' });
+  assert.ok(!state.calls.includes('/apply-template'));
+  assert.ok(!state.calls.includes('/tokenize'));
+  assert.equal(state.completionBodies.length, 0);
+  const count = state.calls.length;
+  assert.deepEqual(await service.getStatus(), { state: 'unavailable', configured: true });
+  await assert.rejects(service.generateText('private-user-data'), { kind: 'unavailable' });
+  assert.equal(state.calls.length, count);
+});
+
+test('each readiness proves both negative controls before user data', async (t) => {
+  const { service, state, credentials } = await fixture(t);
+  await service.generateText('synthetic');
+  const firstData = state.calls.indexOf('/apply-template');
+  assert.ok(state.auth.slice(0, firstData).includes(undefined));
+  assert.ok(state.auth.slice(0, firstData).some((key) => key && key !== `Bearer ${credentials.apiKey}`));
+  const before = state.calls.length;
+  await service.generateText('synthetic');
+  assert.deepEqual(state.auth.slice(before, before + 4), [undefined, 'Bearer deliberately-wrong-key', `Bearer ${credentials.apiKey}`, `Bearer ${credentials.apiKey}`]);
+});
+
+for (const status of [302, 403, 500]) test(`negative-control status ${status} cannot qualify readiness`, async (t) => {
+  const { service, state } = await fixture(t);
+  state.authBypass = async (req, res) => { if (req.headers.authorization) return false; res.writeHead(status, { location: '/props' }).end('{}'); return true; };
+  await assert.rejects(service.generateText('private'), { kind: 'unsafe_configuration' });
+  assert.deepEqual(state.calls, ['/props']);
+});
+
+test('negative controls retain admission and close on caller cancellation', async (t) => {
+  const { service, state } = await fixture(t); const controller = new AbortController();
+  let entered; const waiting = new Promise((resolve) => { entered = resolve; });
+  state.authBypass = async (req) => { if (req.headers.authorization) return false; entered(); return true; };
+  const operation = service.generateText('synthetic', { signal: controller.signal }); await waiting;
+  await assert.rejects(service.generateText('other'), { kind: 'busy' });
+  assert.deepEqual(await service.getStatus(), { state: 'busy', configured: true });
+  controller.abort(); await assert.rejects(operation, { kind: 'cancelled' });
+  await service.onModuleDestroy(); assert.deepEqual(state.calls, ['/props']);
 });

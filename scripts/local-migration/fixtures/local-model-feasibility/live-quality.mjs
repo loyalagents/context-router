@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { cases, repoRoot } from './cases.mjs';
-import { runConsumer, grammarSchema, semanticUnits, criticalViolations } from './consumers.mjs';
+import { runConsumer, fixtureCapabilities, grammarSchema, semanticUnits, criticalViolations } from './consumers.mjs';
 import { freezeManifest, digest } from './freeze.mjs';
 import { renderForCompletion } from './protocol.mjs';
 import { scoreQuality } from './quality.mjs';
@@ -43,7 +43,7 @@ export async function runQuality(configuration, client, { render = renderForComp
       }
     };
     try {
-      const result = await runConsumer(entry, { generateStructured: (prompt, schema) => invoke(prompt, schema),
+      const result = await runConsumer(entry, { capabilities: fixtureCapabilities, generateStructured: (prompt, schema) => invoke(prompt, schema),
         generateStructuredWithFile: (prompt, file, schema) => invoke(prompt, schema, file) });
       if (performance.now() >= deadline) throw new Error('Quality workflow deadline');
       trial.structureValid = !fatalCall;

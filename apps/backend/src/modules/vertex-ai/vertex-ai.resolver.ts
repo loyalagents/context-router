@@ -1,3 +1,4 @@
+import { createAiWorkflow } from '../../domains/shared/ports/ai-execution';
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { Inject, Logger, UseGuards } from '@nestjs/common';
 import { AiTextGeneratorPort } from '../../domains/shared/ports/ai-text-generator.port';
@@ -24,7 +25,11 @@ export class VertexAiResolver {
   ): Promise<string> {
     try {
       this.logger.log('Processing authenticated text-generation request');
-      const response = await this.textGenerator.generateText(message);
+      const execution = createAiWorkflow(this.textGenerator.capabilities);
+      const response = this.textGenerator.capabilities.strictExecutionControls
+        ? await this.textGenerator.generateText(message, execution.options)
+        : await this.textGenerator.generateText(message);
+      execution.check();
       return response;
     } catch {
       this.logger.error('Text generation request failed');

@@ -1,3 +1,4 @@
+import { AiExecutionOptions, createAiWorkflow } from '../../../../domains/shared/ports/ai-execution';
 import { Injectable, Inject } from '@nestjs/common';
 import { WorkflowInput, IWorkflow } from '../../shared/workflow.interface';
 import { WorkflowStepRecorder } from '../../shared/workflow-step-recorder';
@@ -43,7 +44,9 @@ export class PreferenceSearchWorkflow
 
   async run(
     input: PreferenceSearchWorkflowInput,
+    options?: AiExecutionOptions,
   ): Promise<PreferenceSearchWorkflowOutput> {
+    const execution = createAiWorkflow(this.aiStructuredPort.capabilities, options);
     const recorder = new WorkflowStepRecorder('PreferenceSearchWorkflow');
 
     // Step 1: Load catalog
@@ -56,6 +59,7 @@ export class PreferenceSearchWorkflow
         input.filterAccessibleSlugs,
       ),
     );
+    execution.check();
 
     const knownSlugs = new Set(snapshot.definitions.map((d) => d.slug));
 
@@ -69,9 +73,11 @@ export class PreferenceSearchWorkflow
       this.aiStructuredPort.generateStructured(
         prompt,
         RelevanceResponseSchema,
-        { operationName: 'preferenceSearch.slugIdentification' },
+        { ...execution.options, operationName: 'preferenceSearch.slugIdentification' },
       ),
     );
+
+    execution.check();
 
     // Step 3: Slug validation — discard hallucinated slugs, dedupe preserving order
     const validatedSlugs = await recorder.record(
@@ -86,6 +92,8 @@ export class PreferenceSearchWorkflow
         });
       },
     );
+
+    execution.check();
 
     // Step 4: Fetch preferences for validated slugs
     const result = await recorder.record('fetchPreferences', 'db', async () => {
@@ -109,6 +117,7 @@ export class PreferenceSearchWorkflow
         input.userId,
         input.locationId,
       );
+      execution.check();
       let matchedActivePreferences = allActive.filter((p) =>
         slugSet.has(p.slug),
       );
@@ -121,6 +130,7 @@ export class PreferenceSearchWorkflow
             input.userId,
             input.locationId,
           );
+        execution.check();
         matchedSuggestedPreferences = allSuggested.filter((p) =>
           slugSet.has(p.slug),
         );
@@ -152,6 +162,7 @@ export class PreferenceSearchWorkflow
       };
     });
 
+    execution.check();
     recorder.logSummary();
 
     return {

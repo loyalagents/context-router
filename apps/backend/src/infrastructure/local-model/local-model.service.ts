@@ -41,7 +41,7 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
   private claimed?: ClaimedConfiguration;
   private client?: CompletionClient;
   private parser?: Parser;
-  private probe: (config: ClaimedConfiguration, path: string, data: unknown, options: { timeoutMs: number; signal?: AbortSignal; onSocket?: (socket: Socket) => void }) => Promise<{ value: any }>;
+  private probe: (config: ClaimedConfiguration, path: string, data: unknown, options: { timeoutMs: number; signal?: AbortSignal; key?: string | null; expectedStatus?: 200 | 401; onFailure?: (fault: string) => void; onSocket?: (socket: Socket) => void }) => Promise<{ value: any }>;
   private active = false;
   private unavailable = false;
   private closing = false;
@@ -170,23 +170,33 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
     return task;
   }
 
-  private async json(path: string, data: unknown, controls: AiExecutionOptions, check: () => void) {
+  private async json(path: string, data: unknown, controls: AiExecutionOptions, check: () => void, denialKey?: null | 'deliberately-wrong-key') {
     check();
     const remaining = controls.deadline - performance.now();
     if (!Number.isFinite(remaining) || remaining <= 0) throw new AiError('deadline');
-    let socket: Socket; let closed = Promise.resolve();
+    let socket: Socket; let closed = Promise.resolve(); let fault: string;
     try {
       const response = await this.probe(this.claimed, path, data, { signal: controls.signal, timeoutMs: Math.min(5000, remaining),
+        ...(denialKey === undefined ? {} : { key: denialKey, expectedStatus: 401 as const }),
+        onFailure: (reason) => { fault = reason; },
         onSocket: (owned) => {
           socket = owned; socket.on('error', () => {});
           closed = new Promise((resolve) => socket.once('close', resolve));
         } });
       check(); return response.value;
+    } catch (error) {
+      check();
+      if (denialKey !== undefined && fault === 'http') {
+        this.unavailable = true; throw new AiError('unsafe_configuration');
+      }
+      throw error;
     } finally { socket?.destroy(); await closed; check(); }
   }
   private async readiness(controls: AiExecutionOptions, check: () => void) {
     const end = Math.min(controls.deadline, performance.now() + 5000);
     const readinessControls = { ...controls, deadline: end };
+    await this.json('/props', undefined, readinessControls, check, null);
+    await this.json('/props', undefined, readinessControls, check, 'deliberately-wrong-key');
     const props = await this.json('/props', undefined, readinessControls, check);
     const models = await this.json('/models', undefined, readinessControls, check);
     if (performance.now() >= end) throw new AiError('deadline');

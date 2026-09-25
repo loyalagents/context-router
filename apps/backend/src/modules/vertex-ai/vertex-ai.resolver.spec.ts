@@ -1,4 +1,4 @@
-import { HOSTED_AI_CAPABILITIES } from '../../domains/shared/ports/ai-execution';
+import { HOSTED_AI_CAPABILITIES, LOCAL_AI_CAPABILITIES } from '../../domains/shared/ports/ai-execution';
 import { Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { readFileSync } from 'fs';
@@ -79,4 +79,15 @@ describe('VertexAiResolver', () => {
       JSON.stringify((Logger.prototype.error as jest.Mock).mock.calls),
     ).not.toContain('provider-secret-canary');
   });
+  it('gives local text generation one bounded workflow deadline', async () => {
+    Object.defineProperty(port, 'capabilities', { value: LOCAL_AI_CAPABILITIES });
+    const resolver = await compileResolver();
+    port.generateText.mockResolvedValue('local response');
+    const started = performance.now();
+    await expect(resolver.askVertexAI('synthetic')).resolves.toBe('local response');
+    const controls = port.generateText.mock.calls[0][1];
+    expect(controls.deadline).toBeGreaterThan(started);
+    expect(controls.deadline).toBeLessThanOrEqual(performance.now() + 180000);
+  });
+
 });

@@ -1,4 +1,4 @@
-import { HOSTED_AI_CAPABILITIES } from '../../../domains/shared/ports/ai-execution';
+import { HOSTED_AI_CAPABILITIES, LOCAL_AI_CAPABILITIES, AiError } from '../../../domains/shared/ports/ai-execution';
 import { Logger } from '@nestjs/common';
 import { FormFillService } from './form-fill.service';
 
@@ -49,6 +49,30 @@ describe('FormFillService', () => {
         }),
       } as any,
     );
+  });
+
+  it('retains one deadline and cannot publish filled PDF bytes after a late abort', async () => {
+    aiStructuredService.capabilities = LOCAL_AI_CAPABILITIES;
+    const controller = new AbortController(); const deadline = performance.now() + 10000;
+    fieldExtractor.extractFields.mockResolvedValue({ fields: [{ name: 'name', type: 'text', options: [], supported: true }], hasXfa: false });
+    preferenceService.getActivePreferences.mockResolvedValue([]);
+    promptBuilder.buildPrompt.mockReturnValue('synthetic');
+    aiStructuredService.generateStructured.mockResolvedValue({ fillActions: [] });
+    validator.validate.mockReturnValue({ validActions: [], filledFields: [], skippedFields: [], warnings: [], validationEvents: [] });
+    pdfFiller.fillPdf.mockImplementation(async () => { controller.abort(); return Buffer.from('must not publish'); });
+    const result = await service.fillPdfForm('user', Buffer.from('synthetic'), 'form.pdf', undefined, { signal: controller.signal, deadline });
+    expect(result.status).toBe('failed'); expect(result.filledPdfBase64).toBeNull();
+    expect(aiStructuredService.generateStructured.mock.calls[0][2]).toMatchObject({ signal: controller.signal, deadline });
+  });
+
+  it('checks cancellation after field extraction before publishing the empty-form shortcut', async () => {
+    aiStructuredService.capabilities = LOCAL_AI_CAPABILITIES;
+    const controller = new AbortController();
+    fieldExtractor.extractFields.mockImplementation(async () => { controller.abort(); return { fields: [] }; });
+    const result = await service.fillPdfForm('user', Buffer.from('synthetic'), 'form.pdf', undefined, { signal: controller.signal });
+    expect(result.status).toBe('failed'); expect(result.filledPdfBase64).toBeNull();
+    expect(preferenceService.getActivePreferences).not.toHaveBeenCalled();
+    expect(aiStructuredService.generateStructured).not.toHaveBeenCalled();
   });
 
   afterEach(() => {
