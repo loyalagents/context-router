@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { Logger } from '@nestjs/common';
 import { FormFillAiResponseSchema } from '../../modules/preferences/form-fill/form-fill.types';
 import { VertexAiStructuredService } from './vertex-ai-structured.service';
@@ -90,5 +91,41 @@ describe('VertexAiStructuredService', () => {
     });
 
     expect(warnSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("hosted AI execution controls", () => {
+  it("rejects explicit hosted controls before either provider method executes", async () => {
+    const provider = {
+      generateText: jest.fn(),
+      generateTextWithFile: jest.fn(),
+    };
+    const structured = new VertexAiStructuredService(
+      provider as unknown as VertexAiService,
+    );
+    const text = Object.create(VertexAiService.prototype) as VertexAiService;
+    const options = { signal: new AbortController().signal };
+    const file = {
+      buffer: Buffer.from("private input"),
+      mimeType: "text/plain",
+    };
+    for (const operation of [
+      text.generateText("private", options),
+      text.generateTextWithFile("private", file, options),
+      structured.generateStructured("private", z.string(), options),
+      structured.generateStructuredWithFile(
+        "private",
+        file,
+        z.string(),
+        options,
+      ),
+    ]) {
+      await expect(operation).rejects.toMatchObject({
+        kind: "unsupported",
+        message: "AI capability unsupported",
+      });
+    }
+    expect(provider.generateText).not.toHaveBeenCalled();
+    expect(provider.generateTextWithFile).not.toHaveBeenCalled();
   });
 });
