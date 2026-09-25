@@ -84,7 +84,7 @@ Restoring an older pair restores its old bearer and generation. After successful
 
 ## Non-Listening Preview And Protection Boundary
 
-Preview preflights identity and exact database ownership, seeds the catalog, initializes the real local Nest composition with `init()`, verifies again, and emits readiness. It never calls `listen()` and exposes no HTTP, GraphQL-over-network, MCP, OAuth, web or model endpoint. `SIGINT`/`SIGTERM` closes the application with the conventional signal exit code. A real HTTP server or local model remains later migration work.
+Preview preflights identity and exact database ownership, seeds the catalog, initializes the real local Nest composition with `init()`, verifies again, and emits readiness. It never calls `listen()` and exposes no HTTP, GraphQL-over-network, MCP, OAuth, web or model endpoint. `SIGINT`/`SIGTERM` closes the application with the conventional signal exit code. The additive `preview-model` command selects the [manual local model integration](LOCAL_MODEL.md), while ordinary `preview` stays no-model. Both preserve this non-listening lifecycle; application readiness does not certify inference readiness. HTTP/MCP/UI listeners remain later migration work.
 
 The bearer remains in private canonical/candidate files and parent authentication memory; never place those bytes in argv, environment variables, logs, issues or command output. The fixed worker protocol carries bounded identity/configuration data, never credential bytes, arbitrary SQL or row metadata. Same UID, root, debugger, compromised runtime/kernel/hardware, network filesystems, Windows and hardware power-loss guarantees are outside this macOS/Linux preview evidence.
 

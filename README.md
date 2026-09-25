@@ -1,7 +1,7 @@
 # Context Router
 
 Context Router is a `pnpm` workspace monorepo with a retained hosted
-composition and a file-backed, non-listening local database preview:
+composition and a file-backed, non-listening local database preview with an explicit manual model integration:
 
 - `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and a hosted-JWT-protected MCP HTTP endpoint
 - `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens
@@ -19,6 +19,8 @@ For docs writing rules, see [`docs/README.md`](docs/README.md).
 
 For local-first migration work, start with
 [`docs/plans/active/local-migration/orchestration.md`](docs/plans/active/local-migration/orchestration.md).
+
+For the explicit Step 06 model configuration, see [manual local model preview](docs/useful/LOCAL_MODEL.md). Runtime binaries and weights stay outside Git.
 
 ## How The Repo Works
 

@@ -78,7 +78,7 @@ export async function runProductionQuality(service, onProgress = () => {}) {
       const start = performance.now(), options = { deadline: start + 180000 };
       const frozen = manifest.cases.find((c) => c.id === entry.id).calls[0];
       const trial = { caseId:entry.id, repetition, structureValid:false, failed:false, criticalViolations:0, proposalUnits:[], validatedUnits:[] };
-      let initialSchema; let calls = 0;
+      let initialSchema; let calls = 0; let fatalBinding = false;
       observer.begin();
       const invoke = async (prompt, schema, file, controls) => {
         calls++; if (!initialSchema) initialSchema = schema;
@@ -90,6 +90,7 @@ export async function runProductionQuality(service, onProgress = () => {}) {
         const message = userMessage(prompt,file), grammarHash = digest(localJsonSchema(schema));
         try { return await (file ? service.generateStructuredWithFile(prompt,file,schema,controls) : service.generateStructured(prompt,schema,controls)); }
         finally {
+          try {
           const attempts = observer.current.calls.slice(beforeCalls), messages = observer.current.messages.slice(beforeMessages);
           assert.ok(attempts.length >= 1 && attempts.length <= 2);
           assert.equal(messages.length, attempts.length);
@@ -97,6 +98,7 @@ export async function runProductionQuality(service, onProgress = () => {}) {
             assert.equal(call.schemaSha256, grammarHash);
             assert.equal(messages[attempt], digest(message + (attempt === 0 ? '' : correction)));
           }
+          } catch (error) { fatalBinding = true; throw error; }
         }
       };
       try {
@@ -109,7 +111,7 @@ export async function runProductionQuality(service, onProgress = () => {}) {
       await service.settled();
       let initialProposalValid = false;
       try { const parsed = initialSchema.parse(JSON.parse(observer.current.firstRaw)); initialProposalValid = true; trial.proposalUnits = semanticUnits(entry,parsed,'proposal'); } catch {}
-      if (observer.current.messages[0] !== frozen.messageSha256 || observer.current.calls.some((c) => c.failed)) trial.failed = true;
+      if (fatalBinding || observer.current.messages[0] !== frozen.messageSha256 || observer.current.calls.some((c) => c.failed)) trial.failed = true;
       const measured = { caseId:entry.id,repetition,workflowMs:performance.now()-start,calls:observer.current.calls,messages:observer.current.messages,initialProposalValid,state:service.client.state };
       trials.push(trial); measurements.push(measured); onProgress({caseId:entry.id,repetition,failed:trial.failed});
     }

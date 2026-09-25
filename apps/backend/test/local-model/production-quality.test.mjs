@@ -48,16 +48,20 @@ test('production runner fails changed correction framing or dispatched schema de
   const { fixtureReply }=await import('../../../../scripts/local-migration/fixtures/local-model-feasibility/consumers.mjs');
   const { userMessage }=await import('../../../../scripts/local-migration/fixtures/local-model-feasibility/freeze.mjs');
   const { runProductionQuality }=await import('../../../../scripts/local-migration/fixtures/local-model-feasibility/production-quality.mjs');
-  for (const mismatch of ['none','message','schema']) {
-    let logical=0,raw='';
+  for (const mismatch of ['none','message','schema','duplicate']) {
+    let logical=0,raw='',pendingDuplicate=false;
     const service={capabilities:LOCAL_AI_CAPABILITIES,getStatus:async()=>({state:'available'}),settled:async()=>{},probe:async()=>({value:{}}),client:{state:'ready',complete:async()=>({text:raw,inputTokens:1,outputTokens:2})}};
     const generate=async(prompt,file,schema,options)=>{
-      const entry=cases[Math.floor(logical/3)],first=logical++===0, message=userMessage(prompt,file);
+      const duplicate=pendingDuplicate;pendingDuplicate=false;
+      const entry=cases[Math.floor(logical/3)],first=!duplicate&&logical===0&&mismatch!=='duplicate', message=userMessage(prompt,file);
+      if(!duplicate)logical++;
       assert.ok(options.deadline>performance.now());
       await service.probe({},'/apply-template',{messages:[{content:message}]},{});
-      raw=first?'invalid':JSON.stringify(fixtureReply(entry));
+      const reply=duplicate?{suggestion:fixtureReply(cases[0]).suggestions[0]}:fixtureReply(entry);
+      if(mismatch==='duplicate'&&logical===1&&!duplicate){reply.suggestions.push({...reply.suggestions[0]});pendingDuplicate=true;}
+      raw=first?'invalid':JSON.stringify(reply);
       const grammar=localJsonSchema(schema);
-      let result=await service.client.complete('rendered',{...options,schema:grammar});
+      let result=await service.client.complete('rendered',{...options,schema:duplicate?{changed:true}:grammar});
       if(first){
         await service.probe({},'/apply-template',{messages:[{content:message+(mismatch==='message'?'changed':'\n\nThe previous response did not satisfy the required JSON schema. Return valid JSON only.')}]},{});
         raw=JSON.stringify(fixtureReply(entry));
@@ -68,6 +72,6 @@ test('production runner fails changed correction framing or dispatched schema de
     service.generateStructured=(p,s,o)=>generate(p,undefined,s,o);service.generateStructuredWithFile=(p,f,s,o)=>generate(p,f,s,o);
     const result=await runProductionQuality(service);
     assert.equal(result.measurements.length,48);assert.equal(result.passed,mismatch==='none');assert.equal(result.score.trials[0].failed,mismatch!=='none');
-    assert.equal(result.measurements[0].initialProposalValid,false);assert.equal(result.measurements[0].calls.length,2);
+    assert.equal(result.measurements[0].initialProposalValid,mismatch==='duplicate');assert.equal(result.measurements[0].calls.length,2);
   }
 });

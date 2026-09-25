@@ -5,11 +5,11 @@ This document is the human-readable companion to the versioned
 registry. The version-two registry and its referenced fixtures are the
 executable baseline. They retain the hosted product characterized at planning
 base `9b56d38fde927d4e643af89ba45665a439613939` and now name three explicit modes:
-`hosted-baseline`, `local-identity-preview`, and `local-database-preview`.
+`hosted-baseline`, `local-identity-preview`, `local-database-preview`, and `local-model-preview`.
 
 `hosted-baseline` remains the NestJS backend and Next.js web app backed by PostgreSQL, Auth0, and Vertex AI. `local-identity-preview` retains the non-listening PostgreSQL reference composition through `local-identity:postgres-reference`, with its explicit loopback TLS target and original identity root. `local-database-preview` is the default local command's SQLite composition with separate explicit database/identity roots and no database network dependency. Both previews use a private principal/bearer and fixed unavailable model adapter; neither opens a listener. Missing configuration never selects a fallback.
 
-The third mode is additive: existing capability dispositions, roadmap owners and wire fixtures stay unchanged. All twelve phases remain; seven applicable phases name both previews. The standalone local test command receives no inherited `DATABASE_URL` or administration URL, and its build prerequisite prepares the actual compiled worker. Source and sealed-package smokes require both the exact eight-resource PostgreSQL proof and the independent ten-resource SQLite proof, including two signal-clean preview generations, stable catalog/data/principal, rotation/recovery and actual engine inventory.
+The SQLite database mode is additive: existing capability dispositions, roadmap owners and wire fixtures stay unchanged. All twelve phases remain; seven applicable phases name both previews. The standalone local test command receives no inherited `DATABASE_URL` or administration URL, and its build prerequisite prepares the actual compiled worker. Source and sealed-package smokes require both the exact eight-resource PostgreSQL proof and the independent ten-resource SQLite proof, including two signal-clean preview generations, stable catalog/data/principal, rotation/recovery and actual engine inventory.
 
 ## How To Read The Baseline
 
@@ -510,3 +510,9 @@ Proven input widenings such as added `enum`, `type`, or `anyOf` members remain
 additive. Existing GraphQL enum, union, and interface possible-type widenings
 require review because generated or exhaustive clients can treat those output
 domains as closed.
+
+## Explicit Local Model Integration
+
+`local-model-preview` selects the actual SQLite composition with one manually provisioned pinned llama.cpp/Qwen3.5-9B session behind both AI ports. It opens no application listener and owns no inference process. Ordinary no-model previews retain their original denial proof. A separate source/sealed-package smoke verifies two fresh authenticated TLS fixture sessions, actual lazy configured CLI startup, text/structured/PDF calls, unsupported images, fixed credential claims, SQLite worker denial controls and exact owned parser/process cleanup. Deterministic CI uses no model weights or external provider.
+
+See [manual configuration](../useful/LOCAL_MODEL.md) for the qualified Mac, private session requirements, unavailable recovery, limits and accepted email omission. Text and qualified PDF processing are local capabilities; local images/OCR and live Harbor comparison remain unsupported/unrun as documented in the [selection](../plans/active/local-migration/06-local-model/selection.md). Public wire fixtures, hosted behavior, grant narrowing, protected definitions and domain validation remain unchanged. Managed assets/processes and native Windows/Linux or smaller-hardware qualification belong to Step 09.
