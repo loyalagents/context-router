@@ -40,3 +40,34 @@ test('attempt observer preserves malformed initial output, correction and failed
   assert.deepEqual(observer.current.calls.map((c) => c.failed),[false,false,true]);
   assert.equal(observer.current.firstRaw,'invalid'); assert.equal(observer.current.calls.length,3); observer.restore();
 });
+
+test('production runner fails changed correction framing or dispatched schema despite correct final domain results', async () => {
+  const { createRequire }=await import('node:module'); const req=createRequire(import.meta.url);
+  const { LOCAL_AI_CAPABILITIES }=req('../../dist/domains/shared/ports/ai-execution.js');
+  const { localJsonSchema }=req('../../dist/infrastructure/local-model/schema.js');
+  const { fixtureReply }=await import('../../../../scripts/local-migration/fixtures/local-model-feasibility/consumers.mjs');
+  const { userMessage }=await import('../../../../scripts/local-migration/fixtures/local-model-feasibility/freeze.mjs');
+  const { runProductionQuality }=await import('../../../../scripts/local-migration/fixtures/local-model-feasibility/production-quality.mjs');
+  for (const mismatch of ['none','message','schema']) {
+    let logical=0,raw='';
+    const service={capabilities:LOCAL_AI_CAPABILITIES,getStatus:async()=>({state:'available'}),settled:async()=>{},probe:async()=>({value:{}}),client:{state:'ready',complete:async()=>({text:raw,inputTokens:1,outputTokens:2})}};
+    const generate=async(prompt,file,schema,options)=>{
+      const entry=cases[Math.floor(logical/3)],first=logical++===0, message=userMessage(prompt,file);
+      assert.ok(options.deadline>performance.now());
+      await service.probe({},'/apply-template',{messages:[{content:message}]},{});
+      raw=first?'invalid':JSON.stringify(fixtureReply(entry));
+      const grammar=localJsonSchema(schema);
+      let result=await service.client.complete('rendered',{...options,schema:grammar});
+      if(first){
+        await service.probe({},'/apply-template',{messages:[{content:message+(mismatch==='message'?'changed':'\n\nThe previous response did not satisfy the required JSON schema. Return valid JSON only.')}]},{});
+        raw=JSON.stringify(fixtureReply(entry));
+        result=await service.client.complete('rendered-correction',{...options,schema:mismatch==='schema'?{changed:true}:grammar});
+      }
+      return schema.parse(JSON.parse(result.text));
+    };
+    service.generateStructured=(p,s,o)=>generate(p,undefined,s,o);service.generateStructuredWithFile=(p,f,s,o)=>generate(p,f,s,o);
+    const result=await runProductionQuality(service);
+    assert.equal(result.measurements.length,48);assert.equal(result.passed,mismatch==='none');assert.equal(result.score.trials[0].failed,mismatch!=='none');
+    assert.equal(result.measurements[0].initialProposalValid,false);assert.equal(result.measurements[0].calls.length,2);
+  }
+});

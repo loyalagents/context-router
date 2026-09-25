@@ -86,7 +86,18 @@ export async function runProductionQuality(service, onProgress = () => {}) {
           assert.equal(digest(prompt), frozen.promptSha256); assert.equal(digest(localJsonSchema(schema)), frozen.schemaSha256);
           assert.equal(digest(userMessage(prompt,file)), frozen.messageSha256);
         }
-        return file ? service.generateStructuredWithFile(prompt,file,schema,controls) : service.generateStructured(prompt,schema,controls);
+        const beforeCalls = observer.current.calls.length, beforeMessages = observer.current.messages.length;
+        const message = userMessage(prompt,file), grammarHash = digest(localJsonSchema(schema));
+        try { return await (file ? service.generateStructuredWithFile(prompt,file,schema,controls) : service.generateStructured(prompt,schema,controls)); }
+        finally {
+          const attempts = observer.current.calls.slice(beforeCalls), messages = observer.current.messages.slice(beforeMessages);
+          assert.ok(attempts.length >= 1 && attempts.length <= 2);
+          assert.equal(messages.length, attempts.length);
+          for (const [attempt, call] of attempts.entries()) {
+            assert.equal(call.schemaSha256, grammarHash);
+            assert.equal(messages[attempt], digest(message + (attempt === 0 ? '' : correction)));
+          }
+        }
       };
       try {
         const value = await runConsumer(entry, { capabilities:service.capabilities,
