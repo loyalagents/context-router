@@ -28,9 +28,11 @@ export class PdfProcess {
   #workerPath;
   #sandboxProfile;
   #onSpawn;
-  constructor({ workerPath, sandboxProfile, onSpawn = () => {} }) {
+  #beforeCleanup;
+  constructor({ workerPath, sandboxProfile, onSpawn = () => {}, beforeCleanup = () => {} }) {
     if (!isAbsolute(workerPath)) throw failure();
     this.#workerPath = workerPath; this.#sandboxProfile = sandboxProfile; this.#onSpawn = onSpawn;
+    this.#beforeCleanup = beforeCleanup;
   }
   get state() { return this.#state; }
 
@@ -77,6 +79,7 @@ export class PdfProcess {
       child.once('spawn', () => {
         try { this.#onSpawn(child.pid); } catch { stop('PDF_INVALID'); }
         if (signal?.aborted) stop('PDF_CANCELLED');
+        if (performance.now() >= end - 1000) stop('PDF_TIMEOUT');
         if (!code) child.stdin.end(bytes);
       });
       timer = setTimeout(() => stop('PDF_TIMEOUT'), Math.max(0, end - 1000 - performance.now()));
@@ -90,11 +93,12 @@ export class PdfProcess {
     } finally {
       clearTimeout(timer); clearTimeout(reapTimer); signal?.removeEventListener('abort', abort);
       if (!child || closed) {
-        try { if (root) await rm(root, { recursive: true, force: true }); this.#state = 'ready'; }
+        try { await this.#beforeCleanup(); if (root) await rm(root, { recursive: true, force: true }); this.#state = 'ready'; }
         catch { this.#state = 'unavailable'; error = failure('PDF_UNAVAILABLE'); }
       } else { this.#state = 'unavailable'; error = failure('PDF_UNAVAILABLE'); }
     }
     if (error) throw error;
+    if (signal?.aborted) throw failure('PDF_CANCELLED');
     if (performance.now() >= end) throw failure('PDF_TIMEOUT');
     return result;
   }

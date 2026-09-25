@@ -3,6 +3,7 @@ import test from 'node:test';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Socket } from 'node:net';
 import { PdfProcess } from './fixtures/local-model-feasibility/pdf-process.mjs';
 
 async function fixture(t, body) {
@@ -82,4 +83,39 @@ test('fixed parser errors require a complete successful child protocol and exit'
     const parser = new PdfProcess({ workerPath: worker });
     await assert.rejects(parser.parse(Buffer.from('x')), (failure) => failure.message === error);
   }
+});
+
+test('cancellation during root cleanup cannot publish successful text', async (t) => {
+  const worker = await fixture(t, `for await(const chunk of process.stdin){} ${good}`);
+  let release; let entered; let pid;
+  const cleanup = new Promise((resolve) => { entered = resolve; });
+  const held = new Promise((resolve) => { release = resolve; });
+  const controller = new AbortController();
+  const parser = new PdfProcess({ workerPath: worker, onSpawn: (value) => { pid = value; },
+    beforeCleanup: async () => { entered(); await held; } });
+  const operation = parser.parse(Buffer.from('x'), { signal: controller.signal });
+  await cleanup;
+  assert.throws(() => process.kill(pid, 0), (error) => error.code === 'ESRCH');
+  controller.abort(); release();
+  await assert.rejects(operation, /^Error: PDF_CANCELLED$/);
+  assert.equal(parser.state, 'ready');
+});
+
+test('expiry during the spawn callback prevents even a local stdin write attempt', async (t) => {
+  const worker = await fixture(t, 'setInterval(()=>{},1000)');
+  const bytes = Buffer.from('BOUNDARY_INPUT'); let writes = 0; let pid;
+  const original = Socket.prototype.end;
+  Socket.prototype.end = function (...args) {
+    if (Buffer.isBuffer(args[0]) && args[0].equals(bytes)) writes++;
+    return original.apply(this, args);
+  };
+  try {
+    const deadline = performance.now() + 1200;
+    const parser = new PdfProcess({ workerPath: worker, onSpawn: (value) => {
+      pid = value; while (performance.now() < deadline - 950) { /* Hold past work cutoff. */ }
+    } });
+    await assert.rejects(parser.parse(bytes, { deadline }), /^Error: PDF_TIMEOUT$/);
+    assert.equal(writes, 0);
+    assert.throws(() => process.kill(pid, 0), (error) => error.code === 'ESRCH');
+  } finally { Socket.prototype.end = original; }
 });
