@@ -83,3 +83,32 @@ test('text-stream cleanup skips completed readers and cancels unfinished readers
     assert.equal((await extractPdfText(Buffer.from(normal.bytes))).text, normal.expectedText);
   } finally { ReadableStreamDefaultReader.prototype.cancel = original; }
 });
+
+test('item limit counts non-text items across pages without allocating a giant fixture', async () => {
+  for (const counts of [[100000], [100001], [50000, 50001]]) {
+    const readers = []; let pageIndex = 0;
+    const readerForPage = () => {
+      let remaining = counts[pageIndex++]; let first = true;
+      const state = { cancelled: false, released: false }; readers.push(state);
+      return {
+        async read() {
+          if (remaining === 0) return { done: true };
+          const amount = Math.min(1000, remaining); remaining -= amount;
+          const items = Array.from({ length: amount }, () => ({}));
+          if (first) { items[0] = { str: 'bounded', hasEOL: true }; first = false; }
+          return { done: false, value: { items } };
+        },
+        async cancel(reason) { assert.ok(reason instanceof Error); assert.equal(reason.message, 'PDF_PARSE_STOPPED'); state.cancelled = true; },
+        releaseLock() { state.released = true; },
+      };
+    };
+    const parse = extractPdfText(await emptyPdfFixture(counts.length), { readerForPage });
+    if (counts.reduce((total, count) => total + count, 0) === 100000) {
+      const result = await parse; assert.equal(result.items, 100000); assert.equal(result.text, 'bounded');
+      assert.ok(readers.every((reader) => !reader.cancelled));
+    } else { await assert.rejects(parse, /^Error: PDF_LIMIT$/); assert.equal(readers.at(-1).cancelled, true); }
+    assert.ok(readers.every((reader) => reader.released));
+  }
+  const greek = await greekPdfFixture();
+  assert.equal((await extractPdfText(Buffer.from(greek.bytes))).text, greek.expectedText);
+});

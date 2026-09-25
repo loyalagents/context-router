@@ -11,7 +11,9 @@ async function library() {
 }
 
 // CP1 parser algorithm only. The parent-owned child/timeout boundary is separate.
-export async function extractPdfText(buffer) {
+export async function extractPdfText(buffer, {
+  readerForPage = (page) => page.streamTextContent({ includeMarkedContent: false, disableNormalization: false }).getReader(),
+} = {}) {
   if (!Buffer.isBuffer(buffer) || !buffer.length || buffer.length > 10 * 1024 * 1024) throw new Error('PDF_LIMIT');
   const api = await library();
   let auxiliaryRequested = false;
@@ -36,7 +38,7 @@ export async function extractPdfText(buffer) {
     };
     for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
       const page = await document.getPage(pageNumber);
-      const reader = page.streamTextContent({ includeMarkedContent: false, disableNormalization: false }).getReader();
+      const reader = readerForPage(page);
       let ended = false;
       try {
         while (true) {
