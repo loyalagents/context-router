@@ -1,3 +1,6 @@
 packages:
   - 'apps/*'
 injectWorkspacePackages: true
+
+overrides:
+  "pdfjs-dist@6.3.289>@napi-rs/canvas": "-"

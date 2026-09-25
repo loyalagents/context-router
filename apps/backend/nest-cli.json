@@ -10,6 +10,10 @@
       {
         "include": "config/preferences.catalog.json",
         "outDir": "dist"
+      },
+      {
+        "include": "infrastructure/local-model/engine/*.mjs",
+        "outDir": "dist"
       }
     ]
   },

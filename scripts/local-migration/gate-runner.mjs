@@ -42,6 +42,7 @@ const APPROVED_HOSTED_COMMANDS = new Map([
     ["pnpm", "--filter", "backend", "typecheck:seed"],
     ["pnpm", "--filter", "backend", "build"],
     ["pnpm", "--filter", "backend", "test:unit"],
+    ["pnpm", "--filter", "backend", "test:local-model"],
   ]],
   ["backend-database", [
     ["pnpm", "--filter", "backend", "exec", "prisma", "migrate", "deploy"],

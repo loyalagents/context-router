@@ -90,7 +90,8 @@
         { "argv": ["pnpm", "--filter", "backend", "prisma:generate"] },
         { "argv": ["pnpm", "--filter", "backend", "typecheck:seed"] },
         { "argv": ["pnpm", "--filter", "backend", "build"] },
-        { "argv": ["pnpm", "--filter", "backend", "test:unit"] }
+        { "argv": ["pnpm", "--filter", "backend", "test:unit"] },
+        { "argv": ["pnpm", "--filter", "backend", "test:local-model"] }
       ]
     },
     {
