@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 
 const failure = (code = 'PDF_INVALID') => new Error(code);
-const parseReply = (output) => {
+export const parsePdfReply = (output) => {
   const separator = output.indexOf(10);
   if (separator < 0 || separator > 1024) throw failure();
   const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -87,7 +87,7 @@ export class PdfProcess {
       if (!closed || !outcome) throw failure('PDF_UNAVAILABLE');
       if (code) throw failure(code);
       if (outcome.status !== 0 || outcome.terminatedBy !== null) throw failure();
-      result = parseReply(Buffer.concat(chunks));
+      result = parsePdfReply(Buffer.concat(chunks));
     } catch (caught) {
       error = failure(['PDF_LIMIT', 'PDF_EMPTY', 'PDF_ENCRYPTED', 'PDF_AUXILIARY', 'PDF_INVALID', 'PDF_TIMEOUT', 'PDF_CANCELLED', 'PDF_UNAVAILABLE'].includes(caught?.message) ? caught.message : 'PDF_INVALID');
     } finally {

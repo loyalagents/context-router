@@ -5,6 +5,7 @@ import { chmod, copyFile, mkdtemp, readFile, realpath, rm, writeFile } from 'nod
 import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { PdfProcess } from './fixtures/local-model-feasibility/pdf-process.mjs';
+import { measurePdfFootprint } from './fixtures/local-model-feasibility/pdf-footprint.mjs';
 import { stagePdfLayout, verifyPdfLayout, pdfSandboxProfile } from './fixtures/local-model-feasibility/pdf-stage.mjs';
 import { spawnOwned } from './fixtures/local-model-feasibility/process.mjs';
 import { greekPdfFixture, emptyPdfFixture, standardFontPdfFixture, encryptedPdfFixture, imageOnlyPdfFixture } from './fixtures/local-model-feasibility/pdf-fixtures.mjs';
@@ -47,6 +48,8 @@ try {
     assert.equal(sha256(await readFile(join(packageRoot, file))), sha256(archived));
   }
   root = await realpath(await mkdtemp(join(evidence, 'pdf-closure-owned-')));
+  receipt.memoryObserver = { sourceSha256: sha256(await readFile(join(sourceRoot, 'memory-control.c'))),
+    binarySha256: sha256(await readFile(join(evidence, 'memory-control'))) };
   for (const file of ['offline-controls.mjs', 'pdf-offline-controls.mjs']) await copyFile(join(sourceRoot, file), join(root, file));
   const source = join(root, 'source-layout');
   const relocated = join(root, 'relocated-layout');
@@ -108,8 +111,19 @@ try {
       assert.equal((await abortParser.parse(Buffer.from(greek.bytes))).text, greek.expectedText);
       receipt.cases.push({ layout: name, case: 'real-worker-after-abort', passed: true, exactGreekText: true });
     } finally { clearTimeout(abortTimer); if (abortParser.state !== 'ready') cleanupSafe = false; }
+    const footprints = [];
+    for (const item of cases.slice(0, 2)) {
+      try {
+        const measured = await measurePdfFootprint({ workerPath: join(layout, 'pdf-worker.mjs'), bytes: item.bytes, sandboxProfile: profile,
+          sample: (pid, timeoutMs) => JSON.parse(execFileSync(join(evidence, 'memory-control'), [String(pid)],
+            { timeout: Math.max(1, Math.floor(timeoutMs)), maxBuffer: 4096, stdio: ['ignore', 'pipe', 'ignore'], env: { PATH: '/usr/bin:/bin' }, encoding: 'utf8' })) });
+        const expected = receipt.cases.find((entry) => entry.layout === name && entry.case === item.name).output;
+        assert.deepEqual(measured.output, expected);
+        footprints.push({ case: item.name, inputBytes: item.bytes.length, inputSha256: sha256(item.bytes), ...measured });
+      } catch (error) { if (error?.cleanupConfirmed !== true) cleanupSafe = false; throw error; }
+    }
     await verifyPdfLayout(layout, inventory);
-    receipt.layouts.push({ name, inventory, controls, dns, unchangedAfterExecution: true });
+    receipt.layouts.push({ name, inventory, controls, dns, footprints, unchangedAfterExecution: true });
   }
   const negative = join(root, 'missing-worker-layout');
   await stagePdfLayout({ target: negative, sourceRoot: source, packageRoot: join(source, 'node_modules/pdfjs-dist') });
