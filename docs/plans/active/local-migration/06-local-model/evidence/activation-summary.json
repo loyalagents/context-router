@@ -1,0 +1,96 @@
+{
+  "status": "passed",
+  "source": {
+    "headSha": "837701b3633eed669dd2c2c518ffebc0e46d55d8",
+    "dirty": false,
+    "copiedInputsSha256": "e3c9ea478f95229f361a0347c4cd1f150e9b4581bc466636add8eb3a38d4a3a6"
+  },
+  "baseSha": "837701b3633eed669dd2c2c518ffebc0e46d55d8",
+  "versions": {
+    "node": "v24.21.0",
+    "pnpm": "10.25.0",
+    "python": "3.12.8",
+    "postgres": "15.15"
+  },
+  "administrationSource": "supplied-loopback-administration-url",
+  "databaseName": "context_router_f07eb8b77aa32a15b9277df3_test",
+  "baseComparison": "performed",
+  "phases": [
+    {
+      "id": "contract-baseline",
+      "status": "passed",
+      "elapsedMs": 28455
+    },
+    {
+      "id": "documentation",
+      "status": "passed",
+      "elapsedMs": 1445
+    },
+    {
+      "id": "backend-unit-build",
+      "status": "passed",
+      "elapsedMs": 27245
+    },
+    {
+      "id": "backend-database",
+      "status": "passed",
+      "elapsedMs": 215429
+    },
+    {
+      "id": "local-orchestrator",
+      "status": "passed",
+      "elapsedMs": 6198
+    },
+    {
+      "id": "eval-fixtures",
+      "status": "passed",
+      "elapsedMs": 38109
+    },
+    {
+      "id": "eval-deterministic-scenarios",
+      "status": "passed",
+      "elapsedMs": 7833
+    },
+    {
+      "id": "web-production-build",
+      "status": "passed",
+      "elapsedMs": 28911
+    },
+    {
+      "id": "harbor-static",
+      "status": "passed",
+      "elapsedMs": 2436
+    },
+    {
+      "id": "restart-smoke",
+      "status": "passed",
+      "elapsedMs": 66596
+    },
+    {
+      "id": "packaged-composition-smoke",
+      "status": "passed",
+      "elapsedMs": 232137
+    },
+    {
+      "id": "repository-integrity",
+      "status": "passed",
+      "elapsedMs": 1837
+    }
+  ],
+  "cleanup": [
+    {
+      "resource": "database",
+      "status": "removed",
+      "name": "context_router_f07eb8b77aa32a15b9277df3_test"
+    },
+    {
+      "resource": "administration",
+      "status": "clean"
+    }
+  ],
+  "elapsedMs": 690573,
+  "mode": "full",
+  "callerIntegrity": true,
+  "cleanupErrors": [],
+  "failure": null
+}

@@ -1,0 +1,52 @@
+# Step 06 Selection
+
+Status: selected for CP2 tests-first integration. Architecture (Astra Extra High), compatibility/evaluation (Astra High), and safety (Astra Extra High) independently approved `eee89f960e235daa1f2b5b77312eb114f1fc80ac` with no blocking findings. This record preserves historical failed receipts and does not claim completed production implementation.
+
+## Candidate And Scope
+
+Select pinned llama.cpp b11146 (`7fe450e19305b828c199d602c23a8337aaa1f03b`) with Qwen3.5-9B Q4_K_M (`03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8`) for the observed M1 Max, 64 GiB, macOS 15.1.1 arm64 target. The [plan](plan.md#checkpoints) records exact sources, archive hashes and consent. Assets remain outside Git under the approved temporary root. No lower-memory Mac, other macOS, native Windows or native Linux qualification is claimed.
+
+The 4B candidate failed extraction precision/recall and absent-value negatives. The 9B candidate preserves the original FAILED quality verdict: extraction recall is 18/21 (85.71%), with exactly one known email omitted in each of three repetitions. Human-approved [amendment E](plan.md#amendment-e-user-directed-accuracy-deferral) accepts only this omission for initial integration. Optional prompt tuning D remains deferred. This is a selection with an explicit accuracy exception, not a retrospective passing score.
+
+One cohesive PR integrates a manually operated runtime through the existing AI ports. The application owns its connections and bounded PDF-processing children, not inference-process startup, stop, restart, download or installation. Step 09 retains managed lifecycle and early native Windows/Linux qualification. UI/MCP listeners and product cutover remain outside this step. Live remote/Harbor comparison was not run and is unnecessary to this selected local path.
+
+## Fixed Configuration And Capabilities
+
+- Literal `127.0.0.1`, HTTPS with a fresh private pinned certificate and separate 32-byte random inference bearer; one direct exclusive runtime and backend per session. Apply the [manual session contract](plan.md#manual-runtime-session-contract-for-selection), including a persistent exclusive filesystem claim. Recovery requires manually stopping both old processes and creating a fresh credential root. The claim prevents cooperating-backend reuse; it is not runtime boot attestation and cannot detect operator copying of credentials.
+- Alias `step06-qwen35`; context 16,384; one slot; batch/ubatch 512; Metal/all GPU layers; flash attention on; fit off; mmap; offline; non-thinking template `7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67`; no context shift, prompt cache, idle cache or web UI. Native completion uses one streamed response internally, temperature 0, seed 42, bounded progress and terminal records, while application results remain buffered.
+- At most 12,000 rendered input tokens and 2,048 output tokens; prompt plus decoded text 128 KiB, schema 32 KiB, response text 256 KiB, upload 10 MiB. Stream wire 2 MiB, event 16 KiB, 8,192 events. No truncation or partial-output salvage.
+- One application admission owner across both AI aliases, parsing, readiness, rendering/tokenization, inference, optional correction and settlement; one active operation and zero queue. Workflow 180 seconds, each inference 120 seconds, readiness five seconds, parser ten seconds, all clamped to one monotonic outer deadline. At most one correction for completed invalid JSON/Zod; no transport/auth/cancellation/limit retry.
+- UTF-8 text/plain, text/markdown, application/json, application/x-yaml, application/yaml and text/yaml, plus the qualified PDF text subset. PNG/JPEG return unsupported before inference in this composition; public upload MIME contracts and hosted behavior remain. Existing editable AcroForm extraction, validation and filling remain local, with model action proposals checked by actual Zod/domain validators.
+- Own admission plus fresh post-abort idle on the exact retained control connection qualifies witnessed cancellation only under the exclusive session contract. Unwitnessed dispatch, lost continuity or uncertain settlement permanently latches unavailable. Status, configuration reload or a later generic idle response cannot clear it.
+- Add explicit non-listening SQLite `preview-model`; ordinary `preview` ignores model configuration. Startup and non-AI behavior remain available without inference. Hosted and PostgreSQL reference modes remain. Configured metadata is an operator/runtime claim, not artifact attestation.
+
+## Evidence And Review Disposition
+
+| Dimension | Retained evidence | Current disposition |
+| --- | --- | --- |
+| Quality and latency | [48-case batch-512 run](evidence/quality-9b-batch512.json), [all quality runs](evidence/quality-run-index.json) | All actual Zod responses valid first attempt, 21 negatives pass, zero accepted critical violations; only E omission. One-call p95 14,586.267 ms, max 15,514.853 ms. High compatibility approved |
+| Actual schemas and output limit | [Four probes](evidence/schemas-9b.json), [index](evidence/schema-run-index.json) | Arbitrary JSON, null/defaults, dynamic duplicate schema and native limit rejection pass; separate from quality denominator. High and Extra High affected approvals |
+| Witnessed cancellation | [G result](evidence/cancellation-9b-verification-fixed.json), [native counters](evidence/cancellation-9b-verification-fixed-native-counters.json), [index including failures](evidence/cancellation-run-index.json) | Three prefill and three decode trials plus six same-runtime followups pass unchanged limits. Client return at most 1.786 ms, settlement at most 3,433.436 ms. Extra High safety approved |
+| Uncertain early failure | [Abort](evidence/early-abort-9b.json), [disconnect](evidence/early-disconnect-9b.json), [index](evidence/early-boundary-run-index.json) | Both reject and permanently latch before admission witness; disconnect release remains unknown. No capacity-recovery claim. Extra High safety approved |
+| Model resources | [Numeric allocation receipt](evidence/startup-allocation-9b-complete.json), [records](evidence/startup-allocation-9b-complete.jsonl), [index](evidence/startup-allocation-run-index.json) | All required startup families/counters captured. Workload footprint below 18 GiB, normal sampled pressure, no observed OOM or sampled swap increase. Architecture Extra High approved; overlapping mappings/graphics are not summed into a universal memory peak |
+| PDF capability and isolation | [Closure/footprint receipt](evidence/pdf-closure-complete.json), [index](evidence/pdf-closure-run-index.json) | 26 cases, four exact-worker footprint observations, source/relocated inventories, missing-worker and file/network negatives pass; all owned roots removed after reaping. High compatibility and Extra High safety approved |
+| Session establishment | `manual-session.mjs` and nine tests at `3a36a8dde0907681549e4f175ceea4de2867fe6a` | Extra High safety approved bounded credential reads, immutable snapshots, exclusive synced claim, fixed errors, crash/concurrency/reconstruction tests. Actual shared production composition remains CP2 |
+| Remaining negatives | [Native input limit](evidence/input-limit-9b.json), [resource failures](evidence/negative-resources.json), [index](evidence/negative-run-index.json) | Passed on `245b3e0a4e6af83dd0f58df8bb7594eab7ee11d6`: 13,011 tokens rejected before inference, zero native tasks; unavailable endpoint and exact missing binary/model failures, cleanup confirmed |
+
+All reviewers remain read-only; requested Astra High/Extra High launch settings were accepted, serving internals unverified. Root is sole writer. Earlier failed runs remain retained. The [feasibility chronology](feasibility.md) supplies revision-specific approvals, test-first failures, measurements and limitations.
+
+## Integration And Final Gates
+
+After combined selection approval, root implements CP2 tests first: minimal port contracts and hosted/no-model compatibility; production protected configuration/session owner, transport and PDF parser; all consumer propagation and mocks; explicit SQLite composition; actual Nest workflows and editable PDF fill. CP1 scripts are evidence scaffolding, not production imports.
+
+The actual production adapter, installed parser, source/sealed application packages and real model application workflows must be validated on their own revisions. Deterministic CI cannot depend on live weights. Preserve strict no-model network-denial proof and add separate narrow authenticated model-loopback proof. Fresh complete-diff reviews, the final exact-base twelve-phase local gate, Markdown/whitespace checks and final pushed-head standard CI plus migration CI remain required. No PR is ready until these gates pass; do not merge automatically.
+
+All three read-only reviewers approved their named selection dimensions at that revision. Prior unaffected approvals carry forward; the negative results closed the remaining CP1 evidence. Root now owns CP2 tests-first execution under the unchanged reviewed plan. Requested launch settings were accepted; serving internals remain unverified.
+
+## Application Qualification
+
+The selected configuration also passed [actual production quality](evidence/production-quality-9b.json) at `3e16596c27a5ce0fdc8dd1b2ca4faf2749341cd2`: all 48 trials structurally valid first attempt, all 21 negatives correct, zero accepted critical violations and only E's known email omission. Original FAILED scorer semantics remain. Supplemental actual Nest schemas, seeded duplicate/native consolidation and editable PDF fill passed. High compatibility independently accepted this evidence.
+
+[Production cancellation](evidence/production-cancellation-9b.json) at `6263459ec158fb81b75877696d5fa05a2ffe4bef` passed three witnessed prefill and three decode aborts, six same-runtime followups and exact 17-task post-reap native corroboration. It exercises actual public service readiness, rendering, tokenization, claim and settlement. Its short calls retain production's 2,048-token cap. All original timing limits passed; memory/pressure, identity preservation and owned cleanup also passed. CP1 G and earlier failures remain separate records.
+
+Final complete-diff review and exact local/CI gate evidence belong to [PR #165](https://github.com/loyalagents/context-router/pull/165). No automatic merge or next-step activation is authorized.

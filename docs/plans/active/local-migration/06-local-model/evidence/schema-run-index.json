@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "file": "schemas-9b.json",
+  "testedRevision": "787ac08f110d149a7982f902ec20a707dae64a1d",
+  "sha256": "21033fd1f33161e5ec076d6718b2ab9dbcf3e33fff19d72831e6e56b1893fe9a",
+  "manifestJsonDigest": "db48203172e8ffe0264f3cc5869ffcb37d2d0db67359ee3c27f94f41195361a4",
+  "disposition": "all four separate probes passed; arbitrary JSON/form defaults/dynamic literal plus observed rejected one-token limit; zero quality-denominator contribution"
+}

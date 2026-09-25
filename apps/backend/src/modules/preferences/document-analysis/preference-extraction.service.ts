@@ -16,6 +16,7 @@ import { PreferenceSchemaSnapshotService } from '../preference-definition/prefer
 import { buildDuplicateConsolidationPrompt } from './duplicate-consolidation.prompt';
 import { buildDuplicateConsolidationSchema } from './duplicate-consolidation.schema';
 import { canonicalizePreferenceValue } from '../preference/preference-value-normalization';
+import { AiError, AiExecutionOptions, createAiWorkflow } from '../../../domains/shared/ports/ai-execution';
 
 /**
  * Zod schema for validating AI response structure.
@@ -83,15 +84,18 @@ export class PreferenceExtractionService {
     fileBuffer: Buffer,
     mimeType: string,
     filename: string,
+    options?: AiExecutionOptions,
   ): Promise<{
     suggestions: PreferenceSuggestion[];
     filteredSuggestions: FilteredSuggestion[];
     documentSummary: string;
     filteredCount: number;
   }> {
+    const execution = createAiWorkflow(this.aiStructuredService.capabilities, options);
     // Fetch user's current ACTIVE preferences
     const currentPreferences =
       await this.preferenceService.getActivePreferences(userId);
+    execution.check();
 
     // Build the prompt with catalog-based schema
     const prompt = await this.buildExtractionPrompt(
@@ -102,6 +106,7 @@ export class PreferenceExtractionService {
       filename,
       userId,
     );
+    execution.check();
 
     this.logger.log('Calling the configured preference-extraction model');
 
@@ -116,20 +121,24 @@ export class PreferenceExtractionService {
         prompt,
         { buffer: fileBuffer, mimeType: aiFileMimeType },
         AiResponseSchema,
-        { operationName: 'preferenceExtraction' },
+        { ...execution.options, operationName: 'preferenceExtraction' },
       );
+    execution.check();
 
     // Transform validated AI data to domain types
     const parsed = this.transformAiResult(aiResult);
 
-    return this.validateAndSanitizeSuggestions(
+    const result = await this.validateAndSanitizeSuggestions(
       parsed,
       currentPreferences.map((p) => ({
         slug: p.slug,
         value: p.value,
       })),
       userId,
+      execution,
     );
+    execution.check();
+    return result;
   }
 
   private normalizeMimeTypeForAiFileInput(mimeType: string): string {
@@ -247,6 +256,7 @@ If no preferences can be extracted, return:
     parsed: { suggestions: PreferenceSuggestion[]; documentSummary: string },
     currentPreferences: Array<{ slug: string; value: any }>,
     userId: string,
+    execution: ReturnType<typeof createAiWorkflow>,
   ): Promise<{
     suggestions: PreferenceSuggestion[];
     filteredSuggestions: FilteredSuggestion[];
@@ -268,8 +278,10 @@ If no preferences can be extracted, return:
           pref.value,
           userId,
           definitionCache,
+          execution.check,
         ),
       );
+      execution.check();
     }
 
     const validatedSuggestions: PreferenceSuggestion[] = [];
@@ -281,7 +293,9 @@ If no preferences can be extracted, return:
         suggestion,
         userId,
         definitionCache,
+        execution.check,
       );
+      execution.check();
       if (prefiltered) {
         filteredSuggestions.push(prefiltered);
         continue;
@@ -292,8 +306,10 @@ If no preferences can be extracted, return:
           suggestion,
           userId,
           definitionCache,
+          execution.check,
         ),
       );
+      execution.check();
     }
 
     const groupedSuggestions = new Map<string, PreferenceSuggestion[]>();
@@ -304,6 +320,7 @@ If no preferences can be extracted, return:
     }
 
     for (const [slug, group] of groupedSuggestions.entries()) {
+      execution.check();
       if (group.length === 1) {
         this.pushNormalizationResult(
           this.normalizeSuggestion(group[0], preferenceMap),
@@ -322,7 +339,9 @@ If no preferences can be extracted, return:
           slug,
           group,
           preferenceMap.get(slug),
+          execution.options,
         );
+        execution.check();
 
         filteredSuggestions.push(
           ...group.map((candidate) =>
@@ -338,9 +357,11 @@ If no preferences can be extracted, return:
             consolidatedSuggestion,
             userId,
             definitionCache,
+            execution.check,
           ),
           preferenceMap,
         );
+        execution.check();
 
         if (normalizedConsolidated.kind === 'accepted') {
           validatedSuggestions.push(normalizedConsolidated.suggestion);
@@ -359,7 +380,9 @@ If no preferences can be extracted, return:
         this.logger.log(
           `[DUPLICATE_GROUP_NO_CHANGE] candidateCount=${group.length}`,
         );
-      } catch {
+      } catch (error) {
+        execution.check();
+        if (error instanceof AiError) throw error;
         this.logger.warn(
           `[DUPLICATE_GROUP_FALLBACK_FIRST] candidateCount=${group.length}`,
         );
@@ -386,6 +409,8 @@ If no preferences can be extracted, return:
       `Validation complete: ${validatedSuggestions.length} valid suggestions, ${filteredSuggestions.length} filtered`,
     );
 
+    execution.check();
+
     return {
       suggestions: validatedSuggestions,
       filteredSuggestions,
@@ -398,6 +423,7 @@ If no preferences can be extracted, return:
     suggestion: PreferenceSuggestion,
     userId: string,
     definitionCache: Map<string, StoredPreferenceDefinition>,
+    check: () => void,
   ): Promise<FilteredSuggestion | null> {
     const originalIndex = this.getOriginalIndex(suggestion.id);
 
@@ -416,6 +442,7 @@ If no preferences can be extracted, return:
       suggestion.slug,
       userId,
       definitionCache,
+      check,
     );
     if (!definition) {
       this.logger.warn('Filtered a suggestion with an unknown slug');
@@ -512,6 +539,7 @@ If no preferences can be extracted, return:
     slug: string,
     suggestions: PreferenceSuggestion[],
     currentValue: any,
+    options: AiExecutionOptions,
   ): Promise<PreferenceSuggestion> {
     const consolidationPrompt = buildDuplicateConsolidationPrompt(
       slug,
@@ -535,6 +563,7 @@ If no preferences can be extracted, return:
         consolidationPrompt,
         schema,
         {
+          ...options,
           operationName: `preferenceExtraction.duplicateConsolidation.${slug}`,
         },
       );
@@ -594,13 +623,16 @@ If no preferences can be extracted, return:
     slug: string,
     userId: string,
     definitionCache: Map<string, StoredPreferenceDefinition>,
+    check: () => void,
   ): Promise<StoredPreferenceDefinition | null> {
+    check();
     const cached = definitionCache.get(slug);
     if (cached) {
       return cached;
     }
 
     const definition = await this.defRepo.getDefinitionBySlug(slug, userId);
+    check();
     if (definition) {
       definitionCache.set(slug, definition);
     }
@@ -613,11 +645,13 @@ If no preferences can be extracted, return:
     value: unknown,
     userId: string,
     definitionCache: Map<string, StoredPreferenceDefinition>,
+    check: () => void,
   ): Promise<unknown> {
     const definition = await this.getDefinitionForSlug(
       slug,
       userId,
       definitionCache,
+      check,
     );
     if (!definition) {
       return value;
@@ -637,6 +671,7 @@ If no preferences can be extracted, return:
     suggestion: PreferenceSuggestion,
     userId: string,
     definitionCache: Map<string, StoredPreferenceDefinition>,
+    check: () => void,
   ): Promise<PreferenceSuggestion> {
     return {
       ...suggestion,
@@ -645,12 +680,14 @@ If no preferences can be extracted, return:
         suggestion.oldValue,
         userId,
         definitionCache,
+        check,
       ),
       newValue: await this.canonicalizeValueForSlug(
         suggestion.slug,
         suggestion.newValue,
         userId,
         definitionCache,
+        check,
       ),
     };
   }

@@ -1,0 +1,38 @@
+{
+  "revision": "8ac10e0240955b460d1e7be963c2e4b362460861",
+  "cleanCheckout": true,
+  "node": "v24.21.0",
+  "pnpm": "10.25.0",
+  "commands": [
+    "pnpm install --offline --frozen-lockfile",
+    "pnpm --filter backend prisma:generate",
+    "pnpm --filter backend build"
+  ],
+  "buildSha256": "4b21cc2ec015533f95085b792523b53c4a9103c89bcaeefbd0d61d6a2a468cdf",
+  "completeManifestMatchesHistorical": true,
+  "currentBuildSha256": "0893542f6d6e18b10dcf21c790760b75f2f7d3cd2b6f710dfc187e962ca7c1da",
+  "qualityAndCancellationInputsUnchanged": true,
+  "compiledFiles": 268,
+  "changedFiles": [
+    {
+      "path": "infrastructure/local-model/local-model.service.js",
+      "before": "ec99c1003439baa3d31b02d5e0c0a1778dbb4fadff289f50cbe0d70eb50f94f7",
+      "after": "aa9269fda1bf22c258d518730cc5467ad1653e103ad5f40337ce1b545b104c6a"
+    },
+    {
+      "path": "modules/preferences/document-analysis/document-analysis.service.js",
+      "before": "8387fdbae5e133a9898aaeebc872b89a77103d88d7c2311392c1034c408b0961",
+      "after": "144f1beb677fa379cf04a7910858dab68196900c7190a4cb56137e194427b880"
+    }
+  ],
+  "inventoryEvidence": [
+    {
+      "file": "review-provenance-old-build.json",
+      "sha256": "577098ce38bfcc868785a336cebf80f8401a2c5f374caadc4123021bc29873e0"
+    },
+    {
+      "file": "review-build-inventory.json",
+      "sha256": "f21b3eced6fb0eacb52ab7a1908f37c93ba393329b1c07565abbd024d502b0bc"
+    }
+  ]
+}

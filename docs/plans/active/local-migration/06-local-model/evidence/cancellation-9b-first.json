@@ -1,0 +1,234 @@
+{
+  "run": "native-9b-cancellation-1790278937097",
+  "testedRevision": "1eed4814f54de63a01704be8029f05017f5fc754",
+  "timestamp": "2026-09-24T19:42:17.097Z",
+  "candidate": "9b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "passed": false,
+  "memoryBefore": {
+    "physicalFootprintBytes": 1000192,
+    "lifetimePeakPhysicalFootprintBytes": 1016576,
+    "residentBytes": 1179648,
+    "pressure": 1,
+    "swapUsedBytes": 21809922048
+  },
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 1252.0117500000006
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-9B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "57164",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "2048",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "cancellation",
+    "passed": false,
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "baselines": [
+      {
+        "repetition": 0,
+        "elapsedMs": 396.14275000000004,
+        "passed": true
+      },
+      {
+        "repetition": 1,
+        "elapsedMs": 302.3530840000001,
+        "passed": true
+      },
+      {
+        "repetition": 2,
+        "elapsedMs": 299.37970800000016,
+        "passed": true
+      },
+      {
+        "repetition": 3,
+        "elapsedMs": 299.5487499999999,
+        "passed": true
+      },
+      {
+        "repetition": 4,
+        "elapsedMs": 298.6725419999998,
+        "passed": true
+      }
+    ],
+    "baselineP95Ms": 396.14275000000004,
+    "trials": [
+      {
+        "phase": "prefill",
+        "repetition": 0,
+        "notRun": false,
+        "passed": false,
+        "witnessed": true,
+        "cancelled": true,
+        "state": "unavailable",
+        "clientReturnMs": 0.7645419999998921,
+        "settledMs": 5071.785917,
+        "witness": {
+          "admitted": false,
+          "processed": 2048,
+          "total": 8029,
+          "decoded": 0,
+          "terminal": false
+        },
+        "terminalObserved": false,
+        "observationOverflow": false,
+        "observations": [
+          {
+            "admitted": false,
+            "processed": 2048,
+            "total": 8029,
+            "decoded": 0,
+            "terminal": false,
+            "afterAbortMs": 0.48979200000030687
+          }
+        ],
+        "inputTokens": 8029
+      },
+      {
+        "phase": "prefill",
+        "repetition": 1,
+        "notRun": true,
+        "passed": false
+      },
+      {
+        "phase": "prefill",
+        "repetition": 2,
+        "notRun": true,
+        "passed": false
+      },
+      {
+        "phase": "decode",
+        "repetition": 0,
+        "notRun": true,
+        "passed": false
+      },
+      {
+        "phase": "decode",
+        "repetition": 1,
+        "notRun": true,
+        "passed": false
+      },
+      {
+        "phase": "decode",
+        "repetition": 2,
+        "notRun": true,
+        "passed": false
+      }
+    ]
+  },
+  "memory": [
+    {
+      "elapsedMs": 5923.900625,
+      "physicalFootprintBytes": 723669056,
+      "lifetimePeakPhysicalFootprintBytes": 723669056,
+      "residentBytes": 814710784,
+      "pressure": 1,
+      "swapUsedBytes": 21809922048
+    },
+    {
+      "elapsedMs": 7930.676625,
+      "physicalFootprintBytes": 786469056,
+      "lifetimePeakPhysicalFootprintBytes": 789156032,
+      "residentBytes": 881344512,
+      "pressure": 1,
+      "swapUsedBytes": 21809922048
+    },
+    {
+      "elapsedMs": 9931.981625,
+      "physicalFootprintBytes": 806326592,
+      "lifetimePeakPhysicalFootprintBytes": 806326592,
+      "residentBytes": 901627904,
+      "pressure": 1,
+      "swapUsedBytes": 21809922048
+    },
+    {
+      "elapsedMs": 11932.408875,
+      "physicalFootprintBytes": 808014144,
+      "lifetimePeakPhysicalFootprintBytes": 808014144,
+      "residentBytes": 903675904,
+      "pressure": 1,
+      "swapUsedBytes": 21809922048
+    },
+    {
+      "elapsedMs": 13935.273208,
+      "physicalFootprintBytes": 810111296,
+      "lifetimePeakPhysicalFootprintBytes": 810111296,
+      "residentBytes": 905773056,
+      "pressure": 1,
+      "swapUsedBytes": 21809922048
+    },
+    {
+      "elapsedMs": 15937.603375,
+      "physicalFootprintBytes": 811176256,
+      "lifetimePeakPhysicalFootprintBytes": 811176256,
+      "residentBytes": 906838016,
+      "pressure": 1,
+      "swapUsedBytes": 21809922048
+    },
+    {
+      "elapsedMs": 16526.4985,
+      "physicalFootprintBytes": 812405056,
+      "lifetimePeakPhysicalFootprintBytes": 812405056,
+      "residentBytes": 908165120,
+      "pressure": 1,
+      "swapUsedBytes": 21809922048
+    }
+  ],
+  "memoryPassed": true,
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true,
+  "nativeCancellationAudit": {
+    "passed": false,
+    "calls": [],
+    "failure": "Native cancellation corroboration failed"
+  }
+}

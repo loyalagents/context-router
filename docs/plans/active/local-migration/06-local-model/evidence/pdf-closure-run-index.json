@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "file": "pdf-closure-complete.json",
+  "testedRevision": "685ca1fcefdbad8b7324f22e7ef401bc357dea28",
+  "sha256": "28860eb304958debae3c5c6b8e6879121f2563c5c2fe1b44a2ae78653ee36e00",
+  "disposition": "26source-derived/sealed-relocatedcases,4instrumentedfootprintobservations,denialcontrolsandmissing-workernegativepassed;notproductionapplicationpackagequalification"
+}

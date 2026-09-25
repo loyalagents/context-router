@@ -1,0 +1,11 @@
+{
+  "longPromptSha256": "51babbb9926b832687842fd06fbe6627398cd3a144a23e506b3e0634fc714098",
+  "shortPromptSha256": "2545d44f2875e0c4d928b1ffa6ee65063baf2e42e24dfa96d9666bc3929c7bc1",
+  "shortSchemaSha256": "699882f3a35ad4098bdd9f0dfa10f60eb624d91425a711b673b33c3ad8f72e4f",
+  "outputTokenCap": 2048,
+  "baselines": 5,
+  "prefill": 3,
+  "decode": 3,
+  "followups": 6,
+  "buildSha256": "4b21cc2ec015533f95085b792523b53c4a9103c89bcaeefbd0d61d6a2a468cdf"
+}

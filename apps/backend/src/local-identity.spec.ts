@@ -64,4 +64,19 @@ describe('local identity process entrypoint', () => {
     expect(stderr).toBe('Local identity command failed\n');
     for (const canary of canaries) expect(stderr).not.toContain(canary);
   });
+  it('selects the model loader only for exact preview-model, never ordinary preview or admin', async () => {
+    const model = jest.fn().mockResolvedValue(143);
+    const loadModelPreview = jest.fn(async () => model);
+    const loadPreview = jest.fn(async () => jest.fn().mockResolvedValue(143));
+    const loadAdmin = jest.fn(async () => jest.fn().mockResolvedValue(2));
+    const dependencies = { loadModelPreview, loadPreview, loadAdmin };
+    await expect(main(['preview'], dependencies)).resolves.toBe(143);
+    await expect(main(['initialize'], dependencies)).resolves.toBe(2);
+    await expect(main(['preview-model', 'extra'], dependencies)).resolves.toBe(2);
+    expect(loadModelPreview).not.toHaveBeenCalled();
+    await expect(main(['preview-model'], dependencies)).resolves.toBe(143);
+    expect(loadModelPreview).toHaveBeenCalledTimes(1);
+    expect(model).toHaveBeenCalledTimes(1);
+  });
+
 });

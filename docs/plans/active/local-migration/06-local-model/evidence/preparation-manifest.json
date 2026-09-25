@@ -1,0 +1,52 @@
+[
+  {
+    "path": "docs/plans/active/local-migration/05-local-database-runtime/README.md",
+    "sha256": "a1723fd5b20c29685711f1ca5109c940ef1e6888f4a70c1928483ac47d0e2ba3",
+    "bytes": 4972
+  },
+  {
+    "path": "docs/plans/active/local-migration/05-local-database-runtime/plan.md",
+    "sha256": "1d68b89a1d797767d5816a48af660f688278d90e74ff68e79eecc8090e06097c",
+    "bytes": 79072
+  },
+  {
+    "path": "docs/plans/active/local-migration/README.md",
+    "sha256": "9672927401b06d8c0e2153da0a7cbe40ea30978f1e7a2ca1b9bd3d57fa9e886c",
+    "bytes": 3448
+  },
+  {
+    "path": "docs/plans/active/local-migration/agent-execution.md",
+    "sha256": "7bcd147dde4267f636647ed3c9be239cc0cbdfcf3e24dc60af85805b2cee4d0d",
+    "bytes": 17472
+  },
+  {
+    "path": "docs/plans/active/local-migration/decision-log.md",
+    "sha256": "31320ec3f1b763b5aa407bacdbc4cf785d9295151387c859d45fe970de1d3fb8",
+    "bytes": 22074
+  },
+  {
+    "path": "docs/plans/active/local-migration/orchestration.md",
+    "sha256": "60c2e7ad818573131b76c648efcc2c0073b6503b3c6d76cb3bd4888617c0003b",
+    "bytes": 25707
+  },
+  {
+    "path": "docs/plans/active/local-migration/research/local-model/README.md",
+    "sha256": "ac2ed6ee50862a18dbefba724d7203b0954fc526b2594f3ac0d330e1c3781437",
+    "bytes": 13766
+  },
+  {
+    "path": "docs/plans/active/local-migration/research/local-model/gemini-report.md",
+    "sha256": "bd3132072c492296a1a59412a7f3dd51204f5bb3d5ab12d6c17fdf1db2a4dd6a",
+    "bytes": 25747
+  },
+  {
+    "path": "docs/plans/active/local-migration/research/local-model/gpt-report.md",
+    "sha256": "04650e3ac9f1e783dea0f1a9fc21483279760e2a0710cc37df12cee14a283c81",
+    "bytes": 58582
+  },
+  {
+    "path": "docs/plans/active/local-migration/step-06-handoff.md",
+    "sha256": "9abfacf2529cb896529f3686bdc0c9a65ef2a94cec0a114dd17f64a1e88af103",
+    "bytes": 15273
+  }
+]

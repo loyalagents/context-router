@@ -1,0 +1,2386 @@
+{
+  "run": "native-9b-quality-1790244092891",
+  "timestamp": "2026-09-24T10:01:32.891Z",
+  "candidate": "9b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "passed": false,
+  "memoryBefore": {
+    "physicalFootprintBytes": 1000192,
+    "lifetimePeakPhysicalFootprintBytes": 1016576,
+    "residentBytes": 1179648,
+    "pressure": 1,
+    "swapUsedBytes": 22799974400
+  },
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 1263.0104580000002
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-9B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "62337",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "2048",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "quality",
+    "passed": false,
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "score": {
+      "manifestSha256": "35ea1d822dbb7d32619c384f00da9e26b69cebc37598f36c92413ecf3ae6424a",
+      "passed": false,
+      "families": {
+        "extraction": {
+          "proposal": {
+            "truePositive": 15,
+            "falseNegative": 6,
+            "falsePositive": 0,
+            "recall": 0.7142857142857143,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 15,
+            "falseNegative": 6,
+            "falsePositive": 0,
+            "recall": 0.7142857142857143,
+            "precision": 1
+          },
+          "failedTrials": 12,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 0,
+          "negativeTrials": 6,
+          "passed": false
+        },
+        "search": {
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 9,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 9,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "failedTrials": 12,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 0,
+          "negativeTrials": 6,
+          "passed": false
+        },
+        "consolidation": {
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 3,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 3,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "failedTrials": 6,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 0,
+          "negativeTrials": 3,
+          "passed": false
+        },
+        "form": {
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 12,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 12,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "failedTrials": 12,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 0,
+          "negativeTrials": 6,
+          "passed": false
+        }
+      },
+      "overall": {
+        "proposal": {
+          "truePositive": 15,
+          "falseNegative": 30,
+          "falsePositive": 0,
+          "recall": 0.3333333333333333,
+          "precision": 1
+        },
+        "validated": {
+          "truePositive": 15,
+          "falseNegative": 30,
+          "falsePositive": 0,
+          "recall": 0.3333333333333333,
+          "precision": 1
+        },
+        "failedTrials": 42,
+        "criticalViolations": 0,
+        "negativeCasesCorrect": 0,
+        "negativeTrials": 21,
+        "passed": false
+      },
+      "trials": [
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 2,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 0,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 1,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 2,
+          "failed": true,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        }
+      ]
+    },
+    "measurements": [
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 0,
+        "workflowMs": 9990.813208,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "69560a50b4e4fc28d5f26ca3b8dc86c13b4649646acbc08092f7fe86b2404d5a",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 9990.133542000001,
+            "inputTokens": 861,
+            "outputTokens": 279
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 1,
+        "workflowMs": 10325.085208999999,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "69560a50b4e4fc28d5f26ca3b8dc86c13b4649646acbc08092f7fe86b2404d5a",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 10324.740791,
+            "inputTokens": 861,
+            "outputTokens": 279
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 2,
+        "workflowMs": 10108.437917,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "69560a50b4e4fc28d5f26ca3b8dc86c13b4649646acbc08092f7fe86b2404d5a",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 10108.070208000001,
+            "inputTokens": 861,
+            "outputTokens": 279
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 0,
+        "workflowMs": 9405.463166999998,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 9404.930334,
+            "inputTokens": 887,
+            "outputTokens": 248
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 1,
+        "workflowMs": 9484.484208000002,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 9484.224875,
+            "inputTokens": 887,
+            "outputTokens": 248
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 2,
+        "workflowMs": 9560.182957999998,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 9559.930916999998,
+            "inputTokens": 887,
+            "outputTokens": 248
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 0,
+        "workflowMs": 2515.163333999997,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "61871b24196e77a7269523361bff5bcfa8fc7b327dda00f791621b967ca34af9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 2514.974083000001
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 1,
+        "workflowMs": 9.336875000000873,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "61871b24196e77a7269523361bff5bcfa8fc7b327dda00f791621b967ca34af9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 9.157250000003842
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 2,
+        "workflowMs": 8.369791000004625,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "61871b24196e77a7269523361bff5bcfa8fc7b327dda00f791621b967ca34af9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 8.184249999998428
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 0,
+        "workflowMs": 6.789875000002212,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "0ea8f1b485aff95f796b425006bdf7065f5dc3e04e3060bfa5c030f5f0694c03",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.58262499999546
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 1,
+        "workflowMs": 7.175541000004159,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "0ea8f1b485aff95f796b425006bdf7065f5dc3e04e3060bfa5c030f5f0694c03",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.949583000001439
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 2,
+        "workflowMs": 6.51866699999664,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "0ea8f1b485aff95f796b425006bdf7065f5dc3e04e3060bfa5c030f5f0694c03",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.309291999998095
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 0,
+        "workflowMs": 7.592499999998836,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "331d8a7a660050020c6bf19e7ea8b818fabc7acdf5bedcaa6f9df47f0fea5b37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 7.392667000000074
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 1,
+        "workflowMs": 7.273957999997947,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "331d8a7a660050020c6bf19e7ea8b818fabc7acdf5bedcaa6f9df47f0fea5b37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 7.070166999998037
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 2,
+        "workflowMs": 6.920082999997248,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "331d8a7a660050020c6bf19e7ea8b818fabc7acdf5bedcaa6f9df47f0fea5b37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.73583299999882
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 0,
+        "workflowMs": 6.581624999998894,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "8c405818fb4ff1ff93d41ae4b4fb93b4a5276ccc848f6cf44b1fcda88c9d4a37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.400082999993174
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 1,
+        "workflowMs": 6.298291999999492,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "8c405818fb4ff1ff93d41ae4b4fb93b4a5276ccc848f6cf44b1fcda88c9d4a37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.1227080000026035
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 2,
+        "workflowMs": 7.088958000000275,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "8c405818fb4ff1ff93d41ae4b4fb93b4a5276ccc848f6cf44b1fcda88c9d4a37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.9146249999976135
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 0,
+        "workflowMs": 6.348124999996799,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.127916000004916
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 1,
+        "workflowMs": 5.67949999999837,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.561750000000757
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 2,
+        "workflowMs": 6.171500000004016,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.029457999997248
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 0,
+        "workflowMs": 6.43358299999818,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.302332999999635
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 1,
+        "workflowMs": 6.383915999998862,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.238499999999476
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 2,
+        "workflowMs": 6.329083999997238,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.210167000004731
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 0,
+        "workflowMs": 5.343791999999667,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.24079100000381
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 1,
+        "workflowMs": 5.957583000003069,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.827166000002762
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 2,
+        "workflowMs": 5.30145800000173,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.20233300000109
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 0,
+        "workflowMs": 5.877916999997979,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.765999999995984
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 1,
+        "workflowMs": 5.826833999999508,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.702665999997407
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 2,
+        "workflowMs": 5.809249999998428,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.6990420000001905
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 0,
+        "workflowMs": 6.166125000003376,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.975333000002138
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 1,
+        "workflowMs": 5.866458999997121,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.713125000002037
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 2,
+        "workflowMs": 6.935125000003609,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.782958999996481
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 0,
+        "workflowMs": 6.057249999998021,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.9050829999978305
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 1,
+        "workflowMs": 5.548750000001746,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.39229200000409
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 2,
+        "workflowMs": 5.713749999995343,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 5.586290999999619
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 0,
+        "workflowMs": 7.127124999999069,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.916207999995095
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 1,
+        "workflowMs": 6.884125000004133,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.683333000000857
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 2,
+        "workflowMs": 6.3825419999993755,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.1973749999961
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 0,
+        "workflowMs": 7.6426250000004075,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 7.327124999996158
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 1,
+        "workflowMs": 7,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.712375000002794
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 2,
+        "workflowMs": 6.781750000001921,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.5410419999971054
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 0,
+        "workflowMs": 6.744959000003291,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.577917000002344
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 1,
+        "workflowMs": 6.821250000000873,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.661208999998053
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 2,
+        "workflowMs": 6.215958000000683,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.062833000003593
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 0,
+        "workflowMs": 6.296666000002006,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.061291999998502
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 1,
+        "workflowMs": 6.783541000004334,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.542332999997598
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 2,
+        "workflowMs": 6.829624999998487,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": false,
+            "transportFailed": true,
+            "elapsedMs": 6.635957999998936
+          }
+        ],
+        "initialProposalValid": false,
+        "clientState": "unavailable"
+      }
+    ]
+  },
+  "memory": [
+    {
+      "elapsedMs": 5198.064667,
+      "physicalFootprintBytes": 705826752,
+      "lifetimePeakPhysicalFootprintBytes": 705826752,
+      "residentBytes": 797556736,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 7205.022292,
+      "physicalFootprintBytes": 839635584,
+      "lifetimePeakPhysicalFootprintBytes": 839701120,
+      "residentBytes": 936935424,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 9206.631167,
+      "physicalFootprintBytes": 843076288,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 964263936,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 11209.335917,
+      "physicalFootprintBytes": 843109056,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 964313088,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 13212.277875,
+      "physicalFootprintBytes": 843109056,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 964362240,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 15213.77725,
+      "physicalFootprintBytes": 843141824,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 964411392,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 17215.932875,
+      "physicalFootprintBytes": 786666176,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 964591616,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 19217.154417,
+      "physicalFootprintBytes": 786649856,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 988577792,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 21218.51825,
+      "physicalFootprintBytes": 786666240,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 988610560,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 23221.34825,
+      "physicalFootprintBytes": 786699008,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 988643328,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 25222.847,
+      "physicalFootprintBytes": 786699008,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 988643328,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 27225.451833,
+      "physicalFootprintBytes": 734221056,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 988856320,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 29228.32175,
+      "physicalFootprintBytes": 734253824,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1005142016,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 31231.936458,
+      "physicalFootprintBytes": 734237440,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1005125632,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 33233.786208,
+      "physicalFootprintBytes": 734237440,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1005125632,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 35235.765417,
+      "physicalFootprintBytes": 734237440,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1005142016,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 37236.892042,
+      "physicalFootprintBytes": 734401280,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1006174208,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 39239.67275,
+      "physicalFootprintBytes": 734286592,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1006190592,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 41241.696875,
+      "physicalFootprintBytes": 734221056,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1006206976,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 43244.141917,
+      "physicalFootprintBytes": 734221056,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1006206976,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 45244.66375,
+      "physicalFootprintBytes": 734221056,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1006223360,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 47244.7655,
+      "physicalFootprintBytes": 734286592,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1006288896,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 49246.08225,
+      "physicalFootprintBytes": 734204672,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1014333440,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 51247.818833,
+      "physicalFootprintBytes": 734204672,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1014333440,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 53249.636083,
+      "physicalFootprintBytes": 734204672,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1014333440,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 55251.344375,
+      "physicalFootprintBytes": 734319360,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1014530048,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 57253.840083,
+      "physicalFootprintBytes": 734089984,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1014530048,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 59256.043208,
+      "physicalFootprintBytes": 734319360,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1022509056,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 61257.487083,
+      "physicalFootprintBytes": 734319360,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1022509056,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 63259.364625,
+      "physicalFootprintBytes": 734335744,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1022525440,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 65260.3695,
+      "physicalFootprintBytes": 734483200,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1024016384,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 67261.411333,
+      "physicalFootprintBytes": 734810880,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1024688128,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    },
+    {
+      "elapsedMs": 67352.8545,
+      "physicalFootprintBytes": 734941952,
+      "lifetimePeakPhysicalFootprintBytes": 867062400,
+      "residentBytes": 1024819200,
+      "pressure": 1,
+      "swapUsedBytes": 22799974400
+    }
+  ],
+  "memoryPassed": true,
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true
+}

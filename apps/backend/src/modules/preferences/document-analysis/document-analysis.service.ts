@@ -1,3 +1,4 @@
+import { AiError } from '../../../domains/shared/ports/ai-execution';
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PreferenceExtractionService } from './preference-extraction.service';
@@ -93,7 +94,7 @@ export class DocumentAnalysisService {
 
       // Distinguish between parse errors and AI service errors
       if (error instanceof Error) {
-        if (error.message.includes('parse')) {
+        if (error instanceof AiError ? error.kind === 'invalid_response' : error.message.includes('parse')) {
           return {
             analysisId,
             suggestions: [],
@@ -118,13 +119,22 @@ export class DocumentAnalysisService {
         };
       }
 
+      const localReasons = {
+        input_limit: 'Document analysis input is too large. Try a smaller document.',
+        context_limit: 'Document analysis exceeds the local model context. Try a smaller document.',
+        busy: 'The local model is busy. Wait for the current operation to finish.',
+        unavailable: 'The local model is unavailable. Check its setup and manual session recovery instructions.',
+        unsafe_configuration: 'The local model configuration is unavailable. Check its setup and manual session recovery instructions.',
+      };
       return {
         analysisId,
         suggestions: [],
         filteredSuggestions: [],
         documentSummary: undefined,
         status: AnalysisStatus.AI_ERROR,
-        statusReason: 'AI service unavailable - please try again later',
+        statusReason: error instanceof AiError && Object.prototype.hasOwnProperty.call(localReasons, error.kind)
+          ? localReasons[error.kind]
+          : 'AI service unavailable - please try again later',
         filteredCount: 0,
       };
     }
@@ -135,6 +145,7 @@ export class DocumentAnalysisService {
       return false;
     }
 
+    if (error instanceof AiError) return error.kind === 'unsupported';
     const message = error.message.toLowerCase();
     return AI_PROVIDER_FILE_TYPE_ERROR_PATTERNS.some((pattern) =>
       message.includes(pattern),

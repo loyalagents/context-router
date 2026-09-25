@@ -1,0 +1,34 @@
+{
+  "runs": [
+    {
+      "testedRevision": "de8a01c6a98cb277d6a2e3c04abdf1a299b73307",
+      "result": "failed",
+      "files": [
+        {
+          "file": "startup-allocation-9b-first.json",
+          "sha256": "2d2320debb43017112154ad4f518e0a0bc8e78448b222b690f0c5aec1f895ebb"
+        },
+        {
+          "file": "startup-allocation-9b-first.jsonl",
+          "sha256": "4e28c739d40d089408878545decd95dcc33269b8b5e080093fe8209132255e8b"
+        }
+      ],
+      "note": "Numeric projection incomplete. Raw verbosity-4 output was never retained. Proven deterministic candidate-matcher defect does not establish the discarded live line."
+    },
+    {
+      "testedRevision": "59d81d30e71d88d4269188cce5246df80147f4f5",
+      "result": "passed",
+      "files": [
+        {
+          "file": "startup-allocation-9b-complete.json",
+          "sha256": "7c3211bba62663368f257fcb78cbd3f5ad6ccd53228dd866c99656830302d404"
+        },
+        {
+          "file": "startup-allocation-9b-complete.jsonl",
+          "sha256": "8b820c80976460ede3707ed5de7768b59453fa5fe4ba3080b56d1db5aa5a8e3d"
+        }
+      ],
+      "note": "Complete numeric startup allocation capture; startup reservations and rounded buffer sizes, not lifetime peaks or a universal total-memory bound."
+    }
+  ]
+}

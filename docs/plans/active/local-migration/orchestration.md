@@ -1,19 +1,18 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Step 05 PR: [PR #164](https://github.com/loyalagents/context-router/pull/164) — current review verdicts and exact-head validation evidence; Step 05 remains active pending human merge
-- Current step: `05-local-database-runtime` — Step 04 [PR #163](https://github.com/loyalagents/context-router/pull/163) was human-merged at `3426dc556fea88d94a360329e7c685bc9acc155e` from final tested head `c83bea0add7039cad814567e05d79f4f8b275aba`; fresh verification confirms successful standard CI [35928247258](https://github.com/loyalagents/context-router/actions/runs/35928247258) and dedicated migration gate [35928247421](https://github.com/loyalagents/context-router/actions/runs/35928247421)
-- Coordinator: `/root`, repository-read-only
-- Outcome owner and sole repository writer: `/root/step05_writer` on `codex/local-migration-05-local-database-runtime`
-- Step 05 activation evidence: exact clean base `3426dc556fea88d94a360329e7c685bc9acc155e` passed all twelve full-gate phases before activation edits; see [plan](05-local-database-runtime/plan.md#activation-gate)
-- Concrete next action: complete review and exact-head validation tracked in PR #164; leave merge to a human and keep Step 06 inactive
-- Review date: 2026-10-07 or Step 05 final review, whichever comes first
+- Last completed step: `05-local-database-runtime` — [PR #164](https://github.com/loyalagents/context-router/pull/164), human-merged at `837701b3633eed669dd2c2c518ffebc0e46d55d8` from final tested head `91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b`; successful standard CI [35957573071](https://github.com/loyalagents/context-router/actions/runs/35957573071) and dedicated migration gate [35957573023](https://github.com/loyalagents/context-router/actions/runs/35957573023) reverified 2026-09-24
+- Current primary implementation step: `06-local-model` — [active plan](06-local-model/plan.md), selection approved; CP2 and review fixes implemented; CP3 paused on repeat cancellation evidence in [PR #165](https://github.com/loyalagents/context-router/pull/165)
+- Coordinator and sole repository writer for Step 06: `/root`; all other agents read-only
+- Step 05 activation/history evidence: retained in its [plan](05-local-database-runtime/plan.md#activation-gate); recording the observed merge here does not activate Step 06
+- Concrete next action: user decision on the [bounded cancellation diagnostic](06-local-model/plan.md#follow-up-result-and-proposed-diagnostic-decision), then resolve the new evidence before renewed final local/CI acceptance. PR #165 stays draft.
+- Review date: Step 06 PR review or 2026-10-08, whichever comes first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
 - Hosted production deployment branch: `hosted-v1-maintenance` (operator-confirmed
   2026-09-13; re-verify before changing branch roles)
-- Last reviewed: 2026-09-23
+- Last reviewed: 2026-09-24
 
 This document is the control plane for migrating Context Router from its current
 hosted-first architecture to an installable local-first application. Keep it
@@ -69,6 +68,11 @@ The most important current decisions are:
 - Remote model calls used for evaluation are explicit opt-in behavior and are
   not part of the default local product path.
 - Every merged checkpoint leaves a documented supported mode runnable.
+- Apple Silicon is the first local-model/product target; manual model-server
+  setup is acceptable for Step 06. A managed runtime belongs to Step 09, with
+  early native Windows/Linux qualification before packaging choices harden.
+- The [local-model research synthesis](research/local-model/README.md) is
+  planning input, not final runtime selection or implementation authority.
 
 ## Target Boundaries
 
@@ -148,6 +152,13 @@ rather than encode storage, identity, or model behavior themselves.
   Its contract suite preserves atomic audit writes, uniqueness and archival
   rules, location precedence, ordering, cascades, concurrent updates, and seed
   idempotence before a second database adapter is accepted.
+- Step 06 validates one manual authenticated loopback runtime/model candidate
+  on Apple Silicon before full integration. Minimal AI-port evolution must
+  cover truthful capabilities, deadlines/cancellation and failure behavior;
+  text inference alone does not complete file-based consumers. Deterministic
+  merge tests and measured live-model evidence are distinct. Keep one PR with
+  internal checkpoints; app-owned model downloads/process supervision remain
+  Step 09. See LM-017/018 and the [handoff](step-06-handoff.md).
 - Steps 07 and 08 deliver useful non-AI local flows without waiting for the model
   step. AI-backed tools and pages remain capability-gated until Step 06 lands.
   Local HTTP/MCP planning must address hostile local applications, browser CSRF,
@@ -310,17 +321,21 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | `02-composition-boundaries` | Complete — PR 02A [#157](https://github.com/loyalagents/context-router/pull/157), PR 02B [#158](https://github.com/loyalagents/context-router/pull/158), PR 02C [#159](https://github.com/loyalagents/context-router/pull/159), PR 02D [#160](https://github.com/loyalagents/context-router/pull/160), and PR 02E [#161](https://github.com/loyalagents/context-router/pull/161); final merge `6b420ed24e9dd344af8990c9045832990ae1b5ec` — [plan](02-composition-boundaries/plan.md) | Select infrastructure at composition roots without changing behavior, and prove early packaging/process/data-directory assumptions with a feasibility smoke. | Step 01 merge and passing LMBG |
 | `03-local-identity` | Complete — [#162](https://github.com/loyalagents/context-router/pull/162), merge `1b35c7c513b01a183bb740f0596273baf7620a10`; final head `cfe3b63786e729e60fd6f954c172db86487bebd4` passed standard CI `35899268852` and migration gate `35899268881`; [retained plan](03-local-identity/plan.md) includes R1 | Stable provider-neutral human identity plus explicit non-listening local preview, durable operation/candidate recovery, and best-effort first-creation profile hints. | Step 02 |
 | `04-storage-boundaries` | Complete — [PR #163](https://github.com/loyalagents/context-router/pull/163), merge `3426dc556fea88d94a360329e7c685bc9acc155e`; final head `c83bea0add7039cad814567e05d79f4f8b275aba` passed standard CI `35928247258` and migration gate `35928247421`; [retained plan](04-storage-boundaries/plan.md) | Extract storage and transaction/unit-of-work boundaries while PostgreSQL remains green, including mutation/audit atomicity, catalog-only production seed, and Step 03 durable operation/candidate, empty/exact recovery and fencing semantics. | Steps 01–03 |
-| `05-local-database-runtime` | Implementation candidate — [README](05-local-database-runtime/README.md), [reviewed plan and evidence](05-local-database-runtime/plan.md); review/validation status in PR #164; active pending human merge | Implemented selected SQLite storage, worker-held identity coordination, actual local composition, recovery/backup and source/package evidence; retain explicit PostgreSQL reference coverage. | Step 04 |
-| `06-local-model` | Not started | Add local model capability discovery, execution, timeout, and error behavior behind provider-neutral ports. | Step 02; may overlap Steps 04-05 |
+| `05-local-database-runtime` | Complete — [PR #164](https://github.com/loyalagents/context-router/pull/164), merge `837701b3633eed669dd2c2c518ffebc0e46d55d8`; final head `91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b` passed standard CI `35957573071` and migration gate `35957573023`; [retained plan](05-local-database-runtime/plan.md) | Implemented selected SQLite storage, worker-held identity coordination, actual local composition, recovery/backup and source/package evidence; retain explicit PostgreSQL reference coverage. | Step 04 |
+| `06-local-model` | Active — clean-base gate passed; [selection](06-local-model/selection.md) independently approved; CP3 paused on repeat native cancellation; draft [PR #165](https://github.com/loyalagents/context-router/pull/165) | Prove a manual Apple Silicon local-model setup, then integrate truthful capabilities, execution, deadlines/cancellation and errors behind provider-neutral ports; one PR by default. | Step 02 boundaries and current Step 05 local composition |
 | `07-local-mcp` | Not started | Connect non-AI local MCP flows and local authorization to the core; capability-gate AI-backed tools until Step 06. | Steps 03 and 05; Step 06 for AI tools |
 | `08-local-ui` | Not started | Run useful non-AI UI flows without Auth0 or hosted services; capability-gate AI-backed pages until Step 06. | Steps 03 and 05; may overlap Steps 06-07 |
-| `09-installation-and-packaging` | Not started | Complete first-run setup, process supervision, data locations, model-asset handling, clean-install smoke, logs, backup/recovery, and application updates using constraints tested since Step 02. | Steps 06-08 |
+| `09-installation-and-packaging` | Not started | Early native Windows/Linux qualification after the Mac model path; then managed first-run setup, process supervision, data locations, model assets, clean-install smoke, logs, backup/recovery and updates. | Final product depends on Steps 06–08; early qualification needs explicit non-overlap review |
 | `10-lan-mcp` | Deferred/optional | Add explicit LAN enablement, pairing/authentication, exposure warnings, and network tests. | Step 09 |
 | `11-hosting-portability-check` | Deferred/optional | Prove a hosted composition can be added at the boundaries without cloud sync or changes to the application core. | Stable local application |
 
 ## Parallel Work
 
-Step 05 is the sole primary migration checkpoint; `/root/step05_writer` owns all repository changes on its dedicated branch/worktree. `/root` coordinates read-only. Read-only discovery and independent review may run in parallel. Initial review precedes executable feasibility, and affected selection review precedes full adapters. No other implementation track is activated: Step 06 remains inactive, as do dependent MCP/UI steps. Visual/interface/evaluation work requires an explicitly non-overlapping owner and cannot change this step's contracts or shared files.
+Step 05 is merged. Step 06 is the sole active primary step; its clean-base gate passed before preparation transfer. `/root` is coordinator and sole repository writer; discovery and reviewers remain read-only. The original preparation workspace is preserved. See the [active plan](06-local-model/plan.md) for evidence and role settings.
+Initial plan review precedes executable feasibility; affected selection review
+precedes the production adapter. MCP/UI and early Step 09 platform work remain
+inactive until explicitly authorized with non-overlapping ownership. Read-only
+discovery and independent review can run in parallel without activating them.
 
 Coordinate or serialize changes to these hotspots:
 

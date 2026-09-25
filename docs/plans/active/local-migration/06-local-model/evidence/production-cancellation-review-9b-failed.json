@@ -1,0 +1,725 @@
+{
+  "run": "native-9b-production-cancellation-1790318124166",
+  "testedRevision": "59e03d9914f481432c6a08e5a4e5d9c5e7bafdfd",
+  "timestamp": "2026-09-25T06:35:24.166Z",
+  "candidate": "9b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "passed": false,
+  "memoryBefore": {
+    "physicalFootprintBytes": 1016576,
+    "lifetimePeakPhysicalFootprintBytes": 1032960,
+    "residentBytes": 1196032,
+    "pressure": 1,
+    "swapUsedBytes": 20364132352
+  },
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 1042.3341250000003
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-9B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "49531",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "512",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "production-cancellation",
+    "passed": false,
+    "manifest": {
+      "longPromptSha256": "51babbb9926b832687842fd06fbe6627398cd3a144a23e506b3e0634fc714098",
+      "shortPromptSha256": "2545d44f2875e0c4d928b1ffa6ee65063baf2e42e24dfa96d9666bc3929c7bc1",
+      "shortSchemaSha256": "699882f3a35ad4098bdd9f0dfa10f60eb624d91425a711b673b33c3ad8f72e4f",
+      "outputTokenCap": 2048,
+      "baselines": 5,
+      "prefill": 3,
+      "decode": 3,
+      "followups": 6,
+      "buildSha256": "0893542f6d6e18b10dcf21c790760b75f2f7d3cd2b6f710dfc187e962ca7c1da"
+    },
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "baselines": [
+      {
+        "repetition": 0,
+        "elapsedMs": 360.889625,
+        "passed": true
+      },
+      {
+        "repetition": 1,
+        "elapsedMs": 323.903583,
+        "passed": true
+      },
+      {
+        "repetition": 2,
+        "elapsedMs": 316.415708,
+        "passed": true
+      },
+      {
+        "repetition": 3,
+        "elapsedMs": 313.5502080000001,
+        "passed": true
+      },
+      {
+        "repetition": 4,
+        "elapsedMs": 312.5146669999999,
+        "passed": true
+      }
+    ],
+    "baselineP95Ms": 360.889625,
+    "trials": [
+      {
+        "phase": "prefill",
+        "witnessed": true,
+        "cancelled": true,
+        "state": "unavailable",
+        "clientReturnMs": 0.9671250000001237,
+        "settledMs": 5001.264832999999,
+        "witness": {
+          "admitted": false,
+          "processed": 512,
+          "total": 8029,
+          "decoded": 0,
+          "terminal": false
+        },
+        "terminalObserved": false,
+        "observationOverflow": false,
+        "observations": [
+          {
+            "admitted": false,
+            "processed": 512,
+            "total": 8029,
+            "decoded": 0,
+            "terminal": false,
+            "afterAbortMs": 0.5770419999998921
+          }
+        ],
+        "controlEvidence": {
+          "state": "unavailable",
+          "overflow": false,
+          "records": [
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "dispatch",
+              "elapsedMs": 0.168,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "readiness",
+              "sequence": 1,
+              "event": "idle",
+              "elapsedMs": 2.409,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 1,
+              "event": "start",
+              "elapsedMs": 21.405,
+              "remainingMs": 5000
+            },
+            {
+              "phase": "settlement",
+              "sequence": 2,
+              "event": "dispatch",
+              "elapsedMs": 21.877,
+              "remainingMs": 4999.527
+            },
+            {
+              "phase": "settlement",
+              "sequence": 2,
+              "event": "busy",
+              "elapsedMs": 22.655,
+              "remainingMs": 4998.749
+            },
+            {
+              "phase": "settlement",
+              "sequence": 3,
+              "event": "dispatch",
+              "elapsedMs": 273.034,
+              "remainingMs": 4748.373
+            },
+            {
+              "phase": "settlement",
+              "sequence": 3,
+              "event": "busy",
+              "elapsedMs": 274.106,
+              "remainingMs": 4747.299
+            },
+            {
+              "phase": "settlement",
+              "sequence": 4,
+              "event": "dispatch",
+              "elapsedMs": 525.282,
+              "remainingMs": 4496.125
+            },
+            {
+              "phase": "settlement",
+              "sequence": 4,
+              "event": "busy",
+              "elapsedMs": 526.111,
+              "remainingMs": 4495.293
+            },
+            {
+              "phase": "settlement",
+              "sequence": 5,
+              "event": "dispatch",
+              "elapsedMs": 777.124,
+              "remainingMs": 4244.283
+            },
+            {
+              "phase": "settlement",
+              "sequence": 5,
+              "event": "busy",
+              "elapsedMs": 777.926,
+              "remainingMs": 4243.478
+            },
+            {
+              "phase": "settlement",
+              "sequence": 6,
+              "event": "dispatch",
+              "elapsedMs": 1029.137,
+              "remainingMs": 3992.27
+            },
+            {
+              "phase": "settlement",
+              "sequence": 6,
+              "event": "busy",
+              "elapsedMs": 1030.243,
+              "remainingMs": 3991.162
+            },
+            {
+              "phase": "settlement",
+              "sequence": 7,
+              "event": "dispatch",
+              "elapsedMs": 1282.244,
+              "remainingMs": 3739.163
+            },
+            {
+              "phase": "settlement",
+              "sequence": 7,
+              "event": "busy",
+              "elapsedMs": 1283.422,
+              "remainingMs": 3737.982
+            },
+            {
+              "phase": "settlement",
+              "sequence": 8,
+              "event": "dispatch",
+              "elapsedMs": 1534.649,
+              "remainingMs": 3486.757
+            },
+            {
+              "phase": "settlement",
+              "sequence": 8,
+              "event": "busy",
+              "elapsedMs": 1535.818,
+              "remainingMs": 3485.586
+            },
+            {
+              "phase": "settlement",
+              "sequence": 9,
+              "event": "dispatch",
+              "elapsedMs": 1785.993,
+              "remainingMs": 3235.413
+            },
+            {
+              "phase": "settlement",
+              "sequence": 9,
+              "event": "busy",
+              "elapsedMs": 1787.085,
+              "remainingMs": 3234.319
+            },
+            {
+              "phase": "settlement",
+              "sequence": 10,
+              "event": "dispatch",
+              "elapsedMs": 2038.478,
+              "remainingMs": 2982.928
+            },
+            {
+              "phase": "settlement",
+              "sequence": 10,
+              "event": "busy",
+              "elapsedMs": 2039.97,
+              "remainingMs": 2981.434
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "dispatch",
+              "elapsedMs": 2294.06,
+              "remainingMs": 2727.345
+            },
+            {
+              "phase": "settlement",
+              "sequence": 11,
+              "event": "busy",
+              "elapsedMs": 2294.939,
+              "remainingMs": 2726.465
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "dispatch",
+              "elapsedMs": 2546.134,
+              "remainingMs": 2475.271
+            },
+            {
+              "phase": "settlement",
+              "sequence": 12,
+              "event": "busy",
+              "elapsedMs": 2546.913,
+              "remainingMs": 2474.49
+            },
+            {
+              "phase": "settlement",
+              "sequence": 13,
+              "event": "dispatch",
+              "elapsedMs": 2797.583,
+              "remainingMs": 2223.821
+            },
+            {
+              "phase": "settlement",
+              "sequence": 13,
+              "event": "busy",
+              "elapsedMs": 2798.256,
+              "remainingMs": 2223.147
+            },
+            {
+              "phase": "settlement",
+              "sequence": 14,
+              "event": "dispatch",
+              "elapsedMs": 3049.392,
+              "remainingMs": 1972.012
+            },
+            {
+              "phase": "settlement",
+              "sequence": 14,
+              "event": "busy",
+              "elapsedMs": 3050.051,
+              "remainingMs": 1971.353
+            },
+            {
+              "phase": "settlement",
+              "sequence": 15,
+              "event": "dispatch",
+              "elapsedMs": 3301.165,
+              "remainingMs": 1720.24
+            },
+            {
+              "phase": "settlement",
+              "sequence": 15,
+              "event": "busy",
+              "elapsedMs": 3301.899,
+              "remainingMs": 1719.505
+            },
+            {
+              "phase": "settlement",
+              "sequence": 16,
+              "event": "dispatch",
+              "elapsedMs": 3553.068,
+              "remainingMs": 1468.336
+            },
+            {
+              "phase": "settlement",
+              "sequence": 16,
+              "event": "busy",
+              "elapsedMs": 3554.032,
+              "remainingMs": 1467.372
+            },
+            {
+              "phase": "settlement",
+              "sequence": 17,
+              "event": "dispatch",
+              "elapsedMs": 3806.137,
+              "remainingMs": 1215.268
+            },
+            {
+              "phase": "settlement",
+              "sequence": 17,
+              "event": "busy",
+              "elapsedMs": 3808.274,
+              "remainingMs": 1213.13
+            },
+            {
+              "phase": "settlement",
+              "sequence": 18,
+              "event": "dispatch",
+              "elapsedMs": 4059.472,
+              "remainingMs": 961.932
+            },
+            {
+              "phase": "settlement",
+              "sequence": 18,
+              "event": "deadline",
+              "elapsedMs": 5021.918,
+              "remainingMs": 0
+            },
+            {
+              "phase": "control",
+              "sequence": 18,
+              "event": "close",
+              "elapsedMs": 5022.251,
+              "remainingMs": 0
+            },
+            {
+              "phase": "settlement",
+              "sequence": 18,
+              "event": "timeout",
+              "elapsedMs": 5022.342,
+              "remainingMs": 0
+            }
+          ]
+        },
+        "passed": false,
+        "repetition": 0,
+        "notRun": false,
+        "inputTokens": 8029
+      },
+      {
+        "phase": "prefill",
+        "repetition": 1,
+        "notRun": true,
+        "passed": false
+      },
+      {
+        "phase": "prefill",
+        "repetition": 2,
+        "notRun": true,
+        "passed": false
+      },
+      {
+        "phase": "decode",
+        "repetition": 0,
+        "notRun": true,
+        "passed": false
+      },
+      {
+        "phase": "decode",
+        "repetition": 1,
+        "notRun": true,
+        "passed": false
+      },
+      {
+        "phase": "decode",
+        "repetition": 2,
+        "notRun": true,
+        "passed": false
+      }
+    ],
+    "shortControls": [
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.293,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.717,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 345.582,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.128,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.164,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 309.948,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.147,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.03,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 302.662,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.118,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 1.807,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 299.478,
+            "remainingMs": 0
+          }
+        ]
+      },
+      {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.147,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "idle",
+            "elapsedMs": 2.712,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 299.347,
+            "remainingMs": 0
+          }
+        ]
+      }
+    ],
+    "inputs": {
+      "longPromptSha256": "51babbb9926b832687842fd06fbe6627398cd3a144a23e506b3e0634fc714098",
+      "shortPromptSha256": "2545d44f2875e0c4d928b1ffa6ee65063baf2e42e24dfa96d9666bc3929c7bc1",
+      "shortSchemaSha256": "699882f3a35ad4098bdd9f0dfa10f60eb624d91425a711b673b33c3ad8f72e4f",
+      "outputTokenCap": 2048,
+      "baselines": 5,
+      "prefill": 3,
+      "decode": 3,
+      "followups": 6
+    },
+    "operations": [
+      {
+        "kind": "short",
+        "messageSha256": "2545d44f2875e0c4d928b1ffa6ee65063baf2e42e24dfa96d9666bc3929c7bc1",
+        "schemaSha256": "699882f3a35ad4098bdd9f0dfa10f60eb624d91425a711b673b33c3ad8f72e4f",
+        "templates": 1,
+        "tokenizations": 1,
+        "nativeCalls": 1,
+        "inputTokens": 20,
+        "deadline": 121175.222583,
+        "renderedSha256": "dabeccc526996b2dcbe37b6064aa0728ee43046309b039577cf8e194bc38c63b"
+      },
+      {
+        "kind": "short",
+        "messageSha256": "2545d44f2875e0c4d928b1ffa6ee65063baf2e42e24dfa96d9666bc3929c7bc1",
+        "schemaSha256": "699882f3a35ad4098bdd9f0dfa10f60eb624d91425a711b673b33c3ad8f72e4f",
+        "templates": 1,
+        "tokenizations": 1,
+        "nativeCalls": 1,
+        "inputTokens": 20,
+        "deadline": 121536.192,
+        "renderedSha256": "dabeccc526996b2dcbe37b6064aa0728ee43046309b039577cf8e194bc38c63b"
+      },
+      {
+        "kind": "short",
+        "messageSha256": "2545d44f2875e0c4d928b1ffa6ee65063baf2e42e24dfa96d9666bc3929c7bc1",
+        "schemaSha256": "699882f3a35ad4098bdd9f0dfa10f60eb624d91425a711b673b33c3ad8f72e4f",
+        "templates": 1,
+        "tokenizations": 1,
+        "nativeCalls": 1,
+        "inputTokens": 20,
+        "deadline": 121860.152917,
+        "renderedSha256": "dabeccc526996b2dcbe37b6064aa0728ee43046309b039577cf8e194bc38c63b"
+      },
+      {
+        "kind": "short",
+        "messageSha256": "2545d44f2875e0c4d928b1ffa6ee65063baf2e42e24dfa96d9666bc3929c7bc1",
+        "schemaSha256": "699882f3a35ad4098bdd9f0dfa10f60eb624d91425a711b673b33c3ad8f72e4f",
+        "templates": 1,
+        "tokenizations": 1,
+        "nativeCalls": 1,
+        "inputTokens": 20,
+        "deadline": 122176.610292,
+        "renderedSha256": "dabeccc526996b2dcbe37b6064aa0728ee43046309b039577cf8e194bc38c63b"
+      },
+      {
+        "kind": "short",
+        "messageSha256": "2545d44f2875e0c4d928b1ffa6ee65063baf2e42e24dfa96d9666bc3929c7bc1",
+        "schemaSha256": "699882f3a35ad4098bdd9f0dfa10f60eb624d91425a711b673b33c3ad8f72e4f",
+        "templates": 1,
+        "tokenizations": 1,
+        "nativeCalls": 1,
+        "inputTokens": 20,
+        "deadline": 122490.201333,
+        "renderedSha256": "dabeccc526996b2dcbe37b6064aa0728ee43046309b039577cf8e194bc38c63b"
+      },
+      {
+        "kind": "long",
+        "messageSha256": "51babbb9926b832687842fd06fbe6627398cd3a144a23e506b3e0634fc714098",
+        "schemaSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "templates": 1,
+        "tokenizations": 1,
+        "nativeCalls": 1,
+        "inputTokens": 8029,
+        "deadline": 122802.873417,
+        "renderedSha256": "e996981b0127792f5d7a2e4c5dd7f08770c3be217850cf108d2be9cc0da74e82"
+      }
+    ],
+    "identityStable": true,
+    "applicationClosed": true
+  },
+  "memory": [
+    {
+      "elapsedMs": 5745.709417,
+      "physicalFootprintBytes": 715427904,
+      "lifetimePeakPhysicalFootprintBytes": 715427904,
+      "residentBytes": 815661056,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 7751.567333,
+      "physicalFootprintBytes": 775590144,
+      "lifetimePeakPhysicalFootprintBytes": 777375936,
+      "residentBytes": 879083520,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 9752.409417,
+      "physicalFootprintBytes": 794415488,
+      "lifetimePeakPhysicalFootprintBytes": 794579328,
+      "residentBytes": 901365760,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 11752.658583,
+      "physicalFootprintBytes": 794448256,
+      "lifetimePeakPhysicalFootprintBytes": 795332992,
+      "residentBytes": 902283264,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 13644.5545,
+      "physicalFootprintBytes": 795529600,
+      "lifetimePeakPhysicalFootprintBytes": 795529600,
+      "residentBytes": 902807552,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    }
+  ],
+  "memoryPassed": true,
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true,
+  "nativeCancellationAudit": {
+    "passed": false,
+    "calls": [],
+    "failure": "Native cancellation corroboration failed"
+  }
+}

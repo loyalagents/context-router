@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { assertLocalModelSmokeSuccessResources } from './local-model-lifecycle.mjs';
 
 import { execFile } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
@@ -1598,6 +1599,7 @@ export async function assertRestartSmokeLifecycleEvidence(
   if (commandSucceeded) {
     assertLocalIdentitySmokeSuccessResources(state, smokeLabel);
     assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
+    assertLocalModelSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }
@@ -1620,6 +1622,7 @@ export async function assertPackagedSmokeLifecycleEvidence(
     assertPackagedSmokeSuccessResources(state);
     assertLocalIdentitySmokeSuccessResources(state, smokeLabel);
     assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
+    assertLocalModelSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }

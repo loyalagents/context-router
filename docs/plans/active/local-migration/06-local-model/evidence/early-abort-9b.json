@@ -1,0 +1,158 @@
+{
+  "run": "native-9b-early-abort-1790293451511",
+  "testedRevision": "85eda113d8664f77d1cec6e4ed2aa53f4f4bb16e",
+  "timestamp": "2026-09-24T23:44:11.511Z",
+  "candidate": "9b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "passed": true,
+  "memoryBefore": {
+    "physicalFootprintBytes": 1000192,
+    "lifetimePeakPhysicalFootprintBytes": 1016576,
+    "residentBytes": 1179648,
+    "pressure": 1,
+    "swapUsedBytes": 21071396864
+  },
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 1247.9316660000004
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-9B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "64013",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "512",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "early-abort",
+    "passed": true,
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "capacityRecoveryQualified": false,
+    "inputTokens": 20,
+    "injection": {
+      "writeFinished": true,
+      "headersObserved": false,
+      "admitted": false,
+      "elapsedMs": 13.540291999999965
+    },
+    "errorKind": "cancelled",
+    "clientReturnMs": 0.7901659999999993,
+    "settledMs": 0.7992910000000393,
+    "state": "unavailable",
+    "controlEvidence": {
+      "state": "unavailable",
+      "overflow": false,
+      "records": [
+        {
+          "phase": "readiness",
+          "sequence": 1,
+          "event": "dispatch",
+          "elapsedMs": 0.534,
+          "remainingMs": 5000
+        },
+        {
+          "phase": "readiness",
+          "sequence": 1,
+          "event": "idle",
+          "elapsedMs": 3.433,
+          "remainingMs": 5000
+        },
+        {
+          "phase": "settlement",
+          "sequence": 1,
+          "event": "start",
+          "elapsedMs": 5.417,
+          "remainingMs": 5000
+        },
+        {
+          "phase": "cleanup",
+          "sequence": 1,
+          "event": "close",
+          "elapsedMs": 5.97,
+          "remainingMs": 4999.444
+        }
+      ]
+    },
+    "reuseRejectedWithoutNewEvidence": true
+  },
+  "memory": [
+    {
+      "elapsedMs": 6385.016833,
+      "physicalFootprintBytes": 718753664,
+      "lifetimePeakPhysicalFootprintBytes": 718753664,
+      "residentBytes": 814759936,
+      "pressure": 1,
+      "swapUsedBytes": 21071396864
+    },
+    {
+      "elapsedMs": 6727.653291,
+      "physicalFootprintBytes": 728354816,
+      "lifetimePeakPhysicalFootprintBytes": 728354816,
+      "residentBytes": 824786944,
+      "pressure": 1,
+      "swapUsedBytes": 21071396864
+    }
+  ],
+  "memoryPassed": true,
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true,
+  "earlyNativeAudit": {
+    "passed": true,
+    "capacityRecoveryQualified": false,
+    "tasks": [
+      {
+        "taskId": 1,
+        "released": true,
+        "releaseTokens": 16,
+        "normalFinalTimingCount": 0
+      }
+    ],
+    "nativeTaskState": "release-observed"
+  }
+}

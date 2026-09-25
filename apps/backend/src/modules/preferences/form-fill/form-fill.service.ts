@@ -1,3 +1,4 @@
+import { AiExecutionOptions, createAiWorkflow } from '../../../domains/shared/ports/ai-execution';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
@@ -49,6 +50,7 @@ export class FormFillService {
     fileBuffer: Buffer,
     filename: string,
     fieldPolicies?: FormFillFieldPolicies,
+    options?: AiExecutionOptions,
   ): Promise<FormFillResponse> {
     const fillId = randomUUID();
     const outputFilename = this.outputFilename(filename);
@@ -58,7 +60,9 @@ export class FormFillService {
     let stage: FormFillFailureStage = 'field_extraction';
 
     try {
+      const execution = createAiWorkflow(this.aiStructuredService.capabilities, options);
       const extracted = await this.fieldExtractor.extractFields(fileBuffer);
+      execution.check();
 
       if (extracted.fields.length === 0) {
         return this.emptyResponse(
@@ -73,6 +77,7 @@ export class FormFillService {
       stage = 'preference_load';
       const preferences =
         await this.preferenceService.getActivePreferences(userId);
+      execution.check();
       const activePreferenceInputs = preferences.map((preference) => ({
         slug: preference.slug,
         value: preference.value,
@@ -93,9 +98,10 @@ export class FormFillService {
       const aiResult = await this.aiStructuredService.generateStructured(
         prompt,
         FormFillAiResponseSchema,
-        { operationName: 'formFill.fillActions' },
+        { ...execution.options, operationName: 'formFill.fillActions' },
       );
 
+      execution.check();
       stage = 'validation';
       const validation = this.validator.validate(
         aiResult.fillActions,
@@ -115,11 +121,13 @@ export class FormFillService {
         },
       );
 
+      execution.check();
       stage = 'pdf_fill';
       const filledPdf = await this.pdfFiller.fillPdf(
         fileBuffer,
         validation.validActions,
       );
+      execution.check();
 
       const summary: FormFillSummary = {
         totalFields: extracted.fields.length,

@@ -5,7 +5,8 @@
   "supportedModes": [
     "hosted-baseline",
     "local-identity-preview",
-    "local-database-preview"
+    "local-database-preview",
+    "local-model-preview"
   ],
   "contractClasses": [
     "preserved-contract",
@@ -265,7 +266,9 @@
         "08"
       ],
       "evidence": [
-        "apps/backend/src/modules/preferences/document-analysis/document-analysis.controller.ts"
+        "apps/backend/src/modules/preferences/document-analysis/document-analysis.controller.ts",
+        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/useful/LOCAL_MODEL.md"
       ]
     },
     {
@@ -288,9 +291,11 @@
       "ownerSteps": [
         "06"
       ],
-      "acceptanceQuestion": "Can the selected local model safely and truthfully support image inputs within resource and privacy limits?",
+      "acceptanceQuestion": "Resolved for Step 06: local PNG/JPEG/OCR unsupported; retained hosted/public MIME contracts are not a local capability claim. Future expansion needs separate qualification.",
       "evidence": [
-        "apps/backend/src/config/document-upload.config.ts"
+        "apps/backend/src/config/document-upload.config.ts",
+        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/useful/LOCAL_MODEL.md"
       ]
     },
     {
@@ -303,7 +308,9 @@
         "08"
       ],
       "evidence": [
-        "apps/backend/src/modules/preferences/form-fill/form-fill.types.ts"
+        "apps/backend/src/modules/preferences/form-fill/form-fill.types.ts",
+        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/useful/LOCAL_MODEL.md"
       ]
     },
     {
@@ -329,7 +336,9 @@
         "08"
       ],
       "evidence": [
-        "apps/backend/src/mcp/tools/preference-search.tool.ts"
+        "apps/backend/src/mcp/tools/preference-search.tool.ts",
+        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/useful/LOCAL_MODEL.md"
       ]
     },
     {
@@ -344,7 +353,9 @@
       ],
       "evidence": [
         "apps/backend/src/modules/workflows/preferences/schema-consolidation/schema-consolidation.workflow.spec.ts",
-        "apps/backend/test/e2e/workflows.e2e-spec.ts"
+        "apps/backend/test/e2e/workflows.e2e-spec.ts",
+        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/useful/LOCAL_MODEL.md"
       ]
     },
     {
@@ -581,9 +592,11 @@
       "ownerSteps": [
         "06"
       ],
-      "acceptanceQuestion": "Is an opt-in live research run needed to support the local model selection after deterministic evaluation passes?",
+      "acceptanceQuestion": "Resolved for Step 06: selected local evidence is sufficient; no live Harbor/provider comparison was run or required.",
       "evidence": [
-        "examples/eval-harbor/README.md"
+        "examples/eval-harbor/README.md",
+        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/useful/LOCAL_MODEL.md"
       ]
     },
     {
@@ -621,6 +634,21 @@
       "acceptanceQuestion": "Which packaged dependencies attempt network access after installation, and which checks must be disabled or disclosed?",
       "evidence": [
         "docs/plans/active/local-migration/orchestration.md"
+      ]
+    },
+    {
+      "id": "explicit-local-model-text-json-pdf",
+      "label": "Explicit manual local text/structured inference and qualified PDF text input",
+      "disposition": "RETAIN",
+      "contractClass": "preserved-contract",
+      "ownerSteps": [
+        "06"
+      ],
+      "evidence": [
+        "docs/useful/LOCAL_MODEL.md",
+        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "apps/backend/src/infrastructure/local-model/local-model.service.ts",
+        "apps/backend/test/local-model/application.test.mjs"
       ]
     }
   ],
@@ -1299,6 +1327,173 @@
         "01",
         "02",
         "03"
+      ]
+    },
+    {
+      "id": "explicit-local-model-inference",
+      "sources": [
+        {
+          "path": "apps/backend/src/infrastructure/local-model/engine/client.mjs",
+          "fingerprints": [
+            "https.request(options(configuration",
+            "https.request(options(this.#configuration"
+          ]
+        }
+      ],
+      "destination": "one explicitly configured, certificate-pinned HTTPS runtime directly bound to literal 127.0.0.1; no proxy or hosted fallback",
+      "payload": "private per-session API authorization, readiness/slot metadata, prompt/schema/document text and bounded native completion records; application never owns the runtime process",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "06"
+      ]
+    },
+    {
+      "id": "local-model-pdf-processing",
+      "sources": [
+        {
+          "path": "apps/backend/src/infrastructure/local-model/engine/pdf-process.mjs",
+          "fingerprints": [
+            "child = spawn(",
+            "PATH: '/usr/bin:/bin'"
+          ]
+        },
+        {
+          "path": "apps/backend/src/infrastructure/local-model/engine/pdf.mjs",
+          "fingerprints": [
+            "class DenyBinaryDataFactory",
+            "PDF_AUXILIARY"
+          ]
+        }
+      ],
+      "destination": "one exact owned Node PDF child and the installed four-file PDF.js closure; auxiliary fetch is a deny-only method, not a network request",
+      "payload": "bounded PDF bytes over pipes, fixed protocol and bounded text; stripped environment, exact child termination/reaping, no inference lifecycle ownership",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "06"
+      ]
+    },
+    {
+      "id": "local-model-opt-in-qualification",
+      "sources": [
+        {
+          "path": "scripts/local-migration/fixtures/local-model-feasibility/client.mjs",
+          "fingerprints": [
+            "https.request(options(configuration",
+            "https.request(options(this.#configuration"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/fixtures/local-model-feasibility/offline-controls.mjs",
+          "fingerprints": [
+            "net.connect(options)",
+            "socket.send(Buffer.from([0]), 53"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/fixtures/local-model-feasibility/pdf-footprint.mjs",
+          "fingerprints": [
+            "child = spawn(",
+            "sample"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/fixtures/local-model-feasibility/pdf-process.mjs",
+          "fingerprints": [
+            "child = spawn("
+          ]
+        },
+        {
+          "path": "scripts/local-migration/fixtures/local-model-feasibility/pdf.mjs",
+          "fingerprints": [
+            "class DenyBinaryDataFactory",
+            "PDF_AUXILIARY"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/fixtures/local-model-feasibility/process.mjs",
+          "fingerprints": [
+            "const child = spawn(command, args",
+            "TMPDIR: cwd"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/fixtures/local-model-feasibility/tls-fixture.mjs",
+          "fingerprints": [
+            "spawnSync('openssl'",
+            "randomBytes(32)"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/local-model-live-probe.mjs",
+          "fingerprints": [
+            "execFileSync",
+            "spawnOwned",
+            "withNative"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/local-model-allocation-probe.mjs",
+          "fingerprints": [
+            "execFileSync",
+            "runAllocationStartup"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/local-model-pdf-closure-probe.mjs",
+          "fingerprints": [
+            "execFileSync"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/local-model-negative-probe.mjs",
+          "fingerprints": [
+            "runMissingAsset"
+          ]
+        }
+      ],
+      "destination": "opt-in pinned local native runtime, exact owned parser/observer/OpenSSL children, isolated permission-denied loopback/nonloopback/DNS control targets; no remote judge",
+      "payload": "synthetic fixtures, private temporary credentials, exact asset hashes, owned process selectors and bounded numeric/hash/semantic evidence; optional commands are outside weights-independent CI",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "06"
+      ]
+    },
+    {
+      "id": "local-model-deterministic-smoke",
+      "sources": [
+        {
+          "path": "scripts/local-migration/local-model-smoke.mjs",
+          "fingerprints": [
+            "spawnSync('openssl'",
+            "createGatedNodeChild",
+            "https.createServer"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/fixtures/local-model-smoke/policy.cjs",
+          "fingerprints": [
+            "cp.spawn = function",
+            "threads.Worker = class",
+            "LOCAL_MODEL_SMOKE_DENIED"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/fixtures/local-model-smoke/probe.cjs",
+          "fingerprints": [
+            "createNestLocalIdentityApplication",
+            "copyParserWithoutWorker"
+          ]
+        }
+      ],
+      "destination": "two fresh owned literal-loopback TLS fixture sessions, actual compiled preview/probe processes, exact SQLite worker threads and PDF children; CJS/ESM negative controls deny providers, other endpoints and out-of-closure imports",
+      "payload": "synthetic text/PDF, fresh private fixture credentials, in-memory request validation, bounded control counts/thread/PID/exit evidence and artifact hashes; no live weights or model download",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "06"
       ]
     }
   ],
@@ -2954,6 +3149,24 @@
   ],
   "outboundSinkInventory": [
     {
+      "path": "apps/backend/src/infrastructure/local-model/engine/client.mjs",
+      "sinks": {
+        "http-client": 2
+      }
+    },
+    {
+      "path": "apps/backend/src/infrastructure/local-model/engine/pdf-process.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "apps/backend/src/infrastructure/local-model/engine/pdf.mjs",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
       "path": "apps/backend/src/infrastructure/prisma/local-prisma-client-options.ts",
       "sinks": {
         "postgresql": 1
@@ -3230,6 +3443,42 @@
       "path": "scripts/local-migration/check-generated-integrity.mjs",
       "sinks": {
         "subprocess-wrapper": 4
+      }
+    },
+    {
+      "path": "scripts/local-migration/fixtures/local-model-feasibility/client.mjs",
+      "sinks": {
+        "http-client": 2
+      }
+    },
+    {
+      "path": "scripts/local-migration/fixtures/local-model-feasibility/offline-controls.mjs",
+      "sinks": {
+        "net-connect": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/fixtures/local-model-feasibility/pdf-footprint.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/fixtures/local-model-feasibility/pdf-process.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/fixtures/local-model-feasibility/pdf.mjs",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/fixtures/local-model-feasibility/process.mjs",
+      "sinks": {
+        "spawn": 1
       }
     },
     {

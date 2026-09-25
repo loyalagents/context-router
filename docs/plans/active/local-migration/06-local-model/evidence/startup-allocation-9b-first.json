@@ -1,0 +1,10 @@
+{
+  "run": "native-9b-startup-allocation-1790294862899",
+  "testedRevision": "de8a01c6a98cb277d6a2e3c04abdf1a299b73307",
+  "runtimeRevision": "7fe450e19305b828c199d602c23a8337aaa1f03b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "modelBytes": 5680522464,
+  "timestamp": "2026-09-25T00:07:42.899Z",
+  "passed": false,
+  "failure": "Startup allocation capture failed"
+}
