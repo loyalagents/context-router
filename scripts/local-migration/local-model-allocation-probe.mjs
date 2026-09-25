@@ -34,7 +34,14 @@ try {
     sandboxProfile: '(version 1)(allow default)(deny network*)(allow network-bind network-inbound (local tcp "localhost:PORT"))(allow network-outbound (remote tcp "localhost:PORT"))(deny mach-lookup (global-name "com.apple.dnssd.service"))',
   });
   receipt = { ...receipt, ...result, passed: true };
-} catch { receipt.failure = 'Startup allocation capture failed'; }
+} catch (error) {
+  receipt.failure = 'Startup allocation capture failed';
+  if (error?.capture && ['credentials', 'spawn', 'readiness', 'shutdown'].includes(error.capture.phase) &&
+      typeof error.capture.ownedChildStoppedAndReaped === 'boolean' && typeof error.capture.credentialRootRemoved === 'boolean') {
+    receipt.capture = { phase: error.capture.phase, ownedChildStoppedAndReaped: error.capture.ownedChildStoppedAndReaped,
+      credentialRootRemoved: error.capture.credentialRootRemoved };
+  }
+}
 await writeFile(output, `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
 console.log(JSON.stringify({ run, passed: receipt.passed, receiptPath: output }));
 process.exitCode = receipt.passed ? 0 : 1;

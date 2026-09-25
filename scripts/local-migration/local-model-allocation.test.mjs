@@ -58,6 +58,15 @@ test('requires complete framing on both streams and all five families and seven 
   assert.throws(() => unended.finish(), /Allocation projection failed/);
 });
 
+test('normal pinned context-capacity diagnostics are discarded without losing same-chunk numeric records', () => {
+  const diagnostic = `${prefix}llama_context: n_ctx_seq (16384) < n_ctx_train (262144) -- the full capacity of the model will not be utilized\n`;
+  const projection = new AllocationProjection();
+  const output = projection.push('stderr', Buffer.from(configuration + diagnostic + allocationLines.slice(configuration.length)));
+  assert.equal(finish(projection).records.length, 13);
+  assert.equal(output.toString().trim().split('\n').length, 13);
+  assert.ok(!output.includes(Buffer.from('n_ctx_train')));
+});
+
 test('strict UTF-8 and fixed byte, pending-line and record bounds latch failure', () => {
   for (const chunks of [[Buffer.from([0xff])], [Buffer.from('x'.repeat(16385))],
     [Buffer.from(('x'.repeat(100) + '\n').repeat(5200))], [Buffer.from(buffer('model').repeat(65))]]) {
@@ -94,7 +103,11 @@ server.listen(Number(value('--port')), '127.0.0.1');
       await writeFile(binary, script, { mode: 0o700 });
       const logPath = join(root, `numeric-${lateFailure}.jsonl`);
       const run = runAllocationStartup({ binary, model: '/private/fake-model.gguf', logPath });
-      if (lateFailure) await assert.rejects(run, /^Error: Startup allocation capture failed$/);
+      if (lateFailure) await assert.rejects(run, (error) => {
+        assert.equal(error.message, 'Startup allocation capture failed');
+        assert.deepEqual(error.capture, { phase: 'shutdown', ownedChildStoppedAndReaped: true, credentialRootRemoved: true });
+        return true;
+      });
       else {
         const result = await run;
         assert.equal(result.ownedChildStoppedAndReaped, true);

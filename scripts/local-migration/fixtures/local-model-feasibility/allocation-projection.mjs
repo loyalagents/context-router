@@ -9,7 +9,7 @@ const formats = [
   ['output', 'llama_context', 10, ' output', ['CPU']],
 ];
 const prefix = /^(?:0|[1-9][0-9]*)\.[0-5][0-9]\.[0-9]{3}\.[0-9]{3} I /;
-const candidate = /(?:model|KV|RS|compute|output) buffer size|llama_context: *n_(?:seq_max|ctx|ctx_seq|batch|ubatch|rs_seq|outputs_max)\b/;
+const candidate = /(?:model|KV|RS|compute|output) buffer size|llama_context: *n_(?:seq_max|ctx|ctx_seq|batch|ubatch|rs_seq|outputs_max) +=/;
 
 /** Only fixed enums/numbers leave this parser. Never retain rejected or ignored raw lines. */
 export class AllocationProjection {

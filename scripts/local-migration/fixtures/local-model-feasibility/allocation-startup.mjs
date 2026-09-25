@@ -15,14 +15,17 @@ export function allocationArgs(configuration) {
 /** CP1 startup-only diagnostic. Raw trace output never reaches a file or caller. */
 export async function runAllocationStartup({ binary, model, logPath, sandboxProfile }) {
   const started = performance.now(); const until = started + 120000;
-  let credentials; let child; let readyMs; let healthRequests = 0;
+  let credentials; let child; let readyMs; let healthRequests = 0; let result; let error;
+  const capture = { phase: 'credentials', ownedChildStoppedAndReaped: false, credentialRootRemoved: false };
   try {
     credentials = await createTlsFixture();
     const port = await vacantPort();
     const args = allocationArgs({ model, port, ...credentials });
+    capture.phase = 'spawn';
     child = await spawnOwned({ command: sandboxProfile ? '/usr/bin/sandbox-exec' : binary,
       args: sandboxProfile ? ['-p', sandboxProfile.replaceAll('PORT', String(port)), binary, ...args] : args,
       cwd: credentials.root, logPath, projection: new AllocationProjection() });
+    capture.phase = 'readiness';
     while (performance.now() < until && child.running && !child.logOverflow) {
       try {
         healthRequests++;
@@ -33,17 +36,22 @@ export async function runAllocationStartup({ binary, model, logPath, sandboxProf
       } catch { await delay(Math.max(0, Math.min(200, until - performance.now()))); }
     }
     if (readyMs === undefined || performance.now() >= until || !child.running || child.logOverflow) throw failed();
+    capture.phase = 'shutdown';
     const outcome = await child.stop();
+    capture.ownedChildStoppedAndReaped = !child.running;
     if (child.running || child.logOverflow || (outcome.code !== 0 && outcome.signal !== 'SIGTERM')) throw failed();
     const allocation = child.projectionResult;
-    return { allocation, startupReadyMs: readyMs, publicHealthRequests: healthRequests,
+    result = { allocation, startupReadyMs: readyMs, publicHealthRequests: healthRequests,
       protectedRequests: 0, clientInferenceRequests: 0, ownedChildStoppedAndReaped: true,
       diagnosticVerbosity: 4, supportedWorkloadVerbosity: 3, nativeStartupWarmup: true };
-  } catch { throw failed(); }
+  } catch { error = failed(); }
   finally {
     try {
-      if (child) { await child.stop(); if (child.running) throw failed(); }
+      if (child) { await child.stop(); if (child.running) throw failed(); capture.ownedChildStoppedAndReaped = true; }
       await credentials?.remove();
-    } catch { throw failed(); }
+      capture.credentialRootRemoved = !!credentials;
+    } catch { error = failed(); }
   }
+  if (error) { error.capture = { ...capture }; throw error; }
+  return { ...result, credentialRootRemoved: capture.credentialRootRemoved };
 }

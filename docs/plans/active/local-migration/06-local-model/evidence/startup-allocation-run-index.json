@@ -1,0 +1,19 @@
+{
+  "runs": [
+    {
+      "testedRevision": "de8a01c6a98cb277d6a2e3c04abdf1a299b73307",
+      "result": "failed",
+      "files": [
+        {
+          "file": "startup-allocation-9b-first.json",
+          "sha256": "2d2320debb43017112154ad4f518e0a0bc8e78448b222b690f0c5aec1f895ebb"
+        },
+        {
+          "file": "startup-allocation-9b-first.jsonl",
+          "sha256": "4e28c739d40d089408878545decd95dcc33269b8b5e080093fe8209132255e8b"
+        }
+      ],
+      "note": "Numeric projection incomplete. Raw verbosity-4 output was never retained. Proven deterministic candidate-matcher defect does not establish the discarded live line."
+    }
+  ]
+}
