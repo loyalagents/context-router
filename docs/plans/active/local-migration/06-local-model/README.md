@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Status: active CP1; G witnessed cancellation passed; batch-512 quality has only the E-accepted omission; remaining qualification and selection review in progress
+- Status: active CP2; independently approved selection; application integration in progress
 - Branch: `codex/local-migration-06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Coordinator and sole repository writer: `/root`; all other agents read-only
@@ -15,18 +15,6 @@ The [plan](plan.md), including transport amendment C, has independent architectu
 
 Existing no-model previews remain supported throughout. No product code or model assets have changed at activation. Final live and deterministic evidence, fresh complete-diff review, final local gate and final pushed-head CI remain required before the single PR is ready for human review. Do not merge automatically or activate another step.
 
-The [feasibility record](feasibility.md#selection-stop-both-frozen-candidates-fail) retains both completed quality runs and the incomplete first 9B transport run. Both completed candidates missed the 90% extraction-recall requirement; 4B also failed absent-value negatives. Runtime, 4B and 9B assets are hash-verified outside Git. No model is selected, no production integration is authorized, and no PR is ready. The [proposed amendment D](plan.md#proposed-amendment-d-bounded-prompt-framing-experiment) makes the next requested decision concrete while preserving all original evidence and thresholds.
+The [selection record](selection.md) is independently approved for CP2 tests-first integration at `eee89f960e235daa1f2b5b77312eb114f1fc80ac`. Select pinned llama.cpp b11146 and Qwen3.5-9B Q4_K_M, batch 512, on the observed M1 Max/64 GiB/macOS 15.1.1. The original quality verdict remains FAILED; human-approved E accepts only the known email omission. G cancellation, resources, schemas, PDF closure, manual session claim and remaining negative checks passed their scoped reviews. All 129 deterministic feasibility tests pass. Historical failed runs and amendment decisions remain in the [feasibility record](feasibility.md) and [plan](plan.md).
 
-The user subsequently approved moving on with a documented accuracy limitation; see [amendment E](plan.md#amendment-e-user-directed-accuracy-deferral). Keep the original 9B recall failure visible and defer optional D tuning. 9B is provisional pending all remaining CP1 evidence and selection review; no production integration is approved yet.
-
-The first native prefill-cancellation trial failed the unchanged recovery deadline and correctly latched unavailable; see [amendment F](plan.md#proposed-amendment-f-smaller-prefill-batch). The existing quality exception remains accepted. Integration is paused at this separate runtime blocker; no further model run proceeds before the F decision.
-
-The user explicitly approved F (“yes you can test this”). Continue its bounded smaller-batch experiment after affected implementation review; quality deferral E remains accepted. Production selection/integration remain gated on the results and remaining qualification.
-
-F ran once and failed client capacity recovery despite observed native early release. Its stop condition is active; no conditional quality run or integration proceeded. See the [F result](plan.md#f-result-native-release-observed-capacity-recovery-failed).
-
-[Proposed G](plan.md#proposed-amendment-g-fix-cancellation-verification) addresses a plausible verification timeout while retaining the total five-second limit. All three affected reviewers approved it for the user decision; the observed F failure remains retained and no new execution is authorized.
-
-The user approved G. Its deterministic verification fixes now pass; affected implementation review precedes the authorized retest. F remains failed evidence, and no configuration is selected yet.
-
-G implementation and its six-phase native retest passed review and validation. The batch-512 quality rerun has only the previously accepted E omission. Continue remaining CP1 evidence; see the [current results](feasibility.md#verification-retest-and-changed-configuration-quality).
+Root continues application integration, actual application/package qualification, fresh complete-diff reviews, final local gate and final pushed-head CI in this one branch/PR. No production integration or final gate is claimed complete. No new user decision is pending.

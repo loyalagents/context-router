@@ -1,12 +1,13 @@
-import { z } from 'zod';
-import { FileInput } from './ai-text-generator.port';
+import { z } from "zod";
+import { FileInput } from "./ai-text-generator.port";
+import type { AiCapabilityProvider, AiExecutionOptions } from "./ai-execution";
 
-export interface AiStructuredOptions {
+export interface AiStructuredOptions extends AiExecutionOptions {
   retries?: number;
   operationName?: string; // used for logging/tracing (e.g. 'preferenceSearch.slugIdentification')
 }
 
-export interface AiStructuredOutputPort {
+export interface AiStructuredOutputPort extends AiCapabilityProvider {
   generateStructured<T>(
     prompt: string,
     schema: z.ZodType<T>,

@@ -1,6 +1,7 @@
-import '../setup/env';
+import { HOSTED_AI_CAPABILITIES } from "../../src/domains/shared/ports/ai-execution";
+import "../setup/env";
 
-import { readFile, writeFile } from 'fs/promises';
+import { readFile, writeFile } from "fs/promises";
 import {
   PDFCheckBox,
   PDFDocument,
@@ -8,24 +9,24 @@ import {
   PDFOptionList,
   PDFRadioGroup,
   PDFTextField,
-} from 'pdf-lib';
-import request from 'supertest';
-import { createTestApp, createTestUser } from '../setup/test-app';
+} from "pdf-lib";
+import request from "supertest";
+import { createTestApp, createTestUser } from "../setup/test-app";
 import {
   disconnectPrisma,
   resetDb,
   seedPreferenceDefinitions,
-} from '../setup/test-db';
+} from "../setup/test-db";
 import {
   AuditActorType,
   AuditOrigin,
   PreferenceScope,
   PreferenceValueType,
   SourceType,
-} from '../../src/infrastructure/prisma/generated-client';
-import { PreferenceDefinitionService } from '../../src/modules/preferences/preference-definition/preference-definition.service';
-import { PreferenceService } from '../../src/modules/preferences/preference/preference.service';
-import { MutationContext } from '../../src/modules/preferences/audit/audit.types';
+} from "../../src/infrastructure/prisma/generated-client";
+import { PreferenceDefinitionService } from "../../src/modules/preferences/preference-definition/preference-definition.service";
+import { PreferenceService } from "../../src/modules/preferences/preference/preference.service";
+import { MutationContext } from "../../src/modules/preferences/audit/audit.types";
 
 interface HarnessInput {
   scenario: {
@@ -44,7 +45,7 @@ interface HarnessInput {
 
 async function main() {
   const { inputPath, outputPath } = parseArgs(process.argv.slice(2));
-  const input = JSON.parse(await readFile(inputPath, 'utf8')) as HarnessInput;
+  const input = JSON.parse(await readFile(inputPath, "utf8")) as HarnessInput;
 
   let testApp: Awaited<ReturnType<typeof createTestApp>> | null = null;
   try {
@@ -53,18 +54,28 @@ async function main() {
 
     testApp = await createTestApp({
       mockVertexAi: {
-        generateText: async () => 'Eval runner mock text response',
+        capabilities: HOSTED_AI_CAPABILITIES,
+        getStatus: async () => ({
+          state: "unsupported" as const,
+          configured: true,
+        }),
+        generateText: async () => "Eval runner mock text response",
         generateTextWithFile: async () =>
           JSON.stringify({
             suggestions: [],
-            documentSummary: 'Eval runner mock',
+            documentSummary: "Eval runner mock",
           }),
       },
       mockStructuredAi: {
+        capabilities: HOSTED_AI_CAPABILITIES,
+        getStatus: async () => ({
+          state: "unsupported" as const,
+          configured: true,
+        }),
         generateStructured: async () => ({ fillActions: input.fillActions }),
         generateStructuredWithFile: async () => ({
           suggestions: [],
-          documentSummary: 'Eval runner mock',
+          documentSummary: "Eval runner mock",
         }),
       },
     });
@@ -81,10 +92,10 @@ async function main() {
 
     const pdfBuffer = await readFile(input.formPdfPath);
     const response = await request(testApp.app.getHttpServer())
-      .post('/api/form-fill/pdf')
-      .attach('file', pdfBuffer, {
-        filename: 'form.pdf',
-        contentType: 'application/pdf',
+      .post("/api/form-fill/pdf")
+      .attach("file", pdfBuffer, {
+        filename: "form.pdf",
+        contentType: "application/pdf",
       })
       .expect(201);
 
@@ -156,13 +167,13 @@ function mutationContext(scenarioId: string): MutationContext {
 }
 
 async function readFilledPdfFields(base64: string) {
-  const pdfDoc = await PDFDocument.load(Buffer.from(base64, 'base64'));
+  const pdfDoc = await PDFDocument.load(Buffer.from(base64, "base64"));
   const fields: Record<string, unknown> = {};
 
   for (const field of pdfDoc.getForm().getFields()) {
     const name = field.getName();
     if (field instanceof PDFTextField) {
-      fields[name] = { value: field.getText() ?? '' };
+      fields[name] = { value: field.getText() ?? "" };
     } else if (field instanceof PDFCheckBox) {
       fields[name] = { checked: field.isChecked() };
     } else if (field instanceof PDFDropdown) {
@@ -188,17 +199,17 @@ function parseArgs(args: string[]) {
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     const value = args[index + 1];
-    if (!value || value.startsWith('--')) {
+    if (!value || value.startsWith("--")) {
       throw new Error(`Missing value for ${arg}`);
     }
     index += 1;
-    if (arg === '--input') inputPath = value;
-    else if (arg === '--output') outputPath = value;
+    if (arg === "--input") inputPath = value;
+    else if (arg === "--output") outputPath = value;
     else throw new Error(`Unsupported argument: ${arg}`);
   }
 
   if (!inputPath || !outputPath) {
-    throw new Error('--input and --output are required');
+    throw new Error("--input and --output are required");
   }
   return { inputPath, outputPath };
 }

@@ -1,3 +1,4 @@
+import { HOSTED_AI_CAPABILITIES } from "../../../domains/shared/ports/ai-execution";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
 import { Logger } from "@nestjs/common";
@@ -80,6 +81,10 @@ describe("PreferenceExtractionService", () => {
 
   beforeEach(async () => {
     mockAiStructuredService = {
+      capabilities: HOSTED_AI_CAPABILITIES,
+      getStatus: jest
+        .fn()
+        .mockResolvedValue({ state: "unsupported", configured: true }),
       generateStructured: jest.fn(),
       generateStructuredWithFile: jest.fn(),
     };

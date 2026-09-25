@@ -1,29 +1,30 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Logger } from '@nestjs/common';
+import { HOSTED_AI_CAPABILITIES } from "../../../../domains/shared/ports/ai-execution";
+import { Test, TestingModule } from "@nestjs/testing";
+import { Logger } from "@nestjs/common";
 import {
   PreferenceSearchWorkflow,
   PreferenceSearchWorkflowInput,
-} from './preference-search.workflow';
-import { AiStructuredOutputPort } from '../../../../domains/shared/ports/ai-structured-output.port';
-import { AI_STRUCTURED_OUTPUT_PORT } from '../../../../domains/shared/ports/ai.tokens';
-import { PreferenceSchemaSnapshotService } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
-import { PreferenceService } from '../../../preferences/preference/preference.service';
-import { EnrichedPreference } from '../../../preferences/preference/preference.repository';
+} from "./preference-search.workflow";
+import { AiStructuredOutputPort } from "../../../../domains/shared/ports/ai-structured-output.port";
+import { AI_STRUCTURED_OUTPUT_PORT } from "../../../../domains/shared/ports/ai.tokens";
+import { PreferenceSchemaSnapshotService } from "../../../preferences/preference-definition/preference-schema-snapshot.service";
+import { PreferenceService } from "../../../preferences/preference/preference.service";
+import { EnrichedPreference } from "../../../preferences/preference/preference.repository";
 import {
   PreferenceStatus,
   SourceType,
-} from '@infrastructure/prisma/generated-client';
+} from "@infrastructure/prisma/generated-client";
 
 const createMockPreference = (
   slug: string,
   status: PreferenceStatus = PreferenceStatus.ACTIVE,
 ): EnrichedPreference => ({
-  id: `pref-${slug.replace('.', '-')}-${status}`,
-  userId: 'user-1',
+  id: `pref-${slug.replace(".", "-")}-${status}`,
+  userId: "user-1",
   slug,
-  category: slug.split('.')[0],
-  definitionId: `def-${slug.replace('.', '-')}`,
-  contextKey: 'GLOBAL',
+  category: slug.split(".")[0],
+  definitionId: `def-${slug.replace(".", "-")}`,
+  contextKey: "GLOBAL",
   value: `value-for-${slug}`,
   status,
   sourceType: SourceType.USER,
@@ -41,34 +42,34 @@ const createMockPreference = (
 const MOCK_SNAPSHOT = {
   definitions: [
     {
-      slug: 'food.dietary_restrictions',
-      category: 'food',
-      description: 'Dietary restrictions',
-      valueType: 'ARRAY',
-      namespace: 'GLOBAL',
-      scope: 'GLOBAL',
+      slug: "food.dietary_restrictions",
+      category: "food",
+      description: "Dietary restrictions",
+      valueType: "ARRAY",
+      namespace: "GLOBAL",
+      scope: "GLOBAL",
     },
     {
-      slug: 'food.cuisine_preferences',
-      category: 'food',
-      description: 'Preferred cuisines',
-      valueType: 'ARRAY',
-      namespace: 'GLOBAL',
-      scope: 'GLOBAL',
+      slug: "food.cuisine_preferences",
+      category: "food",
+      description: "Preferred cuisines",
+      valueType: "ARRAY",
+      namespace: "GLOBAL",
+      scope: "GLOBAL",
     },
     {
-      slug: 'travel.seat_preference',
-      category: 'travel',
-      description: 'Airplane seat preference',
-      valueType: 'ENUM',
-      namespace: 'GLOBAL',
-      scope: 'GLOBAL',
+      slug: "travel.seat_preference",
+      category: "travel",
+      description: "Airplane seat preference",
+      valueType: "ENUM",
+      namespace: "GLOBAL",
+      scope: "GLOBAL",
     },
   ],
-  promptJson: '[]',
+  promptJson: "[]",
 };
 
-describe('PreferenceSearchWorkflow', () => {
+describe("PreferenceSearchWorkflow", () => {
   let workflow: PreferenceSearchWorkflow;
   let mockAiPort: jest.Mocked<AiStructuredOutputPort>;
   let mockSnapshotService: jest.Mocked<PreferenceSchemaSnapshotService>;
@@ -76,6 +77,10 @@ describe('PreferenceSearchWorkflow', () => {
 
   beforeEach(async () => {
     mockAiPort = {
+      capabilities: HOSTED_AI_CAPABILITIES,
+      getStatus: jest
+        .fn()
+        .mockResolvedValue({ state: "unsupported", configured: true }),
       generateStructured: jest.fn(),
       generateStructuredWithFile: jest.fn(),
     };
@@ -103,8 +108,8 @@ describe('PreferenceSearchWorkflow', () => {
 
     workflow = module.get(PreferenceSearchWorkflow);
 
-    jest.spyOn(Logger.prototype, 'log').mockImplementation();
-    jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+    jest.spyOn(Logger.prototype, "log").mockImplementation();
+    jest.spyOn(Logger.prototype, "debug").mockImplementation();
   });
 
   afterEach(() => {
@@ -112,41 +117,41 @@ describe('PreferenceSearchWorkflow', () => {
   });
 
   const baseInput: PreferenceSearchWorkflowInput = {
-    userId: 'user-1',
-    clientKey: 'claude',
-    naturalLanguageQuery: 'what are my food preferences?',
+    userId: "user-1",
+    clientKey: "claude",
+    naturalLanguageQuery: "what are my food preferences?",
   };
 
-  it('should return matched definitions and preferences for valid slugs', async () => {
+  it("should return matched definitions and preferences for valid slugs", async () => {
     mockAiPort.generateStructured.mockResolvedValue({
-      relevantSlugs: ['food.dietary_restrictions', 'food.cuisine_preferences'],
-      queryInterpretation: 'Looking for food-related preferences',
+      relevantSlugs: ["food.dietary_restrictions", "food.cuisine_preferences"],
+      queryInterpretation: "Looking for food-related preferences",
     });
     mockPreferenceService.getActivePreferences.mockResolvedValue([
-      createMockPreference('food.dietary_restrictions'),
+      createMockPreference("food.dietary_restrictions"),
     ]);
 
     const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions).toHaveLength(2);
     expect(result.matchedDefinitions.map((d) => d.slug)).toEqual([
-      'food.dietary_restrictions',
-      'food.cuisine_preferences',
+      "food.dietary_restrictions",
+      "food.cuisine_preferences",
     ]);
     expect(result.matchedActivePreferences).toHaveLength(1);
     expect(result.matchedActivePreferences[0].slug).toBe(
-      'food.dietary_restrictions',
+      "food.dietary_restrictions",
     );
     expect(result.matchedSuggestedPreferences).toHaveLength(0);
     expect(result.queryInterpretation).toBe(
-      'Looking for food-related preferences',
+      "Looking for food-related preferences",
     );
   });
 
-  it('should include definitions without preference rows', async () => {
+  it("should include definitions without preference rows", async () => {
     mockAiPort.generateStructured.mockResolvedValue({
-      relevantSlugs: ['food.cuisine_preferences'],
-      queryInterpretation: 'Cuisine prefs',
+      relevantSlugs: ["food.cuisine_preferences"],
+      queryInterpretation: "Cuisine prefs",
     });
     // No active preferences for this slug
     mockPreferenceService.getActivePreferences.mockResolvedValue([]);
@@ -154,55 +159,53 @@ describe('PreferenceSearchWorkflow', () => {
     const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions).toHaveLength(1);
-    expect(result.matchedDefinitions[0].slug).toBe(
-      'food.cuisine_preferences',
-    );
+    expect(result.matchedDefinitions[0].slug).toBe("food.cuisine_preferences");
     expect(result.matchedActivePreferences).toHaveLength(0);
   });
 
-  it('should return profile preferences for natural-language identity queries', async () => {
+  it("should return profile preferences for natural-language identity queries", async () => {
     mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValueOnce({
       definitions: [
         {
-          slug: 'profile.full_name',
-          category: 'profile',
+          slug: "profile.full_name",
+          category: "profile",
           description: "The user's preferred full name",
-          valueType: 'STRING',
-          namespace: 'GLOBAL',
-          scope: 'GLOBAL',
+          valueType: "STRING",
+          namespace: "GLOBAL",
+          scope: "GLOBAL",
         },
         {
-          slug: 'profile.email',
-          category: 'profile',
+          slug: "profile.email",
+          category: "profile",
           description: "The user's contact email",
-          valueType: 'STRING',
-          namespace: 'GLOBAL',
-          scope: 'GLOBAL',
+          valueType: "STRING",
+          namespace: "GLOBAL",
+          scope: "GLOBAL",
         },
       ],
       promptJson: JSON.stringify([
         {
-          slug: 'profile.full_name',
+          slug: "profile.full_name",
           description: "The user's preferred full name",
         },
         {
-          slug: 'profile.email',
+          slug: "profile.email",
           description: "The user's contact email",
         },
       ]),
     });
     mockAiPort.generateStructured.mockResolvedValue({
-      relevantSlugs: ['profile.full_name', 'profile.email'],
-      queryInterpretation: 'Identity and contact profile fields',
+      relevantSlugs: ["profile.full_name", "profile.email"],
+      queryInterpretation: "Identity and contact profile fields",
     });
     mockPreferenceService.getActivePreferences.mockResolvedValue([
       {
-        ...createMockPreference('profile.full_name'),
-        value: 'Ada Lovelace',
+        ...createMockPreference("profile.full_name"),
+        value: "Ada Lovelace",
       },
       {
-        ...createMockPreference('profile.email'),
-        value: 'ada@example.test',
+        ...createMockPreference("profile.email"),
+        value: "ada@example.test",
       },
     ]);
 
@@ -212,47 +215,43 @@ describe('PreferenceSearchWorkflow', () => {
     });
 
     const prompt = mockAiPort.generateStructured.mock.calls[0][0] as string;
-    expect(prompt).toContain('profile.full_name');
-    expect(prompt).toContain('profile.email');
-    expect(result.matchedDefinitions.map((definition) => definition.slug)).toEqual([
-      'profile.full_name',
-      'profile.email',
-    ]);
-    expect(result.matchedActivePreferences.map((preference) => preference.slug)).toEqual([
-      'profile.full_name',
-      'profile.email',
-    ]);
+    expect(prompt).toContain("profile.full_name");
+    expect(prompt).toContain("profile.email");
+    expect(
+      result.matchedDefinitions.map((definition) => definition.slug),
+    ).toEqual(["profile.full_name", "profile.email"]);
+    expect(
+      result.matchedActivePreferences.map((preference) => preference.slug),
+    ).toEqual(["profile.full_name", "profile.email"]);
     expect(result.queryInterpretation).toBe(
-      'Identity and contact profile fields',
+      "Identity and contact profile fields",
     );
   });
 
-  it('should silently discard hallucinated slugs', async () => {
+  it("should silently discard hallucinated slugs", async () => {
     mockAiPort.generateStructured.mockResolvedValue({
       relevantSlugs: [
-        'food.dietary_restrictions',
-        'food.nonexistent_hallucinated',
-        'totally.fake_slug',
+        "food.dietary_restrictions",
+        "food.nonexistent_hallucinated",
+        "totally.fake_slug",
       ],
-      queryInterpretation: 'Food preferences',
+      queryInterpretation: "Food preferences",
     });
     mockPreferenceService.getActivePreferences.mockResolvedValue([
-      createMockPreference('food.dietary_restrictions'),
+      createMockPreference("food.dietary_restrictions"),
     ]);
 
     const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions).toHaveLength(1);
-    expect(result.matchedDefinitions[0].slug).toBe(
-      'food.dietary_restrictions',
-    );
+    expect(result.matchedDefinitions[0].slug).toBe("food.dietary_restrictions");
     expect(result.matchedActivePreferences).toHaveLength(1);
   });
 
-  it('should return empty arrays when AI returns no relevant slugs', async () => {
+  it("should return empty arrays when AI returns no relevant slugs", async () => {
     mockAiPort.generateStructured.mockResolvedValue({
       relevantSlugs: [],
-      queryInterpretation: 'No matches found',
+      queryInterpretation: "No matches found",
     });
 
     const result = await workflow.run(baseInput);
@@ -260,20 +259,23 @@ describe('PreferenceSearchWorkflow', () => {
     expect(result.matchedDefinitions).toHaveLength(0);
     expect(result.matchedActivePreferences).toHaveLength(0);
     expect(result.matchedSuggestedPreferences).toHaveLength(0);
-    expect(result.queryInterpretation).toBe('No matches found');
+    expect(result.queryInterpretation).toBe("No matches found");
   });
 
-  it('should include suggested preferences when includeSuggestions is true', async () => {
+  it("should include suggested preferences when includeSuggestions is true", async () => {
     mockAiPort.generateStructured.mockResolvedValue({
-      relevantSlugs: ['food.dietary_restrictions'],
-      queryInterpretation: 'Diet info',
+      relevantSlugs: ["food.dietary_restrictions"],
+      queryInterpretation: "Diet info",
     });
     mockPreferenceService.getActivePreferences.mockResolvedValue([
-      createMockPreference('food.dietary_restrictions', PreferenceStatus.ACTIVE),
+      createMockPreference(
+        "food.dietary_restrictions",
+        PreferenceStatus.ACTIVE,
+      ),
     ]);
     mockPreferenceService.getSuggestedPreferences.mockResolvedValue([
       createMockPreference(
-        'food.dietary_restrictions',
+        "food.dietary_restrictions",
         PreferenceStatus.SUGGESTED,
       ),
     ]);
@@ -290,10 +292,10 @@ describe('PreferenceSearchWorkflow', () => {
     );
   });
 
-  it('should not fetch suggested preferences when includeSuggestions is false', async () => {
+  it("should not fetch suggested preferences when includeSuggestions is false", async () => {
     mockAiPort.generateStructured.mockResolvedValue({
-      relevantSlugs: ['food.dietary_restrictions'],
-      queryInterpretation: 'Diet info',
+      relevantSlugs: ["food.dietary_restrictions"],
+      queryInterpretation: "Diet info",
     });
 
     await workflow.run({ ...baseInput, includeSuggestions: false });
@@ -303,27 +305,27 @@ describe('PreferenceSearchWorkflow', () => {
     ).not.toHaveBeenCalled();
   });
 
-  it('should apply maxResults to active and suggested preferences', async () => {
+  it("should apply maxResults to active and suggested preferences", async () => {
     mockAiPort.generateStructured.mockResolvedValue({
       relevantSlugs: [
-        'food.dietary_restrictions',
-        'food.cuisine_preferences',
-        'travel.seat_preference',
+        "food.dietary_restrictions",
+        "food.cuisine_preferences",
+        "travel.seat_preference",
       ],
-      queryInterpretation: 'Everything',
+      queryInterpretation: "Everything",
     });
     mockPreferenceService.getActivePreferences.mockResolvedValue([
-      createMockPreference('food.dietary_restrictions'),
-      createMockPreference('food.cuisine_preferences'),
-      createMockPreference('travel.seat_preference'),
+      createMockPreference("food.dietary_restrictions"),
+      createMockPreference("food.cuisine_preferences"),
+      createMockPreference("travel.seat_preference"),
     ]);
     mockPreferenceService.getSuggestedPreferences.mockResolvedValue([
       createMockPreference(
-        'food.dietary_restrictions',
+        "food.dietary_restrictions",
         PreferenceStatus.SUGGESTED,
       ),
       createMockPreference(
-        'food.cuisine_preferences',
+        "food.cuisine_preferences",
         PreferenceStatus.SUGGESTED,
       ),
     ]);
@@ -341,13 +343,13 @@ describe('PreferenceSearchWorkflow', () => {
     expect(result.matchedSuggestedPreferences).toHaveLength(2);
   });
 
-  it('should pass a tool-provided access filter through to the snapshot service', async () => {
-    const filterAccessibleSlugs = jest.fn().mockResolvedValue([
-      'food.dietary_restrictions',
-    ]);
+  it("should pass a tool-provided access filter through to the snapshot service", async () => {
+    const filterAccessibleSlugs = jest
+      .fn()
+      .mockResolvedValue(["food.dietary_restrictions"]);
     mockAiPort.generateStructured.mockResolvedValue({
       relevantSlugs: [],
-      queryInterpretation: 'No matches found',
+      queryInterpretation: "No matches found",
     });
 
     await workflow.run({
@@ -356,29 +358,29 @@ describe('PreferenceSearchWorkflow', () => {
     } as PreferenceSearchWorkflowInput);
 
     expect(mockSnapshotService.getGrantFilteredSnapshot).toHaveBeenCalledWith(
-      'user-1',
-      'claude',
-      'read',
+      "user-1",
+      "claude",
+      "read",
       undefined,
       filterAccessibleSlugs,
     );
   });
 
-  it('should sort preference rows by AI relevance before applying maxResults', async () => {
+  it("should sort preference rows by AI relevance before applying maxResults", async () => {
     // AI ranks travel first, then cuisine, then dietary
     mockAiPort.generateStructured.mockResolvedValue({
       relevantSlugs: [
-        'travel.seat_preference',
-        'food.cuisine_preferences',
-        'food.dietary_restrictions',
+        "travel.seat_preference",
+        "food.cuisine_preferences",
+        "food.dietary_restrictions",
       ],
-      queryInterpretation: 'Travel then food',
+      queryInterpretation: "Travel then food",
     });
     // Repository returns in a different order (recency / alphabetical)
     mockPreferenceService.getActivePreferences.mockResolvedValue([
-      createMockPreference('food.dietary_restrictions'),
-      createMockPreference('food.cuisine_preferences'),
-      createMockPreference('travel.seat_preference'),
+      createMockPreference("food.dietary_restrictions"),
+      createMockPreference("food.cuisine_preferences"),
+      createMockPreference("travel.seat_preference"),
     ]);
 
     const result = await workflow.run({
@@ -388,74 +390,71 @@ describe('PreferenceSearchWorkflow', () => {
 
     // Should keep the top-2 by AI relevance: travel, then cuisine
     expect(result.matchedActivePreferences.map((p) => p.slug)).toEqual([
-      'travel.seat_preference',
-      'food.cuisine_preferences',
+      "travel.seat_preference",
+      "food.cuisine_preferences",
     ]);
   });
 
-  it('should pass locationId to preference service', async () => {
+  it("should pass locationId to preference service", async () => {
     mockAiPort.generateStructured.mockResolvedValue({
-      relevantSlugs: ['food.dietary_restrictions'],
-      queryInterpretation: 'Diet info',
+      relevantSlugs: ["food.dietary_restrictions"],
+      queryInterpretation: "Diet info",
     });
 
-    await workflow.run({ ...baseInput, locationId: 'loc-123' });
+    await workflow.run({ ...baseInput, locationId: "loc-123" });
 
     expect(mockPreferenceService.getActivePreferences).toHaveBeenCalledWith(
-      'user-1',
-      'loc-123',
+      "user-1",
+      "loc-123",
     );
   });
 
-  it('should preserve AI relevance ordering in matchedDefinitions', async () => {
+  it("should preserve AI relevance ordering in matchedDefinitions", async () => {
     // AI returns travel first, then food — opposite of snapshot's alphabetical order
     mockAiPort.generateStructured.mockResolvedValue({
-      relevantSlugs: [
-        'travel.seat_preference',
-        'food.dietary_restrictions',
-      ],
-      queryInterpretation: 'Travel then food',
+      relevantSlugs: ["travel.seat_preference", "food.dietary_restrictions"],
+      queryInterpretation: "Travel then food",
     });
 
     const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions.map((d) => d.slug)).toEqual([
-      'travel.seat_preference',
-      'food.dietary_restrictions',
+      "travel.seat_preference",
+      "food.dietary_restrictions",
     ]);
   });
 
-  it('should dedupe repeated slugs from AI while preserving relevance order', async () => {
+  it("should dedupe repeated slugs from AI while preserving relevance order", async () => {
     mockAiPort.generateStructured.mockResolvedValue({
       relevantSlugs: [
-        'food.dietary_restrictions',
-        'food.cuisine_preferences',
-        'food.dietary_restrictions', // duplicate
+        "food.dietary_restrictions",
+        "food.cuisine_preferences",
+        "food.dietary_restrictions", // duplicate
       ],
-      queryInterpretation: 'Food prefs',
+      queryInterpretation: "Food prefs",
     });
     mockPreferenceService.getActivePreferences.mockResolvedValue([
-      createMockPreference('food.dietary_restrictions'),
-      createMockPreference('food.cuisine_preferences'),
+      createMockPreference("food.dietary_restrictions"),
+      createMockPreference("food.cuisine_preferences"),
     ]);
 
     const result = await workflow.run(baseInput);
 
     expect(result.matchedDefinitions.map((d) => d.slug)).toEqual([
-      'food.dietary_restrictions',
-      'food.cuisine_preferences',
+      "food.dietary_restrictions",
+      "food.cuisine_preferences",
     ]);
     // Active preferences should also not be duplicated
     expect(result.matchedActivePreferences).toHaveLength(2);
   });
 
-  it('should propagate errors from AI port', async () => {
+  it("should propagate errors from AI port", async () => {
     mockAiPort.generateStructured.mockRejectedValue(
-      new Error('AI validation failed'),
+      new Error("AI validation failed"),
     );
 
     await expect(workflow.run(baseInput)).rejects.toThrow(
-      'AI validation failed',
+      "AI validation failed",
     );
   });
 });

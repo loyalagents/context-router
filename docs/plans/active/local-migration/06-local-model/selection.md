@@ -1,6 +1,6 @@
 # Step 06 Selection
 
-Status: proposed selection; combined independent approval pending. This record consolidates the current evidence without replacing historical failed receipts or approving production implementation.
+Status: selected for CP2 tests-first integration. Architecture (Astra Extra High), compatibility/evaluation (Astra High), and safety (Astra Extra High) independently approved `eee89f960e235daa1f2b5b77312eb114f1fc80ac` with no blocking findings. This record preserves historical failed receipts and does not claim completed production implementation.
 
 ## Candidate And Scope
 
@@ -40,3 +40,5 @@ All reviewers remain read-only; requested Astra High/Extra High launch settings 
 After combined selection approval, root implements CP2 tests first: minimal port contracts and hosted/no-model compatibility; production protected configuration/session owner, transport and PDF parser; all consumer propagation and mocks; explicit SQLite composition; actual Nest workflows and editable PDF fill. CP1 scripts are evidence scaffolding, not production imports.
 
 The actual production adapter, installed parser, source/sealed application packages and real model application workflows must be validated on their own revisions. Deterministic CI cannot depend on live weights. Preserve strict no-model network-denial proof and add separate narrow authenticated model-loopback proof. Fresh complete-diff reviews, the final exact-base twelve-phase local gate, Markdown/whitespace checks and final pushed-head standard CI plus migration CI remain required. No PR is ready until these gates pass; do not merge automatically.
+
+All three read-only reviewers approved their named selection dimensions at that revision. Prior unaffected approvals carry forward; the negative results closed the remaining CP1 evidence. Root now owns CP2 tests-first execution under the unchanged reviewed plan. Requested launch settings were accepted; serving internals remain unverified.

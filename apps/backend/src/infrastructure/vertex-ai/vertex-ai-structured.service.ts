@@ -1,11 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { z } from 'zod';
+import { Injectable, Logger } from "@nestjs/common";
+import { z } from "zod";
 import {
   AiStructuredOutputPort,
   AiStructuredOptions,
-} from '../../domains/shared/ports/ai-structured-output.port';
-import { FileInput } from '../../domains/shared/ports/ai-text-generator.port';
-import { VertexAiService } from './vertex-ai.service';
+} from "../../domains/shared/ports/ai-structured-output.port";
+import { FileInput } from "../../domains/shared/ports/ai-text-generator.port";
+import { VertexAiService } from "./vertex-ai.service";
+import {
+  AiStatus,
+  HOSTED_AI_CAPABILITIES,
+  rejectUnsupportedControls,
+} from "../../domains/shared/ports/ai-execution";
 
 /**
  * Escapes literal (unescaped) newlines inside JSON string values.
@@ -17,9 +22,9 @@ function escapeLiteralNewlinesInJsonStrings(input: string): string {
     /"((?:[^"\\]|\\.)*)"/gs,
     (_, content: string) =>
       `"${content
-        .replace(/\r\n/g, '\\n')
-        .replace(/\r/g, '\\n')
-        .replace(/\n/g, '\\n')}"`,
+        .replace(/\r\n/g, "\\n")
+        .replace(/\r/g, "\\n")
+        .replace(/\n/g, "\\n")}"`,
   );
 }
 
@@ -28,12 +33,12 @@ function escapeLiteralNewlinesInJsonStrings(input: string): string {
  */
 function stripMarkdownFences(text: string): string {
   let cleaned = text.trim();
-  if (cleaned.startsWith('```json')) {
+  if (cleaned.startsWith("```json")) {
     cleaned = cleaned.slice(7);
-  } else if (cleaned.startsWith('```')) {
+  } else if (cleaned.startsWith("```")) {
     cleaned = cleaned.slice(3);
   }
-  if (cleaned.endsWith('```')) {
+  if (cleaned.endsWith("```")) {
     cleaned = cleaned.slice(0, -3);
   }
   return cleaned.trim();
@@ -45,8 +50,10 @@ interface NullFillActionValue {
   fieldName: string;
 }
 
-function normalizedNullFillActionValues(parsed: unknown): NullFillActionValue[] {
-  if (!parsed || typeof parsed !== 'object') {
+function normalizedNullFillActionValues(
+  parsed: unknown,
+): NullFillActionValue[] {
+  if (!parsed || typeof parsed !== "object") {
     return [];
   }
 
@@ -56,7 +63,7 @@ function normalizedNullFillActionValues(parsed: unknown): NullFillActionValue[] 
   }
 
   return fillActions.flatMap((action, index) => {
-    if (!action || typeof action !== 'object') {
+    if (!action || typeof action !== "object") {
       return [];
     }
 
@@ -74,13 +81,13 @@ function normalizedNullFillActionValues(parsed: unknown): NullFillActionValue[] 
       {
         index,
         action:
-          typeof fillAction.action === 'string'
+          typeof fillAction.action === "string"
             ? fillAction.action
-            : '<non-string-action>',
+            : "<non-string-action>",
         fieldName:
-          typeof fillAction.fieldName === 'string'
+          typeof fillAction.fieldName === "string"
             ? fillAction.fieldName
-            : '<non-string-field>',
+            : "<non-string-field>",
       },
     ];
   });
@@ -88,6 +95,10 @@ function normalizedNullFillActionValues(parsed: unknown): NullFillActionValue[] 
 
 @Injectable()
 export class VertexAiStructuredService implements AiStructuredOutputPort {
+  readonly capabilities = HOSTED_AI_CAPABILITIES;
+  async getStatus(): Promise<AiStatus> {
+    return Object.freeze({ state: "unsupported", configured: true });
+  }
   private readonly logger = new Logger(VertexAiStructuredService.name);
 
   constructor(private readonly vertexAiService: VertexAiService) {}
@@ -97,7 +108,8 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
     schema: z.ZodType<T>,
     options?: AiStructuredOptions,
   ): Promise<T> {
-    const opName = options?.operationName ?? 'generateStructured';
+    rejectUnsupportedControls(options);
+    const opName = options?.operationName ?? "generateStructured";
     const retries = options?.retries ?? 1;
 
     const rawText = await this.vertexAiService.generateText(prompt);
@@ -110,14 +122,22 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
     schema: z.ZodType<T>,
     options?: AiStructuredOptions,
   ): Promise<T> {
-    const opName = options?.operationName ?? 'generateStructuredWithFile';
+    rejectUnsupportedControls(options);
+    const opName = options?.operationName ?? "generateStructuredWithFile";
     const retries = options?.retries ?? 1;
 
     const rawText = await this.vertexAiService.generateTextWithFile(
       prompt,
       file,
     );
-    return this.parseAndValidate(rawText, schema, prompt, retries, opName, file);
+    return this.parseAndValidate(
+      rawText,
+      schema,
+      prompt,
+      retries,
+      opName,
+      file,
+    );
   }
 
   private async parseAndValidate<T>(
@@ -168,12 +188,10 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
     }
 
     const zodErrors = result.error.issues
-      .map((i) => `${i.path.join('.')}: ${i.message}`)
-      .join('; ');
+      .map((i) => `${i.path.join(".")}: ${i.message}`)
+      .join("; ");
 
-    this.logger.error(
-      `[${operationName}] Zod validation failed: ${zodErrors}`,
-    );
+    this.logger.error(`[${operationName}] Zod validation failed: ${zodErrors}`);
 
     if (retriesRemaining > 0) {
       return this.correctionRetry(
@@ -235,7 +253,7 @@ Please respond with corrected, valid JSON only. No markdown fences.`;
     operationName: string,
     parsed: unknown,
   ): void {
-    if (operationName !== 'formFill.fillActions') {
+    if (operationName !== "formFill.fillActions") {
       return;
     }
 
@@ -249,7 +267,7 @@ Please respond with corrected, valid JSON only. No markdown fences.`;
         (entry) =>
           `${entry.index}:${entry.action}:${JSON.stringify(entry.fieldName)}`,
       )
-      .join(', ');
+      .join(", ");
 
     this.logger.warn(
       `[${operationName}] Normalized null fill action value(s) to omitted values: count=${nullValues.length} actions=${actions}`,
