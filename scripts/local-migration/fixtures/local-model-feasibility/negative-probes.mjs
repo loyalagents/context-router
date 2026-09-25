@@ -1,4 +1,4 @@
-import { lstat } from 'node:fs/promises';
+import { lstat, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { ProbeClient, probeJson } from './client.mjs';
@@ -66,14 +66,14 @@ export async function runUnavailable() {
 
 /** Disposable negative fixtures only. Never acts on a user-owned runtime. */
 export async function runMissingAsset({ kind, binary, evidenceRoot, sandboxProfile, exitTimeoutMs = 10000,
-  argsForModel = runtimeArgs }) {
+  argsForModel = runtimeArgs, now = () => performance.now() }) {
   if (!['binary', 'model'].includes(kind)) throw new Error('Invalid negative probe');
   const credentials = await createTlsFixture();
   const result = { kind, passed: false, spawnRejected: false, naturalExit: null, readinessRequests: 0,
-    completionRequests: 0, ownedChildStoppedAndReaped: false, diagnosticAuditPassed: false, credentialsRemoved: false };
+    completionRequests: 0, ownedChildStoppedAndReaped: false, diagnosticAuditPassed: false, missingModelDiagnostic: false, credentialsRemoved: false };
   const logPath = join(evidenceRoot, `missing-${kind}.log`);
   let child; let spawnAttempted = false; let safeToRemove = true;
-  const start = performance.now();
+  const start = now(); const deadline = start + exitTimeoutMs;
   try {
     const missing = join(credentials.root, kind === 'binary' ? 'absent-runtime' : 'absent-model.gguf');
     let absent = false;
@@ -90,9 +90,20 @@ export async function runMissingAsset({ kind, binary, evidenceRoot, sandboxProfi
     } catch { result.spawnRejected = true; }
     if (kind === 'binary') result.passed = result.spawnRejected;
     else if (child) {
-      result.naturalExit = await Promise.race([child.exited, delay(exitTimeoutMs, null, { ref: false })]);
-      result.passed = result.naturalExit !== null && Number.isInteger(result.naturalExit.code) &&
-        result.naturalExit.code !== 0 && result.naturalExit.signal === null && !child.logOverflow;
+      const remaining = deadline - now();
+      if (remaining > 0) result.naturalExit = await Promise.race([child.exited, delay(remaining, null, { ref: false })]);
+      const observedWithinDeadline = now() < deadline;
+      if (result.naturalExit && !child.logOverflow) {
+        const bytes = await readFile(logPath);
+        if (bytes.length > 0 && bytes.length <= 512 * 1024 && bytes.at(-1) === 10) {
+          const diagnostic = `gguf_init_from_file: failed to open GGUF file '${missing}' (No such file or directory)`;
+          const lines = new TextDecoder('utf-8', { fatal: true }).decode(bytes).split('\n');
+          result.missingModelDiagnostic = lines.some((line) => line.endsWith(diagnostic) &&
+            /^(?:\d+\.\d+\.\d+\.\d+ E )?$/.test(line.slice(0, -diagnostic.length)));
+        }
+      }
+      result.passed = observedWithinDeadline && result.missingModelDiagnostic && result.naturalExit !== null &&
+        Number.isInteger(result.naturalExit.code) && result.naturalExit.code !== 0 && result.naturalExit.signal === null && !child.logOverflow;
     }
   } catch { result.passed = false; }
   finally {
@@ -106,7 +117,7 @@ export async function runMissingAsset({ kind, binary, evidenceRoot, sandboxProfi
     } catch { result.passed = false; safeToRemove = false; }
     if (safeToRemove) { await credentials.remove(); result.credentialsRemoved = true; }
   }
-  result.elapsedMs = performance.now() - start;
+  result.elapsedMs = now() - start;
   result.passed &&= result.ownedChildStoppedAndReaped && result.diagnosticAuditPassed && result.credentialsRemoved;
   return result;
 }
