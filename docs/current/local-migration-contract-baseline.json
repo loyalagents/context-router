@@ -5,7 +5,8 @@
   "supportedModes": [
     "hosted-baseline",
     "local-identity-preview",
-    "local-database-preview"
+    "local-database-preview",
+    "local-model-preview"
   ],
   "contractClasses": [
     "preserved-contract",

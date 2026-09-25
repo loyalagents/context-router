@@ -493,6 +493,12 @@ test("every packaging subprocess has materializer policy or a reviewed helper ce
     );
   }
 
+  const modelSource = await readFile(path.join(repositoryRoot, 'scripts/local-migration/local-model-smoke.mjs'), 'utf8');
+  assert.equal([...modelSource.matchAll(/\bspawnSync\s*\(/g)].length, 1);
+  assert.match(modelSource, /spawnSync\('openssl', \['req', '-x509'/);
+  assert.match(modelSource, /stdio: 'ignore', timeout: 15000/);
+  assert.equal([...modelSource.matchAll(/\bcreateGatedNodeChild\s*\(/g)].length, 1);
+
   const localIdentitySource = await readFile(
     path.join(repositoryRoot, "scripts/local-migration/local-identity-smoke.mjs"),
     "utf8",

@@ -136,7 +136,7 @@ test('credential growth is bounded and replacement between path check and open i
 
 test('root-owned sticky temporary ancestry works while writable user-owned ancestry and wrong IP do not', async (t) => {
   const { credentials, config } = await fixture(t);
-  const parent = await fs.mkdtemp('/private/tmp/step06-manual-ancestry-');
+  const parent = await fs.mkdtemp(join(await fs.realpath(process.platform === 'darwin' ? '/private/tmp' : '/tmp'), 'step06-manual-ancestry-'));
   t.after(() => fs.rm(parent, { recursive: true, force: true }));
   for (const name of ['safe', 'unsafe']) {
     const root = join(parent, name); await fs.mkdir(root, { mode: 0o700 });

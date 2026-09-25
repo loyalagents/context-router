@@ -1,3 +1,4 @@
+import { localModelLifecycleResources } from './fixtures/local-model-lifecycle.mjs';
 import { localDatabaseLifecycleResources } from "./fixtures/local-database-lifecycle.mjs";
 import assert from "node:assert/strict";
 import {
@@ -328,6 +329,7 @@ test("packaged smoke phase independently rejects an incomplete child journal", a
           ),
           ...localIdentityResources,
           ...localDatabaseLifecycleResources(diagnostics),
+          ...localModelLifecycleResources(diagnostics),
         ],
       })}\n`,
       { mode: 0o600 },
@@ -350,6 +352,12 @@ test("packaged smoke phase independently rejects an incomplete child journal", a
     await assert.rejects(gate.assertRestartSmokeLifecycleEvidence(diagnostics, { commandSucceeded: true }), /local-database/);
     await assert.rejects(gate.assertPackagedSmokeLifecycleEvidence(diagnostics, { commandSucceeded: true }), /local-database/);
     await writeFile(journalPath, JSON.stringify(bothModes) + "\n", { mode: 0o600 });
+
+    const missingModel = structuredClone(bothModes); missingModel.resources = missingModel.resources.filter(item => !item.id.startsWith('local-model-'));
+    await writeFile(journalPath, JSON.stringify(missingModel) + '\n', { mode: 0o600 });
+    await assert.rejects(gate.assertRestartSmokeLifecycleEvidence(diagnostics, { commandSucceeded: true }), /model lifecycle/);
+    await assert.rejects(gate.assertPackagedSmokeLifecycleEvidence(diagnostics, { commandSucceeded: true }), /model lifecycle/);
+    await writeFile(journalPath, JSON.stringify(bothModes) + '\n', { mode: 0o600 });
 
     const dispatchEvents = [];
     const dispatched = await gate.executeGatePhaseCommand({
@@ -850,6 +858,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
       requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"],
     },
     { id: "local-database-preview", status: "active", successorModes: [], requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"] },
+    { id: "local-model-preview", status: "active", successorModes: [], requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"] },
   ]);
   const dualModePhases = new Set([
     "contract-baseline",
@@ -864,7 +873,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
     assert.deepEqual(
       phase.modes,
       dualModePhases.has(phase.id)
-        ? ["hosted-baseline", "local-identity-preview", "local-database-preview"]
+        ? ["hosted-baseline", "local-identity-preview", "local-database-preview", "local-model-preview"]
         : ["hosted-baseline"],
     );
   }
@@ -889,6 +898,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
           "scripts/local-migration/runtime-resources.test.mjs",
           "scripts/local-migration/packaging-smoke.test.mjs",
           "scripts/local-migration/local-database-smoke.test.mjs",
+          "scripts/local-migration/local-model-smoke.test.mjs",
         ],
         ["node", "scripts/local-migration/check-contract-baseline.mjs"],
       ],
