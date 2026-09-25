@@ -5,40 +5,59 @@ import { setTimeout as delay } from 'node:timers/promises';
 const failed = () => new Error('Owned probe process failed');
 
 /** Retains the exact child handle; no PID lookup, process-name matching or foreign cleanup. */
-export async function spawnOwned({ command, args, cwd, logPath, logLimit = 512 * 1024, overflowGraceMs = 3000 }) {
+export async function spawnOwned({ command, args, cwd, logPath, logLimit = 512 * 1024, overflowGraceMs = 3000, projection }) {
   const descriptor = openSync(logPath, 'wx', 0o600);
   const child = spawn(command, args, { cwd, env: { PATH: '/usr/bin:/bin:/opt/homebrew/bin',
     TMPDIR: cwd, LC_ALL: 'C' }, stdio: ['ignore', 'pipe', 'pipe'] });
   let closed = false; let outcome; let captured = ''; let bytes = 0; let overflow = false;
-  let stopPromise;
+  let stopPromise; let projectedResult;
   const exited = new Promise((resolve) => {
     child.once('close', (code, signal) => {
-      closed = true; outcome = { code, signal }; closeSync(descriptor); resolve(outcome);
+      closed = true; outcome = { code, signal };
+      try { if (projection && !overflow) projectedResult = projection.finish(); }
+      catch { overflow = true; }
+      try { closeSync(descriptor); } catch { overflow = true; }
+      resolve(outcome);
     });
   });
-  const capture = (chunk) => {
-    if (closed) return;
+  const failCapture = () => { overflow = true; void api.stop({ graceMs: overflowGraceMs }).catch(() => {}); };
+  const capture = (name, chunk) => {
+    if (closed || overflow) return;
     const remaining = Math.max(0, logLimit - bytes);
+    if (projection) {
+      // Raw data cannot reach the default capture or any diagnostic exception path.
+      try {
+        bytes += chunk.length;
+        if (chunk.length > remaining) throw failed();
+        const projected = projection.push(name, chunk);
+        if (!Buffer.isBuffer(projected)) throw failed();
+        writeSync(descriptor, projected);
+        captured += projected.toString('utf8');
+      } catch { failCapture(); }
+      return;
+    }
     if (remaining > 0) {
       const bounded = chunk.subarray(0, remaining);
       try { writeSync(descriptor, bounded); }
-      catch { overflow = true; void api.stop({ graceMs: overflowGraceMs }).catch(() => {}); }
+      catch { failCapture(); }
       captured += bounded.toString('utf8'); bytes += bounded.length;
     }
-    if (chunk.length > remaining) { overflow = true; void api.stop({ graceMs: overflowGraceMs }).catch(() => {}); }
+    if (chunk.length > remaining) failCapture();
   };
-  child.stdout.on('data', capture); child.stderr.on('data', capture);
-  try {
-    await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', () => reject(failed())); });
-  } catch {
-    await exited;
-    throw failed();
+  for (const [name, stream] of [['stdout', child.stdout], ['stderr', child.stderr]]) {
+    stream.on('data', (chunk) => capture(name, chunk));
+    stream.once('end', () => { if (projection && !overflow) { try { projection.end(name); } catch { failCapture(); } } });
+    stream.once('error', failCapture);
   }
   const api = {
     pid: child.pid,
     exited,
     get running() { return !closed && child.exitCode === null && child.signalCode === null; },
     get logOverflow() { return overflow; },
+    get projectionResult() {
+      if (!projection || !closed || overflow) throw failed();
+      return projectedResult;
+    },
     async waitForLog(marker, timeoutMs) {
       const until = performance.now() + timeoutMs;
       while (!captured.includes(marker)) {
@@ -60,5 +79,11 @@ export async function spawnOwned({ command, args, cwd, logPath, logLimit = 512 *
       return stopPromise;
     },
   };
+  try {
+    await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', () => reject(failed())); });
+  } catch {
+    await exited;
+    throw failed();
+  }
   return api;
 }

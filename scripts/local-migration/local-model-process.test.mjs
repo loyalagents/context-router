@@ -58,3 +58,49 @@ test('diagnostic overflow reaps even a child that ignores graceful termination',
     assert.equal(child.logOverflow, true);
   } finally { await child?.stop({ graceMs: 30 }); await rm(root, { recursive: true, force: true }); }
 });
+
+test('projects before any persistence and validates only after both streams end and child reaping', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'step06-projected-test-')); let child;
+  const events = [];
+  const projection = {
+    push(name, chunk) { events.push(`data:${name}`); return Buffer.from(JSON.stringify({ bytes: chunk.length }) + '\n'); },
+    end(name) { events.push(`end:${name}`); },
+    finish() { assert.ok(events.includes('end:stdout') && events.includes('end:stderr')); events.push('finish'); return { complete: true }; },
+  };
+  try {
+    child = await spawnOwned({ command: process.execPath,
+      args: ['-e', 'process.on("SIGTERM",()=>{process.stderr.write("late SECRET_PATH\\n");process.exit(0)});console.log("SECRET_TAIL");setInterval(()=>{},1000)'],
+      cwd: root, logPath: join(root, 'numbers.jsonl'), projection });
+    await child.waitForLog('bytes', 1000);
+    assert.throws(() => child.projectionResult, /Owned probe process failed/);
+    await child.stop();
+    assert.equal(child.running, false);
+    assert.deepEqual(child.projectionResult, { complete: true });
+    assert.equal(events.at(-1), 'finish');
+    assert.ok(events.includes('data:stderr'));
+    const content = await readFile(join(root, 'numbers.jsonl'), 'utf8');
+    assert.ok(!content.includes('SECRET'));
+    assert.ok(content.trim().split('\n').every((line) => Number.isInteger(JSON.parse(line).bytes)));
+  } finally { await child?.stop(); await rm(root, { recursive: true, force: true }); }
+});
+
+test('projection exceptions and shutdown failures never fall back to raw diagnostics', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'step06-projected-test-'));
+  try {
+    for (const phase of ['push', 'end', 'finish']) {
+      const projection = { push() { return Buffer.from('{"fixed":true}\n'); }, end() {}, finish() { return {}; } };
+      projection[phase] = () => { throw new Error('SECRET_EXCEPTION'); };
+      const path = join(root, `${phase}.jsonl`);
+      const child = await spawnOwned({ command: process.execPath,
+        args: ['-e', 'process.stdout.write("SECRET_RAW\\n");process.stderr.write("SECRET_PATH\\n")'],
+        cwd: root, logPath: path, projection, overflowGraceMs: 30 });
+      try {
+        await child.exited;
+        assert.equal(child.logOverflow, true);
+        assert.equal(child.running, false);
+        assert.throws(() => child.projectionResult, /^Error: Owned probe process failed$/);
+        assert.ok(!(await readFile(path, 'utf8')).includes('SECRET'));
+      } finally { await child.stop({ graceMs: 30 }); }
+    }
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
