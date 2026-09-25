@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { FileInput } from "./ai-text-generator.port";
-import type { AiCapabilityProvider, AiExecutionOptions } from "./ai-execution";
+import type { AiCapabilityProvider, AiExecutionOptions } from './ai-execution';
+import { z } from 'zod';
+import { FileInput } from './ai-text-generator.port';
 
 export interface AiStructuredOptions extends AiExecutionOptions {
   retries?: number;

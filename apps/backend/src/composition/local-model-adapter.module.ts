@@ -1,11 +1,10 @@
-import { Global, Injectable, Module } from "@nestjs/common";
-import type { z } from "zod";
+import { AiError, AiExecutionOptions, AiStatus, UNAVAILABLE_AI_CAPABILITIES } from '../domains/shared/ports/ai-execution';
 import {
-  AiError,
-  AiExecutionOptions,
-  AiStatus,
-  UNAVAILABLE_AI_CAPABILITIES,
-} from "../domains/shared/ports/ai-execution";
+  Global,
+  Injectable,
+  Module,
+} from "@nestjs/common";
+import type { z } from "zod";
 
 import type {
   AiStructuredOptions,
@@ -23,7 +22,7 @@ import {
 export const LOCAL_MODEL_UNAVAILABLE_MESSAGE = "Local model is unavailable";
 
 function unavailable(): never {
-  throw new AiError("unavailable");
+  throw new AiError('unavailable');
 }
 
 @Injectable()
@@ -31,13 +30,8 @@ export class LocalUnavailableModelService
   implements AiTextGeneratorPort, AiStructuredOutputPort
 {
   readonly capabilities = UNAVAILABLE_AI_CAPABILITIES;
-  async getStatus(): Promise<AiStatus> {
-    return Object.freeze({ state: "unavailable", configured: false });
-  }
-  async generateText(
-    _prompt: string,
-    _options?: AiExecutionOptions,
-  ): Promise<string> {
+  async getStatus(): Promise<AiStatus> { return Object.freeze({ state: 'unavailable', configured: false }); }
+  async generateText(_prompt: string, _options?: AiExecutionOptions): Promise<string> {
     return unavailable();
   }
 

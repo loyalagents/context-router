@@ -1,4 +1,4 @@
-import { HOSTED_AI_CAPABILITIES } from "../../src/domains/shared/ports/ai-execution";
+import { HOSTED_AI_CAPABILITIES } from '../../src/domains/shared/ports/ai-execution';
 /**
  * Test Application Factory
  *
@@ -12,34 +12,34 @@ import { HOSTED_AI_CAPABILITIES } from "../../src/domains/shared/ports/ai-execut
  * - Call createTestUser() in beforeEach (cheap, runs after resetDb)
  * - Use setTestUser() to update the guard's user reference
  */
-import { Test, TestingModule } from "@nestjs/testing";
+import { Test, TestingModule } from '@nestjs/testing';
 import {
   DynamicModule,
   INestApplication,
   Module,
   ExecutionContext,
-} from "@nestjs/common";
-import { GqlExecutionContext } from "@nestjs/graphql";
-import { AppModule } from "../../src/app.module";
-import { configureHostedApplication } from "../../src/bootstrap/hosted-bootstrap";
-import { GqlAuthGuard } from "../../src/common/guards/gql-auth.guard";
-import { JwtAuthGuard } from "../../src/common/guards/jwt-auth.guard";
-import { OptionalGqlAuthGuard } from "../../src/common/guards/optional-gql-auth.guard";
-import { McpAuthGuard } from "../../src/mcp/auth/mcp-auth.guard";
-import { HostedModelAdapterModule } from "../../src/composition/hosted-model-adapter.module";
-import { resolveRuntimeConfiguration } from "../../src/config/runtime-config";
+} from '@nestjs/common';
+import { GqlExecutionContext } from '@nestjs/graphql';
+import { AppModule } from '../../src/app.module';
+import { configureHostedApplication } from '../../src/bootstrap/hosted-bootstrap';
+import { GqlAuthGuard } from '../../src/common/guards/gql-auth.guard';
+import { JwtAuthGuard } from '../../src/common/guards/jwt-auth.guard';
+import { OptionalGqlAuthGuard } from '../../src/common/guards/optional-gql-auth.guard';
+import { McpAuthGuard } from '../../src/mcp/auth/mcp-auth.guard';
+import { HostedModelAdapterModule } from '../../src/composition/hosted-model-adapter.module';
+import { resolveRuntimeConfiguration } from '../../src/config/runtime-config';
 import {
   AI_STRUCTURED_OUTPUT_PORT,
   AI_TEXT_GENERATOR_PORT,
-} from "../../src/domains/shared/ports/ai.tokens";
-import { PrismaService } from "../../src/infrastructure/prisma/prisma.service";
-import { getPrismaClient } from "./test-db";
+} from '../../src/domains/shared/ports/ai.tokens';
+import { PrismaService } from '../../src/infrastructure/prisma/prisma.service';
+import { getPrismaClient } from './test-db';
 
 /**
  * Default test user data for database seeding.
  */
 export const DEFAULT_TEST_USER_DATA = {
-  email: "test@example.com",
+  email: 'test@example.com',
 };
 
 /**
@@ -66,14 +66,12 @@ interface UserRef {
  */
 export const createMockVertexAiService = () => ({
   capabilities: HOSTED_AI_CAPABILITIES,
-  getStatus: jest
-    .fn()
-    .mockResolvedValue({ state: "unsupported", configured: true }),
-  generateText: jest.fn().mockResolvedValue("Mock AI response"),
+  getStatus: jest.fn().mockResolvedValue({ state: 'unsupported', configured: true }),
+  generateText: jest.fn().mockResolvedValue('Mock AI response'),
   generateTextWithFile: jest.fn().mockResolvedValue(
     JSON.stringify({
       suggestions: [],
-      documentSummary: "Mock document summary",
+      documentSummary: 'Mock document summary',
     }),
   ),
 });
@@ -84,13 +82,11 @@ export const createMockVertexAiService = () => ({
  */
 export const createMockStructuredAiService = () => ({
   capabilities: HOSTED_AI_CAPABILITIES,
-  getStatus: jest
-    .fn()
-    .mockResolvedValue({ state: "unsupported", configured: true }),
+  getStatus: jest.fn().mockResolvedValue({ state: 'unsupported', configured: true }),
   generateStructured: jest.fn().mockResolvedValue({}),
   generateStructuredWithFile: jest.fn().mockResolvedValue({
     suggestions: [],
-    documentSummary: "Mock document summary",
+    documentSummary: 'Mock document summary',
   }),
 });
 
@@ -215,9 +211,9 @@ function createMcpMockAuthGuard(
   return {
     canActivate: (context: ExecutionContext) => {
       const request = context.switchToHttp().getRequest();
-      const testUserId = request?.headers?.["x-test-user-id"];
-      const testClientId = request?.headers?.["x-test-mcp-client-id"];
-      const rawGrants = request?.headers?.["x-test-mcp-grants"];
+      const testUserId = request?.headers?.['x-test-user-id'];
+      const testClientId = request?.headers?.['x-test-mcp-client-id'];
+      const rawGrants = request?.headers?.['x-test-mcp-grants'];
 
       if (testUserId) {
         const user = mcpUsersMap.get(testUserId);
@@ -238,18 +234,18 @@ function createMcpMockAuthGuard(
 
       if (rawGrants === undefined) {
         request.tokenGrants = [
-          "preferences:read",
-          "preferences:suggest",
-          "preferences:write",
-          "preferences:define",
+          'preferences:read',
+          'preferences:suggest',
+          'preferences:write',
+          'preferences:define',
         ];
-      } else if (rawGrants === "__absent__") {
+      } else if (rawGrants === '__absent__') {
         request.tokenGrants = undefined;
-      } else if (rawGrants === "") {
+      } else if (rawGrants === '') {
         request.tokenGrants = [];
       } else {
         request.tokenGrants = String(rawGrants)
-          .split(",")
+          .split(',')
           .map((grant) => grant.trim())
           .filter(Boolean);
       }
@@ -374,7 +370,7 @@ export async function createTestApp(
   // Passing an initialized-but-unbound server to Supertest makes each request
   // race through its own listen(0)/close cycle, which can intermittently route
   // a later request to a reused ephemeral port.
-  await app.listen(0, "127.0.0.1");
+  await app.listen(0, '127.0.0.1');
 
   return {
     app,

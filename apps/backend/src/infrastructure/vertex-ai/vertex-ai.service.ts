@@ -1,28 +1,21 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { AiExecutionOptions, AiStatus, HOSTED_AI_CAPABILITIES, rejectUnsupportedControls } from '../../domains/shared/ports/ai-execution';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   VertexAI,
   GenerativeModel,
   GenerateContentResult,
   Part,
-} from "@google-cloud/vertexai";
+} from '@google-cloud/vertexai';
 import {
   AiTextGeneratorPort,
   FileInput,
-} from "../../domains/shared/ports/ai-text-generator.port";
-import { getVertexAiConfig } from "../../config/vertex-ai.config";
-import {
-  AiExecutionOptions,
-  AiStatus,
-  HOSTED_AI_CAPABILITIES,
-  rejectUnsupportedControls,
-} from "../../domains/shared/ports/ai-execution";
+} from '../../domains/shared/ports/ai-text-generator.port';
+import { getVertexAiConfig } from '../../config/vertex-ai.config';
 
 @Injectable()
 export class VertexAiService implements AiTextGeneratorPort {
   readonly capabilities = HOSTED_AI_CAPABILITIES;
-  async getStatus(): Promise<AiStatus> {
-    return Object.freeze({ state: "unsupported", configured: true });
-  }
+  async getStatus(): Promise<AiStatus> { return Object.freeze({ state: 'unsupported', configured: true }); }
   private readonly logger = new Logger(VertexAiService.name);
   private readonly vertexAI: VertexAI;
   private readonly model: GenerativeModel;
@@ -44,20 +37,15 @@ export class VertexAiService implements AiTextGeneratorPort {
     });
   }
 
-  async generateText(
-    prompt: string,
-    options?: AiExecutionOptions,
-  ): Promise<string> {
+  async generateText(prompt: string, options?: AiExecutionOptions): Promise<string> {
     rejectUnsupportedControls(options);
     try {
-      this.logger.log(
-        `Generating text for prompt: ${prompt.substring(0, 50)}...`,
-      );
+      this.logger.log(`Generating text for prompt: ${prompt.substring(0, 50)}...`);
 
       const request = {
         contents: [
           {
-            role: "user" as const,
+            role: 'user' as const,
             parts: [{ text: prompt }],
           },
         ],
@@ -69,27 +57,23 @@ export class VertexAiService implements AiTextGeneratorPort {
       const firstCandidate = candidates[0];
 
       if (!firstCandidate?.content?.parts?.length) {
-        this.logger.warn("No candidates returned from Vertex AI");
-        return "";
+        this.logger.warn('No candidates returned from Vertex AI');
+        return '';
       }
 
       const text = firstCandidate.content.parts
-        .map((part) => part.text ?? "")
-        .join("");
+        .map((part) => part.text ?? '')
+        .join('');
 
       this.logger.log(`Generated ${text.length} characters of text`);
       return text;
     } catch (error) {
-      this.logger.error("Error calling Vertex AI", error);
+      this.logger.error('Error calling Vertex AI', error);
       throw error;
     }
   }
 
-  async generateTextWithFile(
-    prompt: string,
-    file: FileInput,
-    options?: AiExecutionOptions,
-  ): Promise<string> {
+  async generateTextWithFile(prompt: string, file: FileInput, options?: AiExecutionOptions): Promise<string> {
     rejectUnsupportedControls(options);
     try {
       this.logger.log(
@@ -101,7 +85,7 @@ export class VertexAiService implements AiTextGeneratorPort {
         {
           inlineData: {
             mimeType: file.mimeType,
-            data: file.buffer.toString("base64"),
+            data: file.buffer.toString('base64'),
           },
         },
         { text: prompt },
@@ -110,7 +94,7 @@ export class VertexAiService implements AiTextGeneratorPort {
       const request = {
         contents: [
           {
-            role: "user" as const,
+            role: 'user' as const,
             parts,
           },
         ],
@@ -122,18 +106,18 @@ export class VertexAiService implements AiTextGeneratorPort {
       const firstCandidate = candidates[0];
 
       if (!firstCandidate?.content?.parts?.length) {
-        this.logger.warn("No candidates returned from Vertex AI");
-        return "";
+        this.logger.warn('No candidates returned from Vertex AI');
+        return '';
       }
 
       const text = firstCandidate.content.parts
-        .map((part) => part.text ?? "")
-        .join("");
+        .map((part) => part.text ?? '')
+        .join('');
 
       this.logger.log(`Generated ${text.length} characters of text from file`);
       return text;
     } catch (error) {
-      this.logger.error("Error calling Vertex AI with file", error);
+      this.logger.error('Error calling Vertex AI with file', error);
       throw error;
     }
   }
