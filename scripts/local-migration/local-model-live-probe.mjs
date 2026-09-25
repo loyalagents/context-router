@@ -21,7 +21,7 @@ for await (const chunk of createReadStream(model)) hash.update(chunk);
 if (hash.digest('hex') !== pinned.sha256) throw new Error('Model asset hash mismatch');
 const profile = '(version 1)(allow default)(deny network*)(allow network-bind network-inbound (local tcp "localhost:PORT"))(allow network-outbound (remote tcp "localhost:PORT"))(deny mach-lookup (global-name "com.apple.dnssd.service"))';
 const mode = process.argv[2] ?? 'smoke';
-if (!['smoke', 'quality', 'cancellation', 'schemas', 'early-abort', 'early-disconnect'].includes(mode)) throw new Error('Unknown probe mode');
+if (!['smoke', 'quality', 'cancellation', 'schemas', 'early-abort', 'early-disconnect', 'input-limit'].includes(mode)) throw new Error('Unknown probe mode');
 const testedRevision = execFileSync('/usr/bin/git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 if (execFileSync('/usr/bin/git', ['status', '--porcelain'], { encoding: 'utf8' }).trim()) throw new Error('Commit probe inputs before live measurement');
 const run = `native-${candidate}-${mode}-${Date.now()}`;
@@ -63,6 +63,10 @@ try {
   if (['early-abort', 'early-disconnect'].includes(mode)) {
     receipt.earlyNativeAudit = auditEarlyBoundaryLog(diagnostics, receipt.worker);
     receipt.passed &&= receipt.earlyNativeAudit.passed;
+  }
+  if (mode === 'input-limit') {
+    receipt.noInferenceAudit = auditEarlyBoundaryLog(diagnostics, receipt.worker);
+    receipt.passed &&= receipt.noInferenceAudit.passed && receipt.noInferenceAudit.tasks.length === 0;
   }
 } catch (error) { receipt.passed = false; receipt.failure = error.message; }
 await writeFile(join(evidence, `${run}.json`), `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
