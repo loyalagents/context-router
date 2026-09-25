@@ -1,6 +1,6 @@
 # Step 06 Selection
 
-Status: proposed selection; remaining negative measurements and combined independent approval pending. This record consolidates the current evidence without replacing historical failed receipts or approving production implementation.
+Status: proposed selection; combined independent approval pending. This record consolidates the current evidence without replacing historical failed receipts or approving production implementation.
 
 ## Candidate And Scope
 
@@ -31,7 +31,7 @@ One cohesive PR integrates a manually operated runtime through the existing AI p
 | Model resources | [Numeric allocation receipt](evidence/startup-allocation-9b-complete.json), [records](evidence/startup-allocation-9b-complete.jsonl), [index](evidence/startup-allocation-run-index.json) | All required startup families/counters captured. Workload footprint below 18 GiB, normal sampled pressure, no observed OOM or sampled swap increase. Architecture Extra High approved; overlapping mappings/graphics are not summed into a universal memory peak |
 | PDF capability and isolation | [Closure/footprint receipt](evidence/pdf-closure-complete.json), [index](evidence/pdf-closure-run-index.json) | 26 cases, four exact-worker footprint observations, source/relocated inventories, missing-worker and file/network negatives pass; all owned roots removed after reaping. High compatibility and Extra High safety approved |
 | Session establishment | `manual-session.mjs` and nine tests at `3a36a8dde0907681549e4f175ceea4de2867fe6a` | Extra High safety approved bounded credential reads, immutable snapshots, exclusive synced claim, fixed errors, crash/concurrency/reconstruction tests. Actual shared production composition remains CP2 |
-| Remaining negatives | `negative-probes.mjs` and tests at `c23380c` | Four tests pass; native input overflow, unavailable endpoint and missing binary/model measurements pending |
+| Remaining negatives | [Native input limit](evidence/input-limit-9b.json), [resource failures](evidence/negative-resources.json), [index](evidence/negative-run-index.json) | Passed on `245b3e0a4e6af83dd0f58df8bb7594eab7ee11d6`: 13,011 tokens rejected before inference, zero native tasks; unavailable endpoint and exact missing binary/model failures, cleanup confirmed |
 
 All reviewers remain read-only; requested Astra High/Extra High launch settings were accepted, serving internals unverified. Root is sole writer. Earlier failed runs remain retained. The [feasibility chronology](feasibility.md) supplies revision-specific approvals, test-first failures, measurements and limitations.
 

@@ -1,0 +1,112 @@
+{
+  "run": "native-9b-input-limit-1790298404300",
+  "testedRevision": "245b3e0a4e6af83dd0f58df8bb7594eab7ee11d6",
+  "timestamp": "2026-09-25T01:06:44.300Z",
+  "candidate": "9b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "passed": true,
+  "memoryBefore": {
+    "physicalFootprintBytes": 1000192,
+    "lifetimePeakPhysicalFootprintBytes": 1016576,
+    "residentBytes": 1179648,
+    "pressure": 1,
+    "swapUsedBytes": 20970733568
+  },
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 1259.0481250000003
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-9B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "50382",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "512",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "input-limit",
+    "passed": true,
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "promptBytes": 13000,
+    "renderedBytes": 13068,
+    "tokenCount": 13011,
+    "paths": [
+      "/apply-template",
+      "/tokenize"
+    ],
+    "completionRequests": 0
+  },
+  "memory": [
+    {
+      "elapsedMs": 7088.023375,
+      "physicalFootprintBytes": 723570816,
+      "lifetimePeakPhysicalFootprintBytes": 724668480,
+      "residentBytes": 824541184,
+      "pressure": 1,
+      "swapUsedBytes": 20970733568
+    },
+    {
+      "elapsedMs": 7666.661791,
+      "physicalFootprintBytes": 724144256,
+      "lifetimePeakPhysicalFootprintBytes": 724668480,
+      "residentBytes": 825229312,
+      "pressure": 1,
+      "swapUsedBytes": 20970733568
+    }
+  ],
+  "memoryPassed": true,
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true,
+  "noInferenceAudit": {
+    "passed": true,
+    "capacityRecoveryQualified": false,
+    "tasks": [],
+    "nativeTaskState": "no-launch-observed"
+  }
+}
