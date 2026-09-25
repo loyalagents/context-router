@@ -184,6 +184,22 @@ Safety Extra High approved the allocation-only correction at `56ece3c06af3986ae8
 
 The real byte-only PDF worker is prepared for isolated-layout qualification. Its default library resolver requires the canonical pinned package entry inside that layout; only algorithm-only tests inject the existing external asset loader. No loader or path is accepted over worker stdin. The nine algorithm and five parent-process cases pass together (884.592 ms); source-derived/relocated real-worker execution and affected review remain pending.
 
+The corrected startup capture PASSED at `59d81d30e71d88d4269188cce5246df80147f4f5`: [complete receipt](evidence/startup-allocation-9b-complete.json), [numeric records](evidence/startup-allocation-9b-complete.jsonl), [hash index](evidence/startup-allocation-run-index.json). Startup readiness took 1,471.220 ms, with eight public-health requests, zero protected/client-inference requests, exact-child stop/reap and credential-root removal confirmed. The projector consumed 18,181 raw bytes in bounded memory and persisted only 915 bytes of fixed numeric records. Runtime verbosity 4 was confined to this startup diagnostic; workloads remain at 3.
+
+| Startup family | Backend | Reported MiB |
+| --- | --- | ---: |
+| Model mapping/view | CPU_Mapped | 545.62 |
+| Model mapping/view | MTL0_Mapped | 5,406.91 |
+| Initial output | CPU | 0.95 |
+| Attention KV | MTL0 | 512.00 |
+| Recurrent RS | MTL0 | 50.25 |
+| Compute | MTL0 | 137.22 |
+| Compute | CPU | 32.02 |
+
+All seven context/slot/batch/output counters match the frozen configuration. These are native startup buffer allocations/reservations rounded to 0.01 MiB, not workload lifetime maxima; mapped views can overlap the same file. The full GGUF is 5,680,522,464 bytes. Do not add overlapping mappings or kernel footprint into an asserted exact total.
+
+For the selected batch-512 quality run, 193 samples recorded a maximum kernel lifetime-peak physical footprint of 889,098,944 bytes (about 0.828 GiB), below the 18-GiB process-footprint criterion. Cancellation, schemas and early-boundary runs also remained below that criterion (maxima 872,354,368; 811,520,512; 728,354,816; 777,261,312 bytes respectively). Every recorded pressure sample was normal, no run observed OOM termination, and maximum sampled system-swap increase over each baseline was zero. Quality's final swap was 40 MiB lower; the others were unchanged. System swap changes are host-wide and not attributable to the model. These measured kernel charges omit parts of mapped/model/graphics accounting; the full model bytes and native allocation records are reported separately. No universal total-memory peak or lower-memory/other-OS support is claimed. Independent resource/selection assessment remains required.
+
 All eight opt-in PDF checks pass under Node 24.21.0 with a 256-MiB V8 heap and strict unhandled rejections (490.773 ms). Ten separate repeated I-9 parses passed as a control; ten overflow/successful-Greek pairs passed after the cleanup fix without unhandled rejection. No library patch or exception suppression was added. These remain algorithm/fixture checks; owned-child deadlines/abort/reap, item-budget isolation, source/relocated closure and final application qualification remain open.
 
 Safety independently confirmed both early-boundary receipts and approved the startup-allocation observation proposal at `058494727e0f62fda6c4da180a0ae71875de905c`. No allocation capture has run. The filtered runner still needs tests-first implementation and sensitive review; the workload configuration stays at verbosity 3.
