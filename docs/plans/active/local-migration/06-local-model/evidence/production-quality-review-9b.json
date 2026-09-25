@@ -1,0 +1,3647 @@
+{
+  "run": "native-9b-production-quality-1790317737281",
+  "testedRevision": "59e03d9914f481432c6a08e5a4e5d9c5e7bafdfd",
+  "timestamp": "2026-09-25T06:28:57.281Z",
+  "candidate": "9b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "passed": true,
+  "memoryBefore": {
+    "physicalFootprintBytes": 1016640,
+    "lifetimePeakPhysicalFootprintBytes": 1033024,
+    "residentBytes": 1179648,
+    "pressure": 1,
+    "swapUsedBytes": 20364132352
+  },
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 1452.939875
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-9B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "65340",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "512",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "production-quality",
+    "passed": true,
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "score": {
+      "manifestSha256": "765ed1cbb0787d31a89988087867ab8db943f57be39c89d8ecef7f1f31595605",
+      "passed": false,
+      "families": {
+        "extraction": {
+          "proposal": {
+            "truePositive": 18,
+            "falseNegative": 3,
+            "falsePositive": 0,
+            "recall": 0.8571428571428571,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 18,
+            "falseNegative": 3,
+            "falsePositive": 0,
+            "recall": 0.8571428571428571,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 6,
+          "negativeTrials": 6,
+          "passed": false
+        },
+        "search": {
+          "proposal": {
+            "truePositive": 9,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 9,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 6,
+          "negativeTrials": 6,
+          "passed": true
+        },
+        "consolidation": {
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 3,
+            "recall": 1,
+            "precision": 0.5
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 3,
+          "negativeTrials": 3,
+          "passed": true
+        },
+        "form": {
+          "proposal": {
+            "truePositive": 12,
+            "falseNegative": 0,
+            "falsePositive": 3,
+            "recall": 1,
+            "precision": 0.8
+          },
+          "validated": {
+            "truePositive": 12,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 6,
+          "negativeTrials": 6,
+          "passed": true
+        }
+      },
+      "overall": {
+        "proposal": {
+          "truePositive": 42,
+          "falseNegative": 3,
+          "falsePositive": 6,
+          "recall": 0.9333333333333333,
+          "precision": 0.875
+        },
+        "validated": {
+          "truePositive": 42,
+          "falseNegative": 3,
+          "falsePositive": 0,
+          "recall": 0.9333333333333333,
+          "precision": 1
+        },
+        "failedTrials": 0,
+        "criticalViolations": 0,
+        "negativeCasesCorrect": 21,
+        "negativeTrials": 21,
+        "passed": true
+      },
+      "trials": [
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        }
+      ]
+    },
+    "amendmentEAccepted": true,
+    "limitsPassed": true,
+    "warmOneCallP95Ms": 10362.813291999999,
+    "measurements": [
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 0,
+        "workflowMs": 10355.600916,
+        "calls": [
+          {
+            "renderedSha256": "6fde19bdabb4d9665e74d591a50b6953b895cd44228b46de04fa76575ca9b0c0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 861,
+            "outputTokens": 279,
+            "elapsedMs": 10337.587125
+          }
+        ],
+        "messages": [
+          "85decb3a8ab9c75f2bdf61352400ed1cf04af857b5fdb6641281674c094d60f3"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 1,
+        "workflowMs": 10435.839582999999,
+        "calls": [
+          {
+            "renderedSha256": "6fde19bdabb4d9665e74d591a50b6953b895cd44228b46de04fa76575ca9b0c0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 861,
+            "outputTokens": 279,
+            "elapsedMs": 10420.158082999998
+          }
+        ],
+        "messages": [
+          "85decb3a8ab9c75f2bdf61352400ed1cf04af857b5fdb6641281674c094d60f3"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 2,
+        "workflowMs": 10810.1875,
+        "calls": [
+          {
+            "renderedSha256": "6fde19bdabb4d9665e74d591a50b6953b895cd44228b46de04fa76575ca9b0c0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 861,
+            "outputTokens": 279,
+            "elapsedMs": 10794.835167000001
+          }
+        ],
+        "messages": [
+          "85decb3a8ab9c75f2bdf61352400ed1cf04af857b5fdb6641281674c094d60f3"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 0,
+        "workflowMs": 10166.256500000003,
+        "calls": [
+          {
+            "renderedSha256": "6193f40f375fee66a1c43c7e786d35fe31611ad8e0a2a928e6427b2dd1585db9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 887,
+            "outputTokens": 248,
+            "elapsedMs": 10150.120458999998
+          }
+        ],
+        "messages": [
+          "d27ff265f032922cadd47b09d6d7a2d72ed310035afd09f89ee1e268fb029ee4"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 1,
+        "workflowMs": 10127.856500000002,
+        "calls": [
+          {
+            "renderedSha256": "6193f40f375fee66a1c43c7e786d35fe31611ad8e0a2a928e6427b2dd1585db9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 887,
+            "outputTokens": 248,
+            "elapsedMs": 10112.564917000003
+          }
+        ],
+        "messages": [
+          "d27ff265f032922cadd47b09d6d7a2d72ed310035afd09f89ee1e268fb029ee4"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 2,
+        "workflowMs": 10362.813291999999,
+        "calls": [
+          {
+            "renderedSha256": "6193f40f375fee66a1c43c7e786d35fe31611ad8e0a2a928e6427b2dd1585db9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 887,
+            "outputTokens": 248,
+            "elapsedMs": 10348.391542000005
+          }
+        ],
+        "messages": [
+          "d27ff265f032922cadd47b09d6d7a2d72ed310035afd09f89ee1e268fb029ee4"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 0,
+        "workflowMs": 6898.472750000001,
+        "calls": [
+          {
+            "renderedSha256": "684f8b5464d246713a1912dfe7c23fcae77142c67f678626808a651aca10e5e3",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 1071,
+            "outputTokens": 125,
+            "elapsedMs": 6872.163624999994
+          }
+        ],
+        "messages": [
+          "3ad59859faab036466cb74b8f82cf09d2dcc0747fb3d2f2655d0ca9c468dff46"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 1,
+        "workflowMs": 6880.42570800001,
+        "calls": [
+          {
+            "renderedSha256": "684f8b5464d246713a1912dfe7c23fcae77142c67f678626808a651aca10e5e3",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 1071,
+            "outputTokens": 125,
+            "elapsedMs": 6863.605541000012
+          }
+        ],
+        "messages": [
+          "3ad59859faab036466cb74b8f82cf09d2dcc0747fb3d2f2655d0ca9c468dff46"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 2,
+        "workflowMs": 6794.337958000004,
+        "calls": [
+          {
+            "renderedSha256": "684f8b5464d246713a1912dfe7c23fcae77142c67f678626808a651aca10e5e3",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 1071,
+            "outputTokens": 125,
+            "elapsedMs": 6779.763500000001
+          }
+        ],
+        "messages": [
+          "3ad59859faab036466cb74b8f82cf09d2dcc0747fb3d2f2655d0ca9c468dff46"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 0,
+        "workflowMs": 4202.095583999995,
+        "calls": [
+          {
+            "renderedSha256": "46fe07fdf27a3ee1d69c992d76b7f640790fcdf86f4d07a02748a8b3c3cd5737",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 828,
+            "outputTokens": 60,
+            "elapsedMs": 4187.708249999996
+          }
+        ],
+        "messages": [
+          "ff2a87259da34d85ae19b59ac191e6938bd957f5137780023e5d44bb7ba18f63"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 1,
+        "workflowMs": 4165.884667000006,
+        "calls": [
+          {
+            "renderedSha256": "46fe07fdf27a3ee1d69c992d76b7f640790fcdf86f4d07a02748a8b3c3cd5737",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 828,
+            "outputTokens": 60,
+            "elapsedMs": 4141.178125000006
+          }
+        ],
+        "messages": [
+          "ff2a87259da34d85ae19b59ac191e6938bd957f5137780023e5d44bb7ba18f63"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 2,
+        "workflowMs": 4106.661374999996,
+        "calls": [
+          {
+            "renderedSha256": "46fe07fdf27a3ee1d69c992d76b7f640790fcdf86f4d07a02748a8b3c3cd5737",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 828,
+            "outputTokens": 60,
+            "elapsedMs": 4091.244000000006
+          }
+        ],
+        "messages": [
+          "ff2a87259da34d85ae19b59ac191e6938bd957f5137780023e5d44bb7ba18f63"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 0,
+        "workflowMs": 4613.891707999996,
+        "calls": [
+          {
+            "renderedSha256": "3a4073352745d52a965e6f8ac7046075c7c7e4316c08c29f6743eea2117ac3a2",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 1028,
+            "outputTokens": 59,
+            "elapsedMs": 4598.3117499999935
+          }
+        ],
+        "messages": [
+          "090b275014c8141be256c2a94e90297ab6ace9fe398871baf9b18152624fcd41"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 1,
+        "workflowMs": 4641.481750000006,
+        "calls": [
+          {
+            "renderedSha256": "3a4073352745d52a965e6f8ac7046075c7c7e4316c08c29f6743eea2117ac3a2",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 1028,
+            "outputTokens": 59,
+            "elapsedMs": 4625.946874999994
+          }
+        ],
+        "messages": [
+          "090b275014c8141be256c2a94e90297ab6ace9fe398871baf9b18152624fcd41"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 2,
+        "workflowMs": 4674.128291999994,
+        "calls": [
+          {
+            "renderedSha256": "3a4073352745d52a965e6f8ac7046075c7c7e4316c08c29f6743eea2117ac3a2",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 1028,
+            "outputTokens": 59,
+            "elapsedMs": 4658.750541999994
+          }
+        ],
+        "messages": [
+          "090b275014c8141be256c2a94e90297ab6ace9fe398871baf9b18152624fcd41"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 0,
+        "workflowMs": 4016.477040999991,
+        "calls": [
+          {
+            "renderedSha256": "b5926ba069ea273ca06dc08cb1ba20d8d08f0b5de8e1c057b7b1bece7feb24a9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 824,
+            "outputTokens": 58,
+            "elapsedMs": 4000.9202919999952
+          }
+        ],
+        "messages": [
+          "0892545f0f04ed73b5f5fc326108553276300eee4bb9772da7b5718a5a0fc852"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 1,
+        "workflowMs": 4238.392667000007,
+        "calls": [
+          {
+            "renderedSha256": "b5926ba069ea273ca06dc08cb1ba20d8d08f0b5de8e1c057b7b1bece7feb24a9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 824,
+            "outputTokens": 58,
+            "elapsedMs": 4223.676625000007
+          }
+        ],
+        "messages": [
+          "0892545f0f04ed73b5f5fc326108553276300eee4bb9772da7b5718a5a0fc852"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 2,
+        "workflowMs": 4209.300124999994,
+        "calls": [
+          {
+            "renderedSha256": "b5926ba069ea273ca06dc08cb1ba20d8d08f0b5de8e1c057b7b1bece7feb24a9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 824,
+            "outputTokens": 58,
+            "elapsedMs": 4194.622791000002
+          }
+        ],
+        "messages": [
+          "0892545f0f04ed73b5f5fc326108553276300eee4bb9772da7b5718a5a0fc852"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 0,
+        "workflowMs": 2970.5796670000127,
+        "calls": [
+          {
+            "renderedSha256": "da2e0393f74c624ca6387d25a7df183380f7102768144e694fa636618f5d00d2",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 427,
+            "outputTokens": 48,
+            "elapsedMs": 2955.3342919999996
+          }
+        ],
+        "messages": [
+          "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 1,
+        "workflowMs": 2955.2357499999925,
+        "calls": [
+          {
+            "renderedSha256": "da2e0393f74c624ca6387d25a7df183380f7102768144e694fa636618f5d00d2",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 427,
+            "outputTokens": 48,
+            "elapsedMs": 2940.9500419999968
+          }
+        ],
+        "messages": [
+          "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 2,
+        "workflowMs": 2806.1612500000047,
+        "calls": [
+          {
+            "renderedSha256": "da2e0393f74c624ca6387d25a7df183380f7102768144e694fa636618f5d00d2",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 427,
+            "outputTokens": 48,
+            "elapsedMs": 2792.4201249999896
+          }
+        ],
+        "messages": [
+          "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 0,
+        "workflowMs": 3819.176542000001,
+        "calls": [
+          {
+            "renderedSha256": "c430a2c4effed845a610a4d9f214195e76839bb3f12ba04e5a590af31402b217",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 490,
+            "outputTokens": 69,
+            "elapsedMs": 3805.9831669999985
+          }
+        ],
+        "messages": [
+          "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 1,
+        "workflowMs": 3864.4007090000086,
+        "calls": [
+          {
+            "renderedSha256": "c430a2c4effed845a610a4d9f214195e76839bb3f12ba04e5a590af31402b217",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 490,
+            "outputTokens": 69,
+            "elapsedMs": 3850.969374999986
+          }
+        ],
+        "messages": [
+          "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 2,
+        "workflowMs": 3862.766667000018,
+        "calls": [
+          {
+            "renderedSha256": "c430a2c4effed845a610a4d9f214195e76839bb3f12ba04e5a590af31402b217",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 490,
+            "outputTokens": 69,
+            "elapsedMs": 3848.8940839999996
+          }
+        ],
+        "messages": [
+          "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 0,
+        "workflowMs": 2769.64833299999,
+        "calls": [
+          {
+            "renderedSha256": "6b1a4bc4b46d7947a4fe84d321fd4aeac3d6bc5320f48863b829cdd48f86a195",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 287,
+            "outputTokens": 55,
+            "elapsedMs": 2756.85824999999
+          }
+        ],
+        "messages": [
+          "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 1,
+        "workflowMs": 2891.0591249999998,
+        "calls": [
+          {
+            "renderedSha256": "6b1a4bc4b46d7947a4fe84d321fd4aeac3d6bc5320f48863b829cdd48f86a195",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 287,
+            "outputTokens": 55,
+            "elapsedMs": 2878.23887500001
+          }
+        ],
+        "messages": [
+          "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 2,
+        "workflowMs": 2859.833291000017,
+        "calls": [
+          {
+            "renderedSha256": "6b1a4bc4b46d7947a4fe84d321fd4aeac3d6bc5320f48863b829cdd48f86a195",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 287,
+            "outputTokens": 55,
+            "elapsedMs": 2847.234792000003
+          }
+        ],
+        "messages": [
+          "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 0,
+        "workflowMs": 3639.080583999981,
+        "calls": [
+          {
+            "renderedSha256": "0c3cb7e68ab137b31cc80da769e1b7a5bd5ca7d90d71f292a5d2c76e1c8f2d7b",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 362,
+            "outputTokens": 70,
+            "elapsedMs": 3625.686875000014
+          }
+        ],
+        "messages": [
+          "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 1,
+        "workflowMs": 3707.174500000023,
+        "calls": [
+          {
+            "renderedSha256": "0c3cb7e68ab137b31cc80da769e1b7a5bd5ca7d90d71f292a5d2c76e1c8f2d7b",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 362,
+            "outputTokens": 70,
+            "elapsedMs": 3692.980165999994
+          }
+        ],
+        "messages": [
+          "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 2,
+        "workflowMs": 3711.9701249999925,
+        "calls": [
+          {
+            "renderedSha256": "0c3cb7e68ab137b31cc80da769e1b7a5bd5ca7d90d71f292a5d2c76e1c8f2d7b",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "failed": false,
+            "inputTokens": 362,
+            "outputTokens": 70,
+            "elapsedMs": 3698.4910840000084
+          }
+        ],
+        "messages": [
+          "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 0,
+        "workflowMs": 6748.217042000004,
+        "calls": [
+          {
+            "renderedSha256": "231ae111ab9cce5053721e3ee97f6554089285b5bd5a4edb1674719f2cec80aa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "failed": false,
+            "inputTokens": 576,
+            "outputTokens": 137,
+            "elapsedMs": 6732.775583999988
+          }
+        ],
+        "messages": [
+          "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 1,
+        "workflowMs": 7014.476832999993,
+        "calls": [
+          {
+            "renderedSha256": "231ae111ab9cce5053721e3ee97f6554089285b5bd5a4edb1674719f2cec80aa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "failed": false,
+            "inputTokens": 576,
+            "outputTokens": 137,
+            "elapsedMs": 7001.057958999998
+          }
+        ],
+        "messages": [
+          "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 2,
+        "workflowMs": 7203.8537079999805,
+        "calls": [
+          {
+            "renderedSha256": "231ae111ab9cce5053721e3ee97f6554089285b5bd5a4edb1674719f2cec80aa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "failed": false,
+            "inputTokens": 576,
+            "outputTokens": 137,
+            "elapsedMs": 7189.680625000008
+          }
+        ],
+        "messages": [
+          "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 0,
+        "workflowMs": 7627.9820840000175,
+        "calls": [
+          {
+            "renderedSha256": "fb90d6898c837de18ada6ca74c9e312e43fae898efa5cc5ce8beb6c6b290d39e",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "failed": false,
+            "inputTokens": 565,
+            "outputTokens": 143,
+            "elapsedMs": 7612.864541999996
+          }
+        ],
+        "messages": [
+          "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 1,
+        "workflowMs": 7982.884832999989,
+        "calls": [
+          {
+            "renderedSha256": "fb90d6898c837de18ada6ca74c9e312e43fae898efa5cc5ce8beb6c6b290d39e",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "failed": false,
+            "inputTokens": 565,
+            "outputTokens": 143,
+            "elapsedMs": 7968.422874999989
+          }
+        ],
+        "messages": [
+          "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 2,
+        "workflowMs": 7731.084458999976,
+        "calls": [
+          {
+            "renderedSha256": "fb90d6898c837de18ada6ca74c9e312e43fae898efa5cc5ce8beb6c6b290d39e",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "failed": false,
+            "inputTokens": 565,
+            "outputTokens": 143,
+            "elapsedMs": 7717.2400420000195
+          }
+        ],
+        "messages": [
+          "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 0,
+        "workflowMs": 9867.213084000017,
+        "calls": [
+          {
+            "renderedSha256": "b4e2527727186061e5a364a673f7a2c2d04d685400da6546093105e8cde40c46",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 913,
+            "outputTokens": 154,
+            "elapsedMs": 9849.061709000001
+          }
+        ],
+        "messages": [
+          "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 1,
+        "workflowMs": 10130.315417000005,
+        "calls": [
+          {
+            "renderedSha256": "b4e2527727186061e5a364a673f7a2c2d04d685400da6546093105e8cde40c46",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 913,
+            "outputTokens": 154,
+            "elapsedMs": 10110.897166999988
+          }
+        ],
+        "messages": [
+          "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 2,
+        "workflowMs": 9799.27591700002,
+        "calls": [
+          {
+            "renderedSha256": "b4e2527727186061e5a364a673f7a2c2d04d685400da6546093105e8cde40c46",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 913,
+            "outputTokens": 154,
+            "elapsedMs": 9783.914790999988
+          }
+        ],
+        "messages": [
+          "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 0,
+        "workflowMs": 10248.24754099999,
+        "calls": [
+          {
+            "renderedSha256": "6291ca5e9f9a9859319a77cab9d5bc3cf437c7c1a651869534e7b75fe68ee2af",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 1187,
+            "outputTokens": 140,
+            "elapsedMs": 10232.632416999986
+          }
+        ],
+        "messages": [
+          "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 1,
+        "workflowMs": 10333.48895900001,
+        "calls": [
+          {
+            "renderedSha256": "6291ca5e9f9a9859319a77cab9d5bc3cf437c7c1a651869534e7b75fe68ee2af",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 1187,
+            "outputTokens": 140,
+            "elapsedMs": 10318.816625000007
+          }
+        ],
+        "messages": [
+          "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 2,
+        "workflowMs": 10356.73000000001,
+        "calls": [
+          {
+            "renderedSha256": "6291ca5e9f9a9859319a77cab9d5bc3cf437c7c1a651869534e7b75fe68ee2af",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 1187,
+            "outputTokens": 140,
+            "elapsedMs": 10341.529249999992
+          }
+        ],
+        "messages": [
+          "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 0,
+        "workflowMs": 5135.006999999983,
+        "calls": [
+          {
+            "renderedSha256": "a889803a7fef9c580ac2baa0210621c04a1ab9097db9b12c126c60acc62dcc67",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 841,
+            "outputTokens": 51,
+            "elapsedMs": 5121.132582999999
+          }
+        ],
+        "messages": [
+          "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 1,
+        "workflowMs": 5279.9162910000305,
+        "calls": [
+          {
+            "renderedSha256": "a889803a7fef9c580ac2baa0210621c04a1ab9097db9b12c126c60acc62dcc67",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 841,
+            "outputTokens": 51,
+            "elapsedMs": 5265.215124999988
+          }
+        ],
+        "messages": [
+          "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 2,
+        "workflowMs": 5612.213541999983,
+        "calls": [
+          {
+            "renderedSha256": "a889803a7fef9c580ac2baa0210621c04a1ab9097db9b12c126c60acc62dcc67",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 841,
+            "outputTokens": 51,
+            "elapsedMs": 5596.455166
+          }
+        ],
+        "messages": [
+          "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 0,
+        "workflowMs": 6713.637583000003,
+        "calls": [
+          {
+            "renderedSha256": "20394a2d516f10f5f04ed0ee1e61780acbeb4e129822b0af85a90258ac626a4e",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 911,
+            "outputTokens": 83,
+            "elapsedMs": 6698.470625000016
+          }
+        ],
+        "messages": [
+          "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 1,
+        "workflowMs": 6968.995333000028,
+        "calls": [
+          {
+            "renderedSha256": "20394a2d516f10f5f04ed0ee1e61780acbeb4e129822b0af85a90258ac626a4e",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 911,
+            "outputTokens": 83,
+            "elapsedMs": 6954.487709000008
+          }
+        ],
+        "messages": [
+          "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 2,
+        "workflowMs": 7118.025208999985,
+        "calls": [
+          {
+            "renderedSha256": "20394a2d516f10f5f04ed0ee1e61780acbeb4e129822b0af85a90258ac626a4e",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 911,
+            "outputTokens": 83,
+            "elapsedMs": 7098.684000000008
+          }
+        ],
+        "messages": [
+          "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417"
+        ],
+        "initialProposalValid": true,
+        "state": "ready"
+      }
+    ],
+    "productionSchemas": [
+      {
+        "id": "arbitrary-json",
+        "passed": true,
+        "elapsedMs": 4385.561166999978,
+        "calls": [
+          {
+            "renderedSha256": "81c78a96fda4f50d11968b561cbf6ff5348a9112cfdcdb11b320c5924d1857d4",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "failed": false,
+            "inputTokens": 110,
+            "outputTokens": 80,
+            "elapsedMs": 4372.446750000003
+          }
+        ]
+      },
+      {
+        "id": "form-defaults",
+        "passed": true,
+        "elapsedMs": 1807.870041999966,
+        "calls": [
+          {
+            "renderedSha256": "5adcf8e8a0657ec392d43158f5e4e7c548905b0716534168e0eb77a5d5b5f0cf",
+            "schemaSha256": "97750150dc2d659f654c187011233fa3395ad56fa873b31cb2e4d0f89a8de17d",
+            "failed": false,
+            "inputTokens": 62,
+            "outputTokens": 32,
+            "elapsedMs": 1793.3417079999927
+          }
+        ]
+      },
+      {
+        "id": "duplicate-literal",
+        "passed": true,
+        "elapsedMs": 4624.706333999988,
+        "calls": [
+          {
+            "renderedSha256": "2d5041bdeb74e5519a04fd73c30c2a95bc09e3dd3af9c989574b2da9e12c4597",
+            "schemaSha256": "8436a1274b7b63514d1feafef89fc82c2841a1b5372d963ab6783f8ba40ca53a",
+            "failed": false,
+            "inputTokens": 370,
+            "outputTokens": 73,
+            "elapsedMs": 4609.688165999949
+          }
+        ]
+      }
+    ],
+    "duplicateChain": {
+      "passed": true,
+      "seededInitialResponses": 1,
+      "nativeConsolidations": 1,
+      "consolidatedResult": true,
+      "mergedAuditEntries": 2,
+      "calls": [
+        {
+          "renderedSha256": "eb61bad3a7d857dfd4fc1b622a12473147f887aa40cf5e9892edc8491eb4d677",
+          "schemaSha256": "fcb4d34ca7365bf0c459ab8da2c9dee99f3318dd8b16af75efb5d77933130d01",
+          "failed": false,
+          "inputTokens": 364,
+          "outputTokens": 70,
+          "elapsedMs": 4621.59354099998
+        }
+      ]
+    },
+    "editableForm": {
+      "passed": true,
+      "elapsedMs": 5956.060624999984,
+      "retainsEditableValue": true
+    },
+    "identityStable": true,
+    "applicationClosed": true
+  },
+  "memory": [
+    {
+      "elapsedMs": 7092.290208,
+      "physicalFootprintBytes": 717787072,
+      "lifetimePeakPhysicalFootprintBytes": 717787072,
+      "residentBytes": 805814272,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 9097.63775,
+      "physicalFootprintBytes": 791761408,
+      "lifetimePeakPhysicalFootprintBytes": 791761408,
+      "residentBytes": 882606080,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 11098.391792,
+      "physicalFootprintBytes": 851399296,
+      "lifetimePeakPhysicalFootprintBytes": 851497600,
+      "residentBytes": 944750592,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 13098.831625,
+      "physicalFootprintBytes": 851841664,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 976715776,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 15100.074292,
+      "physicalFootprintBytes": 851858048,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 976748544,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 17101.020792,
+      "physicalFootprintBytes": 851907200,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 976896000,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 19101.302292,
+      "physicalFootprintBytes": 799412864,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977207296,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 21102.810417,
+      "physicalFootprintBytes": 799445632,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977240064,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 23103.375375,
+      "physicalFootprintBytes": 799642304,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1001799680,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 25104.562875,
+      "physicalFootprintBytes": 799675072,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1001832448,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 27105.610792,
+      "physicalFootprintBytes": 799675072,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1001832448,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 29106.834583,
+      "physicalFootprintBytes": 799658688,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1001816064,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 31107.411,
+      "physicalFootprintBytes": 746623680,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1001930752,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 33109.042417,
+      "physicalFootprintBytes": 747082432,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1010057216,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 35114.699,
+      "physicalFootprintBytes": 765809344,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 952696832,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 37115.792042,
+      "physicalFootprintBytes": 765776576,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 952696832,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 39117.266375,
+      "physicalFootprintBytes": 765776576,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 952696832,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 41118.641167,
+      "physicalFootprintBytes": 762745536,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 954269696,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 43119.533667,
+      "physicalFootprintBytes": 765645504,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 957267968,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 45121.011,
+      "physicalFootprintBytes": 765629120,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 974307328,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 47121.972292,
+      "physicalFootprintBytes": 765629120,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 974356480,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 49123.062042,
+      "physicalFootprintBytes": 765612736,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 974340096,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 51123.266167,
+      "physicalFootprintBytes": 762548928,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 974372864,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 53124.933292,
+      "physicalFootprintBytes": 762565312,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 974536704,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 55126.076208,
+      "physicalFootprintBytes": 762532544,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 990429184,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 57125.666458,
+      "physicalFootprintBytes": 762532544,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 990445568,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 59127.176458,
+      "physicalFootprintBytes": 762532544,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 990445568,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 61128.476458,
+      "physicalFootprintBytes": 762467008,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 990461952,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 63129.10025,
+      "physicalFootprintBytes": 762467008,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 990511104,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 65131.13025,
+      "physicalFootprintBytes": 762467008,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 990511104,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 67136.207333,
+      "physicalFootprintBytes": 762467008,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 990511104,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 69137.226083,
+      "physicalFootprintBytes": 762467008,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 990511104,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 71138.6855,
+      "physicalFootprintBytes": 762843840,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 992821248,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 73140.08675,
+      "physicalFootprintBytes": 762876608,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 993345536,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 75140.245375,
+      "physicalFootprintBytes": 766284480,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1012269056,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 77141.313083,
+      "physicalFootprintBytes": 766317248,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1012416512,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 79141.293875,
+      "physicalFootprintBytes": 762991296,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1012482048,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 81143.008542,
+      "physicalFootprintBytes": 763384512,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1012482048,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 83143.238375,
+      "physicalFootprintBytes": 763515648,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1036877824,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 85144.89475,
+      "physicalFootprintBytes": 763646720,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1036910592,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 87145.663208,
+      "physicalFootprintBytes": 763155200,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1036910592,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 89147.048625,
+      "physicalFootprintBytes": 763515648,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1039581184,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 91147.076167,
+      "physicalFootprintBytes": 763515648,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1039581184,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 93147.466375,
+      "physicalFootprintBytes": 763138816,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1040203776,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 95148.995292,
+      "physicalFootprintBytes": 763499264,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1040285696,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 97149.469792,
+      "physicalFootprintBytes": 763122432,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1040384000,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 99150.96925,
+      "physicalFootprintBytes": 763482880,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1040384000,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 101150.831542,
+      "physicalFootprintBytes": 763155200,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1040433152,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 103152.128083,
+      "physicalFootprintBytes": 763515648,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1040433152,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 105153.17225,
+      "physicalFootprintBytes": 763269888,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1041580032,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 107153.343833,
+      "physicalFootprintBytes": 766595840,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1044512768,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 109155.011083,
+      "physicalFootprintBytes": 763761408,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1044611072,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 111155.617833,
+      "physicalFootprintBytes": 763646720,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1044709376,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 113156.589542,
+      "physicalFootprintBytes": 763745024,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1044709376,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 115157.7405,
+      "physicalFootprintBytes": 763253504,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1044709376,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 117157.855125,
+      "physicalFootprintBytes": 763646720,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1041612800,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 119157.863167,
+      "physicalFootprintBytes": 763319040,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1026441216,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 121158.59525,
+      "physicalFootprintBytes": 763679488,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1023131648,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 123160.185375,
+      "physicalFootprintBytes": 763335424,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1023229952,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 125161.97125,
+      "physicalFootprintBytes": 763695872,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1017053184,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 127163.075292,
+      "physicalFootprintBytes": 763335424,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1017053184,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 129164.884042,
+      "physicalFootprintBytes": 763695872,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1017053184,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 131165.228333,
+      "physicalFootprintBytes": 763712256,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1011302400,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 133166.4835,
+      "physicalFootprintBytes": 763712256,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1011351552,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 135167.366833,
+      "physicalFootprintBytes": 763712256,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1011351552,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 137168.81,
+      "physicalFootprintBytes": 773116672,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1006551040,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 139169.981333,
+      "physicalFootprintBytes": 763712256,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1006583808,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 141170.472833,
+      "physicalFootprintBytes": 789385984,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1004077056,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 143171.443708,
+      "physicalFootprintBytes": 763712256,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1004208128,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 145172.830875,
+      "physicalFootprintBytes": 763712256,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1004208128,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 147173.677375,
+      "physicalFootprintBytes": 763695872,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1004208128,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 149175.012708,
+      "physicalFootprintBytes": 763695872,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1004208128,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 151175.225708,
+      "physicalFootprintBytes": 768365312,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1004208128,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 153177.842542,
+      "physicalFootprintBytes": 763695872,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1004224512,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 155180.179375,
+      "physicalFootprintBytes": 765678336,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1006206976,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 157182.756958,
+      "physicalFootprintBytes": 815551232,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1006190592,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 159185.113042,
+      "physicalFootprintBytes": 815518464,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 997146624,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 161186.365083,
+      "physicalFootprintBytes": 815502080,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 997244928,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 163188.838,
+      "physicalFootprintBytes": 815698688,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985726976,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 165190.223833,
+      "physicalFootprintBytes": 815960832,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 975388672,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 167193.0545,
+      "physicalFootprintBytes": 815928064,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 975388672,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 169194.294792,
+      "physicalFootprintBytes": 815928064,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 975388672,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 171196.231625,
+      "physicalFootprintBytes": 815977216,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977584128,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 173198.430167,
+      "physicalFootprintBytes": 815960832,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977616896,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 175199.393417,
+      "physicalFootprintBytes": 815960832,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977747968,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 177202.059958,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977928192,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 179202.679833,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977928192,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 181204.35375,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977928192,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 183206.34375,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977928192,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 185209.412625,
+      "physicalFootprintBytes": 762843904,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977944576,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 187211.000417,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977944576,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 189213.042167,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977944576,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 191214.324375,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977944576,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 193217.008792,
+      "physicalFootprintBytes": 762286848,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977977344,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 195219.140125,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977977344,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 197219.782542,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 977977344,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 199221.0095,
+      "physicalFootprintBytes": 763220736,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 978075648,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 201221.898042,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 978075648,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 203223.489,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 978075648,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 205225.924375,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 978075648,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 207228.087958,
+      "physicalFootprintBytes": 763237120,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 978108416,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 209229.511583,
+      "physicalFootprintBytes": 763220736,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 978108416,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 211230.382375,
+      "physicalFootprintBytes": 763220736,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 978108416,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 213232.365708,
+      "physicalFootprintBytes": 763220736,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 978108416,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 215234.9715,
+      "physicalFootprintBytes": 763204352,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 979861504,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 217237.238417,
+      "physicalFootprintBytes": 762811136,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981401600,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 219240.139875,
+      "physicalFootprintBytes": 763187968,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981401600,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 221241.876375,
+      "physicalFootprintBytes": 763187968,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981401600,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 223244.173417,
+      "physicalFootprintBytes": 763187968,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981401600,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 225246.765917,
+      "physicalFootprintBytes": 762958592,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981467136,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 227249.090083,
+      "physicalFootprintBytes": 762417920,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981549056,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 229248.961458,
+      "physicalFootprintBytes": 763302656,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981549056,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 231250.647208,
+      "physicalFootprintBytes": 763286272,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981532672,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 233252.747542,
+      "physicalFootprintBytes": 763286272,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981532672,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 235254.727083,
+      "physicalFootprintBytes": 763286272,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981647360,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 237257.192708,
+      "physicalFootprintBytes": 762303232,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981647360,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 239259.434917,
+      "physicalFootprintBytes": 763220736,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981647360,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 241261.085542,
+      "physicalFootprintBytes": 763220736,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981647360,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 243262.854625,
+      "physicalFootprintBytes": 763220736,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981647360,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 245264.950958,
+      "physicalFootprintBytes": 763351808,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 981680128,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 247266.594292,
+      "physicalFootprintBytes": 762942208,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 982056960,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 249268.945458,
+      "physicalFootprintBytes": 763302656,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 982056960,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 251270.864167,
+      "physicalFootprintBytes": 763302656,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 982056960,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 253271.030458,
+      "physicalFootprintBytes": 763302656,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 982056960,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 255273.037542,
+      "physicalFootprintBytes": 763696000,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 982351872,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 257274.874125,
+      "physicalFootprintBytes": 763286400,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 982433792,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 259277.224958,
+      "physicalFootprintBytes": 766677888,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985464832,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 261279.288583,
+      "physicalFootprintBytes": 766677888,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985464832,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 263282.186208,
+      "physicalFootprintBytes": 766677888,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985464832,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 265284.663208,
+      "physicalFootprintBytes": 763728768,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985513984,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 267286.321792,
+      "physicalFootprintBytes": 763319168,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985595904,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 269288.871875,
+      "physicalFootprintBytes": 763712384,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985612288,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 271290.994042,
+      "physicalFootprintBytes": 763712384,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985612288,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 273292.264708,
+      "physicalFootprintBytes": 763712384,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985612288,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 275294.972792,
+      "physicalFootprintBytes": 763630464,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985645056,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 277295.387542,
+      "physicalFootprintBytes": 763302784,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985743360,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 279298.101917,
+      "physicalFootprintBytes": 763679616,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985743360,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 281299.945292,
+      "physicalFootprintBytes": 763597696,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985759744,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 283301.534833,
+      "physicalFootprintBytes": 763204480,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985776128,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 285304.218333,
+      "physicalFootprintBytes": 763614080,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985792512,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 287306.745042,
+      "physicalFootprintBytes": 763237248,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985841664,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 289306.850542,
+      "physicalFootprintBytes": 763597696,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985841664,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 291308.948333,
+      "physicalFootprintBytes": 763597696,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 985890816,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 293309.467542,
+      "physicalFootprintBytes": 763302784,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 986005504,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 295311.221458,
+      "physicalFootprintBytes": 763679616,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 986005504,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 297312.634833,
+      "physicalFootprintBytes": 763679616,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 986005504,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 299314.87175,
+      "physicalFootprintBytes": 763614080,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 986021888,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 301315.118125,
+      "physicalFootprintBytes": 762762112,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 986087424,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 303321.484417,
+      "physicalFootprintBytes": 766497664,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 988938240,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 305323.901917,
+      "physicalFootprintBytes": 763433856,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 988954624,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 307325.426667,
+      "physicalFootprintBytes": 763122560,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 964509696,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 309327.346542,
+      "physicalFootprintBytes": 766497664,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 967491584,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 311328.841042,
+      "physicalFootprintBytes": 766497664,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 967491584,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 313328.767375,
+      "physicalFootprintBytes": 763581312,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1006026752,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 315329.80125,
+      "physicalFootprintBytes": 763581312,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1006026752,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 317331.411625,
+      "physicalFootprintBytes": 763401088,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1006075904,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 319333.79475,
+      "physicalFootprintBytes": 763351936,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1006567424,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 321335.4075,
+      "physicalFootprintBytes": 763204480,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1014562816,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 323336.0315,
+      "physicalFootprintBytes": 763155328,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1014595584,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 325337.170958,
+      "physicalFootprintBytes": 763155328,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1014595584,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 327336.924667,
+      "physicalFootprintBytes": 763220864,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1012137984,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 329337.529958,
+      "physicalFootprintBytes": 762860416,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1012203520,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 331338.811042,
+      "physicalFootprintBytes": 763237248,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1012219904,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    },
+    {
+      "elapsedMs": 333257.67825,
+      "physicalFootprintBytes": 763237248,
+      "lifetimePeakPhysicalFootprintBytes": 883298944,
+      "residentBytes": 1012219904,
+      "pressure": 1,
+      "swapUsedBytes": 20364132352
+    }
+  ],
+  "memoryPassed": true,
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true
+}

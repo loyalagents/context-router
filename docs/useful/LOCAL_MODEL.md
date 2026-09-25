@@ -1,11 +1,16 @@
 # Manual Local Model Preview
 
-- Status: useful; Step 06 candidate, final qualification recorded in the linked implementation evidence
+- Status: useful; Step 06 candidate, final acceptance paused on repeat cancellation evidence
 - Read when: operating the explicit non-listening SQLite model preview
 - Source of truth: `apps/backend/src/infrastructure/local-model/`, `apps/backend/src/config/local-model.config.ts`, and `scripts/local-migration/fixtures/local-model-feasibility/native.mjs`
 - Last reviewed: 2026-09-24
 
 ## Supported Configuration
+
+The review follow-up's native cancellation rerun failed its five-second idle
+verification and safely disabled the session. The configuration below remains
+the selected candidate; PR #165 is draft pending diagnosis and renewed final
+acceptance. See the [current evidence](../plans/active/local-migration/06-local-model/implementation.md#independent-review-follow-up).
 
 Use pinned llama.cpp **b11146**, source `7fe450e19305b828c199d602c23a8337aaa1f03b`, and **Qwen3.5-9B Q4_K_M** on the qualified M1 Max, 64 GiB, macOS 15.1.1 arm64 machine. Other hardware/operating systems remain unqualified. Node must be 24.21.0 and pnpm 10.25.0. The [selection](../plans/active/local-migration/06-local-model/selection.md) records provenance, licenses, historical failures, cancellation/resource evidence and the accepted email-omission limitation; [implementation evidence](../plans/active/local-migration/06-local-model/implementation.md) distinguishes application qualification from CP1.
 
