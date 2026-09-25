@@ -1,0 +1,550 @@
+{
+  "run": "pdf-closure-1790296796338",
+  "testedRevision": "685ca1fcefdbad8b7324f22e7ef401bc357dea28",
+  "node": "v24.21.0",
+  "passed": true,
+  "layouts": [
+    {
+      "name": "source-derived",
+      "inventory": {
+        "files": [
+          {
+            "path": "node_modules/pdfjs-dist/legacy/build/pdf.mjs",
+            "mode": 384,
+            "bytes": 1047456,
+            "sha256": "91e29f812c593904e8d48d022db5ddf93e3443575d4765ac9bfbb42494cfbd8d"
+          },
+          {
+            "path": "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
+            "mode": 384,
+            "bytes": 2395538,
+            "sha256": "df3bf6bf6b8b8dac8a4042d8c4ecf1cf21e1d197e0fe231c192122409eba656b"
+          },
+          {
+            "path": "node_modules/pdfjs-dist/LICENSE",
+            "mode": 384,
+            "bytes": 10174,
+            "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+          },
+          {
+            "path": "node_modules/pdfjs-dist/package.json",
+            "mode": 384,
+            "bytes": 710,
+            "sha256": "3fcf6a22713e12b62ac8430e54bf00547d664b3248b618aa57915840c7f8b617"
+          },
+          {
+            "path": "package.json",
+            "mode": 384,
+            "bytes": 33,
+            "sha256": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035"
+          },
+          {
+            "path": "pdf-worker.mjs",
+            "mode": 384,
+            "bytes": 1129,
+            "sha256": "26f50d92e39e570b12968706cd4fdffb7f36c13621d5470bd0c786aedd7e674d"
+          },
+          {
+            "path": "pdf.mjs",
+            "mode": 384,
+            "bytes": 3714,
+            "sha256": "e518ac9c8e99ddef11e52e0dc0855fce773f04402a4df50260b001c37202f661"
+          }
+        ],
+        "directories": [
+          {
+            "path": "",
+            "mode": 448
+          },
+          {
+            "path": "node_modules",
+            "mode": 448
+          },
+          {
+            "path": "node_modules/pdfjs-dist",
+            "mode": 448
+          },
+          {
+            "path": "node_modules/pdfjs-dist/legacy",
+            "mode": 448
+          },
+          {
+            "path": "node_modules/pdfjs-dist/legacy/build",
+            "mode": 448
+          }
+        ],
+        "sha256": "7834f320761d0833784854fa1f4785b82b91108244154595400ee6adcbe6b373"
+      },
+      "controls": {
+        "passed": true,
+        "localReadPositive": true,
+        "deniedReadRoots": 3,
+        "network": {
+          "nonLoopback": "EPERM",
+          "otherLoopbackPort": "EPERM",
+          "dnsTransport": "EPERM",
+          "resolverUnixIpc": "EPERM"
+        }
+      },
+      "dns": {
+        "machLookupResult": 1100,
+        "permissionDeniedCode": 1100,
+        "nativeLookupResult": 8
+      },
+      "footprints": [
+        {
+          "case": "repository-i9",
+          "inputBytes": 495163,
+          "inputSha256": "1f79a48b5afc599d0b4e05b78cc6fccccfc6a3e25ce02dd8d73cbefb258826f2",
+          "memory": {
+            "lifetimePeakPhysicalFootprintBytes": 65943168,
+            "physicalFootprintBytes": 65943168,
+            "pressure": 1,
+            "residentBytes": 111722496,
+            "swapUsedBytes": 20979122176
+          },
+          "output": {
+            "bytes": 8330,
+            "pages": 2,
+            "items": 496,
+            "textSha256": "2d7583783df0f235ac88cc61af3a6a465c3d5ab8baa6b6fcdd30130af4f8e5af",
+            "canvasPresent": false
+          },
+          "postSampleAcknowledged": true,
+          "ownedChildStoppedAndReaped": true,
+          "elapsedMs": 199.40337499999987,
+          "includesWrapperOverhead": true,
+          "excludesPostSampleTeardownAllocations": true,
+          "ownedRootRemoved": true
+        },
+        {
+          "case": "embedded-greek",
+          "inputBytes": 92185,
+          "inputSha256": "172b17e80491a7adf8b25a7c1a8ddd84442bd0413317bdfcd718caddfac59259",
+          "memory": {
+            "lifetimePeakPhysicalFootprintBytes": 50279040,
+            "physicalFootprintBytes": 50279040,
+            "pressure": 1,
+            "residentBytes": 95961088,
+            "swapUsedBytes": 20979122176
+          },
+          "output": {
+            "bytes": 10,
+            "pages": 1,
+            "items": 1,
+            "textSha256": "c52df369413030d8d1c07cf868551c7d47fae0cb4b336b8a3b2978b9b974e44e",
+            "canvasPresent": false
+          },
+          "postSampleAcknowledged": true,
+          "ownedChildStoppedAndReaped": true,
+          "elapsedMs": 154.9811669999999,
+          "includesWrapperOverhead": true,
+          "excludesPostSampleTeardownAllocations": true,
+          "ownedRootRemoved": true
+        }
+      ],
+      "unchangedAfterExecution": true
+    },
+    {
+      "name": "sealed-relocated",
+      "inventory": {
+        "files": [
+          {
+            "path": "node_modules/pdfjs-dist/legacy/build/pdf.mjs",
+            "mode": 256,
+            "bytes": 1047456,
+            "sha256": "91e29f812c593904e8d48d022db5ddf93e3443575d4765ac9bfbb42494cfbd8d"
+          },
+          {
+            "path": "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
+            "mode": 256,
+            "bytes": 2395538,
+            "sha256": "df3bf6bf6b8b8dac8a4042d8c4ecf1cf21e1d197e0fe231c192122409eba656b"
+          },
+          {
+            "path": "node_modules/pdfjs-dist/LICENSE",
+            "mode": 256,
+            "bytes": 10174,
+            "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+          },
+          {
+            "path": "node_modules/pdfjs-dist/package.json",
+            "mode": 256,
+            "bytes": 710,
+            "sha256": "3fcf6a22713e12b62ac8430e54bf00547d664b3248b618aa57915840c7f8b617"
+          },
+          {
+            "path": "package.json",
+            "mode": 256,
+            "bytes": 33,
+            "sha256": "89c47db7851f89caec72da4f215ebc21cf1e294aeef3b45d2583562d846ab035"
+          },
+          {
+            "path": "pdf-worker.mjs",
+            "mode": 256,
+            "bytes": 1129,
+            "sha256": "26f50d92e39e570b12968706cd4fdffb7f36c13621d5470bd0c786aedd7e674d"
+          },
+          {
+            "path": "pdf.mjs",
+            "mode": 256,
+            "bytes": 3714,
+            "sha256": "e518ac9c8e99ddef11e52e0dc0855fce773f04402a4df50260b001c37202f661"
+          }
+        ],
+        "directories": [
+          {
+            "path": "",
+            "mode": 320
+          },
+          {
+            "path": "node_modules",
+            "mode": 320
+          },
+          {
+            "path": "node_modules/pdfjs-dist",
+            "mode": 320
+          },
+          {
+            "path": "node_modules/pdfjs-dist/legacy",
+            "mode": 320
+          },
+          {
+            "path": "node_modules/pdfjs-dist/legacy/build",
+            "mode": 320
+          }
+        ],
+        "sha256": "b3a24a99c130a986ddd6683a004cb147e2eb5f958bd59f6ef92f099f6e94bc19"
+      },
+      "controls": {
+        "passed": true,
+        "localReadPositive": true,
+        "deniedReadRoots": 4,
+        "network": {
+          "nonLoopback": "EPERM",
+          "otherLoopbackPort": "EPERM",
+          "dnsTransport": "EPERM",
+          "resolverUnixIpc": "EPERM"
+        }
+      },
+      "dns": {
+        "machLookupResult": 1100,
+        "permissionDeniedCode": 1100,
+        "nativeLookupResult": 8
+      },
+      "footprints": [
+        {
+          "case": "repository-i9",
+          "inputBytes": 495163,
+          "inputSha256": "1f79a48b5afc599d0b4e05b78cc6fccccfc6a3e25ce02dd8d73cbefb258826f2",
+          "memory": {
+            "lifetimePeakPhysicalFootprintBytes": 64894528,
+            "physicalFootprintBytes": 64894528,
+            "pressure": 1,
+            "residentBytes": 112214016,
+            "swapUsedBytes": 20979122176
+          },
+          "output": {
+            "bytes": 8330,
+            "pages": 2,
+            "items": 496,
+            "textSha256": "2d7583783df0f235ac88cc61af3a6a465c3d5ab8baa6b6fcdd30130af4f8e5af",
+            "canvasPresent": false
+          },
+          "postSampleAcknowledged": true,
+          "ownedChildStoppedAndReaped": true,
+          "elapsedMs": 212.4915000000001,
+          "includesWrapperOverhead": true,
+          "excludesPostSampleTeardownAllocations": true,
+          "ownedRootRemoved": true
+        },
+        {
+          "case": "embedded-greek",
+          "inputBytes": 92185,
+          "inputSha256": "172b17e80491a7adf8b25a7c1a8ddd84442bd0413317bdfcd718caddfac59259",
+          "memory": {
+            "lifetimePeakPhysicalFootprintBytes": 52016064,
+            "physicalFootprintBytes": 52016064,
+            "pressure": 1,
+            "residentBytes": 97632256,
+            "swapUsedBytes": 20979122176
+          },
+          "output": {
+            "bytes": 10,
+            "pages": 1,
+            "items": 1,
+            "textSha256": "c52df369413030d8d1c07cf868551c7d47fae0cb4b336b8a3b2978b9b974e44e",
+            "canvasPresent": false
+          },
+          "postSampleAcknowledged": true,
+          "ownedChildStoppedAndReaped": true,
+          "elapsedMs": 156.28912500000024,
+          "includesWrapperOverhead": true,
+          "excludesPostSampleTeardownAllocations": true,
+          "ownedRootRemoved": true
+        }
+      ],
+      "unchangedAfterExecution": true
+    }
+  ],
+  "cases": [
+    {
+      "layout": "source-derived",
+      "case": "repository-i9",
+      "inputBytes": 495163,
+      "inputSha256": "1f79a48b5afc599d0b4e05b78cc6fccccfc6a3e25ce02dd8d73cbefb258826f2",
+      "passed": true,
+      "output": {
+        "bytes": 8330,
+        "pages": 2,
+        "items": 496,
+        "textSha256": "2d7583783df0f235ac88cc61af3a6a465c3d5ab8baa6b6fcdd30130af4f8e5af",
+        "canvasPresent": false
+      },
+      "elapsedMs": 197.8481670000001
+    },
+    {
+      "layout": "source-derived",
+      "case": "embedded-greek",
+      "inputBytes": 92185,
+      "inputSha256": "172b17e80491a7adf8b25a7c1a8ddd84442bd0413317bdfcd718caddfac59259",
+      "passed": true,
+      "output": {
+        "bytes": 10,
+        "pages": 1,
+        "items": 1,
+        "textSha256": "c52df369413030d8d1c07cf868551c7d47fae0cb4b336b8a3b2978b9b974e44e",
+        "canvasPresent": false
+      },
+      "elapsedMs": 142.41508399999998
+    },
+    {
+      "layout": "source-derived",
+      "case": "auxiliary-standard-font",
+      "inputBytes": 879,
+      "inputSha256": "c3f8190e423838587ae9cd71f2901ec0f222dc44cf7fbc58344a59fc65c7fc73",
+      "passed": true,
+      "error": "PDF_AUXILIARY",
+      "elapsedMs": 138.3276659999999
+    },
+    {
+      "layout": "source-derived",
+      "case": "encrypted-password",
+      "inputBytes": 908,
+      "inputSha256": "0cd5ce34fec87e0a2a839c2909c7dabf44d5ec6b68e4213b97d9232c8b0bb152",
+      "passed": true,
+      "error": "PDF_ENCRYPTED",
+      "elapsedMs": 126.72366599999987
+    },
+    {
+      "layout": "source-derived",
+      "case": "encrypted-empty-password",
+      "inputBytes": 908,
+      "inputSha256": "9dfcf2c4b6dd67c260f5bb63f75fa58c9d258a724ce2ad6a8c77ed97a48b177b",
+      "passed": true,
+      "error": "PDF_ENCRYPTED",
+      "elapsedMs": 127.65716599999996
+    },
+    {
+      "layout": "source-derived",
+      "case": "malformed",
+      "inputBytes": 9,
+      "inputSha256": "6d689ba9522127c0c759535f5adb7f2c8f182ac280d94eab93cb54e5ec598fa0",
+      "passed": true,
+      "error": "PDF_INVALID",
+      "elapsedMs": 141.6025000000002
+    },
+    {
+      "layout": "source-derived",
+      "case": "empty",
+      "inputBytes": 576,
+      "inputSha256": "2198e6b0122e6d87f454b8ff1f2f1335ada25e8ab74233c71d909cec80935fdd",
+      "passed": true,
+      "error": "PDF_EMPTY",
+      "elapsedMs": 131.00766699999986
+    },
+    {
+      "layout": "source-derived",
+      "case": "image-only",
+      "inputBytes": 912,
+      "inputSha256": "349a4bc8f03f223eaeb70ab3f2c08a5336cf40110dc5b0a19e0cfa2af067a115",
+      "passed": true,
+      "error": "PDF_EMPTY",
+      "elapsedMs": 131.86687499999994
+    },
+    {
+      "layout": "source-derived",
+      "case": "page-limit",
+      "inputBytes": 1168,
+      "inputSha256": "6a36615064c676856e2ba8ac7452fc64693bcb3339119b8af9443fd3fb1a353e",
+      "passed": true,
+      "error": "PDF_LIMIT",
+      "elapsedMs": 128.71016699999996
+    },
+    {
+      "layout": "source-derived",
+      "case": "input-byte-limit",
+      "inputBytes": 10485761,
+      "inputSha256": "0c2725e0d4ae4ae669bdd6c88b253997198efb67d962d217c52e6cbfd318fe0c",
+      "passed": true,
+      "error": "PDF_LIMIT",
+      "elapsedMs": 5.046915999999783
+    },
+    {
+      "layout": "source-derived",
+      "case": "text-byte-limit",
+      "inputBytes": 99406,
+      "inputSha256": "d0bab0709f8e3cee54e87b85331f6f95da39680cdabccf5d854d79cc050c84ef",
+      "passed": true,
+      "error": "PDF_LIMIT",
+      "elapsedMs": 198.72524999999996
+    },
+    {
+      "layout": "source-derived",
+      "case": "real-worker-early-abort",
+      "passed": true,
+      "error": "PDF_CANCELLED",
+      "elapsedMs": 13.067749999999705,
+      "ownedChildStoppedAndReaped": true,
+      "parsingStageAtAbort": "not-observed"
+    },
+    {
+      "layout": "source-derived",
+      "case": "real-worker-after-abort",
+      "passed": true,
+      "exactGreekText": true
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "repository-i9",
+      "inputBytes": 495163,
+      "inputSha256": "1f79a48b5afc599d0b4e05b78cc6fccccfc6a3e25ce02dd8d73cbefb258826f2",
+      "passed": true,
+      "output": {
+        "bytes": 8330,
+        "pages": 2,
+        "items": 496,
+        "textSha256": "2d7583783df0f235ac88cc61af3a6a465c3d5ab8baa6b6fcdd30130af4f8e5af",
+        "canvasPresent": false
+      },
+      "elapsedMs": 196.92079200000035
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "embedded-greek",
+      "inputBytes": 92185,
+      "inputSha256": "172b17e80491a7adf8b25a7c1a8ddd84442bd0413317bdfcd718caddfac59259",
+      "passed": true,
+      "output": {
+        "bytes": 10,
+        "pages": 1,
+        "items": 1,
+        "textSha256": "c52df369413030d8d1c07cf868551c7d47fae0cb4b336b8a3b2978b9b974e44e",
+        "canvasPresent": false
+      },
+      "elapsedMs": 147.86274999999978
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "auxiliary-standard-font",
+      "inputBytes": 879,
+      "inputSha256": "c3f8190e423838587ae9cd71f2901ec0f222dc44cf7fbc58344a59fc65c7fc73",
+      "passed": true,
+      "error": "PDF_AUXILIARY",
+      "elapsedMs": 140.6429579999999
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "encrypted-password",
+      "inputBytes": 908,
+      "inputSha256": "0cd5ce34fec87e0a2a839c2909c7dabf44d5ec6b68e4213b97d9232c8b0bb152",
+      "passed": true,
+      "error": "PDF_ENCRYPTED",
+      "elapsedMs": 127.01591700000017
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "encrypted-empty-password",
+      "inputBytes": 908,
+      "inputSha256": "9dfcf2c4b6dd67c260f5bb63f75fa58c9d258a724ce2ad6a8c77ed97a48b177b",
+      "passed": true,
+      "error": "PDF_ENCRYPTED",
+      "elapsedMs": 126.76774999999998
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "malformed",
+      "inputBytes": 9,
+      "inputSha256": "6d689ba9522127c0c759535f5adb7f2c8f182ac280d94eab93cb54e5ec598fa0",
+      "passed": true,
+      "error": "PDF_INVALID",
+      "elapsedMs": 146.46024999999963
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "empty",
+      "inputBytes": 576,
+      "inputSha256": "2198e6b0122e6d87f454b8ff1f2f1335ada25e8ab74233c71d909cec80935fdd",
+      "passed": true,
+      "error": "PDF_EMPTY",
+      "elapsedMs": 130.6579999999999
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "image-only",
+      "inputBytes": 912,
+      "inputSha256": "349a4bc8f03f223eaeb70ab3f2c08a5336cf40110dc5b0a19e0cfa2af067a115",
+      "passed": true,
+      "error": "PDF_EMPTY",
+      "elapsedMs": 134.24570800000038
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "page-limit",
+      "inputBytes": 1168,
+      "inputSha256": "6a36615064c676856e2ba8ac7452fc64693bcb3339119b8af9443fd3fb1a353e",
+      "passed": true,
+      "error": "PDF_LIMIT",
+      "elapsedMs": 131.13195799999994
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "input-byte-limit",
+      "inputBytes": 10485761,
+      "inputSha256": "0c2725e0d4ae4ae669bdd6c88b253997198efb67d962d217c52e6cbfd318fe0c",
+      "passed": true,
+      "error": "PDF_LIMIT",
+      "elapsedMs": 5.366375000000062
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "text-byte-limit",
+      "inputBytes": 99406,
+      "inputSha256": "d0bab0709f8e3cee54e87b85331f6f95da39680cdabccf5d854d79cc050c84ef",
+      "passed": true,
+      "error": "PDF_LIMIT",
+      "elapsedMs": 200.01074999999992
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "real-worker-early-abort",
+      "passed": true,
+      "error": "PDF_CANCELLED",
+      "elapsedMs": 12.621125000000575,
+      "ownedChildStoppedAndReaped": true,
+      "parsingStageAtAbort": "not-observed"
+    },
+    {
+      "layout": "sealed-relocated",
+      "case": "real-worker-after-abort",
+      "passed": true,
+      "exactGreekText": true
+    }
+  ],
+  "memoryObserver": {
+    "sourceSha256": "019729c55bba94c1ec3edb428bf047b26b15e5388b092ff7dea063c7894d4661",
+    "binarySha256": "65e702638d5571be2533f6327f42efe8f53e741bc75809e76f0e6d329a21717e"
+  },
+  "missingWorkerRejectedWithoutFallback": true,
+  "ownedRootsRemovedAfterReaping": true
+}
