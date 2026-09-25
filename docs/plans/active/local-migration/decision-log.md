@@ -342,6 +342,10 @@ step plan that resolves them.
   Imported reports are background, not approved commands or measured repo proof.
   Neither this proposal nor the [handoff](step-06-handoff.md) activates Step 06.
 
+## Step 06 Implementation And Evidence
+
+PR [#165](https://github.com/loyalagents/context-router/pull/165) implements the independently selected manual llama.cpp b11146 / Qwen3.5-9B Q4_K_M path on the qualified M1 Max/64 GiB/macOS 15.1.1. Actual application quality preserves the FAILED original scorer verdict and applies only human-approved E's known email omission. No other quality threshold changes. Both AI ports share one private claimed session; uncertain work latches unavailable. The explicit `preview-model` composition opens no listener and never owns inference lifecycle. Text and qualified PDF input are supported; images/OCR are unsupported locally, live Harbor comparison was not needed or run. See [selection](06-local-model/selection.md), [implementation evidence](06-local-model/implementation.md) and [manual operation](../../../useful/LOCAL_MODEL.md). Final reviews/gates remain separate; the PR is not merged and later steps are inactive.
+
 ## Deferred Decisions And Owning Steps
 
 | Decision | Owning step |
@@ -349,7 +353,7 @@ step plan that resolves them.
 | Exact supported OS/hardware versions, process topology, signing and distribution constraints; native Windows/Linux qualification after Apple Silicon first (LM-017) | `02-composition-boundaries` and early `09-installation-and-packaging` |
 | Final platform credential protection, keychain/process isolation, and destructive identity reset | `09-installation-and-packaging` |
 | Local database choice/library/bootstrap | Resolved in Step 05 / LM-003; final hardware durability qualification remains Step 09 |
-| Exact local model/runtime, capabilities and manual provisioning policy (LM-018 provisional) | `06-local-model`; managed asset lifecycle in Step 09 |
+| Exact local model/runtime, capabilities and manual provisioning policy (resolved by Step 06 selection; final PR gates pending) | `06-local-model`; managed asset lifecycle in Step 09 |
 | Exact offline guarantee before and after model assets are installed | `06-local-model` and `09-installation-and-packaging` |
 | Local MCP transport mix: streamable HTTP, stdio adapter, or both | `07-local-mcp` |
 | Local UI/desktop shell and process topology | `08-local-ui` and `09-installation-and-packaging` |

@@ -42,3 +42,11 @@ After combined selection approval, root implements CP2 tests first: minimal port
 The actual production adapter, installed parser, source/sealed application packages and real model application workflows must be validated on their own revisions. Deterministic CI cannot depend on live weights. Preserve strict no-model network-denial proof and add separate narrow authenticated model-loopback proof. Fresh complete-diff reviews, the final exact-base twelve-phase local gate, Markdown/whitespace checks and final pushed-head standard CI plus migration CI remain required. No PR is ready until these gates pass; do not merge automatically.
 
 All three read-only reviewers approved their named selection dimensions at that revision. Prior unaffected approvals carry forward; the negative results closed the remaining CP1 evidence. Root now owns CP2 tests-first execution under the unchanged reviewed plan. Requested launch settings were accepted; serving internals remain unverified.
+
+## Application Qualification
+
+The selected configuration also passed [actual production quality](evidence/production-quality-9b.json) at `3e16596c27a5ce0fdc8dd1b2ca4faf2749341cd2`: all 48 trials structurally valid first attempt, all 21 negatives correct, zero accepted critical violations and only E's known email omission. Original FAILED scorer semantics remain. Supplemental actual Nest schemas, seeded duplicate/native consolidation and editable PDF fill passed. High compatibility independently accepted this evidence.
+
+[Production cancellation](evidence/production-cancellation-9b.json) at `6263459ec158fb81b75877696d5fa05a2ffe4bef` passed three witnessed prefill and three decode aborts, six same-runtime followups and exact 17-task post-reap native corroboration. It exercises actual public service readiness, rendering, tokenization, claim and settlement. Its short calls retain production's 2,048-token cap. All original timing limits passed; memory/pressure, identity preservation and owned cleanup also passed. CP1 G and earlier failures remain separate records.
+
+Final complete-diff review and exact local/CI gate evidence belong to [PR #165](https://github.com/loyalagents/context-router/pull/165). No automatic merge or next-step activation is authorized.

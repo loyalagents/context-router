@@ -1,10 +1,10 @@
 # Step 06: Local Model
 
-- Status: active CP2; independently approved selection; application integration in progress
+- Status: active CP3; application integration, native quality and cancellation qualified; candidate for final review/gates
 - Branch: `codex/local-migration-06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Coordinator and sole repository writer: `/root`; all other agents read-only
-- Intended PR count: one cohesive PR; PR pending
+- Intended PR count: one cohesive PR: [#165](https://github.com/loyalagents/context-router/pull/165), draft until final gates pass
 - Last updated: 2026-09-24
 
 The clean-base twelve-phase activation gate passed before preparation documents were copied. The original dirty workspace remains untouched; ten inventoried files transferred with exact content hashes. See the [plan](plan.md#entry-criteria-and-activation-evidence) for source/base, timings, toolchain, integrity and cleanup evidence.
@@ -17,4 +17,4 @@ Existing no-model previews remain supported throughout. No product code or model
 
 The [selection record](selection.md) is independently approved for CP2 tests-first integration at `eee89f960e235daa1f2b5b77312eb114f1fc80ac`. Select pinned llama.cpp b11146 and Qwen3.5-9B Q4_K_M, batch 512, on the observed M1 Max/64 GiB/macOS 15.1.1. The original quality verdict remains FAILED; human-approved E accepts only the known email omission. G cancellation, resources, schemas, PDF closure, manual session claim and remaining negative checks passed their scoped reviews. All 129 deterministic feasibility tests pass. Historical failed runs and amendment decisions remain in the [feasibility record](feasibility.md) and [plan](plan.md).
 
-Root continues application integration, actual application/package qualification, fresh complete-diff reviews, final local gate and final pushed-head CI in this one branch/PR. No production integration or final gate is claimed complete. No new user decision is pending.
+Application integration is implemented; [actual native quality and supplemental workflows](implementation.md#actual-native-application-qualification) pass under unchanged E. Production cancellation also passes. Sealed packaging, fresh complete-diff reviews, the final local gate and final pushed-head CI are separate gates; their final receipts and verdicts are recorded in PR #165. Root continues them in PR #165. No new user decision is pending.

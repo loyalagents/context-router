@@ -1,6 +1,6 @@
 # Step 06: Local Model
 
-- Document status: amendment E accuracy deferral approved; first native cancellation failed; G verification correction approved by user; deterministic fixes pass; affected implementation review precedes the single native retest; no production selection/integration approval
+- Document status: CP1 selection independently approved; CP2 implemented; CP3 actual application quality passed under E and production cancellation passed; candidate for fresh final review/gates in PR #165. Historical failed runs and amendment chronology remain below.
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Branch: `codex/local-migration-06-local-model`
@@ -9,7 +9,7 @@
 - Change classification: `local-only`; retained main-line hosted/reference behavior remains supported
 - Risk profile: sensitive, because inference introduces a credential and data egress boundary, cancellation and owned parser/probe processes
 - Requested coordinator: GPT-6 Astra Extra High; inherited serving settings are not independently exposed and no in-turn setting change is claimed
-- Intended PR count: one cohesive PR with internal checkpoints; PR pending
+- Intended PR count: one cohesive PR with internal checkpoints: [#165](https://github.com/loyalagents/context-router/pull/165), draft until final gates pass
 - Supported outcome: explicit non-listening SQLite local-model preview on the qualified Mac, using one manually provisioned runtime; existing no-model SQLite and PostgreSQL previews and hosted mode retained
 - Last updated: 2026-09-24
 
