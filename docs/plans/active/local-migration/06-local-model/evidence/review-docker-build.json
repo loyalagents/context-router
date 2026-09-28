@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "sourceHead": "89b708b627ab0a7a9c1501888f7367cebb39b4d0",
+  "recordedDate": "2026-09-27",
+  "cleanup": {
+    "userAuthorized": true,
+    "context": "desktop-linux",
+    "before": {
+      "containers": 18,
+      "images": 190,
+      "volumes": 51,
+      "buildCacheRecords": 1793,
+      "customNetworks": 6
+    },
+    "after": {
+      "containers": 0,
+      "images": 0,
+      "volumes": 0,
+      "buildCacheRecords": 0,
+      "customNetworks": 0,
+      "builtInNetworks": 3
+    },
+    "status": "completed",
+    "limitation": "Prune totals can overlap; no combined host-disk reclaimed-byte claim. Subsequent validation creates fresh image/cache."
+  },
+  "build": {
+    "exitCode": 0,
+    "elapsedSeconds": 28.8,
+    "imageId": "sha256:8fe61f118bbddecec0228779d4c15da32922ff010f638ded0635ccff2e3be298",
+    "dockerfile": "apps/backend/Dockerfile",
+    "tag": "context-router-step06-review:followup"
+  },
+  "productionPdfSmoke": {
+    "exitCode": 0,
+    "elapsedSeconds": 0.86,
+    "isolation": {
+      "network": "none",
+      "readOnlyRoot": true,
+      "capabilities": "none",
+      "user": "node",
+      "tmpfsMiB": 64,
+      "input": "read-only public repository I-9 fixture"
+    },
+    "result": {
+      "passed": true,
+      "platform": "linux",
+      "arch": "arm64",
+      "node": "v24.21.0",
+      "pinnedAssets": 4,
+      "devDependencyAbsent": true,
+      "positiveParses": 2,
+      "malformedRejected": true,
+      "spawnedAndReaped": 3,
+      "finalState": "ready"
+    },
+    "limitation": "Production Docker build and PDF packaging evidence only; not Mac model cancellation or full hosted application qualification."
+  },
+  "privateEvidence": [
+    {
+      "path": "/private/tmp/step06-evidence/docker-cleanup-2026-09-27/full-cleanup-receipt.json",
+      "sha256": "7ac47a2124465efe097435515a27b0aee1354c1c6c9f3215270049edf0b62843"
+    },
+    {
+      "path": "/private/tmp/step06-evidence/docker-cleanup-2026-09-27/full-cleanup.log",
+      "sha256": "b281e6c1121275626b82abcca037c7dbd5651bd310f47f900bafda3e081e9f6c"
+    },
+    {
+      "path": "/private/tmp/step06-evidence/review-docker-build-after-cleanup.json",
+      "sha256": "c4fd422a4397a4f1ceefe8500236e1b315605d02110f16dace3b9e57c3be8592"
+    },
+    {
+      "path": "/private/tmp/step06-evidence/review-docker-build-after-cleanup.log",
+      "sha256": "d84696ab847eaa365fd7a1d2f2154ffe84c237db3f15557fdd67032b538f4283"
+    },
+    {
+      "path": "/private/tmp/step06-evidence/review-docker-pdf-smoke.json",
+      "sha256": "a2f592fcb67673640e3dc1518b8f133e0ea2a2bda27ae2a924285f3e97519a8d"
+    },
+    {
+      "path": "/private/tmp/step06-evidence/review-docker-pdf-smoke.log",
+      "sha256": "769cdcc0e719c11fe0a8a3a83f52db63e75a12f83e8d3b0be3234216dc128ede"
+    },
+    {
+      "path": "/private/tmp/step06-evidence/review-docker-pdf-smoke-source.mjs",
+      "sha256": "024ea2f75c0321bdfee30596b5a04f8076e5e1347c7cefb9d1c5fb72d177faa4"
+    }
+  ]
+}

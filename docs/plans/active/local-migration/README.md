@@ -5,7 +5,7 @@
 - Step 05 final evidence: standard CI [35957573071](https://github.com/loyalagents/context-router/actions/runs/35957573071) and dedicated migration gate [35957573023](https://github.com/loyalagents/context-router/actions/runs/35957573023), both successful on that head; reverified 2026-09-24
 - Current primary implementation step: `06-local-model` — [active plan](06-local-model/plan.md), selection approved; implementation and review fixes complete; CP3 paused on repeat cancellation evidence
 - Coordinator and sole repository writer for Step 06: `/root`; all other agents read-only
-- Concrete next action: decide the [bounded cancellation diagnostic](06-local-model/plan.md#follow-up-result-and-proposed-diagnostic-decision); resolve the failure before renewed final gates and ready status for draft PR #165
+- Concrete next action: decide the [revised client-only diagnostic](06-local-model/plan.md#source-inspection-and-revised-client-only-diagnostic) after approved inspection found the required native markers unavailable; resolve cancellation before renewed final gates and ready status for draft PR #165
 - Review date: Step 06 diagnostic decision or 2026-10-08, whichever comes first
 - Last reviewed: 2026-09-25
 
