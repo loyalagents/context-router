@@ -32,12 +32,23 @@ export function parseDiagnosticReceipt(bytes, apiKey) {
 
 /** Dedicated disposable worker. It cannot introduce a seventh operation or raw diagnostic persistence. */
 export async function runDiagnosticWorker({ evidenceRoot, credentialRoot, configuration, runtimeChild, memorySample,
-  sandboxProfile, workerPath = fileURLToPath(new URL('./client-diagnostic-worker.mjs', import.meta.url)), timeoutMs = 6 * 181000 }) {
+  sandboxProfile, workerPath = fileURLToPath(new URL('./client-diagnostic-worker.mjs', import.meta.url)), timeoutMs = 6 * 181000,
+  stopOnMemoryFailure = false, spawn = spawnOwned }) {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 6 * 181000) throw failure();
   const result = { diagnosticValid: false, data: null, workerStoppedAndReaped: false,
     workerRootRemoved: false, workerOutput: null, memory: [], memoryPassed: false };
   const started = performance.now();
-  let root, worker, projection, timer, memoryTimer, memoryFailed = false, stage = 'provision';
+  let root, worker, projection, timer, memoryTimer, memoryFailed = false, memoryStop, stage = 'provision';
+  let signalMemoryFailure;
+  const memoryFailure = new Promise(resolve => { signalMemoryFailure = resolve; });
+  const stopForMemory = () => {
+    if (!stopOnMemoryFailure || !memoryFailed) return;
+    clearInterval(memoryTimer); signalMemoryFailure(null);
+    if (worker && !memoryStop) {
+      try { memoryStop = Promise.resolve(worker.stop()).then(() => true, () => false); }
+      catch { memoryStop = Promise.resolve(false); }
+    }
+  };
   const sample = () => {
     try {
       if (!runtimeChild.running || result.memory.length >= 600) throw failure();
@@ -46,20 +57,26 @@ export async function runDiagnosticWorker({ evidenceRoot, credentialRoot, config
         if (!Number.isSafeInteger(raw[key]) || raw[key] < 0) throw failure(); value[key] = raw[key];
       }
       result.memory.push(value);
+      if (value.pressure !== 1 || value.lifetimePeakPhysicalFootprintBytes > 18 * 1024 ** 3) memoryFailed = true;
     } catch { memoryFailed = true; }
+    stopForMemory();
   };
   try {
     root = await mkdtemp(join(evidenceRoot, 'client-diagnostic-worker-')); await chmod(root, 0o700);
     const configPath = join(root, 'config.json'), outputPath = join(root, 'receipt.json');
     await writeFile(configPath, JSON.stringify({ configuration: { ...configuration, certificate: configuration.certificate.toString('utf8') }, credentialRoot, outputPath }), { flag: 'wx', mode: 0o600 });
     projection = new DiagnosticOutput({ apiKey: configuration.apiKey });
-    sample(); memoryTimer = setInterval(sample, 2000);
+    sample();
+    if (stopOnMemoryFailure && memoryFailed) throw failure();
+    memoryTimer = setInterval(sample, 2000);
     stage = 'spawn';
-    worker = await spawnOwned({ command: sandboxProfile ? '/usr/bin/sandbox-exec' : process.execPath,
+    worker = await spawn({ command: sandboxProfile ? '/usr/bin/sandbox-exec' : process.execPath,
       args: sandboxProfile ? ['-p', sandboxProfile.replaceAll('PORT', String(configuration.port)), process.execPath, workerPath, configPath] : [workerPath, configPath],
       cwd: root, logPath: join(root, 'discard.log'), projection });
+    stopForMemory();
     stage = 'wait';
-    const outcome = await Promise.race([worker.exited, new Promise(resolve => { timer = setTimeout(() => resolve(null), timeoutMs); })]);
+    const outcome = await Promise.race([worker.exited, memoryFailure, new Promise(resolve => { timer = setTimeout(() => resolve(null), timeoutMs); })]);
+    if (stopOnMemoryFailure && memoryFailed) throw failure();
     if (!outcome || worker.logOverflow) throw failure();
     stage = 'receipt';
     const info = await lstat(outputPath);
@@ -69,12 +86,14 @@ export async function runDiagnosticWorker({ evidenceRoot, credentialRoot, config
     result.data = data; sample();
     result.memoryPassed = !memoryFailed && result.memory.length > 0 && result.memory.every(item => item.pressure === 1 && item.lifetimePeakPhysicalFootprintBytes <= 18 * 1024 ** 3);
     result.diagnosticValid = outcome.code === 0 && data.diagnosticValid && data.identityStable === true && data.applicationClosed === true && result.memoryPassed;
-  } catch { result.diagnosticValid = false; result.failureStage = stage; }
+  } catch { result.diagnosticValid = false; result.failureStage = stopOnMemoryFailure && memoryFailed ? 'memory' : stage; }
   finally {
     clearTimeout(timer); clearInterval(memoryTimer);
     try {
       if (worker) {
-        await worker.stop(); result.workerStoppedAndReaped = !worker.running;
+        if (memoryStop) { if (!await memoryStop) throw failure(); }
+        else await worker.stop();
+        result.workerStoppedAndReaped = !worker.running;
         result.workerOutput = { ...projection.snapshot(), overflow: worker.logOverflow };
         if (worker.logOverflow) result.workerOutput.complete = false;
         if (!result.workerOutput.complete || result.workerOutput.invalid || result.workerOutput.leakDetected) result.diagnosticValid = false;

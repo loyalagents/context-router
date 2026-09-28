@@ -23,3 +23,6 @@ and cannot restore qualification. The dedicated launcher discards raw runtime
 and worker output before persistence; do not substitute the raw-log qualification
 launcher or the full cancellation matrix. See the active Step 06 plan and frozen
 `client-diagnostic-manifest.json` for limits and review/execution prerequisites.
+
+
+The separate `local-model-client-reproducibility.mjs` entrypoint executes only the approved three-session diagnostic series. It consumes its own permanent private guard, preserves the original one-shot claim, uses fresh disposable sessions, and stops at the first failed or invalid result. Its opt-in worker memory control stops the exact diagnostic child upon an abnormal sample. These fixtures never grant production inference lifecycle ownership or restore qualification; see the active Step 06 plan.
