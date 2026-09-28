@@ -1378,6 +1378,13 @@
       "id": "local-model-opt-in-qualification",
       "sources": [
         {
+          "path": "scripts/local-migration/fixtures/local-model-feasibility/diagnostic-worker-runner.mjs",
+          "fingerprints": [
+            "spawn = spawnOwned",
+            "worker = await spawn({ command:"
+          ]
+        },
+        {
           "path": "scripts/local-migration/fixtures/local-model-feasibility/client.mjs",
           "fingerprints": [
             "https.request(options(configuration",
@@ -1453,7 +1460,7 @@
           ]
         }
       ],
-      "destination": "opt-in pinned local native runtime, exact owned parser/observer/OpenSSL children, isolated permission-denied loopback/nonloopback/DNS control targets; no remote judge",
+      "destination": "opt-in pinned local native runtime, exact owned parser/observer/diagnostic-worker/OpenSSL children, isolated permission-denied loopback/nonloopback/DNS control targets; no remote judge",
       "payload": "synthetic fixtures, private temporary credentials, exact asset hashes, owned process selectors and bounded numeric/hash/semantic evidence; optional commands are outside weights-independent CI",
       "defaultRuntime": false,
       "disposition": "RETAIN",
@@ -3449,6 +3456,12 @@
       "path": "scripts/local-migration/fixtures/local-model-feasibility/client.mjs",
       "sinks": {
         "http-client": 2
+      }
+    },
+    {
+      "path": "scripts/local-migration/fixtures/local-model-feasibility/diagnostic-worker-runner.mjs",
+      "sinks": {
+        "spawn": 1
       }
     },
     {
