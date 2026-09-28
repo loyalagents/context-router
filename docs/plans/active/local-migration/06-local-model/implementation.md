@@ -142,3 +142,27 @@ Independent outcome verdicts: the same High evidence and Extra High safety revie
 
 
 Both reviewers approved the result documentation and presenting the three-session proposal to the human, with no blocking findings. Extra High approval binds final plan SHA-256 `a9265a0551a25515a0e587152aa216035d13581a37e4fb61b14aa0970d3b7874`; High approved the same proposal substance before the final current-status sentence was corrected. That editorial correction does not change the proposal or evidence. These approvals authorize presentation only, not implementation or execution. Markdown links pass for 154 files, diff whitespace passes, and all ten original preparation files were verified byte-identical again.
+
+
+## Approved Three-Session Diagnostic Result
+
+The user approved the separately reviewed three-session follow-up. Root remained sole writer, with read-only Astra High discovery/evidence review and Astra Extra High privacy/cancellation/process review. Launch settings were explicitly accepted; serving internals remain unverified. Tests first added the bounded series and optional immediate worker-memory failure control. The combined affected suite passed **181/181** in 45,829.123 ms. Independent review identified missing directory synchronization after receipt publication; its regression failed before the fix, then **42/42** affected series/native-fixture tests passed in 2,069.787 ms. Both reviewers approved clean `acb4a218a392e0be82041a22a78bfc230507bb3f` before live execution, carrying forward unaffected full-delta coverage. Production source and compiled digest were unchanged.
+
+The single [three-session series](evidence/client-reproducibility-9b.json) completed on that exact head. Its new immutable series guard is consumed; the original one-run guard remains unchanged. Every fresh session ran exactly five original short baselines and the first original prefill cancellation: **18 inference calls total**, no retries, followups or fourth session. All fifteen baselines passed (289.293–338.487 ms). The artifact/build/prompt/flag/deadline bindings remained fixed by the [series manifest](evidence/client-reproducibility-manifest.json).
+
+| Fresh session | Caller return after abort | Settlement to ready | Last control write-to-headers interval |
+| --- | ---: | ---: | ---: |
+| 1 | 0.881 ms | 3,309.969 ms | 1,040.603 ms |
+| 2 | 1.479 ms | 3,324.650 ms | 1,056.687 ms |
+| 3 | 2.103 ms | 3,249.390 ms | 981.435 ms |
+
+Each cancellation witnessed 512/8,029 input tokens with zero decoded tokens. Every post-abort control request retained the exact socket. Sequence 11 delivered the final fresh idle response with 1,676.216–1,751.488 ms remaining in the unchanged five-second budget. These are client observations and within-clock deltas; local write and receive events do not establish native handling or send times.
+
+All three observations were valid without overflow. Each native process emitted 6,241 scanned/discarded bytes; worker output was empty. Complete bounded cross-chunk credential/sentinel audits found no leak, and all persisted discard files are empty. Offline controls, fresh credential checks, identity stability, application close, wrapper restoration, both exact-child reaps and both root removals passed for every session. Memory samples were normal with unchanged system swap; maximum recorded kernel lifetime peak across sessions was 805,228,800 bytes. This is not total mapped/model/graphics memory accounting. The [evidence index](evidence/client-reproducibility-run-index.json) binds the private receipts, consumed guards and test logs; the exact three session receipts are retained beside the aggregate.
+
+**The prior failure did not reproduce in this bounded series, and its cause remains unresolved.** Three successful exploratory sessions do not establish a failure rate, erase the earlier failed qualification, prove followup serving capacity or restore acceptance. No production fix is established by these observations. CP3 and PR #165 remain paused/draft pending a new disposition; renewed final local and final-head CI acceptance remain outstanding. This series is complete and no further native run is authorized by it.
+
+
+Independent outcome reviewers `/root/repro_evidence` (Astra High) and `/root/repro_safety` (Astra Extra High) both approved the aggregate SHA-256 `786a085f36bb7df8739735f36d692ae1ddf0e8c97faf9e2cb9f2e5feccd5f21d` as valid diagnostic non-reproduction at the tested revision, with no blocking findings. Neither found evidence supporting a specific code fix, restored qualification or additional unchanged repeats. High also verified all nineteen indexed private/test artifact hashes and byte-identical committed receipt copies, then approved the result documentation. The two next directions are separately reviewed native instrumentation, or explicit human acceptance of a possible cancellation timeout requiring manual fresh-session recovery as a selection limitation. Neither direction is approved or implemented here. The five-second deadline, permanent unavailable latch, fresh credentials and operator-owned recovery remain unchanged.
+
+Markdown links pass for 154 files and diff whitespace passes. All ten original uncommitted preparation documents were rehashed unchanged. Both authorization guards remain consumed and the original guard is byte-identical. Final local/CI acceptance is still outstanding; no automatic merge or later-step activation is authorized.

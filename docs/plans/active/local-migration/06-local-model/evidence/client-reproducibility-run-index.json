@@ -1,0 +1,147 @@
+{
+  "testedRevision": "acb4a218a392e0be82041a22a78bfc230507bb3f",
+  "qualification": false,
+  "result": "three valid client-only diagnostic recoveries; prior failure did not reproduce and qualification remains blocked",
+  "privateArtifacts": [
+    {
+      "file": "native-9b-client-reproducibility-1790569957345.json",
+      "bytes": 1058,
+      "sha256": "786a085f36bb7df8739735f36d692ae1ddf0e8c97faf9e2cb9f2e5feccd5f21d"
+    },
+    {
+      "file": "client-diagnostic-three-session.claim.json",
+      "bytes": 290,
+      "sha256": "0d232b644cc62f9cc4e65b2195c380f4142099d110891fa360608d1747c44691"
+    },
+    {
+      "file": "client-diagnostic-approved-2026-09-27.claim.json",
+      "bytes": 196,
+      "sha256": "216314aa5a51efa9686afc428764aec641ed559c4c0d0a8751e2da740f1e340e"
+    },
+    {
+      "file": "repro-live-command.log",
+      "bytes": 179,
+      "sha256": "c985fe76d69efe1b4cd5cc7c4de87d8b8739e8bd67022e81ae177b7c523b36e9"
+    },
+    {
+      "file": "repro-implementation-checkpoint.json",
+      "bytes": 2765,
+      "sha256": "795b03537502e39929c111dbcfa4c4c6a0eeb87c1ed3f1837ff2b37a86f2c890"
+    },
+    {
+      "file": "native-9b-client-reproducibility-1790569957345-session-1.json",
+      "bytes": 20576,
+      "sha256": "4b5ade8c5ba2865062d10dd6358bdf45447b3f695af65ba8b06f8d9ab361e47e"
+    },
+    {
+      "file": "native-9b-client-reproducibility-1790569957345-session-1.json.discard",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "native-9b-client-reproducibility-1790569957345-session-2.json",
+      "bytes": 20402,
+      "sha256": "334d4da904c5148a7dc4b811604bfc21928bd822361de170d269d1aa51e9ad81"
+    },
+    {
+      "file": "native-9b-client-reproducibility-1790569957345-session-2.json.discard",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "native-9b-client-reproducibility-1790569957345-session-3.json",
+      "bytes": 20395,
+      "sha256": "fab68ee02f64afd379938b2aac40cb2392b6185c394ef7fab1e1c536c78842ce"
+    },
+    {
+      "file": "native-9b-client-reproducibility-1790569957345-session-3.json.discard",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "tests": [
+    {
+      "file": "repro-series-red.log",
+      "bytes": 3803,
+      "sha256": "ce525b085805516b18e23b18920b16ad8b227b27acfb1617a510e93002699947"
+    },
+    {
+      "file": "repro-series-green.log",
+      "bytes": 4427,
+      "sha256": "d434a2694c48b02a857385997ab78c186efd21c436c9716df9aeed5e1d2052bc"
+    },
+    {
+      "file": "repro-failure-path-red.log",
+      "bytes": 6324,
+      "sha256": "d9fa8bc2d154a5293075328d47930e8f23f2c514e3f9cb3f2ecf4360943f38d5"
+    },
+    {
+      "file": "repro-failure-path-green.log",
+      "bytes": 5591,
+      "sha256": "34d9e9fa2a453ed19139e35f25e50d42a57b3bca88b1f48edfff68d8c7e91fef"
+    },
+    {
+      "file": "repro-fresh-sessions.log",
+      "bytes": 712,
+      "sha256": "ce3c6d2288f0e023dee798a4b312df681395ad8da06b2d2d92870d722ef19f40"
+    },
+    {
+      "file": "repro-affected-suite.log",
+      "bytes": 19989,
+      "sha256": "a33615c7a0f41c7bb8c49de8d0500365e084d24bbab5570cb1577a507c44a2f8"
+    },
+    {
+      "file": "repro-directory-sync-red.log",
+      "bytes": 5481,
+      "sha256": "7bfcaaff3720fd0256d445c30b24c107c17cf38dc051a165c94f97d72154cf89"
+    },
+    {
+      "file": "repro-directory-sync-green.log",
+      "bytes": 5357,
+      "sha256": "4ed8cf0d5131edbbfa6c5e98a4ee6a26d8d828203840a8a66f3db3a9eea0135f"
+    }
+  ],
+  "reviewers": [
+    {
+      "role": "bounded discovery",
+      "agent": "/root/repro_discovery",
+      "requestedModel": "gpt-6-astra",
+      "requestedEffort": "high",
+      "launchAccepted": true,
+      "servingInternalsVerified": false,
+      "verdict": "completed; bounded recommendations incorporated"
+    },
+    {
+      "role": "independent evidence/compatibility implementation review",
+      "agent": "/root/repro_evidence",
+      "requestedModel": "gpt-6-astra",
+      "requestedEffort": "high",
+      "launchAccepted": true,
+      "servingInternalsVerified": false,
+      "verdict": "APPROVED bounded series only at acb4a218a392e0be82041a22a78bfc230507bb3f"
+    },
+    {
+      "role": "independent privacy/cancellation/process implementation review",
+      "agent": "/root/repro_safety",
+      "requestedModel": "gpt-6-astra",
+      "requestedEffort": "xhigh",
+      "launchAccepted": true,
+      "servingInternalsVerified": false,
+      "verdict": "APPROVED bounded series only at acb4a218a392e0be82041a22a78bfc230507bb3f"
+    }
+  ],
+  "conclusions": {
+    "nativeStageAttribution": false,
+    "priorFailureCauseResolved": false,
+    "followupCapacityTested": false,
+    "qualificationRestored": false,
+    "furtherRunsAuthorized": false
+  },
+  "outcomeReview": {
+    "aggregateSha256": "786a085f36bb7df8739735f36d692ae1ddf0e8c97faf9e2cb9f2e5feccd5f21d",
+    "high": "Approved valid diagnostic non-reproduction and docs/evidence; no blockers",
+    "extraHigh": "Approved valid diagnostic non-reproduction; no privacy/process/cancellation evidence blockers",
+    "specificCodeFixSupported": false,
+    "furtherExecutionApproved": false
+  }
+}
