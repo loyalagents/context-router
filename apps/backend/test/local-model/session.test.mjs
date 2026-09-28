@@ -40,6 +40,50 @@ test('status preserves caller deadlines, invalid deadline rejection and in-fligh
   state.hook = null; assert.equal((await service.getStatus()).state, 'available');
 });
 
+for (const scenario of [
+  { name: 'status caller limit', mode: 'status', deadlineMs: 50, fault: 'timeout', expected: 'deadline' },
+  { name: 'generation caller limit', mode: 'generation', deadlineMs: 50, fault: 'timeout', expected: 'deadline' },
+  { name: 'status own limit', mode: 'status', fault: 'timeout', expected: 'unavailable' },
+  { name: 'status earlier than caller limit', mode: 'status', deadlineMs: 10000, fault: 'timeout', expected: 'unavailable' },
+  { name: 'generation independent readiness limit', mode: 'generation', fault: 'timeout', expected: 'unavailable' },
+  { name: 'rendering caller limit', mode: 'generation', target: '/apply-template', deadlineMs: 4000, fault: 'timeout', expected: 'deadline' },
+  { name: 'rendering independent per-probe limit', mode: 'generation', target: '/apply-template', fault: 'timeout', expected: 'unavailable' },
+  { name: 'status unrelated transport failure', mode: 'status', deadlineMs: 50, fault: 'transport', expected: 'unavailable' },
+  { name: 'cancellation wins over early timeout', mode: 'status', deadlineMs: 50, fault: 'timeout', abort: true, expected: 'cancelled' },
+]) test(`early probe failure preserves its cause: ${scenario.name}`, async (t) => {
+  const { service, state } = await fixture(t);
+  await service.getStatus(); await service.settled();
+  const before = state.calls.length, probe = service.probe;
+  const now = 10000, controller = new AbortController();
+  const clock = t.mock.method(performance, 'now', () => now);
+  const probes = [];
+  const target = scenario.target ?? '/props';
+  service.probe = async (configuration, path, body, options) => {
+    if (path !== target) return probe(configuration, path, body, options);
+    probes.push({ body, key: options.key, timeoutMs: options.timeoutMs });
+    if (scenario.abort) controller.abort();
+    options.onFailure(scenario.fault);
+    throw new Error('Local model unavailable');
+  };
+  try {
+    const options = { signal: controller.signal,
+      ...(scenario.deadlineMs === undefined ? {} : { deadline: now + scenario.deadlineMs }) };
+    const result = scenario.mode === 'status' ? service.getStatus(options) : service.generateText('private-user-data', options);
+    if (scenario.mode === 'status' && scenario.expected === 'unavailable') {
+      assert.deepEqual(await result, { state: 'unavailable', configured: true });
+    } else {
+      await assert.rejects(result, { kind: scenario.expected });
+    }
+    await service.settled();
+    assert.equal(probes.length, 1);
+    if (target === '/props') { assert.equal(probes[0].body, undefined); assert.equal(probes[0].key, null); }
+    assert.equal(probes[0].timeoutMs, Math.min(scenario.deadlineMs ?? 5000, 5000));
+    assert.deepEqual(state.calls.slice(before), target === '/props' ? [] : ['/props', '/props', '/props', '/models']);
+    assert.equal(state.completionBodies.length, 0);
+  } finally { service.probe = probe; clock.mock.restore(); }
+  assert.equal((await service.getStatus()).state, 'available');
+});
+
 test('actual adapter claims once, reports bounded readiness and serves both ports with actual Zod', async (t) => {
   const { service, state, config } = await fixture(t);
   assert.deepEqual(await service.getStatus(), { state: 'available', configured: true });

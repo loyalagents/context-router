@@ -130,6 +130,12 @@ error-type change, not a promise of an HTTP 503 response. A status check reports
 cancellation, invalid deadlines and an earlier caller deadline still reject.
 It does not clear any unavailable latch or change recovery requirements.
 
+If a probe's timeout was limited by the caller/operation deadline, it preserves
+the typed deadline error even when the timer fires fractionally before the
+precise clock boundary. An earlier independent readiness or per-probe timeout
+still reports unavailable. Cancellation retains precedence; budgets and cleanup
+do not change.
+
 Document analysis gives fixed actionable reasons for input/context limits,
 busy inference and unavailable/unsafe configuration. Unavailable messages
 direct operators to check setup first, and to use recovery when a model session

@@ -175,7 +175,7 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
     return task;
   }
 
-  private async json(path: string, data: unknown, controls: AiExecutionOptions, check: () => void, denialKey?: null | 'deliberately-wrong-key') {
+  private async json(path: string, data: unknown, controls: AiExecutionOptions, check: () => void, denialKey?: null | 'deliberately-wrong-key', operationDeadline = controls.deadline) {
     check();
     const remaining = controls.deadline - performance.now();
     if (!Number.isFinite(remaining) || remaining <= 0) throw new AiError('deadline');
@@ -191,6 +191,8 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
       check(); return response.value;
     } catch (error) {
       check();
+      // A fractional timer can fire before the exact clock boundary. Preserve which budget selected it.
+      if (fault === 'timeout' && controls.deadline === operationDeadline && remaining <= 5000) throw new AiError('deadline');
       if (denialKey !== undefined && fault === 'http') {
         this.unavailable = true; throw new AiError('unsafe_configuration');
       }
@@ -200,10 +202,10 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
   private async readiness(controls: AiExecutionOptions, check: () => void) {
     const end = Math.min(controls.deadline, performance.now() + 5000);
     const readinessControls = { ...controls, deadline: end };
-    await this.json('/props', undefined, readinessControls, check, null);
-    await this.json('/props', undefined, readinessControls, check, 'deliberately-wrong-key');
-    const props = await this.json('/props', undefined, readinessControls, check);
-    const models = await this.json('/models', undefined, readinessControls, check);
+    await this.json('/props', undefined, readinessControls, check, null, controls.deadline);
+    await this.json('/props', undefined, readinessControls, check, 'deliberately-wrong-key', controls.deadline);
+    const props = await this.json('/props', undefined, readinessControls, check, undefined, controls.deadline);
+    const models = await this.json('/models', undefined, readinessControls, check, undefined, controls.deadline);
     if (performance.now() >= end) throw new AiError('deadline');
     if (props?.total_slots !== 1 || props?.default_generation_settings?.n_ctx !== 16384 ||
         typeof props?.chat_template !== 'string' || createHash('sha256').update(props.chat_template).digest('hex') !== templateHash ||
