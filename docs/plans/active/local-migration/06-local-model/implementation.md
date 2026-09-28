@@ -1,5 +1,8 @@
 # Step 06 Integration Evidence
 
+Current disposition: the user accepted the manual cancellation-recovery limitation under [H](plan.md#amendment-h-user-accepted-manual-cancellation-recovery-limitation), independently approved by High compatibility/evidence and Extra High safety/architecture reviewers. CP3 closeout has resumed. Historical failed/blocked checkpoint statements below remain chronological evidence; the original cancellation qualification is still FAILED, while H permits the manual preview to proceed under the documented limitation. Final complete-diff reviews and renewed exact-head local/CI gates remain required; their final receipts/verdicts are retained in [PR #165](https://github.com/loyalagents/context-router/pull/165) without changing the tested head solely to append results.
+
+
 Root remains sole repository writer. The three independent selection approvals at `eee89f960e235daa1f2b5b77312eb114f1fc80ac` authorize CP2 under the reviewed plan; fresh final review is separate.
 
 ## Shared AI Contract
@@ -166,3 +169,10 @@ All three observations were valid without overflow. Each native process emitted 
 Independent outcome reviewers `/root/repro_evidence` (Astra High) and `/root/repro_safety` (Astra Extra High) both approved the aggregate SHA-256 `786a085f36bb7df8739735f36d692ae1ddf0e8c97faf9e2cb9f2e5feccd5f21d` as valid diagnostic non-reproduction at the tested revision, with no blocking findings. Neither found evidence supporting a specific code fix, restored qualification or additional unchanged repeats. High also verified all nineteen indexed private/test artifact hashes and byte-identical committed receipt copies, then approved the result documentation. The two next directions are separately reviewed native instrumentation, or explicit human acceptance of a possible cancellation timeout requiring manual fresh-session recovery as a selection limitation. Neither direction is approved or implemented here. The five-second deadline, permanent unavailable latch, fresh credentials and operator-owned recovery remain unchanged.
 
 Markdown links pass for 154 files and diff whitespace passes. All ten original uncommitted preparation documents were rehashed unchanged. Both authorization guards remain consumed and the original guard is byte-identical. Final local/CI acceptance is still outstanding; no automatic merge or later-step activation is authorized.
+
+
+## Accepted Limitation And Final Closeout
+
+The user explicitly chose to accept and document the limitation, with a later investigation if manual recovery becomes too disruptive. H changes selection acceptance only: no code, deadline, native oracle, deterministic test, model/runtime setting or credential/process-ownership rule changed. The failure and unknown frequency remain disclosed, and no diagnostic success is relabelled qualification. Selection, operating instructions and program status now agree. Step 09 owns revisiting runtime reliability/recovery burden; earlier maintenance can be brought forward on user impact, without activating later-step supervision here.
+
+Both affected acceptance reviewers approved H before these documentation changes. Root remains sole writer. The next frozen candidate receives fresh full-diff architecture and safety reviews at explicit Astra Extra High and compatibility/evidence review at explicit Astra High, plus the complete local twelve-phase exact-base gate and both final pushed-head CI workflows. Runtime/model assets remain in approved temporary storage outside Git. All original preparation documents and activation/historical gate receipts remain preserved.

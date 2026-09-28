@@ -1,17 +1,19 @@
 # Manual Local Model Preview
 
-- Status: useful; Step 06 candidate, final acceptance paused on repeat cancellation evidence
+- Status: useful; manual Step 06 configuration with accepted accuracy and cancellation-recovery limitations
 - Read when: operating the explicit non-listening SQLite model preview
 - Source of truth: `apps/backend/src/infrastructure/local-model/`, `apps/backend/src/config/local-model.config.ts`, and `scripts/local-migration/fixtures/local-model-feasibility/native.mjs`
-- Last reviewed: 2026-09-24
+- Last reviewed: 2026-09-27
 
 ## Supported Configuration
 
-The review follow-up's native cancellation rerun failed its five-second idle
-verification and safely disabled the session. The configuration below remains
-the selected candidate; PR #165 is draft pending diagnosis and renewed final
-acceptance. A subsequent bounded client diagnostic recovered in 3.299 seconds,
-but did not reproduce or explain the earlier failure. See the [current evidence](../plans/active/local-migration/06-local-model/implementation.md#independent-review-follow-up).
+The user accepted that cancellation may leave this manual model session
+unavailable and require manual recovery. The five-second cancellation recovery
+test remains failed; later diagnostic successes did not establish its cause or
+frequency. This is a documented availability limitation, not a passing recovery
+qualification. The deadline and safeguards remain unchanged. See the
+[accepted selection limitation](../plans/active/local-migration/06-local-model/selection.md#accepted-cancellation-recovery-limitation)
+and recovery instructions below.
 
 Use pinned llama.cpp **b11146**, source `7fe450e19305b828c199d602c23a8337aaa1f03b`, and **Qwen3.5-9B Q4_K_M** on the qualified M1 Max, 64 GiB, macOS 15.1.1 arm64 machine. Other hardware/operating systems remain unqualified. Node must be 24.21.0 and pnpm 10.25.0. The [selection](../plans/active/local-migration/06-local-model/selection.md) records provenance, licenses, historical failures, cancellation/resource evidence and the accepted email-omission limitation; [implementation evidence](../plans/active/local-migration/06-local-model/implementation.md) distinguishes application qualification from CP1.
 
@@ -79,7 +81,11 @@ At the first model operation/status check, the backend validates and snapshots p
 
 One operation can run; there is no queue. Cancellation rejects promptly. Reuse requires request-specific admission evidence and fresh idle evidence on the retained control connection. Unwitnessed dispatch, lost continuity or uncertain cleanup leaves the session permanently unavailable. Generic idle, polling, configuration reload or reconstructing the backend cannot clear that state.
 
-For recovery or a normal restart, stop **both exact old processes and wait for their actual exits**. Provision a new private root, API key, certificate and private key, then start a new runtime/backend pair. Never delete a claim to reuse its credentials. Application shutdown closes only application-owned connections/parser work; it does not stop the manually owned runtime. Same UID/root/debugger access and compromised host/runtime are outside this protection boundary.
+**Known limitation:** if fresh idle cannot be verified within five seconds after cancellation, AI operations remain unavailable for the rest of that session. The caller's cancellation returns promptly; the failed verification does not authorize another request. This can require operator intervention at an unknown frequency. Non-AI behavior remains available until the operator restarts the backend. Waiting, retrying or polling will not clear the latch.
+
+For recovery or a normal restart, stop **both exact old processes and wait for their actual exits**. Provision a new private root, API key, certificate and private key, then start a new runtime/backend pair. Never delete a claim to reuse its credentials. Application shutdown closes only application-owned connections/parser work; it does not stop the manually owned runtime. Same UID/root/debugger access and compromised host/runtime are outside this protection boundary. Keep the existing database and identity roots and downloaded model/runtime assets; recovery does not require deleting application data or downloading the model again.
+
+Step 09 owns revisiting this recovery burden during runtime and packaging qualification. Bring forward a local-model maintenance investigation if manual recovery becomes disruptive. Future supervision must preserve ownership and must not clear uncertain work merely because a timeout occurred.
 
 ## Capabilities And Limits
 
