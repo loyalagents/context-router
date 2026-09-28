@@ -1,0 +1,153 @@
+{
+  "kind": "client-only-diagnostic-evidence-index",
+  "testedRevision": "9a11ee81e090fc9de7b32629979248d3ad4534a3",
+  "qualification": false,
+  "result": "valid diagnostic; prior failure not reproduced; cancellation qualification remains blocked",
+  "receipt": {
+    "path": "client-diagnostic-9b.json",
+    "bytes": 20627,
+    "sha256": "25e49b4498f7eb254b0b2096fdb38da232a7597fa848e32a9289186e23d90272"
+  },
+  "privateArtifacts": [
+    {
+      "file": "client-diagnostic-approved-2026-09-27.claim.json",
+      "bytes": 196,
+      "sha256": "216314aa5a51efa9686afc428764aec641ed559c4c0d0a8751e2da740f1e340e"
+    },
+    {
+      "file": "client-diagnostic-live-command.log",
+      "bytes": 116,
+      "sha256": "e196dd441a16cc18991d7785a71cb215b388e0a1e3756b372651d0323ab94ee1"
+    },
+    {
+      "file": "client-diagnostic-implementation-checkpoint.json",
+      "bytes": 3425,
+      "sha256": "93cde072b5030ed11e6a9a69431feddb7c7118a0a988c1ea5fef53e7d3af5bd8"
+    },
+    {
+      "file": "client-diagnostic-runtime-tree.json",
+      "bytes": 7079,
+      "sha256": "6597a71c5d8d2723dab0f851efc351a7e9dcbccd1b0143a526a6df672a69179e"
+    },
+    {
+      "file": "native-9b-client-diagnostic-1790557072091.json",
+      "bytes": 20627,
+      "sha256": "25e49b4498f7eb254b0b2096fdb38da232a7597fa848e32a9289186e23d90272"
+    },
+    {
+      "file": "native-9b-client-diagnostic-1790557072091.discard",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "implementationTests": [
+    {
+      "file": "client-diagnostic-observer-red.log",
+      "sha256": "cd65dc67f750dbaa66c5ed742b5ad430d943fd8d447b45fccce06adf5c91f07a"
+    },
+    {
+      "file": "client-diagnostic-observer-green.log",
+      "sha256": "10e80e6e0426191968cac0e36e05ac8a998f606d969ddebf02c407fb78bab9e7"
+    },
+    {
+      "file": "client-diagnostic-runner-red.log",
+      "sha256": "821c6f068c09ed65d0ee16071a3dd5317dcc8487cbb47ef85ffe33744cebf9a6"
+    },
+    {
+      "file": "client-diagnostic-runner-green.log",
+      "sha256": "1e6687b50395e66aa445e91b65bb5247e0420c5b040ea4fb77c281eacb2939c8"
+    },
+    {
+      "file": "client-diagnostic-native-red.log",
+      "sha256": "2b81362c553776d3c1e0ac5198ed6e9d4359ef199700b5c7a28ec398e4dc7fd4"
+    },
+    {
+      "file": "client-diagnostic-native-green.log",
+      "sha256": "66035de714be4785c86f14a5e82a36b602d3697018ce7b5a400fa8359d9fff56"
+    },
+    {
+      "file": "client-diagnostic-worker-red.log",
+      "sha256": "f437108f0d4d4db4a4cc615b0b071bd126ed590341bc160fc1c3a1849f94d88c"
+    },
+    {
+      "file": "client-diagnostic-worker-green.log",
+      "sha256": "ab2a9bb48449df0c5fdcbf4eab93e122fb9d86b7ba7029367fa5ac4fac9898e0"
+    },
+    {
+      "file": "client-diagnostic-protocol-red.log",
+      "sha256": "b0dd1cde55d92ca841cdb60c7eeea49abec988ee3bd218005734635eb9a968a7"
+    },
+    {
+      "file": "client-diagnostic-protocol-green.log",
+      "sha256": "9aabccaa3b35b544832178591387d8ad5644f434e241c41f877f03e1a0b3374f"
+    },
+    {
+      "file": "client-diagnostic-coverage-red.log",
+      "sha256": "0499ad49c900e6412f0c07ce430c56682fa95c53b6772783d175dc331a80ad14"
+    },
+    {
+      "file": "client-diagnostic-coverage-green.log",
+      "sha256": "f3128be81eeddb06f13a6584973bad8b13c584f48c87f59dd876fc96effb8c34"
+    },
+    {
+      "file": "client-diagnostic-affected-suite.log",
+      "sha256": "c8df1e6b156bf3227b7d9d6c5f6255a3a9205d97cae823fc724dfe230af247df"
+    }
+  ],
+  "reviewers": [
+    {
+      "role": "bounded discovery",
+      "agent": "/root/client_diagnostic_discovery",
+      "model": "gpt-6-astra",
+      "effort": "high",
+      "launchAccepted": true,
+      "servingInternalsVerified": false,
+      "verdict": "no implementation blocker in discovery; review still required"
+    },
+    {
+      "role": "fresh privacy/cancellation/process ownership",
+      "agent": "/root/client_diagnostic_impl_safety",
+      "model": "gpt-6-astra",
+      "effort": "xhigh",
+      "launchAccepted": true,
+      "servingInternalsVerified": false,
+      "verdict": "APPROVED: no blocking findings for one bounded client-only diagnostic",
+      "reviewedHead": "9a11ee81e090fc9de7b32629979248d3ad4534a3",
+      "outcomeVerdict": "Accepted valid diagnostic evidence only; no blocking findings; qualification unresolved"
+    },
+    {
+      "role": "fresh compatibility/tests/evidence",
+      "agent": "/root/client_diagnostic_impl_evidence",
+      "model": "gpt-6-astra",
+      "effort": "high",
+      "launchAccepted": true,
+      "servingInternalsVerified": false,
+      "verdict": "APPROVED: no blocking findings for one bounded client-only diagnostic",
+      "reviewedHead": "9a11ee81e090fc9de7b32629979248d3ad4534a3",
+      "outcomeVerdict": "Accepted valid diagnostic evidence only; no blocking findings; qualification unresolved"
+    }
+  ],
+  "preparationFilesVerifiedUnchanged": 10,
+  "limits": {
+    "attempts": 1,
+    "baselines": 5,
+    "prefill": 1,
+    "inferenceCalls": 6,
+    "followups": 0,
+    "retries": 0
+  },
+  "conclusions": {
+    "causeResolved": false,
+    "nativeStageAttribution": false,
+    "followupCapacityTested": false,
+    "qualificationRestored": false,
+    "furtherExecutionApproved": false
+  },
+  "nextProposalReview": {
+    "userApproved": false,
+    "executionAuthorized": false,
+    "planSha256": "a9265a0551a25515a0e587152aa216035d13581a37e4fb61b14aa0970d3b7874",
+    "highVerdict": "Approved presentation only; same proposal substance before editorial current-status correction",
+    "extraHighVerdict": "Approved presentation only at final plan digest; no blockers"
+  }
+}
