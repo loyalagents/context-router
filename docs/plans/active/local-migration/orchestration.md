@@ -5,7 +5,7 @@
 - Current primary implementation step: `06-local-model` — [active plan](06-local-model/plan.md), selection approved; CP2 and review fixes implemented; CP3 paused on repeat cancellation evidence in [PR #165](https://github.com/loyalagents/context-router/pull/165)
 - Coordinator and sole repository writer for Step 06: `/root`; all other agents read-only
 - Step 05 activation/history evidence: retained in its [plan](05-local-database-runtime/plan.md#activation-gate); recording the observed merge here does not activate Step 06
-- Concrete next action: decide the [revised client-only diagnostic](06-local-model/plan.md#source-inspection-and-revised-client-only-diagnostic) after approved inspection found the required native markers unavailable; resolve cancellation before renewed final gates and ready status for draft PR #165
+- Concrete next action: complete tests and fresh affected review for the [approved client-only diagnostic](06-local-model/plan.md#source-inspection-and-revised-client-only-diagnostic), then perform its single bounded run; cancellation resolution and renewed final gates remain required before ready status for draft PR #165
 - Review date: Step 06 PR review or 2026-10-08, whichever comes first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`

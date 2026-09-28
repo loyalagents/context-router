@@ -15,3 +15,11 @@ this directory exercise the actual compiled Nest service. Their current frozen
 manifests use the `-review.json` suffix; original manifests and receipts remain
 unchanged as historical evidence. This distinction prevents accidental claims
 that CP1 copies or an old compiled digest qualify a changed production build.
+
+The `client-diagnostic*`, `client-observer` and `diagnostic-*` fixtures are the
+separately approved client-only cancellation investigation. They preserve the
+production build and all native settings, observe at most six inference calls,
+and cannot restore qualification. The dedicated launcher discards raw runtime
+and worker output before persistence; do not substitute the raw-log qualification
+launcher or the full cancellation matrix. See the active Step 06 plan and frozen
+`client-diagnostic-manifest.json` for limits and review/execution prerequisites.
