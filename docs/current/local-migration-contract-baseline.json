@@ -2800,6 +2800,12 @@
       "reference": "/health"
     },
     {
+      "path": "docs/useful/LOCAL_MODEL.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
       "path": "docs/useful/local-orchestrator-commands.md",
       "contract": "http",
       "kind": "route",
