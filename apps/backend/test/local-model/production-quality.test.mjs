@@ -1,9 +1,19 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { cases } from '../../../../scripts/local-migration/fixtures/local-model-feasibility/cases.mjs';
 import { scoreQuality } from '../../../../scripts/local-migration/fixtures/local-model-feasibility/quality.mjs';
-import { buildProductionManifest, requireFrozenManifest, acceptAmendmentE, observeService } from '../../../../scripts/local-migration/fixtures/local-model-feasibility/production-quality.mjs';
+import { buildProductionManifest, requireFrozenManifest, acceptAmendmentE, observeService, runProductionQuality, productionManifestPath } from '../../../../scripts/local-migration/fixtures/local-model-feasibility/production-quality.mjs';
+
+async function mockManifest(t, manifest) {
+  const root = await mkdtemp(join(tmpdir(), 'step06-mock-quality-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const manifestPath = join(root, 'manifest.json');
+  await writeFile(manifestPath, JSON.stringify(manifest), { flag: 'wx', mode: 0o600 });
+  return { manifestPath };
+}
 
 test('production manifest preserves all original expectations and rejects changed build/prompt/schema inputs', async () => {
   const original = JSON.parse(await readFile(new URL('../../../../docs/plans/active/local-migration/06-local-model/evidence/quality-manifest.json', import.meta.url)));
@@ -41,13 +51,26 @@ test('attempt observer preserves malformed initial output, correction and failed
   assert.equal(observer.current.firstRaw,'invalid'); assert.equal(observer.current.calls.length,3); observer.restore();
 });
 
-test('production runner fails changed correction framing or dispatched schema despite correct final domain results', async () => {
+test('production runner rejects mismatched explicit and historical default manifests before touching the service', async (t) => {
+  const manifest = await buildProductionManifest();
+  const options = await mockManifest(t, { ...manifest, buildSha256: 'wrong-build' });
+  let serviceAccesses = 0;
+  const service = new Proxy({}, { get() { serviceAccesses++; throw new Error('Service must not be accessed'); } });
+  await assert.rejects(runProductionQuality(service, undefined, options), /Frozen production inputs changed/);
+  const historical = JSON.parse(await readFile(productionManifestPath, 'utf8'));
+  assert.notEqual(manifest.buildSha256, historical.buildSha256);
+  await assert.rejects(runProductionQuality(service), /Frozen production inputs changed/);
+  assert.equal(serviceAccesses, 0);
+});
+
+test('production runner fails changed correction framing or dispatched schema despite correct final domain results', async (t) => {
+  // This mock-only run freezes today's build; historical native receipts remain immutable.
+  const options = await mockManifest(t, await buildProductionManifest());
   const { createRequire }=await import('node:module'); const req=createRequire(import.meta.url);
   const { LOCAL_AI_CAPABILITIES }=req('../../dist/domains/shared/ports/ai-execution.js');
   const { localJsonSchema }=req('../../dist/infrastructure/local-model/schema.js');
   const { fixtureReply }=await import('../../../../scripts/local-migration/fixtures/local-model-feasibility/consumers.mjs');
   const { userMessage }=await import('../../../../scripts/local-migration/fixtures/local-model-feasibility/freeze.mjs');
-  const { runProductionQuality }=await import('../../../../scripts/local-migration/fixtures/local-model-feasibility/production-quality.mjs');
   for (const mismatch of ['none','message','schema','duplicate']) {
     let logical=0,raw='',pendingDuplicate=false;
     const service={capabilities:LOCAL_AI_CAPABILITIES,getStatus:async()=>({state:'available'}),settled:async()=>{},probe:async()=>({value:{}}),client:{state:'ready',complete:async()=>({text:raw,inputTokens:1,outputTokens:2})}};
@@ -70,7 +93,7 @@ test('production runner fails changed correction framing or dispatched schema de
       return schema.parse(JSON.parse(result.text));
     };
     service.generateStructured=(p,s,o)=>generate(p,undefined,s,o);service.generateStructuredWithFile=(p,f,s,o)=>generate(p,f,s,o);
-    const result=await runProductionQuality(service);
+    const result=await runProductionQuality(service, undefined, options);
     assert.equal(result.measurements.length,48);assert.equal(result.passed,mismatch==='none');assert.equal(result.score.trials[0].failed,mismatch!=='none');
     assert.equal(result.measurements[0].initialProposalValid,mismatch==='duplicate');assert.equal(result.measurements[0].calls.length,2);
   }

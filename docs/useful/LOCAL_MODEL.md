@@ -3,7 +3,7 @@
 - Status: useful; manual Step 06 configuration with accepted accuracy and cancellation-recovery limitations
 - Read when: operating the explicit non-listening SQLite model preview
 - Source of truth: `apps/backend/src/infrastructure/local-model/`, `apps/backend/src/config/local-model.config.ts`, and `scripts/local-migration/fixtures/local-model-feasibility/native.mjs`
-- Last reviewed: 2026-09-27
+- Last reviewed: 2026-09-28
 
 ## Supported Configuration
 
@@ -67,7 +67,22 @@ Choose an unused numeric port. Start exactly one directly bound runtime, exclusi
 
 Do not enable TRACE/DEBUG or request-body logging. Do not put key bytes in argv, environment, logs or issues. Other clients, proxies, routers, shared listeners, reuse-port, copied certificates and replacing the runtime behind existing credentials are unsupported. TLS pins the configured certificate and literal peer; it cannot attest the binary/model or prove the operator followed the exclusive-session rules.
 
-In a separate terminal, select the same credential-root path and port, plus the existing database and identity root paths, then run:
+The example certificate expires **one day after creation**, not one day after backend startup. Plan the session around its actual expiry time. Expiry makes new verified TLS connections fail; an already-established connection is not an application-level expiry timer. Each new model operation performs fresh readiness connections, so an expired certificate prevents further operations. Use the fresh-session recovery below; do not extend or replace credentials inside a consumed session.
+
+In a separate terminal, select the same credential-root path and port, plus the existing database and identity root paths. **Wait for the runtime to finish loading before the first application model operation or status check.** Application initialization alone does not establish model readiness. A bounded public health check is:
+
+```sh
+curl -q --noproxy '*' --cacert "$LOCAL_MODEL_SESSION_ROOT/server-cert.pem" \
+  --connect-timeout 2 --max-time 5 --fail --silent --show-error \
+  --output /dev/null --write-out '%{http_code}\n' \
+  "https://127.0.0.1:$LOCAL_MODEL_PORT/health"
+```
+
+Proceed only if the command succeeds **and prints `200`**. A `503` means loading is incomplete; wait and manually repeat this bounded check. Other failures require checking setup. The command ignores ambient curl configuration, bypasses proxies, verifies the configured certificate and does not send an API key, follow redirects or submit inference. Its public health result does not replace the application's authenticated checks and missing/wrong-key controls.
+
+The pinned runtime [starts its HTTP listener before model loading](https://github.com/ggml-org/llama.cpp/blob/7fe450e19305b828c199d602c23a8337aaa1f03b/tools/server/server.cpp#L425) and [checks loading state before authentication](https://github.com/ggml-org/llama.cpp/blob/7fe450e19305b828c199d602c23a8337aaa1f03b/tools/server/server-http.cpp#L280). If the application's first missing-key probe receives loading `503` instead of the required `401`, the application permanently marks the session unavailable without sending user data. A later healthy response cannot recover that consumed session; follow fresh-session recovery. This startup prerequisite is separate from the accepted cancellation-recovery limitation.
+
+After runtime readiness is confirmed, run:
 
 ```sh
 pnpm --filter backend local-identity preview-model
@@ -93,13 +108,17 @@ Text, structured JSON and strict UTF-8 files support `text/plain`, `text/markdow
 
 Structured output must pass actual Zod and domain checks. The model proposes extraction/search/consolidation/form actions; ownership, grants, protected definitions and form constraints remain authoritative. Editable AcroForm filling uses local extraction/validation/filling. The accepted 9B quality limitation is omission of the known personal-email fact in the adversarial extraction fixture; it is not permission for other regressions. Live remote Harbor/provider comparison was unnecessary and was not run.
 
+If duplicate consolidation raises a typed local error, including busy or invalid response after its allowed correction, the whole document analysis fails without publishing partial suggestions or choosing the first candidate as a fallback. Invalid response maps to the existing parse-error envelope; busy and availability failures map to the AI-error envelope. This discards that analysis's proposed results, not persisted preferences. Existing generic hosted-error fallback remains unchanged.
+
 | Bound | Limit |
 | --- | --- |
 | Context / rendered input / output | 16,384 / 12,000 / 2,048 tokens |
 | Prompt plus decoded document / schema / response | 128 KiB / 32 KiB / 256 KiB |
 | File / PDF pages | 10 MiB / 50 pages |
-| Workflow / inference / readiness / parser | 180 s / 120 s / 5 s / 10 s, clamped to one caller deadline |
+| Workflow / adapter operation / readiness / parser | 180 s / 120 s / 5 s / 10 s, clamped to one caller deadline |
 | Correction | At most one for completed invalid JSON/Zod; no transport/auth/limit/cancellation retry |
+
+The 120-second cap is shared by one complete adapter operation: preparation/parsing, readiness, rendering/tokenization, completion and its optional correction. Those stages do not receive fresh 120-second budgets. Extraction and any subsequent duplicate-consolidation operations share the outer 180-second workflow deadline; every operation is also limited by that deadline's remaining time. Cancellation settlement retains its separate absolute five-second bound and may continue after the caller has received cancellation.
 
 Output is buffered, never silently truncated or salvaged. Typed errors include unavailable/unsafe configuration, busy, cancellation/deadline, unsupported input, size/context bounds and invalid response; existing public envelopes stay sanitized. The parser's 256-MiB JavaScript heap limit is not a total resident-memory guarantee. Native selection measured footprint below 18 GiB on the stated Mac; engine allocations and mapped weights overlap and are not a universal peak or support claim for smaller hardware.
 
@@ -112,8 +131,10 @@ cancellation, invalid deadlines and an earlier caller deadline still reject.
 It does not clear any unavailable latch or change recovery requirements.
 
 Document analysis gives fixed actionable reasons for input/context limits,
-busy inference and unavailable/unsafe configuration. Smaller documents can
-resolve size limits; a consumed or uncertain session requires the manual
+busy inference and unavailable/unsafe configuration. Unavailable messages
+direct operators to check setup first, and to use recovery when a model session
+is already configured; ordinary no-model previews have no model session to
+recover. Smaller documents can resolve size limits; a consumed or uncertain session requires the manual
 recovery above. Hosted generic errors stay unchanged. `PDF_INVALID` still
 includes malformed input and parser infrastructure failures; a more precise
 public distinction belongs to Step 08 and must not mislabel all such failures

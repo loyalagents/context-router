@@ -185,6 +185,31 @@ for (const status of [302, 403, 500]) test(`negative-control status ${status} ca
   assert.deepEqual(state.calls, ['/props']);
 });
 
+for (const firstCall of ['generation', 'status']) test(`loading before the first ${firstCall} permanently rejects the session without sending user data`, async (t) => {
+  const { service, state } = await fixture(t);
+  state.authBypass = async (_req, res) => {
+    res.writeHead(503).end(JSON.stringify({ error: { message: 'Loading model' } }));
+    return true;
+  };
+  if (firstCall === 'generation') {
+    await assert.rejects(service.generateText('private-user-data'), { kind: 'unsafe_configuration' });
+  } else {
+    assert.deepEqual(await service.getStatus(), { state: 'unavailable', configured: true });
+  }
+  await service.settled();
+  assert.deepEqual(state.calls, ['/props']);
+  assert.deepEqual(state.auth, [undefined]);
+  assert.equal(state.completionBodies.length, 0);
+
+  // Becoming healthy later cannot rehabilitate the already-consumed session.
+  state.authBypass = null;
+  assert.deepEqual(await service.getStatus(), { state: 'unavailable', configured: true });
+  await assert.rejects(service.generateText('private-user-data'), { kind: 'unavailable' });
+  assert.deepEqual(state.calls, ['/props']);
+  assert.deepEqual(state.auth, [undefined]);
+  assert.equal(state.completionBodies.length, 0);
+});
+
 test('negative controls retain admission and close on caller cancellation', async (t) => {
   const { service, state } = await fixture(t); const controller = new AbortController();
   let entered; const waiting = new Promise((resolve) => { entered = resolve; });

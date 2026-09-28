@@ -184,7 +184,7 @@ describe("PreferenceExtractionService", () => {
     expect(mockAiStructuredService.generateStructured.mock.calls[0][2]).toMatchObject({ signal: controller.signal, deadline });
   });
 
-  it.each(['cancelled', 'deadline', 'unavailable'] as const)("does not turn %s in duplicate consolidation into first-candidate success", async (kind) => {
+  it.each(['cancelled', 'deadline', 'unavailable', 'invalid_response', 'busy'] as const)("does not turn %s in duplicate consolidation into first-candidate success", async (kind) => {
     Object.defineProperty(mockAiStructuredService, 'capabilities', { value: LOCAL_AI_CAPABILITIES });
     mockPreferenceService.getActivePreferences.mockResolvedValue([]);
     const suggestion = (slug: string) => ({ slug, operation: 'CREATE', newValue: 'synthetic', confidence: 0.9, sourceSnippet: 'synthetic' });

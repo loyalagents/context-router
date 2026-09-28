@@ -12,8 +12,8 @@ describe('DocumentAnalysisService local errors', () => {
     ['input_limit', AnalysisStatus.AI_ERROR, 'Document analysis input is too large. Try a smaller document.'],
     ['context_limit', AnalysisStatus.AI_ERROR, 'Document analysis exceeds the local model context. Try a smaller document.'],
     ['busy', AnalysisStatus.AI_ERROR, 'The local model is busy. Wait for the current operation to finish.'],
-    ['unavailable', AnalysisStatus.AI_ERROR, 'The local model is unavailable. Check its setup and manual session recovery instructions.'],
-    ['unsafe_configuration', AnalysisStatus.AI_ERROR, 'The local model configuration is unavailable. Check its setup and manual session recovery instructions.'],
+    ['unavailable', AnalysisStatus.AI_ERROR, 'The local model is unavailable. Check its setup. If a model session is already configured, follow the manual recovery instructions.'],
+    ['unsafe_configuration', AnalysisStatus.AI_ERROR, 'The local model configuration is unavailable. Check its setup. If a model session is already configured, follow the manual recovery instructions.'],
   ] as const)('maps %s to the retained public envelope', async (kind, status, statusReason) => {
     const extraction = { extractPreferences: jest.fn().mockRejectedValue(new AiError(kind)) };
     const service = new DocumentAnalysisService(extraction as unknown as PreferenceExtractionService);

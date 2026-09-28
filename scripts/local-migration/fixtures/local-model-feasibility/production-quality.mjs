@@ -86,8 +86,8 @@ export function observeService(service) {
   return { begin() { current = { calls: [], messages: [], firstRaw: undefined }; }, get current() { return current; },
     restore() { service.client.complete = complete; service.probe = probe; } };
 }
-export async function runProductionQuality(service, onProgress = () => {}) {
-  const manifest = JSON.parse(await readFile(productionManifestPath, 'utf8'));
+export async function runProductionQuality(service, onProgress = () => {}, { manifestPath = productionManifestPath } = {}) {
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
   requireFrozenManifest(manifest, await buildProductionManifest());
   assert.equal((await service.getStatus()).state, 'available'); await service.settled();
   const observer = observeService(service), trials = [], measurements = [];
