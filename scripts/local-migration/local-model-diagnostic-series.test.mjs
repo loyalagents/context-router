@@ -159,3 +159,15 @@ test('interruption during a session leaves the series guard consumed and cannot 
   await assert.rejects(runDiagnosticSeries({ ...f, runSession: () => assert.fail('interrupted attempt replaced') }));
   assert.deepEqual(await readFile(join(f.evidenceRoot, 'client-diagnostic-approved-2026-09-27.claim.json')), f.original);
 });
+
+test('receipt directory-sync failure consumes the attempt and stops before a second session', async t => {
+  const f = await fixture(t); let syncs = 0, calls = 0;
+  const result = await runDiagnosticSeries({ ...f, runSession: async () => { calls++; return success(); },
+    syncDirectory: async directory => {
+      assert.equal(directory, f.evidenceRoot);
+      if (++syncs === 2) throw new Error('directory sync failed');
+    } });
+  assert.equal(calls, 1); assert.equal(syncs, 3);
+  assert.equal(result.stopReason, 'evidence-write'); assert.equal(result.attempts[0].retained, false);
+  assert.equal(JSON.parse(await readFile(join(f.evidenceRoot, result.attempts[0].receipt))).session, 1);
+});

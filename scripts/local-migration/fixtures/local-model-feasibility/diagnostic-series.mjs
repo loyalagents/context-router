@@ -11,6 +11,10 @@ async function retain(path, bytes) {
   try { await file.writeFile(bytes); await file.sync(); }
   finally { await file.close(); }
 }
+async function syncParent(path) {
+  const directory = await open(path, 'r');
+  try { await directory.sync(); } finally { await directory.close(); }
+}
 const abnormal = sample => sample && sample.pressure !== 1;
 function disposition(value) {
   const worker = value.worker, data = worker?.data;
@@ -43,14 +47,14 @@ function observedCalls(value) {
 }
 
 /** One consumed authorization, at most three sequential sessions; never a qualification/retry loop. */
-export async function runDiagnosticSeries({ evidenceRoot, testedRevision, manifestSha256, originalClaimSha256, preflight, runSession }) {
+export async function runDiagnosticSeries({ evidenceRoot, testedRevision, manifestSha256, originalClaimSha256, preflight, runSession,
+  syncDirectory = syncParent }) {
   if (!/^[a-f0-9]{40}$/.test(testedRevision) || !/^[a-f0-9]{64}$/.test(manifestSha256) ||
       !/^[a-f0-9]{64}$/.test(originalClaimSha256)) throw failed();
   const run = 'native-9b-client-reproducibility-' + Date.now();
   // Exclusive creation is permanent, including preflight, interruption and partial failures.
   await retain(join(evidenceRoot, seriesClaimName), JSON.stringify({ run, testedRevision, manifestSha256, originalClaimSha256 }) + '\n');
-  const directory = await open(evidenceRoot, 'r');
-  try { await directory.sync(); } finally { await directory.close(); }
+  await syncDirectory(evidenceRoot);
   const aggregate = { run, testedRevision, manifestSha256, qualification: false, stopReason: 'preflight',
     maximumReservedInferenceCalls: 0, observedInferenceCalls: 0, attempts: [] };
   try {
@@ -78,7 +82,7 @@ export async function runDiagnosticSeries({ evidenceRoot, testedRevision, manife
         bytes = Buffer.from(JSON.stringify({ session: index + 1, testedRevision, manifestSha256, qualification: false, valid: false, failure: 'Receipt overflow' }) + '\n');
       }
       attempt.bytes = bytes.length; attempt.sha256 = hash(bytes);
-      try { await retain(join(evidenceRoot, receipt), bytes); attempt.retained = true; }
+      try { await retain(join(evidenceRoot, receipt), bytes); await syncDirectory(evidenceRoot); attempt.retained = true; }
       catch { attempt.stopReason = 'evidence-write'; }
       aggregate.stopReason = attempt.stopReason;
       if (attempt.stopReason !== 'complete') break;
@@ -87,5 +91,6 @@ export async function runDiagnosticSeries({ evidenceRoot, testedRevision, manife
   const bytes = JSON.stringify(aggregate) + '\n';
   if (Buffer.byteLength(bytes) > 16384) throw failed();
   await retain(join(evidenceRoot, run + '.json'), bytes);
+  await syncDirectory(evidenceRoot);
   return aggregate;
 }
