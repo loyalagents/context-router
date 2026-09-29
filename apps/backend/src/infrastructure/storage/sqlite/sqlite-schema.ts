@@ -126,3 +126,22 @@ export const SQLITE_EXPECTED_SCHEMA = SQLITE_SCHEMA.split(";")
   .map(normalizeSchemaSql)
   .filter(Boolean)
   .sort();
+
+/** Explicit, additive v2. Never modify v1 or upgrade during ordinary open. */
+export const SQLITE_MCP_SCHEMA_VERSION = 2;
+export const SQLITE_MCP_SCHEMA = `
+CREATE TABLE local_mcp_clients (
+  id TEXT PRIMARY KEY NOT NULL CHECK(length(id)=22),
+  principal_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  label TEXT NOT NULL CHECK(length(label)<=64),
+  secret_digest TEXT NOT NULL CHECK(length(secret_digest)=64),
+  generation INTEGER NOT NULL CHECK(generation>0),
+  revoked INTEGER NOT NULL DEFAULT 0 CHECK(revoked IN (0,1)),
+  policy TEXT NOT NULL CHECK(json_valid(policy)),
+  created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+);
+`;
+export const SQLITE_MCP_EXPECTED_SCHEMA = [
+  ...SQLITE_EXPECTED_SCHEMA,
+  ...SQLITE_MCP_SCHEMA.split(';').map(normalizeSchemaSql).filter(Boolean),
+].sort();

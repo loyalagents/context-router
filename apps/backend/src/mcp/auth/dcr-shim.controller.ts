@@ -82,7 +82,7 @@ export class DcrShimController {
 
     if (resolution.status === 'invalid') {
       this.logger.warn(
-        `DCR rejected - invalid redirect_uris: ${JSON.stringify(requestedRedirectUris)}`,
+        `DCR rejected - invalid redirect_uris; count=${requestedRedirectUris.length}`,
       );
       throw new HttpException(
         {
@@ -97,7 +97,7 @@ export class DcrShimController {
 
     if (resolution.status === 'mixed') {
       this.logger.warn(
-        `DCR rejected - mixed redirect_uri buckets: ${JSON.stringify(requestedRedirectUris)}`,
+        `DCR rejected - mixed redirect_uri buckets; count=${requestedRedirectUris.length}`,
       );
       throw new HttpException(
         {

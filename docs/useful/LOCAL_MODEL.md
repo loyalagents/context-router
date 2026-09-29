@@ -1,7 +1,7 @@
 # Manual Local Model Preview
 
 - Status: useful; manual Step 06 configuration with accepted accuracy and cancellation-recovery limitations
-- Read when: operating the explicit non-listening SQLite model preview
+- Read when: operating the explicit SQLite model preview or local MCP model mode
 - Source of truth: `apps/backend/src/infrastructure/local-model/`, `apps/backend/src/config/local-model.config.ts`, and `scripts/local-migration/fixtures/local-model-feasibility/native.mjs`
 - Last reviewed: 2026-09-28
 
@@ -88,7 +88,7 @@ After runtime readiness is confirmed, run:
 pnpm --filter backend local-identity preview-model
 ```
 
-The command uses the actual Nest/SQLite composition but opens **no application listener**. Its fixed readiness record means application initialization succeeded; it does not mean inference is ready. This step offers in-process integration and qualification, not a browser/MCP endpoint. Ordinary `local-identity preview` ignores model variables. Missing/malformed model selection and missing/offline inference preserve non-AI behavior; model calls return fixed errors. Hosted and explicit PostgreSQL reference modes remain unchanged.
+The command uses the actual Nest/SQLite composition but opens **no application listener**. Its fixed readiness record means application initialization succeeded; it does not mean inference is ready. The preview offers in-process integration and qualification. Step 07 separately adds `local-mcp serve-model` with the same prerequisites, ownership, limits and recovery; see [MCP setup](MCP_LOCAL_SETUP.md). Ordinary `local-identity preview` ignores model variables. Missing/malformed model selection and missing/offline inference preserve non-AI behavior; model calls return fixed errors. Hosted and explicit PostgreSQL reference modes remain unchanged.
 
 ## Claim, Cancellation And Recovery
 
@@ -123,8 +123,7 @@ The 120-second cap is shared by one complete adapter operation: preparation/pars
 Output is buffered, never silently truncated or salvaged. Typed errors include unavailable/unsafe configuration, busy, cancellation/deadline, unsupported input, size/context bounds and invalid response; existing public envelopes stay sanitized. The parser's 256-MiB JavaScript heap limit is not a total resident-memory guarantee. Native selection measured footprint below 18 GiB on the stated Mac; engine allocations and mapped weights overlap and are not a universal peak or support claim for smaller hardware.
 
 The ordinary no-model adapter also uses the internal `AiError('unavailable')`
-contract instead of an HTTP exception. Both previews have no listener; a future
-public transport owns its error mapping. This is an intentional in-process
+contract instead of an HTTP exception. Both previews have no listener; the separate Step 07 MCP transport uses the existing sanitized tool error envelopes. This is an intentional in-process
 error-type change, not a promise of an HTTP 503 response. A status check reports
 `unavailable` when its own five-second readiness budget expires; explicit caller
 cancellation, invalid deadlines and an earlier caller deadline still reject.

@@ -61,7 +61,7 @@ async function credentials(root) {
   await writeFile(path.join(root, 'api-key.txt'), apiKey + '\n', { mode: 0o600, flag: 'wx' });
   return { apiKey, key: await readFile(keyPath), cert: await readFile(certPath) };
 }
-async function createServer(material, template) {
+async function createServer(material, template, reply = '{"answer":"synthetic"}') {
   const counters = { requests: 0, denied: 0, completions: 0, overflow: false, pdfSeen: false };
   const server = https.createServer({ key: material.key, cert: material.cert }, async (req, res) => {
     try {
@@ -82,7 +82,7 @@ async function createServer(material, template) {
       res.setHeader('content-type', 'text/event-stream');
       for (const event of [
         { index: 0, stop: false, content: '', tokens_predicted: 0, tokens_evaluated: 3, prompt_progress: { total: 3, cache: 0, processed: 0, time_ms: 0 } },
-        { index: 0, stop: true, content: '{"answer":"synthetic"}', tokens_predicted: 2, tokens_evaluated: 3, stop_type: 'eos', truncated: false },
+        { index: 0, stop: true, content: reply, tokens_predicted: 2, tokens_evaluated: 3, stop_type: 'eos', truncated: false },
       ]) res.write(`data: ${JSON.stringify(event)}\n\n`);
       res.end();
     } catch { counters.overflow = true; res.destroy(); }
@@ -97,6 +97,7 @@ async function createServer(material, template) {
     assert.equal(server.listening, false);
   } };
 }
+export { credentials as createSmokeModelCredentials, createServer as createSmokeModelPeer };
 export async function runLocalModelSmoke({ entrypoint, cwd, home, temporaryDirectory, stateParent, journal,
   environment = process.env, signal, verifyArtifact = async () => {} }) {
   const root = path.join(await realpath(stateParent), `local-model-${randomUUID()}`);

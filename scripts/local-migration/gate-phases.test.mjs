@@ -1,3 +1,4 @@
+import { localMcpLifecycleResources } from './fixtures/local-mcp-lifecycle.mjs';
 import { localModelLifecycleResources } from './fixtures/local-model-lifecycle.mjs';
 import { localDatabaseLifecycleResources } from "./fixtures/local-database-lifecycle.mjs";
 import assert from "node:assert/strict";
@@ -330,6 +331,7 @@ test("packaged smoke phase independently rejects an incomplete child journal", a
           ...localIdentityResources,
           ...localDatabaseLifecycleResources(diagnostics),
           ...localModelLifecycleResources(diagnostics),
+          ...localMcpLifecycleResources(diagnostics),
         ],
       })}\n`,
       { mode: 0o600 },
@@ -859,6 +861,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
     },
     { id: "local-database-preview", status: "active", successorModes: [], requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"] },
     { id: "local-model-preview", status: "active", successorModes: [], requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"] },
+    { id: "local-mcp", status: "active", successorModes: [], requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"] },
   ]);
   const dualModePhases = new Set([
     "contract-baseline",
@@ -873,7 +876,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
     assert.deepEqual(
       phase.modes,
       dualModePhases.has(phase.id)
-        ? ["hosted-baseline", "local-identity-preview", "local-database-preview", "local-model-preview"]
+        ? ["hosted-baseline", "local-identity-preview", "local-database-preview", "local-model-preview", "local-mcp"]
         : ["hosted-baseline"],
     );
   }
@@ -899,6 +902,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
           "scripts/local-migration/packaging-smoke.test.mjs",
           "scripts/local-migration/local-database-smoke.test.mjs",
           "scripts/local-migration/local-model-smoke.test.mjs",
+          "scripts/local-migration/local-mcp-smoke.test.mjs",
         ],
         ["node", "scripts/local-migration/check-contract-baseline.mjs"],
       ],
@@ -912,6 +916,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
         ["pnpm", "--filter", "backend", "build"],
         ["pnpm", "--filter", "backend", "test:unit"],
         ["pnpm", "--filter", "backend", "test:local-model"],
+        ["pnpm", "--filter", "backend", "test:local-mcp"],
       ],
       [
         ["pnpm", "--filter", "backend", "exec", "prisma", "migrate", "deploy"],

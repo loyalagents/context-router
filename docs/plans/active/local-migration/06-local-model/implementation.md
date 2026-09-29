@@ -1,5 +1,7 @@
 # Step 06 Integration Evidence
 
+Current closeout (2026-09-29): PR [#165](https://github.com/loyalagents/context-router/pull/165) was human-merged at `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`; final head `f004702ef07df59f3cece36e0db0a79aea7055b7` passed [standard CI](https://github.com/loyalagents/context-router/actions/runs/36487182884) and [migration CI](https://github.com/loyalagents/context-router/actions/runs/36487183214), freshly reverified. Historical pending/draft statements below retain their chronological meaning. Original failed native evidence and accepted E/H limitations are unchanged.
+
 Current disposition: the user accepted the manual cancellation-recovery limitation under [H](plan.md#amendment-h-user-accepted-manual-cancellation-recovery-limitation), independently approved by High compatibility/evidence and Extra High safety/architecture reviewers. CP3 closeout has resumed. Historical failed/blocked checkpoint statements below remain chronological evidence; the original cancellation qualification is still FAILED, while H permits the manual preview to proceed under the documented limitation. Final complete-diff reviews and renewed exact-head local/CI gates remain required; their final receipts/verdicts are retained in [PR #165](https://github.com/loyalagents/context-router/pull/165) without changing the tested head solely to append results.
 
 

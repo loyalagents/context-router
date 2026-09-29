@@ -427,6 +427,7 @@ export class PreferenceMutateTool implements McpToolInterface {
     this.validateDefinitionPayload(definition, true);
 
     await this.assertTarget(context, 'define', slug);
+    this.assertSensitive(context, definition.isSensitive === true);
 
     const created = await this.definitionService.create(
       {
@@ -470,6 +471,7 @@ export class PreferenceMutateTool implements McpToolInterface {
     );
 
     await this.assertTarget(context, 'define', existing.slug);
+    this.assertSensitive(context, existing.isSensitive || definition.isSensitive === true);
 
     const updated = await this.definitionService.update(
       existing.id,
@@ -508,6 +510,7 @@ export class PreferenceMutateTool implements McpToolInterface {
     );
 
     await this.assertTarget(context, 'define', existing.slug);
+    this.assertSensitive(context, existing.isSensitive);
 
     const archived = await this.definitionService.archiveDefinition(
       existing.id,
@@ -542,6 +545,8 @@ export class PreferenceMutateTool implements McpToolInterface {
     );
 
     await this.assertTarget(context, 'write', existing.slug);
+    if (context.client.policy.allowSensitive === false &&
+        !await this.authorizationService.canAccessDefinition(context.client, context.user.userId, existing.definitionId)) this.assertSensitive(context, true);
 
     const deleted = await this.preferenceService.deletePreference(
       id,
@@ -667,6 +672,11 @@ export class PreferenceMutateTool implements McpToolInterface {
       'tools/call',
       { slug },
     );
+  }
+
+  private assertSensitive(context: McpContext, sensitive: boolean): void {
+    if (sensitive && context.client.policy.allowSensitive === false)
+      throw new McpAuthorizationError('Sensitive preference access denied', context.client.key, 'preferences:read', 'tools/call');
   }
 
   private buildMutationContext(

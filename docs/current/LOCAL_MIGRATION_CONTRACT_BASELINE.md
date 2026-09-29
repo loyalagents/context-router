@@ -171,9 +171,7 @@ Important observed boundaries include:
 - the default backend listener is not code-confined to loopback;
 - MCP Origin checks do not cover the entire browser trust boundary, and proxy
   headers are trusted for DCR rate limiting;
-- rejected DCR requests currently log the complete untrusted redirect-URI
-  array, including any query strings; Step 07 must replace that with redacted
-  origin/class/outcome logging before local transport ships;
+- Step 07 replaces rejected DCR redirect-URI logging with fixed rejection class and count; query strings and raw URI arrays are not logged. Its local composition does not mount OAuth/DCR. Signed hosted tokens with absent/empty/unrecognized scopes now have empty authority; local authority is explicitly provisioned per instance. The exact LM-008 transition and affected consumers are recorded in the registry;
 - provider prompt prefixes, extracted old/new preference values, and upload
   filenames/user IDs can enter untouched current logs; the Step 03 hosted
   identity, Auth0, user, Prisma, JWT, and MCP-auth paths use fixed diagnostics,
@@ -516,3 +514,9 @@ domains as closed.
 `local-model-preview` selects the actual SQLite composition with one manually provisioned pinned llama.cpp/Qwen3.5-9B session behind both AI ports. It opens no application listener and owns no inference process. Ordinary no-model previews retain their original denial proof. A separate source/sealed-package smoke verifies two fresh authenticated TLS fixture sessions, actual lazy configured CLI startup, text/structured/PDF calls, unsupported images, fixed credential claims, SQLite worker denial controls and exact owned parser/process cleanup. Deterministic CI uses no model weights or external provider.
 
 See [manual configuration](../useful/LOCAL_MODEL.md) for the qualified Mac, private session requirements, unavailable recovery, limits, accepted email omission and user-accepted cancellation-recovery limitation. A cancelled model operation can permanently disable its session when fresh idle is not verified within five seconds; manual fresh-session recovery is required, with unknown frequency. The native failed qualification remains failed under the explicit H selection exception. Text and qualified PDF processing are local capabilities; local images/OCR and live Harbor comparison remain unsupported/unrun as documented in the [selection](../plans/active/local-migration/06-local-model/selection.md). Public wire fixtures, hosted behavior, grant narrowing, protected definitions and domain validation remain unchanged. Managed assets/processes and native Windows/Linux or smaller-hardware qualification belong to Step 09.
+
+## Step 07 Local MCP Evolution
+
+`local-mcp` is an additive supported mode under the same twelve gate phases. Direct literal-loopback Streamable HTTP exposes the six registered tools, six mutation operations, schema resource and a local capability resource. The hosted transport remains separate. The reviewed least-privilege visibility transition is recorded as `step07-local-mcp-least-privilege`, including exact fixture fingerprints and the union of 53 affected consumer identities. Unknown external clients receive migration guidance, not an invented claim of live-client verification.
+
+[Local setup](../useful/MCP_LOCAL_SETUP.md) covers explicit v1→v2 upgrade, matching-pair rollback, token generation races and client setup. [Step 07's plan](../plans/active/local-migration/07-local-mcp/plan.md) records minimal dispositions for combined writes, no-op/partial responses, definition restore, audit rollback and narrowing. Actual Claude/Codex acceptance remains pending until the user records results.

@@ -1,16 +1,13 @@
 # Interface Evolution Track
 
-- Status: dormant — activates only after Step 01 establishes the contract
-  baseline and aggregate migration gate
+- Status: active policy — Step 01 baseline and aggregate gate established; Step 07 applies LM-008 under its reviewed plan
 - Outcome owner: local-migration coordinator (`/root`) until an interface-track
   sole writer is assigned
 - Outcome: allow intentional UI and public-interface evolution without leaving
   supported producers, consumers, or external clients on incompatible contracts
-- Concrete next action: Step 01 inventories the current contract families and
-  consumers; after its baseline is approved, assign a track owner and propose
-  the first additive interface change through the capture-to-remove sequence
-- Review date: 2026-10-14 or Step 01 plan approval, whichever comes first
-- Last reviewed: 2026-09-14
+- Concrete next action: review Step 07 local MCP additions and explicit least-privilege scope normalization against captured contracts and all consumers; root remains sole writer
+- Review date: 2026-10-14 or Step 07 PR review, whichever comes first
+- Last reviewed: 2026-09-29
 
 This is a cross-cutting track, not a separate product architecture. It allows UI
 and interface work to proceed alongside the local-runtime migration without

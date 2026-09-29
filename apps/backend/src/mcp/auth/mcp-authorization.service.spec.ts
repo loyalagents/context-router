@@ -98,11 +98,12 @@ describe('McpAuthorizationService', () => {
     ).toBe(true);
   });
 
-  it('treats empty or non-mcp grant sets as absent', () => {
-    expect(normalizeMcpGrants([])).toBeUndefined();
+  it('treats absent, empty or non-mcp token grant sets as explicit empty authority', () => {
+    expect(normalizeMcpGrants(undefined)).toEqual([]);
+    expect(normalizeMcpGrants([])).toEqual([]);
     expect(
       normalizeMcpGrants(['openid', 'profile', 'offline_access']),
-    ).toBeUndefined();
+    ).toEqual([]);
   });
 
   it('intersects policy capabilities with normalized grants when present', () => {

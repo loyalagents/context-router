@@ -12,6 +12,8 @@ import {
   SQLITE_SCHEMA_VERSION,
   SQLITE_SCHEMA,
   SQLITE_EXPECTED_SCHEMA,
+  SQLITE_MCP_SCHEMA_VERSION,
+  SQLITE_MCP_EXPECTED_SCHEMA,
   SQLITE_TABLES,
   normalizeSchemaSql,
 } from "./sqlite-schema";
@@ -70,6 +72,7 @@ function driver(file: string): DatabaseSync {
   });
 }
 function validate(db: DatabaseSync, expectedTarget?: string): string {
+  const version = db.prepare("PRAGMA user_version").get().user_version;
   if (
     process.versions.node !== "24.21.0" ||
     db.prepare("SELECT sqlite_version() version").get().version !== "3.53.4"
@@ -78,8 +81,7 @@ function validate(db: DatabaseSync, expectedTarget?: string): string {
   if (
     db.prepare("PRAGMA application_id").get().application_id !==
       SQLITE_APPLICATION_ID ||
-    db.prepare("PRAGMA user_version").get().user_version !==
-      SQLITE_SCHEMA_VERSION
+    (version !== SQLITE_SCHEMA_VERSION && version !== SQLITE_MCP_SCHEMA_VERSION)
   )
     unavailable();
   if (db.prepare("PRAGMA journal_mode").get().journal_mode !== "delete")
@@ -89,7 +91,7 @@ function validate(db: DatabaseSync, expectedTarget?: string): string {
     .all()
     .map((row) => normalizeSchemaSql(String(row.sql)))
     .sort();
-  if (JSON.stringify(actual) !== JSON.stringify(SQLITE_EXPECTED_SCHEMA))
+  if (JSON.stringify(actual) !== JSON.stringify(version === SQLITE_SCHEMA_VERSION ? SQLITE_EXPECTED_SCHEMA : SQLITE_MCP_EXPECTED_SCHEMA))
     unavailable();
   const metadata = db
     .prepare("SELECT singleton,target_id FROM local_metadata")

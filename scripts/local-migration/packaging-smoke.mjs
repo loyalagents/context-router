@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { runLocalMcpSmoke } from './local-mcp-smoke.mjs';
 
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
@@ -84,6 +85,7 @@ const execFileAsync = promisify(execFile);
 const backendEntrypointRelative = "dist/main.js";
 const localIdentityEntrypointRelative = "dist/local-identity-postgres-reference.js";
 const localDatabaseEntrypointRelative = "dist/local-identity.js";
+const localMcpEntrypointRelative = "dist/local-mcp.js";
 const expectedCatalogCount = 19;
 const packagingAudience = "urn:context-router:packaging-smoke";
 const aggregateGateWorkspaceMarkerRelativePath = path.join(
@@ -1781,6 +1783,8 @@ async function assembleAndSealStage({
     "staged local identity entrypoint",
   );
   await assertRegularFile(path.join(stageBackend, localDatabaseEntrypointRelative), "staged local database entrypoint");
+  await assertRegularFile(path.join(stageBackend, localMcpEntrypointRelative), "staged local MCP entrypoint");
+  await assertRegularFile(path.join(stageBackend, "dist/schema.gql"), "staged local MCP schema resource");
   await assertRegularFile(path.join(stageBackend, "dist/infrastructure/storage/sqlite/sqlite-coordination.worker.js"), "staged local database worker");
   await assertRegularFile(path.join(stageBackend, "dist/infrastructure/storage/sqlite/sqlite-schema.js"), "staged local schema");
   for (const file of ['client.mjs', 'stream.mjs', 'control-evidence.mjs', 'manual-session.mjs', 'pdf-process.mjs', 'pdf-worker.mjs', 'pdf.mjs',
@@ -1857,6 +1861,7 @@ async function assembleAndSealStage({
     backendEntrypoint: `backend/${backendEntrypointRelative}`,
     localIdentityEntrypoint: `backend/${localIdentityEntrypointRelative}`,
     localDatabaseEntrypoint: `backend/${localDatabaseEntrypointRelative}`,
+    localMcpEntrypoint: `backend/${localMcpEntrypointRelative}`,
     localDatabaseWorker: "backend/dist/infrastructure/storage/sqlite/sqlite-coordination.worker.js",
     localDatabaseSchema: "backend/dist/infrastructure/storage/sqlite/sqlite-schema.js",
     webEntrypoint: normalizedRelative(stageRoot, layout.serverEntrypoint),
@@ -1883,6 +1888,7 @@ async function assembleAndSealStage({
     sealed,
     native,
     localDatabaseEntrypoint: path.join(stageBackend, localDatabaseEntrypointRelative),
+    localMcpEntrypoint: path.join(stageBackend, localMcpEntrypointRelative),
     localIdentityEntrypoint: path.join(
       stageBackend,
       localIdentityEntrypointRelative,
@@ -4141,6 +4147,12 @@ async function runPackagingSmokeWithPrivateUmask({
       stateParent: secretDirectory, journal, environment, signal,
       verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
     });
+    const localMcp = await runLocalMcpSmoke({
+      entrypoint: stage.localMcpEntrypoint, cwd: hostileCwd,
+      home: path.join(runtimeRoot, 'local-mcp-home'), temporaryDirectory: path.join(runtimeRoot, 'local-mcp-tmp'),
+      stateParent: secretDirectory, journal, environment, signal,
+      verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
+    });
     assert.equal(localDatabase.sqlite, stage.native.sqlite.version);
     assert.equal(localDatabase.sourceId, stage.native.sqlite.sourceId);
     assert.equal(
@@ -4175,6 +4187,7 @@ async function runPackagingSmokeWithPrivateUmask({
       localIdentity,
       localDatabase,
       localModel,
+      localMcp,
       seedRuns: 2,
       networkIsolationFailures: isolationFailures,
       generations: generations.map((generation) => ({
