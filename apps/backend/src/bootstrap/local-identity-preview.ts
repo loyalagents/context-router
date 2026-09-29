@@ -1,3 +1,4 @@
+import type { LocalModelSelection } from '../config/local-model.config';
 import { writeSync } from "node:fs";
 
 import { ValidationPipe } from "@nestjs/common";
@@ -61,8 +62,9 @@ function createDefaultVerifier(
   };
 }
 
-async function createNestLocalIdentityApplication(
+export async function createNestLocalIdentityApplication(
   configuration: PreviewConfiguration,
+  model?: LocalModelSelection,
 ): Promise<LocalIdentityPreviewApplication> {
   const local = requireLocalDatabaseConfiguration(configuration);
   const [
@@ -75,7 +77,7 @@ async function createNestLocalIdentityApplication(
     import("../infrastructure/storage/sqlite/sqlite-local-runtime"),
   ]);
   await seedLocalCatalog(createSqliteIdentityRuntime(local).database);
-  return NestFactory.create(LocalApplicationModule.register(local), {
+  return NestFactory.create(LocalApplicationModule.register(local, model), {
     abortOnError: false,
     logger: false,
   });

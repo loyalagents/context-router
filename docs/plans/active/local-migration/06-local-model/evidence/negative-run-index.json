@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "runs": [
+    {
+      "file": "input-limit-9b.json",
+      "testedRevision": "245b3e0a4e6af83dd0f58df8bb7594eab7ee11d6",
+      "sha256": "b55cda21e07167e71de19ede0e47d01f15621ba245339290bf1e60df9547c7de",
+      "disposition": "passed native tokenizer overflow before completion; zero launched tasks"
+    },
+    {
+      "file": "negative-resources.json",
+      "testedRevision": "245b3e0a4e6af83dd0f58df8bb7594eab7ee11d6",
+      "sha256": "ccfda03e510249db26af1ae90cbe66d749113ea556c8ebcde8d5db7e0388676b",
+      "disposition": "passed unavailable endpoint and exact missing binary/model failures"
+    }
+  ]
+}

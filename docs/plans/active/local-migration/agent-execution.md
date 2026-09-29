@@ -2,12 +2,12 @@
 
 - Status: agreed execution preferences; future steps remain inactive until activated
 - Owner: migration coordinator; sole writer is assigned per activated branch
-- Last reviewed: 2026-09-23
+- Last reviewed: 2026-09-24
 - Read when: activating/planning Steps 04–11 or assigning their agents
 
 This is a staffing, risk, and sequencing guide, not an approved implementation
-plan for any future step. It does not mark Step 03 merged, activate another step,
-choose a database/model runtime, or authorize overlapping writers. Follow
+plan for any future step. It does not activate another step, select an
+unqualified database/model runtime, or authorize overlapping writers. Follow
 [`orchestration.md`](orchestration.md), [`decision-log.md`](decision-log.md),
 and the active step's plan. Create detailed step directories only at activation.
 
@@ -34,11 +34,17 @@ Do not copy that entire guide into each step plan.
 
 ## Role Allocation By Step
 
-All settings below use GPT-6 Astra (`gpt-6-astra`). H = High; X = Extra High
+Default settings below use GPT-6 Astra (`gpt-6-astra`). H = High; X = Extra High
 (`xhigh`); U = Ultra. Max is available for a bounded unresolved decision or
 review dispute. These are requested allocations; record actual availability
 and any agreed fallback in the activated plan. The sole writer owns all edits,
 including plans and docs; a separate coordinator remains read-only.
+
+A supported Sol model at High can handle a bounded factual inventory or scope
+review when explicitly assigned. Do not infer an unavailable model ID from a
+product announcement or substitute it for sensitive review without recording
+the tradeoff. Step 06's prepared handoff recommends Astra Extra High for the
+full-step driver; it does not require Ultra coordination or final approval.
 
 | Step | Coordinator / planning | Sole-writer allocation | Independent review allocation |
 | --- | --- | --- | --- |
@@ -151,13 +157,41 @@ concurrency tests, not an Ultra verdict, are the acceptance evidence.
 
 ### 06: Local Model
 
-Settle a capability matrix and explicit download/offline/privacy policy; then
-implement the local adapter behind existing ports and validate it. Separate
-deterministic merge tests from declared live-model evidence. Cover timeouts,
-cancellation, malformed structured output, unavailable runtime and unsupported
-file/multimodal features. Preserve application validation of model proposals;
-never silently fall back to a hosted model. Evaluation-fixture work and privacy
-review can run alongside the sole writer.
+Read the [research synthesis](research/local-model/README.md) and
+[activation/execution handoff](step-06-handoff.md). These are planning inputs,
+not activation or implementation approval. Follow LM-017/018: Apple Silicon
+first, manual setup now, managed application lifecycle later; one PR by default.
+Keep inference separate from lifecycle ownership so Step 09 can reuse the
+adapter with its own process. This is not a commitment to permanent external
+server support, embedded inference or dual-runtime features; see the
+[ownership rationale](research/local-model/README.md#runtime-ownership-and-future-options).
+
+1. After plan review, run a bounded feasibility/selection checkpoint. Prefer
+   pinned manual `llama.cpp`; a small model pair is enough to start. Agree
+   hardware, task-specific criteria, capabilities/MIME handling, context/thinking
+   mode, artifact provenance/licenses and explicit download/offline/privacy
+   policy. Measure actual schemas/tasks, memory/latency and cancellation during
+   prefill and decode, including serving-capacity reuse. Review the selection
+   before full integration; report numbers are not acceptance evidence.
+2. Evolve existing AI ports only as needed for truthful capabilities/readiness,
+   deadlines/cancellation and runtime/model evidence; current interfaces do not
+   already supply these contracts. Inventory/migrate consumers and mocks in the
+   same PR while preserving hosted/reference behavior. Implement tests first.
+   Text-like document inputs currently use file calls; explicitly resolve
+   text/PDF/PNG/JPEG behavior. Preserve Zod/domain validation, propose-before-apply,
+   grant-filtered search, advisory consolidation and AcroForm support.
+3. Prove deterministic adapter/composition/package behavior separately from live
+   model results. Cover unavailable inference, queue/retry/deadline bounds,
+   malformed/truncated responses, unsupported features, privacy and safe process
+   ownership. Preserve non-AI use and no-model/network-denial tests; never silently
+   call a hosted model. Complete canonical docs, fresh complete-diff review,
+   final local gate and exact-head CI in the same PR.
+
+Parallelize bounded consumer/schema inventory, evaluation-case design and
+runtime/privacy investigation. Review a frozen candidate in parallel with
+isolated validation. Keep one writer; a test probe owns only its disposable
+process/roots. Production supervision, automatic downloads, installer/updater
+and model-management UI remain Step 09, not additional Step 06 checkpoints.
 
 ### 07: Local MCP
 
@@ -179,6 +213,14 @@ clients, auth, configuration, and generated schemas need coordinated changes.
 
 ### 09: Installation And Packaging
 
+Own early native Windows/Linux qualification soon after the Step 06 Mac path
+works, before final packaging choices harden. Research can run read-only; an
+executable overlap requires explicit activation/non-overlap review. Check native
+runtime artifacts, accelerator choices, process/port cleanup, path/ACL/identity
+protections and restart on real target OSes. Current POSIX assumptions are not
+permission to weaken local safety. Separate engine availability, adapter proof
+and whole-application support; WSL is not native Windows qualification.
+
 Confirm supported platforms and lifecycle design, implement the smallest
 installable product, then prove clean install/offline use, restart, logs,
 backup/restore, interruption, update authenticity/rollback, and non-surprising
@@ -186,6 +228,14 @@ uninstall. Include model assets and final credential/data locations. Real target
 OS evidence cannot be replaced by a model review; do not imply Windows support
 from macOS/Linux tests. A second PR is justified only by a genuinely useful,
 safe landing boundary, not by separating scripts, tests, and docs.
+
+Use the Step 06 manual setup as evidence for an app-private model runtime and
+assets. Re-review the process/download/credential/update ownership transition;
+manual setup does not by itself qualify a managed sidecar or final shell choice.
+A managed sidecar can be the permanent architecture; embedding is not a required
+milestone. Decide whether an advanced external-server mode has a demonstrated
+use case rather than carrying it forward as an automatic product commitment.
+Supervise only verified app-owned processes, never a user's external daemon.
 
 ### 10: LAN MCP (Optional)
 

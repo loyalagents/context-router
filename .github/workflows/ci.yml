@@ -175,6 +175,9 @@ jobs:
       - name: Run standalone local database tests
         run: pnpm test:local-database
 
+      - name: Run compiled local model tests
+        run: pnpm test:local-model
+
   local-orchestrator-checks:
     needs: changes
     if: needs.changes.outputs.local_orchestrator == 'true'

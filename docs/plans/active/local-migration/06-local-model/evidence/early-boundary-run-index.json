@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "runs": [
+    {
+      "file": "early-abort-9b.json",
+      "testedRevision": "85eda113d8664f77d1cec6e4ed2aa53f4f4bb16e",
+      "sha256": "ee26d2623fc5810044aa1af55e46c4b6acc0882c1e2ec20eb400f627a51c833b",
+      "disposition": "passed pre-witness permanent-unavailable characterization; no capacity recovery qualification"
+    },
+    {
+      "file": "early-disconnect-9b.json",
+      "testedRevision": "85eda113d8664f77d1cec6e4ed2aa53f4f4bb16e",
+      "sha256": "06073d542b27fb295c8100eee8f1922866dca4495380a7c4469d0b33928b6419",
+      "disposition": "passed pre-witness permanent-unavailable characterization; no capacity recovery qualification"
+    }
+  ]
+}

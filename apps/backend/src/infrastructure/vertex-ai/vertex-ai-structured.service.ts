@@ -1,3 +1,4 @@
+import { AiStatus, HOSTED_AI_CAPABILITIES, rejectUnsupportedControls } from '../../domains/shared/ports/ai-execution';
 import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 import {
@@ -88,6 +89,8 @@ function normalizedNullFillActionValues(parsed: unknown): NullFillActionValue[] 
 
 @Injectable()
 export class VertexAiStructuredService implements AiStructuredOutputPort {
+  readonly capabilities = HOSTED_AI_CAPABILITIES;
+  async getStatus(): Promise<AiStatus> { return Object.freeze({ state: 'unsupported', configured: true }); }
   private readonly logger = new Logger(VertexAiStructuredService.name);
 
   constructor(private readonly vertexAiService: VertexAiService) {}
@@ -97,6 +100,7 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
     schema: z.ZodType<T>,
     options?: AiStructuredOptions,
   ): Promise<T> {
+    rejectUnsupportedControls(options);
     const opName = options?.operationName ?? 'generateStructured';
     const retries = options?.retries ?? 1;
 
@@ -110,6 +114,7 @@ export class VertexAiStructuredService implements AiStructuredOutputPort {
     schema: z.ZodType<T>,
     options?: AiStructuredOptions,
   ): Promise<T> {
+    rejectUnsupportedControls(options);
     const opName = options?.operationName ?? 'generateStructuredWithFile';
     const retries = options?.retries ?? 1;
 

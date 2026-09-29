@@ -1,7 +1,7 @@
 # Local Migration Decision Log
 
 - Status: active decision record
-- Last reviewed: 2026-09-23
+- Last reviewed: 2026-09-24
 
 This file records decisions that affect more than one migration step. Keep each
 entry concise. Detailed alternatives and implementation mechanics belong in the
@@ -290,14 +290,81 @@ step plan that resolves them.
   leave merging to a human. This activates no future step and changes no
   product, recovery, interface, or migration-gate contract.
 
+### LM-017: Apple Silicon first, manual model setup before managed lifecycle
+
+- Status: Accepted — user-requested platform and setup preferences, 2026-09-24
+- Decision: the first supported local-model path targets Apple Silicon Macs.
+  Manual runtime/model installation and launch are acceptable in Step 06.
+  The eventual application should manage its runtime and model assets, without
+  making users operate a separate model product. Windows and Linux are intended
+  near-term targets, not abandoned platforms or already supported whole apps.
+- Consequence: Step 06 owns a reproducible manual setup and application adapter;
+  Step 09 owns product-managed downloads, supervision, installation and updates.
+  Schedule native Windows/Linux qualification early in Step 09, soon after the
+  Mac path works and before final packaging decisions. Early overlap requires
+  reviewed ownership; engine support and Linux CI do not prove native app support.
+  Do not weaken identity/filesystem protections to claim portability.
+- This does not approve an exact minimum Mac/RAM, runtime, model, download,
+  license, final process topology or a multi-platform implementation in Step 06.
+
+### LM-018: One local inference candidate, measured before integration
+
+- Status: Provisional — research-informed Step 06 planning preference
+- Proposal: start with a pinned manually launched `llama.cpp` server using a
+  protected inference credential on literal loopback. It is a plausible stepping
+  stone to an app-private Step 09 sidecar, not a final packaging decision. Use
+  Ollama as a challenger only if the bounded feasibility evidence justifies it;
+  do not implement a multi-runtime framework now.
+- Ownership and future options: a fully managed application may retain a
+  separate inference process permanently; embedding is not a required end state.
+  Keep inference separate from lifecycle ownership so a later app-owned process
+  can reuse the adapter. Step 06 must not start, stop or restart the user's
+  manually managed server. Step 09 may supervise only a verified app-owned
+  instance and decides final topology plus whether an advanced external-server
+  mode has a demonstrated use case. Manual setup now is not a commitment to
+  permanent external-server support, embedded inference or dual-runtime modes.
+  Preserve options through existing AI ports, not additional implementations.
+- Selection gate: independently review the plan before executable feasibility,
+  then review the measured runtime/model/capability choice before full adapter
+  implementation. Evaluate actual application tasks and Zod schemas, memory and
+  latency, file-format behavior, authentication, offline use, cancellation and
+  serving-capacity recovery. Keep live evidence distinct from deterministic CI.
+- Model candidates: a small Qwen3.5 4B/9B Q4-class GGUF comparison is a starting
+  hypothesis, contingent on hardware, artifact provenance, licenses and quality;
+  it is not a promise that either model satisfies every retained capability.
+  Pin versions/hashes, template/thinking mode, context and budgets at selection.
+- Consequence: preserve the existing application boundaries and review minimal
+  additive capability/deadline/cancellation changes plus all consumers. Retain
+  application validation of proposals, privacy and explicit unsupported states;
+  never silently fall back to a hosted model or remove registered formats.
+  Keep feasibility, integration and acceptance in one PR by default (LM-016).
+- Evidence and corrections: [research synthesis](research/local-model/README.md).
+  Imported reports are background, not approved commands or measured repo proof.
+  Neither this proposal nor the [handoff](step-06-handoff.md) activates Step 06.
+
+### LM-019: Manual cancellation recovery is an accepted Step 06 limitation
+
+- Status: Accepted — explicit user decision after one failed qualification and four diagnostic recoveries; affected High compatibility/evidence and Extra High safety/architecture review approved H.
+- Decision: the selected manual b11146/Qwen3.5-9B configuration may require manual session recovery when fresh idle cannot be verified after cancellation. Cause and frequency remain unknown. The original qualification stays FAILED; acceptance is an explicit limitation, not a new passing result.
+- Unchanged: prompt caller return, five-second settlement deadline, permanent unavailable latch, one admission owner, private fresh credentials, exact-process recovery, domain/privacy rules and every other final review/local/CI gate. No extra native run, automatic retry/restart, claim reuse or later-step activation is authorized.
+- Recovery: stop and await both old processes, provision fresh credential root/keys, restart while retaining database/identity data and downloaded model assets. No data reset or model redownload is required.
+- Follow-up: Step 09 revisits runtime reliability and recovery burden during qualification/packaging; bring forward local-model maintenance if recovery becomes disruptive. The [H amendment](06-local-model/plan.md#amendment-h-user-accepted-manual-cancellation-recovery-limitation), [selection](06-local-model/selection.md#accepted-cancellation-recovery-limitation) and [manual runbook](../../../useful/LOCAL_MODEL.md#claim-cancellation-and-recovery) state the exact scope.
+
+## Step 06 Implementation And Evidence
+
+PR [#165](https://github.com/loyalagents/context-router/pull/165) implements the independently selected manual llama.cpp b11146 / Qwen3.5-9B Q4_K_M path on the qualified M1 Max/64 GiB/macOS 15.1.1. Actual application quality preserves the FAILED original scorer verdict and applies only human-approved E's known email omission. No other quality threshold changes. Both AI ports share one private claimed session; uncertain work latches unavailable. The explicit `preview-model` composition opens no listener and never owns inference lifecycle. Text and qualified PDF input are supported; images/OCR are unsupported locally, live Harbor comparison was not needed or run. See [selection](06-local-model/selection.md), [implementation evidence](06-local-model/implementation.md) and [manual operation](../../../useful/LOCAL_MODEL.md). Final reviews/gates remain separate; the PR is not merged and later steps are inactive.
+
+The independent-review follow-up passed repeat quality under unchanged E but failed the first native prefill cancellation settlement at `59e03d9`. The application safely latched unavailable. The user approved the bounded diagnostic on 2026-09-27. Its source-inspection checkpoint found that the unchanged runtime cannot expose the required native timing markers, so execution stopped before any model operation. The user then approved the [revised client-only diagnostic](06-local-model/plan.md#source-inspection-and-revised-client-only-diagnostic); tests and both fresh affected implementation reviews passed before its one bounded run at `9a11ee81`. The [valid client diagnostic](06-local-model/implementation.md#approved-client-only-diagnostic-result) recovered in 3,298.776 ms with complete cleanup. This non-reproduction does not establish the earlier failure cause or restore qualification; the one-run authorization is consumed. The user subsequently approved one separate three-session reproducibility series (maximum 18 calls, stop on first failure); tests-first fixtures and both independent implementation reviews passed before execution at `acb4a218`. All three cancellations recovered in 3.249–3.325 seconds with eighteen calls total and complete cleanup. This is non-reproduction, not restored qualification; no further run is authorized. Those diagnostic results alone added no qualification or acceptance exception. The subsequent explicit user decision is LM-019/H above: accept possible manual recovery while retaining the failed verdict and unchanged safety rules, then complete all remaining final gates. The separately authorized full Docker cleanup and image/PDF packaging verification passed. Historical passes remain historical.
+
 ## Deferred Decisions And Owning Steps
 
 | Decision | Owning step |
 | --- | --- |
-| Supported operating systems, process topology, signing, and distribution constraints | `02-composition-boundaries` and `09-installation-and-packaging` |
+| Cancellation reliability and manual recovery burden; bring forward maintenance if disruptive (LM-019) | `09-installation-and-packaging` |
+| Exact supported OS/hardware versions, process topology, signing and distribution constraints; native Windows/Linux qualification after Apple Silicon first (LM-017) | `02-composition-boundaries` and early `09-installation-and-packaging` |
 | Final platform credential protection, keychain/process isolation, and destructive identity reset | `09-installation-and-packaging` |
-| Local database choice; if SQLite is confirmed, its library and schema/bootstrap mechanism | `05-local-database-runtime` |
-| Local model runtime, supported capabilities, and download policy | `06-local-model` |
+| Local database choice/library/bootstrap | Resolved in Step 05 / LM-003; final hardware durability qualification remains Step 09 |
+| Exact local model/runtime, capabilities and manual provisioning policy (resolved by Step 06 selection; final PR gates pending) | `06-local-model`; managed asset lifecycle in Step 09 |
 | Exact offline guarantee before and after model assets are installed | `06-local-model` and `09-installation-and-packaging` |
 | Local MCP transport mix: streamable HTTP, stdio adapter, or both | `07-local-mcp` |
 | Local UI/desktop shell and process topology | `08-local-ui` and `09-installation-and-packaging` |

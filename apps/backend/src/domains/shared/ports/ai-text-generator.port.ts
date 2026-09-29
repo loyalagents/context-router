@@ -1,14 +1,15 @@
+import type { AiCapabilityProvider, AiExecutionOptions } from './ai-execution';
+
 export interface FileInput {
   buffer: Buffer;
   mimeType: string;
 }
 
-export interface AiTextGeneratorPort {
-  generateText(prompt: string): Promise<string>;
+export interface AiTextGeneratorPort extends AiCapabilityProvider {
+  generateText(prompt: string, options?: AiExecutionOptions): Promise<string>;
 
   /**
-   * Generate text from a prompt with an attached file (for multimodal models).
-   * The file buffer is passed directly to the model for native processing.
+   * Generate text from an attached file supported by the configured capabilities.
    */
-  generateTextWithFile(prompt: string, file: FileInput): Promise<string>;
+  generateTextWithFile(prompt: string, file: FileInput, options?: AiExecutionOptions): Promise<string>;
 }

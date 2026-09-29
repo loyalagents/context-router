@@ -1,0 +1,7 @@
+{
+  "run": "native-readiness-1790242874610",
+  "timestamp": "2026-09-24T09:41:14.610Z",
+  "model": "Qwen3.5-4B-Q4_K_M",
+  "result": "failed",
+  "failure": "Native probe readiness failed"
+}

@@ -67,6 +67,7 @@ import {
 } from "./test-database.mjs";
 import { runLocalIdentitySmoke } from "./local-identity-smoke.mjs";
 import { runLocalDatabaseSmoke } from "./local-database-smoke.mjs";
+import { runLocalModelSmoke } from "./local-model-smoke.mjs";
 import {
   assertCatalogState,
   createSignedTestToken,
@@ -1782,6 +1783,10 @@ async function assembleAndSealStage({
   await assertRegularFile(path.join(stageBackend, localDatabaseEntrypointRelative), "staged local database entrypoint");
   await assertRegularFile(path.join(stageBackend, "dist/infrastructure/storage/sqlite/sqlite-coordination.worker.js"), "staged local database worker");
   await assertRegularFile(path.join(stageBackend, "dist/infrastructure/storage/sqlite/sqlite-schema.js"), "staged local schema");
+  for (const file of ['client.mjs', 'stream.mjs', 'control-evidence.mjs', 'manual-session.mjs', 'pdf-process.mjs', 'pdf-worker.mjs', 'pdf.mjs',
+    'pdfjs/package.json', 'pdfjs/LICENSE', 'pdfjs/pdf.mjs', 'pdfjs/pdf.worker.mjs']) {
+    await assertRegularFile(path.join(stageBackend, 'dist/infrastructure/local-model/engine', file), 'staged model/parser closure');
+  }
   await assertRegularFile(layout.serverEntrypoint, "staged web entrypoint");
   await assertRegularFile(
     path.join(stageBackend, "dist/config/preferences.catalog.json"),
@@ -4130,6 +4135,12 @@ async function runPackagingSmokeWithPrivateUmask({
       signal,
       verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
     });
+    const localModel = await runLocalModelSmoke({
+      entrypoint: stage.localDatabaseEntrypoint, cwd: hostileCwd,
+      home: path.join(runtimeRoot, 'local-model-home'), temporaryDirectory: path.join(runtimeRoot, 'local-model-tmp'),
+      stateParent: secretDirectory, journal, environment, signal,
+      verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
+    });
     assert.equal(localDatabase.sqlite, stage.native.sqlite.version);
     assert.equal(localDatabase.sourceId, stage.native.sqlite.sourceId);
     assert.equal(
@@ -4163,6 +4174,7 @@ async function runPackagingSmokeWithPrivateUmask({
       orphanRegression,
       localIdentity,
       localDatabase,
+      localModel,
       seedRuns: 2,
       networkIsolationFailures: isolationFailures,
       generations: generations.map((generation) => ({

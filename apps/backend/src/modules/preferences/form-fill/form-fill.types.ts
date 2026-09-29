@@ -128,7 +128,7 @@ export const FillActionSchema = z.object({
   value: z.preprocess(
     (value) => (value === null ? undefined : value),
     z.string().optional(),
-  ),
+  ).meta({ aiJsonInput: { anyOf: [{ type: 'string' }, { type: 'null' }] } }).optional(),
   sourceSlugs: z.array(z.string()).optional().default([]),
   confidence: z.number().min(0).max(1).optional(),
   skipReason: z.string().optional(),

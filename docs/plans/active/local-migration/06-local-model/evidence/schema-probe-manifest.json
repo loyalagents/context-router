@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "repetitions": 1,
+  "qualityDenominatorContribution": 0,
+  "probes": [
+    {
+      "id": "arbitrary-json",
+      "promptSha256": "efa3f3882adf63722349a287ef29da81ca28200455f2b19986f564e716b8275f",
+      "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+      "expectedSha256": "70766df96c8b4058baaa2fea9045ec71b55d77044cd19cfb9257b070181b3054"
+    },
+    {
+      "id": "form-defaults",
+      "promptSha256": "e0670998e3ba04688b14a113a49760ec3c3489cb19f8bdaa002611d79078416a",
+      "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+      "expectedSha256": "42b6b96c3ab071e9c93f8f2c8d7682359fe3e9af9475c822d833c65888215c30"
+    },
+    {
+      "id": "duplicate-literal",
+      "promptSha256": "f9b481405e618c413706c1000013c95361b9ebd77d26dcf04ae3ba2a129d072a",
+      "schemaSha256": "8436a1274b7b63514d1feafef89fc82c2841a1b5372d963ab6783f8ba40ca53a",
+      "expectedSha256": "e94c0af1c6d0111811d8e646de3bf2805d6ce0ee0c6c3a5ef197d8988d8097f4"
+    }
+  ],
+  "limit": {
+    "promptSha256": "efa3f3882adf63722349a287ef29da81ca28200455f2b19986f564e716b8275f",
+    "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+    "maxTokens": 1,
+    "requiredObservation": "one-validated-limit-marker-before-immediate-rejection",
+    "cleanEofClaim": false,
+    "requiredSettledState": "ready"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "verifiedFiles": 10,
+  "originalUntouched": true,
+  "base": "837701b3633eed669dd2c2c518ffebc0e46d55d8",
+  "source": {
+    "headSha": "837701b3633eed669dd2c2c518ffebc0e46d55d8",
+    "dirty": false,
+    "copiedInputsSha256": "e3c9ea478f95229f361a0347c4cd1f150e9b4581bc466636add8eb3a38d4a3a6"
+  },
+  "destination": "/private/tmp/context-router-step06"
+}

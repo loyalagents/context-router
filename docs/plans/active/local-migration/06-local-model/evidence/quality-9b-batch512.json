@@ -1,0 +1,3709 @@
+{
+  "run": "native-9b-quality-1790291478569",
+  "testedRevision": "c8a3dc128d93639431c9250f290770f59858c74c",
+  "timestamp": "2026-09-24T23:11:18.569Z",
+  "candidate": "9b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "passed": false,
+  "memoryBefore": {
+    "physicalFootprintBytes": 1000192,
+    "lifetimePeakPhysicalFootprintBytes": 1016576,
+    "residentBytes": 1179648,
+    "pressure": 1,
+    "swapUsedBytes": 21155348480
+  },
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 844.4316250000002
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-9B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "62162",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "512",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "quality",
+    "passed": false,
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "score": {
+      "manifestSha256": "35ea1d822dbb7d32619c384f00da9e26b69cebc37598f36c92413ecf3ae6424a",
+      "passed": false,
+      "families": {
+        "extraction": {
+          "proposal": {
+            "truePositive": 18,
+            "falseNegative": 3,
+            "falsePositive": 0,
+            "recall": 0.8571428571428571,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 18,
+            "falseNegative": 3,
+            "falsePositive": 0,
+            "recall": 0.8571428571428571,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 6,
+          "negativeTrials": 6,
+          "passed": false
+        },
+        "search": {
+          "proposal": {
+            "truePositive": 9,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 9,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 6,
+          "negativeTrials": 6,
+          "passed": true
+        },
+        "consolidation": {
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 3,
+            "recall": 1,
+            "precision": 0.5
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 3,
+          "negativeTrials": 3,
+          "passed": true
+        },
+        "form": {
+          "proposal": {
+            "truePositive": 12,
+            "falseNegative": 0,
+            "falsePositive": 3,
+            "recall": 1,
+            "precision": 0.8
+          },
+          "validated": {
+            "truePositive": 12,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "failedTrials": 0,
+          "criticalViolations": 0,
+          "negativeCasesCorrect": 6,
+          "negativeTrials": 6,
+          "passed": true
+        }
+      },
+      "overall": {
+        "proposal": {
+          "truePositive": 42,
+          "falseNegative": 3,
+          "falsePositive": 6,
+          "recall": 0.9333333333333333,
+          "precision": 0.875
+        },
+        "validated": {
+          "truePositive": 42,
+          "falseNegative": 3,
+          "falsePositive": 0,
+          "recall": 0.9333333333333333,
+          "precision": 1
+        },
+        "failedTrials": 0,
+        "criticalViolations": 0,
+        "negativeCasesCorrect": 21,
+        "negativeTrials": 21,
+        "passed": true
+      },
+      "trials": [
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-name-history",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 3,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-work-authorization",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-stale-title",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-absent-values",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-other-person-decoy",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "extraction-instruction-injection",
+          "family": "extraction",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 1,
+            "falsePositive": 0,
+            "recall": 0,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-personal-email",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-work-authorization",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-inaccessible-email",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "search-hallucinated-secret",
+          "family": "search",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "consolidation-channel-alias",
+          "family": "consolidation",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 1,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "consolidation-protected-profile",
+          "family": "consolidation",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-address",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-permanent-resident",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": false,
+          "negativeCorrect": false,
+          "proposal": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          },
+          "validated": {
+            "truePositive": 2,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": 1,
+            "precision": 1
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-missing-and-unsupported",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 0,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 1,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        },
+        {
+          "caseId": "form-conflicting-status",
+          "family": "form",
+          "repetition": 2,
+          "failed": false,
+          "criticalViolations": 0,
+          "negativeCase": true,
+          "negativeCorrect": true,
+          "proposal": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 1,
+            "recall": null,
+            "precision": 0
+          },
+          "validated": {
+            "truePositive": 0,
+            "falseNegative": 0,
+            "falsePositive": 0,
+            "recall": null,
+            "precision": null
+          }
+        }
+      ]
+    },
+    "measurements": [
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 0,
+        "workflowMs": 14586.983167,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "69560a50b4e4fc28d5f26ca3b8dc86c13b4649646acbc08092f7fe86b2404d5a",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 14586.267334,
+            "inputTokens": 861,
+            "outputTokens": 279
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 1,
+        "workflowMs": 15515.260832999998,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "69560a50b4e4fc28d5f26ca3b8dc86c13b4649646acbc08092f7fe86b2404d5a",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 15514.853334000001,
+            "inputTokens": 861,
+            "outputTokens": 279
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-name-history",
+        "repetition": 2,
+        "workflowMs": 15372.560749999997,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "69560a50b4e4fc28d5f26ca3b8dc86c13b4649646acbc08092f7fe86b2404d5a",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 15372.112916000002,
+            "inputTokens": 861,
+            "outputTokens": 279
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 0,
+        "workflowMs": 14333.062958000002,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 14332.603875,
+            "inputTokens": 887,
+            "outputTokens": 248
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 1,
+        "workflowMs": 14131.89241700001,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 14131.504791,
+            "inputTokens": 887,
+            "outputTokens": 248
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-work-authorization",
+        "repetition": 2,
+        "workflowMs": 14306.050290999992,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 14305.678832999998,
+            "inputTokens": 887,
+            "outputTokens": 248
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 0,
+        "workflowMs": 9457.058667000005,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "61871b24196e77a7269523361bff5bcfa8fc7b327dda00f791621b967ca34af9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 9456.590083000003,
+            "inputTokens": 1071,
+            "outputTokens": 125
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 1,
+        "workflowMs": 9786.561958999999,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "61871b24196e77a7269523361bff5bcfa8fc7b327dda00f791621b967ca34af9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 9786.214458000002,
+            "inputTokens": 1071,
+            "outputTokens": 125
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-stale-title",
+        "repetition": 2,
+        "workflowMs": 9681.83812500001,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "61871b24196e77a7269523361bff5bcfa8fc7b327dda00f791621b967ca34af9",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 9681.596333000009,
+            "inputTokens": 1071,
+            "outputTokens": 125
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 0,
+        "workflowMs": 5298.555124999999,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "0ea8f1b485aff95f796b425006bdf7065f5dc3e04e3060bfa5c030f5f0694c03",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 5298.328125,
+            "inputTokens": 828,
+            "outputTokens": 60
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 1,
+        "workflowMs": 5694.389999999999,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "0ea8f1b485aff95f796b425006bdf7065f5dc3e04e3060bfa5c030f5f0694c03",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 5694.195000000007,
+            "inputTokens": 828,
+            "outputTokens": 60
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-absent-values",
+        "repetition": 2,
+        "workflowMs": 5862.274166000003,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "0ea8f1b485aff95f796b425006bdf7065f5dc3e04e3060bfa5c030f5f0694c03",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 5862.062209000011,
+            "inputTokens": 828,
+            "outputTokens": 60
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 0,
+        "workflowMs": 6428.056666999997,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "331d8a7a660050020c6bf19e7ea8b818fabc7acdf5bedcaa6f9df47f0fea5b37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 6427.816416000016,
+            "inputTokens": 1028,
+            "outputTokens": 59
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 1,
+        "workflowMs": 6190.419332999998,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "331d8a7a660050020c6bf19e7ea8b818fabc7acdf5bedcaa6f9df47f0fea5b37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 6190.225334000017,
+            "inputTokens": 1028,
+            "outputTokens": 59
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-other-person-decoy",
+        "repetition": 2,
+        "workflowMs": 6224.509374999994,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "331d8a7a660050020c6bf19e7ea8b818fabc7acdf5bedcaa6f9df47f0fea5b37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 6224.308416999993,
+            "inputTokens": 1028,
+            "outputTokens": 59
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 0,
+        "workflowMs": 5786.68645899999,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "8c405818fb4ff1ff93d41ae4b4fb93b4a5276ccc848f6cf44b1fcda88c9d4a37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 5786.455209000007,
+            "inputTokens": 824,
+            "outputTokens": 58
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 1,
+        "workflowMs": 5347.942542000004,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "8c405818fb4ff1ff93d41ae4b4fb93b4a5276ccc848f6cf44b1fcda88c9d4a37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 5347.718792,
+            "inputTokens": 824,
+            "outputTokens": 58
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "extraction-instruction-injection",
+        "repetition": 2,
+        "workflowMs": 5528.523749999993,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "8c405818fb4ff1ff93d41ae4b4fb93b4a5276ccc848f6cf44b1fcda88c9d4a37",
+            "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+            "structureValid": true,
+            "elapsedMs": 5528.303917000012,
+            "inputTokens": 824,
+            "outputTokens": 58
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 0,
+        "workflowMs": 3888.7781250000116,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 3888.4523340000014,
+            "inputTokens": 427,
+            "outputTokens": 48
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 1,
+        "workflowMs": 3674.337709000014,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 3674.1803749999963,
+            "inputTokens": 427,
+            "outputTokens": 48
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-personal-email",
+        "repetition": 2,
+        "workflowMs": 3568.2414590000117,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 3568.0825830000103,
+            "inputTokens": 427,
+            "outputTokens": 48
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 0,
+        "workflowMs": 4868.121625,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 4867.912291999994,
+            "inputTokens": 490,
+            "outputTokens": 69
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 1,
+        "workflowMs": 5501.881583000009,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 5501.542291999998,
+            "inputTokens": 490,
+            "outputTokens": 69
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-work-authorization",
+        "repetition": 2,
+        "workflowMs": 4919.8242080000055,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 4919.592875000002,
+            "inputTokens": 490,
+            "outputTokens": 69
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 0,
+        "workflowMs": 3621.4532079999917,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 3621.2969589999993,
+            "inputTokens": 287,
+            "outputTokens": 55
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 1,
+        "workflowMs": 3426.035541999998,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 3425.901124999975,
+            "inputTokens": 287,
+            "outputTokens": 55
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-inaccessible-email",
+        "repetition": 2,
+        "workflowMs": 3503.228833000001,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 3503.091207999998,
+            "inputTokens": 287,
+            "outputTokens": 55
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 0,
+        "workflowMs": 4302.910459000006,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 4302.7612500000105,
+            "inputTokens": 362,
+            "outputTokens": 70
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 1,
+        "workflowMs": 4243.840750000003,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 4243.718874999991,
+            "inputTokens": 362,
+            "outputTokens": 70
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "search-hallucinated-secret",
+        "repetition": 2,
+        "workflowMs": 4617.579874999996,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+            "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572",
+            "structureValid": true,
+            "elapsedMs": 4617.457915999985,
+            "inputTokens": 362,
+            "outputTokens": 70
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 0,
+        "workflowMs": 8389.084042000002,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 8388.702542000014,
+            "inputTokens": 576,
+            "outputTokens": 137
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 1,
+        "workflowMs": 8176.925125000009,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 8176.699458000017,
+            "inputTokens": 576,
+            "outputTokens": 137
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-channel-alias",
+        "repetition": 2,
+        "workflowMs": 8457.306374999986,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 8457.048999999999,
+            "inputTokens": 576,
+            "outputTokens": 137
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 0,
+        "workflowMs": 8962.069084000017,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 8961.73887500001,
+            "inputTokens": 565,
+            "outputTokens": 143
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 1,
+        "workflowMs": 8526.137166999979,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 8525.914832999988,
+            "inputTokens": 565,
+            "outputTokens": 143
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "consolidation-protected-profile",
+        "repetition": 2,
+        "workflowMs": 8331.180708999978,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+            "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f",
+            "structureValid": true,
+            "elapsedMs": 8330.97987500002,
+            "inputTokens": 565,
+            "outputTokens": 143
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 0,
+        "workflowMs": 9950.832875000022,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 9950.274082999968,
+            "inputTokens": 913,
+            "outputTokens": 154
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 1,
+        "workflowMs": 10120.889582999982,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 10120.564708999998,
+            "inputTokens": 913,
+            "outputTokens": 154
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-address",
+        "repetition": 2,
+        "workflowMs": 10545.798415999976,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 10545.345666000037,
+            "inputTokens": 913,
+            "outputTokens": 154
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 0,
+        "workflowMs": 11192.79574999999,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 11191.535082999966,
+            "inputTokens": 1187,
+            "outputTokens": 147
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 1,
+        "workflowMs": 11321.011457999994,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 11320.52362500003,
+            "inputTokens": 1187,
+            "outputTokens": 147
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-permanent-resident",
+        "repetition": 2,
+        "workflowMs": 10997.711791999987,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 10997.355374999985,
+            "inputTokens": 1187,
+            "outputTokens": 147
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 0,
+        "workflowMs": 9677.353375000006,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 9677.109624999983,
+            "inputTokens": 841,
+            "outputTokens": 137
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 1,
+        "workflowMs": 9275.712082999991,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 9275.472791999986,
+            "inputTokens": 841,
+            "outputTokens": 137
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-missing-and-unsupported",
+        "repetition": 2,
+        "workflowMs": 9307.83491700003,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 9307.585500000045,
+            "inputTokens": 841,
+            "outputTokens": 137
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 0,
+        "workflowMs": 6900.505165999988,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 6900.15758400003,
+            "inputTokens": 911,
+            "outputTokens": 83
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 1,
+        "workflowMs": 6769.171499999997,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 6768.79449999996,
+            "inputTokens": 911,
+            "outputTokens": 83
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      },
+      {
+        "caseId": "form-conflicting-status",
+        "repetition": 2,
+        "workflowMs": 6967.578374999983,
+        "calls": [
+          {
+            "attempt": 0,
+            "promptSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+            "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d",
+            "structureValid": true,
+            "elapsedMs": 6967.242834000033,
+            "inputTokens": 911,
+            "outputTokens": 83
+          }
+        ],
+        "initialProposalValid": true,
+        "clientState": "ready"
+      }
+    ]
+  },
+  "memory": [
+    {
+      "elapsedMs": 4630.03475,
+      "physicalFootprintBytes": 720326592,
+      "lifetimePeakPhysicalFootprintBytes": 720474048,
+      "residentBytes": 801652736,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 6638.315875,
+      "physicalFootprintBytes": 853988032,
+      "lifetimePeakPhysicalFootprintBytes": 854348480,
+      "residentBytes": 940785664,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 8640.644042,
+      "physicalFootprintBytes": 857445056,
+      "lifetimePeakPhysicalFootprintBytes": 857690816,
+      "residentBytes": 944078848,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 10647.97,
+      "physicalFootprintBytes": 857690816,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 975781888,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 12650.602917,
+      "physicalFootprintBytes": 857690816,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 975798272,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 14650.906917,
+      "physicalFootprintBytes": 857707200,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 975814656,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 16653.238959,
+      "physicalFootprintBytes": 855806656,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 975863808,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 18654.880917,
+      "physicalFootprintBytes": 855790272,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 975847424,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 20661.581625,
+      "physicalFootprintBytes": 800314048,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 976175104,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 22662.258625,
+      "physicalFootprintBytes": 799396544,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 976175104,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 24662.18175,
+      "physicalFootprintBytes": 802460352,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1003749376,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 26662.863125,
+      "physicalFootprintBytes": 802460352,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1003749376,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 28664.318792,
+      "physicalFootprintBytes": 802460352,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1003749376,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 30664.727625,
+      "physicalFootprintBytes": 802460352,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1003749376,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 32666.389417,
+      "physicalFootprintBytes": 802460352,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1003749376,
+      "pressure": 1,
+      "swapUsedBytes": 21155348480
+    },
+    {
+      "elapsedMs": 34667.454792,
+      "physicalFootprintBytes": 802460352,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1003749376,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 36668.483084,
+      "physicalFootprintBytes": 746853056,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1003831296,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 38669.031042,
+      "physicalFootprintBytes": 746853056,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1003831296,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 40669.320542,
+      "physicalFootprintBytes": 746803904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1019772928,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 42670.028875,
+      "physicalFootprintBytes": 746803904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1019772928,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 44671.027917,
+      "physicalFootprintBytes": 746803904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1019772928,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 46672.572,
+      "physicalFootprintBytes": 746803904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1019772928,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 48674.591584,
+      "physicalFootprintBytes": 746803904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1019772928,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 50676.53425,
+      "physicalFootprintBytes": 746738368,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1020755968,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 52677.13775,
+      "physicalFootprintBytes": 746345152,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1020788736,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 54677.144584,
+      "physicalFootprintBytes": 746771136,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1020821504,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 56677.933667,
+      "physicalFootprintBytes": 746803904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1020854272,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 58679.082625,
+      "physicalFootprintBytes": 746803904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1020854272,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 60679.790625,
+      "physicalFootprintBytes": 746787520,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1020854272,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 62680.796792,
+      "physicalFootprintBytes": 746787520,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1020854272,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 64681.845584,
+      "physicalFootprintBytes": 746787520,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1020887040,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 66685.171542,
+      "physicalFootprintBytes": 746345152,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1020936192,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 68686.471709,
+      "physicalFootprintBytes": 746738368,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1020936192,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 70687.350084,
+      "physicalFootprintBytes": 746787520,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1044873216,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 72688.339542,
+      "physicalFootprintBytes": 746787520,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1044873216,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 74688.651417,
+      "physicalFootprintBytes": 746787520,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1044873216,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 76689.3785,
+      "physicalFootprintBytes": 746787520,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1044873216,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 78690.357542,
+      "physicalFootprintBytes": 746787520,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1044873216,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 80691.777417,
+      "physicalFootprintBytes": 746820288,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1044938752,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 82693.1965,
+      "physicalFootprintBytes": 746820288,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1044938752,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 84694.150084,
+      "physicalFootprintBytes": 746803904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1052934144,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 86694.788625,
+      "physicalFootprintBytes": 746803904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1052934144,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 88696.269334,
+      "physicalFootprintBytes": 746787520,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1052934144,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 90696.819334,
+      "physicalFootprintBytes": 762401472,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1002438656,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 92698.21725,
+      "physicalFootprintBytes": 762401472,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1002438656,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 94699.532792,
+      "physicalFootprintBytes": 762565312,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 986415104,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 96699.974459,
+      "physicalFootprintBytes": 762614464,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 986955776,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 98701.332584,
+      "physicalFootprintBytes": 763056832,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1011941376,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 100701.786625,
+      "physicalFootprintBytes": 763056832,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1012006912,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 102703.282375,
+      "physicalFootprintBytes": 763056832,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1012137984,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 104704.503167,
+      "physicalFootprintBytes": 762254016,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1012367360,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 106706.168167,
+      "physicalFootprintBytes": 762647232,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 1012367360,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 108707.590875,
+      "physicalFootprintBytes": 862933696,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 968097792,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 110709.442709,
+      "physicalFootprintBytes": 868602560,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 965017600,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 112710.228625,
+      "physicalFootprintBytes": 815944384,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 965132288,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 114711.47875,
+      "physicalFootprintBytes": 815911616,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 941195264,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 116711.513917,
+      "physicalFootprintBytes": 815944384,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 941326336,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 118712.534542,
+      "physicalFootprintBytes": 818074304,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 944668672,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 120713.357167,
+      "physicalFootprintBytes": 818074304,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 944668672,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 122714.132542,
+      "physicalFootprintBytes": 763663040,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 945733632,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 124715.414834,
+      "physicalFootprintBytes": 763269824,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 945733632,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 126716.268292,
+      "physicalFootprintBytes": 766612160,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 948748288,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 128717.450959,
+      "physicalFootprintBytes": 763368128,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 948862976,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 130717.906917,
+      "physicalFootprintBytes": 762745536,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 948862976,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 132719.429709,
+      "physicalFootprintBytes": 763777792,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 948994048,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 134720.582875,
+      "physicalFootprintBytes": 763466496,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 949026816,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 136722.189792,
+      "physicalFootprintBytes": 762876672,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 949026816,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 138722.99775,
+      "physicalFootprintBytes": 763777792,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 949010432,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 140724.458375,
+      "physicalFootprintBytes": 763974400,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 950779904,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 142725.090709,
+      "physicalFootprintBytes": 763482880,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 950878208,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 144726.064292,
+      "physicalFootprintBytes": 764072704,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 930578432,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 146727.001834,
+      "physicalFootprintBytes": 764072704,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 930660352,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 148728.01675,
+      "physicalFootprintBytes": 763581184,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 930660352,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 150728.630209,
+      "physicalFootprintBytes": 763974400,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 923648000,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 152730.106042,
+      "physicalFootprintBytes": 764072704,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 923680768,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 154731.335625,
+      "physicalFootprintBytes": 763581184,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 923680768,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 156731.333125,
+      "physicalFootprintBytes": 766956288,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 926662656,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 158731.829,
+      "physicalFootprintBytes": 764072704,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 927694848,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 160732.229,
+      "physicalFootprintBytes": 763679488,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 927694848,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 162732.265417,
+      "physicalFootprintBytes": 764072704,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 927744000,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 164733.298584,
+      "physicalFootprintBytes": 764138240,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 928038912,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 166734.057667,
+      "physicalFootprintBytes": 763695872,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 928038912,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 168734.675417,
+      "physicalFootprintBytes": 767070976,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 931020800,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 170736.459959,
+      "physicalFootprintBytes": 763712256,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 931020800,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 172737.5745,
+      "physicalFootprintBytes": 764039936,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 931020800,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 174738.906584,
+      "physicalFootprintBytes": 764023552,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 932397056,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 176740.217084,
+      "physicalFootprintBytes": 764023552,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 932413440,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 178740.940834,
+      "physicalFootprintBytes": 764023552,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 932544512,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 180742.537542,
+      "physicalFootprintBytes": 764023552,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 932560896,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 182743.518459,
+      "physicalFootprintBytes": 764023552,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 932560896,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 184743.908209,
+      "physicalFootprintBytes": 767005440,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 935542784,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 186745.346542,
+      "physicalFootprintBytes": 764007168,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 935575552,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 188745.78475,
+      "physicalFootprintBytes": 763958016,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 935575552,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 190747.178167,
+      "physicalFootprintBytes": 763958016,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 935690240,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 192748.433875,
+      "physicalFootprintBytes": 763040512,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 935690240,
+      "pressure": 1,
+      "swapUsedBytes": 21146959872
+    },
+    {
+      "elapsedMs": 194749.96225,
+      "physicalFootprintBytes": 763958016,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 935690240,
+      "pressure": 1,
+      "swapUsedBytes": 21130182656
+    },
+    {
+      "elapsedMs": 196751.3915,
+      "physicalFootprintBytes": 763958016,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 919814144,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 198752.069667,
+      "physicalFootprintBytes": 763958016,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 919814144,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 200752.31625,
+      "physicalFootprintBytes": 763958016,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 919781376,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 202753.603459,
+      "physicalFootprintBytes": 765367040,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 921206784,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 204755.550667,
+      "physicalFootprintBytes": 763958016,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 897335296,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 206756.378375,
+      "physicalFootprintBytes": 763990784,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 897368064,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 208757.592417,
+      "physicalFootprintBytes": 763958016,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 897335296,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 210758.759125,
+      "physicalFootprintBytes": 763941632,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 897318912,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 212760.127792,
+      "physicalFootprintBytes": 763941632,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 889421824,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 214761.309709,
+      "physicalFootprintBytes": 763941632,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 889602048,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 216761.573125,
+      "physicalFootprintBytes": 763941632,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 889733120,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 218762.758084,
+      "physicalFootprintBytes": 763941632,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 889733120,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 220764.383875,
+      "physicalFootprintBytes": 763941632,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 889733120,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 222763.863042,
+      "physicalFootprintBytes": 766923520,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 892715008,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 224764.729542,
+      "physicalFootprintBytes": 766956288,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 867762176,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 226765.617667,
+      "physicalFootprintBytes": 763581184,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 866500608,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 228767.148125,
+      "physicalFootprintBytes": 763990784,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 866549760,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 230767.6415,
+      "physicalFootprintBytes": 763990784,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 866762752,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 232768.822542,
+      "physicalFootprintBytes": 763990784,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 866910208,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 234769.82725,
+      "physicalFootprintBytes": 763613952,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 867074048,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 236773.719959,
+      "physicalFootprintBytes": 763974400,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 867074048,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 238775.197584,
+      "physicalFootprintBytes": 763974400,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 867024896,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 240776.13,
+      "physicalFootprintBytes": 763974400,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 867024896,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 242777.604375,
+      "physicalFootprintBytes": 763679488,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 863797248,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 244779.400625,
+      "physicalFootprintBytes": 764154624,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 860635136,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 246780.561209,
+      "physicalFootprintBytes": 764154624,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 860635136,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 248794.087375,
+      "physicalFootprintBytes": 764285696,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 853999616,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 250794.653917,
+      "physicalFootprintBytes": 764203776,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 853966848,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 252796.524167,
+      "physicalFootprintBytes": 767054592,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 853835776,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 254796.6985,
+      "physicalFootprintBytes": 767054592,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 847790080,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 256797.236167,
+      "physicalFootprintBytes": 767054592,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 847691776,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 258797.758375,
+      "physicalFootprintBytes": 764039936,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 847773696,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 260799.340834,
+      "physicalFootprintBytes": 763646720,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 847773696,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 262804.080167,
+      "physicalFootprintBytes": 767021824,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 850755584,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 264805.169834,
+      "physicalFootprintBytes": 767021824,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 850755584,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 266806.326542,
+      "physicalFootprintBytes": 767021824,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 850755584,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 268806.368167,
+      "physicalFootprintBytes": 763745024,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 850788352,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 270806.503375,
+      "physicalFootprintBytes": 767021824,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 853770240,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 272807.012667,
+      "physicalFootprintBytes": 767038208,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 853786624,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 274807.766584,
+      "physicalFootprintBytes": 767038208,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 853786624,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 276808.968584,
+      "physicalFootprintBytes": 763826944,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 856424448,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 278810.422709,
+      "physicalFootprintBytes": 763220736,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 858013696,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 280812.823375,
+      "physicalFootprintBytes": 767120128,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 861028352,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 282813.682167,
+      "physicalFootprintBytes": 767120128,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 861028352,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 284814.092042,
+      "physicalFootprintBytes": 767120128,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 861028352,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 286815.6235,
+      "physicalFootprintBytes": 764056320,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 861110272,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 288816.725917,
+      "physicalFootprintBytes": 763187968,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 861159424,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 290818.527417,
+      "physicalFootprintBytes": 765694720,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 862748672,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 292818.983792,
+      "physicalFootprintBytes": 767103744,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 862715904,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 294819.197709,
+      "physicalFootprintBytes": 767103744,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 862715904,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 296820.343084,
+      "physicalFootprintBytes": 764072704,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 862732288,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 298821.051167,
+      "physicalFootprintBytes": 763810560,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 859832320,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 300822.185792,
+      "physicalFootprintBytes": 764171008,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 859832320,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 302823.214667,
+      "physicalFootprintBytes": 764171008,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 859799552,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 304824.154542,
+      "physicalFootprintBytes": 764171008,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 859799552,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 306824.918584,
+      "physicalFootprintBytes": 764252928,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 860160000,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 308826.23575,
+      "physicalFootprintBytes": 763761408,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 860160000,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 310827.196292,
+      "physicalFootprintBytes": 764203776,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 860520448,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 312877.929,
+      "physicalFootprintBytes": 764596992,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 886554624,
+      "pressure": 1,
+      "swapUsedBytes": 21121794048
+    },
+    {
+      "elapsedMs": 314878.214667,
+      "physicalFootprintBytes": 764596992,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 886554624,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 316878.240042,
+      "physicalFootprintBytes": 764580608,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 886554624,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 318878.555875,
+      "physicalFootprintBytes": 764351232,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 886636544,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 320880.484167,
+      "physicalFootprintBytes": 763859712,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 886636544,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 322881.246834,
+      "physicalFootprintBytes": 764236544,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 886636544,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 324882.351417,
+      "physicalFootprintBytes": 764252928,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 907608064,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 326884.685584,
+      "physicalFootprintBytes": 764252928,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 907608064,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 328885.729709,
+      "physicalFootprintBytes": 764154624,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 907608064,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 330886.651625,
+      "physicalFootprintBytes": 763663104,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 907558912,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 332887.941292,
+      "physicalFootprintBytes": 763138816,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 907558912,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 334889.666917,
+      "physicalFootprintBytes": 766939904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 918487040,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 336891.065292,
+      "physicalFootprintBytes": 766939904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 918487040,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 338891.047125,
+      "physicalFootprintBytes": 766939904,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 918487040,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 340891.962209,
+      "physicalFootprintBytes": 763810560,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 918552576,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 342892.290792,
+      "physicalFootprintBytes": 762893056,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 918585344,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 344892.682542,
+      "physicalFootprintBytes": 763826944,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 929464320,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 346894.465792,
+      "physicalFootprintBytes": 763826944,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 929464320,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 348896.0435,
+      "physicalFootprintBytes": 763826944,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 929464320,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 350899.290375,
+      "physicalFootprintBytes": 763794176,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 929464320,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 352899.99025,
+      "physicalFootprintBytes": 763794176,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 929464320,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 354900.951667,
+      "physicalFootprintBytes": 763745024,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 950370304,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 356902.11425,
+      "physicalFootprintBytes": 763745024,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 950370304,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 358903.229792,
+      "physicalFootprintBytes": 763712256,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 950370304,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 360904.227875,
+      "physicalFootprintBytes": 763319040,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 950370304,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 362905.282334,
+      "physicalFootprintBytes": 763728640,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 950386688,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 364905.795375,
+      "physicalFootprintBytes": 763663104,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966230016,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 366906.476542,
+      "physicalFootprintBytes": 763646720,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966213632,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 368907.497417,
+      "physicalFootprintBytes": 763613952,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966230016,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 370907.90675,
+      "physicalFootprintBytes": 763237120,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966262784,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 372909.573,
+      "physicalFootprintBytes": 763630336,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966262784,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 374911.569875,
+      "physicalFootprintBytes": 763630336,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966262784,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 376915.872584,
+      "physicalFootprintBytes": 763237120,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966262784,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 378917.532292,
+      "physicalFootprintBytes": 763613952,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966246400,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 380918.387834,
+      "physicalFootprintBytes": 763613952,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966246400,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 382919.213667,
+      "physicalFootprintBytes": 763319040,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966279168,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 384919.866084,
+      "physicalFootprintBytes": 763253504,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 966279168,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 386921.098334,
+      "physicalFootprintBytes": 766677824,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 969293824,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 388669.169542,
+      "physicalFootprintBytes": 766677824,
+      "lifetimePeakPhysicalFootprintBytes": 889098944,
+      "residentBytes": 969310208,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    }
+  ],
+  "memoryPassed": true,
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true
+}

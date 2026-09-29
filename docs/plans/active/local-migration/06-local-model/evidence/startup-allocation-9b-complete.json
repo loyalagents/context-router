@@ -1,0 +1,111 @@
+{
+  "run": "native-9b-startup-allocation-1790295472691",
+  "testedRevision": "59d81d30e71d88d4269188cce5246df80147f4f5",
+  "runtimeRevision": "7fe450e19305b828c199d602c23a8337aaa1f03b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "modelBytes": 5680522464,
+  "timestamp": "2026-09-25T00:17:52.691Z",
+  "passed": true,
+  "allocation": {
+    "records": [
+      {
+        "kind": "buffer",
+        "family": "model",
+        "backend": "CPU_Mapped",
+        "reportedMiB": 545.62
+      },
+      {
+        "kind": "buffer",
+        "family": "model",
+        "backend": "MTL0_Mapped",
+        "reportedMiB": 5406.91
+      },
+      {
+        "kind": "configuration",
+        "field": "n_seq_max",
+        "value": 1
+      },
+      {
+        "kind": "configuration",
+        "field": "n_ctx",
+        "value": 16384
+      },
+      {
+        "kind": "configuration",
+        "field": "n_ctx_seq",
+        "value": 16384
+      },
+      {
+        "kind": "configuration",
+        "field": "n_batch",
+        "value": 512
+      },
+      {
+        "kind": "configuration",
+        "field": "n_ubatch",
+        "value": 512
+      },
+      {
+        "kind": "configuration",
+        "field": "n_rs_seq",
+        "value": 0
+      },
+      {
+        "kind": "configuration",
+        "field": "n_outputs_max",
+        "value": 1
+      },
+      {
+        "kind": "buffer",
+        "family": "output",
+        "backend": "CPU",
+        "reportedMiB": 0.95
+      },
+      {
+        "kind": "buffer",
+        "family": "kv",
+        "backend": "MTL0",
+        "reportedMiB": 512
+      },
+      {
+        "kind": "buffer",
+        "family": "recurrent",
+        "backend": "MTL0",
+        "reportedMiB": 50.25
+      },
+      {
+        "kind": "buffer",
+        "family": "compute",
+        "backend": "MTL0",
+        "reportedMiB": 137.22
+      },
+      {
+        "kind": "buffer",
+        "family": "compute",
+        "backend": "CPU",
+        "reportedMiB": 32.02
+      }
+    ],
+    "configuration": {
+      "n_seq_max": 1,
+      "n_ctx": 16384,
+      "n_ctx_seq": 16384,
+      "n_batch": 512,
+      "n_ubatch": 512,
+      "n_rs_seq": 0,
+      "n_outputs_max": 1
+    },
+    "rawBytesDiscardedOrProjected": 18181,
+    "projectedBytes": 915,
+    "reportedPrecisionMiB": 0.01
+  },
+  "startupReadyMs": 1471.2197919999999,
+  "publicHealthRequests": 8,
+  "protectedRequests": 0,
+  "clientInferenceRequests": 0,
+  "ownedChildStoppedAndReaped": true,
+  "diagnosticVerbosity": 4,
+  "supportedWorkloadVerbosity": 3,
+  "nativeStartupWarmup": true,
+  "credentialRootRemoved": true
+}

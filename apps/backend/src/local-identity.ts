@@ -5,6 +5,7 @@ type RunAdmin = (argv: readonly string[]) => Promise<number>;
 
 export interface LocalIdentityEntrypointDependencies {
   loadPreview?: () => Promise<RunPreview>;
+  loadModelPreview?: () => Promise<RunPreview>;
   loadAdmin?: () => Promise<RunAdmin>;
 }
 
@@ -18,6 +19,20 @@ async function loadPreview(): Promise<RunPreview> {
     runLocalIdentityPreview({
       configuration: createLocalDatabaseConfiguration(),
     });
+}
+
+async function loadModelPreview(): Promise<RunPreview> {
+  const [{ createLocalDatabaseConfiguration }, { createLocalModelSelection },
+    { runLocalIdentityPreview, createNestLocalIdentityApplication }] = await Promise.all([
+      import('./config/local-database.config'), import('./config/local-model.config'),
+      import('./bootstrap/local-identity-preview'),
+    ]);
+  return () => {
+    const configuration = createLocalDatabaseConfiguration();
+    const model = createLocalModelSelection();
+    return runLocalIdentityPreview({ configuration,
+      createApplication: (local) => createNestLocalIdentityApplication(local, model) });
+  };
 }
 
 async function loadAdmin(): Promise<RunAdmin> {
@@ -37,6 +52,10 @@ export async function main(
   clearLocalIdentityAmbientDriverSelection();
   if (argv.length === 1 && argv[0] === "preview") {
     const runPreview = await (dependencies.loadPreview ?? loadPreview)();
+    return runPreview();
+  }
+  if (argv.length === 1 && argv[0] === 'preview-model') {
+    const runPreview = await (dependencies.loadModelPreview ?? loadModelPreview)();
     return runPreview();
   }
   const runAdmin = await (dependencies.loadAdmin ?? loadAdmin)();

@@ -1,0 +1,175 @@
+{
+  "run": "native-9b-schemas-1790292514636",
+  "testedRevision": "787ac08f110d149a7982f902ec20a707dae64a1d",
+  "timestamp": "2026-09-24T23:28:34.636Z",
+  "candidate": "9b",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "passed": true,
+  "memoryBefore": {
+    "physicalFootprintBytes": 1000192,
+    "lifetimePeakPhysicalFootprintBytes": 1016576,
+    "residentBytes": 1179648,
+    "pressure": 1,
+    "swapUsedBytes": 21113405440
+  },
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 1254.2861670000002
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-9B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "63134",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "512",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "schemas",
+    "passed": true,
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "probes": [
+      {
+        "id": "arbitrary-json",
+        "passed": true,
+        "notRun": false,
+        "inputTokens": 110,
+        "nativeCalls": 1,
+        "outputTokens": 80,
+        "state": "ready",
+        "elapsedMs": 2781.45325
+      },
+      {
+        "id": "form-defaults",
+        "passed": true,
+        "notRun": false,
+        "inputTokens": 62,
+        "nativeCalls": 1,
+        "outputTokens": 32,
+        "state": "ready",
+        "elapsedMs": 1114.7209579999999
+      },
+      {
+        "id": "duplicate-literal",
+        "passed": true,
+        "notRun": false,
+        "consumerCalls": 2,
+        "inputTokens": 370,
+        "nativeCalls": 1,
+        "outputTokens": 73,
+        "state": "ready",
+        "elapsedMs": 3098.2049160000006
+      },
+      {
+        "id": "output-limit",
+        "passed": true,
+        "notRun": false,
+        "rejected": true,
+        "inputTokens": 110,
+        "nativeCalls": 1,
+        "state": "ready",
+        "terminalObservations": [
+          {
+            "stopType": "limit",
+            "truncated": false,
+            "inputTokens": 110,
+            "outputTokens": 1
+          }
+        ],
+        "observationOverflow": false,
+        "elapsedMs": 383.92583299999933
+      }
+    ],
+    "manifestSha256": "db48203172e8ffe0264f3cc5869ffcb37d2d0db67359ee3c27f94f41195361a4"
+  },
+  "memory": [
+    {
+      "elapsedMs": 5746.06375,
+      "physicalFootprintBytes": 710643648,
+      "lifetimePeakPhysicalFootprintBytes": 710643648,
+      "residentBytes": 805994496,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 7751.53325,
+      "physicalFootprintBytes": 779637248,
+      "lifetimePeakPhysicalFootprintBytes": 811520512,
+      "residentBytes": 933117952,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 9753.215167,
+      "physicalFootprintBytes": 776147456,
+      "lifetimePeakPhysicalFootprintBytes": 811520512,
+      "residentBytes": 933167104,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 11753.933792,
+      "physicalFootprintBytes": 785371648,
+      "lifetimePeakPhysicalFootprintBytes": 811520512,
+      "residentBytes": 944291840,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    },
+    {
+      "elapsedMs": 13745.436834,
+      "physicalFootprintBytes": 788353536,
+      "lifetimePeakPhysicalFootprintBytes": 811520512,
+      "residentBytes": 955351040,
+      "pressure": 1,
+      "swapUsedBytes": 21113405440
+    }
+  ],
+  "memoryPassed": true,
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true
+}

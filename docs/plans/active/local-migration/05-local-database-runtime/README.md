@@ -1,7 +1,7 @@
 # Step 05: Local Database Runtime
 
-- Status: implementation and CP5 integration complete; review/validation status in PR #164; active pending human merge
-- Step 05 PR: [PR #164](https://github.com/loyalagents/context-router/pull/164) — current review verdicts and exact-head validation evidence; Step 05 remains active pending human merge
+- Status: complete; human merge verified 2026-09-24; retained as Step 06 prerequisite evidence
+- Step 05 PR: [PR #164](https://github.com/loyalagents/context-router/pull/164), merge `837701b3633eed669dd2c2c518ffebc0e46d55d8`, tested head `91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b`
 - Program step: `05-local-database-runtime`
 - Target branch: `main`
 - Working branch: `codex/local-migration-05-local-database-runtime`
@@ -10,7 +10,7 @@
 - Planning/implementation owner and sole repository writer: `/root/step05_writer`
 - Change classification: `local-only`; preserved hosted line and external deployments are untouched
 - Intended PR count: one cohesive PR with internal testable checkpoints
-- Last updated: 2026-09-23
+- Last updated: 2026-09-24
 
 ## Outcome And Entry Evidence
 
@@ -28,10 +28,16 @@ The [initial plan](plan.md) first establishes the durable-state/failure model, t
 
 The [CP1 feasibility and accepted selection](feasibility.md) records the exact runtime, file/process/backup probes and PostgreSQL characterization. All affected independent selection reviews approved frozen revision `0a6cda5af9ec90415792d2813f097e6bce62bfaa`, and the coordinator authorized production implementation.
 
-Step 05 is the sole active primary step. No local model, MCP/browser/UI cutover, installer, LAN service, historical importer, cloud sync, automatic merge or Step 06 activation belongs here.
+During implementation Step 05 was the sole active primary step. No local model,
+MCP/browser/UI cutover, installer, LAN service, historical importer or cloud sync
+was included. Its merge does not itself activate Step 06.
 
-## Implementation Candidate
+## Completed Implementation
 
 The actual local runtime, real file-backed contracts/application/process/recovery and matching-pair backup mechanism are implemented. Source and sealed relocated package starts pass on macOS arm64 with Node 24.21.0 / pnpm 10.25.0 / SQLite 3.53.4. Gate/CI discovery adds the local project and independent ten-resource SQLite lifecycle proof while retaining the twelve phases, eight-resource PostgreSQL reference proof and hosted/web coverage. Canonical docs distinguish fresh SQLite roots from preserved PostgreSQL state.
 
-Checkpoint evidence and limitations are recorded in the [plan](plan.md#cp5-integration-and-package-evidence). Closeout requires fresh complete planning-base-to-candidate review, the final exact-base full gate and final pushed-head standard/dedicated CI. Current verdicts and exact source-bound results are maintained in PR #164. Human merge remains separate; Step 06 stays inactive.
+Checkpoint evidence and limitations are recorded in the [plan](plan.md#cp5-integration-and-package-evidence), with final verdicts and exact source-bound validation in PR #164. Fresh verification confirmed the human merge and successful standard CI [35957573071](https://github.com/loyalagents/context-router/actions/runs/35957573071) and dedicated migration gate [35957573023](https://github.com/loyalagents/context-router/actions/runs/35957573023) on the tested head above.
+
+Next use the [Step 06 handoff](../step-06-handoff.md). This documentation-only
+merge record neither reruns historical checks nor activates Step 06; the next
+agent still needs clean-base gate evidence and an independently reviewed plan.

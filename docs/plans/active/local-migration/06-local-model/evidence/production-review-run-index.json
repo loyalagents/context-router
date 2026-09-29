@@ -1,0 +1,20 @@
+[
+  {
+    "file": "production-quality-review-9b.json",
+    "sha256": "c022c9de742a56edcde4ba7744ccd311acb3a5ee73d0639d550ce790aa42f099",
+    "testedRevision": "59e03d9914f481432c6a08e5a4e5d9c5e7bafdfd",
+    "passed": true,
+    "privateNativeLog": "native-9b-production-quality-1790317737281.log",
+    "privateNativeLogSha256": "e3793fa1e159e74c915ff347b9ea3e23d39febcf7246cfb2c343d8fe68e3cfd5",
+    "ownedChildStoppedAndReaped": true
+  },
+  {
+    "file": "production-cancellation-review-9b-failed.json",
+    "sha256": "ddfd305e7d8007efa6fc554a87a861bd62076600526243c0d37b2713f2c274f8",
+    "testedRevision": "59e03d9914f481432c6a08e5a4e5d9c5e7bafdfd",
+    "passed": false,
+    "privateNativeLog": "native-9b-production-cancellation-1790318124166.log",
+    "privateNativeLogSha256": "f0dd38a50b4eb03d763fc0ea9825b8b6220cc4bff42b7f9f6fbfa5be26c6f896",
+    "ownedChildStoppedAndReaped": true
+  }
+]

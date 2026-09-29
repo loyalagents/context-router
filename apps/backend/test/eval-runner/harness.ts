@@ -1,3 +1,4 @@
+import { HOSTED_AI_CAPABILITIES } from '../../src/domains/shared/ports/ai-execution';
 import '../setup/env';
 
 import { readFile, writeFile } from 'fs/promises';
@@ -53,6 +54,8 @@ async function main() {
 
     testApp = await createTestApp({
       mockVertexAi: {
+        capabilities: HOSTED_AI_CAPABILITIES,
+        getStatus: async () => ({ state: 'unsupported' as const, configured: true }),
         generateText: async () => 'Eval runner mock text response',
         generateTextWithFile: async () =>
           JSON.stringify({
@@ -61,6 +64,8 @@ async function main() {
           }),
       },
       mockStructuredAi: {
+        capabilities: HOSTED_AI_CAPABILITIES,
+        getStatus: async () => ({ state: 'unsupported' as const, configured: true }),
         generateStructured: async () => ({ fillActions: input.fillActions }),
         generateStructuredWithFile: async () => ({
           suggestions: [],

@@ -1,0 +1,7 @@
+{"kind":"buffer","family":"model","backend":"CPU_Mapped","reportedMiB":545.62}
+{"kind":"buffer","family":"model","backend":"MTL0_Mapped","reportedMiB":5406.91}
+{"kind":"configuration","field":"n_seq_max","value":1}
+{"kind":"configuration","field":"n_ctx","value":16384}
+{"kind":"configuration","field":"n_ctx_seq","value":16384}
+{"kind":"configuration","field":"n_batch","value":512}
+{"kind":"configuration","field":"n_ubatch","value":512}

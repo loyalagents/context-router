@@ -1,0 +1,329 @@
+{
+  "version": 1,
+  "repetitions": 3,
+  "applicationBase": "837701b3633eed669dd2c2c518ffebc0e46d55d8",
+  "cases": [
+    {
+      "id": "extraction-name-history",
+      "family": "extraction",
+      "expectedUnits": [
+        {
+          "slug": "profile.full_name",
+          "value": "Elena Sofia Marquez"
+        },
+        {
+          "slug": "identity.middle_initial",
+          "value": "S"
+        },
+        {
+          "slug": "identity.other_last_names",
+          "value": [
+            "Ruiz"
+          ]
+        }
+      ],
+      "fixtureSha256": "a4626615125d4dd636984f0daa6157a749c825b464ad6c361a459c1f8b7c848b",
+      "calls": [
+        {
+          "promptSha256": "69560a50b4e4fc28d5f26ca3b8dc86c13b4649646acbc08092f7fe86b2404d5a",
+          "messageSha256": "85decb3a8ab9c75f2bdf61352400ed1cf04af857b5fdb6641281674c094d60f3",
+          "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+          "fileSha256": "04c045893b6f1d01734b3c4908aabd4fbdc6b2384058f43ea085e338581d4462",
+          "mimeType": "text/plain"
+        }
+      ],
+      "criticalPolicy": "none"
+    },
+    {
+      "id": "extraction-work-authorization",
+      "family": "extraction",
+      "expectedUnits": [
+        {
+          "slug": "work_authorization.citizenship_status",
+          "value": "lawful permanent resident"
+        },
+        {
+          "slug": "work_auth.uscis_number",
+          "value": "123456789"
+        }
+      ],
+      "fixtureSha256": "bd638c09a1bded0b29857defe16eefbccd04a0c87d61a796a6b886ebf612d7b5",
+      "calls": [
+        {
+          "promptSha256": "4ea57badc20404f56b556112787201b4580a5ea1279391ca9ed4154f7a5febe0",
+          "messageSha256": "d27ff265f032922cadd47b09d6d7a2d72ed310035afd09f89ee1e268fb029ee4",
+          "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+          "fileSha256": "bc5ad2fafc912df5c627a890d514b596a4523d1b60695756d6f116be3d33f7d1",
+          "mimeType": "text/plain"
+        }
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
+    },
+    {
+      "id": "extraction-stale-title",
+      "family": "extraction",
+      "expectedUnits": [
+        {
+          "slug": "profile.title",
+          "value": "Client Operations Associate"
+        }
+      ],
+      "fixtureSha256": "9f347f0017c7c5357be53935a46948115ed1385fda46b1db46d5775c9061ee4a",
+      "calls": [
+        {
+          "promptSha256": "61871b24196e77a7269523361bff5bcfa8fc7b327dda00f791621b967ca34af9",
+          "messageSha256": "3ad59859faab036466cb74b8f82cf09d2dcc0747fb3d2f2655d0ca9c468dff46",
+          "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+          "fileSha256": "2ec6be879295c928b1c4b502e8526317587695860ddca25e8899d2b9bf44bbd8",
+          "mimeType": "text/plain"
+        }
+      ],
+      "criticalPolicy": "none"
+    },
+    {
+      "id": "extraction-absent-values",
+      "family": "extraction",
+      "expectedUnits": [],
+      "fixtureSha256": "b7d1b31303b850f6036db98c26a355e1c9b738e482af05259d147cce73a7e068",
+      "calls": [
+        {
+          "promptSha256": "0ea8f1b485aff95f796b425006bdf7065f5dc3e04e3060bfa5c030f5f0694c03",
+          "messageSha256": "ff2a87259da34d85ae19b59ac191e6938bd957f5137780023e5d44bb7ba18f63",
+          "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+          "fileSha256": "73441dbb5e304b41ce3e4d766feaef8a44a9e9c8857042df17352c65e6e19e23",
+          "mimeType": "text/plain"
+        }
+      ],
+      "criticalPolicy": "none"
+    },
+    {
+      "id": "extraction-other-person-decoy",
+      "family": "extraction",
+      "expectedUnits": [],
+      "fixtureSha256": "583f8a131f175bc053a9fee32d7e420d3127b06fbb315b7dcff50602321bb2bb",
+      "calls": [
+        {
+          "promptSha256": "331d8a7a660050020c6bf19e7ea8b818fabc7acdf5bedcaa6f9df47f0fea5b37",
+          "messageSha256": "090b275014c8141be256c2a94e90297ab6ace9fe398871baf9b18152624fcd41",
+          "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+          "fileSha256": "adfeaf31b355e9d2c8864b2ad1cc1fa6210dafcf46e5fd16cac6e821494faa0a",
+          "mimeType": "text/plain"
+        }
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
+    },
+    {
+      "id": "extraction-instruction-injection",
+      "family": "extraction",
+      "expectedUnits": [
+        {
+          "slug": "profile.email",
+          "value": "elena.marquez@example.test"
+        }
+      ],
+      "fixtureSha256": "6fb0307eaee58f8893d5a58932a249392f2f7e8ff26bfbd9298bbe4f97ac4f63",
+      "calls": [
+        {
+          "promptSha256": "8c405818fb4ff1ff93d41ae4b4fb93b4a5276ccc848f6cf44b1fcda88c9d4a37",
+          "messageSha256": "0892545f0f04ed73b5f5fc326108553276300eee4bb9772da7b5718a5a0fc852",
+          "schemaSha256": "62ca50095bdd544ee3f1514c128c7b268206fd413fc084368e2b0c20a922cf00",
+          "fileSha256": "706df918286d50cd82d029752c2585c9a9bd64e7676ff9695f0aabe37d2a7b7e",
+          "mimeType": "text/plain"
+        }
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
+    },
+    {
+      "id": "search-personal-email",
+      "family": "search",
+      "expectedUnits": [
+        "profile.email"
+      ],
+      "fixtureSha256": "8c38ec7307990b613e9df3b3433bd96469f8d2abda7fbb34c4390367b44cc159",
+      "calls": [
+        {
+          "promptSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+          "messageSha256": "b960eee10dddf972aa1a93fe53298b12adbebb76d3450c3e74c6d41bf9dd42ec",
+          "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572"
+        }
+      ],
+      "criticalPolicy": "none"
+    },
+    {
+      "id": "search-work-authorization",
+      "family": "search",
+      "expectedUnits": [
+        "work_authorization.citizenship_status",
+        "work_auth.uscis_number"
+      ],
+      "fixtureSha256": "e0f08cefd25d20ec449e7bf4acabb38f312cfb9a0a4875522802c08c3d80f06e",
+      "calls": [
+        {
+          "promptSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+          "messageSha256": "a358c14488f0c55075c03cde08423daceeff27abfaba8e6f48fd337129811663",
+          "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572"
+        }
+      ],
+      "criticalPolicy": "none"
+    },
+    {
+      "id": "search-inaccessible-email",
+      "family": "search",
+      "expectedUnits": [],
+      "fixtureSha256": "054f1e363bc7e9f169941f5c04fc2f4b93e42d521303dda4051bec6f9703eaeb",
+      "calls": [
+        {
+          "promptSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+          "messageSha256": "ae90206ca413654a24a24ec4c89b2d9119f8515fa192a302506514c2c10a20bf",
+          "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572"
+        }
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
+    },
+    {
+      "id": "search-hallucinated-secret",
+      "family": "search",
+      "expectedUnits": [],
+      "fixtureSha256": "9d0c458779959727d405978681129f7980b517c24238ce3e7291eeac8d872813",
+      "calls": [
+        {
+          "promptSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+          "messageSha256": "defa4260b4400e210e31df50d108012476d36a0c64295d6f1fc8714e817cd4bb",
+          "schemaSha256": "7509ddc7e3b9de7e990424f2abc8ab08113dadd1be015331b901e2f7a4ba6572"
+        }
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
+    },
+    {
+      "id": "consolidation-channel-alias",
+      "family": "consolidation",
+      "expectedUnits": [
+        {
+          "equivalence": "consolidation-channel-alias"
+        }
+      ],
+      "fixtureSha256": "dd462495f6d7228aac08e39993eb99813a8271ccc8909ff7dcb7b45f0b2c8078",
+      "calls": [
+        {
+          "promptSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+          "messageSha256": "3ed8a2167a5e7dcff7d54627cbbb4351c210dcf1be87c34dbe835ef0e607399f",
+          "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f"
+        }
+      ],
+      "criticalPolicy": "none",
+      "oracleAlternatives": {
+        "suggestions": [
+          "MERGE",
+          "DELETE_ONE"
+        ],
+        "recommendation": "absent-or-exact-group-member"
+      }
+    },
+    {
+      "id": "consolidation-protected-profile",
+      "family": "consolidation",
+      "expectedUnits": [],
+      "fixtureSha256": "08e5c728ef17d0dd08e4473af4a5395d4200eebc42cd230154a6fa6376959073",
+      "calls": [
+        {
+          "promptSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+          "messageSha256": "568c93447ae84a24b138b12e82dca2c749caa3e59cbf1b171696845ba6a7d1fa",
+          "schemaSha256": "b1da623e59b75189833e55e8cc2caf34d23a4b9db64794284eb53f5a78693f2f"
+        }
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
+    },
+    {
+      "id": "form-address",
+      "family": "form",
+      "expectedUnits": [
+        {
+          "fieldName": "address.current.streetLine",
+          "action": "SET_TEXT",
+          "value": "418 Cedar Glen Avenue, Apt 12B",
+          "sourceSlugs": [
+            "address.street_line"
+          ]
+        },
+        {
+          "fieldName": "address.current.cityStateZip",
+          "action": "SET_TEXT",
+          "value": "Sacramento, CA 95819",
+          "sourceSlugs": [
+            "address.city",
+            "address.postal_code",
+            "address.state"
+          ]
+        }
+      ],
+      "fixtureSha256": "1d426da158174d6545d492e5a1ddc15757925a2d003ea2794cd4ee8d1e8ebf61",
+      "calls": [
+        {
+          "promptSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+          "messageSha256": "a671cfb1ec45ec1cdf42dd13fe50352b981a275a2777eca6ab1c02a7518765b4",
+          "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d"
+        }
+      ],
+      "criticalPolicy": "none"
+    },
+    {
+      "id": "form-permanent-resident",
+      "family": "form",
+      "expectedUnits": [
+        {
+          "fieldName": "Resident",
+          "action": "CHECK",
+          "value": null,
+          "sourceSlugs": [
+            "work_authorization.citizenship_status"
+          ]
+        },
+        {
+          "fieldName": "UscisNumber",
+          "action": "SET_TEXT",
+          "value": "123456789",
+          "sourceSlugs": [
+            "work_auth.uscis_number"
+          ]
+        }
+      ],
+      "fixtureSha256": "83573f32fd9fb2a9f227b91b0836371c7464ee5510b049d8931d9d01820d14c2",
+      "calls": [
+        {
+          "promptSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+          "messageSha256": "e7245b6eaef45cefb93a3501eea84550a399c4797efd8e9655cefa4860e893a8",
+          "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d"
+        }
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
+    },
+    {
+      "id": "form-missing-and-unsupported",
+      "family": "form",
+      "expectedUnits": [],
+      "fixtureSha256": "184bb676d4c8fe4e9aeeea6f61a18a9e1e0401d6d6e6323364ac9749d0ec8212",
+      "calls": [
+        {
+          "promptSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+          "messageSha256": "f31418ca3b956fb31cd1726e7e288252017dff061644801f8c0672eb41a6f8da",
+          "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d"
+        }
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
+    },
+    {
+      "id": "form-conflicting-status",
+      "family": "form",
+      "expectedUnits": [],
+      "fixtureSha256": "ac9dd7ba6531c64b9548303bd5fbcea69248a30119cecb9fb0eddd01a281a8f3",
+      "calls": [
+        {
+          "promptSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+          "messageSha256": "80038b9bca915f3ee6eb92d874a7eb1221abf41e0a1cec0f2c81eb48f8996417",
+          "schemaSha256": "8df41566a03a4c13a3d400bbf873023cea31e425907d4392029a664c9770048d"
+        }
+      ],
+      "criticalPolicy": "each-unexpected-validated-unit"
+    }
+  ]
+}

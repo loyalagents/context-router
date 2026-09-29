@@ -6,9 +6,14 @@
     "deleteOutDir": true,
     "webpack": false,
     "tsConfigPath": "tsconfig.json",
+    "plugins": ["../scripts/local-model-assets.plugin.cjs"],
     "assets": [
       {
         "include": "config/preferences.catalog.json",
+        "outDir": "dist"
+      },
+      {
+        "include": "infrastructure/local-model/engine/*.mjs",
         "outDir": "dist"
       }
     ]

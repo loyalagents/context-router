@@ -33,3 +33,5 @@ This file is for doc writers. For agent startup, follow `AGENTS.md`.
   agent roles, effort settings, parallelism, review, and speed/assurance tradeoffs.
 - [Local identity administration](useful/LOCAL_IDENTITY_ADMIN.md) — initialize,
   rotate, perform terminate-and-reap recovery, understand matching-pair backup, and run the non-listening SQLite preview or explicit PostgreSQL reference.
+
+- [Manual local model preview](useful/LOCAL_MODEL.md) — pinned manual runtime, private sessions, explicit SQLite integration, capabilities, limits and recovery.

@@ -1,3 +1,4 @@
+import { HOSTED_AI_CAPABILITIES } from '../../src/domains/shared/ports/ai-execution';
 /**
  * Test Application Factory
  *
@@ -64,6 +65,8 @@ interface UserRef {
  * All methods are jest.fn() for easy spying and per-test overrides.
  */
 export const createMockVertexAiService = () => ({
+  capabilities: HOSTED_AI_CAPABILITIES,
+  getStatus: jest.fn().mockResolvedValue({ state: 'unsupported', configured: true }),
   generateText: jest.fn().mockResolvedValue('Mock AI response'),
   generateTextWithFile: jest.fn().mockResolvedValue(
     JSON.stringify({
@@ -78,6 +81,8 @@ export const createMockVertexAiService = () => ({
  * Returns parsed objects directly (no JSON string parsing needed).
  */
 export const createMockStructuredAiService = () => ({
+  capabilities: HOSTED_AI_CAPABILITIES,
+  getStatus: jest.fn().mockResolvedValue({ state: 'unsupported', configured: true }),
   generateStructured: jest.fn().mockResolvedValue({}),
   generateStructuredWithFile: jest.fn().mockResolvedValue({
     suggestions: [],
@@ -86,11 +91,15 @@ export const createMockStructuredAiService = () => ({
 });
 
 export interface MockVertexAiService {
+  capabilities: typeof HOSTED_AI_CAPABILITIES;
+  getStatus: (...args: any[]) => any;
   generateText: (...args: any[]) => any;
   generateTextWithFile: (...args: any[]) => any;
 }
 
 export interface MockStructuredAiService {
+  capabilities: typeof HOSTED_AI_CAPABILITIES;
+  getStatus: (...args: any[]) => any;
   generateStructured: (...args: any[]) => any;
   generateStructuredWithFile: (...args: any[]) => any;
 }

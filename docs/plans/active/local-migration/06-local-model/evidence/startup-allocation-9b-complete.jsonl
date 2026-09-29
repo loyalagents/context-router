@@ -1,0 +1,14 @@
+{"kind":"buffer","family":"model","backend":"CPU_Mapped","reportedMiB":545.62}
+{"kind":"buffer","family":"model","backend":"MTL0_Mapped","reportedMiB":5406.91}
+{"kind":"configuration","field":"n_seq_max","value":1}
+{"kind":"configuration","field":"n_ctx","value":16384}
+{"kind":"configuration","field":"n_ctx_seq","value":16384}
+{"kind":"configuration","field":"n_batch","value":512}
+{"kind":"configuration","field":"n_ubatch","value":512}
+{"kind":"configuration","field":"n_rs_seq","value":0}
+{"kind":"configuration","field":"n_outputs_max","value":1}
+{"kind":"buffer","family":"output","backend":"CPU","reportedMiB":0.95}
+{"kind":"buffer","family":"kv","backend":"MTL0","reportedMiB":512}
+{"kind":"buffer","family":"recurrent","backend":"MTL0","reportedMiB":50.25}
+{"kind":"buffer","family":"compute","backend":"MTL0","reportedMiB":137.22}
+{"kind":"buffer","family":"compute","backend":"CPU","reportedMiB":32.02}

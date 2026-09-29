@@ -1,0 +1,155 @@
+{
+  "run": "native-smoke-1790243393351",
+  "timestamp": "2026-09-24T09:49:53.351Z",
+  "passed": true,
+  "metadata": {
+    "context": 16384,
+    "slots": 1,
+    "templateSha256": "7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67",
+    "coldReadyMs": 847.6307499999998
+  },
+  "args": [
+    "--model",
+    "/private/tmp/context-router-step06-assets/Qwen3.5-4B-Q4_K_M.gguf",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "61824",
+    "--alias",
+    "step06-qwen35",
+    "--ctx-size",
+    "16384",
+    "--parallel",
+    "1",
+    "--gpu-layers",
+    "all",
+    "--flash-attn",
+    "on",
+    "--fit",
+    "off",
+    "--batch-size",
+    "2048",
+    "--ubatch-size",
+    "512",
+    "--load-mode",
+    "mmap",
+    "--offline",
+    "--api-key-file",
+    "<private-credential-file>",
+    "--ssl-key-file",
+    "<private-credential-file>",
+    "--ssl-cert-file",
+    "<private-credential-file>",
+    "--chat-template-kwargs",
+    "{\"enable_thinking\":false}",
+    "--no-webui",
+    "--slots",
+    "--no-context-shift",
+    "--cache-ram",
+    "0",
+    "--no-cache-idle-slots",
+    "--no-cache-prompt",
+    "--log-verbosity",
+    "3",
+    "--threads-http",
+    "4"
+  ],
+  "worker": {
+    "mode": "smoke",
+    "passed": true,
+    "offlineControls": {
+      "nonLoopback": "EPERM",
+      "otherLoopbackPort": "EPERM",
+      "dnsTransport": "EPERM",
+      "resolverUnixIpc": "EPERM"
+    },
+    "elapsedMs": 670.016792,
+    "inputTokens": 40,
+    "evaluatedTokens": 40,
+    "outputTokens": 6,
+    "progress": [
+      {
+        "admitted": true,
+        "processed": 0,
+        "total": 40,
+        "decoded": 0,
+        "terminal": false,
+        "elapsedMs": 15.395999999999958
+      },
+      {
+        "admitted": false,
+        "processed": 36,
+        "total": 40,
+        "decoded": 0,
+        "terminal": false,
+        "elapsedMs": 315.280042
+      },
+      {
+        "admitted": false,
+        "processed": 40,
+        "total": 40,
+        "decoded": 0,
+        "terminal": false,
+        "elapsedMs": 556.2959589999999
+      },
+      {
+        "admitted": false,
+        "processed": 40,
+        "total": 40,
+        "decoded": 1,
+        "terminal": false,
+        "elapsedMs": 557.0739169999999
+      },
+      {
+        "admitted": false,
+        "processed": 40,
+        "total": 40,
+        "decoded": 2,
+        "terminal": false,
+        "elapsedMs": 600.38725
+      },
+      {
+        "admitted": false,
+        "processed": 40,
+        "total": 40,
+        "decoded": 3,
+        "terminal": false,
+        "elapsedMs": 617.423459
+      },
+      {
+        "admitted": false,
+        "processed": 40,
+        "total": 40,
+        "decoded": 4,
+        "terminal": false,
+        "elapsedMs": 634.963167
+      },
+      {
+        "admitted": false,
+        "processed": 40,
+        "total": 40,
+        "decoded": 5,
+        "terminal": false,
+        "elapsedMs": 652.060167
+      },
+      {
+        "admitted": false,
+        "processed": 40,
+        "total": 40,
+        "decoded": 6,
+        "terminal": false,
+        "elapsedMs": 669.0114169999999
+      },
+      {
+        "admitted": false,
+        "processed": 40,
+        "total": 40,
+        "decoded": 6,
+        "terminal": true,
+        "elapsedMs": 669.185375
+      }
+    ]
+  },
+  "ownedChildStoppedAndReaped": true,
+  "sentinelAbsentFromRuntimeLog": true
+}

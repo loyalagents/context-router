@@ -1,0 +1,9 @@
+{
+  "name": "Qwen3.5-9B-Q4_K_M.gguf",
+  "bytes": 5680522464,
+  "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "source": "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/3885219b6810b007914f3a7950a8d1b469d598a5/Qwen3.5-9B-Q4_K_M.gguf",
+  "license": "Apache-2.0",
+  "timestamp": "2026-09-24T10:01:03.642Z",
+  "verified": true
+}

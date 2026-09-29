@@ -1,3 +1,4 @@
+import { AiExecutionOptions, AiStatus, HOSTED_AI_CAPABILITIES, rejectUnsupportedControls } from '../../domains/shared/ports/ai-execution';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   VertexAI,
@@ -13,6 +14,8 @@ import { getVertexAiConfig } from '../../config/vertex-ai.config';
 
 @Injectable()
 export class VertexAiService implements AiTextGeneratorPort {
+  readonly capabilities = HOSTED_AI_CAPABILITIES;
+  async getStatus(): Promise<AiStatus> { return Object.freeze({ state: 'unsupported', configured: true }); }
   private readonly logger = new Logger(VertexAiService.name);
   private readonly vertexAI: VertexAI;
   private readonly model: GenerativeModel;
@@ -34,7 +37,8 @@ export class VertexAiService implements AiTextGeneratorPort {
     });
   }
 
-  async generateText(prompt: string): Promise<string> {
+  async generateText(prompt: string, options?: AiExecutionOptions): Promise<string> {
+    rejectUnsupportedControls(options);
     try {
       this.logger.log(`Generating text for prompt: ${prompt.substring(0, 50)}...`);
 
@@ -69,7 +73,8 @@ export class VertexAiService implements AiTextGeneratorPort {
     }
   }
 
-  async generateTextWithFile(prompt: string, file: FileInput): Promise<string> {
+  async generateTextWithFile(prompt: string, file: FileInput, options?: AiExecutionOptions): Promise<string> {
+    rejectUnsupportedControls(options);
     try {
       this.logger.log(
         `Generating text with file (${file.mimeType}, ${file.buffer.length} bytes)`,

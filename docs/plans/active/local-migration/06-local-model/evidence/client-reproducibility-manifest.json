@@ -1,0 +1,15 @@
+{
+  "mode": "client-only-cancellation-reproducibility",
+  "qualification": false,
+  "maximumSessions": 3,
+  "maximumInferenceCalls": 18,
+  "operationsPerSession": 6,
+  "followups": 0,
+  "retries": 0,
+  "diagnosticManifestSha256": "c6dd703afebca698266e9777c6dd1459fcd7500cd615c5ca368a0ebe36e31b12",
+  "originalClaimSha256": "216314aa5a51efa9686afc428764aec641ed559c4c0d0a8751e2da740f1e340e",
+  "originalReceiptSha256": "25e49b4498f7eb254b0b2096fdb38da232a7597fa848e32a9289186e23d90272",
+  "stopOnMemoryFailure": true,
+  "sessionReceiptByteLimit": 1048576,
+  "aggregateByteLimit": 16384
+}

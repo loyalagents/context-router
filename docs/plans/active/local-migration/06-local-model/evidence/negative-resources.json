@@ -1,0 +1,77 @@
+{
+  "testedRevision": "245b3e0a4e6af83dd0f58df8bb7594eab7ee11d6",
+  "timestamp": "2026-09-25T01:07:08.601Z",
+  "passed": true,
+  "results": [
+    {
+      "passed": true,
+      "completionRequests": 0,
+      "credentialsRemoved": true,
+      "elapsedMs": 5.569999999999993,
+      "controlEvidence": {
+        "state": "ready",
+        "overflow": false,
+        "records": [
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "dispatch",
+            "elapsedMs": 0.459,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "readiness",
+            "sequence": 1,
+            "event": "transport",
+            "elapsedMs": 4.663,
+            "remainingMs": 0
+          },
+          {
+            "phase": "settlement",
+            "sequence": 1,
+            "event": "start",
+            "elapsedMs": 4.694,
+            "remainingMs": 5000
+          },
+          {
+            "phase": "cleanup",
+            "sequence": 1,
+            "event": "close",
+            "elapsedMs": 4.971,
+            "remainingMs": 4999.723
+          }
+        ]
+      },
+      "state": "unavailable"
+    },
+    {
+      "kind": "binary",
+      "passed": true,
+      "spawnRejected": true,
+      "naturalExit": null,
+      "readinessRequests": 0,
+      "completionRequests": 0,
+      "ownedChildStoppedAndReaped": true,
+      "diagnosticAuditPassed": true,
+      "missingModelDiagnostic": false,
+      "credentialsRemoved": true,
+      "elapsedMs": 4.62008400000002
+    },
+    {
+      "kind": "model",
+      "passed": true,
+      "spawnRejected": false,
+      "naturalExit": {
+        "code": 1,
+        "signal": null
+      },
+      "readinessRequests": 0,
+      "completionRequests": 0,
+      "ownedChildStoppedAndReaped": true,
+      "diagnosticAuditPassed": true,
+      "missingModelDiagnostic": true,
+      "credentialsRemoved": true,
+      "elapsedMs": 105.09812499999998
+    }
+  ]
+}

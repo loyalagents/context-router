@@ -1,3 +1,4 @@
+import { HOSTED_AI_CAPABILITIES } from '../../src/domains/shared/ports/ai-execution';
 import { INestApplication } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import request from 'supertest';
@@ -28,12 +29,16 @@ describe('Permission Grants (e2e)', () => {
   let preferenceService: PreferenceService;
   let preferenceDefinitionService: PreferenceDefinitionService;
   let structuredAi: {
+    capabilities: typeof HOSTED_AI_CAPABILITIES;
+    getStatus: jest.Mock;
     generateStructured: jest.Mock;
     generateStructuredWithFile: jest.Mock;
   };
 
   beforeAll(async () => {
     structuredAi = {
+      capabilities: HOSTED_AI_CAPABILITIES,
+      getStatus: jest.fn().mockResolvedValue({ state: 'unsupported', configured: true }),
       generateStructured: jest.fn(),
       generateStructuredWithFile: jest.fn(),
     };
