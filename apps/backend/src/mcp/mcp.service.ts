@@ -452,17 +452,26 @@ export class McpService implements OnModuleInit {
     accessLog?: McpAccessLogMetadata;
   }): Promise<void> {
     try {
+      const local = params.context.client.policy.localTargets !== undefined;
+      const known = this.toolMap.has(params.operationName) || this.resourceMap.has(params.operationName);
+      const counts: Record<string, number | boolean> = {};
+      if (local) {
+        for (const key of ['activeCount', 'suggestedCount', 'grantCount', 'definitionCount', 'matchedDefinitionCount', 'matchedActiveCount', 'matchedSuggestedCount', 'byteLength', 'cacheHit']) {
+          const value = params.accessLog?.responseMetadata?.[key];
+          if (typeof value === 'boolean' || (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 && value <= 1000000000)) counts[key] = value;
+        }
+      }
       await this.mcpAccessLogService.record({
         userId: params.context.user.userId,
         clientKey: params.context.client.key,
         surface: params.surface,
-        operationName: params.operationName,
+        operationName: local && !known ? 'unknown' : params.operationName,
         outcome: params.outcome,
         correlationId: params.context.correlationId ?? randomUUID(),
         latencyMs: params.latencyMs,
-        requestMetadata: params.accessLog?.requestMetadata,
-        responseMetadata: params.accessLog?.responseMetadata,
-        errorMetadata: params.accessLog?.errorMetadata,
+        requestMetadata: local ? undefined : params.accessLog?.requestMetadata,
+        responseMetadata: local ? counts : params.accessLog?.responseMetadata,
+        errorMetadata: local ? (params.outcome === McpAccessOutcome.SUCCESS ? undefined : { source: 'LOCAL_MCP', code: params.outcome }) : params.accessLog?.errorMetadata,
       });
     } catch (error) {
       this.logger.warn(`Failed to record MCP access event: ${error.message}`);

@@ -94,12 +94,15 @@ export class SchemaConsolidationTool implements McpToolInterface {
           slugs,
         );
 
-      const result = await this.workflow.run({
+      const input = {
         userId: context!.user.userId,
         clientKey: context!.client.key,
         filterAccessibleSlugs,
-        scope: params.scope ?? 'PERSONAL',
-      });
+        scope: params.scope ?? ('PERSONAL' as const),
+      };
+      const result = context?.execution
+        ? await this.workflow.run(input, context.execution)
+        : await this.workflow.run(input);
       const structuredContent = {
         success: true as const,
         ...result,

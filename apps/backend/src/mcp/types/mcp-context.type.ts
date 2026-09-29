@@ -6,6 +6,7 @@ import {
   McpCapability,
   ResolvedMcpClient,
 } from './mcp-authorization.types';
+import type { AiExecutionOptions } from '../../domains/shared/ports/ai-execution';
 
 export interface McpUser {
   userId: string;
@@ -21,4 +22,6 @@ export interface McpContext {
   client: ResolvedMcpClient;
   grants?: McpCapability[];
   correlationId?: string;
+  /** Trusted local transport controls, never client-supplied arguments. */
+  execution?: AiExecutionOptions;
 }

@@ -10,7 +10,7 @@ export const MCP_CLIENT_KEYS = [
   "unknown",
 ] as const;
 
-export type McpClientKey = (typeof MCP_CLIENT_KEYS)[number];
+export type McpClientKey = (typeof MCP_CLIENT_KEYS)[number] | `local:${string}`;
 
 export interface McpAccess {
   resource: "preferences";
@@ -48,6 +48,9 @@ export interface McpClientPolicy {
   label: string;
   capabilities: McpCapability[];
   targetRules: McpTargetRule[];
+  /** Present only for independently authenticated local instances. Empty denies every target. */
+  localTargets?: string[];
+  allowSensitive?: boolean;
 }
 
 export interface ResolvedMcpClient {
@@ -71,11 +74,7 @@ export function isMcpCapability(value: string): value is McpCapability {
 
 export function normalizeMcpGrants(
   grants: string[] | undefined,
-): McpCapability[] | undefined {
-  if (!grants || grants.length === 0) {
-    return undefined;
-  }
-
-  const normalized = grants.filter(isMcpCapability);
-  return normalized.length > 0 ? normalized : undefined;
+): McpCapability[] {
+  // Token-derived absence is no authority, never permission to restore policy maxima.
+  return [...new Set((grants ?? []).filter(isMcpCapability))];
 }

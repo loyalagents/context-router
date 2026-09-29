@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { runLocalMcpSmoke } from './local-mcp-smoke.mjs';
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -1683,6 +1684,11 @@ export async function runRestartSmoke({
         home: path.join(secretDirectory, 'local-model-home'), temporaryDirectory: path.join(secretDirectory, 'local-model-tmp'),
         stateParent: secretDirectory, journal, environment, signal,
       });
+      const localMcp = await runLocalMcpSmoke({
+        entrypoint: path.join(repositoryRoot, 'apps/backend/dist/local-mcp.js'), cwd: hostileLocalCwd,
+        home: path.join(secretDirectory, 'local-mcp-home'), temporaryDirectory: path.join(secretDirectory, 'local-mcp-tmp'),
+        stateParent: secretDirectory, journal, environment, signal,
+      });
       return {
         databaseName: database.databaseName,
         administrationSource: administration.source,
@@ -1694,6 +1700,7 @@ export async function runRestartSmoke({
         localIdentity,
         localDatabase,
         localModel,
+        localMcp,
         elapsedMs: Date.now() - startedAt,
       };
     });

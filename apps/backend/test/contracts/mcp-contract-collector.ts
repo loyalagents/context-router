@@ -15,7 +15,8 @@ import { SmartSearchTool } from '../../src/mcp/tools/smart-search.tool';
 import { SchemaConsolidationTool } from '../../src/mcp/tools/schema-consolidation.tool';
 import { PermissionGrantListTool } from '../../src/mcp/tools/permission-grant-list.tool';
 import { SchemaResource } from '../../src/mcp/resources/schema.resource';
-import { McpCapability } from '../../src/mcp/types/mcp-authorization.types';
+import { McpCapability, normalizeMcpGrants } from '../../src/mcp/types/mcp-authorization.types';
+import { LocalCapabilitiesResource } from '../../src/mcp/local/local-capabilities.resource';
 import { McpToolInterface } from '../../src/mcp/tools/base/mcp-tool.interface';
 
 const TEST_ENV = {
@@ -137,8 +138,11 @@ export function collectMcpContractBaseline() {
         ['fallback', undefined],
         ['unknown', undefined],
         ['claude-read-scope', ['preferences:read']],
+        ['claude-absent-scope', normalizeMcpGrants(undefined)],
+        ['claude-empty-scope', normalizeMcpGrants([])],
+        ['claude-unrecognized-scope', normalizeMcpGrants(['unknown'])],
       ].map(([profile, grants]) => {
-        const clientKey = String(profile).replace('-read-scope', '');
+        const clientKey = String(profile).split('-')[0];
         const policy = config.clients.find((item) => item.key === clientKey)!;
         const resolved = { key: policy.key, policy };
         return [
@@ -271,6 +275,17 @@ export function collectMcpContractBaseline() {
     return {
       runtimeEvidence: [
         {
+          surface: 'production-guard-scope-narrowing',
+          path: 'apps/backend/src/mcp/auth/mcp-auth.guard.spec.ts',
+          cases: ['signed token scopes produce explicit least privilege: %j'],
+        },
+        {
+          surface: 'local-mcp-production-http-sqlite',
+          path: 'apps/backend/test/local-mcp/http.test.mjs',
+          cases: ['actual SDK HTTP handshake, separate sessions and constrained read-only discovery',
+            'negotiation excludes batch-era protocol and bounds exact typed request IDs'],
+        },
+        {
           surface: 'backend-mcp-e2e',
           path: 'apps/backend/test/e2e/mcp.e2e-spec.ts',
           cases: [
@@ -328,6 +343,15 @@ export function collectMcpContractBaseline() {
         },
       })),
       visibility,
+      local: {
+        transport: { path: '/mcp', host: '127.0.0.1', protocols: ['2025-06-18', '2025-11-25'],
+          post: 'fresh bearer authority; bounded client/generation/principal-bound sessions',
+          get: 405, delete: 'authenticated own-session cancellation',
+          cancellation: '202 notification; original POST 200 empty text/event-stream; retain work until terminal witness',
+          disconnect: 'retain admitted deadline; no implicit cancellation or mutation rollback' },
+        resources: [...resources.map((r) => r.descriptor), new LocalCapabilitiesResource(undefined as never).descriptor],
+        credentialDefault: { capabilities: ['preferences:read'], targets: [], allowSensitive: false },
+      },
       oauth: {
         protectedResourcePaths: [
           '/.well-known/oauth-protected-resource',

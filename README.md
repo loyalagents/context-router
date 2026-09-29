@@ -206,6 +206,12 @@ The local command needs no PostgreSQL, Docker, Auth0 or hosted model, loads no d
 
 Existing PostgreSQL preview data remains separately usable through `local-identity:postgres-reference`, which preserves the `local-identity-preview` gate mode and its explicit loopback TLS configuration. Do not reuse that identity root for SQLite; no automatic import or data conversion exists. Hosted commands below remain unchanged.
 
+### Local MCP
+
+Step 07 adds one manually started `local-mcp serve` backend for Claude Code and Codex CLI, using the same stable local identity and SQLite data with separate per-instance MCP credentials. It binds only `127.0.0.1` and exposes `/mcp`; it has no GraphQL/browser/OAuth endpoints. An explicit v1→v2 upgrade preserves existing data. `serve-model` reuses the manually operated Step 06 model adapter and its accepted E/H limitations; ordinary tools need no model.
+
+Follow [local MCP setup and administration](docs/useful/MCP_LOCAL_SETUP.md) and the [synthetic real-client checklist](docs/plans/active/local-migration/07-local-mcp/acceptance.md). Step 07 remains manual acceptance pending; the PR stays draft until the required results and review gates pass. The non-listening previews and hosted modes remain supported.
+
 ### Containerized Backend Workflow
 
 Use this if you want the backend to run inside Docker instead of on the host:

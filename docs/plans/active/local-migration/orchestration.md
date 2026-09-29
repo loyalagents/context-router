@@ -1,18 +1,18 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Last completed step: `05-local-database-runtime` — [PR #164](https://github.com/loyalagents/context-router/pull/164), human-merged at `837701b3633eed669dd2c2c518ffebc0e46d55d8` from final tested head `91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b`; successful standard CI [35957573071](https://github.com/loyalagents/context-router/actions/runs/35957573071) and dedicated migration gate [35957573023](https://github.com/loyalagents/context-router/actions/runs/35957573023) reverified 2026-09-24
-- Current primary implementation step: `06-local-model` — [active plan](06-local-model/plan.md), selection approved; CP2 and review fixes implemented; CP3 closeout under user-accepted H recovery limitation in [PR #165](https://github.com/loyalagents/context-router/pull/165)
-- Coordinator and sole repository writer for Step 06: `/root`; all other agents read-only
+- Last completed step: `06-local-model` — [PR #165](https://github.com/loyalagents/context-router/pull/165), human-merged at `cf18207e1197d0a1ffe5f598b5828c77c4711ad5` from final tested head `f004702ef07df59f3cece36e0db0a79aea7055b7`; successful [standard CI](https://github.com/loyalagents/context-router/actions/runs/36487182884) and [migration gate](https://github.com/loyalagents/context-router/actions/runs/36487183214) reverified 2026-09-29. Historical failed qualification and accepted E/H limitations remain unchanged.
+- Current primary implementation step: `07-local-mcp` — [active plan](07-local-mcp/plan.md); clean-base full gate passed; P2 independently approved; implementation in progress
+- Coordinator and sole repository writer for Step 07: `/root`; all other agents read-only; existing checkout on `codex/local-migration-07-local-mcp`
 - Step 05 activation/history evidence: retained in its [plan](05-local-database-runtime/plan.md#activation-gate); recording the observed merge here does not activate Step 06
-- Concrete next action: finish fresh full-diff reviews and renewed final local/CI gates for [PR #165](https://github.com/loyalagents/context-router/pull/165) under the user-accepted [H recovery limitation](06-local-model/plan.md#amendment-h-user-accepted-manual-cancellation-recovery-limitation); mark ready only after remaining gates pass, never merge automatically
-- Review date: Step 06 PR review or 2026-10-08, whichever comes first
+- Concrete next action: complete final frozen-candidate independent review and full gate/CI, then hand off the Step 07 real-client checklist in one draft PR; never merge automatically
+- Review date: Step 07 PR review or 2026-10-13, whichever comes first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
 - Hosted production deployment branch: `hosted-v1-maintenance` (operator-confirmed
   2026-09-13; re-verify before changing branch roles)
-- Last reviewed: 2026-09-24
+- Last reviewed: 2026-09-29
 
 This document is the control plane for migrating Context Router from its current
 hosted-first architecture to an installable local-first application. Keep it
@@ -322,8 +322,8 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | `03-local-identity` | Complete — [#162](https://github.com/loyalagents/context-router/pull/162), merge `1b35c7c513b01a183bb740f0596273baf7620a10`; final head `cfe3b63786e729e60fd6f954c172db86487bebd4` passed standard CI `35899268852` and migration gate `35899268881`; [retained plan](03-local-identity/plan.md) includes R1 | Stable provider-neutral human identity plus explicit non-listening local preview, durable operation/candidate recovery, and best-effort first-creation profile hints. | Step 02 |
 | `04-storage-boundaries` | Complete — [PR #163](https://github.com/loyalagents/context-router/pull/163), merge `3426dc556fea88d94a360329e7c685bc9acc155e`; final head `c83bea0add7039cad814567e05d79f4f8b275aba` passed standard CI `35928247258` and migration gate `35928247421`; [retained plan](04-storage-boundaries/plan.md) | Extract storage and transaction/unit-of-work boundaries while PostgreSQL remains green, including mutation/audit atomicity, catalog-only production seed, and Step 03 durable operation/candidate, empty/exact recovery and fencing semantics. | Steps 01–03 |
 | `05-local-database-runtime` | Complete — [PR #164](https://github.com/loyalagents/context-router/pull/164), merge `837701b3633eed669dd2c2c518ffebc0e46d55d8`; final head `91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b` passed standard CI `35957573071` and migration gate `35957573023`; [retained plan](05-local-database-runtime/plan.md) | Implemented selected SQLite storage, worker-held identity coordination, actual local composition, recovery/backup and source/package evidence; retain explicit PostgreSQL reference coverage. | Step 04 |
-| `06-local-model` | Active — clean-base gate passed; [selection](06-local-model/selection.md) independently approved; CP3 closeout under accepted H recovery limitation; draft [PR #165](https://github.com/loyalagents/context-router/pull/165) | Prove a manual Apple Silicon local-model setup, then integrate truthful capabilities, execution, deadlines/cancellation and errors behind provider-neutral ports; one PR by default. | Step 02 boundaries and current Step 05 local composition |
-| `07-local-mcp` | Not started | Connect non-AI local MCP flows and local authorization to the core; capability-gate AI-backed tools until Step 06. | Steps 03 and 05; Step 06 for AI tools |
+| `06-local-model` | Complete — [PR #165](https://github.com/loyalagents/context-router/pull/165), merge `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`; final tested head `f004702ef07df59f3cece36e0db0a79aea7055b7` passed standard CI `36487182884` and migration CI `36487183214`; [retained plan](06-local-model/plan.md) | Manual Apple Silicon local-model adapter with truthful capabilities, bounded execution and explicit E/H limitations; original failures retained. | Step 02 boundaries and Step 05 local composition |
+| `07-local-mcp` | Active — full clean-base gate passed; [plan](07-local-mcp/plan.md) independently approved | Direct loopback HTTP for Claude Code and Codex CLI, per-instance credentials, SQLite tools and shared Step 06 inference. | Steps 03, 05 and 06 complete |
 | `08-local-ui` | Not started | Run useful non-AI UI flows without Auth0 or hosted services; capability-gate AI-backed pages until Step 06. | Steps 03 and 05; may overlap Steps 06-07 |
 | `09-installation-and-packaging` | Not started | Early native Windows/Linux qualification after the Mac model path; then managed first-run setup, process supervision, data locations, model assets, clean-install smoke, logs, backup/recovery and updates. | Final product depends on Steps 06–08; early qualification needs explicit non-overlap review |
 | `10-lan-mcp` | Deferred/optional | Add explicit LAN enablement, pairing/authentication, exposure warnings, and network tests. | Step 09 |
@@ -331,11 +331,7 @@ accumulate; more than one may exist during an explicitly approved overlap.
 
 ## Parallel Work
 
-Step 05 is merged. Step 06 is the sole active primary step; its clean-base gate passed before preparation transfer. `/root` is coordinator and sole repository writer; discovery and reviewers remain read-only. The original preparation workspace is preserved. See the [active plan](06-local-model/plan.md) for evidence and role settings.
-Initial plan review precedes executable feasibility; affected selection review
-precedes the production adapter. MCP/UI and early Step 09 platform work remain
-inactive until explicitly authorized with non-overlapping ownership. Read-only
-discovery and independent review can run in parallel without activating them.
+Step 06 is merged and Step 07 is the sole active primary step. Its full exact-base activation gate passed before activation edits. `/root` is coordinator and sole writer in the existing checkout; all discovery/review agents remain read-only. See the [active plan](07-local-mcp/plan.md) for evidence, risk allocation and independent-review gates. Steps 08–11 remain inactive.
 
 Coordinate or serialize changes to these hotspots:
 

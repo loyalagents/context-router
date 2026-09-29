@@ -1,5 +1,7 @@
 # Step 06 Selection
 
+Current closeout (2026-09-29): PR [#165](https://github.com/loyalagents/context-router/pull/165) was human-merged at `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`; final head `f004702ef07df59f3cece36e0db0a79aea7055b7` passed [standard CI](https://github.com/loyalagents/context-router/actions/runs/36487182884) and [migration CI](https://github.com/loyalagents/context-router/actions/runs/36487183214), freshly reverified. Historical pending/draft statements below retain their chronological meaning. Original failed native evidence and accepted E/H limitations are unchanged.
+
 Status: selected manual Step 06 configuration with user-accepted accuracy exception E and cancellation-recovery limitation H. H has independent High evidence/compatibility and Extra High safety/architecture approval. Final complete-diff review and renewed local/CI gates remain required before PR readiness.
 
 ## Candidate And Scope

@@ -7,14 +7,14 @@
   `apps/backend/test/e2e/mcp.e2e-spec.ts`,
   `apps/backend/test/e2e/permission-grants.e2e-spec.ts`, and
   `apps/backend/test/e2e/mcp-access-log.e2e-spec.ts`
-- Last reviewed: 2026-09-22
+- Last reviewed: 2026-09-29
 
 ## Components
 
 This document describes the hosted MCP transport. Both the SQLite `local-database-preview` and explicit PostgreSQL
 `local-identity-preview` exclude `McpModule`, OAuth/DCR, and every HTTP/MCP
 listener. Each private human bearer is a separate credential and never
-authenticates an MCP client; Step 07 owns local MCP identity and transport.
+authenticates an MCP client. Step 07 separately mounts a narrow local HTTP edge with distinct per-instance credentials; see [local setup](../useful/MCP_LOCAL_SETUP.md).
 
 - `McpController` handles HTTP JSON-RPC requests.
 - `McpAuthGuard` validates Auth0 JWTs and emits OAuth challenges and metadata.
@@ -31,6 +31,10 @@ Authorization is intentionally layered:
 3. Database-backed `PermissionGrant` rules
 
 The DB layer can only narrow access. It never widens a denial from an earlier layer.
+
+Token scopes are an explicit narrowing layer: missing, empty or entirely unrecognized signed scopes produce `[]`, never the client maximum. Trusted internal calls may deliberately omit grants; this is distinct from token-derived empty grants. Recognized scopes are deduplicated and intersected with client maxima.
+
+Local instances use opaque `local:<id>` actors for the same stable human principal. Persisted capability and target policy is read on every request; default READ has no allowed targets and no sensitive access. Local sensitivity checks use actual stored definition IDs and fail closed for missing or archived-sensitive definitions. Product labels, clientInfo, requested user IDs and session IDs do not confer authority. Rotation changes generation; revocation is terminal. Already admitted work may complete after either transition. The six mutation operations retain existing semantics and audit atomicity; no hidden retries or cross-call rollback are added.
 
 ## Permission Grants
 

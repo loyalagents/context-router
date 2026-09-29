@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { PermissionGrantService } from '@modules/permission-grant/permission-grant.service';
+import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
 import {
   McpAccess,
   McpCapability,
@@ -32,6 +33,7 @@ export class McpAuthorizationService {
 
   constructor(
     private readonly permissionGrantService: PermissionGrantService,
+    @Optional() private readonly definitions?: PreferenceDefinitionRepository,
   ) {}
 
   toCapability(access: McpAccess): McpCapability {
@@ -125,6 +127,9 @@ export class McpAuthorizationService {
     capability: McpCapability,
     target: McpTarget,
   ): boolean {
+    if (client.policy.localTargets !== undefined && !client.policy.localTargets.some((rule) =>
+      rule === '*' || rule === target.slug || (rule.endsWith('.*') && target.slug?.startsWith(rule.slice(0, -1))),
+    )) return false;
     const relevantRules = client.policy.targetRules.filter(
       (rule) => rule.capability === capability,
     );
@@ -193,6 +198,9 @@ export class McpAuthorizationService {
       return true;
     }
 
+    if (client.policy.allowSensitive === false &&
+        (!this.definitions || (await this.definitions.getAll(userId)).some((definition) => definition.slug === target.slug && definition.isSensitive))) return false;
+
     for (const action of this.getActionChain(access.action)) {
       const decision = await this.permissionGrantService.evaluateAccess(
         userId,
@@ -249,7 +257,10 @@ export class McpAuthorizationService {
     userId: string,
     slugs: string[],
   ): Promise<string[]> {
-    const coarseAllowedSlugs = slugs.filter((slug) =>
+    const sensitive = client.policy.allowSensitive === false
+      ? new Set((await this.definitions?.getAll(userId) ?? []).filter((definition) => definition.isSensitive).map((definition) => definition.slug)) : new Set<string>();
+    if (client.policy.allowSensitive === false && !this.definitions) return [];
+    const coarseAllowedSlugs = slugs.filter((slug) => !sensitive.has(slug) &&
       this.canAccess(client, access, grants, { slug }),
     );
 
@@ -268,6 +279,24 @@ export class McpAuthorizationService {
     }
 
     return allowedSlugs;
+  }
+
+  /** A slug winner is insufficient: old values may reference an archived definition. */
+  async filterValues<T extends { definitionId: string }>(client: ResolvedMcpClient, userId: string, values: T[]): Promise<T[]> {
+    if (client.policy.allowSensitive !== false) return values;
+    const allowed = new Map<string, boolean>();
+    const result: T[] = [];
+    for (const value of values) {
+      if (!allowed.has(value.definitionId)) allowed.set(value.definitionId, await this.canAccessDefinition(client, userId, value.definitionId));
+      if (allowed.get(value.definitionId)) result.push(value);
+    }
+    return result;
+  }
+
+  async canAccessDefinition(client: ResolvedMcpClient, userId: string, definitionId: string): Promise<boolean> {
+    if (client.policy.allowSensitive !== false) return true;
+    const definition = this.definitions && typeof definitionId === 'string' ? await this.definitions.getDefinitionById(definitionId) : null;
+    return !!definition && !definition.isSensitive && (definition.ownerUserId === null || definition.ownerUserId === userId);
   }
 
   private expandCapabilities(
