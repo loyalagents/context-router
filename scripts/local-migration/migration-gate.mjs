@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { assertLocalMcpSmokeSuccessResources } from './local-mcp-lifecycle.mjs';
 import { assertLocalModelSmokeSuccessResources } from './local-model-lifecycle.mjs';
 
 import { execFile } from "node:child_process";
@@ -1600,6 +1601,7 @@ export async function assertRestartSmokeLifecycleEvidence(
     assertLocalIdentitySmokeSuccessResources(state, smokeLabel);
     assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
     assertLocalModelSmokeSuccessResources(state, smokeLabel);
+    assertLocalMcpSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }
@@ -1623,6 +1625,7 @@ export async function assertPackagedSmokeLifecycleEvidence(
     assertLocalIdentitySmokeSuccessResources(state, smokeLabel);
     assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
     assertLocalModelSmokeSuccessResources(state, smokeLabel);
+    assertLocalMcpSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }

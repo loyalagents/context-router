@@ -1,11 +1,13 @@
 # Step 06: Local Model
 
-- Status: active CP3 review follow-up; E/H acceptance and final gates passed at `2705e86`; operational fixes and a final-gate caller-deadline classification correction awaiting renewed final reviews/local/CI gates
+- Status: complete, human-merged as PR #165 at `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`; exact final-head standard/migration CI reverified 2026-09-29
 - Branch: `codex/local-migration-06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`
 - Coordinator and sole repository writer: `/root`; all other agents read-only
-- Intended PR count: one cohesive PR: [#165](https://github.com/loyalagents/context-router/pull/165), draft until final gates pass
-- Last updated: 2026-09-28
+- Intended PR count: one cohesive PR: [#165](https://github.com/loyalagents/context-router/pull/165), merged after final gates
+- Last updated: 2026-09-29
+
+Current closeout: final tested head `f004702ef07df59f3cece36e0db0a79aea7055b7` passed [standard CI](https://github.com/loyalagents/context-router/actions/runs/36487182884) and [migration CI](https://github.com/loyalagents/context-router/actions/runs/36487183214). Merge and workflows were freshly verified. Step 07 is now independently activated under its [plan](../07-local-mcp/plan.md). Original quality/cancellation failures and accepted E/H remain unchanged. The remaining paragraphs are chronological preparation/review history; their pending/draft language does not override this closeout.
 
 The clean-base twelve-phase activation gate passed before preparation documents were copied. The original dirty workspace remains untouched; ten inventoried files transferred with exact content hashes. See the [plan](plan.md#entry-criteria-and-activation-evidence) for source/base, timings, toolchain, integrity and cleanup evidence.
 

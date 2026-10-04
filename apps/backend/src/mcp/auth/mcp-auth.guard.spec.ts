@@ -102,6 +102,21 @@ describe('McpAuthGuard', () => {
   });
 
   it.each([
+    [{}, []],
+    [{ scope: '' }, []],
+    [{ scope: 'openid profile' }, []],
+    [{ scope: 'openid preferences:read' }, ['preferences:read']],
+    [{ scope: 'preferences:write preferences:define' }, ['preferences:write', 'preferences:define']],
+    [{ permissions: ['unknown', 'preferences:suggest'] }, ['preferences:suggest']],
+  ])('signed token scopes produce explicit least privilege: %j', async (claims, expected) => {
+    const guard = createGuard({}, { resolve: jest.fn().mockResolvedValue({ userId: 'principal' }) });
+    useFixtureKey(guard);
+    const { context } = createContext({ authorization: `Bearer ${signed.token(claims)}` });
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(context.switchToHttp().getRequest().tokenGrants).toEqual(expected);
+  });
+
+  it.each([
     ['issuer', { iss: 'https://other.example.test/' }],
     ['audience', { aud: 'wrong-audience' }],
     ['expiration', { exp: 1 }],

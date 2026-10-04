@@ -9,6 +9,10 @@
     "plugins": ["../scripts/local-model-assets.plugin.cjs"],
     "assets": [
       {
+        "include": "schema.gql",
+        "outDir": "dist"
+      },
+      {
         "include": "config/preferences.catalog.json",
         "outDir": "dist"
       },

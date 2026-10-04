@@ -249,6 +249,11 @@ export class PreferenceSearchTool implements McpToolInterface {
     filteredActive = filteredActive.filter((pref) => allowedSlugs.has(pref.slug));
     suggestions = suggestions.filter((pref) => allowedSlugs.has(pref.slug));
 
+    if (context.client.policy.allowSensitive === false) {
+      filteredActive = await this.authorizationService.filterValues(context.client, userId, filteredActive);
+      suggestions = await this.authorizationService.filterValues(context.client, userId, suggestions);
+    }
+
     if (maxResults) {
       if (filteredActive.length > maxResults) {
         this.logger.warn(

@@ -1,6 +1,21 @@
 {
   "runtimeEvidence": [
     {
+      "surface": "production-guard-scope-narrowing",
+      "path": "apps/backend/src/mcp/auth/mcp-auth.guard.spec.ts",
+      "cases": [
+        "signed token scopes produce explicit least privilege: %j"
+      ]
+    },
+    {
+      "surface": "local-mcp-production-http-sqlite",
+      "path": "apps/backend/test/local-mcp/http.test.mjs",
+      "cases": [
+        "actual SDK HTTP handshake, separate sessions and constrained read-only discovery",
+        "negotiation excludes batch-era protocol and bounds exact typed request IDs"
+      ]
+    },
+    {
       "surface": "backend-mcp-e2e",
       "path": "apps/backend/test/e2e/mcp.e2e-spec.ts",
       "cases": [
@@ -789,6 +804,54 @@
       "resources": [
         "schema://graphql"
       ]
+    },
+    "claude-absent-scope": {
+      "tools": [],
+      "resources": []
+    },
+    "claude-empty-scope": {
+      "tools": [],
+      "resources": []
+    },
+    "claude-unrecognized-scope": {
+      "tools": [],
+      "resources": []
+    }
+  },
+  "local": {
+    "transport": {
+      "path": "/mcp",
+      "host": "127.0.0.1",
+      "protocols": [
+        "2025-06-18",
+        "2025-11-25"
+      ],
+      "post": "fresh bearer authority; bounded client/generation/principal-bound sessions",
+      "get": 405,
+      "delete": "authenticated own-session cancellation",
+      "cancellation": "202 notification; original POST 200 empty text/event-stream; retain work until terminal witness",
+      "disconnect": "retain admitted deadline; no implicit cancellation or mutation rollback"
+    },
+    "resources": [
+      {
+        "uri": "schema://graphql",
+        "name": "GraphQL Schema",
+        "description": "GraphQL schema for the Context Router API. Use this for API introspection and direct GraphQL integration, not for preference lookup; use searchPreferences or smartSearchPreferences for preference retrieval.",
+        "mimeType": "text/plain"
+      },
+      {
+        "uri": "context-router://capabilities",
+        "name": "Local model capabilities",
+        "description": "Configured model capabilities and bounded current readiness. Check only after the manual model readiness prerequisites; unavailable inference does not disable ordinary tools.",
+        "mimeType": "application/json"
+      }
+    ],
+    "credentialDefault": {
+      "capabilities": [
+        "preferences:read"
+      ],
+      "targets": [],
+      "allowSensitive": false
     }
   },
   "oauth": {

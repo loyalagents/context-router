@@ -1,5 +1,7 @@
 # Step 06: Local Model
 
+Current closeout (2026-09-29): PR [#165](https://github.com/loyalagents/context-router/pull/165) was human-merged at `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`; final head `f004702ef07df59f3cece36e0db0a79aea7055b7` passed [standard CI](https://github.com/loyalagents/context-router/actions/runs/36487182884) and [migration CI](https://github.com/loyalagents/context-router/actions/runs/36487183214), freshly reverified. Historical pending/draft statements below retain their chronological meaning. Original failed native evidence and accepted E/H limitations are unchanged.
+
 - Document status: implementation and review follow-ups complete. The user accepted the cancellation-recovery limitation under amendment H below; original failed evidence remains failed. Affected independent acceptance review approved H; fresh final implementation reviews and renewed final local/CI gates precede ready status. PR #165 remains draft until those gates pass.
 - Program step: `06-local-model`; target `main`
 - Planning base: `837701b3633eed669dd2c2c518ffebc0e46d55d8`

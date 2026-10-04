@@ -6,7 +6,8 @@
     "hosted-baseline",
     "local-identity-preview",
     "local-database-preview",
-    "local-model-preview"
+    "local-model-preview",
+    "local-mcp"
   ],
   "contractClasses": [
     "preserved-contract",
@@ -81,6 +82,292 @@
         {
           "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
           "consumerId": "fp:mcp-external-unknown",
+          "outcome": "migrated"
+        }
+      ]
+    },
+    {
+      "id": "step07-local-mcp-least-privilege",
+      "contract": "mcp",
+      "approval": "reviewed",
+      "fromFingerprint": "sha256:6c4fdb52637ae6c0ff4522b9d2536421ceafa9d889f6b067e3143162f9324df7",
+      "toFingerprint": "sha256:51437088a1c3bdf2bdb07e04f0fb020ed561f457c49e5241cd4ab56093cb4018",
+      "breakingChanges": [
+        "added $.visibility.claude-absent-scope = {\"tools\":[],\"resources\":[]}",
+        "added $.visibility.claude-empty-scope = {\"tools\":[],\"resources\":[]}",
+        "added $.visibility.claude-unrecognized-scope = {\"tools\":[],\"resources\":[]}"
+      ],
+      "compatibilityWindow": "Six hosted tool descriptors, six mutation operations, OAuth metadata and schema resource remain supported. Empty, absent or entirely unrecognized token scopes immediately deny instead of restoring configured maxima. Local MCP is an additional explicitly upgraded mode.",
+      "migrationGuidance": "Hosted clients must reauthenticate with explicit recognized preference scopes. Unknown external users receive the same published guidance; no claim is made that their deployed configurations were inspected. Local clients receive distinct provisioned instance credentials and explicit capabilities/targets. Follow docs/useful/MCP_LOCAL_SETUP.md. No legacy user state is discarded.",
+      "rollback": "Stop this binary and clients. Use the retained hosted composition if needed; do not restore the unsafe absent-scope fallback. For local schema rollback, restore an explicit pre-upgrade matching database/identity backup into new roots with the compatible binary. Restoring older credentials can revive their authority; rotate or revoke before reconnecting. Never open upgraded v2 state with v1-only code.",
+      "additiveReplacement": {
+        "description": "Reviewed Step07 HTTP-only local mode, least-privilege signed-scope profiles, independent credentials, sensitivity checks, execution controls and deterministic real-HTTP/SQLite evidence.",
+        "evidencePath": "docs/plans/active/local-migration/07-local-mcp/plan.md"
+      },
+      "consumerEvidence": [
+        {
+          "consumerId": "fp:mcp-http-setup",
+          "path": "docs/useful/MCP_LOCAL_SETUP.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:mcp-claude-auth-setup",
+          "path": "docs/useful/MCP_LOCAL_SETUP.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:mcp-codex-auth-setup",
+          "path": "docs/useful/MCP_LOCAL_SETUP.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:eval-mcp-tool-wildcard",
+          "path": "examples/eval/scripts/e2e-mcp-agent.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:harbor-mcp-list-slugs",
+          "path": "examples/eval-harbor/modes/cr-mcp.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:harbor-mcp-mutate-preferences",
+          "path": "examples/eval-harbor/modes/cr-mcp.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:packaging-smoke-mcp-graphql-schema-resource",
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:restart-smoke-mcp-list-slugs",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:mcp-fallback-auth-class",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:mcp-unknown-auth-class",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:mcp-graphql-schema-resource",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:mcp-external-unknown",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/history/McpAccessHistoryTab.tsx:mcp:tool:searchPreferences",
+          "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/search-lab/SearchLabClient.tsx:mcp:tool:smartSearchPreferences",
+          "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/AUDIT_AND_ACCESS_HISTORY.md:mcp:tool:mutatePreferences",
+          "path": "docs/current/AUDIT_AND_ACCESS_HISTORY.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md:mcp:resource:schema://graphql",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md:mcp:route:/mcp",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md:mcp:tool:mutatePreferences",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/MCP_AUTHORIZATION.md:mcp:resource:schema://graphql",
+          "path": "docs/current/MCP_AUTHORIZATION.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/MCP_AUTHORIZATION.md:mcp:tool:consolidateSchema",
+          "path": "docs/current/MCP_AUTHORIZATION.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/MCP_AUTHORIZATION.md:mcp:tool:listPermissionGrants",
+          "path": "docs/current/MCP_AUTHORIZATION.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/MCP_AUTHORIZATION.md:mcp:tool:listPreferenceSlugs",
+          "path": "docs/current/MCP_AUTHORIZATION.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/MCP_AUTHORIZATION.md:mcp:tool:mutatePreferences",
+          "path": "docs/current/MCP_AUTHORIZATION.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/MCP_AUTHORIZATION.md:mcp:tool:searchPreferences",
+          "path": "docs/current/MCP_AUTHORIZATION.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/MCP_AUTHORIZATION.md:mcp:tool:smartSearchPreferences",
+          "path": "docs/current/MCP_AUTHORIZATION.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/PREFERENCE_SCHEMA.md:mcp:tool:consolidateSchema",
+          "path": "docs/current/PREFERENCE_SCHEMA.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/PREFERENCE_SCHEMA.md:mcp:tool:listPreferenceSlugs",
+          "path": "docs/current/PREFERENCE_SCHEMA.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/PREFERENCE_SCHEMA.md:mcp:tool:mutatePreferences",
+          "path": "docs/current/PREFERENCE_SCHEMA.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/PREFERENCE_SCHEMA.md:mcp:tool:smartSearchPreferences",
+          "path": "docs/current/PREFERENCE_SCHEMA.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/WORKFLOWS.md:mcp:tool:consolidateSchema",
+          "path": "docs/current/WORKFLOWS.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/WORKFLOWS.md:mcp:tool:smartSearchPreferences",
+          "path": "docs/current/WORKFLOWS.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/IMPORTANT/CURRENT_STATE.md:mcp:tool:consolidateSchema",
+          "path": "docs/IMPORTANT/CURRENT_STATE.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/IMPORTANT/CURRENT_STATE.md:mcp:tool:smartSearchPreferences",
+          "path": "docs/IMPORTANT/CURRENT_STATE.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/plans/active/local-migration/orchestration.md:mcp:tool:mutatePreferences",
+          "path": "docs/plans/active/local-migration/orchestration.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/plans/active/local-migration/tracks/interface-evolution.md:mcp:route:/mcp",
+          "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/useful/MCP_LOCAL_SETUP.md:mcp:route:/mcp",
+          "path": "docs/useful/MCP_LOCAL_SETUP.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/modes/cr-mcp.md:mcp:tool:listPreferenceSlugs",
+          "path": "examples/eval-harbor/modes/cr-mcp.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/modes/cr-mcp.md:mcp:tool:mutatePreferences",
+          "path": "examples/eval-harbor/modes/cr-mcp.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/modes/cr-mcp.md:mcp:tool:searchPreferences",
+          "path": "examples/eval-harbor/modes/cr-mcp.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/scripts/build_dynamicmem_task.py:mcp:route:/mcp",
+          "path": "examples/eval-harbor/scripts/build_dynamicmem_task.py",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/scripts/check_sensitive_policy.py:mcp:tool:mutatePreferences",
+          "path": "examples/eval-harbor/scripts/check_sensitive_policy.py",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/scripts/check_sensitive_policy.py:mcp:tool:searchPreferences",
+          "path": "examples/eval-harbor/scripts/check_sensitive_policy.py",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/scripts/report_cr_overhead.py:mcp:tool:listPreferenceSlugs",
+          "path": "examples/eval-harbor/scripts/report_cr_overhead.py",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/scripts/report_cr_overhead.py:mcp:tool:mutatePreferences",
+          "path": "examples/eval-harbor/scripts/report_cr_overhead.py",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/scripts/report_cr_overhead.py:mcp:tool:searchPreferences",
+          "path": "examples/eval-harbor/scripts/report_cr_overhead.py",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/scripts/sensitive_policy.py:mcp:tool:mutatePreferences",
+          "path": "examples/eval-harbor/scripts/sensitive_policy.py",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:README.md:mcp:route:/mcp",
+          "path": "README.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/packaging-smoke.mjs:mcp:resource:schema://graphql",
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/packaging-smoke.mjs:mcp:route:/mcp",
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/restart-smoke.mjs:mcp:resource:schema://graphql",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/restart-smoke.mjs:mcp:route:/mcp",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/restart-smoke.mjs:mcp:tool:listPreferenceSlugs",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/useful/MCP_LOCAL_SETUP.md:mcp:resource:schema://graphql",
+          "path": "docs/useful/MCP_LOCAL_SETUP.md",
           "outcome": "migrated"
         }
       ]
@@ -518,14 +805,15 @@
     },
     {
       "id": "mcp-absent-scope-max-authority",
-      "label": "Absent or unrecognized scope restores configured client maximum",
+      "label": "Historical absent or unrecognized scope maximum fallback, replaced by explicit empty authority in Step 07",
       "disposition": "REPLACE",
       "contractClass": "observed-not-promised",
       "ownerSteps": [
         "07"
       ],
       "evidence": [
-        "apps/backend/src/mcp/types/mcp-authorization.types.ts"
+        "apps/backend/src/mcp/types/mcp-authorization.types.ts",
+        "apps/backend/src/mcp/auth/mcp-auth.guard.spec.ts"
       ]
     },
     {
@@ -1501,6 +1789,34 @@
       "disposition": "RETAIN",
       "ownerSteps": [
         "06"
+      ]
+    },
+    {
+      "id": "local-mcp-deterministic-smoke",
+      "sources": [
+        {
+          "path": "scripts/local-migration/local-mcp-smoke.mjs",
+          "fingerprints": [
+            "http.request",
+            "createGatedNodeChild",
+            "createSmokeModelPeer"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/fixtures/local-mcp-smoke/policy.cjs",
+          "fingerprints": [
+            "LOCAL_MCP_SMOKE_DENIED",
+            "Module.syncBuiltinESMExports",
+            "threads.Worker = class"
+          ]
+        }
+      ],
+      "destination": "Two owned literal-loopback MCP listeners and distinct pinned TLS fake model peers; exact CJS/ESM/SQLite-worker controls deny DNS, hosted/auth providers, other endpoints and subprocesses.",
+      "payload": "Synthetic definition/value/query, independent private MCP tokens and fresh inference-session material; fixed counts, process/thread IDs and cleanup evidence only.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "07"
       ]
     }
   ],
@@ -2826,6 +3142,12 @@
     {
       "path": "docs/useful/MCP_LOCAL_SETUP.md",
       "contract": "mcp",
+      "kind": "resource",
+      "reference": "schema://graphql"
+    },
+    {
+      "path": "docs/useful/MCP_LOCAL_SETUP.md",
+      "contract": "mcp",
       "kind": "route",
       "reference": "/mcp"
     },
@@ -3512,6 +3834,12 @@
       "sinks": {
         "spawn": 1,
         "subprocess-wrapper": 6
+      }
+    },
+    {
+      "path": "scripts/local-migration/local-mcp-smoke.mjs",
+      "sinks": {
+        "http-client": 1
       }
     },
     {

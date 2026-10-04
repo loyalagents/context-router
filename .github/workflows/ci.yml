@@ -178,6 +178,9 @@ jobs:
       - name: Run compiled local model tests
         run: pnpm test:local-model
 
+      - name: Test local MCP
+        run: pnpm test:local-mcp
+
   local-orchestrator-checks:
     needs: changes
     if: needs.changes.outputs.local_orchestrator == 'true'

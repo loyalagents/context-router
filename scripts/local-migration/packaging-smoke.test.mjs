@@ -499,6 +499,11 @@ test("every packaging subprocess has materializer policy or a reviewed helper ce
   assert.match(modelSource, /stdio: 'ignore', timeout: 15000/);
   assert.equal([...modelSource.matchAll(/\bcreateGatedNodeChild\s*\(/g)].length, 1);
 
+  const mcpSource = await readFile(path.join(repositoryRoot, 'scripts/local-migration/local-mcp-smoke.mjs'), 'utf8');
+  assert.equal([...mcpSource.matchAll(/\bcreateGatedNodeChild\s*\(/g)].length, 1);
+  assert.equal([...mcpSource.matchAll(/\b(?:spawn|spawnSync|exec|execFile)\s*\(/g)].length, 0);
+  assert.match(mcpSource, /createSmokeModelCredentials\(modelRoot\)/);
+
   const localIdentitySource = await readFile(
     path.join(repositoryRoot, "scripts/local-migration/local-identity-smoke.mjs"),
     "utf8",

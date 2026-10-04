@@ -6,12 +6,6 @@ import { PreferencesModule } from '@/modules/preferences/preferences.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { WorkflowsModule } from '@/modules/workflows/workflows.module';
 import { PermissionGrantModule } from '@/modules/permission-grant/permission-grant.module';
-import { PreferenceSearchTool } from './tools/preference-search.tool';
-import { PreferenceListTool } from './tools/preference-list.tool';
-import { PreferenceMutateTool } from './tools/preference-mutate.tool';
-import { SmartSearchTool } from './tools/smart-search.tool';
-import { SchemaConsolidationTool } from './tools/schema-consolidation.tool';
-import { PermissionGrantListTool } from './tools/permission-grant-list.tool';
 import { SchemaResource } from './resources/schema.resource';
 import { McpAccessLogModule } from './access-log/mcp-access-log.module';
 import { OAuthMetadataController } from './auth/oauth-metadata.controller';
@@ -21,7 +15,8 @@ import { McpAuthGuard } from './auth/mcp-auth.guard';
 import { McpClientRegistry } from './auth/mcp-client-registry.service';
 import { McpAuthorizationService } from './auth/mcp-authorization.service';
 import { McpOriginMiddleware } from './middleware/mcp-origin.middleware';
-import { MCP_RESOURCES, MCP_TOOLS } from './mcp.constants';
+import { MCP_RESOURCES } from './mcp.constants';
+import { mcpToolProviders } from './mcp-tool.providers';
 import { graphqlSchemaSdlSupplierProvider } from './resources/graphql-schema-sdl';
 
 @Module({
@@ -36,40 +31,7 @@ import { graphqlSchemaSdlSupplierProvider } from './resources/graphql-schema-sdl
   controllers: [McpController, OAuthMetadataController, DcrShimController],
   providers: [
     McpService,
-    // Tool classes
-    PreferenceListTool,
-    PreferenceSearchTool,
-    PreferenceMutateTool,
-    SmartSearchTool,
-    SchemaConsolidationTool,
-    PermissionGrantListTool,
-    // MCP_TOOLS token — collects all McpToolInterface implementations
-    {
-      provide: MCP_TOOLS,
-      useFactory: (
-        list: PreferenceListTool,
-        search: PreferenceSearchTool,
-        mutate: PreferenceMutateTool,
-        smartSearch: SmartSearchTool,
-        consolidation: SchemaConsolidationTool,
-        permissionGrantList: PermissionGrantListTool,
-      ) => [
-        list,
-        search,
-        mutate,
-        smartSearch,
-        consolidation,
-        permissionGrantList,
-      ],
-      inject: [
-        PreferenceListTool,
-        PreferenceSearchTool,
-        PreferenceMutateTool,
-        SmartSearchTool,
-        SchemaConsolidationTool,
-        PermissionGrantListTool,
-      ],
-    },
+    ...mcpToolProviders,
     graphqlSchemaSdlSupplierProvider,
     SchemaResource,
     DcrRateLimitGuard,

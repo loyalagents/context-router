@@ -3,7 +3,7 @@
 - Status: useful
 - Read when: initializing, rotating, recovering, or backing up the single-user local identity
 - Source of truth: `apps/backend/src/local-identity.ts`, `apps/backend/src/local-identity-postgres-reference.ts`, `apps/backend/src/config/local-database.config.ts`, `apps/backend/src/bootstrap/local-identity-preview.ts`, `apps/backend/src/infrastructure/storage/sqlite/`, and `apps/backend/src/modules/auth/local-identity-*.ts`
-- Last reviewed: 2026-09-23
+- Last reviewed: 2026-09-29
 
 ## Select Fresh Local State
 
@@ -64,6 +64,8 @@ Rotation preserves the principal, target, account email and all provider binding
 
 The SQLite administrator owns a dedicated worker connection with an actual main-database EXCLUSIVE lock, retained across commit through filesystem publication and cleanup. Other local database readers/writers are excluded during that operation. Parent deadlines reject and latch the handle; they do not interrupt arbitrary native or kernel I/O or acknowledge native release. Only actual worker exit proves its native ownership ended. An ambiguous commit or failed release remains recovery-required, with artifacts preserved and same-process reacquisition forbidden.
 
+Updated binaries admit exact SQLite v1 and v2 schemas. The explicit `local-mcp upgrade` adds per-instance MCP credentials without changing stable identity or stored preferences; earlier v1-only code rejects v2. Restore a compatible matching pair into new roots for rollback, preserving original artifacts.
+
 ## Engine Admission And Files
 
 The selected mode is rollback `DELETE` with `FULL` synchronization. A safe ordinary hot rollback journal may be replayed by SQLite before logical schema/target admission; this intrinsic crash recovery can change physical bytes without being application reset authority. Unsafe journal metadata and a possible embedded super-journal footer are rejected before open, without following any embedded path. Unknown/non-recovery negative states are preserved.
@@ -76,7 +78,7 @@ Never open/read/copy/fsync/close the live main database through raw filesystem d
 
 ## Matching-Pair Backup And Restore
 
-Step 05 implements and tests the adapter-private `SqliteBackup` mechanism; it does not add a supported backup CLI or final backup UI. Step 09 owns that product workflow and hardware qualification. The mechanism requires all original preview/admin processes terminated and reaped and a canonical-only identity state, then holds the same validated database owner through SQLite backup, exact identity-byte copy and durable no-clobber completion. A database-only snapshot is not a credential-consistent backup. Never copy a live main file while omitting its journal.
+Step 05 implements the adapter-private `SqliteBackup` mechanism. Step 07 exposes narrow `local-mcp backup --out` and `restore --from --out` wrappers for matching-pair upgrade/recovery; see [MCP administration](MCP_LOCAL_SETUP.md#local-sqlite-administration). Step 09 still owns the final backup product workflow/UI and hardware qualification. The mechanism requires all original preview/admin processes terminated and reaped and a canonical-only identity state, then holds the same validated database owner through SQLite backup, exact identity-byte copy and durable no-clobber completion. A database-only snapshot is not a credential-consistent backup. Never copy a live main file while omitting its journal.
 
 A complete bundle contains private `data/database.sqlite`, `identity/identity.json` and `complete.json`. Incomplete/ambiguous artifacts are preserved, not treated as permission to reset or delete source data. Restore accepts only a completed bundle and a **new absent destination**, leaves source/bundle unchanged, and validates the copy's schema, target, integrity, foreign keys and exact principal. The destination identity root remains empty until every check and source-envelope recheck succeeds; only then are exact canonical identity bytes published while ownership remains held. Before publication, ordinary preview refuses the destination. A later failure can be acknowledgement ambiguity of an already validated pair.
 
@@ -84,7 +86,7 @@ Restoring an older pair restores its old bearer and generation. After successful
 
 ## Non-Listening Preview And Protection Boundary
 
-Preview preflights identity and exact database ownership, seeds the catalog, initializes the real local Nest composition with `init()`, verifies again, and emits readiness. It never calls `listen()` and exposes no HTTP, GraphQL-over-network, MCP, OAuth, web or model endpoint. `SIGINT`/`SIGTERM` closes the application with the conventional signal exit code. The additive `preview-model` command selects the [manual local model integration](LOCAL_MODEL.md), while ordinary `preview` stays no-model. Both preserve this non-listening lifecycle; application readiness does not certify inference readiness. HTTP/MCP/UI listeners remain later migration work.
+Preview preflights identity and exact database ownership, seeds the catalog, initializes the real local Nest composition with `init()`, verifies again, and emits readiness. It never calls `listen()` and exposes no HTTP, GraphQL-over-network, MCP, OAuth, web or model endpoint. `SIGINT`/`SIGTERM` closes the application with the conventional signal exit code. The additive `preview-model` command selects the [manual local model integration](LOCAL_MODEL.md), while ordinary `preview` stays no-model. Both preserve this non-listening lifecycle; application readiness does not certify inference readiness. Step 07 adds a separately selected narrow [MCP listener](MCP_LOCAL_SETUP.md); these previews remain non-listening and the browser UI remains later work.
 
 The bearer remains in private canonical/candidate files and parent authentication memory; never place those bytes in argv, environment variables, logs, issues or command output. The fixed worker protocol carries bounded identity/configuration data, never credential bytes, arbitrary SQL or row metadata. Same UID, root, debugger, compromised runtime/kernel/hardware, network filesystems, Windows and hardware power-loss guarantees are outside this macOS/Linux preview evidence.
 

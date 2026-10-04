@@ -141,7 +141,7 @@ export class SmartSearchTool implements McpToolInterface {
           slugs,
         );
 
-      const result = await this.workflow.run({
+      const input = {
         userId: context!.user.userId,
         clientKey: context!.client.key,
         filterAccessibleSlugs,
@@ -149,7 +149,10 @@ export class SmartSearchTool implements McpToolInterface {
         locationId: params.locationId,
         includeSuggestions: params.includeSuggestions,
         maxResults,
-      });
+      };
+      const result = context?.execution
+        ? await this.workflow.run(input, context.execution)
+        : await this.workflow.run(input);
 
       const allowedSlugs = new Set(
         await filterAccessibleSlugs(
@@ -174,6 +177,10 @@ export class SmartSearchTool implements McpToolInterface {
             allowedSlugs.has(pref.slug),
           ),
       };
+      if (context!.client.policy.allowSensitive === false) {
+        filteredResult.matchedActivePreferences = await this.authorizationService.filterValues(context!.client, context!.user.userId, filteredResult.matchedActivePreferences);
+        filteredResult.matchedSuggestedPreferences = await this.authorizationService.filterValues(context!.client, context!.user.userId, filteredResult.matchedSuggestedPreferences);
+      }
       const structuredContent = {
         success: true as const,
         ...filteredResult,
