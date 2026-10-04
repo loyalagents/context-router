@@ -4,6 +4,240 @@ import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { browserFixture } from './browser-fixture.mjs';
 
+for (const kind of ['grant', 'revoke'])
+  for (const outcome of ['confirmed', 'lost-response'])
+    test(
+      `passive invalidation retains a ${outcome} MCP ${kind} outcome after server commit`,
+      { timeout: 60000 },
+      async (t) => {
+        const f = await browserFixture(t);
+        const client = JSON.parse(f.cli('local-mcp.js', 'list').stdout)
+          .result[0];
+        await f.page.goto(f.ready.origin + '/dashboard/permissions');
+        await f.page.getByLabel('Unlock token').fill(f.bootstrap);
+        await f.page
+          .getByRole('button', { name: 'Unlock local dashboard' })
+          .click();
+        await f.page
+          .getByRole('button', { name: `Inspect ${client.id}`, exact: true })
+          .click();
+        await f.page
+          .getByRole('region', { name: 'Selected client authority' })
+          .waitFor();
+        const peer = await f.context.newPage();
+        await peer.goto(f.ready.origin + '/dashboard');
+        await peer.evaluate(() => {
+          window.managementPeer = new BroadcastChannel(
+            'context-router.mcp-management.v1',
+          );
+          window.managementInvalidations = 0;
+          window.managementPeer.onmessage = () =>
+            window.managementInvalidations++;
+        });
+        await f.page.evaluate(() => {
+          window.managementObserver = new BroadcastChannel(
+            'context-router.mcp-management.v1',
+          );
+          window.managementInvalidations = 0;
+          window.managementObserver.onmessage = () =>
+            window.managementInvalidations++;
+        });
+        let reads = 0,
+          writes = 0,
+          release;
+        f.page.on('request', (request) => {
+          if (/\/api\/local\/mcp\/(list|inspect)$/.test(request.url())) reads++;
+        });
+        let committed;
+        const reached = new Promise((resolve) => {
+          committed = resolve;
+        });
+        const held = new Promise((resolve) => {
+          release = resolve;
+        });
+        await f.page.route(`**/api/local/mcp/${kind}`, async (route) => {
+          writes++;
+          const response = await route.fetch();
+          assert.equal(response.status(), 200);
+          committed();
+          await held;
+          if (outcome === 'confirmed') await route.fulfill({ response });
+          else await route.abort('failed');
+        });
+        try {
+          if (kind === 'revoke')
+            f.page.once('dialog', (dialog) => dialog.accept());
+          await f.page
+            .getByRole('button', {
+              name: kind === 'grant' ? 'Save grant' : 'Revoke this instance',
+            })
+            .click();
+          await reached;
+          const before = reads;
+          await peer.evaluate(() =>
+            window.managementPeer.postMessage('invalidate'),
+          );
+          await f.page.waitForFunction(
+            () => window.managementInvalidations > 0,
+          );
+          await f.page.evaluate(() => {
+            window.dispatchEvent(new Event('focus'));
+            window.dispatchEvent(new Event('pageshow'));
+          });
+          await f.page.evaluate(
+            () =>
+              new Promise((resolve) =>
+                requestAnimationFrame(() => requestAnimationFrame(resolve)),
+              ),
+          );
+          assert.equal(
+            reads,
+            before,
+            'read refresh waits for mutation settlement',
+          );
+          assert.equal(
+            await f.page
+              .getByRole('region', { name: 'Selected client authority' })
+              .count(),
+            0,
+          );
+          assert.equal(
+            await f.page
+              .getByRole('button', { name: 'Inspect selected instance' })
+              .isDisabled(),
+            true,
+          );
+          const failedRefresh = kind === 'grant' && outcome === 'confirmed';
+          if (failedRefresh)
+            await f.page.route(
+              '**/api/local/mcp/list',
+              (route) => route.fulfill({ status: 503, body: '{}' }),
+              { times: 1 },
+            );
+          release();
+          await f.page
+            .getByText(
+              outcome === 'lost-response'
+                ? 'Change was not confirmed.'
+                : kind === 'grant'
+                  ? 'Grant saved.'
+                  : 'Client instance revoked.',
+              { exact: false },
+            )
+            .waitFor();
+          await peer.waitForFunction(() => window.managementInvalidations > 0);
+          if (failedRefresh) {
+            await f.page
+              .getByRole('alert')
+              .filter({ hasText: 'Unable to load client instances.' })
+              .waitFor();
+            assert.equal(
+              await f.page
+                .getByText('Grant saved.', { exact: false })
+                .isVisible(),
+              true,
+            );
+            await f.page
+              .getByRole('button', { name: 'Reload clients' })
+              .click();
+          }
+          await f.page
+            .getByRole('button', { name: `Inspect ${client.id}`, exact: true })
+            .click();
+          const inspected = f.page.getByRole('region', {
+            name: 'Selected client authority',
+          });
+          await inspected
+            .getByText(
+              kind === 'grant'
+                ? '* · READ · DENY'
+                : 'Revoked: no effective access.',
+              { exact: true },
+            )
+            .waitFor();
+          assert.equal(
+            writes,
+            1,
+            'an uncertain write is never retried automatically',
+          );
+          assert.equal(
+            await inspected
+              .getByRole('cell', { name: 'Denied', exact: true })
+              .count(),
+            4,
+          );
+        } finally {
+          release();
+          await peer.close();
+        }
+      },
+    );
+
+test(
+  'unlock capacity feedback permits retry of the same unconsumed token',
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t);
+    await f.page.goto(f.ready.origin + '/dashboard');
+    let attempts = 0;
+    await f.page.route('**/api/local/unlock', (route) => {
+      attempts++;
+      if (attempts === 1)
+        return route.fulfill({
+          status: 429,
+          contentType: 'application/json',
+          body: '{"error":"Local UI request rejected"}',
+        });
+      return route.continue();
+    });
+    await f.page.getByLabel('Unlock token').fill(f.bootstrap);
+    await f.page
+      .getByRole('button', { name: 'Unlock local dashboard' })
+      .click();
+    await f.page
+      .getByRole('alert')
+      .filter({ hasText: 'same unexpired unlock token' })
+      .waitFor();
+    assert.equal(attempts, 1);
+    await f.page.getByLabel('Unlock token').fill(f.bootstrap);
+    await f.page
+      .getByRole('button', { name: 'Unlock local dashboard' })
+      .click();
+    await f.page
+      .getByRole('heading', { name: 'Dashboard', exact: true })
+      .waitFor();
+    assert.equal(attempts, 2);
+  },
+);
+
+test(
+  'capability failure after unlock does not suggest reusing a consumed token',
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t);
+    await f.page.goto(f.ready.origin + '/dashboard');
+    await f.page.route('**/api/local/capabilities', (route) =>
+      route.fulfill({ status: 429, body: '{}' }),
+    );
+    await f.page.getByLabel('Unlock token').fill(f.bootstrap);
+    await f.page
+      .getByRole('button', { name: 'Unlock local dashboard' })
+      .click();
+    await f.page
+      .getByRole('alert')
+      .filter({ hasText: 'Use a fresh unlock file' })
+      .waitFor();
+    const replay = await f.context.request.post(
+      f.ready.origin + '/api/local/unlock',
+      {
+        headers: { origin: f.ready.origin, 'x-context-router-ui': '1' },
+        data: { bootstrap: f.bootstrap },
+      },
+    );
+    assert.equal(replay.status(), 401);
+  },
+);
+
 test(
   'production dashboard hydrates with nonce CSP, unlocks without Auth0 and edits local profile',
   { timeout: 60000 },

@@ -44,8 +44,10 @@ export default function McpClients() {
   const [effect, setEffect] = useState('DENY');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [readError, setReadError] = useState('');
   const [generation, setGeneration] = useState(0);
   const pending = useRef<AbortController | null>(null);
+  const mutation = useRef<AbortController | null>(null);
   const revision = useRef(0);
   const channel = useRef<BroadcastChannel | null>(null);
   const invalidate = useCallback(() => {
@@ -54,6 +56,9 @@ export default function McpClients() {
     setSnapshot(null);
     setItems([]);
     setNext(null);
+    // A background refresh cannot cancel an already submitted authority change.
+    // Its settlement owns the next reload and the confirmed/uncertain outcome.
+    if (mutation.current) return;
     setBusy(false);
     setGeneration((value) => value + 1);
   }, []);
@@ -67,6 +72,8 @@ export default function McpClients() {
     return () => {
       epoch.current++;
       pending.current?.abort();
+      mutation.current?.abort();
+      mutation.current = null;
       channel.current?.close();
       channel.current = null;
       window.removeEventListener('focus', listener);
@@ -74,12 +81,14 @@ export default function McpClients() {
     };
   }, [invalidate]);
   useEffect(() => {
+    if (mutation.current) return;
     const controller = new AbortController();
     pending.current = controller;
     const current = ++revision.current;
     setBusy(true);
     setItems([]);
     setSnapshot(null);
+    setReadError('');
     void localJson<{ items: Client[]; nextCursor: string | null }>(
       '/api/local/mcp/list',
       cursor ? { after: cursor } : {},
@@ -92,7 +101,7 @@ export default function McpClients() {
       })
       .catch(() => {
         if (!controller.signal.aborted && current === revision.current)
-          setMessage('Unable to load client instances. Reload to continue.');
+          setReadError('Unable to load client instances. Reload to continue.');
       })
       .finally(() => {
         if (!controller.signal.aborted && current === revision.current)
@@ -101,13 +110,14 @@ export default function McpClients() {
     return () => controller.abort();
   }, [cursor, generation]);
   async function inspect(id = selected) {
+    if (mutation.current) return;
     pending.current?.abort();
     const controller = new AbortController();
     pending.current = controller;
     const current = ++revision.current;
     setSelected(id);
     setSnapshot(null);
-    setMessage('');
+    setReadError('');
     setBusy(true);
     try {
       const exactTargets = [
@@ -127,7 +137,7 @@ export default function McpClients() {
         setSnapshot(data);
     } catch {
       if (current === revision.current && !controller.signal.aborted)
-        setMessage(
+        setReadError(
           'Authority could not be inspected. Use up to 32 exact slugs and reload before editing.',
         );
     } finally {
@@ -139,7 +149,7 @@ export default function McpClients() {
     kind: 'grant' | 'revoke',
     grant?: { target: string; action: string; effect: string },
   ) {
-    if (!snapshot || busy) return;
+    if (!snapshot || busy || mutation.current) return;
     if (
       kind === 'revoke' &&
       !window.confirm(
@@ -148,13 +158,14 @@ export default function McpClients() {
     )
       return;
     const captured = snapshot;
-    const current = ++revision.current;
+    revision.current++;
     pending.current?.abort();
     const controller = new AbortController();
-    pending.current = controller;
+    mutation.current = controller;
     setBusy(true);
     setSnapshot(null);
     setMessage('');
+    setReadError('');
     try {
       const result = await localJson<{ changed?: boolean; reason?: string }>(
         `/api/local/mcp/${kind}`,
@@ -167,7 +178,7 @@ export default function McpClients() {
         },
         controller.signal,
       );
-      if (current === revision.current && !controller.signal.aborted)
+      if (mutation.current === controller && !controller.signal.aborted)
         setMessage(
           result.reason === 'OUTSIDE_MAXIMUM'
             ? 'ALLOW was not saved: it provides no authority under this instance’s current CLI maximum.'
@@ -176,12 +187,13 @@ export default function McpClients() {
               : 'Grant saved. Reload to inspect current authority.',
         );
     } catch {
-      if (current === revision.current && !controller.signal.aborted)
+      if (mutation.current === controller && !controller.signal.aborted)
         setMessage(
           'Change was not confirmed. Authority may have changed. Reload and inspect before deciding whether to submit again.',
         );
     } finally {
-      if (current === revision.current && !controller.signal.aborted) {
+      if (mutation.current === controller && !controller.signal.aborted) {
+        mutation.current = null;
         channel.current?.postMessage('invalidate');
         invalidate();
       }
@@ -200,15 +212,16 @@ export default function McpClients() {
         requires read and suggest access.
       </p>
       {message && <p role="status">{message}</p>}
+      {readError && <p role="alert">{readError}</p>}
       <div className="flex gap-3">
-        <button className={button} onClick={invalidate}>
+        <button className={button} disabled={busy} onClick={invalidate}>
           Reload clients
         </button>
         {cursor && (
           <button
             className={button}
             disabled={busy}
-            onClick={() => setCursor(undefined)}
+            onClick={() => { if (!mutation.current) setCursor(undefined); }}
           >
             First page
           </button>
@@ -217,7 +230,7 @@ export default function McpClients() {
           <button
             className={button}
             disabled={busy}
-            onClick={() => setCursor(next)}
+            onClick={() => { if (!mutation.current) setCursor(next); }}
           >
             Next page
           </button>

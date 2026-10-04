@@ -1,6 +1,6 @@
 # Step 08 Implementation Evidence
 
-- Status: implementation and independent reviews complete; full twelve-phase local gate passed; human acceptance pending
+- Status: post-review corrections independently approved; renewed twelve-phase local gate passed; human acceptance pending
 - Sole writer: `/root`; P2 approved in all four mandates before product edits
 - Base: `5e2a67dd785500ba053b2e836c47166e8adeada8`
 - Toolchain: Node 24.21.0, pnpm 10.25.0
@@ -56,8 +56,10 @@ The original security plan reviewer performed an additional read-only early revi
 (Astra/xhigh dispatch retained; internals unobservable). Five findings were accepted:
 post-Multer session admission, separate logout capacity, immediate local locking,
 idle browser expiry, and possible multipart byte loss. New tests reproduced 429
-logout denial and a 400 same-packet upload during delayed auth. Parser-level counting
-preserves backpressure, controllers revalidate after parsing, and authenticated
+logout denial and a 400 same-packet upload during delayed auth. The intended parser
+counter preserved multipart bytes, but did not enforce chunked-body limits after
+Express replaced the request prototype; the post-review correction below supersedes
+that earlier counting claim. Controllers revalidate after parsing, and authenticated
 logout has a separate pool. The full local-UI backend suite passed 15/15 (3,722 ms).
 Transport tests passed 4/4; two Chromium tests passed (4,581 ms), including delayed
 logout acknowledgement and eight-hour idle expiry through the browser clock.
@@ -615,7 +617,7 @@ affected review and the full gate with the exact receipt path before final-head 
 
 ### R11 Final Local Validation
 
-R11 is the final frozen code/test candidate: [candidate-r11.json](candidate-r11.json),
+R11 was the frozen code/test candidate before external review: [candidate-r11.json](candidate-r11.json),
 187 paths, aggregate
 `03102086f9c363c414cb9ce3200ead2b936f123b47201a370d70aacea58763ea`. Architecture,
 security/recovery and compatibility independently approved its bounded diagnostic
@@ -626,7 +628,7 @@ The full pinned-toolchain command used the exact Step 07 base,
 `RUNNER_TEMP=/private/tmp/step08-final-gate-r11-049rf14g`, and
 `MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r11-049rf14g/local-migration-gate-summary.json`.
 Result: **PASS, exit 0, 12/12 phases**. The current
-[sanitized receipt](final-gate-summary.json) records 1,048,139 ms (terminal
+[R11 sanitized receipt](https://github.com/loyalagents/context-router/blob/84cad4a2ca6a5c4b2f931552d150a2029eb73c5a/docs/plans/active/local-migration/08-local-ui/final-gate-summary.json) records 1,048,139 ms (terminal
 1,048,457 ms), exact-base comparison performed, caller integrity true, no cleanup
 errors, removed owned database and clean administration. Source was the frozen
 uncommitted R11 snapshot over `1b86b68f0442d3e6dd311770a01761c30358dc15`, copied-input
@@ -641,3 +643,121 @@ did not recur; its cause remains unconfirmed, and fixed diagnostics remain for a
 recurrence. Only closeout evidence and the sanitized receipt change after this run.
 Replacement-head standard/dedicated CI results belong to PR #167; no prior run is
 substituted. Human acceptance remains **PENDING**, and the PR remains draft.
+
+### Post-Review Corrections (R12)
+
+External review of `84cad4a2ca6a5c4b2f931552d150a2029eb73c5a` identified F1–F3.
+The user authorized fixes. Root remains sole writer on PR #167; no new step,
+public interface, timeout, model qualification or P3 budget is introduced.
+Affected design review approved these bounded checkpoints before their fixes:
+
+1. **F1, body admission:** Express 4 replaces the request prototype, removing the
+   old `push` override. The hook is now an own property installed before Express,
+   preserving actual-byte counting and backpressure for valid chunked requests.
+   Over-limit chunks are discarded and rejection is latched. Content-Length
+   checks remain. Fixed local configuration additionally bounds Multer files,
+   fields, parts, field names and field bytes; hosted configuration is unchanged.
+   Busboy's terminal boundary requires a parts-limit sentinel: analysis permits
+   one file/no fields with `parts=2`; form fill one file/one field with `parts=3`.
+   Both retain the 10 MiB file and 10 MiB + 64 KiB aggregate limits.
+2. **F2, PDF compatibility:** Existing values are read only for policy v2. A failed
+   per-field read becomes explicit internal unknown state, preserved unless a
+   validated explicit overwrite applies. Unknown checkbox occupancy also blocks
+   conflicting group selections. Unwritten unknown fields retain their original
+   appearance state; neither the explicit appearance update nor `save()` rereads
+   them. Absent/v1 keep the legacy extraction and ordinary save behavior. The
+   v2 tests now opt into existing-value extraction explicitly; their expectations
+   are unchanged. No private existing value or unknown marker enters the prompt.
+3. **F3, mutation outcomes:** Passive focus/pageshow/cross-window invalidation
+   discards reads without aborting a submitted grant/revoke or releasing its busy
+   latch. Settlement reports confirmation or uncertainty, broadcasts refresh and
+   reloads the list. Authority remains unavailable for editing until explicit
+   re-inspection. Read errors cannot erase the write outcome. Lock/unmount still
+   abort and suppress late publication; there is no automatic mutation retry.
+4. **Unlock capacity:** Exchange-time 429 explains attempt/session capacity and
+   permits retrying the same unexpired token. A 429 after successful exchange
+   cannot give that advice, because the token has already been consumed. HTTP
+   response shapes remain unchanged; only a typed internal status is added.
+
+Tests were added before backend edits. The original code accepted oversized
+chunked unlock/logout and extra multipart fields; the new full-pipeline rich-text
+tests failed in extraction, and the unknown-checkbox test admitted a conflicting
+CHECK. Four Chromium grant/revoke tests reproduced premature refresh during held
+responses, and the old unlock message failed its browser expectation.
+
+After correction, all **38 HTTP/session tests** pass (26,782 ms), including every
+API body-limit class, use-case exclusion, valid chunked requests, local multipart
+controls and repeated rejection beyond each admission pool's capacity. All
+**94 form-fill/configuration unit tests** pass (2,602 ms). A broader earlier unit
+run passed **922/922** before the final additional no-action rich-text case.
+Logs: `/private/tmp/step08-fixes-http-tests.log`,
+`/private/tmp/step08-fixes-form-tests.log`, `/private/tmp/step08-f2-green.log`.
+All **27 production browser/transport tests** pass (50,875 ms), including real
+committed grant/revoke writes with confirmed or lost responses, passive focus,
+pageshow and peer invalidation, later refresh failure, manual re-inspection and
+no retry. Exchange-time and post-exchange 429 messages have separate tests.
+Browser log: `/private/tmp/step08-fixes-web-tests.log`. Production web/backend
+builds and the contract checker pass (the targeted checker skips base comparison;
+the full gate must perform it). Frozen review, full local gate and replacement-head
+CI are recorded below when complete; previous R11 passes do not validate this
+changed candidate.
+
+The optional sleep-clock hypothesis remains unverified and is not treated as a
+confirmed expiry defect. Capability probes retain shared model admission by
+design; speculative concurrency changes are outside this correction. The egress
+harness retains its documented non-OS-wide limitation. Human acceptance and live
+client/model qualification remain separate and pending.
+
+### R12 Review Gap And R13 Test Correction
+
+Architecture and compatibility approved the R12 implementation. Security found
+one test gap: the oversized form field was whitespace-only invalid JSON, so the
+controller could reject it even without the 64 KiB parser bound. The gate was
+deliberately cancelled before any edit. Its receipt at
+`/private/tmp/step08-final-gate-r12-gW0DyJWi/local-migration-gate-summary.json`
+records cancellation after 223,731 ms, three passing phases, database-phase
+interruption, caller integrity true, removed owned database and clean
+administration. `cleanupErrors` records `received SIGINT`; this is not a pass.
+
+R13 changes that test to valid v2 JSON plus oversized whitespace padding. An
+isolated test-process override that increased only `formFill.multipartLimits`
+`fieldSize` to 1 MiB reproduced HTTP 201 and failed the regression. With the real
+64 KiB limit, the oversized field is rejected before the use case; the smaller
+same-schema control succeeds. Logs are
+`/private/tmp/step08-r13-field-limit-red.log` and
+`/private/tmp/step08-r13-http-green.log`. No production source changed after R12.
+
+Review also found that default Git rename detection omitted the deleted
+`apps/web/next.config.ts` from historical candidate inventories. All three
+reviewers independently verified R12's 192 entries plus this sole deletion
+(193 paths; supplemented aggregate
+`702f8e75b145d50a8da9916ea9204b4d662d0852b44e76cd27b1742805ba04e5`). R12 stays
+immutable; R13 uses rename-independent enumeration and includes the deletion
+directly. No other omitted path was found. This corrects manifest completeness
+claims; it does not change source or the gate's own copied-input evidence.
+
+### R13 Final Local Validation
+
+All three affected specialists approved frozen
+[candidate-r13.json](candidate-r13.json): 194 rename-independent paths, aggregate
+`7dc6c85dec20940243364a7bbdf41965ddb5ba49b5a6530364fbb60f1aac8c55`. The corrected
+multipart proof closes the R12 validation finding. Production source is unchanged
+from R12; unaffected complete review mandates carry forward. Post-gate comparison
+verified every path, mode, hash and deletion with no drift.
+
+The full pinned-toolchain gate passed **12/12**, exit 0, using the exact Step 07
+base and `/private/tmp/step08-final-gate-r13-HrtUGl82`. The current
+[sanitized receipt](final-gate-summary.json) records **1,138,230 ms** (terminal
+1,138,567 ms), exact-base comparison performed, caller integrity true, no cleanup
+errors, removed owned database and clean administration. Source was frozen R13
+over `84cad4a2ca6a5c4b2f931552d150a2029eb73c5a`, dirty true, copied-input digest
+`6879f0e0cc1a5b23cd75a97aeaef60ed9e50e4329a873b26dbccf4de41f723b5`.
+Node 24.21.0, pnpm 10.25.0, Python 3.12.8, PostgreSQL 15.19, Playwright 1.63.0
+and Chromium 153.0.8010.12 match the pinned local validation environment.
+
+Source restart passed in 81,981 ms and sealed packaging in 505,777 ms, including
+both authenticated browser generations and complete lifecycle cleanup. The
+corrected source also passed all gate backend, database, eval, browser and
+integrity phases. Only this evidence ledger, review ledger and sanitized receipt
+change after the frozen run. Final pushed-head standard/dedicated CI is recorded
+on PR #167; human acceptance remains **PENDING**, with no merge or ready action.

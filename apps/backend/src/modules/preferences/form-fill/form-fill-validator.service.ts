@@ -80,7 +80,7 @@ export class FormFillValidatorService {
     const preserve = new Set(options.fieldPolicies?.schemaVersion === 2 ? fields.filter((field) => {
       const value = field.existingValue;
       const occupied = typeof value === 'boolean' ? value : typeof value === 'string' || Array.isArray(value) ? value.length > 0 : false;
-      return occupied && policyByFieldName.get(field.name)?.overwrite !== true;
+      return (occupied || field.existingValueUnknown) && policyByFieldName.get(field.name)?.overwrite !== true;
     }).map((field) => field.name) : []);
 
     for (const field of fields) {
@@ -158,7 +158,7 @@ export class FormFillValidatorService {
 
     if (options.fieldPolicies?.schemaVersion === 2) {
       // An already checked field remains checked unless a validated UNCHECK will run.
-      const existing = fields.filter((field) => field.type === 'checkbox' && field.existingValue === true &&
+      const existing = fields.filter((field) => field.type === 'checkbox' && (field.existingValue === true || field.existingValueUnknown) &&
         !validActions.some((action) => action.fieldName === field.name && action.action === 'UNCHECK'));
       for (const action of [...validActions]) {
         const groupId = policyByFieldName.get(action.fieldName)?.groupId;

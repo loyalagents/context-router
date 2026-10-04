@@ -73,6 +73,11 @@ The reviewer inspected source; targeted execution evidence was coordinator-provi
 Subsequent management boundary changes are undergoing their own affected review.
 This approval does not substitute for fresh complete implementation review.
 
+The later external F1 finding showed that this early parser-byte review did not
+establish chunked-body enforcement after Express's prototype replacement. Its
+byte-preservation result remains historical evidence; the R12 correction and
+renewed affected security review supersede the body-limit claim.
+
 ### Reviewed Apply V2 Persistence
 
 `/root/plan_persistence` returned APPROVE for this affected checkpoint, with no
@@ -541,3 +546,86 @@ verification found no drift. Only evidence/receipt closeout follows. All four
 implementation mandates are approved through the recorded affected-review chain;
 final-head CI and actual human acceptance remain separate requirements. PR #167
 stays draft; Steps 09–11 remain inactive, with no authorization to merge.
+
+### External Review And R12 Correction Design
+
+External review of `84cad4a` found F1 (chunked body-limit bypass), F2 (legacy
+rich-text extraction regression), and F3 (lost grant/revoke outcome). All three
+are accepted and corrected, along with misleading unlock-capacity feedback.
+See [correction evidence](implementation.md#post-review-corrections-r12).
+
+Root remains sole writer. The sensitive boundary changes retain requested Astra
+xhigh for root, architecture and security; compatibility retains its prior High
+request. Actual serving model/effort settings remain unobservable, not newly
+verified. The existing read-only specialists reviewed the focused design:
+
+- `/root/final_security`: **APPROVE**, requiring the own-property parser hook,
+  local-only multipart bounds, unknown-value/group preservation and mutation
+  ownership tests. Independently inspected pinned Busboy's parts sentinel.
+- `/root/final_compatibility`: **APPROVE**, requiring full-pipeline rich-text
+  fixtures and both explicit/save-time appearance safeguards, unchanged legacy
+  behavior, private-state prompt exclusion and actual browser regressions.
+- `/root/final_architecture`: **APPROVE**, including the clarified existing
+  manual re-inspection flow, separate read-error/outcome state and exchange-only
+  429 guidance. No new framework or public response contract is needed.
+
+These are design approvals, not frozen implementation approval. Renew affected
+browser/security, PDF compatibility and application ownership review against R12;
+carry forward only unchanged history/persistence/CAS, MCP maximum authority and
+lifecycle/gate coverage from the complete-review chain. The full local gate and
+both workflows must pass on the corrected candidate/head. Human acceptance and
+merge remain human-owned.
+
+### R12 Findings And R13 Submission
+
+R12 ([candidate-r12.json](candidate-r12.json)) binds 192 listed paths to aggregate
+`e15131e7503a245e4246f59b4970f179edcfdbf9b79b88bb808ac9a072c5ebfe`. All three
+reviewers verified their contents/modes and independently supplemented the
+binding with deleted `apps/web/next.config.ts`: 193 rename-independent paths,
+complete aggregate
+`702f8e75b145d50a8da9916ea9204b4d662d0852b44e76cd27b1742805ba04e5`.
+The old file is absent; its base SHA256 is
+`351c336afa605a0227c7aa78b142a108788320daf2f4107b840cce17a1861aa9`.
+Prior assertions that the default rename-sensitive manifest alone was complete
+are corrected by this explicit deletion witness. Historical manifests remain
+immutable; the replacement generator enumerates with `--no-renames`.
+
+Architecture and compatibility returned **APPROVE**. Security returned
+**CHANGES REQUIRED** solely for the invalid-JSON oversized field test, with no
+remaining source blocker. Root cancelled the gate with verified caller integrity
+and owned cleanup, then strengthened the input and proved it fails when only the
+field-size cap is removed in an isolated process. See
+[R13 evidence](implementation.md#r12-review-gap-and-r13-test-correction).
+R13 renews the test/inventory review; all unchanged R12 source review and complete
+unaffected mandates carry forward. Required full-gate and final-head CI success
+are not inferred from the cancelled attempt.
+
+### R13 Approvals And Renewed Full Gate
+
+All three specialists returned **APPROVE** and independently verified the complete
+194-path rename-independent inventory, modes, hashes and explicit deletion in
+[candidate-r13.json](candidate-r13.json), aggregate
+`7dc6c85dec20940243364a7bbdf41965ddb5ba49b5a6530364fbb60f1aac8c55`. Exact base and
+P3 hash remain unchanged.
+
+- `/root/final_security`: the valid oversized JSON/control pair plus isolated
+  field-size override closes the validation finding. F1–F3 and unlock-feedback
+  source approval carry forward from the R12 source review.
+- `/root/final_compatibility`: new test isolates the parser bound and directly
+  includes the deletion; legacy/v2 PDF behavior, local-only HTTP limits and
+  mutation outcome coverage remain approved.
+- `/root/final_architecture`: no production change after approved R12; the test
+  and inventory correction resolves the remaining proof/bookkeeping issues.
+
+Reviews were read-only and inspected coordinator red/green logs; no reviewer
+claimed to have rerun tests/builds. Requested settings and observability limits
+remain as recorded. Explicitly carried-forward complete coverage includes shared
+application/model ownership, credential separation, GraphQL and legacy HTTP
+consumers, storage/history/CAS, MCP maxima, model controls, packaging, lifecycle
+cleanup, recovery and P3 budgets. No actionable finding remains.
+
+The subsequent frozen full gate passed all 12 phases, with exact-base comparison,
+caller integrity, owned cleanup and zero post-gate binding drift; see
+[final validation](implementation.md#r13-final-local-validation). Post-gate edits
+are limited to evidence and the receipt. Replacement-head CI and actual human
+acceptance are separate requirements. PR #167 remains draft and human-owned.

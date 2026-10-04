@@ -33,6 +33,8 @@ export interface PdfFieldOption {
 export interface PdfFieldMetadata {
   /** Internal validation state. Never include this property in model prompts. */
   existingValue?: string | boolean | string[];
+  /** Unreadable is conservatively occupied; also excluded from prompts. */
+  existingValueUnknown?: true;
   name: string;
   type: PdfFieldType;
   options: PdfFieldOption[];

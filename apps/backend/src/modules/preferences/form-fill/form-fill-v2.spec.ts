@@ -71,6 +71,7 @@ describe('form-fill policy v2 preserves existing real PDF field values', () => {
       const buffer = await fixture();
       const extracted = await new PdfFieldExtractorService().extractFields(
         buffer,
+        { readExistingValues: !['absent', 'v1'].includes(mode) },
       );
       const policies =
         mode === 'absent'
@@ -112,7 +113,7 @@ describe('form-fill policy v2 preserves existing real PDF field values', () => {
   );
   it('v2 fills empty fields and explicit overwrite still undergoes ordinary validation', async () => {
     const buffer = await fixture(false);
-    const fields = (await new PdfFieldExtractorService().extractFields(buffer))
+    const fields = (await new PdfFieldExtractorService().extractFields(buffer, { readExistingValues: true }))
       .fields;
     const result = new FormFillValidatorService().validate(
       actions,
@@ -132,7 +133,7 @@ describe('form-fill policy v2 preserves existing real PDF field values', () => {
       ),
     ).toEqual(['after', false, 'after', ['after'], ['after']]);
     const occupied = (
-      await new PdfFieldExtractorService().extractFields(await fixture())
+      await new PdfFieldExtractorService().extractFields(await fixture(), { readExistingValues: true })
     ).fields;
     const invalid = new FormFillValidatorService().validate(
       [{ ...actions[2], value: 'not an option' }],
@@ -213,7 +214,7 @@ describe('form-fill policy v2 preserves existing real PDF field values', () => {
   });
   it('keeps existing values internal and never serializes them into inference prompts', async () => {
     const fields = (
-      await new PdfFieldExtractorService().extractFields(await fixture())
+      await new PdfFieldExtractorService().extractFields(await fixture(), { readExistingValues: true })
     ).fields;
     expect((fields[0] as any).existingValue).toBe('0');
     const prompt = new FormFillPromptBuilderService().buildPrompt(

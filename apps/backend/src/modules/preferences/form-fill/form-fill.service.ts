@@ -61,7 +61,9 @@ export class FormFillService {
 
     try {
       const execution = createAiWorkflow(this.aiStructuredService.capabilities, options);
-      const extracted = await this.fieldExtractor.extractFields(fileBuffer);
+      const extracted = await this.fieldExtractor.extractFields(fileBuffer, {
+        readExistingValues: fieldPolicies?.schemaVersion === 2,
+      });
       execution.check();
 
       if (extracted.fields.length === 0) {
@@ -126,6 +128,8 @@ export class FormFillService {
       const filledPdf = await this.pdfFiller.fillPdf(
         fileBuffer,
         validation.validActions,
+        new Set(extracted.fields.filter((field) => field.existingValueUnknown &&
+          !validation.validActions.some((action) => action.fieldName === field.name)).map((field) => field.name)),
       );
       execution.check();
 

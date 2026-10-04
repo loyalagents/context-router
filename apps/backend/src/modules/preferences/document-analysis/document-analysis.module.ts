@@ -15,6 +15,7 @@ import { ReviewedSuggestionService } from './reviewed-suggestion.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         limits: {
+          ...configService.get<Record<string, number>>('documentUpload.multipartLimits'),
           fileSize: configService.getOrThrow<number>(
             'documentUpload.maxFileSizeBytes',
           ),

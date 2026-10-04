@@ -80,6 +80,8 @@ async function fixture(t, options = {}) {
       body = {},
       headers = {},
       port = runtime.port,
+      rawBody,
+      chunked = false,
     } = {},
   ) {
     return new Promise((resolve, reject) => {
@@ -113,7 +115,13 @@ async function fixture(t, options = {}) {
         },
       );
       req.on('error', reject);
-      req.end(method === 'GET' ? undefined : JSON.stringify(body));
+      const payload =
+        method === 'GET' ? undefined : (rawBody ?? JSON.stringify(body));
+      if (chunked && payload !== undefined) {
+        // write(), rather than end(payload), deliberately omits Content-Length.
+        req.write(payload);
+        req.end();
+      } else req.end(payload);
     });
   }
   async function unlock() {
@@ -135,6 +143,215 @@ async function fixture(t, options = {}) {
   };
 }
 const me = { query: '{ me { userId } }' };
+
+test('chunked bodies enforce actual route limits before use cases and release admission capacity', async (t) => {
+  const f = await configuredFixture(t);
+  const { token } = await f.unlock();
+  const {
+    DocumentAnalysisService,
+  } = require('../../dist/modules/preferences/document-analysis/document-analysis.service.js');
+  const {
+    FormFillService,
+  } = require('../../dist/modules/preferences/form-fill/form-fill.service.js');
+  const {
+    LocalUiManagement,
+  } = require('../../dist/local-ui/local-ui-management.js');
+  const {
+    AI_TEXT_GENERATOR_PORT,
+  } = require('../../dist/domains/shared/ports/ai.tokens.js');
+  let controlCalls = 0;
+  const status = f.runtime.application.get(AI_TEXT_GENERATOR_PORT);
+  for (const [owner, method] of [
+    [f.runtime.sessions, 'exchange'],
+    [f.runtime.sessions, 'logout'],
+    [status, 'getStatus'],
+    [LocalUiManagement.prototype, 'handle'],
+  ]) {
+    const original = owner[method];
+    owner[method] = function (...args) {
+      controlCalls++;
+      return original.apply(this, args);
+    };
+    t.after(() => {
+      owner[method] = original;
+    });
+  }
+  let uploadCalls = 0;
+  f.runtime.application.get(DocumentAnalysisService).analyzeDocument =
+    async () => {
+      uploadCalls++;
+      return { status: 'success' };
+    };
+  f.runtime.application.get(FormFillService).fillPdfForm = async () => {
+    uploadCalls++;
+    return { status: 'success' };
+  };
+  const delivery = f.runtime.issueUnlock();
+  const bootstrap = fs.readFileSync(delivery.path, 'utf8').trim();
+  const cases = [
+    ['/api/local/unlock', JSON.stringify({ bootstrap }), 4096],
+    ['/api/local/capabilities', '{}', 256 * 1024],
+    ['/api/local/mcp/list', '{}', 256 * 1024],
+    [
+      '/graphql',
+      JSON.stringify({
+        query:
+          'mutation { setPreference(input:{slug:"profile.first_name",value:"oversize-canary"}) { id } }',
+      }),
+      256 * 1024,
+    ],
+    ...['/api/preferences/analysis', '/api/form-fill/pdf'].map((route) => [
+      route,
+      '',
+      10 * 1024 * 1024 + 64 * 1024,
+    ]),
+    ['/api/local/logout', '{}', 4096],
+  ];
+  for (const [route, json, limit] of cases) {
+    await t.test(route, async () => {
+      const upload =
+        route === '/api/preferences/analysis' || route === '/api/form-fill/pdf';
+      const result = await f.request(route, {
+        token,
+        chunked: true,
+        rawBody: upload
+          ? 'x'.repeat(limit + 1) +
+            '\r\n--limit-boundary\r\nContent-Disposition: form-data; name="file"; filename="test.txt"\r\nContent-Type: text/plain\r\n\r\nsynthetic\r\n--limit-boundary--\r\n'
+          : json + ' '.repeat(limit),
+        headers: upload
+          ? { 'content-type': 'multipart/form-data; boundary=limit-boundary' }
+          : {},
+      });
+      assert.equal(result.status, 413, route);
+      assert.equal(
+        controlCalls,
+        0,
+        'no unlock, logout, capability or MCP handler entered',
+      );
+      assert.equal(uploadCalls, 0, 'no upload use case entered');
+    });
+  }
+  assert.equal(uploadCalls, 0);
+  // A rejected logout did not consume this session; an oversized mutation did not run.
+  const preferences = await f.request('/graphql', {
+    token,
+    body: { query: '{ activePreferences { value } }' },
+    chunked: true,
+  });
+  assert.equal(preferences.status, 200);
+  assert.deepEqual(preferences.json().data.activePreferences, []);
+  // Exceed each pool's capacity cumulatively, proving rejected requests release it.
+  for (const [route, count, limit, body] of [
+    ['/api/local/unlock', 9, 4096, { bootstrap }],
+    ['/api/local/logout', 9, 4096, {}],
+    ['/api/local/mcp/list', 33, 256 * 1024, {}],
+  ])
+    for (let i = 0; i < count; i++)
+      assert.equal(
+        (
+          await f.request(route, {
+            token,
+            chunked: true,
+            rawBody: JSON.stringify(body) + ' '.repeat(limit),
+          })
+        ).status,
+        413,
+      );
+  assert.equal(
+    (
+      await f.request('/api/local/unlock', {
+        body: { bootstrap },
+        chunked: true,
+      })
+    ).status,
+    200,
+  );
+  for (const route of [
+    '/api/local/capabilities',
+    '/api/local/mcp/list',
+    '/api/local/logout',
+  ])
+    assert.equal(
+      (await f.request(route, { token, chunked: true })).status,
+      200,
+    );
+});
+
+test('local multipart parsing bounds fields and parts while accepting supported chunked uploads', async (t) => {
+  const f = await configuredFixture(t);
+  const { token } = await f.unlock();
+  const {
+    DocumentAnalysisService,
+  } = require('../../dist/modules/preferences/document-analysis/document-analysis.service.js');
+  const {
+    FormFillService,
+  } = require('../../dist/modules/preferences/form-fill/form-fill.service.js');
+  const { PDFDocument } = require('pdf-lib');
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const pdfBytes = Buffer.from(await pdf.save());
+  let calls = 0;
+  f.runtime.application.get(DocumentAnalysisService).analyzeDocument =
+    async () => {
+      calls++;
+      return { status: 'success' };
+    };
+  f.runtime.application.get(FormFillService).fillPdfForm = async () => {
+    calls++;
+    return { status: 'success' };
+  };
+  const field = (name, value) =>
+    Buffer.from(
+      `--bounded-parts\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`,
+    );
+  for (const route of ['/api/preferences/analysis', '/api/form-fill/pdf']) {
+    const formFill = route === '/api/form-fill/pdf';
+    const file = Buffer.concat([
+      Buffer.from(
+        `--bounded-parts\r\nContent-Disposition: form-data; name="file"; filename="synthetic.${formFill ? 'pdf' : 'txt'}"\r\nContent-Type: ${formFill ? 'application/pdf' : 'text/plain'}\r\n\r\n`,
+      ),
+      formFill ? pdfBytes : Buffer.from('synthetic upload'),
+      Buffer.from('\r\n'),
+    ]);
+    const send = (parts) =>
+      f.request(route, {
+        token,
+        chunked: true,
+        headers: {
+          'content-type': 'multipart/form-data; boundary=bounded-parts',
+        },
+        rawBody: Buffer.concat([
+          ...parts,
+          Buffer.from('--bounded-parts--\r\n'),
+        ]),
+      });
+    const policies = field('fieldPolicies', '{"schemaVersion":2,"fields":[]}');
+    const before = calls;
+    for (const parts of [
+      [file, field('extra', 'one'), field('extra', 'two')],
+      [
+        file,
+        field(
+          'fieldPolicies',
+          '{"schemaVersion":2,"fields":[]}' + ' '.repeat(64 * 1024 + 1),
+        ),
+      ],
+      [file, file],
+    ]) {
+      const response = await send(parts);
+      assert.ok(
+        [400, 413].includes(response.status),
+        `${route}: ${response.status}`,
+      );
+      assert.equal(calls, before);
+    }
+    assert.equal(
+      (await send(formFill ? [policies, file] : [file])).status,
+      201,
+    );
+    assert.equal(calls, before + 1);
+  }
+});
 async function configuredFixture(t) {
   const cleanups = [];
   t.after(async () => {

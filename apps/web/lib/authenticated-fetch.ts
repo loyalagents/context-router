@@ -22,6 +22,15 @@ export const authenticatedFetch: typeof fetch = (input, options = {}) => {
   return localTransport.request(aliases[input] ?? input, options);
 };
 
+export class LocalRequestError extends Error {
+  constructor(readonly status: number) {
+    super(status === 429
+      ? 'Local runtime is busy. Try again when the current work finishes.'
+      : 'Local request failed. Reload before retrying a change.');
+    this.name = 'LocalRequestError';
+  }
+}
+
 export async function localJson<T>(
   route: string,
   body: unknown = {},
@@ -34,11 +43,7 @@ export async function localJson<T>(
     signal,
   });
   if (!response.ok)
-    throw new Error(
-      response.status === 429
-        ? 'Local runtime is busy. Try again when the current work finishes.'
-        : 'Local request failed. Reload before retrying a change.',
-    );
+    throw new LocalRequestError(response.status);
   return response.json();
 }
 

@@ -13,6 +13,7 @@ import {
   enableLocalBrowser,
   localJson,
   localTransport,
+  LocalRequestError,
 } from '@/lib/authenticated-fetch';
 
 export interface LocalCapabilities {
@@ -188,17 +189,21 @@ export default function LocalSession({ children }: { children: ReactNode }) {
     setError('');
     const supplied = bootstrap.trim();
     setBootstrap('');
+    let exchanged = false;
     try {
       sessionStorage.setItem(storageKey, '');
       sessionStorage.removeItem(storageKey);
       const result = await localJson<{ token: string }>('/api/local/unlock', {
         bootstrap: supplied,
       });
+      exchanged = true;
       await accept(result.token);
-    } catch {
+    } catch (error) {
       forget();
       setError(
-        'Unlock failed. Use a fresh unlock file and enable session storage.',
+        !exchanged && error instanceof LocalRequestError && error.status === 429
+          ? 'Unlock is busy. Wait for other unlock attempts to finish or lock another dashboard, then retry the same unexpired unlock token.'
+          : 'Unlock failed. Use a fresh unlock file and enable session storage.',
       );
     } finally {
       setBusy(false);

@@ -21,14 +21,17 @@ import {
 
 @Injectable()
 export class PdfFieldExtractorService {
-  async extractFields(fileBuffer: Buffer): Promise<ExtractedPdfFields> {
+  async extractFields(
+    fileBuffer: Buffer,
+    options: { readExistingValues?: boolean } = {},
+  ): Promise<ExtractedPdfFields> {
     const pdfDoc = await PDFDocument.load(fileBuffer);
     const hasXfa = this.hasXfa(pdfDoc);
     const form = pdfDoc.getForm();
 
     return {
       hasXfa,
-      fields: form.getFields().map((field) => this.toMetadata(field)),
+      fields: form.getFields().map((field) => this.toMetadata(field, options.readExistingValues === true)),
     };
   }
 
@@ -41,7 +44,7 @@ export class PdfFieldExtractorService {
     return acroForm.has(PDFName.of('XFA'));
   }
 
-  private toMetadata(field: PDFField): PdfFieldMetadata {
+  private toMetadata(field: PDFField, readExistingValues: boolean): PdfFieldMetadata {
     const name = field.getName();
     const type = this.fieldType(field);
     const options = this.fieldOptions(field);
@@ -52,15 +55,25 @@ export class PdfFieldExtractorService {
       type,
       options,
       supported: !unsupportedReason,
-      ...(field instanceof PDFTextField ? { existingValue: field.getText() ?? '' }
-        : field instanceof PDFCheckBox ? { existingValue: field.isChecked() }
-        : field instanceof PDFRadioGroup ? { existingValue: field.getSelected() ?? '' }
-        : field instanceof PDFDropdown || field instanceof PDFOptionList ? { existingValue: field.getSelected() } : {}),
+      ...(readExistingValues ? this.existingValue(field) : {}),
       ...(field instanceof PDFTextField && field.getMaxLength() !== undefined
         ? { maxLength: field.getMaxLength() }
         : {}),
       unsupportedReason,
     };
+  }
+
+  private existingValue(field: PDFField): Pick<PdfFieldMetadata, 'existingValue' | 'existingValueUnknown'> {
+    try {
+      if (field instanceof PDFTextField) return { existingValue: field.getText() ?? '' };
+      if (field instanceof PDFCheckBox) return { existingValue: field.isChecked() };
+      if (field instanceof PDFRadioGroup) return { existingValue: field.getSelected() ?? '' };
+      if (field instanceof PDFDropdown || field instanceof PDFOptionList) return { existingValue: field.getSelected() };
+      return {};
+    } catch {
+      // Rich text and other unreadable values are occupied, never inferred empty.
+      return { existingValueUnknown: true };
+    }
   }
 
   private fieldType(field: PDFField): PdfFieldType {

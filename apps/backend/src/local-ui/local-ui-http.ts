@@ -59,6 +59,14 @@ class LocalBrowserRequest extends IncomingMessage {
   bodyBytes = 0;
   bodyLimit = Infinity;
   onBodyLimit?: () => void;
+  constructor(socket: Socket) {
+    super(socket);
+    // Express replaces the request prototype before middleware runs. Keep the
+    // parser hook on the instance so every byte is counted across that change.
+    Object.defineProperty(this, 'push', {
+      value: LocalBrowserRequest.prototype.push,
+    });
+  }
   override push(chunk: any, encoding?: BufferEncoding): boolean {
     if (chunk !== null) this.bodyBytes += Buffer.byteLength(chunk, encoding);
     if (this.bodyBytes > this.bodyLimit) {
@@ -274,7 +282,10 @@ export class LocalUiBoundary {
         : () => {};
     let finished = false;
     const body = req as LocalUiRequest & LocalBrowserRequest;
+    let bodyRejected = false;
     const rejectBody = () => {
+      if (bodyRejected) return;
+      bodyRejected = true;
       abort.abort();
       res.once('finish', () => req.destroy());
       rejectUiRequest(res, 413);
