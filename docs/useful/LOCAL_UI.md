@@ -166,7 +166,12 @@ HOME; product processes receive no browser tooling configuration.
 Linux harness runs need a short temporary parent (normally `TMPDIR=/tmp`):
 Chromium appends its Unix socket name to the owned temporary directory. The
 sealed smoke uses the short `runtime/ui` child to stay within Linux's socket
-path limit. Startup failures expose fixed categories only; raw browser stderr
+path limit. Each generation owns a short `1` or `2` child there for its browser
+temporary files. Each browser uses its private profile as HOME, keeping browser
+caches outside the application HOME. The journal records the browser's exact
+temporary path before launch; confirmed group reaping precedes removal. Failed
+reaping, removal or journaling retains the existing private recovery boundary.
+Startup failures expose fixed categories only; raw browser stderr
 and private paths are not copied to gate diagnostics.
 
 Source and relocated production smokes use synthetic state, pinned TLS inference

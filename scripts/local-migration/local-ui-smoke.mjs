@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile, realpath, mkdir } from 'node:fs/promises';
+import { readFile, realpath, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import net from 'node:net';
 import { createRequire } from 'node:module';
@@ -72,6 +72,30 @@ async function rawProtocolClosed(port, request) {
     5000,
   );
 }
+export async function cleanupLocalUiBrowserResources(
+  { handle, reaped, temporaryDirectory, temporaryCreated, retain = false },
+  { terminate = terminateAndReapJournaledNodeChild, remove = rm } = {},
+) {
+  if (handle && !reaped) {
+    const errors = await terminate(handle, 'local UI browser');
+    if (errors.length)
+      throw new AggregateError(errors, 'Browser cleanup failed');
+  }
+  if (!temporaryCreated)
+    throw new Error('Browser temporary directory ownership not established');
+  if (retain) throw new Error('Browser journal failed; retain recovery state');
+  await remove(temporaryDirectory, { recursive: true });
+}
+export function createLocalUiBrowserEnvironment(options, profile, executable) {
+  return {
+    PATH: options.environment?.PATH ?? process.env.PATH,
+    // Keep browser-created caches within the profile's journaled cleanup boundary.
+    HOME: profile,
+    TMPDIR: options.temporaryDirectory,
+    LOCAL_UI_BROWSER_PROFILE: profile,
+    LOCAL_UI_BROWSER_EXECUTABLE: executable,
+  };
+}
 export async function runLocalUiSmoke({
   webRoot,
   repositoryRoot = path.resolve(directory, '../..'),
@@ -99,37 +123,51 @@ export async function runLocalUiSmoke({
   }) => {
     const journal = options.journal,
       id = `local-ui-browser-${generation}`;
+    const record = async (method, ...args) => {
+      try {
+        return await journal[method](...args);
+      } catch (error) {
+        browserCleanupFailed = true;
+        throw error;
+      }
+    };
     const profile = path.join(root, `browser-${generation}`);
+    const temporaryDirectory = path.join(
+      options.temporaryDirectory,
+      String(generation),
+    );
     await mkdir(profile, { mode: 0o700 });
-    await journal.acquiring({
+    await record('acquiring', {
       id,
       type: 'local-ui-browser-process',
       owned: true,
-      identity: { generation, operation: 'browser' },
+      identity: { generation, operation: 'browser', temporaryDirectory },
       recovery:
-        'Reap only the recorded browser process group before removing its private profile.',
+        'Reap only the recorded browser process group before removing its private profile and owned temporary directory.',
     });
-    const handle = createGatedNodeChild({
-      entrypoint: path.join(directory, 'fixtures/local-ui-smoke/browser.cjs'),
-      operation: 'browser',
-      cwd: options.cwd,
-      env: {
-        PATH: options.environment?.PATH ?? process.env.PATH,
-        HOME: options.home,
-        TMPDIR: options.temporaryDirectory,
-        LOCAL_UI_BROWSER_PROFILE: profile,
-        LOCAL_UI_BROWSER_EXECUTABLE: browserPrerequisite.executable,
-      },
-      signal: options.signal,
-    });
-    let browser,
-      reaped = false;
+    let handle,
+      browser,
+      reaped = false,
+      temporaryCreated = false;
     try {
+      await mkdir(temporaryDirectory, { mode: 0o700 });
+      temporaryCreated = true;
+      handle = createGatedNodeChild({
+        entrypoint: path.join(directory, 'fixtures/local-ui-smoke/browser.cjs'),
+        operation: 'browser',
+        cwd: options.cwd,
+        env: createLocalUiBrowserEnvironment(
+          { ...options, temporaryDirectory },
+          profile,
+          browserPrerequisite.executable,
+        ),
+        signal: options.signal,
+      });
       await activateJournaledNodeChild({
         handle,
-        journal,
+        journal: { acquired: (...args) => record('acquired', ...args) },
         resourceId: id,
-        identity: { generation, operation: 'browser' },
+        identity: { generation, operation: 'browser', temporaryDirectory },
       });
       let ready;
       await bounded(
@@ -376,7 +414,7 @@ export async function runLocalUiSmoke({
         5000,
       );
       reaped = true;
-      await journal.acquired(id, {
+      await record('acquired', id, {
         identity: {
           exitCode: 143,
           childSignal: null,
@@ -393,18 +431,31 @@ export async function runLocalUiSmoke({
           nonceCsp: true,
         },
       });
-      await journal.cleanupFinished(id, { status: 'exited' });
     } finally {
       if (browser) await bounded(browser.close(), 5000).catch(() => {});
-      if (!reaped) {
-        const errors = await terminateAndReapJournaledNodeChild(handle, id);
-        if (errors.length) browserCleanupFailed = true;
-        await journal.cleanupFinished(id, {
-          status: errors.length ? 'failed' : 'exited',
+      try {
+        await cleanupLocalUiBrowserResources({
+          handle,
+          reaped,
+          temporaryDirectory,
+          temporaryCreated,
+          retain: browserCleanupFailed,
         });
-        if (errors.length) {
-          throw new AggregateError(errors, 'Browser cleanup failed');
+        await record('acquired', id, {
+          identity: { temporaryDirectoryRemoved: true },
+        });
+        await record('cleanupFinished', id, { status: 'exited' });
+      } catch (error) {
+        browserCleanupFailed = true;
+        try {
+          await record('cleanupFinished', id, { status: 'failed' });
+        } catch (journalError) {
+          throw new AggregateError(
+            [error, journalError],
+            'Browser cleanup failed',
+          );
         }
+        throw error;
       }
     }
   };
@@ -417,9 +468,7 @@ export async function runLocalUiSmoke({
       verifyGeneration,
       assertCleanup: () => {
         if (browserCleanupFailed)
-          throw new Error(
-            'Browser process group not reaped; retain private root',
-          );
+          throw new Error('Browser cleanup unconfirmed; retain private root');
       },
       dependencies: await realpath(
         webRoot === path.join(repositoryRoot, 'apps/web')

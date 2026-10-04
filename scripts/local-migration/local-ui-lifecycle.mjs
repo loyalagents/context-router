@@ -1,4 +1,5 @@
 import { assertLocalMcpSmokeSuccessResources } from './local-mcp-lifecycle.mjs';
+import path from 'node:path';
 export function assertLocalUiSmokeSuccessResources(state, label) {
   const fail = () => {
     throw new Error(
@@ -50,7 +51,7 @@ export function assertLocalUiSmokeSuccessResources(state, label) {
       r.type !== 'local-ui-browser-process' ||
       r.cleanup?.status !== 'exited' ||
       Object.keys(v).sort().join() !==
-        'authenticated,authoritySeparated,childSignal,exitCode,generation,groupGone,historyClear,nonceCsp,operation,pageRequestsConfined,pid,rawProtocolsClosed,restartSessionRejected,sharedState,smartSearch,version' ||
+        'authenticated,authoritySeparated,childSignal,exitCode,generation,groupGone,historyClear,nonceCsp,operation,pageRequestsConfined,pid,rawProtocolsClosed,restartSessionRejected,sharedState,smartSearch,temporaryDirectory,temporaryDirectoryRemoved,version' ||
       !Number.isSafeInteger(v.pid) ||
       v.pid < 1 ||
       pids.has(v.pid) ||
@@ -59,6 +60,11 @@ export function assertLocalUiSmokeSuccessResources(state, label) {
       v.exitCode !== 143 ||
       v.childSignal !== null ||
       v.groupGone !== true ||
+      typeof v.temporaryDirectory !== 'string' ||
+      !path.isAbsolute(v.temporaryDirectory) ||
+      path.normalize(v.temporaryDirectory) !== v.temporaryDirectory ||
+      path.basename(v.temporaryDirectory) !== String(generation) ||
+      v.temporaryDirectoryRemoved !== true ||
       v.version !== '153.0.8010.12' ||
       [
         'authenticated',

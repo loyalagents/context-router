@@ -420,7 +420,7 @@ CI validation are required. Human acceptance remains pending.
 
 ### R7 Final Local Validation
 
-R7 is the final code/test candidate: [candidate-r7.json](candidate-r7.json),
+R7 was the third final code/test candidate: [candidate-r7.json](candidate-r7.json),
 182 bound paths, aggregate
 `7ce78944372cfe56fd8d3c4a475d2285ff6ea060e37edffaf1b4cfe7c4151eb4`.
 Security and compatibility independently verified and approved the narrow CLI
@@ -431,8 +431,8 @@ The renewed command used the same pinned toolchain and exact Step 07 base, with
 `RUNNER_TEMP=/private/tmp/step08-final-gate-r7-pe00fgz4` and
 `MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r7-pe00fgz4/local-migration-gate-summary.json`.
 Result: **PASS, exit 0, 12/12 phases**, receipt elapsed 1,141,289 ms (terminal
-1,141,533 ms including final return). The current
-[sanitized receipt](final-gate-summary.json) records performed base comparison,
+1,141,533 ms including final return). The
+[R7 receipt](https://github.com/loyalagents/context-router/blob/e9540a5810fb6f02b6a1dacbb16284200434ca32/docs/plans/active/local-migration/08-local-ui/final-gate-summary.json) records performed base comparison,
 caller integrity true, no cleanup errors, removed owned database and clean owned
 administration. Source was the R7 uncommitted snapshot over
 `fa1f649fc9adbb7b9ed59836727d50db4e9ef383`, copied-input digest
@@ -446,3 +446,73 @@ replacement-head standard and dedicated results belong in the PR's final CI
 closeout and do not inherit that earlier standard result. Only documentation,
 review evidence and the sanitized receipt change after this frozen local run.
 Required synthetic human acceptance remains **PENDING** and PR #167 stays draft.
+
+### Linux Browser State Ownership Correction
+
+R7 head `e9540a5810fb6f02b6a1dacbb16284200434ca32` passed all
+[standard CI jobs](https://github.com/loyalagents/context-router/actions/runs/37195435035).
+Its [dedicated workflow](https://github.com/loyalagents/context-router/actions/runs/37195435017)
+passed the first ten phases, including source Chromium, then failed the final
+sealed-runtime private-tree assertion after browser smoke: Chromium left
+`local-ui-home/.cache` with mode `0755`. That result is a failure, not final Linux
+acceptance. The strict private-tree assertion remains unchanged.
+
+An owned Ubuntu 24.04 arm64 container running the pinned Chromium 153.0.8010.12
+as a non-root user reproduced `0755` fontconfig caches, additional HOME state,
+and a Unix socket left after confirmed process-group exit. A preliminary root
+probe did not create that cache; the initial non-root probe exposed the additional
+socket residue. Final comparison evidence is
+`/private/tmp/step08-linux-home-proof/result.log`: the original shared HOME/TMP
+leaves non-private entries; profile HOME plus an exclusively owned temporary child
+leaves the application HOME empty and no non-private entries after reaping/removal.
+The corrected sealed TMPDIR is 55 bytes and its observed socket path 100 bytes;
+both browser launches reached readiness. The disposable container was removed.
+
+R8 sets browser HOME to the existing private profile and browser TMPDIR to a fresh
+`0700` generation child (`1` or `2`) under the existing short temporary parent.
+Product HOME/TMPDIR are unchanged. The existing browser journal record binds the
+exact temporary path before gated process release. Non-recursive creation rejects
+collisions; cleanup never adopts a preexisting child. Confirmed group absence
+precedes removal, and only successful removal can produce the new strict
+`temporaryDirectoryRemoved` evidence. Failed reaping, removal or journaling
+latches recovery retention through the existing inner and ancestor guards.
+Profile caches follow the existing private-state cleanup boundary.
+
+Two new regressions failed before their fixes. The actual browser-wrapper launch
+checks HOME/cache placement and preserved TMPDIR, while an actual leftover Unix
+socket exercises ordered removal, failed reap/removal, unowned-directory refusal
+and journal-failure retention. Lifecycle fixtures require the exact path shape
+and removal proof. The UI, packaging and gate-phase harness suites pass **104/104**
+in 11,305 ms. P2, product behavior, interfaces and application persistence are
+unchanged. Affected independent architecture, security/recovery and compatibility
+approval, a renewed full local gate and both final-head workflows remain required.
+Human acceptance stays pending.
+
+### R8 Final Local Validation
+
+R8 is the final code/test candidate: [candidate-r8.json](candidate-r8.json),
+183 bound paths, aggregate
+`ddfb88945f7cbfe1c46332d1766242fa05a7352de03063131902294d62345937`.
+Architecture, security/recovery and compatibility independently verified and
+approved the affected ownership correction. Unchanged complete-diff application
+persistence and other review coverage carry forward. Post-gate verification found
+no drift in any bound path, mode or content.
+
+The renewed full command used the same pinned toolchain and exact Step 07 base,
+with `RUNNER_TEMP=/private/tmp/step08-final-gate-r8-2fexs29_` and
+`MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r8-2fexs29_/local-migration-gate-summary.json`.
+Result: **PASS, exit 0, 12/12 phases**. The current
+[sanitized receipt](final-gate-summary.json) records 1,064,627 ms (terminal
+1,064,884 ms including final return), performed exact-base comparison, caller
+integrity true, no cleanup errors, removed owned database and clean owned
+administration. Source was the frozen R8 uncommitted snapshot over
+`e9540a5810fb6f02b6a1dacbb16284200434ca32`, copied-input digest
+`82ccfbe91def6456e1fbb6d72bb0e2c73c7926014092667ca9bd93bef3abdb0e`.
+All pinned local versions match R7. Sealed composition passed in 477,811 ms;
+both browser generations recorded authentication, confirmed group exit and
+temporary-directory removal. Generation two also rejected the pre-restart session.
+
+Only closeout documentation/review evidence and the sanitized receipt change
+after the frozen run. Replacement-head standard and dedicated workflow results
+are recorded in PR #167, without substituting earlier runs. Human acceptance
+remains **PENDING**; the PR stays draft and Steps 09–11 remain inactive.

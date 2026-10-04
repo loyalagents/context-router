@@ -31,6 +31,8 @@ export function localUiLifecycleResources(parent) {
         exitCode: 143,
         childSignal: null,
         groupGone: true,
+        temporaryDirectory: `${parent}/local-ui-tmp/${generation}`,
+        temporaryDirectoryRemoved: true,
         version: '153.0.8010.12',
         authenticated: true,
         authoritySeparated: true,

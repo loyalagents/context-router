@@ -4,6 +4,10 @@ import { assertLocalUiSmokeSuccessResources } from './local-ui-lifecycle.mjs';
 import { localUiLifecycleResources } from './fixtures/local-ui-lifecycle.mjs';
 import { localUiBrowserPrerequisite } from './local-ui-browser.mjs';
 import {
+  createLocalUiBrowserEnvironment,
+  cleanupLocalUiBrowserResources,
+} from './local-ui-smoke.mjs';
+import {
   createGatedNodeChild,
   activateJournaledNodeChild,
   terminateAndReapJournaledNodeChild,
@@ -78,6 +82,96 @@ test(
   },
 );
 
+test('browser caches stay inside the owned profile and leave the application home untouched', async () => {
+  const { mkdtemp, writeFile, mkdir, readdir, readFile, stat, rm } =
+    await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const path = await import('node:path');
+  const { removeMcpSmokeStateAfterCleanup } = await import(
+    './local-mcp-smoke.mjs'
+  );
+  const root = await mkdtemp(path.join(tmpdir(), 'ui-browser-home-'));
+  const home = path.join(root, 'application-home');
+  const profile = path.join(root, 'profile');
+  const temporaryDirectory = path.join(root, 'tmp');
+  let reaped = false;
+  try {
+    for (const directory of [home, profile, temporaryDirectory])
+      await mkdir(directory, { mode: 0o700 });
+    const executable = path.join(root, 'browser');
+    await writeFile(
+      executable,
+      `#!${process.execPath}\n` +
+        `const fs = require('node:fs'), path = require('node:path');\n` +
+        `const cache = path.join(process.env.HOME, '.cache');\n` +
+        `fs.mkdirSync(cache); fs.chmodSync(cache, 0o755);\n` +
+        `fs.writeFileSync(path.join(cache, 'entry'), 'synthetic browser cache');\n` +
+        `fs.chmodSync(path.join(cache, 'entry'), 0o644);\n` +
+        `fs.writeFileSync(${JSON.stringify(path.join(profile, 'environment.json'))}, JSON.stringify({ home: process.env.HOME, temporaryDirectory: process.env.TMPDIR }));\n` +
+        `process.exitCode = 23;\n`,
+      { mode: 0o700 },
+    );
+    const handle = createGatedNodeChild({
+      entrypoint: path.join(
+        import.meta.dirname,
+        'fixtures/local-ui-smoke/browser.cjs',
+      ),
+      operation: 'browser',
+      cwd: root,
+      env: createLocalUiBrowserEnvironment(
+        { home, temporaryDirectory, environment: { PATH: process.env.PATH } },
+        profile,
+        executable,
+      ),
+    });
+    try {
+      await activateJournaledNodeChild({
+        handle,
+        journal: { acquired: async () => {} },
+        resourceId: 'browser',
+        identity: {},
+      });
+      assert.equal((await handle.result).code, 70);
+      assert.deepEqual(handle.output(), {
+        stdout: '',
+        stderr: 'local-ui-browser-startup:exit\n',
+        overflow: false,
+      });
+    } finally {
+      const errors = await terminateAndReapJournaledNodeChild(
+        handle,
+        'browser home fixture',
+      );
+      reaped = errors.length === 0;
+      assert.deepEqual(errors, []);
+    }
+    assert.deepEqual(await readdir(home), []);
+    assert.deepEqual(
+      JSON.parse(
+        await readFile(path.join(profile, 'environment.json'), 'utf8'),
+      ),
+      { home: profile, temporaryDirectory },
+    );
+    assert.equal((await stat(profile)).mode & 0o777, 0o700);
+    assert.equal(
+      (await stat(path.join(profile, '.cache'))).mode & 0o777,
+      0o755,
+    );
+    const cleanup = [];
+    await removeMcpSmokeStateAfterCleanup({
+      root: profile,
+      created: true,
+      cleanup,
+      cleanupExtension: async () => assert.equal(reaped, true),
+    });
+    assert.deepEqual(cleanup, []);
+    await assert.rejects(stat(profile), { code: 'ENOENT' });
+    assert.deepEqual(await readdir(home), []);
+  } finally {
+    if (reaped) await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('UI lifecycle requires Chromium authentication and semantic proofs in both owned generations', () => {
   const state = { resources: localUiLifecycleResources('/owned') };
   assertLocalUiSmokeSuccessResources(state, 'fixture');
@@ -93,6 +187,7 @@ test('UI lifecycle requires Chromium authentication and semantic proofs in both 
       'pageRequestsConfined',
       'nonceCsp',
       'groupGone',
+      'temporaryDirectoryRemoved',
     ].map((key) => (s) => {
       s.resources.find((r) => r.id === 'local-ui-browser-1').identity[key] =
         false;
@@ -129,10 +224,108 @@ test('UI lifecycle requires Chromium authentication and semantic proofs in both 
       s.resources.find((r) => r.id === 'local-ui-browser-1').recovery
         .processGroupId++;
     },
+    ...['relative/1', '/owned/2', '/owned/../tmp/1'].map(
+      (temporaryDirectory) => (s) => {
+        s.resources.find(
+          (r) => r.id === 'local-ui-browser-1',
+        ).identity.temporaryDirectory = temporaryDirectory;
+      },
+    ),
   ]) {
     const copy = structuredClone(state);
     mutate(copy);
     assert.throws(() => assertLocalUiSmokeSuccessResources(copy, 'fixture'));
+  }
+});
+
+test('browser temporary cleanup removes a leftover socket only after reaping and retains uncertain ownership', async () => {
+  const { mkdtemp, mkdir, lstat, rm } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const path = await import('node:path');
+  const { spawn } = await import('node:child_process');
+  const root = await mkdtemp(path.join(tmpdir(), 'ui-tmp-'));
+  const temporaryDirectory = path.join(root, '1');
+  await mkdir(temporaryDirectory, { mode: 0o700 });
+  const socket = path.join(temporaryDirectory, 'socket');
+  const child = spawn(
+    process.execPath,
+    [
+      '-e',
+      `require('node:net').createServer().listen(process.argv[1], () => process.exit(0))`,
+      socket,
+    ],
+    { stdio: 'ignore' },
+  );
+  await new Promise((resolve, reject) => {
+    child.once('error', reject);
+    child.once('exit', (code) =>
+      code === 0 ? resolve() : reject(new Error('Socket fixture failed')),
+    );
+  });
+  try {
+    assert.equal((await lstat(socket)).isSocket(), true);
+    const resource = {
+      handle: {},
+      reaped: false,
+      temporaryDirectory,
+      temporaryCreated: true,
+    };
+    let removalAttempted = false;
+    await assert.rejects(
+      cleanupLocalUiBrowserResources(resource, {
+        terminate: async () => [new Error('unreaped')],
+        remove: async () => {
+          removalAttempted = true;
+        },
+      }),
+      /Browser cleanup failed/,
+    );
+    assert.equal(removalAttempted, false);
+    assert.equal((await lstat(socket)).isSocket(), true);
+    await assert.rejects(
+      cleanupLocalUiBrowserResources(
+        { ...resource, reaped: true },
+        {
+          remove: async () => {
+            throw new Error('removal failed');
+          },
+        },
+      ),
+      /removal failed/,
+    );
+    assert.equal((await lstat(socket)).isSocket(), true);
+    await assert.rejects(
+      cleanupLocalUiBrowserResources({
+        ...resource,
+        reaped: true,
+        temporaryCreated: false,
+      }),
+      /ownership not established/,
+    );
+    assert.equal((await lstat(socket)).isSocket(), true);
+    await assert.rejects(
+      cleanupLocalUiBrowserResources({
+        ...resource,
+        reaped: true,
+        retain: true,
+      }),
+      /journal failed/,
+    );
+    assert.equal((await lstat(socket)).isSocket(), true);
+    let groupGone = false;
+    await cleanupLocalUiBrowserResources(resource, {
+      terminate: async () => {
+        groupGone = true;
+        return [];
+      },
+      remove: async (...args) => {
+        assert.equal(groupGone, true);
+        await rm(...args);
+      },
+    });
+    await assert.rejects(lstat(temporaryDirectory), { code: 'ENOENT' });
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });
 

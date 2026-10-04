@@ -412,3 +412,45 @@ caller integrity true and no cleanup errors; see
 verification found no drift. Only evidence/receipt closeout follows that run.
 Final-head CI and actual human acceptance remain distinct requirements; the PR
 stays draft with no authorization to merge.
+
+### R8 Linux Browser State Ownership
+
+R7 standard CI passed; its dedicated workflow exposed browser-created cache mode
+violations after the sealed smoke. Non-root pinned Linux reproduction additionally
+found a residual Unix socket after group exit. See the
+[R8 evidence](implementation.md#linux-browser-state-ownership-correction).
+Architecture and security/recovery independently approved the bounded design:
+profile HOME, fresh short per-generation TMP children, existing journal record,
+strict acquisition/reap/removal ordering and failure retention. Final approval
+must bind the implementation candidate; design approval alone is insufficient.
+
+R8 affects harness environment ownership, cleanup evidence and associated tests.
+Architecture, security/recovery and compatibility/test reviews require renewal.
+The application's persistence/history/CAS/grant semantics, browser authentication,
+product interfaces and unchanged complete-diff coverage carry forward explicitly.
+P2 and requested/observable role settings remain unchanged; root is the sole writer.
+
+### R8 Affected Approvals And Renewed Gate
+
+All three affected reviewers independently verified the 183-path manifest, modes
+and aggregate `ddfb88945f7cbfe1c46332d1766242fa05a7352de03063131902294d62345937`
+in [candidate-r8.json](candidate-r8.json), with unchanged P2 and no drift.
+
+| Reviewer | Verdict | Affected scope and carry-forward |
+| --- | --- | --- |
+| `/root/final_architecture` | APPROVE | HOME/TMP ownership, exclusive acquisition, gated launch, ordered reap/removal, strict lifecycle evidence and inner/outer recovery retention; unchanged complete architecture coverage through R4/R6 and unaffected R7 parser delta |
+| `/root/final_security` | APPROVE | Browser-state confinement, refusal to adopt existing paths, journal failure handling and recovery; prior full security/privacy/auth-contract approvals, findings closure and R7 credential-input approval |
+| `/root/final_compatibility` | APPROVE | Actual-wrapper HOME regression, real Unix-socket cleanup/failure tests, Linux reproduction and unchanged product assertions/interfaces; prior complete compatibility/test coverage |
+
+Reviews were read-only. The 104-test run and pinned Linux execution are coordinator
+evidence; reviewers independently inspected their source/receipts rather than
+rerunning builds. Requested/observable role settings remain recorded above.
+Application persistence/history/CAS/grant contracts are unchanged; that independent
+mandate carries forward, with the harness recovery delta covered by the renewed
+architecture and security reviews. No actionable finding remains.
+
+The full R8 local gate passed 12/12 with exact-base comparison, caller integrity
+and complete owned cleanup; see [R8 validation](implementation.md#r8-final-local-validation).
+Post-gate binding verification found no drift. Only closeout evidence/receipt
+updates follow the frozen run. Final-head CI and human acceptance remain separate
+requirements; PR #167 stays draft with no authorization to merge.
