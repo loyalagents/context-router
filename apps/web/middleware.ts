@@ -1,8 +1,9 @@
-import type { NextRequest } from 'next/server';
-import { auth0 } from './lib/auth0';
+import { NextResponse, type NextRequest } from 'next/server';
+import { getAuth0 } from './lib/auth0';
 
 export async function middleware(request: NextRequest) {
-  return await auth0.middleware(request);
+  if (process.env.CONTEXT_ROUTER_WEB_MODE === 'local') return NextResponse.next();
+  return await getAuth0().middleware(request);
 }
 
 export const config = {

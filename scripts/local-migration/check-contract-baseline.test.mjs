@@ -7,6 +7,7 @@ import test from "node:test";
 
 import {
   buildGraphqlSignature,
+  validateGraphqlRootSurface,
   collectContractReferences,
   contractFingerprint,
   collectGraphqlOperations,
@@ -645,7 +646,7 @@ test("packaging smoke has exact derived consumers, references, sinks, and curate
         "http-client": 1,
         "net-connect": 2,
         spawn: 2,
-        "subprocess-wrapper": 8,
+        "subprocess-wrapper": 9,
       },
     },
   ]);
@@ -3179,4 +3180,19 @@ test("validateManifestCompatibility requires a version bump for a schema change"
   assert.ok(stalePaths.some((error) => error.includes("schema filename")));
   assert.ok(stalePaths.some((error) => error.includes("fixture filename")));
   assert.ok(stalePaths.some((error) => error.includes("transition did not bump")));
+});
+
+
+test('Step08 GraphQL roots retain exact legacy surfaces and add only reviewed clear/apply mutations', async () => {
+  const baseline = JSON.parse(await readFile(new URL('../../apps/backend/test/contracts/fixtures/graphql-schema.semantic.json', import.meta.url), 'utf8'));
+  baseline.types.Mutation.fields.clearMyHistory ??= { type: 'ClearMyHistoryResult!' };
+  baseline.types.Mutation.fields.applyPreferenceSuggestionsV2 ??= { type: 'ApplyPreferenceSuggestionsV2Result!' };
+  assert.deepEqual(validateGraphqlRootSurface(baseline), []);
+  for (const [type, field] of [['Query', 'me'], ['Query', 'user'], ['Mutation', 'applyPreferenceSuggestions'], ['Mutation', 'clearMyHistory'], ['Mutation', 'applyPreferenceSuggestionsV2']]) {
+    const changed = structuredClone(baseline);
+    delete changed.types[type].fields[field]; changed.types[type].fields.accidentalReplacement = { type: 'String' };
+    assert.ok(validateGraphqlRootSurface(changed).length, `${type}.${field} must remain`);
+  }
+  const subscribed = structuredClone(baseline); subscribed.roots.subscription = 'Subscription';
+  assert.ok(validateGraphqlRootSurface(subscribed).length);
 });

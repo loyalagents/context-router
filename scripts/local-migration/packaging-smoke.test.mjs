@@ -38,12 +38,16 @@ import {
   assertPackagingDiagnosticsOwnership,
   assertPackagingPrivateRootOwnership,
   buildBackendDeployArgv,
+  buildLocalUiDeployArgv,
+  copyLocalUiDeployment,
+  removeOwnedTree,
   approvedPackagingChildArgv,
   buildPackagedRuntimeEnvironment,
   classifyNegativeProbe,
   collectDarwinListenerEvidence,
   collectListenerIsolationEvidence,
   createPackagingPrivateRoot,
+  createPackagingExecutionRoot,
   createSanitizedPackagingError,
   createStableLoopbackProxy,
   createWebAttemptLifecycleHooks,
@@ -111,7 +115,7 @@ async function close(server) {
 
 test("Next standalone configuration is module-relative and derives apps/web", async () => {
   const source = await readFile(
-    path.join(repositoryRoot, "apps/web/next.config.ts"),
+    path.join(repositoryRoot, "apps/web/next.config.mjs"),
     "utf8",
   );
   assert.match(source, /output:\s*["']standalone["']/);
@@ -351,6 +355,7 @@ test("backend deploy command policy permits exactly one offline production targe
     repositoryRoot: "/private/repository",
     sourceRoot: "/private/source",
     stageBackend: "/private/stage/backend",
+    stageLocalUi: "/private/stage/local-ui",
   };
   for (const id of PACKAGING_CHILD_COMMAND_IDS) {
     const argv = approvedPackagingChildArgv(id, context);
@@ -1076,6 +1081,61 @@ test("stage sealing refuses regular files hardlinked to mutable sources", async 
       assertNoSharedRegularFiles(stageRoot, [sourceRoot]),
       /hardlink/,
     );
+  });
+});
+
+test("local UI deployment copying separates source hardlinks before sealing", async () => {
+  await temporaryDirectory("packaging-ui-copy-test-", async (root) => {
+    const source = path.join(root, "source");
+    const deployment = path.join(root, "deployment");
+    const stage = path.join(root, "stage");
+    await mkdir(source); await mkdir(deployment);
+    const original = path.join(source, "artifact.js");
+    await writeFile(original, "source remains writable\n", { mode: 0o600 });
+    await link(original, path.join(deployment, "artifact.js"));
+    await symlink("artifact.js", path.join(deployment, "internal.js"));
+    await mkdir(path.join(stage, "backend"), { recursive: true });
+    await mkdir(path.join(stage, "web"));
+    await copyLocalUiDeployment(deployment, path.join(stage, "local-ui"));
+    await assertNoSharedRegularFiles(stage, [source, deployment]);
+    await sealAndDescribeStage(stage, { schemaVersion: 1 });
+    assert.equal((await stat(path.join(stage, "local-ui/artifact.js"))).mode & 0o777, 0o444);
+    assert.equal((await stat(path.join(stage, "local-ui"))).mode & 0o777, 0o555);
+    assert.equal((await stat(original)).mode & 0o777, 0o600);
+    assert.equal(await readFile(original, "utf8"), "source remains writable\n");
+    assert.equal(await realpath(path.join(stage, "local-ui/internal.js")), await realpath(path.join(stage, "local-ui/artifact.js")));
+  });
+});
+
+test("owned-tree cleanup unlinks hardlinks without changing external source modes", async () => {
+  await temporaryDirectory("packaging-cleanup-hardlink-test-", async (root) => {
+    const source = path.join(root, "external.js");
+    const owned = path.join(root, "owned");
+    await writeFile(source, "unchanged source\n", { mode: 0o644 });
+    await mkdir(owned, { mode: 0o700 });
+    await link(source, path.join(owned, "injected.js"));
+    await chmod(owned, 0o555);
+    await removeOwnedTree(owned);
+    assert.equal(await lstat(owned).catch((error) => error.code), "ENOENT");
+    assert.equal((await stat(source)).mode & 0o777, 0o644);
+    assert.equal(await readFile(source, "utf8"), "unchanged source\n");
+  });
+});
+
+test("retained execution roots stay outside diagnostic sanitization", async () => {
+  await temporaryDirectory("packaging-retained-payload-test-", async (diagnostics) => {
+    const ownership = await createPackagingExecutionRoot({ diagnostics, onPrivateRoot: () => {} });
+    try {
+      const canonicalDiagnostics = await realpath(diagnostics);
+      assert.equal(ownership.directory.startsWith(canonicalDiagnostics + path.sep), false);
+      const recoveryFile = path.join(ownership.directory, "recovery-state");
+      await writeFile(recoveryFile, "synthetic-recovery-canary", { mode: 0o600 });
+      await writeFile(path.join(diagnostics, "run.log"), "synthetic-recovery-canary");
+      await sanitizeDiagnostics(diagnostics, ["synthetic-recovery-canary"]);
+      assert.equal(await readFile(recoveryFile, "utf8"), "synthetic-recovery-canary");
+      assert.equal((await stat(recoveryFile)).mode & 0o777, 0o600);
+      assert.equal((await readFile(path.join(diagnostics, "run.log"), "utf8")).includes("synthetic-recovery-canary"), false);
+    } finally { await removeOwnedTree(ownership.directory); }
   });
 });
 
@@ -1954,4 +2014,13 @@ test("redaction and lifecycle validation reject raw, encoded, split, or incomple
     false,
   );
   assert.equal(PACKAGED_SMOKE_TERMINATION_GRACE_MS, 180_000);
+});
+
+
+test("local UI payload uses one exact offline production deploy and an explicit file allowlist", async () => {
+  assert.deepEqual(buildLocalUiDeployArgv('/private/stage/local-ui'), ['pnpm', '--offline', '--filter', 'web', 'deploy', '--prod', '/private/stage/local-ui']);
+  assert.throws(() => buildLocalUiDeployArgv('relative'), /absolute/);
+  const manifest = JSON.parse(await readFile(path.join(repositoryRoot, 'apps/web/package.json'), 'utf8'));
+  assert.deepEqual(manifest.files, ['local-ui.mjs', 'next.config.mjs']);
+  assert.equal(manifest.dependencies.backend, 'workspace:*');
 });

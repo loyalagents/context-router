@@ -35,3 +35,5 @@ This file is for doc writers. For agent startup, follow `AGENTS.md`.
   rotate, perform terminate-and-reap recovery, understand matching-pair backup, and run the non-listening SQLite preview or explicit PostgreSQL reference.
 
 - [Manual local model preview](useful/LOCAL_MODEL.md) — pinned manual runtime, private sessions, explicit SQLite integration, capabilities, limits and recovery.
+
+- [Local dashboard](useful/LOCAL_UI.md) — manual production launch, browser unlock/session, shared MCP administration, history clear and selected local AI.

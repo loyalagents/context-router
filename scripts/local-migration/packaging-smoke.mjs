@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { assertLocalUiParentCleanupSafe } from './local-ui-lifecycle.mjs';
+import { runLocalUiSmoke } from './local-ui-smoke.mjs';
 import { runLocalMcpSmoke } from './local-mcp-smoke.mjs';
 
 import assert from "node:assert/strict";
@@ -139,6 +141,11 @@ export function buildBackendDeployArgv(stageBackendRoot) {
   ];
 }
 
+export function buildLocalUiDeployArgv(stageLocalUi) {
+  return ['pnpm', '--offline', '--filter', 'web', 'deploy', '--prod',
+    validateAbsoluteDirectory(stageLocalUi, 'local UI deploy target')];
+}
+
 export function buildPackagedNodeArgv(entrypoint) {
   return [
     "--no-global-search-paths",
@@ -153,13 +160,14 @@ export const PACKAGING_CHILD_COMMAND_IDS = Object.freeze([
   "backend-build",
   "web-build",
   "backend-deploy",
+  "local-ui-deploy",
   "database-migrate",
   "database-seed",
 ]);
 
 export function approvedPackagingChildArgv(
   id,
-  { repositoryRoot, sourceRoot, stageBackend } = {},
+  { repositoryRoot, sourceRoot, stageBackend, stageLocalUi } = {},
 ) {
   switch (id) {
     case "source-clone":
@@ -185,6 +193,8 @@ export function approvedPackagingChildArgv(
       return ["pnpm", "--filter", "web", "build"];
     case "backend-deploy":
       return buildBackendDeployArgv(stageBackend);
+    case "local-ui-deploy":
+      return buildLocalUiDeployArgv(stageLocalUi);
     case "database-migrate":
       return [
         "pnpm",
@@ -426,7 +436,13 @@ export async function sealAndDescribeStage(stageRoot, metadata) {
     throw error;
   });
   if (existingManifest) throw new Error("stage manifest already exists");
-  for (const required of ["backend", "web"]) {
+  const payloads = ["backend", "web"];
+  const localUi = await lstat(path.join(stage, "local-ui")).catch((error) => {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  });
+  if (localUi || metadata.localUiEntrypoint) payloads.push("local-ui");
+  for (const required of payloads) {
     const info = await lstat(path.join(stage, required)).catch(() => null);
     if (!info?.isDirectory() || info.isSymbolicLink()) {
       throw new Error(`staged ${required} payload must be a real directory`);
@@ -435,7 +451,7 @@ export async function sealAndDescribeStage(stageRoot, metadata) {
 
   // Validate the complete unsealed payload before changing its modes.
   await walkTree(stage);
-  for (const required of ["backend", "web"]) {
+  for (const required of payloads) {
     const directory = path.join(stage, required);
     await sealPayloadDirectory(directory);
     await chmod(directory, 0o555);
@@ -945,15 +961,21 @@ async function makeTreeWritable(candidate) {
     for (const name of await readdir(candidate).catch(() => [])) {
       await makeTreeWritable(path.join(candidate, name));
     }
-  } else if (info.isFile()) {
-    await chmod(candidate, 0o600).catch(() => {});
   }
+  // On supported POSIX hosts unlink requires writable parent directories, not
+  // writable files. Never chmod file inodes that may be linked outside this tree.
 }
 
-async function removeOwnedTree(directory) {
+export async function removeOwnedTree(directory) {
   if (!directory) return;
   await makeTreeWritable(directory);
   await rm(directory, { recursive: true, force: true });
+}
+
+export async function removePackagingPrivateRootAfterCleanup(ownership, state) {
+  assertLocalUiParentCleanupSafe(state);
+  await assertPackagingPrivateRootOwnership(ownership);
+  await removeOwnedTree(ownership.directory);
 }
 
 async function removeFreshDirectoryAllocation(directory, identity) {
@@ -1323,6 +1345,16 @@ export function directCallerIntegrityPaths({
   ])];
 }
 
+export async function createPackagingExecutionRoot({ diagnostics, onPrivateRoot, protectedRoots = [] }) {
+  // Recovery payloads may contain credentials, binary files and source hardlinks.
+  // Keep them outside the tree that diagnostic finalization sanitizes/chmods.
+  return createPackagingPrivateRoot(
+    path.join(os.tmpdir(), "context-router-packaging-smoke-"),
+    onPrivateRoot,
+    { protectedRoots: [...protectedRoots, diagnostics] },
+  );
+}
+
 async function prepareExecutionContext({
   repositoryRoot,
   environment,
@@ -1334,11 +1366,9 @@ async function prepareExecutionContext({
   const gate = await verifyGateWorkspaceOwnership(repositoryRoot, environment);
   const storeRoot = await readObservedPnpmStore(repositoryRoot);
   if (gate) {
-    const privateRootOwnership = await createPackagingPrivateRoot(
-      path.join(diagnostics, `owned-${gate.marker.slice(0, 12)}-`),
-      onPrivateRoot,
-      { protectedRoots },
-    );
+    const privateRootOwnership = await createPackagingExecutionRoot({
+      diagnostics, onPrivateRoot, protectedRoots,
+    });
     const privateRoot = privateRootOwnership.directory;
     return {
       mode: "aggregate-gate",
@@ -1359,11 +1389,9 @@ async function prepareExecutionContext({
     };
   }
 
-  const privateRootOwnership = await createPackagingPrivateRoot(
-    path.join(os.tmpdir(), "context-router-packaging-smoke-"),
-    onPrivateRoot,
-    { protectedRoots },
-  );
+  const privateRootOwnership = await createPackagingExecutionRoot({
+    diagnostics, onPrivateRoot, protectedRoots,
+  });
   const privateRoot = privateRootOwnership.directory;
   const gitHome = path.join(privateRoot, "git-home");
   await mkdir(gitHome, { recursive: true, mode: 0o700 });
@@ -1709,6 +1737,15 @@ async function collectNativeEvidence(
   };
 }
 
+// pnpm injected workspace packages may be source hardlinks even with copy mode.
+// Copy into fresh inodes before any sealing/chmod; retain internal relative links.
+export async function copyLocalUiDeployment(deploymentRoot, stageLocalUi) {
+  await cp(deploymentRoot, stageLocalUi, {
+    recursive: true, dereference: false, verbatimSymlinks: true,
+    errorOnExist: true, force: false,
+  });
+}
+
 async function assembleAndSealStage({
   sourceRoot,
   privateRoot,
@@ -1741,6 +1778,28 @@ async function assembleAndSealStage({
     "pnpm-lock.yaml",
   ]);
 
+  // Custom Next servers are outside standalone tracing. Materialize a separate
+  // production web workspace closure, then copy only the immutable build output.
+  const stageLocalUi = path.join(stageRoot, 'local-ui');
+  const deploymentRoot = path.join(privateRoot, 'local-ui-deploy');
+  await runCommand(assertApprovedPackagingChildCommand(
+    "local-ui-deploy", buildLocalUiDeployArgv(deploymentRoot), { stageLocalUi: deploymentRoot },
+  ), { cwd: sourceRoot, env: toolEnvironment, timeoutMs: 180_000,
+    logPath: path.join(diagnostics, 'local-ui-deploy.log'), signal });
+  await copyLocalUiDeployment(deploymentRoot, stageLocalUi);
+  assert.deepEqual((await readdir(stageLocalUi)).sort(),
+    ['local-ui.mjs', 'next.config.mjs', 'node_modules', 'package.json', 'pnpm-lock.yaml']);
+  await cp(path.join(sourceRoot, 'apps/web/.next'), path.join(stageLocalUi, '.next'), {
+    recursive: true, dereference: false, verbatimSymlinks: true,
+    filter: (candidate) => !['cache', 'standalone'].includes(path.relative(path.join(sourceRoot, 'apps/web/.next'), candidate).split(path.sep)[0]),
+  });
+  const uiRequire = createRequire(path.join(stageLocalUi, 'local-ui.mjs'));
+  for (const name of ['next', 'backend/dist/bootstrap/local-ui.js']) {
+    const resolved = await realpath(uiRequire.resolve(name));
+    assert.ok(pathIsWithin(stageLocalUi, resolved), 'local UI production dependency escaped payload');
+  }
+  await assertRegularFile(path.join(stageLocalUi, '.next/BUILD_ID'), 'local UI production build');
+
   const layout = deriveStandaloneLayout({
     repositoryRoot: sourceRoot,
     webRoot: path.join(sourceRoot, "apps/web"),
@@ -1768,6 +1827,9 @@ async function assembleAndSealStage({
     if (!publicInfo.isDirectory() || publicInfo.isSymbolicLink()) {
       throw new Error("apps/web/public must be a real directory when present");
     }
+    await cp(sourcePublic, path.join(stageLocalUi, "public"), {
+      recursive: true, dereference: false, verbatimSymlinks: true,
+    });
     await cp(sourcePublic, path.join(layout.stagedAppRoot, "public"), {
       recursive: true,
       dereference: false,
@@ -1862,6 +1924,7 @@ async function assembleAndSealStage({
     localIdentityEntrypoint: `backend/${localIdentityEntrypointRelative}`,
     localDatabaseEntrypoint: `backend/${localDatabaseEntrypointRelative}`,
     localMcpEntrypoint: `backend/${localMcpEntrypointRelative}`,
+    localUiEntrypoint: "local-ui/local-ui.mjs",
     localDatabaseWorker: "backend/dist/infrastructure/storage/sqlite/sqlite-coordination.worker.js",
     localDatabaseSchema: "backend/dist/infrastructure/storage/sqlite/sqlite-schema.js",
     webEntrypoint: normalizedRelative(stageRoot, layout.serverEntrypoint),
@@ -1884,6 +1947,7 @@ async function assembleAndSealStage({
   return {
     stageRoot,
     stageBackend,
+    stageLocalUi,
     layout,
     sealed,
     native,
@@ -4153,6 +4217,12 @@ async function runPackagingSmokeWithPrivateUmask({
       stateParent: secretDirectory, journal, environment, signal,
       verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
     });
+    const localUi = await runLocalUiSmoke({
+      webRoot: stage.stageLocalUi, repositoryRoot: context.sourceRoot, cwd: hostileCwd,
+      home: path.join(runtimeRoot, 'local-ui-home'), temporaryDirectory: path.join(runtimeRoot, 'local-ui-tmp'),
+      stateParent: secretDirectory, journal, environment, signal,
+      verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
+    });
     assert.equal(localDatabase.sqlite, stage.native.sqlite.version);
     assert.equal(localDatabase.sourceId, stage.native.sqlite.sourceId);
     assert.equal(
@@ -4188,6 +4258,7 @@ async function runPackagingSmokeWithPrivateUmask({
       localDatabase,
       localModel,
       localMcp,
+      localUi,
       seedRuns: 2,
       networkIsolationFailures: isolationFailures,
       generations: generations.map((generation) => ({
@@ -4319,8 +4390,7 @@ async function runPackagingSmokeWithPrivateUmask({
         }
       } else {
         try {
-          await assertPackagingPrivateRootOwnership(privateRootOwnership);
-          await removeOwnedTree(privateRoot);
+          await removePackagingPrivateRootAfterCleanup(privateRootOwnership, journal.state);
           for (const id of ["sealed-stage", "synthetic-secrets"]) {
             const resource = journal.state.resources.find((item) => item.id === id);
             if (!resource) continue;
@@ -4357,6 +4427,9 @@ async function runPackagingSmokeWithPrivateUmask({
       }
       if (context) {
         try {
+          if (sourceSnapshot && context.mode === "aggregate-gate") {
+            await assertCallerIntegrity(sourceSnapshot, { signal: cleanupSignal });
+          }
           await assertCallerIntegrity(context.callerIntegrity, {
             signal: cleanupSignal,
           });

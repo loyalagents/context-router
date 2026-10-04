@@ -1,4 +1,4 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { PermissionGrantService } from '@modules/permission-grant/permission-grant.service';
 import { PreferenceDefinitionRepository } from '@modules/preferences/preference-definition/preference-definition.repository';
 import {
@@ -15,6 +15,10 @@ const VALUE_ACCESS_CHAIN: Record<McpAccess['action'], McpAccess['action'][]> = {
   write: ['read', 'suggest', 'write'],
   define: ['define'],
 };
+export interface McpDefinitionReader {
+  getAll(userId?: string | null): Promise<Array<{ slug: string; isSensitive: boolean }>>;
+  getDefinitionById(id: string): Promise<{ isSensitive: boolean; ownerUserId: string | null } | null>;
+}
 
 export class McpAuthorizationError extends Error {
   constructor(
@@ -33,7 +37,7 @@ export class McpAuthorizationService {
 
   constructor(
     private readonly permissionGrantService: PermissionGrantService,
-    @Optional() private readonly definitions?: PreferenceDefinitionRepository,
+    @Optional() @Inject(PreferenceDefinitionRepository) private readonly definitions?: McpDefinitionReader,
   ) {}
 
   toCapability(access: McpAccess): McpCapability {

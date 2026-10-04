@@ -50,7 +50,7 @@ describe("GraphQL schema fixture tool", () => {
       await expect(buildApplicationGraphqlSchemaSdl()).resolves.toBe(
         trackedSchema,
       );
-      expect(Buffer.byteLength(trackedSchema, "utf8")).toBe(14088);
+      expect(Buffer.byteLength(trackedSchema, "utf8")).toBe(15714);
       expect(process.env).toBe(originalEnvironment);
       expect(process.env.AUTH0_CLIENT_SECRET).toBe("schema-test-secret-canary");
       expect(process.env.GCP_PROJECT_ID).toBe("schema-test-project-canary");

@@ -1,6 +1,9 @@
 import { Auth0Client } from '@auth0/nextjs-auth0/server';
 
-export const auth0 = new Auth0Client({
+let client: Auth0Client | undefined;
+export function getAuth0(): Auth0Client {
+  if (process.env.CONTEXT_ROUTER_WEB_MODE === 'local') throw new Error('Hosted authentication unavailable in local mode');
+  return client ??= new Auth0Client({
   domain: process.env.AUTH0_DOMAIN!,
   clientId: process.env.AUTH0_CLIENT_ID!,
   clientSecret: process.env.AUTH0_CLIENT_SECRET!,
@@ -9,4 +12,5 @@ export const auth0 = new Auth0Client({
   authorizationParameters: {
     audience: process.env.AUTH0_AUDIENCE,
   },
-});
+  });
+}

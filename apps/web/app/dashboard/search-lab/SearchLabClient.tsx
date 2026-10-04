@@ -1,5 +1,7 @@
 'use client';
 
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
@@ -98,7 +100,7 @@ async function graphQlRequest<T>(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
-  const response = await fetch(GRAPHQL_ENDPOINT, {
+  const response = await authenticatedFetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

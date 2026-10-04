@@ -14,9 +14,15 @@ export interface EnrichedPreference extends StoredPreference {
   description?: string;
   lastModifiedBy: PreferenceMutationAttribution | null;
 }
+export interface ReviewedPreferenceTarget { userId: string; definitionId: string; locationId: string | null; }
+export interface ReviewedPreferenceState { id: string; revision: string; }
 
 /** Behavioral storage port; transaction-bound instances are supplied only by StorageUnitOfWork. */
 export abstract class PreferenceRepository {
+  abstract findActiveExact(target: ReviewedPreferenceTarget): Promise<EnrichedPreference | null>;
+  /** Called inside a serializable UoW: absence inserts only; matching identity/state updates only. */
+  abstract compareAndSetActive(target: ReviewedPreferenceTarget, expected: ReviewedPreferenceState | null, value: unknown,
+    provenance: PreferenceProvenanceOptions, attribution: PreferenceMutationAttribution): Promise<PreferenceWriteResult<EnrichedPreference> | null>;
   abstract upsertActive(
     userId: string,
     definitionId: string,

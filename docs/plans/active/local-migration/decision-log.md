@@ -1,7 +1,7 @@
 # Local Migration Decision Log
 
 - Status: active decision record
-- Last reviewed: 2026-09-24
+- Last reviewed: 2026-10-03
 
 This file records decisions that affect more than one migration step. Keep each
 entry concise. Detailed alternatives and implementation mechanics belong in the
@@ -352,11 +352,63 @@ step plan that resolves them.
 
 ### LM-020: Direct loopback MCP with independent per-instance authority
 
-- Status: Accepted product scope — explicit user instruction 2026-09-29; Step 07 P2 plan independently approved across all required areas; final implementation gates and real-client acceptance remain required.
+- Status: Accepted and implemented — explicit user instruction 2026-09-29; Step 07 human-merged as [PR #166](https://github.com/loyalagents/context-router/pull/166). Final evidence and manual-acceptance limits are recorded in the [closeout](07-local-mcp/README.md).
 - Decision: Claude Code and Codex CLI on the same Mac connect directly to one manually started shared loopback Streamable HTTP backend. No stdio transport/bridge, LAN, UI or lifecycle supervisor. Disconnecting a client does not stop the backend.
 - Reuse stable human identity, SQLite, application services and the selected Step 06 model owner. Provision separate independently revocable MCP credentials per configuration/instance, including two instances of one product. Labels/session IDs are not authority; human, MCP and inference credentials are distinct. Use explicit local administrative commands, constrained read-only defaults and no new OAuth system.
 - Storage and protocol specifics, exact routes, sensitivity/grant layering, upgrade/recovery, bounded cancellation and compatibility are defined in the independently reviewed [Step 07 plan](07-local-mcp/plan.md). Preserve LM-008 six-tool/mutation contracts or explicitly record evolution. Preserve E/H and no new native experiment authority.
-- Steps 08–11 remain inactive. One cohesive draft PR; automated evidence precedes a bounded user-run synthetic real-client checklist. Never claim offline cloud assistants or complete Step 07 before required manual acceptance and human merge.
+- Steps 08–11 remain inactive. Step 07 landed as one cohesive PR after automated gates and bounded user-run synthetic real-client acceptance. Do not infer offline cloud assistants or confirmed live server/native cancellation from that acceptance.
+
+### LM-021: Reuse the UI; basic MCP management and simple history in Step 08
+
+- Status: Accepted product direction — user discussion 2026-10-03; technical
+  design still requires Step 08 activation and independent plan review.
+- UI: reuse the existing dashboard, not a redesign. Manual browser-first launch
+  is acceptable now. UI and MCP share application services, local data and the
+  single inference owner; browser sessions are separate from human-file, MCP
+  and inference credentials. Do not expose private service credentials to the
+  browser or relax the MCP Origin guard to accommodate it.
+- Basic MCP management (discussion option B): list real per-instance clients,
+  explain effective capability/target/sensitivity limits, edit narrowing
+  database grants, and revoke clients. Issuance, rotation and maximum credential
+  policy changes remain CLI operations. A database ALLOW never exceeds that
+  maximum policy. Same-product instances remain distinct; labels are not authority.
+- History: keep the existing mutation/access tabs and retain records until the
+  user explicitly clears history. Bring only whole-history deletion forward
+  from Step 09 into Step 08: one confirmed, atomic clear of both streams that
+  preserves preferences, definitions, locations, identity, credentials and
+  grants. Keep it separate from Clear memory, which preserves history; explain
+  that old values may still be in history after memory deletion. This supersedes
+  Step 01's Step 09 ownership of this narrow operation, not backup/restore.
+- Keep history logging enabled; concurrent/new activity may append after the
+  clear. Specify confirmation, failure/rollback, response and UI cache/cursor
+  invalidation in the reviewed plan. Logical deletion is not secure erasure of
+  disk pages, backups or client transcripts. No TTL scheduler, retention-settings
+  framework, per-record deletion or undo/rollback feature now.
+- Preserve mutation/audit atomicity and best-effort access-log semantics. Step
+  08 also fixes event-time sensitivity, including archived definitions and safe
+  treatment of existing local records with missing metadata. Fresh hosted-data
+  migration is unnecessary; existing local user data must survive upgrades.
+- Implementation must reconcile the baseline dispositions through LM-008 with
+  observable tests. These decisions do not claim the UI or history clear ships
+  today. See the [handoff](step-08-handoff.md).
+
+### LM-022: Full MCP onboarding is additive product work, not a migration gate
+
+- Status: Accepted deferral — user discussion 2026-10-03.
+- Full UI issuance/rotation/maximum-policy editing and secure credential setup
+  (option C), plus optional assisted client configuration/diagnostics (C+), live
+  in the [MCP onboarding follow-up](../mcp-onboarding/README.md). They are not
+  Step 08 or mandatory Step 09, do not activate a new numbered step, and do not
+  block migration completion.
+- CLI administration remains a supported path. Future UI and CLI must use the
+  same backend operations and per-instance authority, not separate client
+  registries or credential systems. UI-created clients work with the CLI and
+  CLI-created clients appear in the UI.
+- Step 09 still owns installation and managed app/model startup, with a tested
+  manual MCP setup path. Terminal-free third-party client onboarding is a
+  separate release choice; explicitly prioritize its minimum slice if that
+  becomes a requirement. Do not silently add OAuth, auto-configure external
+  apps or broaden listener exposure.
 
 ## Step 06 Implementation And Evidence
 
@@ -376,6 +428,8 @@ The independent-review follow-up passed repeat quality under unchanged E but fai
 | Exact offline guarantee before and after model assets are installed | `06-local-model` and `09-installation-and-packaging` |
 | Local MCP transport: direct loopback Streamable HTTP only, resolved by LM-020; other transports need a later demonstrated use case | `07-local-mcp` |
 | Local UI/desktop shell and process topology | `08-local-ui` and `09-installation-and-packaging` |
+| Basic client/grant management; retain-until-cleared history and whole-history deletion (LM-021) | `08-local-ui`; backup/restore remains Step 09 |
+| Full UI MCP credentials and optional assisted client setup (LM-022) | [Deferred product follow-up](../mcp-onboarding/README.md), outside numbered migration |
 | Application update channel and rollback mechanism | `09-installation-and-packaging` |
 | LAN pairing, credentials, discovery, and TLS expectations | `10-lan-mcp` |
 | Shape of a future hosted deployment | `11-hosting-portability-check` |

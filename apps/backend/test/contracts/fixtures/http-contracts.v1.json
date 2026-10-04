@@ -8,9 +8,16 @@
       "success": {
         "status": 200,
         "contentType": "application/json",
-        "required": ["status", "timestamp"],
-        "constants": { "status": "ok" },
-        "formats": { "timestamp": "date-time" }
+        "required": [
+          "status",
+          "timestamp"
+        ],
+        "constants": {
+          "status": "ok"
+        },
+        "formats": {
+          "timestamp": "date-time"
+        }
       }
     },
     "graphql": {
@@ -18,16 +25,33 @@
       "path": "/graphql",
       "contentType": "application/json",
       "request": {
-        "required": ["query"],
-        "optional": ["variables", "operationName"]
+        "required": [
+          "query"
+        ],
+        "optional": [
+          "variables",
+          "operationName"
+        ]
       },
-      "success": { "status": 200, "required": ["data"] },
+      "success": {
+        "status": 200,
+        "required": [
+          "data"
+        ]
+      },
       "applicationError": {
         "status": 200,
-        "required": ["errors"],
-        "errorRequired": ["message"]
+        "required": [
+          "errors"
+        ],
+        "errorRequired": [
+          "message"
+        ]
       },
-      "publicProbe": { "query": "{ __typename }", "root": "Query" },
+      "publicProbe": {
+        "query": "{ __typename }",
+        "root": "Query"
+      },
       "catalogAnonymousAccess": "observed-not-promised-class-guard-rejects"
     },
     "documentAnalysis": {
@@ -35,7 +59,12 @@
       "path": "/api/preferences/analysis",
       "auth": "bearer-user",
       "contentType": "multipart/form-data",
-      "multipart": { "required": ["file"], "optional": [] },
+      "multipart": {
+        "required": [
+          "file"
+        ],
+        "optional": []
+      },
       "maxFileSizeBytes": 10485760,
       "allowedMimeTypes": [
         "text/plain",
@@ -57,21 +86,63 @@
           "status",
           "filteredCount"
         ],
-        "optionalNullable": ["documentSummary", "statusReason"],
-        "statuses": ["success", "no_matches", "parse_error", "ai_error"]
+        "optionalNullable": [
+          "documentSummary",
+          "statusReason",
+          "failureCategory"
+        ],
+        "statuses": [
+          "success",
+          "no_matches",
+          "parse_error",
+          "ai_error"
+        ],
+        "suggestionOptional": {
+          "review": {
+            "required": [
+              "definitionId"
+            ],
+            "optionalNullable": [
+              "locationId",
+              "expectedPreferenceId",
+              "expectedRevision"
+            ]
+          }
+        },
+        "failureCategories": [
+          "unavailable",
+          "unsupported",
+          "busy",
+          "input_limit",
+          "context_limit",
+          "cancelled",
+          "deadline",
+          "invalid_response",
+          "unsafe_configuration"
+        ]
       },
       "errors": {
         "missingOrInvalidUpload": {
           "status": 400,
-          "required": ["statusCode", "message", "error"]
+          "required": [
+            "statusCode",
+            "message",
+            "error"
+          ]
         },
         "missingBearer": {
           "status": 401,
-          "required": ["statusCode", "message"]
+          "required": [
+            "statusCode",
+            "message"
+          ]
         },
         "oversizedMultipart": {
           "status": 413,
-          "required": ["statusCode", "message"]
+          "required": [
+            "statusCode",
+            "message"
+          ]
         }
       }
     },
@@ -80,10 +151,30 @@
       "path": "/api/form-fill/pdf",
       "auth": "bearer-user",
       "contentType": "multipart/form-data",
-      "multipart": { "required": ["file"], "optional": ["fieldPolicies"] },
-      "fieldPolicies": { "encoding": "JSON string", "schemaVersion": 1 },
+      "multipart": {
+        "required": [
+          "file"
+        ],
+        "optional": [
+          "fieldPolicies"
+        ]
+      },
+      "fieldPolicies": {
+        "encoding": "JSON string",
+        "schemaVersion": 1,
+        "supportedSchemaVersions": [
+          1,
+          2
+        ],
+        "semantics": {
+          "absentOrV1": "Legacy replacement behavior retained",
+          "v2": "Preserve nonempty fields unless that exact field has overwrite:true; ordinary validation still applies"
+        }
+      },
       "maxFileSizeBytes": 10485760,
-      "allowedMimeTypes": ["application/pdf"],
+      "allowedMimeTypes": [
+        "application/pdf"
+      ],
       "success": {
         "status": 201,
         "required": [
@@ -110,20 +201,44 @@
           "filledFields",
           "skippedFields",
           "warnings"
+        ],
+        "optionalNullable": [
+          "failureCategory"
+        ],
+        "failureCategories": [
+          "unavailable",
+          "unsupported",
+          "busy",
+          "input_limit",
+          "context_limit",
+          "cancelled",
+          "deadline",
+          "invalid_response",
+          "unsafe_configuration"
         ]
       },
       "errors": {
         "missingInvalidOrPolicy": {
           "status": 400,
-          "required": ["statusCode", "message", "error"]
+          "required": [
+            "statusCode",
+            "message",
+            "error"
+          ]
         },
         "missingBearer": {
           "status": 401,
-          "required": ["statusCode", "message"]
+          "required": [
+            "statusCode",
+            "message"
+          ]
         },
         "oversizedMultipart": {
           "status": 413,
-          "required": ["statusCode", "message"]
+          "required": [
+            "statusCode",
+            "message"
+          ]
         }
       }
     },
@@ -133,11 +248,18 @@
       "auth": "bearer-mcp",
       "contentType": "application/json",
       "accept": "application/json, text/event-stream",
-      "request": { "protocol": "JSON-RPC 2.0" },
-      "success": { "status": 200, "contentType": "application/json" },
+      "request": {
+        "protocol": "JSON-RPC 2.0"
+      },
+      "success": {
+        "status": 200,
+        "contentType": "application/json"
+      },
       "disabled": {
         "status": 503,
-        "body": { "error": "MCP HTTP transport is disabled" }
+        "body": {
+          "error": "MCP HTTP transport is disabled"
+        }
       }
     },
     "mcpGet": {
@@ -146,8 +268,12 @@
       "auth": "none",
       "response": {
         "status": 405,
-        "headers": { "Allow": "POST" },
-        "body": { "error": "Method Not Allowed" }
+        "headers": {
+          "Allow": "POST"
+        },
+        "body": {
+          "error": "Method Not Allowed"
+        }
       }
     },
     "oauthMetadata": {
@@ -181,8 +307,13 @@
         ],
         "constants": {
           "token_endpoint_auth_method": "none",
-          "grant_types": ["authorization_code", "refresh_token"],
-          "response_types": ["code"]
+          "grant_types": [
+            "authorization_code",
+            "refresh_token"
+          ],
+          "response_types": [
+            "code"
+          ]
         }
       },
       "errors": {
@@ -237,12 +368,112 @@
         "Access-Control-Allow-Headers": "Content-Type",
         "Cache-Control": "no-store"
       }
+    },
+    "localUnlock": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/unlock",
+      "auth": "one-use-bootstrap",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser",
+      "bootstrapLifetimeMilliseconds": 300000
+    },
+    "localLogout": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/logout",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser"
+    },
+    "localCapabilities": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/capabilities",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser"
+    },
+    "localMcpList": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/mcp/list",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser",
+      "bounds": {
+        "pageSize": 32,
+        "maxResponseBytes": 524288
+      }
+    },
+    "localMcpInspect": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/mcp/inspect",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser",
+      "bounds": {
+        "maxExactTargets": 32,
+        "maxGrantRows": 512,
+        "overflowSentinelRows": 513,
+        "maxResponseBytes": 262144
+      }
+    },
+    "localMcpGrant": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/mcp/grant",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser"
+    },
+    "localMcpRevoke": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/mcp/revoke",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser"
     }
   },
   "supportRoutes": [
-    { "method": "POST", "path": "/api/chat", "class": "planned-removal" },
-    { "method": "GET", "path": "/api/debug/token", "class": "planned-removal" },
-    { "method": "GET", "path": "/auth/*", "class": "planned-removal" }
+    {
+      "method": "POST",
+      "path": "/api/chat",
+      "class": "planned-removal"
+    },
+    {
+      "method": "GET",
+      "path": "/api/debug/token",
+      "class": "planned-removal"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/*",
+      "class": "planned-removal"
+    }
   ],
   "runtimeEvidence": [
     {
@@ -266,12 +497,61 @@
     {
       "surface": "web-support-runtime",
       "path": "scripts/local-migration/web-support-smoke.mjs",
-      "cases": ["assertWebSupportResponses", "runWebSupportSmoke"]
+      "cases": [
+        "assertWebSupportResponses",
+        "runWebSupportSmoke"
+      ]
     },
     {
       "surface": "web-support-build",
       "path": "scripts/local-migration/gate-phases.json",
-      "cases": ["web-production-build"]
+      "cases": [
+        "web-production-build"
+      ]
+    },
+    {
+      "surface": "backend-local-ui",
+      "path": "apps/backend/test/local-ui/http.test.mjs",
+      "cases": [
+        "one local runtime unlocks browser APIs, exposes inert shells and rejects every other authority",
+        "me is retained and user(id) is deprecated while its self-only compatibility behavior remains",
+        "reviewed apply GraphQL reports conflicts per item while the legacy apply remains an upsert",
+        "capabilities report selected upload intersections and client deadlines only shorten the bound"
+      ]
     }
-  ]
+  ],
+  "localBrowser": {
+    "mode": "local-ui",
+    "host": "exact bound 127.0.0.1 host and port",
+    "apiOrigin": "exact browser origin",
+    "apiHeader": {
+      "x-context-router-ui": "1"
+    },
+    "authority": "Independent expiring browser bearer; cookies, human, MCP and inference credentials are not accepted",
+    "lifetimeMilliseconds": 28800000,
+    "defaultDeadlineMilliseconds": 180000,
+    "deadlineHeader": "x-context-router-timeout-ms; integer 1 through 180000, shortening only",
+    "apiCacheControl": "no-store",
+    "legacyModes": "Hosted route auth and compatibility envelopes remain unchanged",
+    "graphql": {
+      "path": "/graphql",
+      "method": "POST",
+      "auth": "browser-session",
+      "maxBodyBytes": 262144
+    },
+    "uploads": {
+      "auth": "browser-session",
+      "selectedCapabilityAndConfigurationIntersection": true,
+      "localFormats": [
+        "text/plain",
+        "text/markdown",
+        "application/json",
+        "application/yaml",
+        "text/yaml",
+        "application/x-yaml",
+        "application/pdf"
+      ],
+      "imagesOrOcr": false
+    }
+  }
 }

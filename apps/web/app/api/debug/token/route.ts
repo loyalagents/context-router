@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth0 } from '@/lib/auth0';
+import { getAuth0 } from '@/lib/auth0';
 
 interface DebugTokenPayload {
   token: string | undefined;
@@ -10,7 +10,7 @@ interface DebugTokenPayload {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth0.getSession();
+    const session = await getAuth0().getSession();
     if (!session?.user) {
       return formatResponse(
         request,
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const tokenResult = await auth0.getAccessToken();
+    const tokenResult = await getAuth0().getAccessToken();
     const accessToken = tokenResult?.token;
 
     const payload: DebugTokenPayload = {

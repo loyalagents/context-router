@@ -1,0 +1,337 @@
+# Step 08 Review Ledger
+
+- Status: P2 independently approved in all four required mandates; checkpoint implementation authorized
+- Sole writer: `/root`; all reviewers read-only
+- Last updated: 2026-10-04
+
+## Plan P1
+
+Plan SHA-256: `b3aad4b9a1f519478143b74af0029a4217752a6108c0cd8a5557bdcfa0499e02`. Markdown links (164 files) and diff whitespace passed. Plan content is frozen for review.
+Required mandates: architecture/scope, security/privacy and auth-contract evolution,
+persistence/recovery, compatibility/tests/usability. No approvals yet.
+
+| Reviewer | Mandate | Requested / observed | Status |
+| --- | --- | --- | --- |
+| `/root/plan_architecture` | Architecture, trust-boundary composition, scope/packaging | Astra xhigh / explicit dispatch accepted; serving internals unobservable | P1 changes required |
+| `/root/plan_security` | Browser/session, credentials, privacy, auth-contract evolution | Astra xhigh / explicit dispatch accepted; serving internals unobservable | P1 changes required |
+| `/root/plan_persistence` | History, transactions, upgrade/recovery | Astra xhigh / explicit dispatch accepted; serving internals unobservable | P1 changes required |
+| `/root/plan_compatibility` | Compatibility, tests, usability/accessibility | Astra High / explicit dispatch accepted; serving internals unobservable | P1 changes required |
+
+## P1 Findings And P2 Disposition
+
+All four P1 verdicts were changes required. Unaffected review dimensions may carry
+forward only through explicit affected P2 approvals.
+
+| ID | Reviewer | Finding | Disposition in P2 |
+| --- | --- | --- | --- |
+| A1 | plan_architecture | Next installs a raw upgrade handler outside Nest routing; unmatched sockets can remain open | Require independent upgrade/CONNECT rejection before forwarding and raw-socket cleanup tests after Next initialization |
+| S1 | plan_security | Unlimited grants make list/revision unbounded; truncation can omit DENY | Pages of 32 client summaries, bounded complete per-instance inspection, explicit overflow denial with no partial revision/effective claim, CLI and generation-only revoke preserved |
+| PERSIST-01 | plan_persistence | CREATE can overwrite intervening memory; default PostgreSQL read/write is not CAS | Exact reviewed state/identity presence or absence, in-transaction definition validation, one serializable compare/write/audit attempt, controlled writer tests; no timestamp-version or ABA promise |
+| PERSIST-02 | plan_persistence | Separate READ COMMITTED deletes lack a common history-clear snapshot | One serializable clear attempt, concurrent ordered-insert/rollback tests and explicit known rollback versus uncertain acknowledgement |
+| C1 | plan_compatibility | Preserve-existing default silently changes absent/v1 REST clients | Add fieldPolicies v2 at existing route, local UI always v2, preserve absent/v1 semantics, all supported field-type old/new tests and migration guidance |
+
+P2 also enumerates the selected Markdown/JSON/YAML/text/PDF MIME set and explicitly
+preserves later-approved Steps 04/07 definition-edit semantics, documenting the
+older Step 01 aspiration as an existing limitation. It reserves bounded logout
+control capacity and actively aborts expired-session AI work. These are security,
+compatibility and concurrency changes requiring affected review, not editorial.
+
+## Plan P2
+
+Frozen SHA-256: `fa7c1838c5ca637363de2ca928ecf04bb2391b7417d05fc0432fd95a9650ee70`.
+Markdown links and whitespace checks pass. All four affected reviewers explicitly
+approved this exact P2 hash before any product edit:
+
+| Reviewer | Verdict | Scope and carry-forward |
+| --- | --- | --- |
+| `/root/plan_architecture` | APPROVE | A1 resolved; architecture/composition/trust boundaries, packaging/lifecycle and scope approved; unaffected P1 single-owner/strategy/E/H coverage carried forward |
+| `/root/plan_security` | APPROVE | S1 resolved; browser/session, credentials/privacy and auth-contract evolution approved; other P2 deltas accepted and unaffected P1 security carried forward |
+| `/root/plan_persistence` | APPROVE | PERSIST-01/02 resolved; history, upgrade/recovery and concurrent proposal/grant writes approved; unchanged storage/privacy/recovery coverage carried forward |
+| `/root/plan_compatibility` | APPROVE | C1 resolved; MIME and definition clarification accepted; compatibility/consumers/test adequacy/usability/accessibility approved; unaffected P1 coverage carried forward |
+
+These are plan approvals, not implementation approvals. Root remains sole writer.
+The plan file retains the exact reviewed bytes; its draft/pending administrative
+labels describe its review submission. This ledger records the subsequent approval.
+Fresh complete implementation review remains required.
+
+## Implementation
+
+Checkpoint 1 starts after all P2 approvals. Fresh complete base-to-candidate reviews remain required.
+
+### Early Browser Security Corrections
+
+`/root/plan_security` (prior Astra xhigh dispatch; serving internals unobservable)
+returned APPROVE for the affected checkpoint 1 corrections after five findings
+were resolved: post-Multer admission, separate logout capacity, immediate local
+locking, active idle expiry and parser byte preservation. Bindings at review:
+
+- HTTP boundary: `db2465df7c56ee22e4e6b0b926dbdc583c893c1cd595bc703c04c36a3625357e`
+- Browser transport: `b96c9b785e70cd2d01397950f081d3f54f0bb2ce38d1ada5f38f02b10ac8b9d1`
+- LocalSession: `91ea66e726a389347d44b1e31b834d672dab418e86f54a6aee67f496ac4005fe`
+
+The reviewer inspected source; targeted execution evidence was coordinator-provided.
+Subsequent management boundary changes are undergoing their own affected review.
+This approval does not substitute for fresh complete implementation review.
+
+### Reviewed Apply V2 Persistence
+
+`/root/plan_persistence` returned APPROVE for this affected checkpoint, with no
+blockers. Prior requested Astra xhigh dispatch retained; serving internals remain
+unobservable. Service SHA-256:
+`e7303458b6255ab9c04b6ec84a9bb80f3e3abe48965c7f4f81f82c394ca474d2`.
+The reviewer recorded a sorted 20-file aggregate
+`fb97c81cd46831e043c6eb425dd51058c7bf30bc93d5d30eadcbab611bdec5e1`
+using SHA-256 of `path + NUL + file SHA256 + LF` records. Exact path manifest is
+being added to this ledger. The review covers definition/row/location identity,
+canonical persisted state, current domain validation, serializable write/audit,
+known conflicts versus uncertain acknowledgement, no retry, and unchanged legacy
+apply. SQLite and PostgreSQL execution evidence above is coordinator-provided;
+the reviewer ran no tests. A nonblocking request for positive owned-location and
+namespace-isolation coverage was accepted and remains to be added. Full final
+Step 08 independent review remains pending.
+
+The reviewed-apply aggregate above covers this exact historical 20-path manifest
+(sorted lexically before hashing). Later AI forwarding/category edits to the
+analysis service and its tests are outside that checkpoint approval:
+
+```text
+apps/backend/src/domains/shared/storage/storage-unit-of-work.ts
+apps/backend/src/infrastructure/storage/postgres/postgres-preference.repository.ts
+apps/backend/src/infrastructure/storage/postgres/postgres-unit-of-work.ts
+apps/backend/src/infrastructure/storage/sqlite/sqlite-preference.repository.ts
+apps/backend/src/infrastructure/storage/sqlite/sqlite-unit-of-work.ts
+apps/backend/src/modules/preferences/audit/event-sensitivity.ts
+apps/backend/src/modules/preferences/document-analysis/document-analysis.module.ts
+apps/backend/src/modules/preferences/document-analysis/document-analysis.resolver.ts
+apps/backend/src/modules/preferences/document-analysis/document-analysis.service.spec.ts
+apps/backend/src/modules/preferences/document-analysis/document-analysis.service.ts
+apps/backend/src/modules/preferences/document-analysis/dto/apply-suggestion-v2-result.dto.ts
+apps/backend/src/modules/preferences/document-analysis/dto/apply-suggestion-v2.input.ts
+apps/backend/src/modules/preferences/document-analysis/dto/preference-suggestion.dto.ts
+apps/backend/src/modules/preferences/document-analysis/reviewed-suggestion.service.ts
+apps/backend/src/modules/preferences/preference/preference-revision.ts
+apps/backend/src/modules/preferences/preference/preference.repository.ts
+apps/backend/test/integration/reviewed-apply.spec.ts
+apps/backend/test/integration/storage-contracts/postgres-unit-of-work.spec.ts
+apps/backend/test/local-database/reviewed-apply.spec.ts
+apps/backend/test/local-database/unit-of-work.spec.ts
+```
+
+### MCP Management Corrections
+
+`/root/plan_security` returned APPROVE for the affected management corrections
+only (requested Astra xhigh retained; serving internals unobservable). Three
+blocking findings were reproduced with new tests and resolved:
+
+1. SQL projections now bound variable values by bytes including embedded NUL,
+   validate numeric storage types/ranges, and bound revoke's returned projection.
+2. The final serialized authority response is checked after effective results
+   are included; overflow returns the fixed unavailable shape without grants.
+3. ALLOW requests wholly outside credential maxima are rejected atomically with
+   an explicit `OUTSIDE_MAXIMUM` result. Wildcard authority remains conditional
+   on actual targets and sensitivity, using the existing authorization chain.
+
+Reviewed SHA-256 bindings:
+
+- SQLite credential adapter: `83c139d9086f71ffcb0830347bc8b9d67c943ada23afb8a32bcfafda5a9f6a33`
+- Management service: `3387d75868152281666c83715dc0c0c0a14e665a9dd09daa614b670fb0b042c8`
+- MCP client UI: `6706885c5e4ea7212420e7da29b8e55c6cb807e62cad8a02584eff572273c70a`
+- Management tests: `452b87e11ec9c7e61ad566a2c7a6463dc52a6d1c503aa1ca22332dd7aa7c27e0`
+
+Coordinator evidence: management 7/7 and authenticated management Chromium 1/1.
+The reviewer inspected source and did not execute tests. New HTTP/bootstrap AI
+changes are excluded and undergoing a separate affected review. This is not a
+complete implementation approval.
+
+### AI Upload Cancellation Corrections
+
+The affected AI/browser review initially returned CHANGES REQUIRED for two P2
+findings: an old cancelled batch could clean up a new batch's shared file map,
+and a composite deadline could still publish proposals from an earlier file.
+Root reproduced the first with a held File read, then introduced per-batch owned
+maps and an explicit composite-signal publication check. The combined browser test
+also covers a successful first file followed by a second exceeding the deadline.
+
+`/root/plan_security` returned APPROVE for the affected corrections only:
+
+- LocalDocumentUpload: `86181157e5552edc26a795ac602276f6a322fb234a35e2d9e7218934979d3bc4`
+- AiControls: `147c9f3f2d8bf12cf9c553d6187f8495b505689ca0c51e3e053ba05e83a69c10`
+- AI browser test: `f749be7e27183839b9df408191025d785338cc8090c25443b08c84afcdc26740`
+
+Requested Astra xhigh retained, serving internals unobservable; read-only review,
+root-provided test evidence. Scoped server control, capability, safe failure,
+v2 preservation and session-epoch conclusions carry forward. Full-step independent
+review remains required.
+
+## Fresh Final Review R1 And R2 Corrections
+
+R1 is bound by [candidate-r1.json](candidate-r1.json): 169 changed/untracked
+paths, exact base `5e2a67dd785500ba053b2e836c47166e8adeada8`, aggregate
+`8dbc97d819566d95158957dba5b778b76c94e6be42f9c5adef2d602945ca730e`.
+Each reviewer independently verified the complete inventory/content/modes. Root
+remained the sole writer. No reviewer ran builds or suites; security additionally
+ran a bounded, in-memory compressed-PDF probe without repository writes.
+
+| Fresh reviewer | Requested setting | R1 verdict |
+| --- | --- | --- |
+| `/root/final_architecture` | Astra xhigh | CHANGES REQUIRED: retained query controls and deployed source hardlinks |
+| `/root/final_security` | Astra xhigh | CHANGES REQUIRED: retained query controls, new shared-process PDF decompression, missing hostile-browser/RSC proof |
+| `/root/final_persistence` | Astra xhigh | APPROVE within persistence/concurrency/recovery mandate; other blockers remain |
+| `/root/final_compatibility` | Astra High | CHANGES REQUIRED: delayed MCP change publishes to closed BroadcastChannel |
+
+Dispatches succeeded. Serving model/effort internals are unobservable. In
+particular, compatibility was dispatched with a full-history fork, so High is a
+request, not a verified override; inheritance may apply. Sensitive reviewers
+were requested at the coordinator's xhigh tier. No claim of a verified tier is
+made from prompt text alone.
+
+The compatibility reviewer independently approved the exact HTTP transition
+`0decd923adc249b1ce70beb38646fff0bce56452d0880f3098ef87cf03a669fb` →
+`35d2d14ec3dfbaf79173759aabdcf0d3320e0775c980c50bec0a91922a841ec2`,
+including all five declared response-domain additions and the exact union of
+113 old/new consumer IDs/paths. Security also approved its auth-contract scope.
+Root therefore changed this specific migration record to `reviewed`; neither
+approval substitutes for final implementation approval.
+
+R2 corrections and evidence:
+
+- Retained `askVertexAI` now forwards the browser signal/deadline without changing
+  its schema or hosted one-argument delegation. A new unit test failed before
+  the fix. Real GraphQL/TLS-model fixtures cover successful completion, logout,
+  shortened deadlines, concurrent native MCP busy/manual availability and
+  settlement without fallback. A model deadline may return a sanitized GraphQL
+  error before the outer HTTP timer; neither path publishes generated text.
+- Removed the newly introduced shared-process `PDFDocument.load`. Only cheap
+  PDF envelope checks remain there; structural document analysis stays behind
+  the existing owned parser. A unit regression failed before removal. The real
+  child handles the reviewer's 4,406-byte/4 MiB compressed-object fixture with a
+  fixed empty/invalid outcome, responsive parent and reaped child. Existing
+  deterministic cancellation/deadline/reaping tests remain. Security confirmed
+  that unchanged in-process AcroForms are an accepted preexisting boundary,
+  not a required broader parser migration; the runbook now states this limit.
+- Added actual production Chromium second-origin hostile-page requests, ambient
+  browser/MCP cookie replay, blocked preflight/CSRF attempts and unauthorized
+  RSC/prefetch canaries for every private route. Targeted test passed.
+- Delayed grant and revoke followed by lock both reproduced a closed-channel
+  unhandled rejection. Cleanup now nulls the channel, and publication requires
+  the current non-aborted request epoch. Both browser regressions passed.
+- Real sealed packaging correctly rejected injected workspace files hardlinked
+  to source. Deployment now materializes beneath the already owned private root,
+  then copies into fresh stage inodes before sealing. The new regression also
+  caught an omitted local-ui payload in the sealing routine; it now seals that
+  directory as well, verifies read-only copies and unchanged source modes/content.
+  The no-shared-inode and complete closure/integrity guards remain enforced.
+- Updated the exact packaging subprocess census from eight to nine for the
+  already reviewed explicit offline web deployment; no wildcard command allowance.
+- Published the plain-HTTP exact-origin replacement-listener/service-worker
+  residual. Prior HTTP/GraphQL compatibility, state, authority and E/H limitations
+  remain unchanged.
+
+R2 affected reapproval, final aggregate gate and final-head CI remain pending.
+Human acceptance remains explicitly pending and is consolidated in
+[acceptance.md](acceptance.md).
+
+
+### R2 Verdicts And R3 Cleanup Correction
+
+R2 [candidate-r2.json](candidate-r2.json) binds 173 paths, aggregate
+`77913396ac0bbfb376cadeffc09a5ef01ff08b35c6af8ecc4388fec690ea119f`.
+Architecture, security and compatibility independently verified that binding.
+Compatibility returned APPROVE for its mandate; security closed all three original
+findings and architecture closed both original findings. Their unaffected R1
+coverage carries forward.
+
+Architecture found one further P2 cleanup issue and security concurred: the
+intermediate deployment's source hardlinks were chmodded by generic recursive
+cleanup. Root reproduced this with the actual cleanup function: an external
+0644 source became 0600. R3 changes permissions on directories only, preserving
+regular-file inodes when unlinking on the supported POSIX hosts. The new actual
+cleanup test verifies removal plus unchanged external source bytes and mode;
+the complete packaging harness passes 45/45. Aggregate-mode source integrity is
+also checked after private-root cleanup, in addition to the existing observation
+before cleanup and external caller/store checks afterward. Direct-mode copied
+source is removed with its root; original caller inputs remain checked afterward.
+
+R3 affected architecture/security/recovery review is required before the final
+gate. Compatibility's R2 product/consumer coverage is unaffected by this cleanup
+and status-copy-only delta. Human acceptance remains pending.
+
+### R3 Recovery Finding And R4 Wrapper Corrections
+
+R3 [candidate-r3.json](candidate-r3.json) binds 174 paths, aggregate
+`0407805701a73c52abff3f68a3ccd092672e509962f36deb3e2845232eaf8685`.
+Persistence independently verified it and approved the inode corrections,
+carrying forward R1's unchanged database/CAS/history/grant coverage.
+
+Persistence then found that the outer restart/packaging cleanup could delete
+an ancestor of state deliberately retained by the inner UI helper after an
+unconfirmed browser reap. Architecture additionally identified that retained
+aggregate packaging state was under diagnostics, whose sanitization/private-mode
+walk could mutate credentials, binary recovery files or external hardlinks.
+These findings kept R3 at CHANGES REQUIRED.
+
+R4 tests the actual enclosing cleanup functions for both wrappers. Missing,
+pending or failed local UI owner cleanup (including a retained private-state
+record) prevents ancestor removal; successful recorded cleanup allows removal.
+The regression failed before the guards. Packaging execution roots now use owned
+private temporary allocations outside the diagnostic tree in both modes, with
+diagnostics explicitly protected against child placement. A second regression
+verifies that diagnostic sanitization cannot rewrite retained recovery content.
+No cleanup retries or unowned process signalling were added. Journal failures
+remain errors with retained recovery paths. The three affected harness suites
+pass 77/77 (2,000 ms), including 46 packaging tests.
+
+The earlier standalone sealed packaging attempt completed both actual
+Chromium/relocated generations and all runtime proofs, then correctly failed its
+caller-integrity observation because root edited inputs during the run. Receipt:
+`context-router-packaging-diagnostics-p3CQVn/summary.json`, status **failed**, not
+final proof. All owned resources in that run finished cleanup. The final full
+gate will use a frozen candidate, so neither this run nor the earlier unsealed
+payload runs are substituted for final sealed evidence.
+
+R4 affected architecture/security/persistence reapproval remains required;
+compatibility product/consumer approval from R2 is unchanged. Full final gate,
+final-head CI and human acceptance remain pending.
+
+### R4 Final Approvals And R5 Schema Test Pins
+
+All four fresh review mandates are APPROVED for R4, aggregate
+`2fa27af053b6f654985a12b62ef7b5e2daad03ed902dd3c0fc81be70073c16c7`
+in [candidate-r4.json](candidate-r4.json). Architecture, security and persistence
+approved affected recovery corrections and explicitly carried forward unchanged
+complete-diff coverage. Compatibility independently verified all 175 paths and
+carried its R2 approval through the cleanup-only delta. Each reviewer remained
+read-only and distinguished coordinator test execution from independent source
+inspection. No blocker remains from these reviews; gate/CI/manual acceptance are
+separate requirements.
+
+The first final aggregate attempt failed phase 3 solely on two retained exact
+schema-size assertions (14,088 bytes). Their byte-for-byte canonical SDL checks
+already passed; the independently reviewed Step 08 schema is 15,714 bytes. R5
+updates only those two numeric pins to the changed public schema requirements;
+no production/schema bytes or behavioral assertions are changed. The two affected
+suites pass 13/13 (4,882 ms). Compatibility affected reapproval is required.
+
+That failed full attempt is retained at
+`/private/tmp/step08-final-gate-2w2yh5t0/local-migration-gate-summary.json`:
+status failed, elapsed 93,811 ms, base comparison performed against the exact
+Step 07 SHA, caller integrity true, owned database removed and administration
+cleaned. Contract phase and documentation passed; later phases were not claimed.
+A fresh full gate is required on R5. Other R4 approvals remain unaffected by this
+schema-test-only and review-evidence delta.
+
+### Final R5 Approval And Gate Result
+
+Compatibility independently verified every R5 path/mode and aggregate
+`2a48f8c76f70d75d1e5b247a37858af5ffc2ff9f773a7363fe7188268792f81b`
+and returned APPROVE: both numeric pins match the canonical 15,714-byte schema,
+byte-for-byte assertions remain, and no product/schema behavior changed.
+All four fresh complete-diff mandates are therefore approved through their
+explicit affected-review chain. No actionable review finding remains.
+
+The full final R5 gate passed all twelve phases, exact-base comparison, caller
+integrity and owned cleanup; see [final evidence](implementation.md#final-local-validation-and-draft-handoff)
+and the [sanitized receipt](final-gate-summary.json). Subsequent changes are only
+closeout documentation/status and this receipt, without production/test/gate
+changes. Final pushed-head CI is a separate PR requirement. Manual acceptance
+remains pending and this does not authorize ready-for-review or merge.

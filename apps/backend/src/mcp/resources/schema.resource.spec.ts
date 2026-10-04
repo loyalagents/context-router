@@ -29,7 +29,7 @@ describe('GraphQL schema resource', () => {
     const serialized = serializeGraphqlSchema(buildSchema(schemaFixture));
 
     expect(serialized).toBe(schemaFixture);
-    expect(Buffer.byteLength(serialized, 'utf8')).toBe(14088);
+    expect(Buffer.byteLength(serialized, 'utf8')).toBe(15714);
     expect(serialized.endsWith('\n')).toBe(false);
   });
 

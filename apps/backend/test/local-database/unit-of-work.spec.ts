@@ -58,7 +58,9 @@ describe("real local transaction capability ownership", () => {
         ).toBe(true);
       }
       expect(Object.keys(scope.preferences).sort()).toEqual([
+        "compareAndSetActive",
         "delete",
+        "findActiveExact",
         "upsertActive",
         "upsertRejected",
         "upsertSuggested",
@@ -66,9 +68,12 @@ describe("real local transaction capability ownership", () => {
       expect(Object.keys(scope.definitions).sort()).toEqual([
         "archive",
         "create",
+        "getDefinitionById",
+        "getDefinitionBySlug",
         "update",
       ]);
       expect(Object.keys(scope.audit)).toEqual(["record"]);
+      expect(Object.keys(scope.locations)).toEqual(["findOne"]);
       await scope.identity.createPrincipal("owner", "private@example.test");
       const definition = await scope.definitions.create({
         slug: "contract.scope",
@@ -117,6 +122,11 @@ describe("real local transaction capability ownership", () => {
     await expect(saved.preferences.delete(result.id)).rejects.toBeInstanceOf(
       StorageScopeExpiredError,
     );
+    await expect(saved.preferences.findActiveExact({} as never)).rejects.toBeInstanceOf(StorageScopeExpiredError);
+    await expect(saved.preferences.compareAndSetActive({} as never, null, null, {} as never, {} as never)).rejects.toBeInstanceOf(StorageScopeExpiredError);
+    await expect(saved.definitions.getDefinitionById('expired')).rejects.toBeInstanceOf(StorageScopeExpiredError);
+    await expect(saved.definitions.getDefinitionBySlug('expired', 'owner')).rejects.toBeInstanceOf(StorageScopeExpiredError);
+    await expect(saved.locations.findOne('expired')).rejects.toBeInstanceOf(StorageScopeExpiredError);
     expect(connects).not.toHaveBeenCalled();
   });
 

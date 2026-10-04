@@ -1,5 +1,6 @@
+import LocalPage from '@/components/local/LocalPage';
 import { redirect } from 'next/navigation';
-import { auth0 } from '@/lib/auth0';
+import { getAuth0 } from '@/lib/auth0';
 import ProfileForm from './ProfileForm';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
@@ -35,12 +36,13 @@ interface ProfilePageDataQuery {
 }
 
 export default async function ProfilePage() {
-  const session = await auth0.getSession();
+  if (process.env.CONTEXT_ROUTER_WEB_MODE === 'local') return <LocalPage page="profile" />;
+  const session = await getAuth0().getSession();
   if (!session?.user) redirect('/auth/login');
 
   let accessToken;
   try {
-    const tokenResult = await auth0.getAccessToken();
+    const tokenResult = await getAuth0().getAccessToken();
     accessToken = tokenResult?.token;
   } catch (e) {
     console.error('Failed to get access token:', e);

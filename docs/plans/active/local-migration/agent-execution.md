@@ -2,7 +2,7 @@
 
 - Status: agreed execution preferences; future steps remain inactive until activated
 - Owner: migration coordinator; sole writer is assigned per activated branch
-- Last reviewed: 2026-09-24
+- Last reviewed: 2026-10-03
 - Read when: activating/planning Steps 04–11 or assigning their agents
 
 This is a staffing, risk, and sequencing guide, not an approved implementation
@@ -52,7 +52,7 @@ full-step driver; it does not require Ultra coordination or final approval.
 | 05 local database | U coordinator; X library/runtime and recovery design | X transaction/concurrency/recovery logic; H reviewed schema/repository wiring | X data semantics, security, crash/restart and packaging feasibility; H consumer inventory and routine test coverage |
 | 06 local model | X coordinator; H bounded plan, X capability/privacy/process decisions | H adapter and deterministic tests; X sensitive lifecycle logic | X privacy, cancellation and unintended outbound calls; H capabilities and evaluation coverage |
 | 07 local MCP | X coordinator and transport/authorization planning | X credentials and authority; H reviewed tool/transport wiring | X authorization, local-network/browser threats; H clients, tools, scope and test coverage |
-| 08 local UI | X coordinator; H UI plan, X browser-session/trust design | H UI and routine integration; X session/security logic | X credential/session/CSRF boundaries and auth-contract removal; H usability, accessibility and ordinary consumers |
+| 08 local UI | X coordinator; H UI discovery, X browser-session/trust and history design | H routine UI only if actually delegated/configured; X sole coordinator/writer by default | X credential/session/CSRF, auth-contract removal and history/persistence; H usability, accessibility, ordinary consumers and test inventory |
 | 09 installation/packaging | X coordinator/planning; U for interdependent lifecycle decisions when useful | X update/recovery/process authority; H reviewed scripts and platform glue | X first run, backup/recovery, signing/update and process safety; H usability/platform evidence |
 | 10 LAN MCP (optional) | X coordinator/planning; U for a broad unresolved threat-design investigation | X pairing/revocation/exposure; H setup UX and fixtures | X remote trust/security; H client compatibility and network-test coverage |
 | 11 hosting portability (optional) | X coordinator and bounded-proof planning | H alternate composition; X semantic/authority changes if needed | X boundary leakage, concurrency and parity; H scope, maintainability and test coverage |
@@ -204,12 +204,30 @@ Run client inventory, threat analysis, and protocol-test design independently.
 
 ### 08: Local UI
 
-Agree a safe browser/session exchange, deliver non-AI flows and capability-gated
-AI UI, then prove browser integration and auth removal. Do not expose the private
-human bearer to browser code. Inventory consumers before final `user(id)` or
-route removal through LM-008. Visual components and state fixtures can proceed
-in parallel with MCP after shared contract/ownership agreement; shared API
-clients, auth, configuration, and generated schemas need coordinated changes.
+Follow [LM-021/022](decision-log.md#lm-021-reuse-the-ui-basic-mcp-management-and-simple-history-in-step-08)
+and the [handoff](step-08-handoff.md). Reuse existing UI; one cohesive PR with
+internal checkpoints for reviewed session/composition, non-AI flows and basic
+MCP management, then capability-gated AI and end-to-end proof. The exact safe
+order belongs in the reviewed plan, not separate PRs by default.
+
+Agree a safe browser/session exchange without exposing the private human bearer
+or reusing an MCP token. Share the backend's local identity/data/model owner and
+preserve the narrow MCP boundary. B includes per-instance listing, effective
+authority, narrowing grants and revocation; issuance/rotation/maximum-policy
+editing stay CLI. C is a separate deferred product follow-up, additive to CLI.
+
+Keep two history tabs, explicit retain-until-cleared semantics, event-time
+sensitivity including archived definitions, and narrow confirmed atomic clearing
+of both streams without touching memory/identity/grants. Review persistence,
+older local records, races, rollback and stale UI responses at X. No general
+retention framework or undo. Inventory consumers before `user(id)`, auth or route
+removal through LM-008; preserve `me` and supported callers.
+
+Parallelize read-only UI/consumer/test inventory and independent session/security,
+architecture, persistence and usability reviews. One writer owns shared API
+clients, auth, configuration, schemas, build outputs and gate/CI changes. Prove
+actual authenticated browser flows, browser+MCP interoperability, no-model use
+and offline application behavior; a build or unauthenticated smoke is insufficient.
 
 ### 09: Installation And Packaging
 
@@ -236,6 +254,12 @@ A managed sidecar can be the permanent architecture; embedding is not a required
 milestone. Decide whether an advanced external-server mode has a demonstrated
 use case rather than carrying it forward as an automatic product commitment.
 Supervise only verified app-owned processes, never a user's external daemon.
+
+LM-021 brings narrow whole-history clearing into Step 08; backup/restore and
+final data lifecycle UX remain here. LM-022 keeps full UI MCP credential setup
+and assisted external-client configuration outside Step 09. Retain a tested
+manual connection path; managed application startup is not the same feature as
+terminal-free onboarding of third-party clients.
 
 ### 10: LAN MCP (Optional)
 

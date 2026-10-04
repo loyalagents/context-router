@@ -14,6 +14,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import type { FormFillConfig } from '../../../config/form-fill.config';
 import { FormFillService } from './form-fill.service';
+import { browserExecution, revalidateBrowserRequest, UI_UPLOAD_POLICY } from '../../../local-ui/local-ui-request';
+import { validateLocalUpload } from '../../../local-ui/local-ui-ai';
 import {
   FormFillFieldPolicies,
   FormFillFieldPoliciesSchema,
@@ -50,6 +52,7 @@ export class FormFillController {
     @Request() req: any,
     @Body('fieldPolicies') fieldPoliciesRaw?: string,
   ): Promise<FormFillResponse> {
+    revalidateBrowserRequest(req);
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
@@ -72,12 +75,16 @@ export class FormFillController {
     }
 
     this.logger.log('Filling an authenticated PDF upload');
+    await validateLocalUpload(file, req[UI_UPLOAD_POLICY]?.formFill);
+    revalidateBrowserRequest(req);
+    const execution = browserExecution(req);
 
     return this.formFillService.fillPdfForm(
       userId,
       file.buffer,
       file.originalname,
       this.parseFieldPolicies(fieldPoliciesRaw),
+      ...(execution ? [execution] : []),
     );
   }
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { assertLocalUiSmokeSuccessResources } from './local-ui-lifecycle.mjs';
+import { localUiBrowserPrerequisite } from './local-ui-browser.mjs';
 import { assertLocalMcpSmokeSuccessResources } from './local-mcp-lifecycle.mjs';
 import { assertLocalModelSmokeSuccessResources } from './local-model-lifecycle.mjs';
 
@@ -1602,6 +1604,7 @@ export async function assertRestartSmokeLifecycleEvidence(
     assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
     assertLocalModelSmokeSuccessResources(state, smokeLabel);
     assertLocalMcpSmokeSuccessResources(state, smokeLabel);
+    assertLocalUiSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }
@@ -1626,6 +1629,7 @@ export async function assertPackagedSmokeLifecycleEvidence(
     assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
     assertLocalModelSmokeSuccessResources(state, smokeLabel);
     assertLocalMcpSmokeSuccessResources(state, smokeLabel);
+    assertLocalUiSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }
@@ -1782,6 +1786,8 @@ async function executeFullGate({
       temporaryHome,
       corepackHome,
     );
+    const browserPrerequisite = localUiBrowserPrerequisite(workspace, sourceEnvironment);
+    gateEnvironment.LOCAL_UI_BROWSER_EXECUTABLE = browserPrerequisite.executable;
     addSensitiveCanaries([gateEnvironment.AUTH0_CLIENT_SECRET]);
     const pythonBin =
       sourceEnvironment.MIGRATION_GATE_PYTHON_BIN ??
@@ -1794,7 +1800,7 @@ async function executeFullGate({
       pythonBin,
       signal: preflightSignal,
     });
-    summary.versions = { ...versions, postgres: "pending" };
+    summary.versions = { ...versions, postgres: "pending", chromium: browserPrerequisite.version, playwright: browserPrerequisite.playwright };
     const trackedSdlSha256 = await sha256(
       path.join(workspace, "apps/backend/src/schema.gql"),
     );
@@ -2075,6 +2081,7 @@ async function executeSmokeOnly({
     temporaryHome,
     corepackHome,
   );
+  environment.LOCAL_UI_BROWSER_EXECUTABLE = localUiBrowserPrerequisite(workspace, sourceEnvironment).executable;
   if (sourceEnvironment.MIGRATION_TEST_ADMIN_URL) {
     environment.MIGRATION_TEST_ADMIN_URL = sourceEnvironment.MIGRATION_TEST_ADMIN_URL;
   }

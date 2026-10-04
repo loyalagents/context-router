@@ -1,3 +1,8 @@
+import { SqliteMcpCredentials } from '@/infrastructure/storage/sqlite/sqlite-mcp-credentials';
+import { SqliteStorageUnitOfWork } from '@/infrastructure/storage/sqlite/sqlite-unit-of-work';
+import { SqliteAuditHistoryStorage } from '@/infrastructure/storage/sqlite/sqlite-audit-history-storage';
+import { PreferenceAuditQueryService } from '@/modules/preferences/audit/preference-audit-query.service';
+import { HistoryClearService } from '@/modules/preferences/audit/history-clear.service';
 import fs = require("node:fs");
 import { createHash } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
@@ -232,6 +237,25 @@ describe("same-held-connection matching-pair backup and new-root restore", () =>
       "value-canary",
     ])
       expect(wire).not.toContain(secret);
+  });
+  it("retains legacy history through v1 upgrade, reopen and matching backup while explicit clear affects only the live pair", async () => {
+    const principal = state(db).principalId;
+    const history = (database: SqliteDatabase) => new PreferenceAuditQueryService(new SqliteAuditHistoryStorage(database)).getHistory(principal, { first: 100 });
+    const legacy = await history(db); expect(legacy.items).toHaveLength(1); expect(legacy.items[0].sensitivity).toBe('UNKNOWN');
+    const credentials = new SqliteMcpCredentials(db, principal); credentials.upgrade();
+    const client = credentials.provision('Synthetic backup client', path.join(root, 'client.token'));
+    credentials.grant(client.id, '*', 'READ', 'DENY');
+    const reopened = SqliteDatabase.open(db.paths);
+    expect(await history(reopened)).toEqual(legacy);
+    const before = snapshot(reopened), identity = bytes(reopened), clients = credentials.list();
+    await backup.create(reopened, bundle);
+    expect(await new HistoryClearService(new SqliteStorageUnitOfWork(reopened)).clear(principal, 'CLEAR HISTORY')).toMatchObject({ status: 'CLEARED' });
+    expect((await history(SqliteDatabase.open(db.paths))).items).toEqual([]);
+    const restored = await backup.restore(bundle, path.join(root, 'history-restored'));
+    expect(snapshot(restored)).toEqual(before); expect(bytes(restored)).toEqual(identity);
+    expect(await history(restored)).toEqual(legacy);
+    expect(new SqliteMcpCredentials(restored, principal).list()).toEqual(clients);
+    expect((await history(db)).items).toEqual([]);
   });
   it("retains independent reader/writer and real rotation exclusion through verification, backup ACK, identity copy and completed-marker fsync", async () => {
     const originalIdentity = bytes(db),

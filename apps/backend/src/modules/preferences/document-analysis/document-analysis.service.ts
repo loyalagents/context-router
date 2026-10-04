@@ -1,7 +1,8 @@
-import { AiError } from '../../../domains/shared/ports/ai-execution';
+import { AiError, type AiExecutionOptions } from '../../../domains/shared/ports/ai-execution';
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PreferenceExtractionService } from './preference-extraction.service';
+import { ReviewedSuggestionService } from './reviewed-suggestion.service';
 import {
   DocumentAnalysisResult,
   AnalysisStatus,
@@ -24,6 +25,7 @@ export class DocumentAnalysisService {
 
   constructor(
     private readonly preferenceExtractionService: PreferenceExtractionService,
+    private readonly reviewed: ReviewedSuggestionService,
   ) {}
 
   async analyzeDocument(
@@ -31,12 +33,14 @@ export class DocumentAnalysisService {
     fileBuffer: Buffer,
     mimeType: string,
     filename: string,
+    options?: AiExecutionOptions,
   ): Promise<DocumentAnalysisResult> {
     const analysisId = randomUUID();
 
     this.logger.log('Starting authenticated document analysis');
 
     try {
+      this.checkExecution(options);
       const {
         suggestions,
         filteredSuggestions,
@@ -47,14 +51,17 @@ export class DocumentAnalysisService {
         fileBuffer,
         mimeType,
         filename,
+        ...(options ? [options] : []),
       );
 
+      this.checkExecution(options);
       // Prefix stable extraction IDs with the analysisId without reindexing.
-      const suggestionsWithIds = suggestions.map((s) => ({
+      const suggestionsWithIds = await this.reviewed.prepare(userId, suggestions.map((s) => ({
         ...s,
         id: `${analysisId}:${s.id}`,
-      }));
+      })));
 
+      this.checkExecution(options);
       // Prefix filtered suggestion IDs as well without reindexing.
       const filteredWithIds = filteredSuggestions.map((s) => ({
         ...s,
@@ -101,6 +108,7 @@ export class DocumentAnalysisService {
             filteredSuggestions: [],
             documentSummary: undefined,
             status: AnalysisStatus.PARSE_ERROR,
+            ...(error instanceof AiError ? { failureCategory: error.kind } : {}),
             statusReason: 'AI response could not be parsed - please try again',
             filteredCount: 0,
           };
@@ -115,11 +123,14 @@ export class DocumentAnalysisService {
           documentSummary: undefined,
           status: AnalysisStatus.AI_ERROR,
           statusReason: AI_PROVIDER_FILE_TYPE_REJECTION_REASON,
+          ...(error instanceof AiError ? { failureCategory: error.kind } : {}),
           filteredCount: 0,
         };
       }
 
       const localReasons = {
+        cancelled: 'Document analysis cancelled. No proposals were published.',
+        deadline: 'Document analysis reached its deadline. No proposals were published.',
         input_limit: 'Document analysis input is too large. Try a smaller document.',
         context_limit: 'Document analysis exceeds the local model context. Try a smaller document.',
         busy: 'The local model is busy. Wait for the current operation to finish.',
@@ -132,12 +143,18 @@ export class DocumentAnalysisService {
         filteredSuggestions: [],
         documentSummary: undefined,
         status: AnalysisStatus.AI_ERROR,
+        ...(error instanceof AiError ? { failureCategory: error.kind } : {}),
         statusReason: error instanceof AiError && Object.prototype.hasOwnProperty.call(localReasons, error.kind)
           ? localReasons[error.kind]
           : 'AI service unavailable - please try again later',
         filteredCount: 0,
       };
     }
+  }
+
+  private checkExecution(options?: AiExecutionOptions): void {
+    if (options?.signal?.aborted) throw new AiError('cancelled');
+    if (options?.deadline !== undefined && (!Number.isFinite(options.deadline) || performance.now() >= options.deadline)) throw new AiError('deadline');
   }
 
   private isAiProviderFileTypeError(error: unknown): boolean {

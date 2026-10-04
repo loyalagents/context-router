@@ -54,7 +54,7 @@ Allowed response shape:
 }
 
 PDF fields:
-${JSON.stringify(fields, null, 2)}
+${JSON.stringify(fields.map(({ name, type, options, supported, maxLength, unsupportedReason }) => ({ name, type, options, supported, maxLength, unsupportedReason })), null, 2)}
 
 Active user memories:
 ${JSON.stringify(activePreferences, null, 2)}

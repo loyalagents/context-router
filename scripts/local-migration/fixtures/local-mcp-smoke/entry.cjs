@@ -21,6 +21,11 @@ exports.runLocalIdentityEntrypoint = async ({ argv: [operation] }) => {
         }) + '\n',
       );
     });
+    if (process.env.LOCAL_UI_SMOKE_WEB_ROOT) {
+      const { pathToFileURL } = require('node:url');
+      const { runLocalUi } = await import(pathToFileURL(path.join(process.env.LOCAL_UI_SMOKE_WEB_ROOT, 'local-ui.mjs')));
+      return runLocalUi(['serve-model', '--port', '0', '--mcp-port', '0', '--unlock-dir', path.join(root, 'exports')]);
+    }
     return require(path.join(dist, 'local-mcp.js')).runLocalMcp([
       'serve-model',
       '--port',

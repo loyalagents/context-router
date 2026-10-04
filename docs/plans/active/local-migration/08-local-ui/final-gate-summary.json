@@ -1,0 +1,98 @@
+{
+  "status": "passed",
+  "source": {
+    "headSha": "5e2a67dd785500ba053b2e836c47166e8adeada8",
+    "dirty": true,
+    "copiedInputsSha256": "98c6f04b208d21749d738dcfcb9e1676c43614294a7c678c09c947759de1e896"
+  },
+  "baseSha": "5e2a67dd785500ba053b2e836c47166e8adeada8",
+  "versions": {
+    "node": "v24.21.0",
+    "pnpm": "10.25.0",
+    "python": "3.12.8",
+    "postgres": "15.19",
+    "chromium": "153.0.8010.12",
+    "playwright": "1.63.0"
+  },
+  "administrationSource": "created-loopback-container",
+  "databaseName": "context_router_d586c170a207b13e83c34cc0_test",
+  "baseComparison": "performed",
+  "phases": [
+    {
+      "id": "contract-baseline",
+      "status": "passed",
+      "elapsedMs": 27341
+    },
+    {
+      "id": "documentation",
+      "status": "passed",
+      "elapsedMs": 1328
+    },
+    {
+      "id": "backend-unit-build",
+      "status": "passed",
+      "elapsedMs": 120947
+    },
+    {
+      "id": "backend-database",
+      "status": "passed",
+      "elapsedMs": 221001
+    },
+    {
+      "id": "local-orchestrator",
+      "status": "passed",
+      "elapsedMs": 6376
+    },
+    {
+      "id": "eval-fixtures",
+      "status": "passed",
+      "elapsedMs": 41325
+    },
+    {
+      "id": "eval-deterministic-scenarios",
+      "status": "passed",
+      "elapsedMs": 7541
+    },
+    {
+      "id": "web-production-build",
+      "status": "passed",
+      "elapsedMs": 73777
+    },
+    {
+      "id": "harbor-static",
+      "status": "passed",
+      "elapsedMs": 2291
+    },
+    {
+      "id": "restart-smoke",
+      "status": "passed",
+      "elapsedMs": 82198
+    },
+    {
+      "id": "packaged-composition-smoke",
+      "status": "passed",
+      "elapsedMs": 506587
+    },
+    {
+      "id": "repository-integrity",
+      "status": "passed",
+      "elapsedMs": 1822
+    }
+  ],
+  "cleanup": [
+    {
+      "resource": "database",
+      "status": "removed",
+      "name": "context_router_d586c170a207b13e83c34cc0_test"
+    },
+    {
+      "resource": "administration",
+      "status": "clean"
+    }
+  ],
+  "elapsedMs": 1123577,
+  "mode": "full",
+  "callerIntegrity": true,
+  "cleanupErrors": [],
+  "failure": null
+}

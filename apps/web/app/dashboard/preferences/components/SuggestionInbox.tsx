@@ -1,5 +1,7 @@
 'use client';
 
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
 import { useState } from 'react';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
@@ -75,7 +77,7 @@ export default function SuggestionInbox({
 
     try {
       const graphqlUrl = GRAPHQL_URL;
-      const response = await fetch(graphqlUrl, {
+      const response = await authenticatedFetch(graphqlUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +109,7 @@ export default function SuggestionInbox({
 
     try {
       const graphqlUrl = GRAPHQL_URL;
-      const response = await fetch(graphqlUrl, {
+      const response = await authenticatedFetch(graphqlUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,7 +1,8 @@
+import LocalPage from '@/components/local/LocalPage';
 import { redirect } from 'next/navigation';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
-import { auth0 } from '@/lib/auth0';
+import { getAuth0 } from '@/lib/auth0';
 import PermissionsClient from './PermissionsClient';
 
 export const dynamic = 'force-dynamic';
@@ -37,12 +38,13 @@ interface MyPermissionGrantsQuery {
 }
 
 export default async function PermissionsPage() {
-  const session = await auth0.getSession();
+  if (process.env.CONTEXT_ROUTER_WEB_MODE === 'local') return <LocalPage page="permissions" />;
+  const session = await getAuth0().getSession();
   if (!session?.user) redirect('/auth/login');
 
   let accessToken = '';
   try {
-    const tokenResult = await auth0.getAccessToken();
+    const tokenResult = await getAuth0().getAccessToken();
     accessToken = tokenResult?.token || '';
   } catch (error) {
     console.error('Failed to get access token:', error);

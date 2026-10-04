@@ -13,6 +13,36 @@ input ApplyPreferenceSuggestionInput {
   suggestionId: ID!
 }
 
+input ApplyPreferenceSuggestionV2Input {
+  confidence: Float
+  definitionId: ID!
+  evidence: JSON
+  expectedPreferenceId: ID
+  expectedRevision: String
+  locationId: ID
+  newValue: JSON
+  operation: PreferenceOperation!
+
+  """The preference slug (e.g., "food.dietary_restrictions")"""
+  slug: String!
+  suggestionId: ID!
+}
+
+type ApplyPreferenceSuggestionV2ItemResult {
+  preference: Preference
+
+  """
+  APPLIED, VALIDATION_FAILED, CONFLICT, or UNCERTAIN. Uncertain writes must not be automatically retried.
+  """
+  status: String!
+  suggestionId: ID!
+}
+
+type ApplyPreferenceSuggestionsV2Result {
+  results: [ApplyPreferenceSuggestionV2ItemResult!]!
+  schemaVersion: Int!
+}
+
 """The actor category recorded for an audit event"""
 enum AuditActorType {
   IMPORT
@@ -48,6 +78,14 @@ enum AuditOrigin {
 enum AuditTargetType {
   PREFERENCE
   PREFERENCE_DEFINITION
+}
+
+type ClearMyHistoryResult {
+  mcpAccessEventsDeleted: Int
+  preferenceAuditEventsDeleted: Int
+
+  """CLEARED, ROLLED_BACK, or UNCERTAIN. Never automatically retry."""
+  status: String!
 }
 
 input CreateLocationInput {
@@ -115,6 +153,7 @@ type FilteredSuggestion {
   newValue: JSON!
   oldValue: JSON
   operation: PreferenceOperation!
+  review: PreferenceReviewDescriptor
 
   """The preference slug (e.g., "food.dietary_restrictions")"""
   slug: String!
@@ -217,9 +256,15 @@ type Mutation {
   """Accept a suggestion, promoting it to ACTIVE"""
   acceptSuggestedPreference(id: ID!): Preference!
   applyPreferenceSuggestions(analysisId: ID!, input: [ApplyPreferenceSuggestionInput!]!): [Preference!]!
+  applyPreferenceSuggestionsV2(analysisId: ID!, input: [ApplyPreferenceSuggestionV2Input!]!): ApplyPreferenceSuggestionsV2Result!
 
   """Archive a user-owned preference definition."""
   archivePreferenceDefinition(id: ID!): PreferenceDefinition!
+
+  """
+  Atomically clear both retained history streams for the current user, preserving live memory and authority. Requires CLEAR HISTORY.
+  """
+  clearMyHistory(confirmation: String!): ClearMyHistoryResult!
   createLocation(data: CreateLocationInput!): Location!
 
   """Create a new user-owned preference definition."""
@@ -318,6 +363,11 @@ type PreferenceAuditEvent {
   metadata: JSON
   occurredAt: DateTime!
   origin: AuditOrigin!
+
+  """
+  Event-time SENSITIVE, NON_SENSITIVE or UNKNOWN; legacy records are UNKNOWN.
+  """
+  sensitivity: String!
   subjectSlug: String!
   targetId: String!
   targetType: AuditTargetType!
@@ -396,6 +446,13 @@ enum PreferenceOperation {
   UPDATE
 }
 
+type PreferenceReviewDescriptor {
+  definitionId: ID!
+  expectedPreferenceId: ID
+  expectedRevision: String
+  locationId: ID
+}
+
 """Whether a preference is global or location-scoped"""
 enum PreferenceScope {
   GLOBAL
@@ -420,6 +477,7 @@ type PreferenceSuggestion {
   newValue: JSON!
   oldValue: JSON
   operation: PreferenceOperation!
+  review: PreferenceReviewDescriptor
 
   """The preference slug (e.g., "food.dietary_restrictions")"""
   slug: String!
@@ -488,7 +546,7 @@ type Query {
   suggestedPreferences(locationId: ID): [Preference!]!
 
   """Get a user by ID"""
-  user(id: ID!): User!
+  user(id: ID!): User! @deprecated(reason: "Use me for the authenticated account. Retained during the LM-008 compatibility window.")
 }
 
 """Current-user data reset mode."""

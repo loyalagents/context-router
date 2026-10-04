@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { assertLocalUiParentCleanupSafe } from './local-ui-lifecycle.mjs';
+import { runLocalUiSmoke } from './local-ui-smoke.mjs';
 import { runLocalMcpSmoke } from './local-mcp-smoke.mjs';
 
 import assert from "node:assert/strict";
@@ -129,6 +131,12 @@ function trackedCleanup(journal, id, cleanup, successStatus = "removed") {
     if (primaryError) throw primaryError;
     if (journalError) throw journalError;
   };
+}
+
+export async function removeRestartSmokeSecretsAfterCleanup(directory, state) {
+  assertLocalUiParentCleanupSafe(state);
+  await withTimeout(rm(directory, { recursive: true, force: true }), 5_000,
+    "secret-directory cleanup timed out");
 }
 
 async function registerTrackedResource(
@@ -1461,12 +1469,7 @@ export async function runRestartSmoke({
           identity: { path: secretDirectory },
           recovery: `Remove only the exact smoke secret directory ${secretDirectory}.`,
         },
-        () =>
-          withTimeout(
-            rm(secretDirectory, { recursive: true, force: true }),
-            5_000,
-            "secret-directory cleanup timed out",
-          ),
+        () => removeRestartSmokeSecretsAfterCleanup(secretDirectory, journal.state),
       );
       await chmod(secretDirectory, 0o700);
       const tls = await createTlsFixture(
@@ -1689,6 +1692,11 @@ export async function runRestartSmoke({
         home: path.join(secretDirectory, 'local-mcp-home'), temporaryDirectory: path.join(secretDirectory, 'local-mcp-tmp'),
         stateParent: secretDirectory, journal, environment, signal,
       });
+      const localUi = await runLocalUiSmoke({
+        webRoot: path.join(repositoryRoot, 'apps/web'), repositoryRoot, cwd: hostileLocalCwd,
+        home: path.join(secretDirectory, 'local-ui-home'), temporaryDirectory: path.join(secretDirectory, 'local-ui-tmp'),
+        stateParent: secretDirectory, journal, environment, signal,
+      });
       return {
         databaseName: database.databaseName,
         administrationSource: administration.source,
@@ -1701,6 +1709,7 @@ export async function runRestartSmoke({
         localDatabase,
         localModel,
         localMcp,
+        localUi,
         elapsedMs: Date.now() - startedAt,
       };
     });

@@ -1,5 +1,7 @@
 'use client';
 
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
 import { gql } from '@apollo/client';
 import { print } from 'graphql';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -82,6 +84,7 @@ interface McpAccessFilters {
 interface McpAccessHistoryTabProps {
   accessToken: string;
   shouldLoad: boolean;
+  invalidationSignal?: AbortSignal;
 }
 
 function formatAbsoluteTimestamp(value: string): string {
@@ -144,9 +147,11 @@ function sanitizeFilters(filters: McpAccessFilters) {
 async function fetchMcpAccessHistory(
   accessToken: string,
   input: Record<string, unknown>,
+  signal?: AbortSignal,
 ): Promise<McpAccessHistoryPage> {
-  const response = await fetch(GRAPHQL_ENDPOINT, {
+  const response = await authenticatedFetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
+    signal,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
@@ -169,6 +174,7 @@ async function fetchMcpAccessHistory(
 export default function McpAccessHistoryTab({
   accessToken,
   shouldLoad,
+  invalidationSignal,
 }: McpAccessHistoryTabProps) {
   const [draftFilters, setDraftFilters] = useState<McpAccessFilters>(DEFAULT_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState<McpAccessFilters>(DEFAULT_FILTERS);
@@ -184,6 +190,8 @@ export default function McpAccessHistoryTab({
     cursor: null,
   });
   const requestVersionRef = useRef(0);
+  const pendingRef = useRef<AbortController | null>(null);
+  useEffect(() => () => { requestVersionRef.current++; pendingRef.current?.abort(); }, []);
 
   const sanitizedAppliedFilters = useMemo(
     () => sanitizeFilters(appliedFilters),
@@ -243,6 +251,9 @@ export default function McpAccessHistoryTab({
   }, [sanitizedAppliedFilters]);
 
   const loadHistory = useCallback(async (reset: boolean, cursor: string | null = null) => {
+    pendingRef.current?.abort();
+    const controller = new AbortController(); pendingRef.current = controller;
+    const signal = invalidationSignal ? AbortSignal.any([invalidationSignal, controller.signal]) : controller.signal;
     const requestVersion = requestVersionRef.current + 1;
     requestVersionRef.current = requestVersion;
     lastRequestRef.current = { reset, cursor };
@@ -285,9 +296,9 @@ export default function McpAccessHistoryTab({
         input.occurredTo = new Date(sanitizedAppliedFilters.occurredTo).toISOString();
       }
 
-      const page = await fetchMcpAccessHistory(accessToken, input);
+      const page = await fetchMcpAccessHistory(accessToken, input, signal);
 
-      if (requestVersion !== requestVersionRef.current) {
+      if (signal.aborted || requestVersion !== requestVersionRef.current) {
         return;
       }
 
@@ -301,7 +312,7 @@ export default function McpAccessHistoryTab({
         setExpandedIds({});
       }
     } catch (loadError) {
-      if (requestVersion === requestVersionRef.current) {
+      if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setError(
           loadError instanceof Error
             ? loadError.message
@@ -309,12 +320,12 @@ export default function McpAccessHistoryTab({
         );
       }
     } finally {
-      if (requestVersion === requestVersionRef.current) {
+      if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setIsLoadingInitial(false);
         setIsLoadingMore(false);
       }
     }
-  }, [accessToken, sanitizedAppliedFilters]);
+  }, [accessToken, sanitizedAppliedFilters, invalidationSignal]);
 
   useEffect(() => {
     if (!shouldLoad) {

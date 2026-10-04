@@ -1,5 +1,7 @@
 'use client';
 
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
 import { useState } from 'react';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
@@ -182,7 +184,7 @@ export default function ManualPreferenceForm({
       let createdDefinition: PreferenceDefinition | undefined;
 
       if (isNewDefinition) {
-        const createResponse = await fetch(graphqlUrl, {
+        const createResponse = await authenticatedFetch(graphqlUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -213,7 +215,7 @@ export default function ManualPreferenceForm({
         createdDefinition = createData.data.createPreferenceDefinition;
       }
 
-      const setResponse = await fetch(graphqlUrl, {
+      const setResponse = await authenticatedFetch(graphqlUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -263,7 +265,8 @@ export default function ManualPreferenceForm({
           </label>
           <input
             list="preference-slug-options"
-            value={slug}
+            aria-label="Slug"
+                value={slug}
             onChange={(event) => setSlug(event.target.value)}
             placeholder="food.oatmeal"
             className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -292,6 +295,7 @@ export default function ManualPreferenceForm({
               </label>
               <input
                 type="text"
+                aria-label="Description"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="What this preference means"
@@ -304,6 +308,7 @@ export default function ManualPreferenceForm({
                 Value Type
               </label>
               <select
+                aria-label="Value Type"
                 value={valueType}
                 onChange={(event) =>
                   setValueType(event.target.value as (typeof VALUE_TYPES)[number])
@@ -325,7 +330,8 @@ export default function ManualPreferenceForm({
                 </label>
                 <input
                   type="text"
-                  value={enumOptions}
+                  aria-label="Enum Options"
+                value={enumOptions}
                   onChange={(event) => setEnumOptions(event.target.value)}
                   placeholder="likes, dislikes, neutral"
                   className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -345,7 +351,8 @@ export default function ManualPreferenceForm({
 
           {effectiveValueType === 'BOOLEAN' ? (
             <select
-              value={booleanValue}
+              aria-label="Value"
+                value={booleanValue}
               onChange={(event) =>
                 setBooleanValue(event.target.value as 'true' | 'false')
               }
@@ -358,6 +365,7 @@ export default function ManualPreferenceForm({
             <>
               <input
                 type="text"
+                aria-label="Value"
                 value={arrayValue}
                 onChange={(event) => setArrayValue(event.target.value)}
                 placeholder="oatmeal, granola, fruit"
@@ -371,6 +379,7 @@ export default function ManualPreferenceForm({
             <>
               <input
                 type="text"
+                aria-label="Value"
                 value={textValue}
                 onChange={(event) => setTextValue(event.target.value)}
                 placeholder={

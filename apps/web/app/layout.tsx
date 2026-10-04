@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { ApolloWrapper } from '@/lib/apollo-wrapper';
 import './globals.css';
+import LocalSession from '@/components/local/LocalSession';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Context Router',
@@ -15,9 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ApolloWrapper>
-          {children}
-        </ApolloWrapper>
+        {process.env.CONTEXT_ROUTER_WEB_MODE === 'local' ? <LocalSession>{children}</LocalSession> : <ApolloWrapper>{children}</ApolloWrapper>}
       </body>
     </html>
   );

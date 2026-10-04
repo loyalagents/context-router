@@ -3,6 +3,7 @@ import type { ResetStorage } from "./reset-storage";
 import type { PreferenceRepository } from "@modules/preferences/preference/preference.repository";
 import type { PreferenceDefinitionRepository } from "@modules/preferences/preference-definition/preference-definition.repository";
 import type { PreferenceAuditService } from "@modules/preferences/audit/preference-audit.service";
+import type { LocationRepository } from "@modules/preferences/location/location.repository";
 
 /** All methods belong to one transaction. Await each operation; never retain a facet past the callback. */
 export interface StorageScope {
@@ -10,12 +11,13 @@ export interface StorageScope {
   readonly reset: ResetStorage;
   readonly preferences: Pick<
     PreferenceRepository,
-    "upsertActive" | "upsertSuggested" | "upsertRejected" | "delete"
+    "upsertActive" | "upsertSuggested" | "upsertRejected" | "delete" | "findActiveExact" | "compareAndSetActive"
   >;
   readonly definitions: Pick<
     PreferenceDefinitionRepository,
-    "create" | "update" | "archive"
+    "create" | "update" | "archive" | "getDefinitionById" | "getDefinitionBySlug"
   >;
+  readonly locations: Pick<LocationRepository, "findOne">;
   readonly audit: PreferenceAuditService;
 }
 

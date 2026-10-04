@@ -1,4 +1,4 @@
-import { AiExecutionOptions, createAiWorkflow } from '../../../domains/shared/ports/ai-execution';
+import { AiError, AiExecutionOptions, createAiWorkflow } from '../../../domains/shared/ports/ai-execution';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
@@ -157,8 +157,12 @@ export class FormFillService {
         filledPdfBase64: filledPdf.toString('base64'),
         summary,
       };
-    } catch {
+    } catch (error) {
       this.logger.error(`Form fill failed during ${stage}`);
+      if (error instanceof AiError) {
+        return { ...this.emptyResponse(fillId, 'failed', filename, outputFilename, [error.message,
+          'No output was published. Check model status before starting another operation.']), failureCategory: error.kind };
+      }
       return this.emptyResponse(fillId, 'failed', filename, outputFilename, [
         'Form fill failed. Please try again.',
         this.failureWarning(stage),

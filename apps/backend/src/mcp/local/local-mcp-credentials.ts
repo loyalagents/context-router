@@ -18,6 +18,15 @@ export interface LocalMcpClientSummary {
 export interface LocalMcpCredential extends LocalMcpClientSummary {
   principalId: string;
 }
+export interface LocalMcpGrantSnapshot {
+  id: string; target: string; action: 'READ' | 'SUGGEST' | 'WRITE' | 'DEFINE'; effect: 'ALLOW' | 'DENY';
+  createdAt: number; updatedAt: number;
+}
+export type LocalMcpAuthoritySnapshot = { status: 'AUTHORITY_UNAVAILABLE'; client: LocalMcpClientSummary } | {
+  status: 'AVAILABLE'; client: LocalMcpClientSummary; grants: LocalMcpGrantSnapshot[]; revision: string;
+  definitions: { slug: string; isSensitive: boolean }[];
+};
+export interface LocalMcpExpectedAuthority { generation: number; revision: string; }
 /** Local edge port: implementations must return fresh persisted authority. */
 export abstract class LocalMcpCredentials {
   abstract authenticate(token: string): LocalMcpCredential | null;

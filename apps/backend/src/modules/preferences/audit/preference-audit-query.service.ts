@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { AuditHistoryStorage } from '@/domains/shared/storage/history-storage';
 import type { PreferenceAuditEvent as StoredPreferenceAuditEvent } from "@/domains/shared/storage/storage-types";
 import { PreferenceAuditHistoryInput } from './dto/preference-audit-history.input';
+import { eventSensitivity, type EventSensitivity } from './event-sensitivity';
 
 interface AuditCursorPayload {
   occurredAt: string;
@@ -9,7 +10,7 @@ interface AuditCursorPayload {
 }
 
 export interface PreferenceAuditHistoryPage {
-  items: StoredPreferenceAuditEvent[];
+  items: (StoredPreferenceAuditEvent & { sensitivity: EventSensitivity })[];
   nextCursor: string | null;
   hasNextPage: boolean;
 }
@@ -36,7 +37,7 @@ export class PreferenceAuditQueryService {
         : null;
 
     return {
-      items,
+      items: items.map((event) => ({ ...event, sensitivity: eventSensitivity(event.metadata) })),
       nextCursor,
       hasNextPage,
     };

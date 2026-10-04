@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { gql } from '@apollo/client';
-import { auth0 } from '@/lib/auth0';
+import { getAuth0 } from '@/lib/auth0';
 import { getClient } from '@/lib/apollo-client';
 import SearchLabClient from './SearchLabClient';
 import { Preference, PreferenceDefinition } from './types';
@@ -63,12 +63,12 @@ interface SearchLabDataQuery {
 }
 
 export default async function SearchLabPage() {
-  const session = await auth0.getSession();
+  const session = await getAuth0().getSession();
   if (!session?.user) redirect('/auth/login');
 
   let accessToken = '';
   try {
-    const tokenResult = await auth0.getAccessToken();
+    const tokenResult = await getAuth0().getAccessToken();
     accessToken = tokenResult?.token || '';
   } catch (e) {
     console.error('Failed to get access token:', e);

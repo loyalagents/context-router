@@ -1,10 +1,13 @@
 import {
   PreferenceRepository,
   type EnrichedPreference,
+  type ReviewedPreferenceTarget,
+  type ReviewedPreferenceState,
 } from "@/modules/preferences/preference/preference.repository";
 import { postgresClient } from "./postgres-client";
 import { Injectable, Logger } from "@nestjs/common";
 import type { Preference as StoredPreference } from "@/domains/shared/storage/storage-types";
+import { preferenceRevision } from '../../../modules/preferences/preference/preference-revision';
 
 import {
   Prisma,
@@ -95,6 +98,21 @@ export class PostgresPreferenceRepository implements PreferenceRepository {
   // ──────────────────────────────────────────────
   // Upserts
   // ──────────────────────────────────────────────
+  async findActiveExact(target: ReviewedPreferenceTarget): Promise<EnrichedPreference | null> {
+    const row = await this.prisma.preference.findFirst({ where: { userId: target.userId, definitionId: target.definitionId, contextKey: this.contextKeyFor(target.locationId), status: 'ACTIVE' }, include: this.includeDefinition });
+    return row ? this.enrich(row) : null;
+  }
+  async compareAndSetActive(target: ReviewedPreferenceTarget, expected: ReviewedPreferenceState | null, value: unknown,
+    provenance: PreferenceProvenanceOptions, attribution: PreferenceMutationAttribution): Promise<PreferenceWriteResult<EnrichedPreference> | null> {
+    const beforeState = await this.findActiveExact(target);
+    if (expected ? !beforeState || beforeState.id !== expected.id || preferenceRevision(beforeState) !== expected.revision : beforeState !== null) return null;
+    const data = { value: value === null ? Prisma.JsonNull : value as Prisma.InputJsonValue, sourceType: provenance.sourceType, confidence: provenance.confidence ?? null,
+      evidence: this.toJsonValue(provenance.evidence), ...this.lastModifiedData(attribution) };
+    const result = expected
+      ? await this.prisma.preference.update({ where: { id: expected.id }, data, include: this.includeDefinition })
+      : await this.prisma.preference.create({ data: { userId: target.userId, definitionId: target.definitionId, locationId: target.locationId, contextKey: this.contextKeyFor(target.locationId), status: 'ACTIVE', ...data }, include: this.includeDefinition });
+    return { beforeState, result: this.enrich(result) };
+  }
 
   /**
    * Upserts an ACTIVE preference for a user.

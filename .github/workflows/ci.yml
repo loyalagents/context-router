@@ -42,6 +42,7 @@ jobs:
               - 'scripts/local-migration/**'
               - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/backend/**'
+              - 'apps/web/local-ui.mjs'
             local_orchestrator:
               - '.github/workflows/ci.yml'
               - '.github/workflows/local-migration-baseline.yml'
@@ -89,7 +90,7 @@ jobs:
               - 'scripts/local-migration/**'
               - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/web/**'
-              - 'apps/backend/src/schema.gql'
+              - 'apps/backend/**'
 
   documentation-checks:
     runs-on: ubuntu-latest
@@ -180,6 +181,9 @@ jobs:
 
       - name: Test local MCP
         run: pnpm test:local-mcp
+
+      - name: Test local browser boundary
+        run: pnpm test:local-ui
 
   local-orchestrator-checks:
     needs: changes
@@ -292,5 +296,26 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: .
 
+      - name: Generate local UI backend Prisma client
+        run: pnpm --filter backend prisma:generate
+        working-directory: .
+
+      - name: Build local UI backend
+        run: pnpm --filter backend build
+        working-directory: .
+
+      - name: Install pinned Chromium prerequisite
+        timeout-minutes: 10
+        run: pnpm --filter web exec playwright install --with-deps chromium
+        working-directory: .
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+
       - name: Build frontend
         run: pnpm build
+
+      - name: Test authenticated local dashboard
+        timeout-minutes: 10
+        run: pnpm test:local-ui
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright

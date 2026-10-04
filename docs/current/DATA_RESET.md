@@ -9,7 +9,7 @@
   `apps/backend/test/local-database/application.spec.ts`,
   `apps/backend/prisma/migrations/step03_20260922_external_identity_issuer/migration.sql`,
   and `apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx`
-- Last reviewed: 2026-09-23
+- Last reviewed: 2026-10-04
 
 ## Reset modes and safety semantics
 
@@ -72,3 +72,12 @@ not authorization and cannot enable a mode that the backend has disabled.
 - The feature is named for demo cleanup and is not a general account-deletion
   or regulatory-erasure workflow.
 - `User` and `ExternalIdentity` are retained in all modes.
+
+## Separate History Clear
+
+The dashboard's **Clear memory** uses `MEMORY_ONLY` and explicitly retains both
+history streams. **Clear both history streams** is a distinct confirmed
+`clearMyHistory` operation, with no preference or schema deletion. Its atomicity,
+uncertain outcomes, retained authority and backup limits are documented in
+[Audit and Access History](AUDIT_AND_ACCESS_HISTORY.md). The local UI does not
+expose the hosted advanced demo-reset controls.

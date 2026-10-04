@@ -1,5 +1,7 @@
 'use client';
 
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
 import { useState } from 'react';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
@@ -47,7 +49,7 @@ const RESET_OPTIONS: ResetOption[] = [
     label: 'Reset Preferences',
     tone: 'normal',
     confirmation:
-      'Reset your active preferences, profile memory, and pending/rejected suggestions? This cannot be undone.',
+      'Reset your active preferences, profile memory, and pending/rejected suggestions? Old values remain in history until you separately clear both history streams. This cannot be undone.',
   },
   {
     mode: 'DEMO_DATA',
@@ -117,7 +119,7 @@ export default function MemoryResetPanel({
 
     try {
       const graphqlUrl = GRAPHQL_URL;
-      const response = await fetch(graphqlUrl, {
+      const response = await authenticatedFetch(graphqlUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,6 +158,7 @@ export default function MemoryResetPanel({
           </h2>
           <p className="mt-1 text-sm text-gray-600">
             Clear the current account&apos;s saved memory, including profile fields.
+            {' '}History and its old values remain until separately cleared on the Audit History page.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

@@ -1,5 +1,7 @@
 'use client';
 
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
 import { useState } from 'react';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
@@ -180,6 +182,7 @@ function DefinitionForm({
             </label>
             <input
               type="text"
+              aria-label="Slug"
               value={formData.slug}
               onChange={(e) => onChange({ ...formData, slug: e.target.value })}
               placeholder="category.preference_name"
@@ -197,7 +200,8 @@ function DefinitionForm({
           </label>
           <input
             type="text"
-            value={formData.displayName}
+            aria-label="Display Name"
+              value={formData.displayName}
             onChange={(e) => onChange({ ...formData, displayName: e.target.value })}
             placeholder="e.g. Dietary Restrictions"
             className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -210,7 +214,8 @@ function DefinitionForm({
           </label>
           <input
             type="text"
-            value={formData.description}
+            aria-label="Description"
+              value={formData.description}
             onChange={(e) => onChange({ ...formData, description: e.target.value })}
             placeholder="Human-readable description"
             className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -223,6 +228,7 @@ function DefinitionForm({
               Value Type
             </label>
             <select
+              aria-label="Value Type"
               value={formData.valueType}
               onChange={(e) =>
                 onChange({ ...formData, valueType: e.target.value as FormData['valueType'] })
@@ -240,6 +246,7 @@ function DefinitionForm({
               Scope
             </label>
             <select
+              aria-label="Scope"
               value={formData.scope}
               onChange={(e) =>
                 onChange({ ...formData, scope: e.target.value as FormData['scope'] })
@@ -260,6 +267,7 @@ function DefinitionForm({
             </label>
             <input
               type="text"
+              aria-label="Options (comma-separated)"
               value={formData.options}
               onChange={(e) => onChange({ ...formData, options: e.target.value })}
               placeholder="option1, option2, option3"
@@ -333,7 +341,7 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
   const handleDownload = async (scope: DownloadScope) => {
     setIsDownloading(true);
     try {
-      const response = await fetch(graphqlUrl, {
+      const response = await authenticatedFetch(graphqlUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -412,7 +420,7 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
         input.options = formData.options.split(',').map((o) => o.trim()).filter(Boolean);
       }
 
-      const response = await fetch(graphqlUrl, {
+      const response = await authenticatedFetch(graphqlUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -465,7 +473,7 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
         input.options = null;
       }
 
-      const response = await fetch(graphqlUrl, {
+      const response = await authenticatedFetch(graphqlUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -497,7 +505,7 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
     if (!confirm(`Archive "${def.slug}"? It will no longer appear in the catalog.`)) return;
 
     try {
-      const response = await fetch(graphqlUrl, {
+      const response = await authenticatedFetch(graphqlUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

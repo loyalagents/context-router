@@ -1,3 +1,4 @@
+import type { AiErrorKind } from '../../../../domains/shared/ports/ai-execution';
 import { ObjectType, Field, ID, Int, registerEnumType } from '@nestjs/graphql';
 import { PreferenceSuggestion, FilteredSuggestion } from './preference-suggestion.dto';
 
@@ -32,6 +33,9 @@ export class DocumentAnalysisResult {
 
   @Field({ nullable: true })
   statusReason?: string;
+
+  @Field(() => String, { nullable: true, description: 'Safe AI failure category; provider details are never returned.' })
+  failureCategory?: AiErrorKind;
 
   @Field(() => Int, { defaultValue: 0 })
   filteredCount: number;

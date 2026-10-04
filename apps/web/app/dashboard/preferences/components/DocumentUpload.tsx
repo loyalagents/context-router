@@ -1,5 +1,9 @@
 'use client';
 
+import { useLocalSession } from '@/components/local/LocalSession';
+import LocalDocumentUpload from '@/components/local/LocalDocumentUpload';
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
 import { useState, useCallback, useRef } from 'react';
 import { BACKEND_URL } from '@/lib/runtime-config';
 import type {
@@ -104,7 +108,7 @@ function getStatusLabel(status: UploadFileStatus): string {
   }
 }
 
-export default function DocumentUpload({
+function HostedDocumentUpload({
   onAnalysisComplete,
   accessToken,
 }: DocumentUploadProps) {
@@ -170,7 +174,7 @@ export default function DocumentUpload({
         const formData = new FormData();
         formData.append('file', record.file);
 
-        const response = await fetch(`${backendUrl}/api/preferences/analysis`, {
+        const response = await authenticatedFetch(`${backendUrl}/api/preferences/analysis`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -358,4 +362,10 @@ export default function DocumentUpload({
       )}
     </div>
   );
+}
+
+
+export default function DocumentUpload(props: DocumentUploadProps) {
+  const local = useLocalSession();
+  return local ? <LocalDocumentUpload onAnalysisComplete={props.onAnalysisComplete} /> : <HostedDocumentUpload {...props} />;
 }

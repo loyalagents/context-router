@@ -52,6 +52,10 @@ export class PdfFieldExtractorService {
       type,
       options,
       supported: !unsupportedReason,
+      ...(field instanceof PDFTextField ? { existingValue: field.getText() ?? '' }
+        : field instanceof PDFCheckBox ? { existingValue: field.isChecked() }
+        : field instanceof PDFRadioGroup ? { existingValue: field.getSelected() ?? '' }
+        : field instanceof PDFDropdown || field instanceof PDFOptionList ? { existingValue: field.getSelected() } : {}),
       ...(field instanceof PDFTextField && field.getMaxLength() !== undefined
         ? { maxLength: field.getMaxLength() }
         : {}),

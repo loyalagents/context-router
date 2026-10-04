@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
   GrantAction,
   GrantEffect,
@@ -7,6 +7,10 @@ import { PermissionGrantRepository } from './permission-grant.repository';
 import { MANAGED_MCP_CLIENT_KEYS } from './permission-grant.constants';
 
 export type PermissionGrantDecision = 'allow' | 'deny' | 'no-grant';
+export interface PermissionGrantReader {
+  findMatchingGrants(userId: string, clientKey: string, action: GrantAction, prefixChain: string[]): Promise<Array<{ target: string; effect: GrantEffect }>>;
+  findByUserClientAction(userId: string, clientKey: string, action: GrantAction): Promise<Array<{ target: string; effect: GrantEffect }>>;
+}
 type PermissionGrantActionInput =
   | GrantAction
   | 'read'
@@ -18,7 +22,7 @@ export const PERMISSION_GRANT_TARGET_PATTERN =
 
 @Injectable()
 export class PermissionGrantService {
-  constructor(private readonly repository: PermissionGrantRepository) {}
+  constructor(@Inject(PermissionGrantRepository) private readonly repository: PermissionGrantReader) {}
 
   private getSpecificity(target: string): number {
     if (target === '*') {

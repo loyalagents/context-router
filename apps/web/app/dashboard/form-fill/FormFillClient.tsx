@@ -1,5 +1,9 @@
 'use client';
 
+import { AiControls, useAiOperation } from '@/components/local/AiControls';
+import { operationFailure, reviewLocalFile, validateLocalFile } from '@/lib/local-upload';
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
 import { useEffect, useRef, useState } from 'react';
 import { BACKEND_URL } from '@/lib/runtime-config';
 
@@ -35,6 +39,7 @@ interface FormFillSummary {
 }
 
 interface FormFillResponse {
+  failureCategory?: string;
   fillId: string;
   status: FormFillStatus;
   originalFilename: string;
@@ -85,6 +90,10 @@ function blobUrlFromBase64(base64: string, mimeType: string): string {
 }
 
 export default function FormFillClient({ accessToken }: FormFillClientProps) {
+  const operation = useAiOperation('formFill');
+  const local = operation.session;
+  const [consent, setConsent] = useState(false);
+  const [overwrite, setOverwrite] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -113,13 +122,17 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
     selectFile(file);
+    event.target.value = '';
   };
 
   const selectFile = (file: File | null) => {
-    setSelectedFile(file);
+    if (operation.pending) return;
+    const invalid = file && local ? validateLocalFile(file, local.capabilities.operations.formFill) : null;
+    setSelectedFile(invalid ? null : file);
+    setOverwrite('');
     setResult(null);
     replaceDownloadUrl(null);
-    setError(null);
+    setError(invalid);
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
@@ -147,6 +160,7 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
   };
 
   const upload = async () => {
+    if (operation.pending || !operation.available || (local && !consent)) return;
     if (!selectedFile) {
       setError('Select a fillable PDF first.');
       return;
@@ -157,22 +171,30 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
       return;
     }
 
+    const fields = [...new Set(overwrite.split('\n').map((value) => value.trim()).filter(Boolean))];
+    if (fields.length > 32 || fields.some((name) => name.length > 256)) { setError('Enter at most 32 field names, each at most 256 characters.'); return; }
+    const request = operation.begin();
     setIsUploading(true);
     setError(null);
     setResult(null);
     replaceDownloadUrl(null);
 
     try {
+      if (local && !await reviewLocalFile(selectedFile, local.capabilities.operations.formFill, request.signal)) throw new Error('Upload cancelled during secret review.');
+      request.signal.throwIfAborted();
       const backendUrl = BACKEND_URL;
       const formData = new FormData();
       formData.append('file', selectedFile);
+      if (local) formData.append('fieldPolicies', JSON.stringify({ schemaVersion: 2, fields: fields.map((fieldName) => ({ fieldName, overwrite: true })) }));
 
-      const response = await fetch(`${backendUrl}/api/form-fill/pdf`, {
+      const response = await authenticatedFetch(`${backendUrl}/api/form-fill/pdf`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          ...request.headers,
         },
         body: formData,
+        signal: request.signal,
       });
 
       if (!response.ok) {
@@ -181,6 +203,8 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
       }
 
       const data: FormFillResponse = await response.json();
+      request.signal.throwIfAborted();
+      if (!operation.isCurrent(request.controller)) return;
       const { filledPdfBase64, ...summaryResult } = data;
 
       if (filledPdfBase64) {
@@ -191,13 +215,10 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
 
       setResult(summaryResult);
     } catch (uploadError) {
-      setError(
-        uploadError instanceof Error
-          ? uploadError.message
-          : 'Form fill failed.',
-      );
+      if (operation.isCurrent(request.controller)) setError(operationFailure(uploadError, request.signal));
     } finally {
-      setIsUploading(false);
+      if (operation.isCurrent(request.controller)) { setSelectedFile(null); setIsUploading(false); setOverwrite(''); }
+      operation.finish(request.controller);
     }
   };
 
@@ -205,11 +226,17 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
     <div className="space-y-6">
       <div className="p-6 border rounded-lg bg-white shadow-sm">
         <div className="space-y-4">
+          {local && <>
+            <p className="text-sm text-gray-600">Fillable PDFs only, up to {Math.floor(local.capabilities.operations.formFill.maxFileSizeBytes / 1024 / 1024)} MB. Existing nonempty fields are preserved. Review the output before use.</p>
+            <p className="text-sm text-gray-600">Raw input stays in memory for this operation and is released afterward. The filled PDF stays here until replaced, locked or closed.</p>
+            <label className="block text-sm"><input type="checkbox" checked={consent} disabled={isUploading} onChange={(e) => setConsent(e.target.checked)} /> I reviewed this PDF and consent to sending its field metadata and my stored preferences to the local model.</label>
+          </>}
           <div>
             <input
               id="form-file"
               type="file"
               accept="application/pdf,.pdf"
+              disabled={isUploading || !operation.available || (!!local && !consent)}
               onChange={handleFileChange}
               className="sr-only"
             />
@@ -238,10 +265,15 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
             )}
           </div>
 
+          {local && <label className="block text-sm">Fields to overwrite (exact PDF field names, one per line)
+            <textarea aria-label="Fields to overwrite" value={overwrite} disabled={isUploading} onChange={(e) => setOverwrite(e.target.value)} rows={2} maxLength={8224} className="block w-full border rounded p-2" />
+            <span>Only the fields you name may replace existing values. Leave empty to preserve all existing values. Skipped field names appear in the results.</span>
+          </label>}
+          <AiControls operation={operation} onCancel={() => { setSelectedFile(null); setOverwrite(''); setIsUploading(false); setError('Operation cancelled. Input released; check model status before continuing.'); }} />
           <button
             type="button"
             onClick={upload}
-            disabled={isUploading || !selectedFile}
+            disabled={isUploading || !selectedFile || !operation.available || (!!local && !consent)}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isUploading ? 'Filling PDF...' : 'Fill PDF'}
@@ -250,7 +282,7 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
       </div>
 
       {error && (
-        <div className="p-4 border border-red-200 rounded-lg bg-red-50 text-red-700">
+        <div role="alert" className="p-4 border border-red-200 rounded-lg bg-red-50 text-red-700">
           {error}
         </div>
       )}
@@ -279,6 +311,7 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
             )}
           </div>
 
+          {result.failureCategory && <p role="status">AI result: {result.failureCategory}. Check model status before continuing.</p>}
           {result.summary.warnings.length > 0 && (
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
               {result.summary.warnings.map((warning) => (
@@ -335,7 +368,7 @@ export default function FormFillClient({ accessToken }: FormFillClientProps) {
           )}
 
           <p className="text-sm text-gray-500">
-            Skipped fields were left blank instead of being guessed.
+            {local ? 'Skipped fields retain their original values. No skipped or conflicting action was applied.' : 'Skipped fields were left blank instead of being guessed.'}
           </p>
         </div>
       )}

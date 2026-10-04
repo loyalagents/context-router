@@ -1,3 +1,4 @@
+import { localUiLifecycleResources } from './fixtures/local-ui-lifecycle.mjs';
 import { localMcpLifecycleResources } from './fixtures/local-mcp-lifecycle.mjs';
 import { localModelLifecycleResources } from './fixtures/local-model-lifecycle.mjs';
 import { localDatabaseLifecycleResources } from "./fixtures/local-database-lifecycle.mjs";
@@ -332,6 +333,7 @@ test("packaged smoke phase independently rejects an incomplete child journal", a
           ...localDatabaseLifecycleResources(diagnostics),
           ...localModelLifecycleResources(diagnostics),
           ...localMcpLifecycleResources(diagnostics),
+          ...localUiLifecycleResources(diagnostics),
         ],
       })}\n`,
       { mode: 0o600 },
@@ -862,6 +864,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
     { id: "local-database-preview", status: "active", successorModes: [], requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"] },
     { id: "local-model-preview", status: "active", successorModes: [], requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"] },
     { id: "local-mcp", status: "active", successorModes: [], requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"] },
+    { id: "local-ui", status: "active", successorModes: [], requiredEvidenceClasses: ["contract", "build", "state", "restart", "integrity"] },
   ]);
   const dualModePhases = new Set([
     "contract-baseline",
@@ -876,8 +879,8 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
     assert.deepEqual(
       phase.modes,
       dualModePhases.has(phase.id)
-        ? ["hosted-baseline", "local-identity-preview", "local-database-preview", "local-model-preview", "local-mcp"]
-        : ["hosted-baseline"],
+        ? ["hosted-baseline", "local-identity-preview", "local-database-preview", "local-model-preview", "local-mcp", "local-ui"]
+        : phase.id === "web-production-build" ? ["hosted-baseline", "local-ui"] : ["hosted-baseline"],
     );
   }
   assert.deepEqual(
@@ -903,6 +906,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
           "scripts/local-migration/local-database-smoke.test.mjs",
           "scripts/local-migration/local-model-smoke.test.mjs",
           "scripts/local-migration/local-mcp-smoke.test.mjs",
+          "scripts/local-migration/local-ui-smoke.test.mjs",
         ],
         ["node", "scripts/local-migration/check-contract-baseline.mjs"],
       ],
@@ -917,6 +921,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
         ["pnpm", "--filter", "backend", "test:unit"],
         ["pnpm", "--filter", "backend", "test:local-model"],
         ["pnpm", "--filter", "backend", "test:local-mcp"],
+        ["pnpm", "--filter", "backend", "test:local-ui"],
       ],
       [
         ["pnpm", "--filter", "backend", "exec", "prisma", "migrate", "deploy"],
@@ -934,7 +939,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
         ["pnpm", "eval:run", "--scenario", "samir-desai-i9-template-smoke"],
         ["pnpm", "eval:run", "--scenario", "elena-marquez-i9-template-smoke"],
       ],
-      [["pnpm", "--filter", "web", "build"]],
+      [["pnpm", "--filter", "web", "build"], ["pnpm", "--filter", "web", "test:local-ui"]],
       [["bash", "examples/eval-harbor/scripts/check_static.sh"]],
       [["node", "scripts/local-migration/restart-smoke.mjs"]],
       [["node", "scripts/local-migration/packaging-smoke.mjs"]],
@@ -954,7 +959,7 @@ test("dedicated CI seeds the exact offline pnpm Corepack cache before invoking t
   assert.ok(gate > seed, "workflow must seed Corepack before running the gate");
 });
 
-test("dedicated CI enforces the reviewed 153/165-minute workflow budget", async () => {
+test("dedicated CI enforces the reviewed 163/175-minute workflow budget", async () => {
   const workflow = parseYaml(
     await readFile(
       new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
@@ -962,7 +967,7 @@ test("dedicated CI enforces the reviewed 153/165-minute workflow budget", async 
     ),
   );
   const job = workflow.jobs["local-migration-baseline"];
-  assert.equal(job["timeout-minutes"], 165);
+  assert.equal(job["timeout-minutes"], 175);
   const expected = [
     ["actions/checkout@v4", 5],
     ["pnpm/action-setup@v6.0.8", 5],
@@ -970,6 +975,7 @@ test("dedicated CI enforces the reviewed 153/165-minute workflow budget", async 
     ["actions/setup-python@v5", 5],
     ["Verify toolchain and seed offline Corepack runtime", 5],
     ["Install dependencies", 15],
+    ["Install pinned Chromium prerequisite", 10],
     ["Run the Local Migration Baseline Gate", 108],
     ["Persist sanitized gate evidence", 5],
   ];
@@ -979,9 +985,9 @@ test("dedicated CI enforces the reviewed 153/165-minute workflow budget", async 
   );
   assert.equal(
     job.steps.reduce((sum, step) => sum + step["timeout-minutes"], 0),
-    153,
+    163,
   );
-  assert.equal(job["timeout-minutes"] - 153, 12);
+  assert.equal(job["timeout-minutes"] - 163, 12);
   const evidence = job.steps.at(-1);
   assert.equal(evidence.if, "always()");
   assert.equal(

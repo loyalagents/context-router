@@ -42,7 +42,17 @@ export class SourceMeta {
 }
 
 @ObjectType()
+export class PreferenceReviewDescriptor {
+  @Field(() => ID) definitionId: string;
+  @Field(() => ID, { nullable: true }) locationId?: string | null;
+  @Field(() => ID, { nullable: true }) expectedPreferenceId?: string | null;
+  @Field({ nullable: true }) expectedRevision?: string | null;
+}
+
+@ObjectType()
 export class PreferenceSuggestion {
+  @Field(() => PreferenceReviewDescriptor, { nullable: true })
+  review?: PreferenceReviewDescriptor;
   @Field(() => ID)
   id: string;
 

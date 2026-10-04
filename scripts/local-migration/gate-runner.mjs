@@ -30,7 +30,7 @@ const LIVE_PROVIDER_PATTERN =
   /(?:--provider(?:=|\s+)(?:vertex|claude|codex|openrouter)|\blive[-_:]|eval-harbor:smoke|run_smoke|bootstrap_runner|docker\s+pull|pnpm\s+install|npm\s+install)/i;
 const APPROVED_HOSTED_COMMANDS = new Map([
   ["contract-baseline", [
-    ["node", "--test", "scripts/local-migration/check-contract-baseline.test.mjs", "scripts/local-migration/gate-runner.test.mjs", "scripts/local-migration/gate-phases.test.mjs", "scripts/local-migration/restart-smoke.test.mjs", "scripts/local-migration/test-database.test.mjs", "scripts/local-migration/web-support-smoke.test.mjs", "scripts/local-migration/eval-test-discovery.test.mjs", "scripts/local-migration/toolchain-contract.test.mjs", "scripts/local-migration/ci-path-filters.test.mjs", "scripts/local-migration/runtime-process.test.mjs", "scripts/local-migration/web-runtime-config.test.mjs", "scripts/local-migration/runtime-resources.test.mjs", "scripts/local-migration/packaging-smoke.test.mjs", "scripts/local-migration/local-database-smoke.test.mjs", "scripts/local-migration/local-model-smoke.test.mjs", "scripts/local-migration/local-mcp-smoke.test.mjs"],
+    ["node", "--test", "scripts/local-migration/check-contract-baseline.test.mjs", "scripts/local-migration/gate-runner.test.mjs", "scripts/local-migration/gate-phases.test.mjs", "scripts/local-migration/restart-smoke.test.mjs", "scripts/local-migration/test-database.test.mjs", "scripts/local-migration/web-support-smoke.test.mjs", "scripts/local-migration/eval-test-discovery.test.mjs", "scripts/local-migration/toolchain-contract.test.mjs", "scripts/local-migration/ci-path-filters.test.mjs", "scripts/local-migration/runtime-process.test.mjs", "scripts/local-migration/web-runtime-config.test.mjs", "scripts/local-migration/runtime-resources.test.mjs", "scripts/local-migration/packaging-smoke.test.mjs", "scripts/local-migration/local-database-smoke.test.mjs", "scripts/local-migration/local-model-smoke.test.mjs", "scripts/local-migration/local-mcp-smoke.test.mjs", "scripts/local-migration/local-ui-smoke.test.mjs"],
     ["node", "scripts/local-migration/check-contract-baseline.mjs"],
   ]],
   ["documentation", [
@@ -44,6 +44,7 @@ const APPROVED_HOSTED_COMMANDS = new Map([
     ["pnpm", "--filter", "backend", "test:unit"],
     ["pnpm", "--filter", "backend", "test:local-model"],
     ["pnpm", "--filter", "backend", "test:local-mcp"],
+    ["pnpm", "--filter", "backend", "test:local-ui"],
   ]],
   ["backend-database", [
     ["pnpm", "--filter", "backend", "exec", "prisma", "migrate", "deploy"],
@@ -61,7 +62,7 @@ const APPROVED_HOSTED_COMMANDS = new Map([
     ["pnpm", "eval:run", "--scenario", "samir-desai-i9-template-smoke"],
     ["pnpm", "eval:run", "--scenario", "elena-marquez-i9-template-smoke"],
   ]],
-  ["web-production-build", [["pnpm", "--filter", "web", "build"]]],
+  ["web-production-build", [["pnpm", "--filter", "web", "build"], ["pnpm", "--filter", "web", "test:local-ui"]]],
   ["harbor-static", [["bash", "examples/eval-harbor/scripts/check_static.sh"]]],
   ["restart-smoke", [["node", "scripts/local-migration/restart-smoke.mjs"]]],
   ["packaged-composition-smoke", [["node", "scripts/local-migration/packaging-smoke.mjs"]]],
@@ -73,6 +74,7 @@ const APPROVED_SUPPORTED_MODES = [
   "local-database-preview",
   "local-model-preview",
   "local-mcp",
+  "local-ui",
 ];
 const APPROVED_LOCAL_IDENTITY_PHASES = new Set([
   "contract-baseline",
@@ -768,7 +770,7 @@ export function validateApprovedPhaseCommands(manifest) {
   const supportedModeIds = (manifest.supportedModes ?? []).map((mode) => mode?.id);
   if (!jsonArrayEqual(supportedModeIds, APPROVED_SUPPORTED_MODES)) {
     errors.push(
-      "command policy supports exactly hosted-baseline, local-identity-preview, local-database-preview, local-model-preview, and local-mcp",
+      "command policy supports exactly hosted-baseline, local-identity-preview, local-database-preview, local-model-preview, local-mcp, and local-ui",
     );
   }
   const activePhases = (manifest.phases ?? []).filter(
@@ -793,6 +795,9 @@ export function validateApprovedPhaseCommands(manifest) {
       errors.push(`${mode} phase set/order differs from the approved command policy`);
     }
   }
+  const uiIds = activePhases.filter((phase) => phase.modes?.includes('local-ui')).map((phase) => phase.id);
+  const expectedUiIds = hostedIds.filter((id) => APPROVED_LOCAL_IDENTITY_PHASES.has(id) || id === 'web-production-build');
+  if (!jsonArrayEqual(uiIds, expectedUiIds)) errors.push('local-ui phase set/order differs from the approved command policy');
   for (const phase of hostedPhases) {
     const actual = (phase.commands ?? []).map((command) => command.argv);
     const expected = APPROVED_HOSTED_COMMANDS.get(phase.id);
@@ -801,7 +806,7 @@ export function validateApprovedPhaseCommands(manifest) {
     }
     const expectedModes = APPROVED_LOCAL_IDENTITY_PHASES.has(phase.id)
       ? APPROVED_SUPPORTED_MODES
-      : ["hosted-baseline"];
+      : phase.id === "web-production-build" ? ["hosted-baseline", "local-ui"] : ["hosted-baseline"];
     if (!jsonArrayEqual(phase.modes, expectedModes)) {
       errors.push(`phase ${phase.id} mode matrix differs from approved policy`);
     }
@@ -923,7 +928,7 @@ export function buildPhaseEnvironment(base, phaseId, values) {
   }
   // The standalone local project must prove it has no PostgreSQL setup dependency,
   // even when the caller inherited hosted fixture settings.
-  if (["test:local-database", "test:local-mcp"].some((name) => jsonArrayEqual(values.commandArgv ?? [], ["pnpm", "--filter", "backend", name]))) {
+  if (["test:local-database", "test:local-mcp", "test:local-ui"].some((name) => jsonArrayEqual(values.commandArgv ?? [], ["pnpm", "--filter", "backend", name]))) {
     delete environment.DATABASE_URL;
     delete environment.MIGRATION_TEST_ADMIN_URL;
   }

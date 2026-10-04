@@ -1,3 +1,4 @@
+import type { AiErrorKind } from '../../../domains/shared/ports/ai-execution';
 import { z } from 'zod';
 
 export type FormFillStatus =
@@ -30,6 +31,8 @@ export interface PdfFieldOption {
 }
 
 export interface PdfFieldMetadata {
+  /** Internal validation state. Never include this property in model prompts. */
+  existingValue?: string | boolean | string[];
   name: string;
   type: PdfFieldType;
   options: PdfFieldOption[];
@@ -50,7 +53,8 @@ export interface FormFillValidationEvent {
     | 'policy_fact_conflict_blocked'
     | 'policy_source_slug_resolved'
     | 'pdf_text_max_length_blocked'
-    | 'checkbox_group_conflict';
+    | 'checkbox_group_conflict'
+    | 'existing_value_preserved';
   fieldName: string;
   message: string;
   confidence?: number;
@@ -111,13 +115,21 @@ const FieldPolicySchema = z
     }
   });
 
-export const FormFillFieldPoliciesSchema = z.object({
+const V1FieldPoliciesSchema = z.object({
   schemaVersion: z.literal(1),
   fields: z.array(FieldPolicySchema),
 });
+const V2FieldPolicySchema = FieldPolicySchema.safeExtend({
+  mode: z.enum(['fact', 'skip']).optional(),
+  overwrite: z.boolean().optional(),
+});
+export const FormFillFieldPoliciesSchema = z.discriminatedUnion('schemaVersion', [
+  V1FieldPoliciesSchema,
+  z.object({ schemaVersion: z.literal(2), fields: z.array(V2FieldPolicySchema) }),
+]);
 
 export type FormFillFieldCondition = z.infer<typeof FieldConditionSchema>;
-export type FormFillFieldPolicy = z.infer<typeof FieldPolicySchema>;
+export type FormFillFieldPolicy = z.infer<typeof V2FieldPolicySchema>;
 export type FormFillFieldPolicies = z.infer<
   typeof FormFillFieldPoliciesSchema
 >;
@@ -176,6 +188,7 @@ export interface FormFillSummary {
 }
 
 export interface FormFillResponse {
+  failureCategory?: AiErrorKind;
   fillId: string;
   status: FormFillStatus;
   originalFilename: string;

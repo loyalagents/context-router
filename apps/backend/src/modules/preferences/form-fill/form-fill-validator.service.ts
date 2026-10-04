@@ -43,8 +43,8 @@ export class FormFillValidatorService {
     const warnings: string[] = [];
     const fieldByName = new Map(fields.map((field) => [field.name, field]));
     const fieldOrder = new Map(fields.map((field, index) => [field.name, index]));
-    const policyByFieldName = new Map(
-      options.fieldPolicies?.fields.map((policy) => [policy.fieldName, policy]) ?? [],
+    const policyByFieldName = new Map<string, FormFillFieldPolicy>(
+      options.fieldPolicies?.fields.map((policy) => [policy.fieldName, policy] as const) ?? [],
     );
     const resolvedFactByKey = new Map(
       (options.resolvedFacts ?? []).map((fact) => [fact.factKey, fact]),
@@ -77,8 +77,19 @@ export class FormFillValidatorService {
     const validActions: ValidatedFillAction[] = [];
     const filledFields: FilledFieldSummary[] = [];
     const skippedFields: SkippedFieldSummary[] = [];
+    const preserve = new Set(options.fieldPolicies?.schemaVersion === 2 ? fields.filter((field) => {
+      const value = field.existingValue;
+      const occupied = typeof value === 'boolean' ? value : typeof value === 'string' || Array.isArray(value) ? value.length > 0 : false;
+      return occupied && policyByFieldName.get(field.name)?.overwrite !== true;
+    }).map((field) => field.name) : []);
 
     for (const field of fields) {
+      if (preserve.has(field.name)) {
+        const reason = 'existing value preserved; explicit overwrite is required';
+        skippedFields.push(this.skip(field, reason));
+        validationEvents.push({ kind: 'existing_value_preserved', fieldName: field.name, message: reason });
+        continue;
+      }
       const action = actionByFieldName.get(field.name);
 
       if (!action) {
@@ -137,7 +148,7 @@ export class FormFillValidatorService {
       validActions,
       filledFields,
       skippedFields,
-      fields,
+      fields: fields.filter((field) => !preserve.has(field.name)),
       activePreferenceSlugs,
       resolvedFactByKey,
       conflictByFactKey,
@@ -145,6 +156,20 @@ export class FormFillValidatorService {
       validationEvents,
     });
 
+    if (options.fieldPolicies?.schemaVersion === 2) {
+      // An already checked field remains checked unless a validated UNCHECK will run.
+      const existing = fields.filter((field) => field.type === 'checkbox' && field.existingValue === true &&
+        !validActions.some((action) => action.fieldName === field.name && action.action === 'UNCHECK'));
+      for (const action of [...validActions]) {
+        const groupId = policyByFieldName.get(action.fieldName)?.groupId;
+        if (action.action !== 'CHECK' || !groupId || !existing.some((field) => field.name !== action.fieldName && policyByFieldName.get(field.name)?.groupId === groupId)) continue;
+        this.removeFieldEntries(action.fieldName, validActions, filledFields, skippedFields);
+        this.removeLowConfidenceEvents(action.fieldName, validationEvents);
+        const reason = `checkbox group conflict: existing selection preserved in ${groupId}`;
+        skippedFields.push(this.skip(fieldByName.get(action.fieldName), reason));
+        validationEvents.push({ kind: 'checkbox_group_conflict', fieldName: action.fieldName, groupId, message: reason });
+      }
+    }
     const groupAdjusted = this.applyCheckboxGroupPolicies({
       validActions,
       filledFields,

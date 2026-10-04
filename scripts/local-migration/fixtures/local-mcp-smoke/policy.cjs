@@ -16,6 +16,7 @@ const { fileURLToPath } = require('node:url');
 const dist = fs.realpathSync(process.env.LOCAL_DATABASE_RUNTIME_DIST);
 const root = fs.realpathSync(process.env.LOCAL_MCP_SMOKE_ROOT);
 const dependencies = fs.realpathSync(process.env.LOCAL_MCP_SMOKE_DEPENDENCIES);
+const webRoot = process.env.LOCAL_UI_SMOKE_WEB_ROOT ? fs.realpathSync(process.env.LOCAL_UI_SMOKE_WEB_ROOT) : undefined;
 const worker = path.join(
   dist,
   'infrastructure/storage/sqlite/sqlite-coordination.worker.js',
@@ -53,6 +54,7 @@ Module.registerHooks({
         !(
           inside(file, dist) ||
           inside(file, dependencies) ||
+          (webRoot && ([path.join(webRoot, 'local-ui.mjs'), path.join(webRoot, 'next.config.mjs')].includes(file) || inside(file, path.join(webRoot, '.next')))) ||
           [__filename, path.join(__dirname, 'entry.cjs')].includes(file)
         )
       )
@@ -67,8 +69,8 @@ net.Server.prototype.listen = function (...args) {
   if (
     isThread ||
     process.env.LOCAL_MCP_SMOKE_OPERATION !== 'serve-model' ||
-    counters.listeners.length ||
-    args.length !== 2 ||
+    counters.listeners.length >= (webRoot ? 2 : 1) ||
+    !(args.length === 2 || (webRoot && args.length === 3 && typeof args[2] === 'function')) ||
     args[0] !== 0 ||
     args[1] !== '127.0.0.1'
   )
@@ -190,6 +192,7 @@ threads.Worker = class extends Worker {
       workerData: { paths: { ...paths }, __mcpAcknowledgement: cell.buffer },
       execArgv: ['--no-global-search-paths', '--require', __filename],
       env: {
+        ...(webRoot ? { LOCAL_UI_SMOKE_WEB_ROOT: webRoot } : {}),
         LOCAL_DATABASE_RUNTIME_DIST: dist,
         LOCAL_MCP_SMOKE_ROOT: root,
         LOCAL_MCP_SMOKE_DEPENDENCIES: dependencies,

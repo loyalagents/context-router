@@ -8,6 +8,8 @@ interface SuggestionItemProps {
   isSelected: boolean;
   onToggle: () => void;
   onValueChange: (newValue: any) => void;
+  disabled?: boolean;
+  outcome?: string;
 }
 
 export default function SuggestionItem({
@@ -15,6 +17,8 @@ export default function SuggestionItem({
   isSelected,
   onToggle,
   onValueChange,
+  disabled = false,
+  outcome,
 }: SuggestionItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(
@@ -54,11 +58,14 @@ export default function SuggestionItem({
         <input
           type="checkbox"
           checked={isSelected}
+          disabled={disabled}
+          aria-label={`Select ${suggestion.slug}`}
           onChange={onToggle}
           className="mt-1 h-4 w-4 text-blue-600 rounded"
         />
 
         <div className="flex-1 min-w-0">
+          {outcome && <p role="status" className="mb-2 font-medium">{outcome}</p>}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-gray-900">
               {suggestion.slug}
@@ -93,7 +100,7 @@ export default function SuggestionItem({
 
           {/* Value diff */}
           <div className="mt-2 space-y-1">
-            {suggestion.operation === 'UPDATE' && suggestion.oldValue && (
+            {suggestion.operation === 'UPDATE' && suggestion.oldValue !== undefined && (
               <div className="flex items-start gap-2 text-sm">
                 <span className="text-gray-500 shrink-0">Old:</span>
                 <pre className="bg-red-50 text-red-700 px-2 py-1 rounded text-xs overflow-x-auto max-w-full">
@@ -106,6 +113,7 @@ export default function SuggestionItem({
               {isEditing ? (
                 <div className="flex-1">
                   <textarea
+                    aria-label={`Edit value for ${suggestion.slug}`}
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     className="w-full px-2 py-1 border rounded text-xs font-mono h-20"
@@ -134,6 +142,7 @@ export default function SuggestionItem({
                     {formatValue(suggestion.newValue)}
                   </pre>
                   <button
+                    disabled={disabled}
                     onClick={() => setIsEditing(true)}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
