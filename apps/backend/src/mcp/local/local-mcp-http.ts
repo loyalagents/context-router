@@ -155,6 +155,16 @@ export class LocalMcpHttpServer {
         this.sessions.delete(id);
     }
   }
+  private checkActiveCapacity(clientId: string) {
+    let active = 0,
+      ownedActive = 0;
+    for (const session of this.sessions.values()) {
+      active += session.active.size;
+      if (session.clientId === clientId) ownedActive += session.active.size;
+    }
+    if (active >= LIMITS.active || ownedActive >= LIMITS.clientActive)
+      statusError(429);
+  }
   private session(
     req: IncomingMessage,
     credential: LocalMcpCredential,
@@ -263,14 +273,27 @@ export class LocalMcpHttpServer {
         )
       )
         statusError(400);
+      // A rejected initialize must not displace an otherwise usable session.
+      this.checkActiveCapacity(credential.id);
       const owned = [...this.sessions.values()].filter(
         (s) => s.clientId === credential.id,
-      ).length;
+      );
       if (
         this.sessions.size >= LIMITS.sessions ||
-        owned >= LIMITS.clientSessions
-      )
-        statusError(429);
+        owned.length >= LIMITS.clientSessions
+      ) {
+        let oldest: Session | undefined;
+        for (const candidate of owned) {
+          if (
+            !candidate.active.size &&
+            (!oldest || candidate.touched < oldest.touched)
+          )
+            oldest = candidate;
+        }
+        if (!oldest) statusError(429);
+        // Retire the whole idle session; never recycle its ID/history or foreign state.
+        this.sessions.delete(oldest.id);
+      }
       const protocol = (PROTOCOLS as readonly string[]).includes(
         message.params.protocolVersion,
       )
@@ -313,19 +336,15 @@ export class LocalMcpHttpServer {
       }
     }
     const key = idKey(message.id);
-    if (session.seen.has(key) || session.seen.size >= LIMITS.ids)
-      statusError(400);
-    const active = [...this.sessions.values()].reduce(
-      (n, s) => n + s.active.size,
-      0,
-    );
-    const ownedActive = [...this.sessions.values()]
-      .filter((s) => s.clientId === credential.id)
-      .reduce((n, s) => n + s.active.size, 0);
-    if (active >= LIMITS.active || ownedActive >= LIMITS.clientActive) {
-      if (message.method === 'initialize') this.sessions.delete(session.id);
-      statusError(429);
+    if (session.seen.has(key)) statusError(400);
+    if (session.seen.size >= LIMITS.ids) {
+      // Signal fresh initialization, retaining admitted work/quota until settlement.
+      session.closing = true;
+      this.prune();
+      statusError(404);
     }
+    if (message.method !== 'initialize')
+      this.checkActiveCapacity(credential.id);
     session.seen.add(key);
     await this.dispatch(message, session, credential, res);
   }

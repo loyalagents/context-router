@@ -120,6 +120,14 @@ One shared Step 06 model owner serves every client and both AI tools. Busy is im
 
 ## Checkpoints
 
+### Post-acceptance amendment: bounded session recovery
+
+External review of `d7e9d65` found that abandoned same-generation sessions can block initialization for 30 minutes, and retained-ID exhaustion returns an unrecoverable sequence of HTTP 400 responses. Keep all existing numeric bounds, authentication and admission linearization. Under either the global or per-client session limit, a valid initialize may retire only its own credential's least-recently-used session with no active work. Retire the complete session and its ID history; the old session ID subsequently returns 404 and the replacement gets a fresh random ID. Never evict another credential's session or a session with active work. If no eligible session exists, return 429. Check active-request capacity before reclaiming an idle session, so a rejected initialize does not evict usable state.
+
+Within a live session, duplicate IDs still return 400. A new ID beyond the 4096 retained-ID bound marks the session closing and returns 404, signaling fresh initialization. The rejected request is never dispatched. Keep already-admitted work and all its quota until terminal handler settlement, then prune the closed session. Retirement does not cancel or retry admitted work; its original response may finish normally. Subsequent requests, cancellation notifications and DELETE using the retired ID return 404. Cancellation/DELETE remain available on live sessions under ordinary request-quota saturation. Recovery does not guarantee automatic reinitialization by every client, nor does it imply rollback or authorize retrying an uncertain mutation.
+
+Checkpoints: (1) obtain affected architecture/lifecycle, authority and compatibility review of this amendment; (2) write failing real-HTTP regressions for same-client LRU recovery, global-limit isolation, active-quota rejection without eviction, and retained-ID retirement with concurrent active work; (3) implement the narrow transport changes, run the focused lifecycle suite and complete local-MCP suite, and update operator guidance; (4) freeze the candidate, obtain affected independent implementation verdicts, run the complete exact-base migration gate and Markdown/diff checks, and renew both exact-head CI workflows. Carry forward unchanged full-diff reviews and prior manual acceptance with their original revision and limitations. These transport-boundary changes do not require another native-model experiment; deterministic tests must demonstrate the new lifecycle behavior without claiming new Claude/Codex recovery observations. Preserve the user's unrelated acceptance-checklist edit.
+
 All checkpoints belong to the same PR. A material deviation requires affected independent review before further implementation.
 
 ### Checkpoint 1: Listener, durable credentials and negative authority

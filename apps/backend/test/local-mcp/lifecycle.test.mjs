@@ -20,8 +20,8 @@ const until = async (fn) => {
     await pause(10);
   }
 };
-async function session(f, token = f.tokens[0]) {
-  const r = await f.raw(
+const initialize = (f, token = f.tokens[0]) =>
+  f.raw(
     {
       jsonrpc: '2.0',
       id: 'init',
@@ -34,6 +34,8 @@ async function session(f, token = f.tokens[0]) {
     },
     { token },
   );
+async function session(f, token = f.tokens[0]) {
+  const r = await initialize(f, token);
   assert.equal(r.status, 200);
   const auth = {
     token,
@@ -229,7 +231,7 @@ test('rotation retires obsolete idle sessions without releasing already-admitted
   assert.equal((await call(f, fresh, 0)).status, 200);
 });
 
-test('body, session, retained-ID and idle bounds fail closed while other clients continue', async (t) => {
+test('body and idle bounds fail closed while other clients continue', async (t) => {
   const f = await fixture(t),
     a = await session(f);
   assert.equal(
@@ -240,28 +242,167 @@ test('body, session, retained-ID and idle bounds fail closed while other clients
     ).status,
     413,
   );
-  for (let i = 0; i < 7; i++) await session(f);
-  assert.equal(
-    (
-      await f.raw({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'initialize',
-        params: {
-          protocolVersion: '2025-11-25',
-          capabilities: {},
-          clientInfo: { name: 'synthetic', version: '1' },
-        },
-      })
-    ).status,
-    429,
-  );
   const state = f.runtime.http.sessions.get(a.headers['mcp-session-id']);
-  for (let i = 0; i < 4096; i++) state.seen.add(`number:${i}`);
-  assert.equal((await call(f, a, 'new')).status, 400);
   state.touched = performance.now() - 30 * 60 * 1000;
   assert.equal((await call(f, a, 'expired')).status, 404);
   assert.equal((await call(f, await session(f, f.tokens[1]), 0)).status, 200);
+});
+
+test("initialization reclaims only the same credential's least recently used idle session", async (t) => {
+  const f = await fixture(t),
+    other = await session(f, f.tokens[1]),
+    owned = [];
+  for (let i = 0; i < 8; i++) owned.push(await session(f));
+  // Refresh the oldest session: the second-oldest idle session must be retired.
+  assert.equal((await call(f, owned[0], 0)).status, 200);
+  const fresh = await session(f);
+  assert.equal(f.runtime.http.diagnostics.sessions, 9);
+  assert.equal((await call(f, owned[1], 0)).status, 404);
+  assert.equal((await call(f, other, 0)).status, 200);
+  for (const auth of owned.filter((_, i) => i !== 1))
+    assert.equal((await call(f, auth, 1)).status, 200);
+  assert.equal((await call(f, fresh, 0)).status, 200);
+});
+
+test('session reclamation skips active work even when it is the oldest session', async (t) => {
+  const f = await fixture(t),
+    a = await session(f),
+    held = hold(f.runtime.application.get(PreferenceSearchTool));
+  f.cleanups.push(held.release);
+  const running = call(f, a, 0);
+  await until(() => held.entered === 1);
+  const idle = [];
+  for (let i = 0; i < 7; i++) idle.push(await session(f));
+  await session(f);
+  assert.equal(f.runtime.http.diagnostics.sessions, 8);
+  assert.equal(f.runtime.http.diagnostics.active, 1);
+  assert.equal((await call(f, idle[0], 0)).status, 404);
+  held.release();
+  assert.equal((await running).status, 200);
+  assert.equal((await call(f, a, 1)).status, 200);
+});
+
+test('active request saturation rejects initialization without reclaiming idle sessions', async (t) => {
+  const f = await fixture(t),
+    owned = [];
+  for (let i = 0; i < 8; i++) owned.push(await session(f));
+  const held = hold(f.runtime.application.get(PreferenceSearchTool));
+  f.cleanups.push(held.release);
+  const active = Array.from({ length: 8 }, (_, id) => call(f, owned[0], id));
+  await until(() => held.entered === 8);
+  assert.equal((await initialize(f)).status, 429);
+  assert.equal(f.runtime.http.diagnostics.sessions, 8);
+  for (const auth of owned)
+    assert.ok(f.runtime.http.sessions.has(auth.headers['mcp-session-id']));
+  assert.equal((await cancel(f, owned[0], 0)).status, 202);
+  assert.equal((await active[0]).text, '');
+  assert.equal(f.runtime.http.diagnostics.active, 8);
+  held.release();
+  await Promise.all(active);
+  await until(() => f.runtime.http.diagnostics.active === 0);
+  for (const auth of owned)
+    assert.equal((await call(f, auth, 'after')).status, 200);
+});
+
+test('global session capacity permits own idle reclamation but never displaces another credential', async (t) => {
+  const f = await fixture(t),
+    owned = [await session(f), await session(f)],
+    others = [];
+  const tokens = [f.tokens[1]];
+  for (let i = 0; i < 8; i++) {
+    const output = path.join(f.root, `extra-${i}.token`);
+    f.store.provision(`extra-${i}`, output);
+    tokens.push(fs.readFileSync(output, 'utf8').trim());
+  }
+  for (let i = 0; i < 62; i++)
+    others.push(await session(f, tokens[Math.floor(i / 8)]));
+  assert.equal(f.runtime.http.diagnostics.sessions, 64);
+  assert.equal((await initialize(f, tokens[8])).status, 429);
+  const fresh = await session(f);
+  assert.equal(f.runtime.http.diagnostics.sessions, 64);
+  assert.equal((await call(f, owned[0], 0)).status, 404);
+  assert.equal((await call(f, owned[1], 0)).status, 200);
+  assert.equal((await call(f, fresh, 0)).status, 200);
+  for (const auth of others) assert.equal((await call(f, auth, 0)).status, 200);
+});
+
+test("global active quota rejects initialization without reclaiming the caller's idle sessions", async (t) => {
+  const f = await fixture(t),
+    owned = [],
+    workers = [await session(f, f.tokens[1])];
+  for (let i = 0; i < 8; i++) owned.push(await session(f));
+  for (let i = 0; i < 3; i++) {
+    const output = path.join(f.root, `worker-${i}.token`);
+    f.store.provision(`worker-${i}`, output);
+    workers.push(await session(f, fs.readFileSync(output, 'utf8').trim()));
+  }
+  const held = hold(f.runtime.application.get(PreferenceSearchTool));
+  f.cleanups.push(held.release);
+  const active = workers.flatMap((auth) =>
+    Array.from({ length: 8 }, (_, id) => call(f, auth, id)),
+  );
+  await until(() => held.entered === 32);
+  assert.equal((await initialize(f)).status, 429);
+  assert.equal(f.runtime.http.diagnostics.sessions, 12);
+  for (const auth of owned)
+    assert.ok(f.runtime.http.sessions.has(auth.headers['mcp-session-id']));
+  assert.equal((await cancel(f, workers[0], 0)).status, 202);
+  assert.equal((await active[0]).text, '');
+  assert.equal(f.runtime.http.diagnostics.active, 32);
+  held.release();
+  await Promise.all(active);
+  await until(() => f.runtime.http.diagnostics.active === 0);
+  for (const auth of owned) assert.equal((await call(f, auth, 0)).status, 200);
+});
+
+test('retained-ID exhaustion retires the session with 404 while duplicates remain 400 until retirement', async (t) => {
+  const f = await fixture(t),
+    a = await session(f),
+    state = f.runtime.http.sessions.get(a.headers['mcp-session-id']);
+  // Initialization already consumed one ID; exercise the final available slot.
+  for (let i = 0; i < 4094; i++) state.seen.add(`number:${i}`);
+  assert.equal((await call(f, a, 'last')).status, 200);
+  assert.equal(state.seen.size, 4096);
+  assert.equal((await call(f, a, 'last')).status, 400);
+  assert.equal((await call(f, a, 'overflow')).status, 404);
+  assert.equal(f.runtime.http.diagnostics.sessions, 0);
+  assert.equal((await call(f, a, 'last')).status, 404);
+  const fresh = await session(f);
+  assert.notEqual(fresh.headers['mcp-session-id'], a.headers['mcp-session-id']);
+  assert.equal((await call(f, fresh, 'last')).status, 200);
+});
+
+test('ID retirement retains admitted work and quota until settlement without cancelling or retrying', async (t) => {
+  const f = await fixture(t),
+    a = await session(f),
+    other = await session(f, f.tokens[1]),
+    state = f.runtime.http.sessions.get(a.headers['mcp-session-id']),
+    held = hold(f.runtime.application.get(PreferenceSearchTool));
+  f.cleanups.push(held.release);
+  const active = Array.from({ length: 8 }, (_, id) => call(f, a, id));
+  await until(() => held.entered === 8);
+  for (let i = 8; state.seen.size < 4096; i++) state.seen.add(`number:${i}`);
+  assert.equal((await call(f, a, 0)).status, 400);
+  assert.equal((await call(f, a, 'overflow')).status, 404);
+  assert.equal(state.closing, true);
+  assert.equal(f.runtime.http.diagnostics.sessions, 2);
+  assert.equal(f.runtime.http.diagnostics.active, 8);
+  assert.equal((await initialize(f)).status, 429);
+  assert.equal((await cancel(f, a, 0)).status, 404);
+  assert.equal(
+    (await f.raw(undefined, { ...a, method: 'DELETE' })).status,
+    404,
+  );
+  held.release();
+  const results = await Promise.all(active);
+  assert.ok(
+    results.every((r) => r.status === 200 && JSON.parse(r.text).result),
+  );
+  assert.equal(held.entered, 8, 'overflow was never dispatched or retried');
+  await until(() => f.runtime.http.diagnostics.active === 0);
+  assert.equal(f.runtime.http.diagnostics.sessions, 1);
+  assert.equal((await call(f, other, 0)).status, 200);
+  assert.equal((await call(f, await session(f), 0)).status, 200);
 });
 
 test('watchdog ends a response but retains active ownership until actual terminal output', async (t) => {

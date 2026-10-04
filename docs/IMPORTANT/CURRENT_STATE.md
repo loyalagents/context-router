@@ -3,7 +3,7 @@
 - Status: important
 - Read when: startup
 - Source of truth: `apps/backend/src/**`, `apps/backend/test/**`, `apps/web/app/dashboard/**`, `README.md`
-- Last reviewed: 2026-09-29
+- Last reviewed: 2026-10-03
 
 ## What This Is
 
@@ -12,7 +12,7 @@ A pnpm monorepo with a NestJS backend (`apps/backend/`) and a Next.js frontend
 JWTs at an edge adapter, calls Vertex AI for AI-backed features, and exposes
 HTTP GraphQL, REST, OAuth/DCR, and MCP surfaces.
 
-The explicit `local-database-preview` now uses SQLite through pinned Node 24.21.0 and the default `local-identity` command. It keeps a stable random principal and independent bearer in a separate private identity root, seeds catalog definitions only, and initializes the real local Nest composition without a listener. It needs no PostgreSQL, Docker, Auth0/JWKS or model runtime. The previous `local-identity-preview` remains an explicit PostgreSQL reference command with its own original state. Hosted defaults stay unchanged. Both no-model previews exclude the web app and MCP transport, and both AI ports return a fixed unavailable result. Merged Step 06 adds explicit non-listening `preview-model` with the manually operated selected local adapter; its accepted E/H limitations remain. Step 07 adds separately selected `local-mcp serve` / `serve-model`: narrow loopback HTTP, explicit preserving SQLite v2 upgrade, independent MCP credentials, shared services/model ownership and real-guard tests. It is under final automated validation/review with real-client acceptance pending; it is not complete or merged. See [local identity administration](../useful/LOCAL_IDENTITY_ADMIN.md) for roots, recovery, backup constraints and reference commands.
+The explicit `local-database-preview` now uses SQLite through pinned Node 24.21.0 and the default `local-identity` command. It keeps a stable random principal and independent bearer in a separate private identity root, seeds catalog definitions only, and initializes the real local Nest composition without a listener. It needs no PostgreSQL, Docker, Auth0/JWKS or model runtime. The previous `local-identity-preview` remains an explicit PostgreSQL reference command with its own original state. Hosted defaults stay unchanged. Both no-model previews exclude the web app and MCP transport, and both AI ports return a fixed unavailable result. Merged Step 06 adds explicit non-listening `preview-model` with the manually operated selected local adapter; its accepted E/H limitations remain. Step 07 adds separately selected `local-mcp serve` / `serve-model`: narrow loopback HTTP, explicit preserving SQLite v2 upgrade, independent MCP credentials, shared services/model ownership and real-guard tests. User-run acceptance for `d7e9d65` is recorded in PR #166, including inconclusive server/native cancellation. Session-recovery follow-up fixes are under renewed validation/review; Step 07 is not complete or merged. See [local identity administration](../useful/LOCAL_IDENTITY_ADMIN.md) for roots, recovery, backup constraints and reference commands.
 
 Run `./print-repo-structure.sh` for the full layout. See `README.md` for setup and dev workflows.
 

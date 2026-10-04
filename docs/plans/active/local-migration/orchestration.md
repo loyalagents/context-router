@@ -5,7 +5,7 @@
 - Current primary implementation step: `07-local-mcp` — [active plan](07-local-mcp/plan.md); clean-base full gate passed; P2 independently approved; implementation in progress
 - Coordinator and sole repository writer for Step 07: `/root`; all other agents read-only; existing checkout on `codex/local-migration-07-local-mcp`
 - Step 05 activation/history evidence: retained in its [plan](05-local-database-runtime/plan.md#activation-gate); recording the observed merge here does not activate Step 06
-- Concrete next action: complete final frozen-candidate independent review and full gate/CI, then hand off the Step 07 real-client checklist in one draft PR; never merge automatically
+- Concrete next action: validate and independently review the Step 07 session-recovery follow-up in PR #166, preserving user-run acceptance for `d7e9d65` and renewing full local/CI gates; never merge automatically
 - Review date: Step 07 PR review or 2026-10-13, whichever comes first
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
