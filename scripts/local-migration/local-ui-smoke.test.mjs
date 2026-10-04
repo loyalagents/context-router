@@ -13,6 +13,33 @@ import {
   terminateAndReapJournaledNodeChild,
 } from './local-identity-smoke.mjs';
 
+test('UI smoke deadlines name only fixed stages without leaking supplied data', async () => {
+  const { withLocalUiSmokeDeadline } = await import('./local-ui-smoke.mjs');
+  assert.equal(
+    await withLocalUiSmokeDeadline(Promise.resolve('done'), 100, 'browser-ready'),
+    'done',
+  );
+  const failure = new Error('underlying operation');
+  await assert.rejects(
+    withLocalUiSmokeDeadline(Promise.reject(failure), 100, 'browser-ready'),
+    (error) => error === failure,
+  );
+  for (const stage of [
+    'raw-protocol', 'browser-ready', 'websocket-control', 'context-close',
+    'browser-disconnect', 'browser-exit', 'browser-group-exit',
+    'cleanup-browser-disconnect', 'synthetic-private-canary',
+    { toString: () => 'synthetic-private-canary' },
+  ]) {
+    const expected =
+      typeof stage === 'string' && stage !== 'synthetic-private-canary'
+        ? stage : 'operation';
+    await assert.rejects(
+      withLocalUiSmokeDeadline(new Promise(() => {}), 1, stage),
+      { message: `Local UI smoke deadline: ${expected}` },
+    );
+  }
+});
+
 test(
   'browser startup failures emit only fixed diagnostics and reap their owned process group',
   { timeout: 30000 },

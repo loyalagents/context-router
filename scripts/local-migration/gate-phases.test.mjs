@@ -959,7 +959,7 @@ test("dedicated CI seeds the exact offline pnpm Corepack cache before invoking t
   assert.ok(gate > seed, "workflow must seed Corepack before running the gate");
 });
 
-test("dedicated CI enforces the reviewed 163/175-minute workflow budget", async () => {
+test("dedicated CI enforces the reviewed 173/185-minute workflow budget", async () => {
   const workflow = parseYaml(
     await readFile(
       new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
@@ -967,7 +967,7 @@ test("dedicated CI enforces the reviewed 163/175-minute workflow budget", async 
     ),
   );
   const job = workflow.jobs["local-migration-baseline"];
-  assert.equal(job["timeout-minutes"], 175);
+  assert.equal(job["timeout-minutes"], 185);
   const expected = [
     ["actions/checkout@v4", 5],
     ["pnpm/action-setup@v6.0.8", 5],
@@ -976,7 +976,7 @@ test("dedicated CI enforces the reviewed 163/175-minute workflow budget", async 
     ["Verify toolchain and seed offline Corepack runtime", 5],
     ["Install dependencies", 15],
     ["Install pinned Chromium prerequisite", 10],
-    ["Run the Local Migration Baseline Gate", 108],
+    ["Run the Local Migration Baseline Gate", 118],
     ["Persist sanitized gate evidence", 5],
   ];
   assert.deepEqual(
@@ -985,9 +985,9 @@ test("dedicated CI enforces the reviewed 163/175-minute workflow budget", async 
   );
   assert.equal(
     job.steps.reduce((sum, step) => sum + step["timeout-minutes"], 0),
-    163,
+    173,
   );
-  assert.equal(job["timeout-minutes"] - 163, 12);
+  assert.equal(job["timeout-minutes"] - 173, 12);
   const evidence = job.steps.at(-1);
   assert.equal(evidence.if, "always()");
   assert.equal(
@@ -1092,6 +1092,15 @@ test("approved command policy rejects substitution, removal, unknown commands, a
 test("packaged smoke and final integrity retain their exact reviewed transition semantics", () => {
   const mutations = [
     (candidate) => {
+      candidate.phases[10].timeoutMs = 900_000;
+    },
+    (candidate) => {
+      candidate.phases[10].timeoutMs = 1_500_001;
+    },
+    (candidate) => {
+      candidate.phases[0].timeoutMs++;
+    },
+    (candidate) => {
       candidate.phases[10].predecessors = ["harbor-static"];
     },
     (candidate) => {
@@ -1181,7 +1190,11 @@ test("the outer gate grants restart smoke more time than its cumulative cleanup 
   assert.equal(terminationGraceForPhase({ kind: "command" }), 5_000);
 });
 
-test("active phase timeouts retain the reviewed global gate windows", () => {
+test("active phase timeouts retain the reviewed global gate windows", async () => {
+  const { PACKAGED_SMOKE_PHASE_TIMEOUT_MS } = await import(
+    "./packaging-smoke.mjs"
+  );
+  assert.equal(PACKAGED_SMOKE_PHASE_TIMEOUT_MS, 1_500_000);
   const active = manifest.phases.filter(({ status }) => status === "active");
   assert.deepEqual(
     active.map(({ timeoutMs }) => timeoutMs),
@@ -1196,13 +1209,13 @@ test("active phase timeouts retain the reviewed global gate windows", () => {
       600_000,
       300_000,
       600_000,
-      900_000,
+      1_500_000,
       300_000,
     ],
   );
   assert.equal(
     active.reduce((sum, phase) => sum + phase.timeoutMs, 0),
-    94 * 60_000,
+    104 * 60_000,
   );
 });
 
@@ -1211,25 +1224,25 @@ test("gate-wide monotonic deadlines cap preflight, phases, settlement, and clean
   const timeline = createGateTimeline({ startedAt: now, now: () => now });
   assert.deepEqual(GATE_TIMELINE_MS, {
     preflight: 3 * 60_000,
-    phaseCancellation: 97 * 60_000,
-    childSettlement: 100 * 60_000,
-    finalCleanup: 103 * 60_000,
+    phaseCancellation: 107 * 60_000,
+    childSettlement: 110 * 60_000,
+    finalCleanup: 113 * 60_000,
   });
   assert.equal(timeline.remaining("preflight"), 3 * 60_000);
   now += 3 * 60_000;
   assert.equal(timeline.remaining("preflight"), 0);
   assert.throws(() => timeline.assertBefore("preflight"), /preflight deadline/);
 
-  now = 10_000 + 96 * 60_000;
+  now = 10_000 + 106 * 60_000;
   assert.equal(
     effectivePhaseTimeoutMs({
-      phaseTimeoutMs: 15 * 60_000,
+      phaseTimeoutMs: 25 * 60_000,
       phaseStartedAt: now,
       timeline,
     }),
     60_000,
   );
-  now = 10_000 + 103 * 60_000;
+  now = 10_000 + 113 * 60_000;
   assert.throws(() => timeline.assertBefore("finalCleanup"), /final cleanup deadline/);
 });
 
@@ -1291,7 +1304,7 @@ test("deadline controller aborts a forced hang using an injected fake clock", as
   expired.dispose();
 });
 
-test("final cleanup gets one lazy three-minute window capped by T+103", () => {
+test("final cleanup gets one lazy three-minute window capped by T+113", () => {
   const scheduled = [];
   let now = 5_000;
   const timeline = createGateTimeline({ startedAt: now, now: () => now });
@@ -1311,7 +1324,7 @@ test("final cleanup gets one lazy three-minute window capped by T+103", () => {
   assert.equal(scheduled.length, 1, "cleanup timer must be memoized");
   early.dispose();
 
-  now = 5_000 + 102 * 60_000;
+  now = 5_000 + 112 * 60_000;
   const late = createFinalCleanupAbortController({
     timeline,
     schedule(callback, milliseconds) {
@@ -1437,7 +1450,7 @@ test("production gate orchestration settles failed work before its one cleanup",
   assert.equal(cleanupRecord.starts, 1);
 });
 
-test("settled work disposes T+97 before final cleanup crosses that boundary", async () => {
+test("settled work disposes T+107 before final cleanup crosses that boundary", async () => {
   const deadlines = new Map();
   const cleanupRecord = { starts: 0, disposed: false };
   let now = 1;
@@ -1449,12 +1462,12 @@ test("settled work disposes T+97 before final cleanup crosses that boundary", as
     finalCleanupFactory: controlledCleanupFactory(cleanupRecord),
     execute: async ({ completePreflight, confirmChildSettlement }) => {
       completePreflight();
-      now = 96 * 60_000;
+      now = 106 * 60_000;
       confirmChildSettlement();
       return { status: "passed" };
     },
     cleanup: async ({ workSignal }) => {
-      now = 98 * 60_000;
+      now = 108 * 60_000;
       assert.equal(
         deadlines.get("phase cancellation").disposed,
         true,
@@ -1562,7 +1575,7 @@ test("non-cooperative work is not abandoned and remains bounded only by the work
   const gateStep = workflow.jobs["local-migration-baseline"].steps.find(
     ({ name }) => name === "Run the Local Migration Baseline Gate",
   );
-  assert.equal(gateStep["timeout-minutes"], 108);
+  assert.equal(gateStep["timeout-minutes"], 118);
 });
 
 test("production gate orchestration bounds cleanup and preserves settlement errors", async () => {

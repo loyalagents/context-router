@@ -1,6 +1,6 @@
 # Step 08: Local UI
 
-- Document status: draft technical plan, revision P2; product implementation prohibited until independent approval
+- Document status: technical plan revision P3; approved P2 product scope retained; validation-budget addendum requires affected approval before implementation
 - Program step: `08-local-ui`; sole active primary step
 - Target branch: `main`; implementation branch: `codex/local-migration-08-local-ui`
 - Planning base commit: `5e2a67dd785500ba053b2e836c47166e8adeada8`
@@ -529,3 +529,63 @@ no personal-client edits or live-model operations without authorization. Resolve
 defects and renew affected evidence before readiness; never merge. Update orchestration
 with observed merge only after a human merges. Retain this plan while downstream steps
 need its contracts; do not activate those steps or create a receipt-only closeout PR.
+
+## P3 Validation Budget Addendum
+
+R8 head `1b86b68f0442d3e6dd311770a01761c30358dc15` passed standard CI and
+the full local gate. Dedicated Linux run `37199274659` passed phases 1–10, then
+the packaging command reached its exact `899999ms` effective phase timeout and
+exited 124 after SIGTERM/cleanup. The log does not identify its last completed
+internal boundary. Earlier R7 reached the final private-tree assertion near
+855 seconds; R8's local complete packaging run took 477,811 ms. Step 08 adds a
+web build/deployment, a larger sealed payload and authenticated browser generations.
+The inherited Step 02 fifteen-minute bound needs explicit bounded headroom;
+increasing it alone is not evidence of successful Linux behavior.
+
+This is a shared validation-tooling deviation only. It does not change product
+contracts, application persistence, browser/MCP authority, ownership, or supported
+modes. P2's approved product scope and unaffected review coverage carry forward;
+architecture, security/cancellation/privacy and compatibility/test reviews own
+this addendum. Root remains sole writer with the previously recorded allocations.
+
+| Bound | Revised value | Preserved margin |
+| --- | --- | --- |
+| Packaging phase | 1,500,000 ms / 25 minutes | All assertions remain; no retry |
+| Sum of active phases | 104 minutes | Other phase allowances unchanged |
+| Absolute preflight / phase cancellation | 3 / 107 minutes | Preflight plus phase sum |
+| Absolute child settlement / final cleanup | 110 / 113 minutes | Three minutes each |
+| Workflow gate step | 118 minutes | Five-minute hard-process fail-safe |
+| Sum of workflow steps / job | 173 / 185 minutes | Twelve-minute overhead |
+
+The manifest, semantic validator, exported packaging constant, monotonic timeline,
+workflow and current documentation change atomically. Retain exact-value validation,
+the 180-second packaging termination grace, 120-second packaging cleanup signal,
+lazy three-minute final cleanup, all child-operation deadlines and non-cooperative
+work retention. Do not widen by environment override, skip checks or retry failures.
+
+Add at most one diagnostic line per member of a finite approved milestone set:
+context preparation, build, seal, startup probes, each hosted generation, each
+local mode, final runtime verification, cleanup start/completion, finalization,
+and failure. Output only a fixed label and monotonic nonnegative integer elapsed
+milliseconds. Reject unknown/duplicate labels and invalid clocks without echoing
+input. A reporting failure must not bypass cleanup. No paths, identifiers, arguments,
+payloads, error text or raw child output. Keep the bounded existing sanitized
+capture; these lines aid the final failure tail, not live streaming or pass receipts.
+
+Checkpoints:
+
+1. Freeze this P3 revision and obtain affected, revision-bound approval. Update
+   exact budget and near-deadline tests first; observe failure on the old bounds.
+2. Apply the atomic budget changes and test the same deadlines, clamping,
+   cancellation/settlement ordering and cleanup margins. Add milestone privacy,
+   cardinality, clock and reporting-failure regressions before implementation.
+3. Run the affected gate runner/phase/packaging/UI suites and Markdown checks;
+   freeze R9 and obtain affected final reviews. Preserve unchanged application
+   persistence and prior complete-diff review coverage explicitly.
+4. Run the full local gate on frozen R9, record exact source/base/caller/cleanup
+   evidence, push the same draft PR, and verify both workflows on the replacement
+   head. Inspect packaging milestone timings in the Linux result. A further
+   failure requires diagnosis rather than an automatic retry or another increase.
+
+Required human acceptance remains pending; no ready-for-review or merge action is
+authorized. Steps 09–11 and full MCP onboarding remain inactive.

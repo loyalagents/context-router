@@ -13,14 +13,26 @@ import { hasLiveProcessGroupMembers } from './gate-runner.mjs';
 import { localUiBrowserPrerequisite } from './local-ui-browser.mjs';
 const directory = import.meta.dirname;
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-async function bounded(promise, ms = 30000) {
+export async function withLocalUiSmokeDeadline(promise, ms = 30000, stage) {
+  const label = [
+    'raw-protocol',
+    'browser-ready',
+    'websocket-control',
+    'context-close',
+    'browser-disconnect',
+    'browser-exit',
+    'browser-group-exit',
+    'cleanup-browser-disconnect',
+  ].includes(stage)
+    ? stage
+    : 'operation';
   let timer;
   try {
     return await Promise.race([
       promise,
       new Promise((_, reject) => {
         timer = setTimeout(
-          () => reject(new Error('Local UI smoke deadline')),
+          () => reject(new Error(`Local UI smoke deadline: ${label}`)),
           ms,
         );
       }),
@@ -44,7 +56,7 @@ function mappedJournal(journal) {
   };
 }
 async function rawProtocolClosed(port, request) {
-  await bounded(
+  await withLocalUiSmokeDeadline(
     new Promise((resolve, reject) => {
       const socket = net.connect({ host: '127.0.0.1', port }, () =>
         socket.write(request),
@@ -70,6 +82,7 @@ async function rawProtocolClosed(port, request) {
       });
     }),
     5000,
+    'raw-protocol',
   );
 }
 export async function cleanupLocalUiBrowserResources(
@@ -170,7 +183,7 @@ export async function runLocalUiSmoke({
         identity: { generation, operation: 'browser', temporaryDirectory },
       });
       let ready;
-      await bounded(
+      await withLocalUiSmokeDeadline(
         (async () => {
           for (;;) {
             const output = handle.output();
@@ -193,6 +206,8 @@ export async function runLocalUiSmoke({
             await delay(10);
           }
         })(),
+        30000,
+        'browser-ready',
       );
       assert.equal(ready.type, 'local-ui-browser-ready');
       assert.match(
@@ -231,7 +246,7 @@ export async function runLocalUiSmoke({
       });
       const page = await context.newPage();
       page.setDefaultTimeout(10000);
-      await bounded(
+      await withLocalUiSmokeDeadline(
         page.evaluate(
           () =>
             new Promise((resolve) => {
@@ -240,6 +255,7 @@ export async function runLocalUiSmoke({
             }),
         ),
         5000,
+        'websocket-control',
       );
       assert.deepEqual(sockets, ['ws://127.0.0.1:1/smoke-control']);
       sockets.length = 0;
@@ -397,21 +413,24 @@ export async function runLocalUiSmoke({
       assert.deepEqual(outbound, []);
       assert.deepEqual(violations, []);
       assert.deepEqual(sockets, []);
-      await bounded(context.close(), 5000);
-      await bounded(browser.close(), 5000);
+      await withLocalUiSmokeDeadline(context.close(), 5000, 'context-close');
+      await withLocalUiSmokeDeadline(browser.close(), 5000, 'browser-disconnect');
       browser = undefined;
       process.kill(-handle.child.pid, 'SIGTERM');
-      const result = await bounded(handle.result, 15000);
+      const result = await withLocalUiSmokeDeadline(
+        handle.result, 15000, 'browser-exit',
+      );
       assert.equal(result.code, 143);
       assert.equal(result.signal, null);
       assert.equal(result.stderr, '');
       assert.equal(result.overflow, false);
-      await bounded(
+      await withLocalUiSmokeDeadline(
         (async () => {
           while (await hasLiveProcessGroupMembers(handle.child.pid))
             await delay(10);
         })(),
         5000,
+        'browser-group-exit',
       );
       reaped = true;
       await record('acquired', id, {
@@ -432,7 +451,10 @@ export async function runLocalUiSmoke({
         },
       });
     } finally {
-      if (browser) await bounded(browser.close(), 5000).catch(() => {});
+      if (browser)
+        await withLocalUiSmokeDeadline(
+          browser.close(), 5000, 'cleanup-browser-disconnect',
+        ).catch(() => {});
       try {
         await cleanupLocalUiBrowserResources({
           handle,

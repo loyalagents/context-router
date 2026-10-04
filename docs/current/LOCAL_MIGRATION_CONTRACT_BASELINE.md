@@ -213,10 +213,14 @@ supported-mode rules. All six modes share `contract-baseline`, `documentation`,
 `packaged-composition-smoke`, and `repository-integrity`.
 The web-production phase additionally names `local-ui` and runs authenticated
 browser tests after its build. `local-orchestrator`, evaluation and Harbor phases
-remain hosted-only. All twelve phase IDs/order and internal timeouts remain.
+remain hosted-only. All twelve phase IDs/order remain. Step 08 P3 increases only
+the expanded packaging phase from fifteen to twenty-five minutes; other phase
+allowances remain unchanged, and active phase budgets now total 104 minutes.
 The dedicated workflow adds a bounded ten-minute pinned Chromium prerequisite;
-step budgets total 163 minutes within a 175-minute job, preserving twelve minutes
-of workflow overhead and the existing 108-minute gate-step fail-safe. Every supported mode must retain active contract, build, state,
+step budgets total 173 minutes within a 185-minute job, preserving twelve minutes
+of workflow overhead. Absolute gate deadlines are preflight T+3, phase cancellation
+T+107, child settlement T+110 and final cleanup T+113 minutes. The 118-minute
+gate-step fail-safe preserves five additional minutes. Every supported mode must retain active contract, build, state,
 restart, and integrity evidence. Each mode records active/retired status and at
 most one successor; a retired mode must name exactly one active successor. The
 command allowlist pins the exact six-mode matrix and rejects added modes,
@@ -410,12 +414,21 @@ both primary and cleanup errors; success removes it together with the
 disposable workspace and exact generated database/container. No production
 database or persisted user state is a gate target.
 
-The implemented Step 02E gate treats T+103 as a cooperative signal-aware
-internal budget. The dedicated workflow's 108-minute gate-step timeout is the
+Step 08 P3 retains the Step 02E cooperative signal-aware design with its internal
+budget at T+113. The dedicated workflow's 118-minute gate-step timeout is the
 hard process-execution fail-safe; it does not claim that arbitrary in-process
 code which ignores cancellation can still complete scoped cleanup. Cleanup
 never races resource-owning work that has not settled, and any outer-timeout
 recovery is limited to exact identities already persisted in private journals.
+The packaging phase retains its 180-second termination grace, 120-second cleanup
+signal and all child-operation deadlines; aggregate cleanup still gets one lazy
+three-minute window. Fixed packaging milestones expose only a finite label and
+monotonic elapsed milliseconds through the existing sanitized capture. They locate
+completed boundaries in failure tails without replacing lifecycle/success evidence
+or enabling live streaming. Unknown labels and reporting errors cannot expose
+private input or interrupt cleanup. The
+[P3 plan](../plans/active/local-migration/08-local-ui/plan.md#p3-validation-budget-addendum)
+records the timeout evidence, affected review and required renewed validation.
 
 On 2026-09-18, the Step 02E correction tree passed all 244 local-migration tests.
 The dedicated Linux run had exposed zombie-only process groups that remained

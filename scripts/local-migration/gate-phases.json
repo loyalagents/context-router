@@ -522,7 +522,7 @@
       "order": 11,
       "ownerStep": "02",
       "status": "active",
-      "timeoutMs": 900000,
+      "timeoutMs": 1500000,
       "terminationGraceMs": 180000,
       "modes": [
         "hosted-baseline",

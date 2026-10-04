@@ -490,7 +490,7 @@ Human acceptance stays pending.
 
 ### R8 Final Local Validation
 
-R8 is the final code/test candidate: [candidate-r8.json](candidate-r8.json),
+R8 was the fourth final code/test candidate: [candidate-r8.json](candidate-r8.json),
 183 bound paths, aggregate
 `ddfb88945f7cbfe1c46332d1766242fa05a7352de03063131902294d62345937`.
 Architecture, security/recovery and compatibility independently verified and
@@ -501,8 +501,8 @@ no drift in any bound path, mode or content.
 The renewed full command used the same pinned toolchain and exact Step 07 base,
 with `RUNNER_TEMP=/private/tmp/step08-final-gate-r8-2fexs29_` and
 `MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r8-2fexs29_/local-migration-gate-summary.json`.
-Result: **PASS, exit 0, 12/12 phases**. The current
-[sanitized receipt](final-gate-summary.json) records 1,064,627 ms (terminal
+Result: **PASS, exit 0, 12/12 phases**. The historical
+[sanitized receipt](https://github.com/loyalagents/context-router/blob/1b86b68f0442d3e6dd311770a01761c30358dc15/docs/plans/active/local-migration/08-local-ui/final-gate-summary.json) records 1,064,627 ms (terminal
 1,064,884 ms including final return), performed exact-base comparison, caller
 integrity true, no cleanup errors, removed owned database and clean owned
 administration. Source was the frozen R8 uncommitted snapshot over
@@ -516,3 +516,128 @@ Only closeout documentation/review evidence and the sanitized receipt change
 after the frozen run. Replacement-head standard and dedicated workflow results
 are recorded in PR #167, without substituting earlier runs. Human acceptance
 remains **PENDING**; the PR stays draft and Steps 09–11 remain inactive.
+
+### Expanded Packaging Budget And Bounded Diagnostics
+
+R8 pushed head `1b86b68f0442d3e6dd311770a01761c30358dc15` passed all
+[standard CI jobs](https://github.com/loyalagents/context-router/actions/runs/37199274685).
+The [dedicated workflow](https://github.com/loyalagents/context-router/actions/runs/37199274659)
+passed phases 1–10, then packaging reached its exact effective `899999ms` phase
+timeout. SIGTERM and cleanup followed; the command exited 124. The failed run
+does not identify the last completed internal boundary and is not Linux acceptance.
+The complete log is `/private/tmp/step08-r8-migration-ci.log`.
+
+The independently approved [P3 addendum](plan.md#p3-validation-budget-addendum)
+sets packaging to 25 minutes for Step 08's expanded web payload, repeated sealed
+audits and browser generations. Exact manifest/validator/exported-constant pins,
+global timeline and workflow budgets change atomically. Active phases total 104
+minutes; absolute preflight/cancellation/settlement/cleanup are 3/107/110/113;
+workflow gate is 118 and steps/job are 173/185. Existing three-minute settlement
+and cleanup margins, five-minute hard-stop margin and twelve-minute job overhead
+remain. Phase termination grace, child deadlines and the two-minute packaging
+cleanup signal are unchanged. No retry, skipped assertion or environment override
+was added. This is bounded headroom, not proof of Linux success.
+
+Six changed-requirement budget/deadline regressions failed on the old limits.
+Two new progress/privacy regressions also failed before their implementation.
+They now run within the already-registered packaging test suite. A finite sixteen-
+label reporter emits at most one fixed-label/monotonic-elapsed line per milestone.
+Unknown/duplicate labels, invalid clocks and write errors produce no unsafe output
+or thrown reporting error; cleanup continues. Completion labels follow awaited
+boundaries, including final runtime verification and cleanup. Failure labels carry
+no raw error text. Existing sanitized capture remains; this improves failure tails,
+not live CI streaming or lifecycle receipts.
+
+The full affected gate-runner, gate-phase, packaging and local-UI harness suites
+passed **149/149**, 11,356 ms before independent R9 review found an asynchronous
+reporting failure not covered by the injected synchronous-throw test. Application
+interfaces, persistence and authority are unchanged.
+
+### Closed-Pipe Reporting Correction
+
+Architecture and security independently blocked frozen R9
+([candidate-r9.json](candidate-r9.json), 185 paths, aggregate
+`313a3377e612c1b3e52dbc290752a53269482e0e3ceb1eb7bdcb450226409863`): raw
+`process.stdout.write` can emit asynchronous EPIPE beyond the reporter's catch and
+terminate packaging before cleanup. The in-flight gate was deliberately cancelled
+before editing. Its receipt at
+`/private/tmp/step08-final-gate-r9-silo4wuu/local-migration-gate-summary.json`
+records cancellation after 75,339 ms, contract/documentation passes, interrupted
+backend unit phase, caller integrity true, removed owned database and clean
+administration. `cleanupErrors` retains `received SIGINT`; this is not a passed run.
+
+A new real-process regression closes the child's stdout pipe only after IPC
+readiness. The child then reports before and during asynchronous owned-resource
+cleanup. The original writer failed with exit 1. Repeated writes also defeat Node
+24.21.0 Console's error handling, so the correction uses synchronous descriptor
+writes inside the existing catch. There are still at most sixteen tiny fixed lines,
+with no retries, global stream handlers or raw error output. Closed/unavailable
+descriptors and write errors suppress diagnostics without interrupting cleanup.
+The regression proves exit 0, empty stderr, a completed cleanup marker, removal
+of the owned resource and child absence.
+
+All affected gate-runner, gate-phase, packaging and local-UI harness tests now pass
+**150/150**, 11,238 ms; the new test also passed in isolation. Evidence is retained
+in `/private/tmp/step08-r10-closed-pipe-red.log`,
+`/private/tmp/step08-r10-closed-pipe-green.log` and
+`/private/tmp/step08-r10-targeted.log`. P3 is unchanged. R10 requires affected frozen
+implementation approval, a renewed full local gate and both replacement-head CI
+results. Human acceptance remains pending.
+
+### R10 Source Deadline And R11 Diagnostic Follow-Up
+
+All three affected reviewers approved frozen R10
+([candidate-r10.json](candidate-r10.json), 186 paths, aggregate
+`22388662e6601728cd135308c8f159fbf6900b413c9b567b78abfc4a8f970851`). Its full gate
+passed phases 1–9, then source restart smoke failed with the generic `Local UI
+smoke deadline`. The receipt at
+`/private/tmp/step08-final-gate-r10-0wrphyhg/local-migration-gate-summary.json`
+records 597,601 ms, caller integrity true, no cleanup errors, removed database and
+clean administration. The first UI browser's resource and temporary-directory
+cleanup completed, but its authenticated-success record was not reached. This is
+not a successful gate, and the generic error cannot identify the expired wait.
+
+R11 adds only finite, fixed deadline-stage labels to the existing waits, preserving
+every timeout, operation, assertion and cleanup ordering. A tests-first regression
+covers successful settlement, original rejection, every fixed label and suppression
+of arbitrary string/object input from deadline text. The affected suites pass
+**151/151** in 11,255 ms (`/private/tmp/step08-r11-targeted.log`).
+
+One focused isolated source run with those labels passed both authenticated browser
+generations and strict cleanup in 85,573 ms. Its command log and lifecycle are at
+`/private/var/folders/pn/rnjt7b1d5xb4pckyss2s55qc0000gn/T/context-router-smoke-run-MNW0Yq`.
+The outer command failed evidence finalization because the coordinator supplied
+`summary.json` instead of the required `local-migration-gate-summary.json`; caller
+integrity remained true. This targeted result is not full-gate acceptance. The
+earlier deadline did not reproduce and its cause remains unconfirmed; no timeout
+increase, automatic retry or speculative shutdown change was made. R11 must renew
+affected review and the full gate with the exact receipt path before final-head CI.
+
+### R11 Final Local Validation
+
+R11 is the final frozen code/test candidate: [candidate-r11.json](candidate-r11.json),
+187 paths, aggregate
+`03102086f9c363c414cb9ce3200ead2b936f123b47201a370d70aacea58763ea`. Architecture,
+security/recovery and compatibility independently approved its bounded diagnostic
+delta and carried forward R10 and all unchanged complete implementation mandates.
+Post-gate comparison found no drift in any bound path, mode or content.
+
+The full pinned-toolchain command used the exact Step 07 base,
+`RUNNER_TEMP=/private/tmp/step08-final-gate-r11-049rf14g`, and
+`MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r11-049rf14g/local-migration-gate-summary.json`.
+Result: **PASS, exit 0, 12/12 phases**. The current
+[sanitized receipt](final-gate-summary.json) records 1,048,139 ms (terminal
+1,048,457 ms), exact-base comparison performed, caller integrity true, no cleanup
+errors, removed owned database and clean administration. Source was the frozen
+uncommitted R11 snapshot over `1b86b68f0442d3e6dd311770a01761c30358dc15`, copied-input
+digest `627f77bd29cb49acdcd29aa0fede03b6fabf9aa31531d5a85cc70e60e9774b13`.
+Pinned local tool versions remain Node 24.21.0, pnpm 10.25.0, Python 3.12.8,
+PostgreSQL 15.19, Playwright 1.63.0 and Chromium 153.0.8010.12.
+
+Source restart passed in 79,178 ms; sealed composition passed in 468,468 ms. Both
+source and sealed lifecycles recorded two authenticated browser generations,
+confirmed group absence and temporary-directory removal. The earlier R10 deadline
+did not recur; its cause remains unconfirmed, and fixed diagnostics remain for any
+recurrence. Only closeout evidence and the sanitized receipt change after this run.
+Replacement-head standard/dedicated CI results belong to PR #167; no prior run is
+substituted. Human acceptance remains **PENDING**, and the PR remains draft.

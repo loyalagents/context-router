@@ -2,6 +2,7 @@
 import { assertLocalUiParentCleanupSafe } from './local-ui-lifecycle.mjs';
 import { runLocalUiSmoke } from './local-ui-smoke.mjs';
 import { runLocalMcpSmoke } from './local-mcp-smoke.mjs';
+import { createPackagingProgressReporter } from './packaging-progress.mjs';
 
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
@@ -103,7 +104,7 @@ export const BACKEND_DEPLOY_ARGV_PREFIX = Object.freeze([
   "deploy",
   "--prod",
 ]);
-export const PACKAGED_SMOKE_PHASE_TIMEOUT_MS = 900_000;
+export const PACKAGED_SMOKE_PHASE_TIMEOUT_MS = 1_500_000;
 export const PACKAGED_SMOKE_TERMINATION_GRACE_MS = 180_000;
 
 function sha256(value) {
@@ -3752,6 +3753,7 @@ async function runPackagingSmokeWithPrivateUmask({
   signal,
 } = {}) {
   const startedAt = Date.now();
+  const progress = createPackagingProgressReporter();
   const requestedDiagnostics =
     diagnosticsDirectory ?? environment.MIGRATION_PACKAGING_SMOKE_DIAGNOSTICS_DIR;
   const protectedStoreRoot = await readObservedPnpmStore(repositoryRoot);
@@ -3840,6 +3842,7 @@ async function runPackagingSmokeWithPrivateUmask({
       identity: { mode: context.mode },
     });
     summary.mode = context.mode;
+    progress('context-prepared');
 
     const runtimeRoot = path.join(context.privateRoot, "runtime");
     const hostileCwd = path.join(runtimeRoot, "hostile-cwd");
@@ -3925,6 +3928,7 @@ async function runPackagingSmokeWithPrivateUmask({
       [context.sourceRoot, context.corepackHome],
       { signal },
     );
+    progress('build-complete');
 
     await journal.acquiring({
       id: "sealed-stage",
@@ -3950,6 +3954,7 @@ async function runPackagingSmokeWithPrivateUmask({
       },
     });
     await verifySealedStage(stage.stageRoot, stage.sealed);
+    progress('stage-sealed');
 
     administration = await prepareTestAdministration({
       repositoryRoot: context.sourceRoot,
@@ -4140,6 +4145,7 @@ async function runPackagingSmokeWithPrivateUmask({
       journal,
       signal,
     });
+    progress('startup-probes-complete');
 
     const generations = [];
     for (const generation of [1, 2]) {
@@ -4161,6 +4167,7 @@ async function runPackagingSmokeWithPrivateUmask({
           signal,
         }),
       );
+      progress(`hosted-generation-${generation}-complete`);
     }
     assert.equal(generations[0].principalId, generations[1].principalId);
     assert.deepEqual(
@@ -4194,6 +4201,7 @@ async function runPackagingSmokeWithPrivateUmask({
         ),
       verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
     });
+    progress('local-identity-complete');
     const localDatabase = await runLocalDatabaseSmoke({
       entrypoint: stage.localDatabaseEntrypoint,
       cwd: hostileCwd,
@@ -4205,18 +4213,21 @@ async function runPackagingSmokeWithPrivateUmask({
       signal,
       verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
     });
+    progress('local-database-complete');
     const localModel = await runLocalModelSmoke({
       entrypoint: stage.localDatabaseEntrypoint, cwd: hostileCwd,
       home: path.join(runtimeRoot, 'local-model-home'), temporaryDirectory: path.join(runtimeRoot, 'local-model-tmp'),
       stateParent: secretDirectory, journal, environment, signal,
       verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
     });
+    progress('local-model-complete');
     const localMcp = await runLocalMcpSmoke({
       entrypoint: stage.localMcpEntrypoint, cwd: hostileCwd,
       home: path.join(runtimeRoot, 'local-mcp-home'), temporaryDirectory: path.join(runtimeRoot, 'local-mcp-tmp'),
       stateParent: secretDirectory, journal, environment, signal,
       verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
     });
+    progress('local-mcp-complete');
     const localUi = await runLocalUiSmoke({
       webRoot: stage.stageLocalUi, repositoryRoot: context.sourceRoot, cwd: hostileCwd,
       // Chromium appends its singleton socket path to TMPDIR. Keep this short
@@ -4225,6 +4236,7 @@ async function runPackagingSmokeWithPrivateUmask({
       stateParent: secretDirectory, journal, environment, signal,
       verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
     });
+    progress('local-ui-complete');
     assert.equal(localDatabase.sqlite, stage.native.sqlite.version);
     assert.equal(localDatabase.sourceId, stage.native.sqlite.sourceId);
     assert.equal(
@@ -4238,6 +4250,7 @@ async function runPackagingSmokeWithPrivateUmask({
       `type ${filenameSecret} { poisoned: String }\n`,
     );
     await assertPrivateTree(runtimeRoot);
+    progress('runtime-verified');
 
     summary = {
       ...summary,
@@ -4291,6 +4304,7 @@ async function runPackagingSmokeWithPrivateUmask({
       privateRootRolledBack = true;
     }
     primaryError = error;
+    progress('failed');
     summary = {
       ...summary,
       status: signal?.aborted ? "cancelled" : "failed",
@@ -4299,6 +4313,7 @@ async function runPackagingSmokeWithPrivateUmask({
       failure: redactSecrets(error?.message ?? error, expandedCanaries(canaries)),
     };
   } finally {
+    progress('cleanup-started');
     const cleanupSignal = getCleanupSignal();
     if (database && administration && context) {
       let error;
@@ -4452,6 +4467,7 @@ async function runPackagingSmokeWithPrivateUmask({
         }
       }
     }
+    if (!cleanupErrors.length) progress('cleanup-complete');
     finalization = await finalizePackagingSmokeEvidence({
       diagnostics,
       diagnosticsOwnership,
@@ -4463,6 +4479,7 @@ async function runPackagingSmokeWithPrivateUmask({
       signal,
       canaries,
     });
+    progress('finalization-complete');
   }
 
   if (
@@ -4480,6 +4497,7 @@ async function runPackagingSmokeWithPrivateUmask({
 
   const combined = combineFailures(primaryError, cleanupErrors, "packaging smoke");
   if (combined) {
+    progress('failed');
     const sanitized = createSanitizedPackagingError(combined, canaries);
     console.error(
       finalization?.diagnosticsRetained

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { createServer, request as httpRequest } from "node:http";
 import {
@@ -2023,4 +2024,144 @@ test("local UI payload uses one exact offline production deploy and an explicit 
   const manifest = JSON.parse(await readFile(path.join(repositoryRoot, 'apps/web/package.json'), 'utf8'));
   assert.deepEqual(manifest.files, ['local-ui.mjs', 'next.config.mjs']);
   assert.equal(manifest.dependencies.backend, 'workspace:*');
+});
+
+test("packaging milestones reject private input and remain finite, monotonic diagnostics", async () => {
+  const { createPackagingProgressReporter, PACKAGING_MILESTONES } =
+    await import("./packaging-progress.mjs");
+  let now = 100.5;
+  const output = [];
+  const report = createPackagingProgressReporter({
+    now: () => now,
+    write: (line) => output.push(line),
+  });
+  const canary = "synthetic-private-path-token-error";
+  assert.equal(report(canary), false);
+  assert.equal(report({ toString: () => canary }), false);
+  assert.deepEqual(output, []);
+  for (const milestone of PACKAGING_MILESTONES) {
+    now += 1.5;
+    assert.equal(report(milestone), true);
+    assert.equal(report(milestone), false);
+  }
+  assert.equal(output.length, PACKAGING_MILESTONES.length);
+  assert.equal(new Set(PACKAGING_MILESTONES).size, PACKAGING_MILESTONES.length);
+  assert.ok(PACKAGING_MILESTONES.length <= 20);
+  let previous = -1;
+  for (const line of output) {
+    const match =
+      /^packaging-smoke: milestone=([a-z0-9-]+) elapsedMs=([0-9]+)\n$/.exec(
+        line,
+      );
+    assert.ok(match);
+    assert.ok(PACKAGING_MILESTONES.includes(match[1]));
+    assert.ok(Number(match[2]) >= previous);
+    previous = Number(match[2]);
+  }
+  assert.equal(output.join("").includes(canary), false);
+  assert.ok(Buffer.byteLength(output.join("")) < 4096);
+  assert.ok(PACKAGING_MILESTONES.includes("failed"));
+  assert.ok(PACKAGING_MILESTONES.includes("cleanup-started"));
+  assert.ok(PACKAGING_MILESTONES.includes("cleanup-complete"));
+});
+
+test("invalid clocks and reporting failures cannot interrupt resource cleanup", async () => {
+  const { createPackagingProgressReporter } = await import(
+    "./packaging-progress.mjs"
+  );
+  for (const invalid of [-1, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    let now = 0;
+    const output = [];
+    const report = createPackagingProgressReporter({
+      now: () => now,
+      write: (line) => output.push(line),
+    });
+    now = invalid;
+    assert.equal(report("cleanup-started"), false);
+    assert.deepEqual(output, []);
+  }
+  let now = 0;
+  const report = createPackagingProgressReporter({
+    now: () => now,
+    write: () => {
+      throw new Error("synthetic-private-write-error");
+    },
+  });
+  let cleaned = false;
+  try {
+    throw new Error("synthetic-primary-error");
+  } catch {
+    assert.equal(report("failed"), false);
+  } finally {
+    now++;
+    assert.equal(report("cleanup-started"), false);
+    cleaned = true;
+    assert.equal(report("cleanup-complete"), false);
+  }
+  assert.equal(cleaned, true);
+  const output = [];
+  now = 0;
+  const monotonic = createPackagingProgressReporter({
+    now: () => now,
+    write: (line) => output.push(line),
+  });
+  now = 10;
+  assert.equal(monotonic("context-prepared"), true);
+  now = 9;
+  assert.equal(monotonic("build-complete"), false);
+  assert.equal(output.length, 1);
+});
+
+test("default milestone writer survives a closed stdout pipe and completes owned cleanup", async () => {
+  await temporaryDirectory("packaging-closed-pipe-test-", async (root) => {
+    const resource = path.join(root, "owned-resource");
+    const marker = path.join(root, "cleanup-complete");
+    const child = spawn(process.execPath, [
+      "--input-type=module", "--eval", `
+        import { mkdir, rm, writeFile } from 'node:fs/promises';
+        import { setTimeout } from 'node:timers/promises';
+        import { createPackagingProgressReporter } from ${JSON.stringify(new URL("./packaging-progress.mjs", import.meta.url).href)};
+        const [resource, marker] = process.argv.slice(1);
+        await mkdir(resource, { mode: 0o700 });
+        const released = new Promise(resolve => process.once('message', resolve));
+        process.send('armed');
+        await released;
+        const report = createPackagingProgressReporter();
+        try {
+          report('context-prepared');
+          await setTimeout(30);
+        } finally {
+          report('cleanup-started');
+          await rm(resource, { recursive: true });
+          await writeFile(marker, 'cleaned', { mode: 0o600 });
+          report('cleanup-complete');
+          await setTimeout(30);
+          process.disconnect();
+        }
+      `, resource, marker,
+    ], { stdio: ["ignore", "pipe", "pipe", "ipc"] });
+    let stderr = "";
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    const closed = new Promise((resolve, reject) => {
+      child.once("error", reject);
+      child.once("close", (code, signal) => resolve({ code, signal }));
+    });
+    const armed = new Promise((resolve) => child.once("message", resolve));
+    try {
+      assert.equal(await waitWithTimeout(Promise.race([armed, closed]), 5_000, "closed-pipe child did not arm"), "armed");
+      const pipeClosed = new Promise((resolve) => child.stdout.once("close", resolve));
+      child.stdout.destroy();
+      await waitWithTimeout(pipeClosed, 5_000, "stdout pipe did not close");
+      child.send("release");
+      assert.deepEqual(await waitWithTimeout(closed, 5_000, "closed-pipe child did not exit"), { code: 0, signal: null }, stderr);
+      assert.equal(stderr, "");
+      assert.equal(await readFile(marker, "utf8"), "cleaned");
+      await assert.rejects(lstat(resource), { code: "ENOENT" });
+      assert.equal(await isProcessLive(child.pid), false);
+    } finally {
+      if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+      await waitWithTimeout(closed, 5_000, "closed-pipe child was not reaped");
+    }
+  });
 });

@@ -454,3 +454,90 @@ and complete owned cleanup; see [R8 validation](implementation.md#r8-final-local
 Post-gate binding verification found no drift. Only closeout evidence/receipt
 updates follow the frozen run. Final-head CI and human acceptance remain separate
 requirements; PR #167 stays draft with no authorization to merge.
+
+### P3 Validation Budget Approval Before R9
+
+R8 standard CI passed, but dedicated run `37199274659` passed phases 1–10 and
+timed out packaging at its exact 899999 ms effective allowance (exit 124).
+No final Linux success is claimed. The previous log's late private-tree failure
+and R8 local timing support bounded headroom for the expanded Step 08 workload;
+they do not locate the unfinished substage or prove a new budget will pass.
+
+The [P3 plan](plan.md#p3-validation-budget-addendum) is frozen at SHA-256
+`365a276bd93b980d3516777bfe6526f698f2df79399bcffb28f48d86390bca0f`.
+Before implementation, `/root/final_architecture`, `/root/final_security`, and
+`/root/final_compatibility` each independently verified that only the header and
+P3 addendum changed from approved P2 and returned **APPROVE** in their affected
+dimensions. They approved exact bounded budget arithmetic, unchanged cleanup,
+grace and operation limits, finite safe diagnostics, tests-first checkpoints and
+renewed full validation. Their reviews were read-only; requested/observable model
+settings remain unchanged. P2 application/persistence/auth-contract scope and
+unaffected complete-diff review coverage explicitly carry forward. R9 implementation
+approval is separate; manual acceptance and final-head CI remain pending.
+
+### R9 Reporting Finding And R10 Correction
+
+Architecture and security independently verified all 185 R9 paths and aggregate
+`313a3377e612c1b3e52dbc290752a53269482e0e3ceb1eb7bdcb450226409863`, then returned
+**CHANGES REQUIRED** for asynchronous stdout EPIPE bypassing the synchronous catch
+and potentially terminating owned cleanup. Compatibility approved the budget/test
+delta, but that approval does not waive the reporting blocker. All three otherwise
+approved the P3 budget arithmetic, unchanged lifecycle bounds and finite diagnostic
+scope. Full R9 validation was deliberately cancelled before source edits; see the
+[correction evidence](implementation.md#closed-pipe-reporting-correction).
+
+R10 adds a real default-writer closed-pipe regression before the fix and uses bounded
+synchronous descriptor writes under the existing catch. Affected architecture,
+security/recovery and compatibility/test review must bind R10. P3 and application
+interfaces, persistence/history/CAS/grants and browser authority are unchanged;
+their complete-diff independent approvals carry forward. Root remains sole writer.
+
+### R10 Approvals And R11 Deadline Diagnostics
+
+Architecture, security/recovery and compatibility independently verified every R10
+path/mode/hash and aggregate
+`22388662e6601728cd135308c8f159fbf6900b413c9b567b78abfc4a8f970851`, then each returned
+**APPROVE**. The synchronous reporter and real closed-pipe test close the R9 blocker;
+P3 budget arithmetic and unchanged complete-diff coverage carry forward. Architecture
+also independently reproduced raw/Console failures and synchronous-writer cleanup
+success with bounded disposable Node children before the frozen review. Other
+behavioral runs were coordinator evidence; reviews were read-only.
+
+R10's subsequent full gate failed a generic source-browser deadline; complete owned
+cleanup and caller integrity passed. Architecture independently confirmed that the
+retained evidence cannot identify the expired wait and recommended fixed labels
+before any shutdown or budget change. R11 makes that diagnostics-only change and
+adds the corresponding privacy/deadline regression. The focused source smoke passed
+internally, with an independently recorded outer receipt-path configuration error;
+the earlier deadline cause remains unconfirmed. See
+[R11 evidence](implementation.md#r10-source-deadline-and-r11-diagnostic-follow-up).
+Final affected review and full-gate success remain required. P3, all operation
+deadlines, product behavior, application persistence and complete unaffected review
+coverage are unchanged.
+
+### R11 Affected Approvals And Renewed Full Gate
+
+All three reviewers independently verified the complete 187-path R11 inventory,
+modes and aggregate `03102086f9c363c414cb9ce3200ead2b936f123b47201a370d70aacea58763ea`,
+with unchanged P3 and no drift, and returned **APPROVE**:
+
+- `/root/final_architecture`: diagnostics-only change preserves waits, assertions
+  and cleanup; R10 and unchanged complete architecture/application coverage carry forward.
+- `/root/final_security`: closed stage allowlist prevents private input entering
+  deadline text; R10 and complete security/auth-contract/state/recovery coverage carry forward.
+- `/root/final_compatibility`: regression covers every stage, fallback and original
+  error identity; R10 and unchanged complete compatibility/test coverage carry forward.
+
+Reviews were read-only and inspected coordinator test evidence. They independently
+checked the focused source pass and outer receipt-path failure without presenting
+either as full acceptance or a root-cause fix. Requested/observable model settings
+remain as recorded. Application persistence/history/CAS/grants remain unchanged;
+their independent complete-review approval carries forward.
+
+The subsequent frozen R11 full gate passed all 12 phases with exact-base comparison,
+caller integrity and complete owned cleanup; see
+[final validation](implementation.md#r11-final-local-validation). Post-gate binding
+verification found no drift. Only evidence/receipt closeout follows. All four
+implementation mandates are approved through the recorded affected-review chain;
+final-head CI and actual human acceptance remain separate requirements. PR #167
+stays draft; Steps 09–11 remain inactive, with no authorization to merge.

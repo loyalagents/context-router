@@ -564,7 +564,7 @@ export function validatePhaseManifest(
     if (phase.kind === "packaged-smoke") {
       if (phase.id !== "packaged-composition-smoke") errors.push("packaged smoke must use the approved phase id");
       if (phase.ownerStep !== "02") errors.push("packaged smoke must be owned by Step 02");
-      if (phase.timeoutMs !== 900_000) errors.push("packaged smoke must use the approved 900000ms timeout");
+      if (phase.timeoutMs !== 1_500_000) errors.push("packaged smoke must use the approved 1500000ms timeout");
       if (phase.terminationGraceMs !== 180_000) errors.push("packaged smoke must use the approved 180000ms termination grace");
       if (!jsonArrayEqual(phase.modes, APPROVED_SUPPORTED_MODES)) {
         errors.push("packaged smoke must use exactly the approved dual-mode matrix");
@@ -590,8 +590,8 @@ export function validatePhaseManifest(
   const activeTimeoutTotal = manifest.phases
     .filter((phase) => phase.status === "active")
     .reduce((total, phase) => total + (phase.timeoutMs ?? 0), 0);
-  if (activeTimeoutTotal > 94 * 60_000) {
-    errors.push("active phase timeouts exceed the approved 94-minute budget");
+  if (activeTimeoutTotal > 104 * 60_000) {
+    errors.push("active phase timeouts exceed the approved 104-minute budget");
   }
   const phasesById = new Map(
     manifest.phases.map((phase) => [phase.id, phase]),

@@ -81,9 +81,9 @@ export const RESTART_SMOKE_TERMINATION_GRACE_MS =
 
 export const GATE_TIMELINE_MS = Object.freeze({
   preflight: 3 * 60_000,
-  phaseCancellation: 97 * 60_000,
-  childSettlement: 100 * 60_000,
-  finalCleanup: 103 * 60_000,
+  phaseCancellation: 107 * 60_000,
+  childSettlement: 110 * 60_000,
+  finalCleanup: 113 * 60_000,
 });
 
 const GATE_TIMELINE_LABELS = Object.freeze({
@@ -375,7 +375,7 @@ export async function runBoundedGateStages({
     try {
       timeline.assertBefore("childSettlement");
     } finally {
-      // Once every owned child has settled, T+97 must no longer be able to
+      // Once every owned child has settled, T+107 must no longer be able to
       // reclassify a valid final-cleanup window as cancelled.
       workDeadline.dispose();
     }

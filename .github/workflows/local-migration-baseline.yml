@@ -12,7 +12,7 @@ permissions:
 jobs:
   local-migration-baseline:
     runs-on: ubuntu-latest
-    timeout-minutes: 175
+    timeout-minutes: 185
 
     services:
       postgres:
@@ -68,7 +68,7 @@ jobs:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
 
       - name: Run the Local Migration Baseline Gate
-        timeout-minutes: 108
+        timeout-minutes: 118
         run: pnpm migration:gate
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
