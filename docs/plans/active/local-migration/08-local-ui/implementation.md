@@ -268,7 +268,7 @@ performed base comparison. Markdown links and diff checks are rerun at closeout.
 Earlier checkpoint entries above are chronological evidence, including failed
 attempts and then-pending gates. This section records the current result.
 
-R5 is the final product/test candidate: [candidate-r5.json](candidate-r5.json),
+R5 was the first final product/test candidate: [candidate-r5.json](candidate-r5.json),
 178 bound paths, aggregate
 `2a48f8c76f70d75d1e5b247a37858af5ffc2ff9f773a7363fe7188268792f81b`.
 The compatibility reviewer independently approved its two schema-test pin updates;
@@ -287,7 +287,7 @@ pnpm migration:gate
 ```
 
 Result: **PASS, exit 0, 12/12 phases**. The committed sanitized
-[receipt](final-gate-summary.json) records 1,123,577 ms; the terminal reports
+[R5 receipt](https://github.com/loyalagents/context-router/blob/ac5de4cef4266e92be94428959b8640c1cad925d/docs/plans/active/local-migration/08-local-ui/final-gate-summary.json) records 1,123,577 ms; the terminal reports
 1,123,936 ms including final return work. Base comparison was **performed** against
 `5e2a67dd785500ba053b2e836c47166e8adeada8`; caller integrity is true, cleanup errors
 are empty, the owned database was removed and owned administration cleaned.
@@ -325,3 +325,67 @@ pushed SHA and both standard CI and dedicated migration results. Required
 Code/Codex interoperability and any qualified live-model checks. Steps 09–11 and
 future full MCP onboarding remain inactive. Existing E/H, plain-HTTP origin trust,
 legacy history/backups and AcroForm parser limits remain as documented.
+
+### Linux CI Startup Correction
+
+Draft [PR #167](https://github.com/loyalagents/context-router/pull/167) initially
+pushed `ac5de4cef4266e92be94428959b8640c1cad925d`.
+[Standard CI](https://github.com/loyalagents/context-router/actions/runs/37190493733)
+passed. The [dedicated gate](https://github.com/loyalagents/context-router/actions/runs/37190493739)
+passed its first ten phases, including source Chromium, then failed sealed
+composition with `Browser driver failed`. The R5 macOS gate remains valid
+historical evidence, but did not establish Linux sealed startup.
+
+An owned disposable Ubuntu 24.04 arm64 container reproduced the failure with the
+exact pinned Chrome for Testing 153.0.8010.12. The original sealed TMPDIR was
+63 bytes; Chromium's resulting `SingletonSocket` path was 108 bytes and aborted
+with `Socket path too long`. The source TMPDIR and corrected sealed TMPDIR were
+53 bytes, their actual socket paths 98 bytes, and both reached DevTools readiness.
+This matches Chromium's [platform-specific socket bounds](https://chromium.googlesource.com/chromium/src.git/+/refs/tags/146.0.7680.21/chrome/browser/process_singleton_posix.cc).
+The exact binary reproduction, rather than the older source tag alone, establishes
+the observed behavior. Local evidence: `/private/tmp/step08-linux-chromium-proof/result.log`.
+The reproduction container and its browser groups were removed afterward.
+
+The correction shortens only packaging's owned UI temporary child to `runtime/ui`.
+No root ownership, journal, parent-retention or product behavior changes. Browser
+startup now emits only fixed spawn/socket-path/exit/signal/deadline categories,
+with a bounded transient stderr tail and no raw diagnostic forwarding. It notices
+signal termination directly and validates the port before accepting readiness.
+New fake-browser failure cases check fixed output, high-volume private canaries,
+split socket diagnostics, spawn/exit/signal/deadline failures and owned-group reap.
+The diagnostic test failed before the fix and passes afterward. The three affected
+UI/packaging/gate-phase harness suites pass 102/102 in 10,975 ms; Markdown links
+(168 files) and diff whitespace pass. An initial sandboxed suite invocation was
+blocked by loopback `EPERM`; the authorized owned-loopback run passed. Affected review,
+a renewed full local gate and both workflows on the replacement pushed head are
+required; manual acceptance remains pending.
+
+
+### R6 Final Local Validation
+
+R6 is the final code/test candidate: [candidate-r6.json](candidate-r6.json),
+179 bound paths, aggregate
+`bad1e63bdafeacda4540a7f299db70c5fa71bf78f308f925fc6502d6804abc71`.
+Architecture, security/recovery and compatibility independently verified this
+manifest and approved the affected correction, carrying forward unchanged
+complete-diff coverage. Application persistence contracts remain unchanged.
+A post-gate comparison found no drift in any bound path, mode or content.
+
+The renewed full command used the same pinned toolchain and exact base above,
+with `RUNNER_TEMP=/private/tmp/step08-final-gate-r6-_0354mbu` and
+`MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r6-_0354mbu/local-migration-gate-summary.json`.
+Result: **PASS, exit 0, 12/12 phases**. The current
+[sanitized receipt](final-gate-summary.json) records 1,139,223 ms; the terminal
+reports 1,139,551 ms including final return. Base comparison was performed;
+caller integrity is true; cleanup errors are empty; the owned database was
+removed and administration cleaned. Source was the R6 uncommitted snapshot over
+`ac5de4cef4266e92be94428959b8640c1cad925d`, with copied-input digest
+`d042f1994a4a742ce97a1cc9d1d05c3f902828ab58e94b59e0e48bf6d7d14508`.
+All versions match R5. Sealed composition passed in 515,930 ms, including both
+actual authenticated browser generations and confirmed group reaping.
+
+Only closeout documentation/review evidence and the sanitized receipt change
+following this frozen run. Replacement pushed-head standard and dedicated CI
+results are recorded in PR #167; human acceptance remains **PENDING** and the PR
+remains draft. The earlier failed Linux run and passing R5 local run are retained
+as historical evidence, not substituted for replacement-head validation.

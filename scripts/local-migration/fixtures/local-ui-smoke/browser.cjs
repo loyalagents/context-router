@@ -35,12 +35,26 @@ exports.runLocalIdentityEntrypoint = async ({ argv: [operation] }) => {
         TMPDIR: process.env.TMPDIR,
       },
       detached: false,
-      stdio: 'ignore',
+      stdio: ['ignore', 'ignore', 'pipe'],
     },
   );
-  let signal;
-  const closed = new Promise((resolve, reject) => {
-    child.once('error', reject);
+  let signal,
+    spawnFailed = false,
+    socketPathFailure = false,
+    stderrTail = '';
+  let port, endpoint;
+  // Keep only enough transient text to recognize a split diagnostic. Never
+  // forward Chromium stderr, which can contain private paths or page data.
+  child.stderr.on('data', (chunk) => {
+    if (endpoint) return;
+    const text = stderrTail + chunk.toString('utf8');
+    socketPathFailure ||= text.includes('Socket path too long');
+    stderrTail = text.slice(-128);
+  });
+  const closed = new Promise((resolve) => {
+    child.once('error', () => {
+      spawnFailed = true;
+    });
     child.once('close', resolve);
   });
   const stop = (name) => {
@@ -49,27 +63,45 @@ exports.runLocalIdentityEntrypoint = async ({ argv: [operation] }) => {
   };
   process.once('SIGTERM', () => stop('SIGTERM'));
   process.once('SIGINT', () => stop('SIGINT'));
-  let port, endpoint;
-  for (
-    let attempt = 0;
-    attempt < 1000 && child.exitCode === null && !signal;
-    attempt++
+  const deadline = Date.now() + 10000;
+  while (
+    Date.now() < deadline &&
+    child.exitCode === null &&
+    child.signalCode === null &&
+    !spawnFailed &&
+    !signal
   ) {
     try {
       const lines = (
         await fs.readFile(path.join(root, 'DevToolsActivePort'), 'utf8')
       ).split('\n');
       port = Number(lines[0]);
-      if (/^\/devtools\/browser\/[a-f0-9-]{36}$/.test(lines[1]))
+      if (
+        Number.isInteger(port) &&
+        port > 0 &&
+        port < 65536 &&
+        /^\/devtools\/browser\/[a-f0-9-]{36}$/.test(lines[1])
+      )
         endpoint = `ws://127.0.0.1:${port}${lines[1]}`;
     } catch {}
-    if (endpoint && Number.isInteger(port) && port > 0 && port < 65536) break;
+    if (endpoint) break;
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
+  stderrTail = '';
   if (!endpoint) {
+    const reason = spawnFailed
+      ? 'spawn'
+      : socketPathFailure
+        ? 'socket-path'
+        : child.signalCode !== null || signal
+          ? 'signal'
+          : child.exitCode !== null
+            ? 'exit'
+            : 'deadline';
     child.kill('SIGKILL');
     await closed;
-    throw new Error('Browser readiness failed');
+    process.stderr.write(`local-ui-browser-startup:${reason}\n`);
+    return 70;
   }
   process.stdout.write(
     JSON.stringify({ type: 'local-ui-browser-ready', port, endpoint }) + '\n',

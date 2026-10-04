@@ -4219,7 +4219,9 @@ async function runPackagingSmokeWithPrivateUmask({
     });
     const localUi = await runLocalUiSmoke({
       webRoot: stage.stageLocalUi, repositoryRoot: context.sourceRoot, cwd: hostileCwd,
-      home: path.join(runtimeRoot, 'local-ui-home'), temporaryDirectory: path.join(runtimeRoot, 'local-ui-tmp'),
+      // Chromium appends its singleton socket path to TMPDIR. Keep this short
+      // enough for Linux's 108-byte sockaddr_un, inside the same owned tree.
+      home: path.join(runtimeRoot, 'local-ui-home'), temporaryDirectory: path.join(runtimeRoot, 'ui'),
       stateParent: secretDirectory, journal, environment, signal,
       verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
     });

@@ -3,6 +3,80 @@ import assert from 'node:assert/strict';
 import { assertLocalUiSmokeSuccessResources } from './local-ui-lifecycle.mjs';
 import { localUiLifecycleResources } from './fixtures/local-ui-lifecycle.mjs';
 import { localUiBrowserPrerequisite } from './local-ui-browser.mjs';
+import {
+  createGatedNodeChild,
+  activateJournaledNodeChild,
+  terminateAndReapJournaledNodeChild,
+} from './local-identity-smoke.mjs';
+
+test(
+  'browser startup failures emit only fixed diagnostics and reap their owned process group',
+  { timeout: 30000 },
+  async () => {
+    const { mkdtemp, writeFile, mkdir, rm } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const path = await import('node:path');
+    const root = await mkdtemp(path.join(tmpdir(), 'ui-browser-failure-'));
+    const canary = 'synthetic-browser-stderr-private-canary';
+    try {
+      for (const [reason, source] of [
+        [
+          'socket-path',
+          `process.stderr.write('${canary}'.repeat(1000)); process.stderr.write('Socket path too'); setTimeout(() => { process.stderr.write(' long: ${canary}'); process.exitCode = 23; }, 20);`,
+        ],
+        ['exit', `process.stderr.write('${canary}'); process.exitCode = 23;`],
+        ['signal', `process.kill(process.pid, 'SIGTERM');`],
+        ['spawn', null],
+        ['deadline', `setInterval(() => {}, 1000);`],
+      ]) {
+        const profile = path.join(root, reason);
+        await mkdir(profile, { mode: 0o700 });
+        const executable = path.join(profile, 'browser');
+        if (source !== null)
+          await writeFile(executable, `#!${process.execPath}\n${source}\n`, {
+            mode: 0o700,
+          });
+        const handle = createGatedNodeChild({
+          entrypoint: path.join(
+            import.meta.dirname,
+            'fixtures/local-ui-smoke/browser.cjs',
+          ),
+          operation: 'browser',
+          cwd: root,
+          env: {
+            PATH: process.env.PATH,
+            HOME: root,
+            TMPDIR: root,
+            LOCAL_UI_BROWSER_PROFILE: profile,
+            LOCAL_UI_BROWSER_EXECUTABLE: executable,
+          },
+        });
+        try {
+          await activateJournaledNodeChild({
+            handle,
+            journal: { acquired: async () => {} },
+            resourceId: 'browser',
+            identity: {},
+          });
+          const result = await handle.result;
+          assert.equal(result.code, 70);
+          assert.deepEqual(handle.output(), {
+            stdout: '',
+            stderr: `local-ui-browser-startup:${reason}\n`,
+            overflow: false,
+          });
+        } finally {
+          assert.deepEqual(
+            await terminateAndReapJournaledNodeChild(handle, 'browser fixture'),
+            [],
+          );
+        }
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);
 
 test('UI lifecycle requires Chromium authentication and semantic proofs in both owned generations', () => {
   const state = { resources: localUiLifecycleResources('/owned') };

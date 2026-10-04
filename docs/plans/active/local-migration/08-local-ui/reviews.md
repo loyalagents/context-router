@@ -335,3 +335,41 @@ and the [sanitized receipt](final-gate-summary.json). Subsequent changes are onl
 closeout documentation/status and this receipt, without production/test/gate
 changes. Final pushed-head CI is a separate PR requirement. Manual acceptance
 remains pending and this does not authorize ready-for-review or merge.
+
+### R6 Linux CI Correction
+
+R5 standard CI passed, but dedicated Linux CI failed sealed Chromium startup.
+The pinned-binary Linux reproduction and correction are recorded in
+[implementation evidence](implementation.md#linux-ci-startup-correction).
+R6 affects packaging temporary-path selection and browser startup diagnostics,
+readiness and cleanup tests. Architecture, security/recovery and compatibility
+require affected reapproval. Persisted application state, history/CAS/grants,
+product APIs and their R4/R5 independent coverage are unchanged. The same sole
+writer and reviewer allocations remain in effect. The P2 plan is unchanged.
+
+
+### R6 Affected Approvals And Renewed Gate
+
+All affected reviewers independently verified the 179-path manifest and aggregate
+`bad1e63bdafeacda4540a7f299db70c5fa71bf78f308f925fc6502d6804abc71`
+in [candidate-r6.json](candidate-r6.json), with no drift and unchanged P2.
+
+| Reviewer | Verdict | Scope and carry-forward |
+| --- | --- | --- |
+| `/root/final_architecture` | APPROVE | Owned temporary path, packaging closure/sealing, bounded startup, journal/reap and parent-retention invariants; unchanged R4 complete architecture coverage and R5 schema pins |
+| `/root/final_security` | APPROVE | Fixed diagnostic categories, bounded transient stderr, no raw forwarding, readiness and owned cleanup/recovery; earlier security findings, auth-contract approval and unchanged full coverage |
+| `/root/final_compatibility` | APPROVE | Pinned Linux reproduction, startup diagnostics and five failure/reaping cases, unchanged product interfaces; R4/R5 compatibility/test coverage |
+
+Each reviewer remained read-only, inspected the reproduction and regression source,
+and distinguished the coordinator's 102/102 execution evidence from their own
+independent source/hash inspection. Requested/observable model settings remain as
+recorded above; no serving-tier claim is added. The persistence mandate's R4
+application-state/history/CAS/grant approval is unaffected; the harness recovery
+delta is covered by the architecture and security/recovery reapprovals.
+
+The renewed full local gate passed all twelve phases with exact-base comparison,
+caller integrity and complete owned cleanup; see
+[R6 validation](implementation.md#r6-final-local-validation). Post-run manifest
+verification found no drift. Only documentation/receipt closeout follows that run.
+Final replacement-head CI and actual human acceptance remain distinct requirements;
+the PR stays draft and is not authorized for merge.

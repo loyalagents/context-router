@@ -139,9 +139,15 @@ export async function runLocalUiSmoke({
             if (
               output.overflow ||
               output.stderr ||
-              handle.child.exitCode !== null
-            )
-              throw new Error('Browser driver failed');
+              handle.child.exitCode !== null ||
+              handle.child.signalCode !== null
+            ) {
+              const reason =
+                /^local-ui-browser-startup:(spawn|socket-path|exit|signal|deadline)\n$/.exec(
+                  output.stderr,
+                )?.[1] ?? 'unknown';
+              throw new Error(`Browser driver failed: ${reason}`);
+            }
             if (output.stdout.endsWith('\n')) {
               ready = JSON.parse(output.stdout);
               break;

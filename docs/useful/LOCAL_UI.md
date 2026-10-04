@@ -163,6 +163,11 @@ chromium` before the gate. Playwright is pinned to 1.63.0 and Chromium to its
 153.0.8010.12/revision-1243 prerequisite. The gate never downloads a browser. It
 validates and passes the canonical executable to test harnesses before isolating
 HOME; product processes receive no browser tooling configuration.
+Linux harness runs need a short temporary parent (normally `TMPDIR=/tmp`):
+Chromium appends its Unix socket name to the owned temporary directory. The
+sealed smoke uses the short `runtime/ui` child to stay within Linux's socket
+path limit. Startup failures expose fixed categories only; raw browser stderr
+and private paths are not copied to gate diagnostics.
 
 Source and relocated production smokes use synthetic state, pinned TLS inference
 fixtures and authenticated Chromium. App policy checks restrict exact module
