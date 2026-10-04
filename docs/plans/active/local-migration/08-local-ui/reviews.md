@@ -373,3 +373,42 @@ caller integrity and complete owned cleanup; see
 verification found no drift. Only documentation/receipt closeout follows that run.
 Final replacement-head CI and actual human acceptance remain distinct requirements;
 the PR stays draft and is not authorized for merge.
+
+### R7 MCP CLI Parsing Correction
+
+The R6 dedicated workflow exposed an existing valid-ID parsing defect, reproduced
+deterministically before the fix; see
+[implementation evidence](implementation.md#issued-mcp-client-id-parsing-correction).
+R7 changes only the CLI's normalization of the already-supported ID domain and
+adds compiled-process regressions. Security/credential-input and compatibility/test
+coverage require affected reapproval. Storage, identity generation, authorization,
+browser/harness behavior, architecture and recovery contracts remain unchanged;
+their prior complete-review coverage carries forward. No HTTP/schema compatibility
+transition or P2 plan change is needed. Root remains the sole repository writer.
+
+
+### R7 Affected Approvals And Renewed Gate
+
+Both affected reviewers independently verified all 182 paths, modes and hashes
+in [candidate-r7.json](candidate-r7.json), aggregate
+`7ce78944372cfe56fd8d3c4a475d2285ff6ea060e37edffaf1b4cfe7c4151eb4`.
+They confirmed unchanged base/P2, no drift and passing whitespace checks.
+
+- `/root/final_security`: **APPROVE** for credential-input normalization, strict
+  parsing/allowlists, downstream validation and unchanged authorization/randomness;
+  all previous full-review, finding-closure, recovery and HTTP approvals carry forward.
+- `/root/final_compatibility`: **APPROVE** for the existing ID-domain correction,
+  compiled regression coverage and preserved interfaces; unchanged complete
+  compatibility/test coverage carries forward.
+
+Both reviews were read-only. Build/57-test execution and workflow results are
+coordinator evidence, not reviewer reruns. Requested/observable settings remain as
+recorded above. Architecture and application persistence/recovery are unchanged
+by this parser-only fix and retain their independent approvals.
+
+The R7 full local gate passed 12/12, with performed exact-base comparison,
+caller integrity true and no cleanup errors; see
+[R7 validation](implementation.md#r7-final-local-validation). Post-gate binding
+verification found no drift. Only evidence/receipt closeout follows that run.
+Final-head CI and actual human acceptance remain distinct requirements; the PR
+stays draft with no authorization to merge.

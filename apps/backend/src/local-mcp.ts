@@ -16,8 +16,16 @@ const commands: Record<string, string[]> = {
 };
 
 function parse(argv: readonly string[]) {
+  // Issued base64url IDs may start with '-'. Node treats that separate value
+  // as option syntax; use its explicit value form only for this exact ID shape.
+  const args: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--id' && /^-[A-Za-z0-9_-]{21}$/.test(argv[i + 1] ?? ''))
+      args.push(`--id=${argv[++i]}`);
+    else args.push(argv[i]);
+  }
   const { values, positionals } = parseArgs({
-    args: [...argv],
+    args,
     allowPositionals: true,
     strict: true,
     options: {

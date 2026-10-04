@@ -363,7 +363,7 @@ required; manual acceptance remains pending.
 
 ### R6 Final Local Validation
 
-R6 is the final code/test candidate: [candidate-r6.json](candidate-r6.json),
+R6 was the second final code/test candidate: [candidate-r6.json](candidate-r6.json),
 179 bound paths, aggregate
 `bad1e63bdafeacda4540a7f299db70c5fa71bf78f308f925fc6502d6804abc71`.
 Architecture, security/recovery and compatibility independently verified this
@@ -374,8 +374,8 @@ A post-gate comparison found no drift in any bound path, mode or content.
 The renewed full command used the same pinned toolchain and exact base above,
 with `RUNNER_TEMP=/private/tmp/step08-final-gate-r6-_0354mbu` and
 `MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r6-_0354mbu/local-migration-gate-summary.json`.
-Result: **PASS, exit 0, 12/12 phases**. The current
-[sanitized receipt](final-gate-summary.json) records 1,139,223 ms; the terminal
+Result: **PASS, exit 0, 12/12 phases**. The
+[R6 receipt](https://github.com/loyalagents/context-router/blob/fa1f649fc9adbb7b9ed59836727d50db4e9ef383/docs/plans/active/local-migration/08-local-ui/final-gate-summary.json) records 1,139,223 ms; the terminal
 reports 1,139,551 ms including final return. Base comparison was performed;
 caller integrity is true; cleanup errors are empty; the owned database was
 removed and administration cleaned. Source was the R6 uncommitted snapshot over
@@ -389,3 +389,60 @@ following this frozen run. Replacement pushed-head standard and dedicated CI
 results are recorded in PR #167; human acceptance remains **PENDING** and the PR
 remains draft. The earlier failed Linux run and passing R5 local run are retained
 as historical evidence, not substituted for replacement-head validation.
+
+### Issued MCP Client ID Parsing Correction
+
+R6 pushed head `fa1f649fc9adbb7b9ed59836727d50db4e9ef383` passed the new browser
+harness phase in [dedicated CI](https://github.com/loyalagents/context-router/actions/runs/37193707041),
+then failed phase 3 in the preexisting compiled MCP administration test at
+`permissions --id <issued-id>`. The only variable command argument is the
+randomly issued ID. Node 24's strict parser rejects a separate string value
+beginning with `-`, while issued 16-byte base64url IDs legitimately permit that
+prefix. This was a real CLI usability defect, not a reason to retry the random
+fixture until it passed. The run did not reach sealed Linux validation.
+
+A new deterministic compiled-process regression supplies test-only randomness
+for the 16-byte ID during isolated provisioning, retaining normal 32-byte token
+randomness. IDs beginning with `-` and `--` reproduce the same exit 2 and fixed
+invalid-command error before the fix. The correction normalizes only exact
+`--id` followed by the existing valid 22-character leading-hyphen ID shape into
+Node's `--id=value` form. Strict parsing, per-command allowlists, ID generation,
+stored state and authority checks are unchanged; existing IDs remain usable.
+
+The regression now passes permissions, grant, rotation and revocation for both
+prefixes, existing equals syntax, and rejection of missing/malformed values,
+unknown/disallowed options and misplaced terminators. Existing tests and their
+requirements are unchanged. Backend build passed; the focused regression passes
+in 2,475 ms and the full local MCP suite passes **57/57**, 36,292 ms. Affected
+independent security/compatibility reapproval and renewed full local/final-head
+CI validation are required. Human acceptance remains pending.
+
+
+### R7 Final Local Validation
+
+R7 is the final code/test candidate: [candidate-r7.json](candidate-r7.json),
+182 bound paths, aggregate
+`7ce78944372cfe56fd8d3c4a475d2285ff6ea060e37edffaf1b4cfe7c4151eb4`.
+Security and compatibility independently verified and approved the narrow CLI
+correction; all unaffected complete-review coverage carries forward. Post-gate
+verification found no drift in any bound path, mode or content.
+
+The renewed command used the same pinned toolchain and exact Step 07 base, with
+`RUNNER_TEMP=/private/tmp/step08-final-gate-r7-pe00fgz4` and
+`MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r7-pe00fgz4/local-migration-gate-summary.json`.
+Result: **PASS, exit 0, 12/12 phases**, receipt elapsed 1,141,289 ms (terminal
+1,141,533 ms including final return). The current
+[sanitized receipt](final-gate-summary.json) records performed base comparison,
+caller integrity true, no cleanup errors, removed owned database and clean owned
+administration. Source was the R7 uncommitted snapshot over
+`fa1f649fc9adbb7b9ed59836727d50db4e9ef383`, copied-input digest
+`d871903d1a00a1b9c1a9307ce82afe2fdfeb918723355bf21f5e27650cb6805a`.
+All pinned local versions match R6. Sealed composition passed in 512,881 ms,
+including both authenticated browser generations and confirmed process-group reap.
+
+The preceding [R6 standard CI](https://github.com/loyalagents/context-router/actions/runs/37193706996)
+passed all jobs; its dedicated failure remains separately recorded above. R7
+replacement-head standard and dedicated results belong in the PR's final CI
+closeout and do not inherit that earlier standard result. Only documentation,
+review evidence and the sanitized receipt change after this frozen local run.
+Required synthetic human acceptance remains **PENDING** and PR #167 stays draft.
