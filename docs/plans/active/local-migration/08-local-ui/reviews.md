@@ -629,3 +629,30 @@ caller integrity, owned cleanup and zero post-gate binding drift; see
 [final validation](implementation.md#r13-final-local-validation). Post-gate edits
 are limited to evidence and the receipt. Replacement-head CI and actual human
 acceptance are separate requirements. PR #167 remains draft and human-owned.
+
+### Documentation Closeout Review After User Acceptance
+
+The operator authorized acceptance closeout and a small deferred UI follow-up,
+including publication on existing draft PR #167 and final-head CI verification.
+Root remained sole writer. A fresh read-only reviewer,
+`/root/closeout_review`, requested Astra High for this bounded documentation and
+evidence review; actual serving model/effort was not independently observable.
+
+The reviewer returned **APPROVE** on the frozen documentation delta over
+`40ef8fd84e8880cbc0539a3260ab24a693b6696a`: eight modified Markdown files and the
+new `docs/plans/active/ui-usability/README.md`. It independently checked all
+194 R13 entries, finding no runtime/test/configuration/dependency/workflow drift;
+the historical receipt and documentation updates remain evidence changes.
+Acceptance correctly separates observed outcomes, operator confirmations and
+accepted unverified observations. Authority, sensitive-history masking, truthful
+mutation outcomes, E/H limits, draft status and later-step inactivity are retained.
+The follow-up has a bounded scope, owner and trigger; no secrets were found.
+
+Reviewer checks passed: `git diff --check` and all 169 Markdown files' links.
+Coordinator documentation-validator tests passed 20/20 on Node 24.21.0.
+This review entry and its evidence pointer are the only additions after that
+review. R13's complete implementation approvals and 12-phase local gate carry
+forward for unchanged runtime inputs; no new local full-gate claim is made.
+Both workflows must still be verified on the final pushed documentation head,
+with results recorded in the PR checks/description. This does not authorize
+ready/merge or activate Step 09.

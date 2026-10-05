@@ -2,10 +2,10 @@
 
 - Status: active program
 - Last completed step: `07-local-mcp` — [PR #166](https://github.com/loyalagents/context-router/pull/166), human-merged at `5e2a67dd785500ba053b2e836c47166e8adeada8` from final tested head `a1a3e0167579f20839b5f91e2a5e52b5a2fd2a6e`; successful [standard CI](https://github.com/loyalagents/context-router/actions/runs/37168124820) and [migration gate](https://github.com/loyalagents/context-router/actions/runs/37168124816). See the [Step 07 closeout](07-local-mcp/README.md) for evidence limits.
-- Current primary implementation step: `08-local-ui` — implemented; independent reviews and full local gate passed; human acceptance pending
+- Current primary implementation step: `08-local-ui` — implemented; independent reviews and full local gate passed; user-run acceptance complete with accepted evidence limits; awaiting human PR disposition
 - Coordinator and sole repository writer: `/root`, requested GPT-6 Astra Extra High; existing checkout on `codex/local-migration-08-local-ui`
-- Concrete next action: verify final pushed-head CI on the single draft PR, then complete the consolidated synthetic human acceptance; do not mark ready or merge
-- Review date: 2026-10-04 — Step 08 final implementation approvals
+- Concrete next action: publish documentation closeout and verify final pushed-head CI on draft PR #167, then await human disposition; do not mark ready or merge
+- Review date: 2026-10-04 — Step 08 final implementation approvals and user-run acceptance disposition
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
@@ -76,6 +76,10 @@ The most important current decisions are:
   narrowly scoped history clearing under LM-021. Full credential onboarding is
   an [additive product follow-up](../mcp-onboarding/README.md), not a Step 09
   requirement; terminal administration remains supported.
+- Step 08's user-run acceptance is complete with explicitly accepted evidence
+  limits. Clearer grant feedback, client labels and history value summaries are
+  tracked in the [UI usability follow-up](../ui-usability/README.md), to revisit
+  after the packaged local workflow is usable without expanding Step 09 scope.
 
 ## Target Boundaries
 
@@ -327,7 +331,7 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | `05-local-database-runtime` | Complete — [PR #164](https://github.com/loyalagents/context-router/pull/164), merge `837701b3633eed669dd2c2c518ffebc0e46d55d8`; final head `91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b` passed standard CI `35957573071` and migration gate `35957573023`; [retained plan](05-local-database-runtime/plan.md) | Implemented selected SQLite storage, worker-held identity coordination, actual local composition, recovery/backup and source/package evidence; retain explicit PostgreSQL reference coverage. | Step 04 |
 | `06-local-model` | Complete — [PR #165](https://github.com/loyalagents/context-router/pull/165), merge `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`; final tested head `f004702ef07df59f3cece36e0db0a79aea7055b7` passed standard CI `36487182884` and migration CI `36487183214`; [retained plan](06-local-model/plan.md) | Manual Apple Silicon local-model adapter with truthful capabilities, bounded execution and explicit E/H limitations; original failures retained. | Step 02 boundaries and Step 05 local composition |
 | `07-local-mcp` | Complete — [PR #166](https://github.com/loyalagents/context-router/pull/166), merge `5e2a67dd785500ba053b2e836c47166e8adeada8`; [retained plan](07-local-mcp/plan.md) and [closeout](07-local-mcp/README.md) | Direct loopback HTTP for Claude Code and Codex CLI, per-instance credentials, SQLite tools and shared Step 06 inference. | Steps 03, 05 and 06 complete |
-| `08-local-ui` | Active — implemented; independent reviews and [full local gate](08-local-ui/final-gate-summary.json) passed; human acceptance pending | Reuse the dashboard without Auth0/hosted dependencies, with a separate safe browser session, shared UI/MCP state and inference, basic client/grant management, and retained history with explicit whole-history clearing (LM-021). | Merged Steps 03, 05–07 |
+| `08-local-ui` | Active — implemented; independent reviews and [full local gate](08-local-ui/final-gate-summary.json) passed; [user-run acceptance](08-local-ui/acceptance.md) complete with accepted evidence limits; awaiting human PR disposition | Reuse the dashboard without Auth0/hosted dependencies, with a separate safe browser session, shared UI/MCP state and inference, basic client/grant management, and retained history with explicit whole-history clearing (LM-021). | Merged Steps 03, 05–07 |
 | `09-installation-and-packaging` | Not started | Early native Windows/Linux qualification after the Mac model path; then managed first-run setup, process supervision, data locations, model assets, clean-install smoke, logs, backup/recovery and updates. | Final product depends on Steps 06–08; early qualification needs explicit non-overlap review |
 | `10-lan-mcp` | Deferred/optional | Add explicit LAN enablement, pairing/authentication, exposure warnings, and network tests. | Step 09 |
 | `11-hosting-portability-check` | Deferred/optional | Prove a hosted composition can be added at the boundaries without cloud sync or changes to the application core. | Stable local application |

@@ -1,9 +1,28 @@
 # Step 08 Synthetic Human Acceptance
 
-Status: **PENDING**. Do not mark the PR ready or merge from automated evidence
-alone. Independent reviews and the full local gate passed. Verify the draft PR’s
-final pushed-head CI before running this consolidated checklist.
-No live model or personal client configuration has been operated by automation.
+Status: **COMPLETED WITH ACCEPTED EVIDENCE LIMITS**, 2026-10-04. The operator
+performed this synthetic walkthrough on implementation head
+`40ef8fd84e8880cbc0539a3260ab24a693b6696a`, following successful standard and
+migration CI, and explicitly accepted leaving the remaining observations
+unverified. Actual results and their provenance are in the
+[acceptance evidence](implementation.md#2026-10-04-user-run-browser-and-native-client-acceptance).
+The checklist below remains available for future runs; it is not a claim that
+every bullet has independent passing evidence. PR #167 remains draft and this
+disposition does not authorize merge or activate Step 09.
+
+The main browser/client flows, selected document apply with saved-value protection,
+PDF preservation/overwrite, smart search, cancellation/manual responsiveness and
+terminal shutdown passed on the recorded scope. Conflict-message visibility,
+final browser AI status after cancellation and separate confirmation of both
+browser locks at closeout remain unverified. The read-only client's mutation tool
+was unavailable, so no manual server-side write-denial request occurred; an extra
+Claude control read during Codex's DENY test was not supplied. The in-app browser's
+exact version was not captured. One native task cancellation does not requalify
+Step 06's accepted E/H limitations or prove session reuse.
+
+Live model and native-client operations were user-run. No personal client
+configuration was changed. Readability findings are deferred to the
+[UI usability follow-up](../../ui-usability/README.md).
 
 Use synthetic data only. Allow about 25 minutes for the no-model/browser/client
 checks and at most 15 additional minutes for an already qualified model session.
@@ -73,10 +92,11 @@ credential/configuration files or other servers. Report actual tool results.”
 Then perform these bounded checks:
 
 - Both read the browser's `detailed` value. Claude sets it to `from-claude`; reload
-  the browser and verify it. Codex's attempted write is denied. The browser sets
+  the browser and verify it. Codex either lacks the mutation tool or has its
+  attempted write denied; record which occurred. The browser sets
   it to `from-browser`; both clients read the new value.
 - In MCP Clients, inspect Codex by actual ID. Add READ/DENY for
-  `synthetic.response_style`; its next read is denied. Remove only that grant and
+  `synthetic.response_style`; its next search returns no matching preference. Remove only that grant and
   verify access returns. An ALLOW outside its CLI maximum must be rejected.
 - Revoke only Claude in the browser. Claude fails authentication; Codex still
   reads. A cached tool list may require normal reconnect. Do not enable OAuth or
@@ -93,7 +113,7 @@ Then perform these bounded checks:
   Both streams become empty in both windows, including a previously hidden tab.
   Saved preferences/profile/schema and Codex access remain. New MCP activity may
   add new access records afterward.
-- Use **Clear memory** separately. Preferences disappear while history remains
+- Use **Reset Preferences** under **Reset Memory** separately. Preferences disappear while history remains
   and a reset event is added. Recreate one synthetic value for restart.
 - Stop the launcher with Ctrl-C and wait for its exit. Restart the same command
   with the same roots. The old browser session must fail; unlock with the new
@@ -126,5 +146,6 @@ Exit both CLI clients, lock browsers, stop the launcher and any user-started mod
 and observe exits. Keep the private synthetic pair for diagnosis until acceptance
 is recorded; do not remove unknown processes or credential claims. Report a compact
 result table for sections 1–5 and any defect. Required manual acceptance remains
-pending until the coordinator records actual results, fixes defects and renews
-affected checks/reviews. This checklist does not authorize merge.
+pending for a future run until the coordinator records its actual results,
+resolves defects and renews affected checks/reviews. The completed 2026-10-04
+disposition is recorded above. This checklist does not authorize merge.

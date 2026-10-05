@@ -761,3 +761,147 @@ corrected source also passed all gate backend, database, eval, browser and
 integrity phases. Only this evidence ledger, review ledger and sanitized receipt
 change after the frozen run. Final pushed-head standard/dedicated CI is recorded
 on PR #167; human acceptance remains **PENDING**, with no merge or ready action.
+
+### 2026-10-04 User-Run Browser And Native-Client Acceptance
+
+The operator performed the guided synthetic walkthrough against checkout
+`40ef8fd84e8880cbc0539a3260ab24a693b6696a` with the no-model `local-ui serve`
+composition. The checkout was clean before this evidence-only update. The
+coordinator verified macOS 15.1.1 / arm64, Node 24.21.0 and pnpm 10.25.0 during
+setup, and inspected installed Claude Code 2.1.289 / Codex CLI 0.160.0. Browser
+checks used the in-app browser; its exact version was not captured. The operator
+supplied CLI responses, screenshots and confirmations in this chat. These are
+user-run results, not an automated native-client or live-model run.
+
+| Check | Observed result |
+| --- | --- |
+| Startup and browser unlock | Passed. Fresh private identity/database initialization and upgrade succeeded; the no-model dashboard started and fresh unlock files were used. |
+| Initial browser checklist | Passed by explicit operator confirmation: optional profile-field clearing, PERSONAL schema JSON export, literal preference search, unavailable AI-control messaging, and Lock dashboard hiding private content. |
+| Shared browser/client preferences | Passed. Both clients freshly read `detailed`; Claude's `SET_PREFERENCE` returned a successful change to `from-claude` with MCP audit provenance. After a browser edit, both clients freshly read `from-browser`. History screenshots and the operator confirmed the recorded values. |
+| Read-only client discovery | Passed. Codex did not expose `mutatePreferences`, so no mutation request was attempted. This is not a manual server-side mutation-denial result. |
+| Narrowing and restoring reads | Passed. Codex search returned zero preferences with an exact READ/DENY grant, then returned `from-browser` after grant removal. Coordinator inspection confirmed both client instances were still active at that point; removing a grant was distinct from revoking a client. |
+| CLI maximum enforcement | Passed functionally. A WRITE/ALLOW grant for the read-only Codex client was rejected. The operator found the failure feedback inadequate. |
+| Independent client revocation | Passed. After browser revocation of Claude, its fresh call failed authentication and the client disconnected. Codex still successfully read `from-browser`. |
+| History content | Passed by operator inspection and screenshots. Audit values and actors were correct, and MCP Access showed the authenticated calls. Readability issues are recorded below. |
+| Event-time sensitive masking | Passed by operator report. A synthetic sensitive value stayed masked in audit history after its definition was archived, until explicit reveal. |
+| History clear | Passed by operator report. Cancel preserved history; confirmed clear emptied both streams in both tabs while preserving live data and authority. A subsequent Codex read succeeded and created new access history. |
+| Memory-only reset | Passed by operator report. Reset Preferences removed saved preference/profile values while preserving both histories and adding the reset event. Codex's fresh read succeeded with an empty result. A synthetic preference was then recreated for restart. |
+| Restart | Passed by operator report. The operator confirmed the restart checklist and supplied a fresh successful Codex read of `restart-check` using its existing credential after reconnecting. |
+
+The no-model functional checklist passed on the reported scope above. The extra
+control read from Claude while Codex's DENY grant was active was not supplied;
+independent client revocation and continued Codex access were separately verified.
+Optional AI checks were pending at this point; subsequent results are recorded
+below. Final application/client shutdown was not reported. Overall human
+acceptance and merge/ready disposition remain pending; the passing checks above
+stand on their recorded scope.
+
+#### Usability Findings For Follow-Up
+
+The operator raised these findings and explicitly left implementation timing
+undecided. No product changes were made during this acceptance session.
+
+1. Rejected grants need a visible explanation of the client's CLI maximum and
+   why the requested action is outside it, with an appropriate next step.
+2. Audit and MCP Access rows should make the configured client label easy to
+   identify, retaining the instance ID to distinguish clients. Labels are display
+   metadata, not authority or verified product identity.
+3. Preference audit rows need a concise before/after value summary without
+   requiring expansion into full JSON. Sensitive and unknown-sensitivity history
+   must retain its masking and explicit-reveal behavior. Full snapshots and
+   correlation IDs remain useful in expanded diagnostics.
+
+Claude also noted that an explicit MCP SET changed `sourceType` to `INFERRED`.
+The coordinator checked the existing implementation and
+[MCP authorization contract](../../../../current/MCP_AUTHORIZATION.md): MCP active
+writes intentionally use that classification. This observation is not a newly
+introduced behavior or a failed acceptance check.
+
+#### User-Run Qualified AI Checks
+
+The operator subsequently started the qualified llama.cpp b11146 / Qwen3.5-9B
+Q4_K_M assets with a fresh private model session and `local-ui serve-model`,
+preserving the same database and identity roots. Before the user-run launch, the
+coordinator verified the pinned archive/model hashes and extracted runtime files
+against the existing Step 06 assets. The coordinator did not start inference or
+submit model requests. The following evidence comes from operator screenshots,
+confirmations, and downloaded synthetic PDFs inspected by the coordinator.
+
+| Check | Observed result |
+| --- | --- |
+| Model availability and document proposals | Passed on the synthetic Markdown case. The dashboard displayed AI available and proposed first name `Alex`, last name `Example`, full name `Alex Example`, and response style `brief`. |
+| Selective apply and stale saved state | Saved-state protection passed. The operator deselected last name and manually changed response style to `manual-wins` before applying the remaining proposals. The resulting active preferences contained the two selected names with document-analysis provenance and retained `manual-wins` with user provenance; last name was absent. The operator could not confirm whether the apply-results panel displayed `Saved state changed since review`, so conflict-message visibility remains unverified. |
+| Default PDF preservation | Passed. The UI reported one filled and one skipped field, explicitly explaining preservation of the existing first-name value. The downloaded PDF stored and rendered `full_name = Alex Example` and `first_name = Taylor`. |
+| Explicit PDF overwrite | Passed. After explicitly naming `first_name`, the UI reported two filled and zero skipped fields. The second downloaded PDF stored and rendered `full_name = Alex Example` and `first_name = Alex`. Both PDF inspections confirmed matching canonical/widget values, nonempty appearances, and editable fields. |
+| Smart search | Passed on one natural-language case: `What name should I put on a registration form?`. The screenshot showed zero literal matches, while Smart results returned saved `profile.first_name = Alex` and `profile.full_name = Alex Example`. AI remained available. |
+| Cancellation and manual responsiveness | Passed by operator confirmation of the guided check: refresh saved preferences in a second tab while smart search runs, cancel the search, check status once, and verify literal search still returns `synthetic.response_style = manual-wins`. A subsequently supplied runtime log shows task 696 receiving cancellation at elapsed `23:31.593595` and releasing its slot at `23:31.766505`, about 173 ms later. This supports native cancellation of this request; it does not independently establish the application's settlement evidence or subsequent session reusability. The final browser AI status was not explicitly supplied. |
+| Final terminal shutdown | Passed by operator confirmation that all test terminals exited. The model log ends with Ctrl-C and `cleaning up before exit`; the pasted log alone does not include a returned shell prompt. A coordinator `lsof` check afterward found no listeners on dashboard port 3002, MCP port 8787, or model port 58080. This corroborates listener shutdown without claiming a complete descendant-process inventory. |
+
+The supplied runtime log's paired `Invalid API Key` warnings are consistent with
+the selected adapter's readiness checks: one missing-key and one deliberately
+wrong-key request must each return 401 before authenticated readiness succeeds.
+Completed inference tasks and the explicit cancellation are present in the log.
+Startup also reported deprecated reasoning/template and web-UI flag forms; these
+were nonfatal, and the pinned qualified configuration was not changed.
+
+Conflict-message visibility and the final browser AI status noted above remain
+unverified; the operator did not separately reconfirm locking both browser tabs
+at closeout. These successful cases do not renew model qualification or remove
+the accepted Step 06 E email-omission and H cancellation-recovery limitations.
+The operator disposition below accepts leaving those observations unverified.
+Final PR closeout and merge/ready disposition remain pending. No product behavior
+changed during these checks.
+
+#### Operator Disposition And UI Follow-Up
+
+After the walkthrough and shutdown, the operator explicitly accepted leaving the
+remaining observations unverified. Conflict-message visibility, final browser AI
+status after cancellation, and separate closeout confirmation of both browser
+locks remain evidence limits, not newly passing checks. The guided manual
+walkthrough is concluded on that basis; the accepted Step 06 E/H limitations and
+the final PR gates are unchanged. This disposition does not authorize merge or
+activate Step 09.
+
+The operator prefers documenting UI findings and deferring broader cleanup until
+the local migration is usable, while considering small, low-risk improvements.
+The operator then authorized documentation closeout and a light future UI note.
+The canonical [UI usability follow-up](../../ui-usability/README.md) preserves
+the tested Step 08 implementation and records the owner and trigger: after
+Step 09's packaged workflow is usable, before broader usability testing. Optional
+Steps 10/11 need not precede it. This is deferred product work, not an activated
+implementation plan or an additional Step 09 requirement.
+
+| Priority | Follow-up and completion criteria | Recommended timing |
+| --- | --- | --- |
+| 1 | Make rejected grant feedback prominent and associated with the attempted action. The existing `OUTSIDE_MAXIMUM` explanation is currently plain status text above the client list. A small presentation fix should retain the submitted context and show why the grant was not saved, without changing authority rules or interpreting an uncertain mutation as a confirmed rejection. | Strongest candidate for a separate small follow-up after Step 08 closeout; otherwise first item in the UI cleanup. |
+| 2 | Show configured client labels prominently in audit and MCP Access rows, retain an instance identifier in details, and fall back safely when labels are missing. Same-label clients remain distinguishable; labels never determine authority. | Focused UI cleanup after the packaged local workflow is usable. |
+| 3 | Summarize preference changes in collapsed history rows, for example `from-claude → from-browser`, retaining full details on expansion. Handle missing/structured values and all event types safely; sensitive and unknown-sensitivity snapshots remain masked until explicit reveal. | Same UI cleanup, with focused privacy and rendering checks. |
+
+Bring forward a UI fix if it conceals a failed write, falsely reports success,
+exposes sensitive data, or prevents a supported task. None of those conditions was
+established by the reported readability findings. Merely small source changes do
+not justify reopening the completed implementation review and full-gate candidate.
+
+#### Documentation Closeout
+
+The operator authorized recording and publishing this acceptance disposition on
+the existing draft [PR #167](https://github.com/loyalagents/context-router/pull/167).
+The closeout synchronizes current status/index/checklist documentation and adds
+the small UI follow-up. The tested implementation head remains
+`40ef8fd84e8880cbc0539a3260ab24a693b6696a`; no runtime, test, generated artifact,
+dependency, configuration or workflow is changed by this documentation delta.
+R13 and its receipt remain immutable historical evidence. The additional status
+documents differ from that frozen inventory solely to record the subsequent
+human result and accepted deferral, not to claim a new full local gate run.
+
+Final-head CI results for the documentation closeout are recorded in the PR's
+checks and description after publication. The prior implementation head's
+[standard CI](https://github.com/loyalagents/context-router/actions/runs/37227671502)
+and [dedicated migration gate](https://github.com/loyalagents/context-router/actions/runs/37227671419)
+were reverified as successful before closeout. Those runs are not substituted for
+new final-head CI. Draft/merge disposition and Step 09 activation remain human-owned.
+
+The [independent documentation review](reviews.md#documentation-closeout-review-after-user-acceptance)
+approved the closeout. Local documentation-validator tests passed 20/20 on
+Node 24.21.0, links passed across 169 Markdown files, and `git diff --check`
+passed. The complete R13 comparison found no runtime/test/configuration drift.

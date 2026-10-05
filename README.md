@@ -26,8 +26,11 @@ Step 07's local MCP runtime is merged; see [local MCP setup](docs/useful/MCP_LOC
 Step 08 adds an explicitly selected local dashboard using SQLite and separate browser
 sessions, with shared MCP/model ownership. See [local dashboard setup](docs/useful/LOCAL_UI.md).
 Its [implementation and validation](docs/plans/active/local-migration/08-local-ui/implementation.md)
-record passing independent reviews and the full local gate. Verify the draft PR’s
-final-head CI; required human acceptance remains pending.
+record passing independent reviews, the full local gate, and completed user-run
+acceptance with explicitly accepted evidence limits. [PR #167](https://github.com/loyalagents/context-router/pull/167)
+remains draft pending human disposition; final-head checks are recorded there.
+Small [UI usability improvements](docs/plans/active/ui-usability/README.md) are
+tracked for follow-up after the packaged local workflow is usable.
 
 ## How The Repo Works
 

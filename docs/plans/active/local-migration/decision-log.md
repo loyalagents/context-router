@@ -430,6 +430,7 @@ The independent-review follow-up passed repeat quality under unchanged E but fai
 | Local UI/desktop shell and process topology | `08-local-ui` and `09-installation-and-packaging` |
 | Basic client/grant management; retain-until-cleared history and whole-history deletion (LM-021) | `08-local-ui`; backup/restore remains Step 09 |
 | Full UI MCP credentials and optional assisted client setup (LM-022) | [Deferred product follow-up](../mcp-onboarding/README.md), outside numbered migration |
+| Grant feedback, readable client labels and compact history value changes from Step 08 acceptance | [UI usability follow-up](../ui-usability/README.md); revisit after the packaged Step 09 workflow is usable, outside mandatory migration scope |
 | Application update channel and rollback mechanism | `09-installation-and-packaging` |
 | LAN pairing, credentials, discovery, and TLS expectations | `10-lan-mcp` |
 | Shape of a future hosted deployment | `11-hosting-portability-check` |
