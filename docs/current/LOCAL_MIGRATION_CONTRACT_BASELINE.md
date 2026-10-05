@@ -4,8 +4,8 @@ This document is the human-readable companion to the versioned
 [`local-migration-contract-baseline.json`](local-migration-contract-baseline.json)
 registry. The version-two registry and its referenced fixtures are the
 executable baseline. They retain the hosted product characterized at planning
-base `9b56d38fde927d4e643af89ba45665a439613939` and now name four explicit modes:
-`hosted-baseline`, `local-identity-preview`, `local-database-preview`, and `local-model-preview`.
+base `9b56d38fde927d4e643af89ba45665a439613939` and now name six explicit modes:
+`hosted-baseline`, `local-identity-preview`, `local-database-preview`, `local-model-preview`, `local-mcp`, and `local-ui`.
 
 `hosted-baseline` remains the NestJS backend and Next.js web app backed by PostgreSQL, Auth0, and Vertex AI. `local-identity-preview` retains the non-listening PostgreSQL reference composition through `local-identity:postgres-reference`, with its explicit loopback TLS target and original identity root. `local-database-preview` is the default local command's SQLite composition with separate explicit database/identity roots and no database network dependency. The two earlier no-model previews use a private principal/bearer and fixed unavailable model adapter; neither opens a listener. Missing configuration never selects a fallback.
 
@@ -55,8 +55,8 @@ Descriptions are a separately pinned copy fingerprint: changing them requires
 an intentional fixture update but not a breaking migration record. Source
 locations and declaration order are deliberately excluded from compatibility.
 
-The baseline has 15 query fields, 15 mutation fields, and no subscription. The
-checker parses and validates 49 named in-repo operations across the web app,
+The baseline has 15 query fields, 17 mutation fields, and no subscription. The
+checker parses and validates 57 named in-repo operations across the web app,
 developer orchestrator, eval tooling, and clean-restart smoke. It separately
 tracks dynamic shell and runbook queries that cannot safely be extracted as
 ordinary template literals. Unknown external GraphQL clients are assumed to exist.
@@ -64,7 +64,7 @@ Unknown external health monitors are assumed to call `GET /health`.
 Unknown external REST upload clients are assumed to call `POST /api/preferences/analysis` and `POST /api/form-fill/pdf`.
 
 `me` is the retained current-principal outcome. The redundant self-only
-`user(id)` query is a planned later removal, not a Step 01 schema change.
+`user(id)` is deprecated in Step 08 but remains self-only and callable throughout the compatibility window; no removal date is claimed.
 
 ### HTTP
 
@@ -208,15 +208,22 @@ user-owned data, and installs the required provider-neutral keys atomically.
 later migration checkpoints. Its lifecycle is checked into
 [`gate-phases.json`](../../scripts/local-migration/gate-phases.json) and validated
 against a strict schema plus semantic ownership, predecessor, retirement, and
-supported-mode rules. Both modes share `contract-baseline`, `documentation`,
+supported-mode rules. All six modes share `contract-baseline`, `documentation`,
 `backend-unit-build`, `backend-database`, `restart-smoke`,
 `packaged-composition-smoke`, and `repository-integrity`.
-`local-orchestrator`, evaluation, web-production, and Harbor phases remain
-hosted-only. Phase IDs, order, commands, timeouts, and workflow budgets are
-unchanged. Every supported mode must retain active contract, build, state,
+The web-production phase additionally names `local-ui` and runs authenticated
+browser tests after its build. `local-orchestrator`, evaluation and Harbor phases
+remain hosted-only. All twelve phase IDs/order remain. Step 08 P3 increases only
+the expanded packaging phase from fifteen to twenty-five minutes; other phase
+allowances remain unchanged, and active phase budgets now total 104 minutes.
+The dedicated workflow adds a bounded ten-minute pinned Chromium prerequisite;
+step budgets total 173 minutes within a 185-minute job, preserving twelve minutes
+of workflow overhead. Absolute gate deadlines are preflight T+3, phase cancellation
+T+107, child settlement T+110 and final cleanup T+113 minutes. The 118-minute
+gate-step fail-safe preserves five additional minutes. Every supported mode must retain active contract, build, state,
 restart, and integrity evidence. Each mode records active/retired status and at
 most one successor; a retired mode must name exactly one active successor. The
-command allowlist pins the exact two-mode matrix and rejects added modes,
+command allowlist pins the exact six-mode matrix and rejects added modes,
 phases, or command substitutions.
 The aggregate runner requires a verified merge-base comparison for every
 contract-baseline phase command and fails if the bound artifact directory is
@@ -407,12 +414,21 @@ both primary and cleanup errors; success removes it together with the
 disposable workspace and exact generated database/container. No production
 database or persisted user state is a gate target.
 
-The implemented Step 02E gate treats T+103 as a cooperative signal-aware
-internal budget. The dedicated workflow's 108-minute gate-step timeout is the
+Step 08 P3 retains the Step 02E cooperative signal-aware design with its internal
+budget at T+113. The dedicated workflow's 118-minute gate-step timeout is the
 hard process-execution fail-safe; it does not claim that arbitrary in-process
 code which ignores cancellation can still complete scoped cleanup. Cleanup
 never races resource-owning work that has not settled, and any outer-timeout
 recovery is limited to exact identities already persisted in private journals.
+The packaging phase retains its 180-second termination grace, 120-second cleanup
+signal and all child-operation deadlines; aggregate cleanup still gets one lazy
+three-minute window. Fixed packaging milestones expose only a finite label and
+monotonic elapsed milliseconds through the existing sanitized capture. They locate
+completed boundaries in failure tails without replacing lifecycle/success evidence
+or enabling live streaming. Unknown labels and reporting errors cannot expose
+private input or interrupt cleanup. The
+[P3 plan](../plans/active/local-migration/08-local-ui/plan.md#p3-validation-budget-addendum)
+records the timeout evidence, affected review and required renewed validation.
 
 On 2026-09-18, the Step 02E correction tree passed all 244 local-migration tests.
 The dedicated Linux run had exposed zombie-only process groups that remained
@@ -520,3 +536,33 @@ See [manual configuration](../useful/LOCAL_MODEL.md) for the qualified Mac, priv
 `local-mcp` is an additive supported mode under the same twelve gate phases. Direct literal-loopback Streamable HTTP exposes the six registered tools, six mutation operations, schema resource and a local capability resource. The hosted transport remains separate. The reviewed least-privilege visibility transition is recorded as `step07-local-mcp-least-privilege`, including exact fixture fingerprints and the union of 53 affected consumer identities. Unknown external clients receive migration guidance, not an invented claim of live-client verification.
 
 [Local setup](../useful/MCP_LOCAL_SETUP.md) covers explicit v1→v2 upgrade, matching-pair rollback, token generation races and client setup. [Step 07's plan](../plans/active/local-migration/07-local-mcp/plan.md) records minimal dispositions for combined writes, no-op/partial responses, definition restore, audit rollback and narrowing. Actual Claude/Codex acceptance remains pending until the user records results.
+
+## Step 08 Local UI Evolution
+
+`local-ui` is an additive custom Next/Nest composition with a separate browser
+session, the same principal/SQLite/services/model owner as MCP, and unchanged
+native MCP Origin denial. The [runbook](../useful/LOCAL_UI.md) gives build, explicit
+upgrade and launch commands. [Consumer guidance](../plans/active/local-migration/08-local-ui/consumers.md)
+retains `me`, deprecated `user(id)`, legacy apply and absent/v1 form-fill semantics.
+The new reviewed apply, history clear, event-time sensitivity, optional safe AI
+failure categories and form-fill v2 are bound to canonical fixtures and exact
+consumer evidence. The Step 08 HTTP transition requires independent approval;
+a derived-fixture refresh alone is not approval.
+
+Source and relocated smoke reuse the existing common MCP setup/restart/recovery
+proof with an explicit UI-only hook. The custom launcher and production web/backend
+closure are materialized by one additional exact offline `web deploy --prod`;
+immutable `.next` output excludes cache/nested standalone. Hosted standalone proof
+remains. Both payloads are sealed and verified. UI mode alone admits exactly two
+readiness-matching loopback app listeners; parser/SQLite worker restrictions stay.
+
+Each UI smoke requires two authenticated Chromium generations, browser/MCP
+credential separation, a browser write read back through MCP, literal and selected
+smart search, confirmed both-stream clear, fresh unlock after restart, CSP and raw
+upgrade/CONNECT denial. The gate independently validates nine common lifecycle
+records plus two browser records; successful exit alone cannot satisfy it.
+A gated Node wrapper owns Chromium in its process group. CDP close is followed by
+explicit signal/reap/group absence before profile removal; failed browser cleanup
+retains the private root. HTTP/WebSocket page-routing evidence is not OS-wide
+browser egress or live model quality evidence. Full final gate, CI and user
+acceptance remain required on the final candidate.

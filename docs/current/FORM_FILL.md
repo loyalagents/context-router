@@ -6,7 +6,7 @@
 - Source of truth: `apps/backend/src/modules/preferences/form-fill/**`,
   `apps/backend/test/e2e/form-fill.e2e-spec.ts`, and
   `apps/web/app/dashboard/form-fill/FormFillClient.tsx`
-- Last reviewed: 2026-09-22
+- Last reviewed: 2026-10-04
 
 ## Current form-fill contract
 
@@ -27,7 +27,7 @@ fill plan, mutates a copy of the PDF, and returns the result in the response.
 Raw PDF bytes are parsed and filled locally and are not sent to the model.
 However, extracted field names/types/options/lengths, global active preference
 values and descriptions, resolved form facts, and any supplied field policies
-are included in the structured-model prompt. The current provider is Vertex AI.
+are included in the structured-model prompt. The hosted provider is Vertex AI.
 The flow is therefore not fully local or private even though it does not send
 the PDF bytes themselves.
 
@@ -48,7 +48,7 @@ XFA-only PDF with zero AcroForm fields returns `no_fillable_fields` and no PDF
 artifact. `unsupported_format` remains in the TypeScript status union but the
 current service has no branch that emits it.
 
-Optional field policies use `schemaVersion: 1`. Each named field is either a
+Legacy optional field policies use `schemaVersion: 1`. Each named field is either a
 fact mapping or an explicit structural skip. Fact mappings name a fact key and
 source slugs used by fact resolution and prompt construction; they can include a
 condition and a mutually exclusive checkbox group. Validation blocks structural
@@ -80,7 +80,7 @@ applied. It:
   confidence threshold, while adding a `low_confidence_applied` diagnostic
   event. The threshold is diagnostic, not a rejection rule.
 
-Applied actions can overwrite an existing field value. Skipped fields are not
+Absent/v1-policy actions can overwrite an existing field value. Skipped fields are not
 mutated, so their existing values remain. The output updates field appearances,
 stays editable, and is not flattened.
 
@@ -102,10 +102,30 @@ review.
 - Form uploads and results are not persisted by the application.
 - The endpoint returns a base64 artifact inside JSON rather than streaming a
   file.
-- Partially completed forms have no separate conflict-review workflow; valid
-  applied actions overwrite their fields.
+- Absent/v1 policies retain existing overwrite behavior. Local v2 preserves occupied fields unless explicitly authorized; neither mode offers an undo workflow.
 - Policy source-slug lists guide fact resolution and prompting but do not
   currently restrict a general model action to those listed slugs; a missing
   resolved fact is not by itself a rejection.
 - Signatures, buttons, and multi-selection option-list behavior are not
   supported.
+
+## Local Dashboard Policy V2
+
+The [local dashboard](../useful/LOCAL_UI.md) uses the selected structured adapter,
+requires PDF consent, intersects actual capability/configured size bounds and
+sends `schemaVersion: 2` for every local fill, including `{ "schemaVersion": 2,
+"fields": [] }`. No-model mode disables the operation without blocking manual UI.
+
+V2 preserves existing nonempty text (including whitespace and "0"), checked
+checkboxes, selected radio/dropdown/list values. Exact named field entries may
+explicitly set `overwrite: true`; all type, domain, source and group
+validation still applies. Protected values remain protected during derived
+checkbox synthesis and group resolution. Existing PDF field values are used for
+local protection only and are omitted from model prompt serialization. Skipped
+outcomes explain existing-value preservation.
+
+Raw PDF/file-picker ownership is released after completion/cancellation and old
+download object URLs are revoked. The browser offers cancellation and bounded
+shorter deadlines; immutable execution controls reach the selected model. Safe
+optional `failureCategory` carries a fixed AI category rather than raw exceptions.
+Step 06's E/H qualification and manual fresh-session recovery limits remain.

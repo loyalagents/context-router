@@ -121,6 +121,8 @@ export class PreferenceDefinitionService {
     this.logger.log('Updating an authenticated preference definition');
 
     const updated = await this.unitOfWork.run(async (tx) => {
+      const before = await tx.definitions.getDefinitionById(id);
+      if (!before || before.ownerUserId !== userId) throw new NotFoundException('Preference definition unavailable');
       const updatedDefinition = await tx.definitions.update(
         id,
         {
@@ -144,7 +146,7 @@ export class PreferenceDefinitionService {
           actorClientKey: _context.actorClientKey,
           origin: _context.origin,
           correlationId: _context.correlationId,
-          beforeState: buildPreferenceDefinitionAuditSnapshot(def),
+          beforeState: buildPreferenceDefinitionAuditSnapshot(before),
           afterState: buildPreferenceDefinitionAuditSnapshot(updatedDefinition),
         });
 
@@ -178,6 +180,8 @@ export class PreferenceDefinitionService {
 
     this.logger.log('Archiving an authenticated preference definition');
     return this.unitOfWork.run(async (tx) => {
+      const before = await tx.definitions.getDefinitionById(id);
+      if (!before || before.ownerUserId !== userId) throw new NotFoundException('Preference definition unavailable');
       const archivedDefinition = await tx.definitions.archive(id);
 
       await tx.audit.record(
@@ -191,7 +195,7 @@ export class PreferenceDefinitionService {
           actorClientKey: _context.actorClientKey,
           origin: _context.origin,
           correlationId: _context.correlationId,
-          beforeState: buildPreferenceDefinitionAuditSnapshot(def),
+          beforeState: buildPreferenceDefinitionAuditSnapshot(before),
           afterState:
             buildPreferenceDefinitionAuditSnapshot(archivedDefinition),
         });

@@ -1,90 +1,28 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import type { LocalDatabaseConfiguration } from '../config/local-database.config';
 import type { LocalModelSelection } from '../config/local-model.config';
-import {
-  LocalConfigurationModule,
-  LocalConfigurationService,
-  LOCAL_APPLICATION_CONFIGURATION,
-} from './local-configuration.module';
+import { LocalConfigurationModule } from './local-configuration.module';
 import { LocalIdentityInfrastructureModule } from './local-identity-infrastructure.module';
 import { LocalConfiguredModelModule } from './local-configured-model.module';
 import { LocalModelAdapterModule } from './local-model-adapter.module';
 import { LocalAuthModule } from '../modules/auth/local-auth.module';
-import { PreferenceModule } from '../modules/preferences/preference/preference.module';
-import { PreferenceDefinitionModule } from '../modules/preferences/preference-definition/preference-definition.module';
-import { PermissionGrantModule } from '../modules/permission-grant/permission-grant.module';
-import { WorkflowsModule } from '../modules/workflows/workflows.module';
-import { McpAccessLogModule } from '../mcp/access-log/mcp-access-log.module';
-import { McpService } from '../mcp/mcp.service';
-import { McpAuthorizationService } from '../mcp/auth/mcp-authorization.service';
-import { mcpToolProviders } from '../mcp/mcp-tool.providers';
-import { MCP_RESOURCES } from '../mcp/mcp.constants';
-import { GRAPHQL_SCHEMA_SDL_SUPPLIER } from '../mcp/resources/graphql-schema-sdl';
-import { SchemaResource } from '../mcp/resources/schema.resource';
-import { LocalCapabilitiesResource } from '../mcp/local/local-capabilities.resource';
+import { LocalMcpFeaturesModule } from './local-mcp-features.module';
 
-/** Application context only: no HTTP/GraphQL driver, broad PreferencesModule or hosted auth. */
+/** Application context only; infrastructure and model ownership are registered once. */
 @Module({})
 export class LocalMcpApplicationModule {
-  static register(
-    configuration: LocalDatabaseConfiguration,
-    model?: LocalModelSelection,
-  ): DynamicModule {
+  static register(configuration: LocalDatabaseConfiguration, model?: LocalModelSelection): DynamicModule {
     return {
       module: LocalMcpApplicationModule,
       imports: [
         LocalConfigurationModule.register(),
         LocalIdentityInfrastructureModule.register(configuration),
-        model
-          ? LocalConfiguredModelModule.register({
-              root: model.root,
-              port: model.port,
-              identityRoot: configuration.stateRoot,
-              databaseRoot: configuration.databaseRoot,
-            })
-          : LocalModelAdapterModule,
+        model ? LocalConfiguredModelModule.register({
+          root: model.root, port: model.port,
+          identityRoot: configuration.stateRoot, databaseRoot: configuration.databaseRoot,
+        }) : LocalModelAdapterModule,
         LocalAuthModule,
-        PreferenceModule,
-        PreferenceDefinitionModule,
-        PermissionGrantModule,
-        WorkflowsModule,
-        McpAccessLogModule,
-      ],
-      providers: [
-        {
-          provide: ConfigService,
-          useFactory: () =>
-            new LocalConfigurationService({
-              ...LOCAL_APPLICATION_CONFIGURATION,
-              mcp: {
-                server: { name: 'context-router-local', version: '1.0.0' },
-                tools: {
-                  preferences: { enabled: true, maxSearchResults: 100 },
-                },
-                resources: { schema: { enabled: true } },
-              },
-            }),
-        },
-        McpService,
-        McpAuthorizationService,
-        ...mcpToolProviders,
-        {
-          provide: GRAPHQL_SCHEMA_SDL_SUPPLIER,
-          useFactory: () => {
-            const sdl = readFileSync(join(__dirname, '../schema.gql'), 'utf8');
-            return () => sdl;
-          },
-        },
-        SchemaResource,
-        LocalCapabilitiesResource,
-        {
-          provide: MCP_RESOURCES,
-          inject: [SchemaResource, LocalCapabilitiesResource],
-          useFactory: (schema, capabilities) => [schema, capabilities],
-        },
+        LocalMcpFeaturesModule,
       ],
     };
   }

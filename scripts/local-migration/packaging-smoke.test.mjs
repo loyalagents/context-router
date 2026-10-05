@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { createServer, request as httpRequest } from "node:http";
 import {
@@ -38,12 +39,16 @@ import {
   assertPackagingDiagnosticsOwnership,
   assertPackagingPrivateRootOwnership,
   buildBackendDeployArgv,
+  buildLocalUiDeployArgv,
+  copyLocalUiDeployment,
+  removeOwnedTree,
   approvedPackagingChildArgv,
   buildPackagedRuntimeEnvironment,
   classifyNegativeProbe,
   collectDarwinListenerEvidence,
   collectListenerIsolationEvidence,
   createPackagingPrivateRoot,
+  createPackagingExecutionRoot,
   createSanitizedPackagingError,
   createStableLoopbackProxy,
   createWebAttemptLifecycleHooks,
@@ -111,7 +116,7 @@ async function close(server) {
 
 test("Next standalone configuration is module-relative and derives apps/web", async () => {
   const source = await readFile(
-    path.join(repositoryRoot, "apps/web/next.config.ts"),
+    path.join(repositoryRoot, "apps/web/next.config.mjs"),
     "utf8",
   );
   assert.match(source, /output:\s*["']standalone["']/);
@@ -351,6 +356,7 @@ test("backend deploy command policy permits exactly one offline production targe
     repositoryRoot: "/private/repository",
     sourceRoot: "/private/source",
     stageBackend: "/private/stage/backend",
+    stageLocalUi: "/private/stage/local-ui",
   };
   for (const id of PACKAGING_CHILD_COMMAND_IDS) {
     const argv = approvedPackagingChildArgv(id, context);
@@ -1076,6 +1082,61 @@ test("stage sealing refuses regular files hardlinked to mutable sources", async 
       assertNoSharedRegularFiles(stageRoot, [sourceRoot]),
       /hardlink/,
     );
+  });
+});
+
+test("local UI deployment copying separates source hardlinks before sealing", async () => {
+  await temporaryDirectory("packaging-ui-copy-test-", async (root) => {
+    const source = path.join(root, "source");
+    const deployment = path.join(root, "deployment");
+    const stage = path.join(root, "stage");
+    await mkdir(source); await mkdir(deployment);
+    const original = path.join(source, "artifact.js");
+    await writeFile(original, "source remains writable\n", { mode: 0o600 });
+    await link(original, path.join(deployment, "artifact.js"));
+    await symlink("artifact.js", path.join(deployment, "internal.js"));
+    await mkdir(path.join(stage, "backend"), { recursive: true });
+    await mkdir(path.join(stage, "web"));
+    await copyLocalUiDeployment(deployment, path.join(stage, "local-ui"));
+    await assertNoSharedRegularFiles(stage, [source, deployment]);
+    await sealAndDescribeStage(stage, { schemaVersion: 1 });
+    assert.equal((await stat(path.join(stage, "local-ui/artifact.js"))).mode & 0o777, 0o444);
+    assert.equal((await stat(path.join(stage, "local-ui"))).mode & 0o777, 0o555);
+    assert.equal((await stat(original)).mode & 0o777, 0o600);
+    assert.equal(await readFile(original, "utf8"), "source remains writable\n");
+    assert.equal(await realpath(path.join(stage, "local-ui/internal.js")), await realpath(path.join(stage, "local-ui/artifact.js")));
+  });
+});
+
+test("owned-tree cleanup unlinks hardlinks without changing external source modes", async () => {
+  await temporaryDirectory("packaging-cleanup-hardlink-test-", async (root) => {
+    const source = path.join(root, "external.js");
+    const owned = path.join(root, "owned");
+    await writeFile(source, "unchanged source\n", { mode: 0o644 });
+    await mkdir(owned, { mode: 0o700 });
+    await link(source, path.join(owned, "injected.js"));
+    await chmod(owned, 0o555);
+    await removeOwnedTree(owned);
+    assert.equal(await lstat(owned).catch((error) => error.code), "ENOENT");
+    assert.equal((await stat(source)).mode & 0o777, 0o644);
+    assert.equal(await readFile(source, "utf8"), "unchanged source\n");
+  });
+});
+
+test("retained execution roots stay outside diagnostic sanitization", async () => {
+  await temporaryDirectory("packaging-retained-payload-test-", async (diagnostics) => {
+    const ownership = await createPackagingExecutionRoot({ diagnostics, onPrivateRoot: () => {} });
+    try {
+      const canonicalDiagnostics = await realpath(diagnostics);
+      assert.equal(ownership.directory.startsWith(canonicalDiagnostics + path.sep), false);
+      const recoveryFile = path.join(ownership.directory, "recovery-state");
+      await writeFile(recoveryFile, "synthetic-recovery-canary", { mode: 0o600 });
+      await writeFile(path.join(diagnostics, "run.log"), "synthetic-recovery-canary");
+      await sanitizeDiagnostics(diagnostics, ["synthetic-recovery-canary"]);
+      assert.equal(await readFile(recoveryFile, "utf8"), "synthetic-recovery-canary");
+      assert.equal((await stat(recoveryFile)).mode & 0o777, 0o600);
+      assert.equal((await readFile(path.join(diagnostics, "run.log"), "utf8")).includes("synthetic-recovery-canary"), false);
+    } finally { await removeOwnedTree(ownership.directory); }
   });
 });
 
@@ -1954,4 +2015,153 @@ test("redaction and lifecycle validation reject raw, encoded, split, or incomple
     false,
   );
   assert.equal(PACKAGED_SMOKE_TERMINATION_GRACE_MS, 180_000);
+});
+
+
+test("local UI payload uses one exact offline production deploy and an explicit file allowlist", async () => {
+  assert.deepEqual(buildLocalUiDeployArgv('/private/stage/local-ui'), ['pnpm', '--offline', '--filter', 'web', 'deploy', '--prod', '/private/stage/local-ui']);
+  assert.throws(() => buildLocalUiDeployArgv('relative'), /absolute/);
+  const manifest = JSON.parse(await readFile(path.join(repositoryRoot, 'apps/web/package.json'), 'utf8'));
+  assert.deepEqual(manifest.files, ['local-ui.mjs', 'next.config.mjs']);
+  assert.equal(manifest.dependencies.backend, 'workspace:*');
+});
+
+test("packaging milestones reject private input and remain finite, monotonic diagnostics", async () => {
+  const { createPackagingProgressReporter, PACKAGING_MILESTONES } =
+    await import("./packaging-progress.mjs");
+  let now = 100.5;
+  const output = [];
+  const report = createPackagingProgressReporter({
+    now: () => now,
+    write: (line) => output.push(line),
+  });
+  const canary = "synthetic-private-path-token-error";
+  assert.equal(report(canary), false);
+  assert.equal(report({ toString: () => canary }), false);
+  assert.deepEqual(output, []);
+  for (const milestone of PACKAGING_MILESTONES) {
+    now += 1.5;
+    assert.equal(report(milestone), true);
+    assert.equal(report(milestone), false);
+  }
+  assert.equal(output.length, PACKAGING_MILESTONES.length);
+  assert.equal(new Set(PACKAGING_MILESTONES).size, PACKAGING_MILESTONES.length);
+  assert.ok(PACKAGING_MILESTONES.length <= 20);
+  let previous = -1;
+  for (const line of output) {
+    const match =
+      /^packaging-smoke: milestone=([a-z0-9-]+) elapsedMs=([0-9]+)\n$/.exec(
+        line,
+      );
+    assert.ok(match);
+    assert.ok(PACKAGING_MILESTONES.includes(match[1]));
+    assert.ok(Number(match[2]) >= previous);
+    previous = Number(match[2]);
+  }
+  assert.equal(output.join("").includes(canary), false);
+  assert.ok(Buffer.byteLength(output.join("")) < 4096);
+  assert.ok(PACKAGING_MILESTONES.includes("failed"));
+  assert.ok(PACKAGING_MILESTONES.includes("cleanup-started"));
+  assert.ok(PACKAGING_MILESTONES.includes("cleanup-complete"));
+});
+
+test("invalid clocks and reporting failures cannot interrupt resource cleanup", async () => {
+  const { createPackagingProgressReporter } = await import(
+    "./packaging-progress.mjs"
+  );
+  for (const invalid of [-1, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    let now = 0;
+    const output = [];
+    const report = createPackagingProgressReporter({
+      now: () => now,
+      write: (line) => output.push(line),
+    });
+    now = invalid;
+    assert.equal(report("cleanup-started"), false);
+    assert.deepEqual(output, []);
+  }
+  let now = 0;
+  const report = createPackagingProgressReporter({
+    now: () => now,
+    write: () => {
+      throw new Error("synthetic-private-write-error");
+    },
+  });
+  let cleaned = false;
+  try {
+    throw new Error("synthetic-primary-error");
+  } catch {
+    assert.equal(report("failed"), false);
+  } finally {
+    now++;
+    assert.equal(report("cleanup-started"), false);
+    cleaned = true;
+    assert.equal(report("cleanup-complete"), false);
+  }
+  assert.equal(cleaned, true);
+  const output = [];
+  now = 0;
+  const monotonic = createPackagingProgressReporter({
+    now: () => now,
+    write: (line) => output.push(line),
+  });
+  now = 10;
+  assert.equal(monotonic("context-prepared"), true);
+  now = 9;
+  assert.equal(monotonic("build-complete"), false);
+  assert.equal(output.length, 1);
+});
+
+test("default milestone writer survives a closed stdout pipe and completes owned cleanup", async () => {
+  await temporaryDirectory("packaging-closed-pipe-test-", async (root) => {
+    const resource = path.join(root, "owned-resource");
+    const marker = path.join(root, "cleanup-complete");
+    const child = spawn(process.execPath, [
+      "--input-type=module", "--eval", `
+        import { mkdir, rm, writeFile } from 'node:fs/promises';
+        import { setTimeout } from 'node:timers/promises';
+        import { createPackagingProgressReporter } from ${JSON.stringify(new URL("./packaging-progress.mjs", import.meta.url).href)};
+        const [resource, marker] = process.argv.slice(1);
+        await mkdir(resource, { mode: 0o700 });
+        const released = new Promise(resolve => process.once('message', resolve));
+        process.send('armed');
+        await released;
+        const report = createPackagingProgressReporter();
+        try {
+          report('context-prepared');
+          await setTimeout(30);
+        } finally {
+          report('cleanup-started');
+          await rm(resource, { recursive: true });
+          await writeFile(marker, 'cleaned', { mode: 0o600 });
+          report('cleanup-complete');
+          await setTimeout(30);
+          process.disconnect();
+        }
+      `, resource, marker,
+    ], { stdio: ["ignore", "pipe", "pipe", "ipc"] });
+    let stderr = "";
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    const closed = new Promise((resolve, reject) => {
+      child.once("error", reject);
+      child.once("close", (code, signal) => resolve({ code, signal }));
+    });
+    const armed = new Promise((resolve) => child.once("message", resolve));
+    try {
+      assert.equal(await waitWithTimeout(Promise.race([armed, closed]), 5_000, "closed-pipe child did not arm"), "armed");
+      const pipeClosed = new Promise((resolve) => child.stdout.once("close", resolve));
+      child.stdout.destroy();
+      await waitWithTimeout(pipeClosed, 5_000, "stdout pipe did not close");
+      child.send("release");
+      assert.deepEqual(await waitWithTimeout(closed, 5_000, "closed-pipe child did not exit"), { code: 0, signal: null }, stderr);
+      assert.equal(stderr, "");
+      assert.equal(await readFile(marker, "utf8"), "cleaned");
+      await assert.rejects(lstat(resource), { code: "ENOENT" });
+      assert.equal(await isProcessLive(child.pid), false);
+    } finally {
+      if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+      await waitWithTimeout(closed, 5_000, "closed-pipe child was not reaped");
+    }
+  });
 });

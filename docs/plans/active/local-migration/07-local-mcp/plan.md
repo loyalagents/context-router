@@ -1,9 +1,9 @@
 # Step 07: Local MCP
 
-- Document status: approved plan P2; implementation in progress
+- Document status: retained approved plan P2 and amendment; Step 07 merged — current evidence in the [closeout](README.md)
 - Program step: `07-local-mcp`; target branch: `main`
 - Planning base commit: `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`
-- Branch/PR owner: `/root`, `codex/local-migration-07-local-mcp`; PR not yet opened
+- Branch/PR owner: `/root`, `codex/local-migration-07-local-mcp`; merged [PR #166](https://github.com/loyalagents/context-router/pull/166)
 - Change classification: `shared` for explicit least-privilege scope normalization and redaction; additive `local-only` listener, credentials and composition
 - Depends on: merged Steps 03, 05 and 06
 - Planning owner, implementation owner, coordinator and sole repository writer: `/root`

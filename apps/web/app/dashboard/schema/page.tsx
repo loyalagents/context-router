@@ -1,7 +1,8 @@
+import LocalPage from '@/components/local/LocalPage';
 import { redirect } from 'next/navigation';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
-import { auth0 } from '@/lib/auth0';
+import { getAuth0 } from '@/lib/auth0';
 import SchemaClient from './SchemaClient';
 
 export const dynamic = 'force-dynamic';
@@ -46,12 +47,13 @@ interface PreferenceCatalogQuery {
 
 
 export default async function SchemaPage() {
-  const session = await auth0.getSession();
+  if (process.env.CONTEXT_ROUTER_WEB_MODE === 'local') return <LocalPage page="schema" />;
+  const session = await getAuth0().getSession();
   if (!session?.user) redirect('/auth/login');
 
   let accessToken = '';
   try {
-    const tokenResult = await auth0.getAccessToken();
+    const tokenResult = await getAuth0().getAccessToken();
     accessToken = tokenResult?.token || '';
   } catch (e) {
     console.error('Failed to get access token:', e);

@@ -1,6 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
@@ -71,6 +73,7 @@ export default function ProfileForm({
       ),
     [initialPreferences],
   );
+  const persistedBySlug = useRef(new Map(initialBySlug));
   const [values, setValues] = useState<Record<ProfileSlug, string>>(() =>
     PROFILE_FIELDS.reduce(
       (acc, field) => {
@@ -91,7 +94,7 @@ export default function ProfileForm({
     variables: Record<string, unknown>,
   ) => {
     const graphqlUrl = GRAPHQL_URL;
-    const response = await fetch(graphqlUrl, {
+    const response = await authenticatedFetch(graphqlUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -121,7 +124,7 @@ export default function ProfileForm({
     try {
       for (const field of PROFILE_FIELDS) {
         const value = values[field.slug].trim();
-        const existing = initialBySlug.get(field.slug);
+        const existing = persistedBySlug.current.get(field.slug);
 
         if (!value && field.required) {
           throw new Error(`${field.label} is required`);
@@ -131,23 +134,24 @@ export default function ProfileForm({
           await graphqlRequest(DELETE_PREFERENCE_MUTATION, {
             id: existing.id,
           });
+          persistedBySlug.current.delete(field.slug);
           continue;
         }
 
         if (value) {
-          await graphqlRequest(SET_PREFERENCE_MUTATION, {
+          const result = await graphqlRequest(SET_PREFERENCE_MUTATION, {
             input: {
               slug: field.slug,
               value,
             },
           });
+          persistedBySlug.current.set(field.slug, result.data.setPreference);
         }
       }
 
       setSuccessMessage('Profile updated successfully.');
       router.refresh();
     } catch (err) {
-      console.error('Failed to update profile:', err);
       setError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setLoading(false);

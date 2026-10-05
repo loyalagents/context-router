@@ -1,10 +1,14 @@
-import { HOSTED_AI_CAPABILITIES, LOCAL_AI_CAPABILITIES } from '../../domains/shared/ports/ai-execution';
+import {
+  HOSTED_AI_CAPABILITIES,
+  LOCAL_AI_CAPABILITIES,
+} from '../../domains/shared/ports/ai-execution';
 import { Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { AiTextGeneratorPort } from '../../domains/shared/ports/ai-text-generator.port';
 import { AI_TEXT_GENERATOR_PORT } from '../../domains/shared/ports/ai.tokens';
+import { UI_EXECUTION } from '../../local-ui/local-ui-request';
 import { VertexAiResolver } from './vertex-ai.resolver';
 
 describe('VertexAiResolver', () => {
@@ -13,7 +17,9 @@ describe('VertexAiResolver', () => {
   beforeEach(() => {
     port = {
       capabilities: HOSTED_AI_CAPABILITIES,
-      getStatus: jest.fn().mockResolvedValue({ state: 'unsupported', configured: true }),
+      getStatus: jest
+        .fn()
+        .mockResolvedValue({ state: 'unsupported', configured: true }),
       generateText: jest.fn(),
       generateTextWithFile: jest.fn(),
     };
@@ -80,14 +86,39 @@ describe('VertexAiResolver', () => {
     ).not.toContain('provider-secret-canary');
   });
   it('gives local text generation one bounded workflow deadline', async () => {
-    Object.defineProperty(port, 'capabilities', { value: LOCAL_AI_CAPABILITIES });
+    Object.defineProperty(port, 'capabilities', {
+      value: LOCAL_AI_CAPABILITIES,
+    });
     const resolver = await compileResolver();
     port.generateText.mockResolvedValue('local response');
     const started = performance.now();
-    await expect(resolver.askVertexAI('synthetic')).resolves.toBe('local response');
+    await expect(resolver.askVertexAI('synthetic')).resolves.toBe(
+      'local response',
+    );
     const controls = port.generateText.mock.calls[0][1];
     expect(controls.deadline).toBeGreaterThan(started);
     expect(controls.deadline).toBeLessThanOrEqual(performance.now() + 180000);
   });
 
+  it('retains the browser deadline/signal and refuses publication after logout', async () => {
+    Object.defineProperty(port, 'capabilities', {
+      value: LOCAL_AI_CAPABILITIES,
+    });
+    const resolver = await compileResolver();
+    const controller = new AbortController();
+    const deadline = performance.now() + 5000;
+    port.generateText.mockImplementation(async () => {
+      controller.abort();
+      return 'must-not-publish';
+    });
+    await expect(
+      resolver.askVertexAI.call(resolver, 'synthetic', {
+        req: { [UI_EXECUTION]: { signal: controller.signal, deadline } },
+      }),
+    ).rejects.toThrow('Failed to generate response');
+    expect(port.generateText.mock.calls[0][1]).toEqual({
+      signal: controller.signal,
+      deadline,
+    });
+  });
 });

@@ -29,6 +29,9 @@ registerEnumType(AuditOrigin, {
 
 @ObjectType('PreferenceAuditEvent')
 export class PreferenceAuditEventModel {
+  @Field(() => String, { description: 'Event-time SENSITIVE, NON_SENSITIVE or UNKNOWN; legacy records are UNKNOWN.' })
+  sensitivity: string;
+
   @Field(() => ID)
   id: string;
 

@@ -9,7 +9,7 @@
   `apps/backend/test/e2e/audit-history.e2e-spec.ts`, and
   `apps/backend/test/e2e/mcp-access-log.e2e-spec.ts`, and
   `apps/backend/test/local-database/application.spec.ts`
-- Last reviewed: 2026-09-23
+- Last reviewed: 2026-10-04
 
 The application keeps three related but distinct records:
 
@@ -144,9 +144,11 @@ additional API redaction.
 filters, applied-filter chips, reset, cursor-based load-more behavior, and
 expandable JSON details.
 
-The Audit tab hides values by default when the subject slug is marked sensitive
-in the current live catalog. An archived or deleted definition can no longer be
-present in that catalog, so its historical value may not receive that UI mask.
+The Audit tab uses the server-authored event-time sensitivity marker. New events
+capture the relevant before/after definition, including archived definitions.
+Sensitive and UNKNOWN legacy/malformed markers mask values, evidence and consumed
+suggestions by default. Reveal is reset on history invalidation. This is a UI
+presentation safeguard; authenticated APIs still return the user's snapshots.
 The MCP tab renders sanitized JSON metadata rather than a specialized tree.
 
 There is no rollback or revert action in either history tab.
@@ -157,7 +159,27 @@ There is no rollback or revert action in either history tab.
   introduced.
 - Advanced reset modes erase audit and access evidence for the current user.
 - Mutation history has no rollback API or concurrency-safe revert workflow.
-- MCP access history is request-level, has no retention policy, and excludes
+- MCP access history is request-level, retained until explicit clear, and excludes
   pre-dispatch authentication failures and discovery calls.
-- Sensitive-value masking depends on current catalog membership and is only a
-  UI behavior.
+- Sensitivity masking uses event-time metadata and masks legacy UNKNOWN events; it remains UI behavior, not API redaction.
+
+## Retention And Separate Whole-History Clear
+
+Both streams are retained until explicit clear; no TTL, per-record deletion or
+undo is added. `clearMyHistory(confirmation: "CLEAR HISTORY")` uses one serializable
+unit of work to remove only the authenticated principal's mutation and access
+rows. Counts are published only after commit. Live preferences and provenance,
+including row attribution, definitions, locations, account/external identity,
+local identity, MCP credentials and grants remain. No clear event is appended.
+
+A known transaction conflict returns `ROLLED_BACK`; other uncertain failures return
+`UNCERTAIN`. There is no automatic retry. Concurrent writes either precede/follow
+the clear's transactional boundary or cause a reported conflict; later activity
+can add new events. The separate best-effort access append remains unchanged.
+
+The retained tabs use one invalidation generation, abort prior queries and notify
+other same-origin windows after confirmed clear. Delayed pre-clear responses
+cannot restore the cleared view. Lock/unmount also discards late results.
+**Clear memory** remains history-preserving. This clear removes logical rows from
+the live pair; it is not disk erasure and does not modify old backups. Restoring
+an older matching pair restores its history. See [local dashboard](../useful/LOCAL_UI.md).

@@ -1,5 +1,7 @@
 'use client';
 
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
 import { useState } from 'react';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
@@ -112,7 +114,7 @@ export default function PreferenceItem({
       }
 
       const graphqlUrl = GRAPHQL_URL;
-      const response = await fetch(graphqlUrl, {
+      const response = await authenticatedFetch(graphqlUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +157,7 @@ export default function PreferenceItem({
 
     try {
       const graphqlUrl = GRAPHQL_URL;
-      const response = await fetch(graphqlUrl, {
+      const response = await authenticatedFetch(graphqlUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -221,6 +223,7 @@ export default function PreferenceItem({
           {isEditing ? (
             <div className="mt-2">
               <textarea
+                aria-label={`Value for ${preference.slug}`}
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 className="w-full font-mono text-sm border rounded p-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

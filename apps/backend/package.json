@@ -43,7 +43,8 @@
     "local-identity:postgres-reference": "node --no-global-search-paths dist/local-identity-postgres-reference.js",
     "test:local-model": "node --unhandled-rejections=strict --test --test-concurrency=1 test/local-model/*.test.mjs",
     "local-mcp": "node --no-global-search-paths dist/local-mcp.js",
-    "test:local-mcp": "node --unhandled-rejections=strict --test --test-concurrency=1 test/local-mcp/*.test.mjs"
+    "test:local-mcp": "node --unhandled-rejections=strict --test --test-concurrency=1 test/local-mcp/*.test.mjs",
+    "test:local-ui": "node --unhandled-rejections=strict --test --test-concurrency=1 test/local-ui/*.test.mjs"
   },
   "repository": {
     "type": "git",

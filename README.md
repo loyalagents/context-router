@@ -1,7 +1,7 @@
 # Context Router
 
 Context Router is a `pnpm` workspace monorepo with a retained hosted
-composition and a file-backed, non-listening local database preview with an explicit manual model integration:
+composition, explicit local database/model previews, and a loopback local MCP runtime:
 
 - `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and a hosted-JWT-protected MCP HTTP endpoint
 - `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens
@@ -21,6 +21,16 @@ For local-first migration work, start with
 [`docs/plans/active/local-migration/orchestration.md`](docs/plans/active/local-migration/orchestration.md).
 
 For the explicit Step 06 model configuration, see [manual local model preview](docs/useful/LOCAL_MODEL.md). Runtime binaries and weights stay outside Git.
+
+Step 07's local MCP runtime is merged; see [local MCP setup](docs/useful/MCP_LOCAL_SETUP.md).
+Step 08 adds an explicitly selected local dashboard using SQLite and separate browser
+sessions, with shared MCP/model ownership. See [local dashboard setup](docs/useful/LOCAL_UI.md).
+Its [implementation and validation](docs/plans/active/local-migration/08-local-ui/implementation.md)
+record passing independent reviews, the full local gate, and completed user-run
+acceptance with explicitly accepted evidence limits. [PR #167](https://github.com/loyalagents/context-router/pull/167)
+remains draft pending human disposition; final-head checks are recorded there.
+Small [UI usability improvements](docs/plans/active/ui-usability/README.md) are
+tracked for follow-up after the packaged local workflow is usable.
 
 ## How The Repo Works
 
@@ -210,7 +220,7 @@ Existing PostgreSQL preview data remains separately usable through `local-identi
 
 Step 07 adds one manually started `local-mcp serve` backend for Claude Code and Codex CLI, using the same stable local identity and SQLite data with separate per-instance MCP credentials. It binds only `127.0.0.1` and exposes `/mcp`; it has no GraphQL/browser/OAuth endpoints. An explicit v1→v2 upgrade preserves existing data. `serve-model` reuses the manually operated Step 06 model adapter and its accepted E/H limitations; ordinary tools need no model.
 
-Follow [local MCP setup and administration](docs/useful/MCP_LOCAL_SETUP.md) and the [synthetic real-client checklist](docs/plans/active/local-migration/07-local-mcp/acceptance.md). Step 07 remains manual acceptance pending; the PR stays draft until the required results and review gates pass. The non-listening previews and hosted modes remain supported.
+Follow [local MCP setup and administration](docs/useful/MCP_LOCAL_SETUP.md) and the [synthetic real-client checklist](docs/plans/active/local-migration/07-local-mcp/acceptance.md). Step 07 is merged; its [closeout](docs/plans/active/local-migration/07-local-mcp/README.md) records final CI and the limits of earlier manual acceptance. The non-listening previews and hosted modes remain supported.
 
 ### Containerized Backend Workflow
 
@@ -310,7 +320,7 @@ CI currently validates:
 - Backend integration tests
 - Backend e2e tests against the test database
 - Standalone local database tests plus the twelve-phase migration gate, including both PostgreSQL reference and SQLite source/relocated-package restart evidence
-- Frontend production build
+- Frontend production build and authenticated local dashboard browser coverage
 
 ## Docs
 

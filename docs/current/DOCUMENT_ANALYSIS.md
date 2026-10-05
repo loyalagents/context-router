@@ -7,7 +7,7 @@
   `apps/backend/src/modules/preferences/document-analysis/**`,
   `apps/backend/test/e2e/document-analysis.e2e-spec.ts`, and the dashboard
   preference suggestion components
-- Last reviewed: 2026-09-22
+- Last reviewed: 2026-10-04
 
 Document analysis proposes preference changes from an uploaded document. It is
 separate from form fill: this path sends the uploaded document to the configured
@@ -21,7 +21,7 @@ Markdown, JSON, PDF, PNG, JPEG, and common YAML variants.
 
 The backend processes the upload in memory and does not write an application
 copy to disk, the database, or object storage. Raw file bytes are sent to the
-configured `AiStructuredOutputPort` file-capable provider, currently Vertex AI,
+configured `AiStructuredOutputPort` file-capable provider, Vertex AI in hosted mode,
 along with the filename, the user's visible schema snapshot, and current global
 active preference values. JSON and YAML uploads are sent to that provider as
 `text/plain` because its inline-file interface rejects their original MIME
@@ -99,8 +99,7 @@ success and not one atomic transaction.
 
 ## Known limitations
 
-- The raw upload and current preference context leave the machine for the
-  configured model provider.
+- In hosted mode, the raw upload and current context leave the machine for the configured provider.
 - There is no persisted analysis object tying an apply request to the original
   server response.
 - Duplicate consolidation preserves representative evidence rather than all
@@ -110,3 +109,29 @@ success and not one atomic transaction.
 - Complete value-type validation is deferred until apply, not guaranteed in the
   extraction response.
 - Per-user upload rate limiting remains unimplemented.
+
+## Local Dashboard And Reviewed Apply V2
+
+The explicit [local dashboard](../useful/LOCAL_UI.md) supplies a browser-authenticated
+upload surface using the selected local adapter. No-model mode leaves manual
+flows available and disables AI operations. Actual selected capabilities and
+configured maximum determine accepted MIME types/bytes: supported UTF-8 text,
+Markdown, JSON, YAML and text-bearing PDF, at most 10 MiB. Local images/OCR are
+unsupported. Byte/structure checks and browser revalidation happen before use-case
+entry. Consent, secret-file confirmation, bounded raw-file ownership and batch
+cancellation apply in the local UI.
+
+The same immutable cancellation signal and monotonic deadline reach extraction,
+model work and final publication. A late result cannot publish after cancellation,
+logout, session expiry or deadline. Safe optional `failureCategory` distinguishes
+AI failure kinds without provider exception text. No hosted fallback occurs.
+
+Analysis now includes an optional v2 review descriptor from a serializable saved-
+state snapshot. The local UI sends `applyPreferenceSuggestionsV2`; hosted/legacy
+consumers retain `applyPreferenceSuggestions`. Each v2 item compares the exact
+owned definition, location, active row/absence and canonical persisted revision
+inside one serializable validation/write/audit unit. Ordered outcomes are
+`APPLIED`, `VALIDATION_FAILED`, `CONFLICT` or `UNCERTAIN`. Reverting every persisted
+field to identical bytes is not an all-ABA guarantee. Proposed client values still
+undergo domain validation; this is not a signed or persisted analysis receipt.
+Items commit independently, and uncertain writes are not automatically retried.

@@ -14,6 +14,8 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { DocumentAnalysisService } from './document-analysis.service';
 import { DocumentAnalysisResult } from './dto/document-analysis-result.dto';
 import type { DocumentUploadConfig } from '../../../config/document-upload.config';
+import { browserExecution, revalidateBrowserRequest, UI_UPLOAD_POLICY } from '../../../local-ui/local-ui-request';
+import { validateLocalUpload } from '../../../local-ui/local-ui-ai';
 
 // TODO: Implement rate limiting per user to prevent abuse and control Vertex AI costs
 
@@ -46,6 +48,7 @@ export class DocumentAnalysisController {
     @UploadedFile() file: Express.Multer.File,
     @Request() req: any,
   ): Promise<DocumentAnalysisResult> {
+    revalidateBrowserRequest(req);
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
@@ -70,12 +73,16 @@ export class DocumentAnalysisController {
     }
 
     this.logger.log('Analyzing an authenticated document upload');
+    await validateLocalUpload(file, req[UI_UPLOAD_POLICY]?.analysis);
+    revalidateBrowserRequest(req);
+    const execution = browserExecution(req);
 
     return this.documentAnalysisService.analyzeDocument(
       userId,
       file.buffer,
       file.mimetype,
       file.originalname,
+      ...(execution ? [execution] : []),
     );
   }
 }

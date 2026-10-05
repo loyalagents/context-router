@@ -1,8 +1,12 @@
+import LocalPage from '@/components/local/LocalPage';
+
+export const dynamic = 'force-dynamic';
 import { redirect } from 'next/navigation';
-import { auth0 } from '@/lib/auth0';
+import { getAuth0 } from '@/lib/auth0';
 
 export default async function Home() {
-  const session = await auth0.getSession();
+  if (process.env.CONTEXT_ROUTER_WEB_MODE === 'local') return <LocalPage page="dashboard" />;
+  const session = await getAuth0().getSession();
 
   if (session?.user) {
     redirect('/dashboard');

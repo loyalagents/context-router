@@ -7,7 +7,7 @@
 
 Step 07 adds `local-mcp`, one manually started SQLite backend for Claude Code and Codex CLI on the same Mac. It exposes only direct Streamable HTTP at `http://127.0.0.1:8787/mcp` by default. There is no stdio bridge, browser UI, GraphQL listener, OAuth/DCR endpoint, public tunnel or LAN mode in this composition. The hosted composition remains separately supported below.
 
-The [Step 07 acceptance checklist](../plans/active/local-migration/07-local-mcp/acceptance.md) gives isolated synthetic setup, both client launches, expected results, restart/revocation, model readiness and cleanup. User-run acceptance is recorded for `d7e9d65` in [PR #166](https://github.com/loyalagents/context-router/pull/166), including its inconclusive live cancellation outcome. Follow-up session-recovery fixes require renewed automated validation and affected review; Step 07 remains active until human merge.
+The [Step 07 acceptance checklist](../plans/active/local-migration/07-local-mcp/acceptance.md) gives isolated synthetic setup, both client launches, expected results, restart/revocation, model readiness and cleanup. User-run acceptance is recorded for `d7e9d65` in [PR #166](https://github.com/loyalagents/context-router/pull/166), including its inconclusive live cancellation outcome. Follow-up session-recovery fixes require renewed automated validation and affected review; Step 07 is merged; renewed Step 08 human acceptance remains pending.
 
 ## Local SQLite Administration
 
@@ -238,3 +238,12 @@ Then update the local backend configuration that advertises the MCP server URL b
 - MCP uses HTTP JSON-RPC. `POST /mcp` is the main transport.
 - OAuth metadata and DCR shim behavior live in `apps/backend/src/mcp/auth/`.
 - For current authorization behavior and tool inventory, read `docs/current/MCP_AUTHORIZATION.md`.
+
+## Shared Dashboard Composition
+
+[Local dashboard](LOCAL_UI.md) starts the same MCP edge alongside its independent
+browser listener. Use that one process instead of a second `local-mcp serve`
+instance. The browser can inspect actual client IDs, narrow grants and revoke;
+provision, rotate and maximum-policy commands remain this CLI. Its browser bearer
+never authenticates MCP, and MCP retains native Origin denial. Hosted setup above
+is unchanged.

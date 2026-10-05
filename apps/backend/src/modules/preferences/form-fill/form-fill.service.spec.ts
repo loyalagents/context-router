@@ -75,6 +75,13 @@ describe('FormFillService', () => {
     expect(aiStructuredService.generateStructured).not.toHaveBeenCalled();
   });
 
+  it.each(['busy', 'unavailable', 'unsafe_configuration', 'unsupported', 'input_limit', 'context_limit', 'invalid_response', 'cancelled', 'deadline'] as const)('exposes only the safe %s category without PDF bytes', async (kind) => {
+    fieldExtractor.extractFields.mockRejectedValue(new AiError(kind));
+    const result = await service.fillPdfForm('user', Buffer.from('synthetic'), 'form.pdf');
+    expect(result).toMatchObject({ status: 'failed', failureCategory: kind, filledPdfBase64: null });
+    expect(result.summary.warnings.join(' ')).not.toMatch(/try again/i);
+  });
+
   afterEach(() => {
     jest.restoreAllMocks();
   });

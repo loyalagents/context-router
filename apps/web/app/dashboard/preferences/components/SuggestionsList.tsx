@@ -1,6 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
+import { useEffect, useRef, useState } from 'react';
+import { useLocalSession } from '@/components/local/LocalSession';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 import SuggestionItem from './SuggestionItem';
 import type {
@@ -31,6 +34,14 @@ const APPLY_SUGGESTIONS_MUTATION = `
     }
   }
 `;
+const APPLY_REVIEWED_MUTATION = /* GraphQL */ `mutation ApplyReviewed($analysisId: ID!, $input: [ApplyPreferenceSuggestionV2Input!]!) {
+  applyPreferenceSuggestionsV2(analysisId: $analysisId, input: $input) { schemaVersion results { suggestionId status } }
+}`;
+const outcomes: Record<string, string> = {
+  APPLIED: 'Applied.', VALIDATION_FAILED: 'Validation failed. Review the current schema and analyze again.',
+  CONFLICT: 'Saved state changed since review. Reload and analyze again.',
+  UNCERTAIN: 'Write outcome is uncertain. Inspect saved preferences before deciding on another change; do not blindly retry.',
+};
 
 const FILTER_REASON_LABELS: Record<FilterReason, string> = {
   MISSING_FIELDS: 'Missing required fields',
@@ -56,6 +67,10 @@ interface SuggestionRow {
 }
 
 interface ApplySuggestionInput {
+  definitionId?: string;
+  locationId?: string | null;
+  expectedPreferenceId?: string | null;
+  expectedRevision?: string | null;
   suggestionId: string;
   slug: string;
   operation: 'CREATE' | 'UPDATE';
@@ -241,13 +256,17 @@ export default function SuggestionsList({
   onApplied,
   accessToken,
 }: SuggestionsListProps) {
+  const local = !!useLocalSession();
   const suggestionRows = getSuggestionRows(batch);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    () => new Set(suggestionRows.map((row) => row.suggestion.id)),
+    () => new Set(suggestionRows.filter((row) => !local || row.suggestion.review).map((row) => row.suggestion.id)),
   );
   const [editedValues, setEditedValues] = useState<Record<string, any>>({});
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+  const [itemOutcomes, setItemOutcomes] = useState<Record<string, string>>({});
+  const pending = useRef<AbortController | null>(null);
+  useEffect(() => () => pending.current?.abort(), []);
 
   const totalFiltered = batch.files.reduce(
     (total, file) => total + (file.result?.filteredSuggestions.length ?? 0),
@@ -259,6 +278,7 @@ export default function SuggestionsList({
   ).length;
 
   const handleToggle = (id: string) => {
+    if (applying || itemOutcomes[id]) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -275,7 +295,7 @@ export default function SuggestionsList({
   };
 
   const handleSelectAll = () => {
-    setSelectedIds(new Set(suggestionRows.map((row) => row.suggestion.id)));
+    setSelectedIds(new Set(suggestionRows.filter((row) => !itemOutcomes[row.suggestion.id] && (!local || row.suggestion.review)).map((row) => row.suggestion.id)));
   };
 
   const handleDeselectAll = () => {
@@ -283,8 +303,9 @@ export default function SuggestionsList({
   };
 
   const handleApply = async () => {
+    if (pending.current) return;
     const selectedRows = suggestionRows.filter((row) =>
-      selectedIds.has(row.suggestion.id),
+      selectedIds.has(row.suggestion.id) && !itemOutcomes[row.suggestion.id] && (!local || row.suggestion.review),
     );
 
     if (selectedRows.length === 0) {
@@ -293,6 +314,13 @@ export default function SuggestionsList({
 
     setApplyError(null);
     setApplying(true);
+    const controller = new AbortController(); pending.current = controller;
+    let attempted: string[] = [];
+    const record = (results: Array<{ suggestionId: string; status: string }>) => {
+      if (controller.signal.aborted) return;
+      setItemOutcomes((previous) => ({ ...previous, ...Object.fromEntries(results.map((result) => [result.suggestionId, result.status])) }));
+      setSelectedIds((previous) => new Set([...previous].filter((id) => !results.some((result) => result.suggestionId === id))));
+    };
 
     try {
       const batchesByAnalysisId = new Map<string, ApplySuggestionInput[]>();
@@ -304,21 +332,24 @@ export default function SuggestionsList({
         }
 
         const existing = batchesByAnalysisId.get(analysisId) ?? [];
-        existing.push(buildApplyInput(row, editedValues));
+        existing.push({ ...buildApplyInput(row, editedValues), ...(local ? row.suggestion.review : {}) });
         batchesByAnalysisId.set(analysisId, existing);
       }
 
       const graphqlUrl = GRAPHQL_URL;
 
       for (const [analysisId, input] of batchesByAnalysisId.entries()) {
-        const response = await fetch(graphqlUrl, {
+        if (controller.signal.aborted) return;
+        attempted = input.map((item) => item.suggestionId);
+        const response = await authenticatedFetch(graphqlUrl, {
+          signal: controller.signal,
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            query: APPLY_SUGGESTIONS_MUTATION,
+            query: local ? APPLY_REVIEWED_MUTATION : APPLY_SUGGESTIONS_MUTATION,
             variables: {
               analysisId,
               input,
@@ -335,15 +366,24 @@ export default function SuggestionsList({
         if (data.errors) {
           throw new Error(data.errors[0]?.message || 'GraphQL error');
         }
+        if (local) {
+          const result = data.data?.applyPreferenceSuggestionsV2;
+          if (result?.schemaVersion !== 2 || !Array.isArray(result.results) || result.results.length !== attempted.length || result.results.some((item: { suggestionId: string; status: string }, index: number) => item.suggestionId !== attempted[index] || !outcomes[item.status])) throw new Error('Invalid reviewed result');
+          record(result.results);
+        }
+        attempted = [];
       }
 
-      onApplied();
+      if (!local && !controller.signal.aborted) onApplied();
     } catch (error) {
+      if (controller.signal.aborted) return;
+      if (local) record(attempted.map((suggestionId) => ({ suggestionId, status: 'UNCERTAIN' })));
       setApplyError(
-        error instanceof Error ? error.message : 'Failed to apply suggestions',
+        local ? 'Apply was not confirmed. Inspect saved preferences before making another change.' : error instanceof Error ? error.message : 'Failed to apply suggestions',
       );
     } finally {
-      setApplying(false);
+      if (!controller.signal.aborted) setApplying(false);
+      pending.current = null;
     }
   };
 
@@ -374,6 +414,7 @@ export default function SuggestionsList({
             <div className="flex gap-2 text-sm">
               <button
                 onClick={handleSelectAll}
+                disabled={applying}
                 className="text-blue-600 hover:text-blue-800"
               >
                 Select all
@@ -381,6 +422,7 @@ export default function SuggestionsList({
               <span className="text-gray-300">|</span>
               <button
                 onClick={handleDeselectAll}
+                disabled={applying}
                 className="text-blue-600 hover:text-blue-800"
               >
                 Deselect all
@@ -453,6 +495,8 @@ export default function SuggestionsList({
                     isSelected={selectedIds.has(suggestion.id)}
                     onToggle={() => handleToggle(suggestion.id)}
                     onValueChange={(value) => handleValueChange(suggestion.id, value)}
+                    disabled={applying || !!itemOutcomes[suggestion.id] || (local && !suggestion.review)}
+                    outcome={outcomes[itemOutcomes[suggestion.id]] ?? (local && !suggestion.review ? 'Reviewed state unavailable. Analyze again before applying.' : undefined)}
                   />
                 ))}
               </div>
@@ -469,11 +513,13 @@ export default function SuggestionsList({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             onClick={onClose}
+            disabled={applying}
             className="px-4 py-2 text-left text-gray-700 hover:text-gray-900 sm:text-center"
           >
             Try Another Upload
           </button>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            {local && Object.keys(itemOutcomes).length > 0 && <button disabled={applying} className="text-blue-700 underline" onClick={onApplied}>Reload saved preferences</button>}
             <span className="text-sm text-gray-500">
               {selectedIds.size} of {suggestionRows.length} selected
             </span>

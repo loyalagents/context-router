@@ -1,5 +1,6 @@
+import LocalPage from '@/components/local/LocalPage';
 import { redirect } from 'next/navigation';
-import { auth0 } from '@/lib/auth0';
+import { getAuth0 } from '@/lib/auth0';
 import { gql } from '@apollo/client';
 import { getClient } from '@/lib/apollo-client';
 import PreferencesClient from './PreferencesClient';
@@ -124,12 +125,13 @@ interface PreferenceCatalogQuery {
 }
 
 export default async function PreferencesPage() {
-  const session = await auth0.getSession();
+  if (process.env.CONTEXT_ROUTER_WEB_MODE === 'local') return <LocalPage page="preferences" />;
+  const session = await getAuth0().getSession();
   if (!session?.user) redirect('/auth/login');
 
   let accessToken;
   try {
-    const tokenResult = await auth0.getAccessToken();
+    const tokenResult = await getAuth0().getAccessToken();
     accessToken = tokenResult?.token;
   } catch (e) {
     console.error('Failed to get access token:', e);

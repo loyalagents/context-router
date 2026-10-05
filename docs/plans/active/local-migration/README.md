@@ -1,17 +1,20 @@
 # Local-First Migration
 
 - Status: active program index
-- Last completed step: `05-local-database-runtime` — [PR #164](https://github.com/loyalagents/context-router/pull/164), human-merged at `837701b3633eed669dd2c2c518ffebc0e46d55d8` from tested head `91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b`
-- Step 05 final evidence: standard CI [35957573071](https://github.com/loyalagents/context-router/actions/runs/35957573071) and dedicated migration gate [35957573023](https://github.com/loyalagents/context-router/actions/runs/35957573023), both successful on that head; reverified 2026-09-24
-- Current primary implementation step: `06-local-model` — [active plan](06-local-model/plan.md), selection approved; implementation and review fixes complete; CP3 closeout under user-accepted H recovery limitation
-- Coordinator and sole repository writer for Step 06: `/root`; all other agents read-only
-- Concrete next action: finish fresh full-diff reviews and renewed final local/CI gates for [PR #165](https://github.com/loyalagents/context-router/pull/165) under the user-accepted [H recovery limitation](06-local-model/plan.md#amendment-h-user-accepted-manual-cancellation-recovery-limitation); mark ready only after remaining gates pass, never merge automatically
-- Review date: Step 06 diagnostic decision or 2026-10-08, whichever comes first
-- Last reviewed: 2026-09-25
+- Last completed step: `07-local-mcp` — [PR #166](https://github.com/loyalagents/context-router/pull/166); merge/evidence and limitations in its [closeout](07-local-mcp/README.md)
+- Current primary implementation step: `08-local-ui` — implemented; independent reviews and full local gate passed; user-run acceptance complete with accepted evidence limits; awaiting human PR disposition
+- Concrete next action: publish documentation closeout and verify final pushed-head CI on draft PR #167, then await human disposition; do not mark ready or merge
+- Review date: 2026-10-04 — Step 08 final implementation approvals and user-run acceptance disposition
+- Last reviewed: 2026-10-04
 
 Start with [`orchestration.md`](orchestration.md). It defines the target,
 roadmap, branch policy, agent workflow, and merge gates. Cross-step decisions
 live in [`decision-log.md`](decision-log.md).
+
+Step 08's [acceptance disposition](08-local-ui/acceptance.md) records completed
+user-run testing and accepted evidence limits. The small
+[UI usability follow-up](../ui-usability/README.md) is deferred until the packaged
+local workflow is usable; it does not activate Step 09 or block this closeout.
 
 For future Steps 04–11, use [`agent-execution.md`](agent-execution.md) for the
 agreed agent/effort allocations, sensitive-work priorities, checkpoint sketches,
@@ -19,15 +22,18 @@ and overlap candidates. This is execution strategy, not step activation or an
 approved implementation plan. General guidance lives in
 [`AGENT_WORKFLOW.md`](../../../useful/AGENT_WORKFLOW.md).
 
-## Prepare And Execute Step 06
+## Prepare And Execute Step 08
 
-1. Start with the [handoff](step-06-handoff.md) and [research synthesis](research/local-model/README.md). The original GPT/Gemini reports are preserved beside the synthesis with warnings and corrections; they are not approved plans or setup scripts.
-2. Target Apple Silicon first, with manual runtime/model setup now and a managed app later. Native Windows/Linux qualification is an early Step 09 follow-up, not a Step 06 whole-app support promise.
-3. Prefer a bounded pinned `llama.cpp` feasibility candidate; choose the exact runtime/model/capabilities through reviewed evidence, not report benchmarks. Keep one PR with internal feasibility, integration and acceptance checkpoints.
-4. Use Astra Extra High for the orchestrator, role-specific High/Extra High work, one sole writer and fresh independent review. The handoff specifies clean-base activation when these preparation docs are still uncommitted.
-5. Retain the Step 05 [README](05-local-database-runtime/README.md), [plan](05-local-database-runtime/plan.md) and feasibility evidence, plus the Step 04 [plan](04-storage-boundaries/plan.md) and Step 03 [recovery/R1 plan](03-local-identity/plan.md) while required. Preserve identity, storage and supported reference modes.
+1. Read the [handoff](step-08-handoff.md) and accepted LM-021/022 in the decision log. Reuse the existing dashboard; no redesign or installer.
+2. Use Astra Extra High for the coordinator/sole writer, role-specific High/Extra High read-only investigation and fresh independent review. One cohesive PR with internal checkpoints is the default.
+3. Add a safe local browser session, useful non-AI and capability-gated AI flows, basic per-instance MCP management and simple history semantics. UI and MCP share local state and the single inference owner, not credentials.
+4. Keep full credential onboarding in the [deferred product follow-up](../mcp-onboarding/README.md). Future UI is additive to CLI; it does not block Step 09.
+5. Retain required Step 03–07 plans/evidence and current runbooks. Preserve local data, identity, MCP clients, Step 06 E/H limitations and supported modes. The handoff handles clean-base validation without losing uncommitted preparation docs or creating a development worktree.
 
-Step 06 is now the sole active step after its clean-base gate. Plan C has independent approval for bounded feasibility. Required asset/target decisions precede live execution; affected selection review precedes product implementation.
+Step 08 passed clean-base activation and restored the preparation documents;
+see its [activation evidence](08-local-ui/activation.md). Its P2 technical plan
+has all four independent approvals recorded in the review ledger. Carry preparation docs into the same PR. Historical Step 06 research and its
+handoff remain context, not new experiment authority.
 
 Only activated steps have detailed directories. Create later step directories
 from the template when they are activated; an explicitly approved overlap may

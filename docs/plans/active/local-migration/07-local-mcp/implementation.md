@@ -1,6 +1,6 @@
 # Step 07 Implementation Evidence
 
-- Status: implementation checkpoints exercised; final complete-diff reviews, full candidate gate and exact-head CI are required before manual handoff
+- Status: retained chronological evidence; Step 07 merged — final candidate/CI and acceptance limits in the [closeout](README.md). Pending/draft statements below describe earlier checkpoints, not current instructions.
 - Branch: `codex/local-migration-07-local-mcp`, existing checkout only
 - Base: `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`
 - Sole writer: `/root`; independent agents read-only, explicit requested Astra Extra High for architecture/authority/lifecycle and High for compatibility/tests. Launch settings were accepted; underlying serving settings and the coordinator's model/effort are not independently exposed.

@@ -12,7 +12,7 @@ permissions:
 jobs:
   local-migration-baseline:
     runs-on: ubuntu-latest
-    timeout-minutes: 165
+    timeout-minutes: 185
 
     services:
       postgres:
@@ -61,10 +61,17 @@ jobs:
         timeout-minutes: 15
         run: pnpm install --frozen-lockfile
 
+      - name: Install pinned Chromium prerequisite
+        timeout-minutes: 10
+        run: pnpm --filter web exec playwright install --with-deps chromium
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+
       - name: Run the Local Migration Baseline Gate
-        timeout-minutes: 108
+        timeout-minutes: 118
         run: pnpm migration:gate
         env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
           MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           MIGRATION_TEST_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
           MIGRATION_GATE_PYTHON_BIN: python3

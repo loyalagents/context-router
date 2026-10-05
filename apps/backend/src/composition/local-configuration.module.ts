@@ -6,15 +6,23 @@ import { createFormFillConfiguration } from "../config/form-fill.config";
 
 type LocalApplicationConfiguration = Record<string, unknown>;
 
-const LOCAL_DOCUMENT_UPLOAD_CONFIGURATION = createDocumentUploadConfiguration(
-  Object.create(null),
-);
+const LOCAL_DOCUMENT_UPLOAD_CONFIGURATION = {
+  ...createDocumentUploadConfiguration(Object.create(null)),
+  multipartLimits: Object.freeze({
+    files: 1, fields: 0, parts: 2, fieldNameSize: 100, fieldSize: 64 * 1024,
+  }),
+};
 Object.freeze(LOCAL_DOCUMENT_UPLOAD_CONFIGURATION.allowedMimeTypes);
 Object.freeze(LOCAL_DOCUMENT_UPLOAD_CONFIGURATION);
 
-const LOCAL_FORM_FILL_CONFIGURATION = createFormFillConfiguration(
-  Object.create(null),
-);
+const LOCAL_FORM_FILL_CONFIGURATION = {
+  ...createFormFillConfiguration(Object.create(null)),
+  multipartLimits: Object.freeze({
+    // Busboy counts the final boundary toward partsLimit; files/fields enforce
+    // the two admitted parts (file plus optional fieldPolicies).
+    files: 1, fields: 1, parts: 3, fieldNameSize: 100, fieldSize: 64 * 1024,
+  }),
+};
 Object.freeze(LOCAL_FORM_FILL_CONFIGURATION.allowedMimeTypes);
 Object.freeze(LOCAL_FORM_FILL_CONFIGURATION);
 

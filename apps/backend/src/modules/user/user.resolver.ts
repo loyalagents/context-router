@@ -9,7 +9,7 @@ import { CurrentUser } from '@common/decorators/current-user.decorator';
 export class UserResolver {
   constructor(private readonly userService: UserService) {}
 
-  @Query(() => User, { name: 'user', description: 'Get a user by ID' })
+  @Query(() => User, { name: 'user', description: 'Get a user by ID', deprecationReason: 'Use me for the authenticated account. Retained during the LM-008 compatibility window.' })
   @UseGuards(GqlAuthGuard)
   async findOne(
     @Args('id', { type: () => ID }) id: string,

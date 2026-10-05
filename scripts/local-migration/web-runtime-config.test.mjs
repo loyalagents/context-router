@@ -16,6 +16,7 @@ const graphqlConsumers = [
   "apps/web/lib/apollo-wrapper.tsx",
   "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
   "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+  "apps/web/app/dashboard/history/HistoryTabs.tsx",
   "apps/web/app/dashboard/profile/ProfileForm.tsx",
   "apps/web/app/dashboard/schema/SchemaClient.tsx",
   "apps/web/app/dashboard/permissions/PermissionsClient.tsx",
@@ -31,7 +32,8 @@ const backendConsumers = [
   "apps/web/app/dashboard/form-fill/FormFillClient.tsx",
   "apps/web/app/dashboard/preferences/components/DocumentUpload.tsx",
 ];
-const allConsumers = [...graphqlConsumers, ...backendConsumers];
+const adapterConsumers = ["apps/web/lib/authenticated-fetch.ts"];
+const allConsumers = [...graphqlConsumers, ...backendConsumers, ...adapterConsumers];
 
 function read(relativePath) {
   return readFileSync(path.join(repositoryRoot, relativePath), "utf8");
@@ -76,10 +78,10 @@ test("one build-time module owns literal public backend endpoint reads and defau
 });
 
 test("the exact approved consumer set imports the centralized endpoints", () => {
-  assert.equal(allConsumers.length, 16);
+  assert.equal(allConsumers.length, 18);
   const importers = sourceFiles(webRoot)
     .filter((file) =>
-      /from ['"]@\/lib\/runtime-config['"]/.test(readFileSync(file, "utf8")),
+      /from ['"](?:@\/lib\/|\.\/)runtime-config['"]/.test(readFileSync(file, "utf8")),
     )
     .map((file) => path.relative(repositoryRoot, file))
     .sort();
@@ -89,6 +91,10 @@ test("the exact approved consumer set imports the centralized endpoints", () => 
     assert.match(source, /from ['"]@\/lib\/runtime-config['"]/);
     assert.match(source, /GRAPHQL_URL/);
     assert.doesNotMatch(source, /NEXT_PUBLIC_|BACKEND_URL/);
+  }
+  for (const consumer of adapterConsumers) {
+    assert.match(read(consumer), /GRAPHQL_URL/); assert.match(read(consumer), /BACKEND_URL/);
+    assert.doesNotMatch(read(consumer), /NEXT_PUBLIC_/);
   }
   for (const consumer of backendConsumers) {
     const source = read(consumer);
@@ -129,13 +135,16 @@ test("the contract registry records centralized endpoint ownership", () => {
     outbound.sources.map((source) => [source.path, source.fingerprints]),
   );
 
-  assert.deepEqual([...sources.keys()].sort(), [...allConsumers].sort());
+  // HistoryTabs sends only its local clear request through the central adapter;
+  // the new adapter/transport are the corresponding registered outbound sinks.
+  const outboundConsumers = [...allConsumers.filter((file) => !file.endsWith('/HistoryTabs.tsx')), 'apps/web/lib/local-transport.ts'];
+  assert.deepEqual([...sources.keys()].sort(), outboundConsumers.sort());
   assert.equal(sources.has(runtimeConfigPath), false);
 
   const movedGraphqlReferences = registry.contractReferences.filter(
     (reference) =>
       reference.reference === "/graphql" &&
-      allConsumers.includes(reference.path),
+      [...graphqlConsumers, ...backendConsumers].includes(reference.path),
   );
   assert.deepEqual(movedGraphqlReferences, []);
   assert.ok(

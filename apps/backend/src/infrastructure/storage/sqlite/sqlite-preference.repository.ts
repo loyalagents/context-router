@@ -1,6 +1,8 @@
 import type {
   PreferenceRepository,
   EnrichedPreference,
+  ReviewedPreferenceTarget,
+  ReviewedPreferenceState,
 } from "../../../modules/preferences/preference/preference.repository";
 import type {
   PreferenceProvenanceOptions,
@@ -22,6 +24,7 @@ import {
   timestamped,
 } from "./sqlite-records";
 import { unavailable } from "./sqlite-files";
+import { preferenceRevision } from '../../../modules/preferences/preference/preference-revision';
 const joined =
   "SELECT p.*,d.slug AS definition_slug,d.description AS definition_description FROM user_preferences p JOIN preference_definitions d ON d.id=p.definition_id";
 const context = (locationId?: string | null) =>
@@ -56,6 +59,23 @@ export class SqlitePreferenceRepository
   extends SqliteAccess
   implements PreferenceRepository
 {
+  findActiveExact(target: ReviewedPreferenceTarget): Promise<EnrichedPreference | null> {
+    return this.call((c) => enrich(c.get(joined + " WHERE p.user_id=? AND p.definition_id=? AND p.context_key=? AND p.status='ACTIVE'", [target.userId, target.definitionId, context(target.locationId)])));
+  }
+  compareAndSetActive(target: ReviewedPreferenceTarget, expected: ReviewedPreferenceState | null, value: unknown,
+    provenance: PreferenceProvenanceOptions, attribution: PreferenceMutationAttribution): Promise<PreferenceWriteResult<EnrichedPreference> | null> {
+    return this.mutate((c) => {
+      const beforeState = enrich(c.get(joined + " WHERE p.user_id=? AND p.definition_id=? AND p.context_key=? AND p.status='ACTIVE'", [target.userId, target.definitionId, context(target.locationId)]));
+      if (expected ? !beforeState || beforeState.id !== expected.id || preferenceRevision(beforeState) !== expected.revision : beforeState !== null) return null;
+      const values = { value: json(value), source_type: provenance.sourceType, confidence: provenance.confidence ?? null,
+        evidence: optionalJson(provenance.evidence), last_actor_type: attribution.actorType,
+        last_actor_client_key: attribution.actorClientKey ?? null, last_origin: attribution.origin };
+      const result = expected
+        ? update<Preference>(c, 'user_preferences', 'id', expected.id, values)
+        : insert<Preference>(c, 'user_preferences', timestamped({ user_id: target.userId, definition_id: target.definitionId, location_id: target.locationId, context_key: context(target.locationId), status: 'ACTIVE', ...values }));
+      return { beforeState, result: find(c, result.id)! };
+    });
+  }
   upsertActive(
     userId: string,
     definitionId: string,

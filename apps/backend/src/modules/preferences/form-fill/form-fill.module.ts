@@ -15,6 +15,7 @@ import { PdfFieldFillerService } from './pdf-field-filler.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         limits: {
+          ...configService.get<Record<string, number>>('formFill.multipartLimits'),
           fileSize: configService.getOrThrow<number>(
             'formFill.maxFileSizeBytes',
           ),

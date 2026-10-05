@@ -1,13 +1,13 @@
 # Interface Evolution Track
 
-- Status: active policy — Step 01 baseline and aggregate gate established; Step 07 applies LM-008 under its reviewed plan
+- Status: active policy — Step 07 merged; Step 08 implements LM-008; exact HTTP transition independently reviewed
 - Outcome owner: local-migration coordinator (`/root`) until an interface-track
   sole writer is assigned
 - Outcome: allow intentional UI and public-interface evolution without leaving
   supported producers, consumers, or external clients on incompatible contracts
-- Concrete next action: review Step 07 local MCP additions and explicit least-privilege scope normalization against captured contracts and all consumers; root remains sole writer
-- Review date: 2026-10-14 or Step 07 PR review, whichever comes first
-- Last reviewed: 2026-09-29
+- Concrete next action: retain the reviewed Step 08 transition and consumer evidence in [the inventory](../08-local-ui/consumers.md); `me`, deprecated `user(id)` and legacy apply remain
+- Review date: 2026-10-04 — fresh implementation and exact transition reviews approved
+- Last reviewed: 2026-10-04
 
 This is a cross-cutting track, not a separate product architecture. It allows UI
 and interface work to proceed alongside the local-runtime migration without

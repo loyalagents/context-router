@@ -1,0 +1,907 @@
+# Step 08 Implementation Evidence
+
+- Status: post-review corrections independently approved; renewed twelve-phase local gate passed; human acceptance pending
+- Sole writer: `/root`; P2 approved in all four mandates before product edits
+- Base: `5e2a67dd785500ba053b2e836c47166e8adeada8`
+- Toolchain: Node 24.21.0, pnpm 10.25.0
+- Last updated: 2026-10-04
+
+## Browser Session Store
+
+Wrote six behavioral tests first; the intended missing-module failure was observed.
+The implementation adds separate random bootstrap/session authorities, exclusive
+private export, one-use exchange/reissue, monotonic expiry, logout/owned-request
+abort, capacity bounds, restart invalidation and disjoint nonsymlink roots. The
+six tests passed after the backend build. A new seventh test reproduced an early
+timer firing that could leave active expiry unarmed; rescheduling against the
+same absolute deadline fixes it without extending the session. All seven now pass.
+A test-only prefix slicing correction removed a random-suffix comparison risk;
+its independent-secret expectation did not change.
+
+Commands: `pnpm --filter backend build` and
+`node --test apps/backend/test/local-ui/sessions.test.mjs` with the pinned Node PATH.
+The backend now exposes `pnpm --filter backend test:local-ui` for this growing suite.
+HTTP composition, actual browser coverage and all later checkpoints remain pending.
+
+## Combined HTTP Composition (Checkpoint 1, Partial)
+
+Three real HTTP tests were written before the new bootstrap and failed because
+it did not exist. The new explicit root registers storage/model once, uses a
+separate browser strategy, reuses extracted MCP features and Nest's own HTTP
+server, and leaves the MCP Origin guard unchanged. Exact routes/Host/Origin,
+separate credential realms, bounded body admission and raw upgrade/CONNECT
+closure are covered. All ten session/HTTP tests now pass (2,632 ms), following a
+clean backend build. A denied keep-alive request initially caused the following
+attack probe to see a reset; explicitly closing denied connections fixed cleanup
+without changing the test expectation. The first sandboxed HTTP run failed during
+startup without retaining the underlying cause; the authorized owned-loopback run
+succeeded after the build fix. The sandbox cause is not independently established.
+
+Actual Next/Chromium, saturation, full lifecycle/model ownership and remaining
+privacy/concurrency evidence are still pending. Passing these ten tests alone
+is not full Checkpoint 1 or browser acceptance.
+
+## Production Browser And Early Security Review
+
+The custom launcher, runtime-selected local page shells, lazy hosted Auth0 construction,
+fixed browser transport and reused profile/preferences/schema/history/form clients
+now build. The first real Chromium production test passed: nonce CSP hydration,
+unlock, synthetic profile save/reload, cookie/localStorage absence, logout, and
+no observed unexpected browser/backend egress. No model or personal client was used.
+Playwright 1.63.0 / Chromium revision 1243 is pinned; installation is an explicit
+test prerequisite. The unused optional `@playwright/test` peer was removed from
+the lockfile; a frozen offline install succeeded without version upgrades.
+
+The original security plan reviewer performed an additional read-only early review
+(Astra/xhigh dispatch retained; internals unobservable). Five findings were accepted:
+post-Multer session admission, separate logout capacity, immediate local locking,
+idle browser expiry, and possible multipart byte loss. New tests reproduced 429
+logout denial and a 400 same-packet upload during delayed auth. The intended parser
+counter preserved multipart bytes, but did not enforce chunked-body limits after
+Express replaced the request prototype; the post-review correction below supersedes
+that earlier counting claim. Controllers revalidate after parsing, and authenticated
+logout has a separate pool. The full local-UI backend suite passed 15/15 (3,722 ms).
+Transport tests passed 4/4; two Chromium tests passed (4,581 ms), including delayed
+logout acknowledgement and eight-hour idle expiry through the browser clock.
+These are targeted evidence, not final review or full checkpoint completion.
+
+## History Work In Progress
+
+New SQLite tests first failed for missing classification/clear contracts. Three
+then passed for archived/event-time and legacy classification, complete non-history
+table preservation, and witnessed second-delete rollback without retry. A fourth
+test reproduced an intervening definition sensitivity update that the old outside-
+transaction snapshot missed; the before snapshot now reads inside the mutation
+transaction. The frozen transaction-facet tests are being updated only for the
+approved new `getDefinitionById` capability. PostgreSQL ordering, broader privacy
+coverage, UI invalidation, reviewed proposal application and full gates remain pending.
+
+## History And Reviewed Apply Checkpoint Progress
+
+SQLite history/UoW/storage contract targets passed 59/59 (6,452 ms). PostgreSQL
+history/UoW targets passed 6/6 (3,251 ms), including a real independent append
+committed between the two history deletes; both new records survived. Owned
+PostgreSQL database/container cleanup completed. Chromium history passed: legacy
+payload masking, explicit reveal, cancelled confirmation, both-stream clear and
+preserved live memory. This does not yet complete restart/upgrade/stale-response
+or full browser acceptance.
+
+Reviewed apply-v2 tests were written first and failed for missing contracts. Seven
+SQLite tests now pass: absence-only CREATE, persisted state/provenance comparison,
+delete/recreate and definition identity, current domain validation, atomic audit
+rollback, uncertain commit acknowledgement without retry, and canonical JSON.
+After adding the approved transaction facets and service wiring, the combined
+SQLite/UoW/document-service run passed 39/39 (4,290 ms). PostgreSQL compilation
+initially rejected the nullable JSON helper for a required JSON value; using
+Prisma JsonNull for that value corrected it. Two controlled real PostgreSQL
+concurrent CREATE/UPDATE tests plus the UoW suite passed 5/5 (2,649 ms). Each race
+produced one APPLIED and one CONFLICT with one committed audit. Both owned runs
+cleaned database/container resources; the failed compile diagnostics remain at
+`/private/tmp/step08-pg-check-LrySfG` for this session only.
+
+Actual local GraphQL v2/legacy compatibility passed: repeated reviewed CREATE
+returns an item conflict, while the retained legacy mutation still upserts. The
+browser review component now sends v2 locally and keeps per-item outcomes visible,
+removes attempted items from selection, and blocks automatic resubmission of an
+uncertain result. Production web build passes; authenticated proposal UI scenarios
+remain pending with the deterministic AI fixture.
+
+## MCP Management Checkpoint Progress
+
+Four tests first failed for missing bounded storage methods. They now pass for
+real per-instance identity, secret-free projections, maximum/generation/revision
+changes, 513-grant overflow with no effective claim, and malformed oversized text.
+HTTP management first failed at its absent route; storage + HTTP targets now pass
+11/11 (3,912 ms). Effective authority uses the existing MCP evaluator through
+narrow read-only snapshot ports. Existing evaluator unit tests pass 30/30.
+Production Chromium passed (2,961 ms): narrowing, remove grant, stale CLI edit,
+and revoking only one of two same-label instances. Further bounded-storage review
+is in progress; this is not final checkpoint acceptance.
+
+Astra High read-only AI inventory (`/root/ai_controls_inventory`) confirmed request
+entrypoints dropping options and identified checkbox policy synthesis and prompt
+serialization pitfalls. Dispatch accepted the requested setting; serving internals
+remain unobservable. No files were edited by that agent.
+
+### AI Controls Checkpoint (In Progress)
+
+Selected structured/text capabilities and upload configuration now determine the
+browser's exact operation/MIME/size policy. Controllers validate actual bytes,
+UTF-8 text and PDF structure before use-case entry, revalidate the browser after
+awaited parsing, and forward immutable request execution controls. The optional
+client deadline can shorten the 180-second bound only. No GraphQL consolidation
+resolver exists in the retained inventory; existing MCP consolidation already
+receives execution controls. This inventory clarification does not add a new API.
+
+Local document uploads require review consent, additional confirmation for
+secret-like filenames/content, release raw files after completion/cancellation,
+and stop a batch on AI failure. Local form fill always sends v2, preserves existing
+nonempty fields, accepts exact named overwrite flags, and keeps reviewable skipped
+outcomes. Useful literal and smart search are now in Preferences. The legacy
+absent/v1 form-fill and legacy apply interfaces remain compatible.
+
+Tests-first evidence, Node 24.21.0 / pnpm 10.25.0:
+
+- Local AI policy/controller/request tests: 15/15 (2,695 ms).
+- Actual PDF v2 preservation/overwrite plus retained extractor/prompt/validator:
+  40/40 (2,277 ms), covering text, checkbox, radio, dropdown and option list.
+- Safe failure categories and final analysis/form-fill publication checks: 33/33
+  (2,430 ms). New cancellation/deadline-after-review cases failed before the fix.
+- Deterministic real-adapter UI/MCP shared admission, successful controls,
+  concurrent busy, non-AI access, logout cancellation and settlement/latch:
+  1/1 (6,366 ms). A test recorder initially captured the subsequent MCP options;
+  fixing that recorder established the separate request signals.
+- Authenticated production Chromium AI controls: 3/3 (7,884 ms): no-model gating
+  with literal search; consent, real inference and mixed applied/conflict proposals;
+  real PDF default preservation and exact explicit overwrite. No hosted egress,
+  page errors or CSP violations observed in these cases.
+- Test harness socket guard: new normalized-argument negative control failed
+  before the fix and now passes (1/1). This is harness evidence, not a product
+  network sandbox claim.
+
+An affected read-only security review is in progress; complete independent
+implementation reviews, final migration gate and CI remain pending. Deterministic
+fixtures do not alter the existing Step 06 E omission or H inconclusive native
+cancellation evidence. No live model or personal client configuration was used.
+
+### Additional Persistence and Browser Evidence
+
+- Positive owned-location CREATE/UPDATE, same-slug personal/global isolation, and
+  expiration of every newly exposed UoW facet: SQLite 29/29 (3,514 ms).
+- Cross-principal history isolation, legacy UNKNOWN sensitivity through v1-to-v2
+  upgrade/reopen/matching backup restore, and existing backup protections: SQLite
+  history plus backup suites 28/28 (18,861 ms). Clear affects the live pair only;
+  restoring an older explicit backup retains its old history and authority.
+- Actual PostgreSQL serialization rollback after a concurrent update of the second
+  history stream, concurrent reviewed writers, and expired facets: 9/9 (3,524 ms).
+  Owned database/container cleanup confirmed. No retry or success receipt on the
+  rolled-back clear; independent concurrent changes remain.
+- Chromium stale history across two windows, including a delayed pre-clear audit
+  response and previously loaded hidden access tab: 1/1 (2,966 ms). Both UI streams
+  stay empty after confirmed clear while live memory survives.
+- Chromium held cancelled File read plus replacement batch and batch deadline:
+  passed (8,418 ms), with affected independent security approval recorded.
+- Repeated profile save then deletion of an optional newly created value reproduced
+  a stale-ID bug; the form now tracks each acknowledged row. Browser regression
+  passed (3,343 ms).
+- `me`/deprecated self-only `user(id)` local GraphQL compatibility: 1/1 (1,039 ms).
+  New deprecation assertion failed first, then passed after the additive change.
+- Schema regenerated from the canonical backend producer; GraphQL root validation
+  now pins exact field identities, not just a count. Contract-checker tests 52/52.
+  Standalone contract inventory currently passes with `baseComparison=skipped`;
+  it is not the required final exact-base compatibility gate.
+
+Contract inventory is in [consumers.md](consumers.md). Final gate/CI wiring,
+relocated browser packaging, complete independent reviews and human acceptance
+remain pending. Step 08 is still in progress.
+
+
+### Browser, Packaging And CI Checkpoint
+
+The production browser suite now passes 18/18 (31,938 ms), including actual
+no-model personal-definition create/edit/export/archive and manual preference
+create/update/delete. Missing form control labels were reproduced first and
+corrected without redesign. Backend local-UI tests pass 27/27 (13,349 ms). The
+latest web build completed without new lint warnings. The unrelated ESLint peer
+snapshot churn was removed; frozen offline pnpm installation passes.
+
+The shared source/relocated MCP harness has an explicit optional UI hook, retaining
+MCP behavior by default. Source UI two-generation evidence passed at
+`/private/tmp/step08-ui-smoke-PETMrc`; relocated production evidence passed at
+`/private/tmp/step08-ui-smoke-juzA4c` after strict closure and WebSocket-control
+updates. Those session-local journals are not durable acceptance artifacts. Both
+runs used Playwright 1.63.0 / Chromium 153.0.8010.12, actual production Next/Nest,
+private SQLite state and deterministic TLS inference. No live inference or
+personal client files were used.
+
+An independently requested architecture consultation (same prior reviewer, xhigh,
+read-only, not final approval) identified browser cleanup propagation and the scope
+of browser egress claims. Chromium now stays in a gated Node process group; CDP
+close is bounded and followed by explicit reap/group absence. A failed browser
+cleanup retains its profile/root through the common runner, with an injected
+regression. Browser evidence is precisely page HTTP/WebSocket confinement, not
+OS-wide no-egress. The exact app policy retains worker controls and admits two
+UI-mode listeners only. Root remains sole writer.
+
+The gate now has six explicit modes and requires browser tests in the web build
+phase plus distinct authenticated browser lifecycle receipts in source and sealed
+packaging smokes. Production web deploy is an additional exact offline materializer
+with an explicit files allowlist; hosted standalone remains covered. Standard CI
+selects frontend for backend changes and backend for launcher changes. CI installs
+the pinned browser as a prerequisite, never from inside the gate. Dedicated step
+budgets grow from 153 to 163 minutes and job bound from 165 to 175, preserving the
+existing twelve-minute overhead and unchanged internal/gate-step limits. This
+additive prerequisite is subject to final independent review.
+
+Focused gate/environment/lifecycle/CI/runtime-config tests pass 108/108 (4,850 ms).
+Packaging harness tests pass 43/43 (793 ms); the initial sandbox-only EPERM was
+rerun with owned loopback permission. Existing MCP helper tests pass 7/7.
+Canonical inventory now has 57 GraphQL consumers, 136 public references and
+58 classified sinks; 15 queries / 17 mutations. Its exact HTTP transition binds
+five strict response-domain additions and 113 affected consumer identities, with
+independent approval still pending. Final complete-diff reviews, the final exact-
+base aggregate gate, draft PR and final pushed-head CI remain pending.
+
+### Fresh Final Review Corrections
+
+See the R1/R2 section in [reviews.md](reviews.md) for independent findings,
+reproductions and targeted corrections. The first actual sealed packaging attempt
+failed safely before sealing on a source-hardlinked backend file in the new web
+production closure; its owned resources were removed and diagnostics retained.
+A copy-before-seal correction and explicit local-ui payload sealing preserve
+source/store integrity. Final sealed end-to-end and full aggregate evidence will
+be recorded after the corrected candidate completes those checks.
+
+The exact HTTP compatibility transition is now independently reviewed, with all
+five strict response additions and all 113 old/new consumer bindings verified.
+Final code approval, gate, PR/CI and human acceptance are still separate gates.
+
+R2 targeted results before affected reapproval: backend resolver/admission 21/21;
+real PDF suites 10/10; real local GraphQL HTTP cases 13/13 across the combined run
+and corrected deadline assertion; complete dashboard suite 21/21 (41,835 ms);
+phase-one contract/gate harness 300/300 (29,912 ms), including all 44 packaging
+harness tests. Production backend and web builds passed. The standalone baseline
+checker passed with base comparison skipped; the exact HTTP transition function
+returned no errors, but neither substitutes for the forthcoming full gate's
+performed base comparison. Markdown links and diff checks are rerun at closeout.
+
+## Final Local Validation And Draft Handoff
+
+Earlier checkpoint entries above are chronological evidence, including failed
+attempts and then-pending gates. This section records the current result.
+
+R5 was the first final product/test candidate: [candidate-r5.json](candidate-r5.json),
+178 bound paths, aggregate
+`2a48f8c76f70d75d1e5b247a37858af5ffc2ff9f773a7363fe7188268792f81b`.
+The compatibility reviewer independently approved its two schema-test pin updates;
+all unaffected R4 architecture/security/persistence approvals carry forward.
+The frozen P2 plan is unchanged.
+
+The full final command was:
+
+```sh
+PATH=/Users/lucasnovak/.nvm/versions/node/v24.21.0/bin:$PATH \
+MIGRATION_GATE_PYTHON_BIN=/Users/lucasnovak/.pyenv/versions/3.12.8/bin/python \
+MIGRATION_GATE_BASE_SHA=5e2a67dd785500ba053b2e836c47166e8adeada8 \
+RUNNER_TEMP=/private/tmp/step08-final-gate-f3f1o5c7 \
+MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-f3f1o5c7/local-migration-gate-summary.json \
+pnpm migration:gate
+```
+
+Result: **PASS, exit 0, 12/12 phases**. The committed sanitized
+[R5 receipt](https://github.com/loyalagents/context-router/blob/ac5de4cef4266e92be94428959b8640c1cad925d/docs/plans/active/local-migration/08-local-ui/final-gate-summary.json) records 1,123,577 ms; the terminal reports
+1,123,936 ms including final return work. Base comparison was **performed** against
+`5e2a67dd785500ba053b2e836c47166e8adeada8`; caller integrity is true, cleanup errors
+are empty, the owned database was removed and owned administration cleaned.
+Versions: Node 24.21.0, pnpm 10.25.0, Python 3.12.8, PostgreSQL 15.19,
+Chromium 153.0.8010.12 and Playwright 1.63.0. Source was the uncommitted R5 snapshot,
+with copied-input digest
+`98c6f04b208d21749d738dcfcb9e1676c43614294a7c678c09c947759de1e896`.
+Only closeout documentation and this receipt are added after that run; product,
+test and gate code are unchanged. Final-head CI validates the pushed commit.
+
+| Phase | Result | Elapsed ms |
+| --- | --- | --- |
+| Contract baseline | passed | 27341 |
+| Documentation | passed | 1328 |
+| Backend unit/build | passed | 120947 |
+| Backend database | passed | 221001 |
+| Local orchestrator | passed | 6376 |
+| Eval fixtures | passed | 41325 |
+| Deterministic scenarios | passed | 7541 |
+| Web production/browser | passed | 73777 |
+| Harbor static | passed | 2291 |
+| Source restart smoke | passed | 82198 |
+| Sealed relocated composition | passed | 506587 |
+| Repository integrity | passed | 1822 |
+
+Source and sealed payload runs each verified two authenticated browser
+generations, separate authority, shared UI/MCP state/model admission, history
+clear, restart invalidation, revocation and bounded owned cleanup. They use
+synthetic deterministic inference. This is not live-model qualification, general
+OS egress isolation, installer proof or personal-client interoperability proof.
+
+The single PR stays **draft**. Its checks and PR closeout record the exact final
+pushed SHA and both standard CI and dedicated migration results. Required
+[human acceptance](acceptance.md) stays **PENDING**, including isolated Claude
+Code/Codex interoperability and any qualified live-model checks. Steps 09–11 and
+future full MCP onboarding remain inactive. Existing E/H, plain-HTTP origin trust,
+legacy history/backups and AcroForm parser limits remain as documented.
+
+### Linux CI Startup Correction
+
+Draft [PR #167](https://github.com/loyalagents/context-router/pull/167) initially
+pushed `ac5de4cef4266e92be94428959b8640c1cad925d`.
+[Standard CI](https://github.com/loyalagents/context-router/actions/runs/37190493733)
+passed. The [dedicated gate](https://github.com/loyalagents/context-router/actions/runs/37190493739)
+passed its first ten phases, including source Chromium, then failed sealed
+composition with `Browser driver failed`. The R5 macOS gate remains valid
+historical evidence, but did not establish Linux sealed startup.
+
+An owned disposable Ubuntu 24.04 arm64 container reproduced the failure with the
+exact pinned Chrome for Testing 153.0.8010.12. The original sealed TMPDIR was
+63 bytes; Chromium's resulting `SingletonSocket` path was 108 bytes and aborted
+with `Socket path too long`. The source TMPDIR and corrected sealed TMPDIR were
+53 bytes, their actual socket paths 98 bytes, and both reached DevTools readiness.
+This matches Chromium's [platform-specific socket bounds](https://chromium.googlesource.com/chromium/src.git/+/refs/tags/146.0.7680.21/chrome/browser/process_singleton_posix.cc).
+The exact binary reproduction, rather than the older source tag alone, establishes
+the observed behavior. Local evidence: `/private/tmp/step08-linux-chromium-proof/result.log`.
+The reproduction container and its browser groups were removed afterward.
+
+The correction shortens only packaging's owned UI temporary child to `runtime/ui`.
+No root ownership, journal, parent-retention or product behavior changes. Browser
+startup now emits only fixed spawn/socket-path/exit/signal/deadline categories,
+with a bounded transient stderr tail and no raw diagnostic forwarding. It notices
+signal termination directly and validates the port before accepting readiness.
+New fake-browser failure cases check fixed output, high-volume private canaries,
+split socket diagnostics, spawn/exit/signal/deadline failures and owned-group reap.
+The diagnostic test failed before the fix and passes afterward. The three affected
+UI/packaging/gate-phase harness suites pass 102/102 in 10,975 ms; Markdown links
+(168 files) and diff whitespace pass. An initial sandboxed suite invocation was
+blocked by loopback `EPERM`; the authorized owned-loopback run passed. Affected review,
+a renewed full local gate and both workflows on the replacement pushed head are
+required; manual acceptance remains pending.
+
+
+### R6 Final Local Validation
+
+R6 was the second final code/test candidate: [candidate-r6.json](candidate-r6.json),
+179 bound paths, aggregate
+`bad1e63bdafeacda4540a7f299db70c5fa71bf78f308f925fc6502d6804abc71`.
+Architecture, security/recovery and compatibility independently verified this
+manifest and approved the affected correction, carrying forward unchanged
+complete-diff coverage. Application persistence contracts remain unchanged.
+A post-gate comparison found no drift in any bound path, mode or content.
+
+The renewed full command used the same pinned toolchain and exact base above,
+with `RUNNER_TEMP=/private/tmp/step08-final-gate-r6-_0354mbu` and
+`MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r6-_0354mbu/local-migration-gate-summary.json`.
+Result: **PASS, exit 0, 12/12 phases**. The
+[R6 receipt](https://github.com/loyalagents/context-router/blob/fa1f649fc9adbb7b9ed59836727d50db4e9ef383/docs/plans/active/local-migration/08-local-ui/final-gate-summary.json) records 1,139,223 ms; the terminal
+reports 1,139,551 ms including final return. Base comparison was performed;
+caller integrity is true; cleanup errors are empty; the owned database was
+removed and administration cleaned. Source was the R6 uncommitted snapshot over
+`ac5de4cef4266e92be94428959b8640c1cad925d`, with copied-input digest
+`d042f1994a4a742ce97a1cc9d1d05c3f902828ab58e94b59e0e48bf6d7d14508`.
+All versions match R5. Sealed composition passed in 515,930 ms, including both
+actual authenticated browser generations and confirmed group reaping.
+
+Only closeout documentation/review evidence and the sanitized receipt change
+following this frozen run. Replacement pushed-head standard and dedicated CI
+results are recorded in PR #167; human acceptance remains **PENDING** and the PR
+remains draft. The earlier failed Linux run and passing R5 local run are retained
+as historical evidence, not substituted for replacement-head validation.
+
+### Issued MCP Client ID Parsing Correction
+
+R6 pushed head `fa1f649fc9adbb7b9ed59836727d50db4e9ef383` passed the new browser
+harness phase in [dedicated CI](https://github.com/loyalagents/context-router/actions/runs/37193707041),
+then failed phase 3 in the preexisting compiled MCP administration test at
+`permissions --id <issued-id>`. The only variable command argument is the
+randomly issued ID. Node 24's strict parser rejects a separate string value
+beginning with `-`, while issued 16-byte base64url IDs legitimately permit that
+prefix. This was a real CLI usability defect, not a reason to retry the random
+fixture until it passed. The run did not reach sealed Linux validation.
+
+A new deterministic compiled-process regression supplies test-only randomness
+for the 16-byte ID during isolated provisioning, retaining normal 32-byte token
+randomness. IDs beginning with `-` and `--` reproduce the same exit 2 and fixed
+invalid-command error before the fix. The correction normalizes only exact
+`--id` followed by the existing valid 22-character leading-hyphen ID shape into
+Node's `--id=value` form. Strict parsing, per-command allowlists, ID generation,
+stored state and authority checks are unchanged; existing IDs remain usable.
+
+The regression now passes permissions, grant, rotation and revocation for both
+prefixes, existing equals syntax, and rejection of missing/malformed values,
+unknown/disallowed options and misplaced terminators. Existing tests and their
+requirements are unchanged. Backend build passed; the focused regression passes
+in 2,475 ms and the full local MCP suite passes **57/57**, 36,292 ms. Affected
+independent security/compatibility reapproval and renewed full local/final-head
+CI validation are required. Human acceptance remains pending.
+
+
+### R7 Final Local Validation
+
+R7 was the third final code/test candidate: [candidate-r7.json](candidate-r7.json),
+182 bound paths, aggregate
+`7ce78944372cfe56fd8d3c4a475d2285ff6ea060e37edffaf1b4cfe7c4151eb4`.
+Security and compatibility independently verified and approved the narrow CLI
+correction; all unaffected complete-review coverage carries forward. Post-gate
+verification found no drift in any bound path, mode or content.
+
+The renewed command used the same pinned toolchain and exact Step 07 base, with
+`RUNNER_TEMP=/private/tmp/step08-final-gate-r7-pe00fgz4` and
+`MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r7-pe00fgz4/local-migration-gate-summary.json`.
+Result: **PASS, exit 0, 12/12 phases**, receipt elapsed 1,141,289 ms (terminal
+1,141,533 ms including final return). The
+[R7 receipt](https://github.com/loyalagents/context-router/blob/e9540a5810fb6f02b6a1dacbb16284200434ca32/docs/plans/active/local-migration/08-local-ui/final-gate-summary.json) records performed base comparison,
+caller integrity true, no cleanup errors, removed owned database and clean owned
+administration. Source was the R7 uncommitted snapshot over
+`fa1f649fc9adbb7b9ed59836727d50db4e9ef383`, copied-input digest
+`d871903d1a00a1b9c1a9307ce82afe2fdfeb918723355bf21f5e27650cb6805a`.
+All pinned local versions match R6. Sealed composition passed in 512,881 ms,
+including both authenticated browser generations and confirmed process-group reap.
+
+The preceding [R6 standard CI](https://github.com/loyalagents/context-router/actions/runs/37193706996)
+passed all jobs; its dedicated failure remains separately recorded above. R7
+replacement-head standard and dedicated results belong in the PR's final CI
+closeout and do not inherit that earlier standard result. Only documentation,
+review evidence and the sanitized receipt change after this frozen local run.
+Required synthetic human acceptance remains **PENDING** and PR #167 stays draft.
+
+### Linux Browser State Ownership Correction
+
+R7 head `e9540a5810fb6f02b6a1dacbb16284200434ca32` passed all
+[standard CI jobs](https://github.com/loyalagents/context-router/actions/runs/37195435035).
+Its [dedicated workflow](https://github.com/loyalagents/context-router/actions/runs/37195435017)
+passed the first ten phases, including source Chromium, then failed the final
+sealed-runtime private-tree assertion after browser smoke: Chromium left
+`local-ui-home/.cache` with mode `0755`. That result is a failure, not final Linux
+acceptance. The strict private-tree assertion remains unchanged.
+
+An owned Ubuntu 24.04 arm64 container running the pinned Chromium 153.0.8010.12
+as a non-root user reproduced `0755` fontconfig caches, additional HOME state,
+and a Unix socket left after confirmed process-group exit. A preliminary root
+probe did not create that cache; the initial non-root probe exposed the additional
+socket residue. Final comparison evidence is
+`/private/tmp/step08-linux-home-proof/result.log`: the original shared HOME/TMP
+leaves non-private entries; profile HOME plus an exclusively owned temporary child
+leaves the application HOME empty and no non-private entries after reaping/removal.
+The corrected sealed TMPDIR is 55 bytes and its observed socket path 100 bytes;
+both browser launches reached readiness. The disposable container was removed.
+
+R8 sets browser HOME to the existing private profile and browser TMPDIR to a fresh
+`0700` generation child (`1` or `2`) under the existing short temporary parent.
+Product HOME/TMPDIR are unchanged. The existing browser journal record binds the
+exact temporary path before gated process release. Non-recursive creation rejects
+collisions; cleanup never adopts a preexisting child. Confirmed group absence
+precedes removal, and only successful removal can produce the new strict
+`temporaryDirectoryRemoved` evidence. Failed reaping, removal or journaling
+latches recovery retention through the existing inner and ancestor guards.
+Profile caches follow the existing private-state cleanup boundary.
+
+Two new regressions failed before their fixes. The actual browser-wrapper launch
+checks HOME/cache placement and preserved TMPDIR, while an actual leftover Unix
+socket exercises ordered removal, failed reap/removal, unowned-directory refusal
+and journal-failure retention. Lifecycle fixtures require the exact path shape
+and removal proof. The UI, packaging and gate-phase harness suites pass **104/104**
+in 11,305 ms. P2, product behavior, interfaces and application persistence are
+unchanged. Affected independent architecture, security/recovery and compatibility
+approval, a renewed full local gate and both final-head workflows remain required.
+Human acceptance stays pending.
+
+### R8 Final Local Validation
+
+R8 was the fourth final code/test candidate: [candidate-r8.json](candidate-r8.json),
+183 bound paths, aggregate
+`ddfb88945f7cbfe1c46332d1766242fa05a7352de03063131902294d62345937`.
+Architecture, security/recovery and compatibility independently verified and
+approved the affected ownership correction. Unchanged complete-diff application
+persistence and other review coverage carry forward. Post-gate verification found
+no drift in any bound path, mode or content.
+
+The renewed full command used the same pinned toolchain and exact Step 07 base,
+with `RUNNER_TEMP=/private/tmp/step08-final-gate-r8-2fexs29_` and
+`MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r8-2fexs29_/local-migration-gate-summary.json`.
+Result: **PASS, exit 0, 12/12 phases**. The historical
+[sanitized receipt](https://github.com/loyalagents/context-router/blob/1b86b68f0442d3e6dd311770a01761c30358dc15/docs/plans/active/local-migration/08-local-ui/final-gate-summary.json) records 1,064,627 ms (terminal
+1,064,884 ms including final return), performed exact-base comparison, caller
+integrity true, no cleanup errors, removed owned database and clean owned
+administration. Source was the frozen R8 uncommitted snapshot over
+`e9540a5810fb6f02b6a1dacbb16284200434ca32`, copied-input digest
+`82ccfbe91def6456e1fbb6d72bb0e2c73c7926014092667ca9bd93bef3abdb0e`.
+All pinned local versions match R7. Sealed composition passed in 477,811 ms;
+both browser generations recorded authentication, confirmed group exit and
+temporary-directory removal. Generation two also rejected the pre-restart session.
+
+Only closeout documentation/review evidence and the sanitized receipt change
+after the frozen run. Replacement-head standard and dedicated workflow results
+are recorded in PR #167, without substituting earlier runs. Human acceptance
+remains **PENDING**; the PR stays draft and Steps 09–11 remain inactive.
+
+### Expanded Packaging Budget And Bounded Diagnostics
+
+R8 pushed head `1b86b68f0442d3e6dd311770a01761c30358dc15` passed all
+[standard CI jobs](https://github.com/loyalagents/context-router/actions/runs/37199274685).
+The [dedicated workflow](https://github.com/loyalagents/context-router/actions/runs/37199274659)
+passed phases 1–10, then packaging reached its exact effective `899999ms` phase
+timeout. SIGTERM and cleanup followed; the command exited 124. The failed run
+does not identify the last completed internal boundary and is not Linux acceptance.
+The complete log is `/private/tmp/step08-r8-migration-ci.log`.
+
+The independently approved [P3 addendum](plan.md#p3-validation-budget-addendum)
+sets packaging to 25 minutes for Step 08's expanded web payload, repeated sealed
+audits and browser generations. Exact manifest/validator/exported-constant pins,
+global timeline and workflow budgets change atomically. Active phases total 104
+minutes; absolute preflight/cancellation/settlement/cleanup are 3/107/110/113;
+workflow gate is 118 and steps/job are 173/185. Existing three-minute settlement
+and cleanup margins, five-minute hard-stop margin and twelve-minute job overhead
+remain. Phase termination grace, child deadlines and the two-minute packaging
+cleanup signal are unchanged. No retry, skipped assertion or environment override
+was added. This is bounded headroom, not proof of Linux success.
+
+Six changed-requirement budget/deadline regressions failed on the old limits.
+Two new progress/privacy regressions also failed before their implementation.
+They now run within the already-registered packaging test suite. A finite sixteen-
+label reporter emits at most one fixed-label/monotonic-elapsed line per milestone.
+Unknown/duplicate labels, invalid clocks and write errors produce no unsafe output
+or thrown reporting error; cleanup continues. Completion labels follow awaited
+boundaries, including final runtime verification and cleanup. Failure labels carry
+no raw error text. Existing sanitized capture remains; this improves failure tails,
+not live CI streaming or lifecycle receipts.
+
+The full affected gate-runner, gate-phase, packaging and local-UI harness suites
+passed **149/149**, 11,356 ms before independent R9 review found an asynchronous
+reporting failure not covered by the injected synchronous-throw test. Application
+interfaces, persistence and authority are unchanged.
+
+### Closed-Pipe Reporting Correction
+
+Architecture and security independently blocked frozen R9
+([candidate-r9.json](candidate-r9.json), 185 paths, aggregate
+`313a3377e612c1b3e52dbc290752a53269482e0e3ceb1eb7bdcb450226409863`): raw
+`process.stdout.write` can emit asynchronous EPIPE beyond the reporter's catch and
+terminate packaging before cleanup. The in-flight gate was deliberately cancelled
+before editing. Its receipt at
+`/private/tmp/step08-final-gate-r9-silo4wuu/local-migration-gate-summary.json`
+records cancellation after 75,339 ms, contract/documentation passes, interrupted
+backend unit phase, caller integrity true, removed owned database and clean
+administration. `cleanupErrors` retains `received SIGINT`; this is not a passed run.
+
+A new real-process regression closes the child's stdout pipe only after IPC
+readiness. The child then reports before and during asynchronous owned-resource
+cleanup. The original writer failed with exit 1. Repeated writes also defeat Node
+24.21.0 Console's error handling, so the correction uses synchronous descriptor
+writes inside the existing catch. There are still at most sixteen tiny fixed lines,
+with no retries, global stream handlers or raw error output. Closed/unavailable
+descriptors and write errors suppress diagnostics without interrupting cleanup.
+The regression proves exit 0, empty stderr, a completed cleanup marker, removal
+of the owned resource and child absence.
+
+All affected gate-runner, gate-phase, packaging and local-UI harness tests now pass
+**150/150**, 11,238 ms; the new test also passed in isolation. Evidence is retained
+in `/private/tmp/step08-r10-closed-pipe-red.log`,
+`/private/tmp/step08-r10-closed-pipe-green.log` and
+`/private/tmp/step08-r10-targeted.log`. P3 is unchanged. R10 requires affected frozen
+implementation approval, a renewed full local gate and both replacement-head CI
+results. Human acceptance remains pending.
+
+### R10 Source Deadline And R11 Diagnostic Follow-Up
+
+All three affected reviewers approved frozen R10
+([candidate-r10.json](candidate-r10.json), 186 paths, aggregate
+`22388662e6601728cd135308c8f159fbf6900b413c9b567b78abfc4a8f970851`). Its full gate
+passed phases 1–9, then source restart smoke failed with the generic `Local UI
+smoke deadline`. The receipt at
+`/private/tmp/step08-final-gate-r10-0wrphyhg/local-migration-gate-summary.json`
+records 597,601 ms, caller integrity true, no cleanup errors, removed database and
+clean administration. The first UI browser's resource and temporary-directory
+cleanup completed, but its authenticated-success record was not reached. This is
+not a successful gate, and the generic error cannot identify the expired wait.
+
+R11 adds only finite, fixed deadline-stage labels to the existing waits, preserving
+every timeout, operation, assertion and cleanup ordering. A tests-first regression
+covers successful settlement, original rejection, every fixed label and suppression
+of arbitrary string/object input from deadline text. The affected suites pass
+**151/151** in 11,255 ms (`/private/tmp/step08-r11-targeted.log`).
+
+One focused isolated source run with those labels passed both authenticated browser
+generations and strict cleanup in 85,573 ms. Its command log and lifecycle are at
+`/private/var/folders/pn/rnjt7b1d5xb4pckyss2s55qc0000gn/T/context-router-smoke-run-MNW0Yq`.
+The outer command failed evidence finalization because the coordinator supplied
+`summary.json` instead of the required `local-migration-gate-summary.json`; caller
+integrity remained true. This targeted result is not full-gate acceptance. The
+earlier deadline did not reproduce and its cause remains unconfirmed; no timeout
+increase, automatic retry or speculative shutdown change was made. R11 must renew
+affected review and the full gate with the exact receipt path before final-head CI.
+
+### R11 Final Local Validation
+
+R11 was the frozen code/test candidate before external review: [candidate-r11.json](candidate-r11.json),
+187 paths, aggregate
+`03102086f9c363c414cb9ce3200ead2b936f123b47201a370d70aacea58763ea`. Architecture,
+security/recovery and compatibility independently approved its bounded diagnostic
+delta and carried forward R10 and all unchanged complete implementation mandates.
+Post-gate comparison found no drift in any bound path, mode or content.
+
+The full pinned-toolchain command used the exact Step 07 base,
+`RUNNER_TEMP=/private/tmp/step08-final-gate-r11-049rf14g`, and
+`MIGRATION_GATE_CI_SUMMARY_PATH=/private/tmp/step08-final-gate-r11-049rf14g/local-migration-gate-summary.json`.
+Result: **PASS, exit 0, 12/12 phases**. The current
+[R11 sanitized receipt](https://github.com/loyalagents/context-router/blob/84cad4a2ca6a5c4b2f931552d150a2029eb73c5a/docs/plans/active/local-migration/08-local-ui/final-gate-summary.json) records 1,048,139 ms (terminal
+1,048,457 ms), exact-base comparison performed, caller integrity true, no cleanup
+errors, removed owned database and clean administration. Source was the frozen
+uncommitted R11 snapshot over `1b86b68f0442d3e6dd311770a01761c30358dc15`, copied-input
+digest `627f77bd29cb49acdcd29aa0fede03b6fabf9aa31531d5a85cc70e60e9774b13`.
+Pinned local tool versions remain Node 24.21.0, pnpm 10.25.0, Python 3.12.8,
+PostgreSQL 15.19, Playwright 1.63.0 and Chromium 153.0.8010.12.
+
+Source restart passed in 79,178 ms; sealed composition passed in 468,468 ms. Both
+source and sealed lifecycles recorded two authenticated browser generations,
+confirmed group absence and temporary-directory removal. The earlier R10 deadline
+did not recur; its cause remains unconfirmed, and fixed diagnostics remain for any
+recurrence. Only closeout evidence and the sanitized receipt change after this run.
+Replacement-head standard/dedicated CI results belong to PR #167; no prior run is
+substituted. Human acceptance remains **PENDING**, and the PR remains draft.
+
+### Post-Review Corrections (R12)
+
+External review of `84cad4a2ca6a5c4b2f931552d150a2029eb73c5a` identified F1–F3.
+The user authorized fixes. Root remains sole writer on PR #167; no new step,
+public interface, timeout, model qualification or P3 budget is introduced.
+Affected design review approved these bounded checkpoints before their fixes:
+
+1. **F1, body admission:** Express 4 replaces the request prototype, removing the
+   old `push` override. The hook is now an own property installed before Express,
+   preserving actual-byte counting and backpressure for valid chunked requests.
+   Over-limit chunks are discarded and rejection is latched. Content-Length
+   checks remain. Fixed local configuration additionally bounds Multer files,
+   fields, parts, field names and field bytes; hosted configuration is unchanged.
+   Busboy's terminal boundary requires a parts-limit sentinel: analysis permits
+   one file/no fields with `parts=2`; form fill one file/one field with `parts=3`.
+   Both retain the 10 MiB file and 10 MiB + 64 KiB aggregate limits.
+2. **F2, PDF compatibility:** Existing values are read only for policy v2. A failed
+   per-field read becomes explicit internal unknown state, preserved unless a
+   validated explicit overwrite applies. Unknown checkbox occupancy also blocks
+   conflicting group selections. Unwritten unknown fields retain their original
+   appearance state; neither the explicit appearance update nor `save()` rereads
+   them. Absent/v1 keep the legacy extraction and ordinary save behavior. The
+   v2 tests now opt into existing-value extraction explicitly; their expectations
+   are unchanged. No private existing value or unknown marker enters the prompt.
+3. **F3, mutation outcomes:** Passive focus/pageshow/cross-window invalidation
+   discards reads without aborting a submitted grant/revoke or releasing its busy
+   latch. Settlement reports confirmation or uncertainty, broadcasts refresh and
+   reloads the list. Authority remains unavailable for editing until explicit
+   re-inspection. Read errors cannot erase the write outcome. Lock/unmount still
+   abort and suppress late publication; there is no automatic mutation retry.
+4. **Unlock capacity:** Exchange-time 429 explains attempt/session capacity and
+   permits retrying the same unexpired token. A 429 after successful exchange
+   cannot give that advice, because the token has already been consumed. HTTP
+   response shapes remain unchanged; only a typed internal status is added.
+
+Tests were added before backend edits. The original code accepted oversized
+chunked unlock/logout and extra multipart fields; the new full-pipeline rich-text
+tests failed in extraction, and the unknown-checkbox test admitted a conflicting
+CHECK. Four Chromium grant/revoke tests reproduced premature refresh during held
+responses, and the old unlock message failed its browser expectation.
+
+After correction, all **38 HTTP/session tests** pass (26,782 ms), including every
+API body-limit class, use-case exclusion, valid chunked requests, local multipart
+controls and repeated rejection beyond each admission pool's capacity. All
+**94 form-fill/configuration unit tests** pass (2,602 ms). A broader earlier unit
+run passed **922/922** before the final additional no-action rich-text case.
+Logs: `/private/tmp/step08-fixes-http-tests.log`,
+`/private/tmp/step08-fixes-form-tests.log`, `/private/tmp/step08-f2-green.log`.
+All **27 production browser/transport tests** pass (50,875 ms), including real
+committed grant/revoke writes with confirmed or lost responses, passive focus,
+pageshow and peer invalidation, later refresh failure, manual re-inspection and
+no retry. Exchange-time and post-exchange 429 messages have separate tests.
+Browser log: `/private/tmp/step08-fixes-web-tests.log`. Production web/backend
+builds and the contract checker pass (the targeted checker skips base comparison;
+the full gate must perform it). Frozen review, full local gate and replacement-head
+CI are recorded below when complete; previous R11 passes do not validate this
+changed candidate.
+
+The optional sleep-clock hypothesis remains unverified and is not treated as a
+confirmed expiry defect. Capability probes retain shared model admission by
+design; speculative concurrency changes are outside this correction. The egress
+harness retains its documented non-OS-wide limitation. Human acceptance and live
+client/model qualification remain separate and pending.
+
+### R12 Review Gap And R13 Test Correction
+
+Architecture and compatibility approved the R12 implementation. Security found
+one test gap: the oversized form field was whitespace-only invalid JSON, so the
+controller could reject it even without the 64 KiB parser bound. The gate was
+deliberately cancelled before any edit. Its receipt at
+`/private/tmp/step08-final-gate-r12-gW0DyJWi/local-migration-gate-summary.json`
+records cancellation after 223,731 ms, three passing phases, database-phase
+interruption, caller integrity true, removed owned database and clean
+administration. `cleanupErrors` records `received SIGINT`; this is not a pass.
+
+R13 changes that test to valid v2 JSON plus oversized whitespace padding. An
+isolated test-process override that increased only `formFill.multipartLimits`
+`fieldSize` to 1 MiB reproduced HTTP 201 and failed the regression. With the real
+64 KiB limit, the oversized field is rejected before the use case; the smaller
+same-schema control succeeds. Logs are
+`/private/tmp/step08-r13-field-limit-red.log` and
+`/private/tmp/step08-r13-http-green.log`. No production source changed after R12.
+
+Review also found that default Git rename detection omitted the deleted
+`apps/web/next.config.ts` from historical candidate inventories. All three
+reviewers independently verified R12's 192 entries plus this sole deletion
+(193 paths; supplemented aggregate
+`702f8e75b145d50a8da9916ea9204b4d662d0852b44e76cd27b1742805ba04e5`). R12 stays
+immutable; R13 uses rename-independent enumeration and includes the deletion
+directly. No other omitted path was found. This corrects manifest completeness
+claims; it does not change source or the gate's own copied-input evidence.
+
+### R13 Final Local Validation
+
+All three affected specialists approved frozen
+[candidate-r13.json](candidate-r13.json): 194 rename-independent paths, aggregate
+`7dc6c85dec20940243364a7bbdf41965ddb5ba49b5a6530364fbb60f1aac8c55`. The corrected
+multipart proof closes the R12 validation finding. Production source is unchanged
+from R12; unaffected complete review mandates carry forward. Post-gate comparison
+verified every path, mode, hash and deletion with no drift.
+
+The full pinned-toolchain gate passed **12/12**, exit 0, using the exact Step 07
+base and `/private/tmp/step08-final-gate-r13-HrtUGl82`. The current
+[sanitized receipt](final-gate-summary.json) records **1,138,230 ms** (terminal
+1,138,567 ms), exact-base comparison performed, caller integrity true, no cleanup
+errors, removed owned database and clean administration. Source was frozen R13
+over `84cad4a2ca6a5c4b2f931552d150a2029eb73c5a`, dirty true, copied-input digest
+`6879f0e0cc1a5b23cd75a97aeaef60ed9e50e4329a873b26dbccf4de41f723b5`.
+Node 24.21.0, pnpm 10.25.0, Python 3.12.8, PostgreSQL 15.19, Playwright 1.63.0
+and Chromium 153.0.8010.12 match the pinned local validation environment.
+
+Source restart passed in 81,981 ms and sealed packaging in 505,777 ms, including
+both authenticated browser generations and complete lifecycle cleanup. The
+corrected source also passed all gate backend, database, eval, browser and
+integrity phases. Only this evidence ledger, review ledger and sanitized receipt
+change after the frozen run. Final pushed-head standard/dedicated CI is recorded
+on PR #167; human acceptance remains **PENDING**, with no merge or ready action.
+
+### 2026-10-04 User-Run Browser And Native-Client Acceptance
+
+The operator performed the guided synthetic walkthrough against checkout
+`40ef8fd84e8880cbc0539a3260ab24a693b6696a` with the no-model `local-ui serve`
+composition. The checkout was clean before this evidence-only update. The
+coordinator verified macOS 15.1.1 / arm64, Node 24.21.0 and pnpm 10.25.0 during
+setup, and inspected installed Claude Code 2.1.289 / Codex CLI 0.160.0. Browser
+checks used the in-app browser; its exact version was not captured. The operator
+supplied CLI responses, screenshots and confirmations in this chat. These are
+user-run results, not an automated native-client or live-model run.
+
+| Check | Observed result |
+| --- | --- |
+| Startup and browser unlock | Passed. Fresh private identity/database initialization and upgrade succeeded; the no-model dashboard started and fresh unlock files were used. |
+| Initial browser checklist | Passed by explicit operator confirmation: optional profile-field clearing, PERSONAL schema JSON export, literal preference search, unavailable AI-control messaging, and Lock dashboard hiding private content. |
+| Shared browser/client preferences | Passed. Both clients freshly read `detailed`; Claude's `SET_PREFERENCE` returned a successful change to `from-claude` with MCP audit provenance. After a browser edit, both clients freshly read `from-browser`. History screenshots and the operator confirmed the recorded values. |
+| Read-only client discovery | Passed. Codex did not expose `mutatePreferences`, so no mutation request was attempted. This is not a manual server-side mutation-denial result. |
+| Narrowing and restoring reads | Passed. Codex search returned zero preferences with an exact READ/DENY grant, then returned `from-browser` after grant removal. Coordinator inspection confirmed both client instances were still active at that point; removing a grant was distinct from revoking a client. |
+| CLI maximum enforcement | Passed functionally. A WRITE/ALLOW grant for the read-only Codex client was rejected. The operator found the failure feedback inadequate. |
+| Independent client revocation | Passed. After browser revocation of Claude, its fresh call failed authentication and the client disconnected. Codex still successfully read `from-browser`. |
+| History content | Passed by operator inspection and screenshots. Audit values and actors were correct, and MCP Access showed the authenticated calls. Readability issues are recorded below. |
+| Event-time sensitive masking | Passed by operator report. A synthetic sensitive value stayed masked in audit history after its definition was archived, until explicit reveal. |
+| History clear | Passed by operator report. Cancel preserved history; confirmed clear emptied both streams in both tabs while preserving live data and authority. A subsequent Codex read succeeded and created new access history. |
+| Memory-only reset | Passed by operator report. Reset Preferences removed saved preference/profile values while preserving both histories and adding the reset event. Codex's fresh read succeeded with an empty result. A synthetic preference was then recreated for restart. |
+| Restart | Passed by operator report. The operator confirmed the restart checklist and supplied a fresh successful Codex read of `restart-check` using its existing credential after reconnecting. |
+
+The no-model functional checklist passed on the reported scope above. The extra
+control read from Claude while Codex's DENY grant was active was not supplied;
+independent client revocation and continued Codex access were separately verified.
+Optional AI checks were pending at this point; subsequent results are recorded
+below. Final application/client shutdown was not reported. Overall human
+acceptance and merge/ready disposition remain pending; the passing checks above
+stand on their recorded scope.
+
+#### Usability Findings For Follow-Up
+
+The operator raised these findings and explicitly left implementation timing
+undecided. No product changes were made during this acceptance session.
+
+1. Rejected grants need a visible explanation of the client's CLI maximum and
+   why the requested action is outside it, with an appropriate next step.
+2. Audit and MCP Access rows should make the configured client label easy to
+   identify, retaining the instance ID to distinguish clients. Labels are display
+   metadata, not authority or verified product identity.
+3. Preference audit rows need a concise before/after value summary without
+   requiring expansion into full JSON. Sensitive and unknown-sensitivity history
+   must retain its masking and explicit-reveal behavior. Full snapshots and
+   correlation IDs remain useful in expanded diagnostics.
+
+Claude also noted that an explicit MCP SET changed `sourceType` to `INFERRED`.
+The coordinator checked the existing implementation and
+[MCP authorization contract](../../../../current/MCP_AUTHORIZATION.md): MCP active
+writes intentionally use that classification. This observation is not a newly
+introduced behavior or a failed acceptance check.
+
+#### User-Run Qualified AI Checks
+
+The operator subsequently started the qualified llama.cpp b11146 / Qwen3.5-9B
+Q4_K_M assets with a fresh private model session and `local-ui serve-model`,
+preserving the same database and identity roots. Before the user-run launch, the
+coordinator verified the pinned archive/model hashes and extracted runtime files
+against the existing Step 06 assets. The coordinator did not start inference or
+submit model requests. The following evidence comes from operator screenshots,
+confirmations, and downloaded synthetic PDFs inspected by the coordinator.
+
+| Check | Observed result |
+| --- | --- |
+| Model availability and document proposals | Passed on the synthetic Markdown case. The dashboard displayed AI available and proposed first name `Alex`, last name `Example`, full name `Alex Example`, and response style `brief`. |
+| Selective apply and stale saved state | Saved-state protection passed. The operator deselected last name and manually changed response style to `manual-wins` before applying the remaining proposals. The resulting active preferences contained the two selected names with document-analysis provenance and retained `manual-wins` with user provenance; last name was absent. The operator could not confirm whether the apply-results panel displayed `Saved state changed since review`, so conflict-message visibility remains unverified. |
+| Default PDF preservation | Passed. The UI reported one filled and one skipped field, explicitly explaining preservation of the existing first-name value. The downloaded PDF stored and rendered `full_name = Alex Example` and `first_name = Taylor`. |
+| Explicit PDF overwrite | Passed. After explicitly naming `first_name`, the UI reported two filled and zero skipped fields. The second downloaded PDF stored and rendered `full_name = Alex Example` and `first_name = Alex`. Both PDF inspections confirmed matching canonical/widget values, nonempty appearances, and editable fields. |
+| Smart search | Passed on one natural-language case: `What name should I put on a registration form?`. The screenshot showed zero literal matches, while Smart results returned saved `profile.first_name = Alex` and `profile.full_name = Alex Example`. AI remained available. |
+| Cancellation and manual responsiveness | Passed by operator confirmation of the guided check: refresh saved preferences in a second tab while smart search runs, cancel the search, check status once, and verify literal search still returns `synthetic.response_style = manual-wins`. A subsequently supplied runtime log shows task 696 receiving cancellation at elapsed `23:31.593595` and releasing its slot at `23:31.766505`, about 173 ms later. This supports native cancellation of this request; it does not independently establish the application's settlement evidence or subsequent session reusability. The final browser AI status was not explicitly supplied. |
+| Final terminal shutdown | Passed by operator confirmation that all test terminals exited. The model log ends with Ctrl-C and `cleaning up before exit`; the pasted log alone does not include a returned shell prompt. A coordinator `lsof` check afterward found no listeners on dashboard port 3002, MCP port 8787, or model port 58080. This corroborates listener shutdown without claiming a complete descendant-process inventory. |
+
+The supplied runtime log's paired `Invalid API Key` warnings are consistent with
+the selected adapter's readiness checks: one missing-key and one deliberately
+wrong-key request must each return 401 before authenticated readiness succeeds.
+Completed inference tasks and the explicit cancellation are present in the log.
+Startup also reported deprecated reasoning/template and web-UI flag forms; these
+were nonfatal, and the pinned qualified configuration was not changed.
+
+Conflict-message visibility and the final browser AI status noted above remain
+unverified; the operator did not separately reconfirm locking both browser tabs
+at closeout. These successful cases do not renew model qualification or remove
+the accepted Step 06 E email-omission and H cancellation-recovery limitations.
+The operator disposition below accepts leaving those observations unverified.
+Final PR closeout and merge/ready disposition remain pending. No product behavior
+changed during these checks.
+
+#### Operator Disposition And UI Follow-Up
+
+After the walkthrough and shutdown, the operator explicitly accepted leaving the
+remaining observations unverified. Conflict-message visibility, final browser AI
+status after cancellation, and separate closeout confirmation of both browser
+locks remain evidence limits, not newly passing checks. The guided manual
+walkthrough is concluded on that basis; the accepted Step 06 E/H limitations and
+the final PR gates are unchanged. This disposition does not authorize merge or
+activate Step 09.
+
+The operator prefers documenting UI findings and deferring broader cleanup until
+the local migration is usable, while considering small, low-risk improvements.
+The operator then authorized documentation closeout and a light future UI note.
+The canonical [UI usability follow-up](../../ui-usability/README.md) preserves
+the tested Step 08 implementation and records the owner and trigger: after
+Step 09's packaged workflow is usable, before broader usability testing. Optional
+Steps 10/11 need not precede it. This is deferred product work, not an activated
+implementation plan or an additional Step 09 requirement.
+
+| Priority | Follow-up and completion criteria | Recommended timing |
+| --- | --- | --- |
+| 1 | Make rejected grant feedback prominent and associated with the attempted action. The existing `OUTSIDE_MAXIMUM` explanation is currently plain status text above the client list. A small presentation fix should retain the submitted context and show why the grant was not saved, without changing authority rules or interpreting an uncertain mutation as a confirmed rejection. | Strongest candidate for a separate small follow-up after Step 08 closeout; otherwise first item in the UI cleanup. |
+| 2 | Show configured client labels prominently in audit and MCP Access rows, retain an instance identifier in details, and fall back safely when labels are missing. Same-label clients remain distinguishable; labels never determine authority. | Focused UI cleanup after the packaged local workflow is usable. |
+| 3 | Summarize preference changes in collapsed history rows, for example `from-claude → from-browser`, retaining full details on expansion. Handle missing/structured values and all event types safely; sensitive and unknown-sensitivity snapshots remain masked until explicit reveal. | Same UI cleanup, with focused privacy and rendering checks. |
+
+Bring forward a UI fix if it conceals a failed write, falsely reports success,
+exposes sensitive data, or prevents a supported task. None of those conditions was
+established by the reported readability findings. Merely small source changes do
+not justify reopening the completed implementation review and full-gate candidate.
+
+#### Documentation Closeout
+
+The operator authorized recording and publishing this acceptance disposition on
+the existing draft [PR #167](https://github.com/loyalagents/context-router/pull/167).
+The closeout synchronizes current status/index/checklist documentation and adds
+the small UI follow-up. The tested implementation head remains
+`40ef8fd84e8880cbc0539a3260ab24a693b6696a`; no runtime, test, generated artifact,
+dependency, configuration or workflow is changed by this documentation delta.
+R13 and its receipt remain immutable historical evidence. The additional status
+documents differ from that frozen inventory solely to record the subsequent
+human result and accepted deferral, not to claim a new full local gate run.
+
+Final-head CI results for the documentation closeout are recorded in the PR's
+checks and description after publication. The prior implementation head's
+[standard CI](https://github.com/loyalagents/context-router/actions/runs/37227671502)
+and [dedicated migration gate](https://github.com/loyalagents/context-router/actions/runs/37227671419)
+were reverified as successful before closeout. Those runs are not substituted for
+new final-head CI. Draft/merge disposition and Step 09 activation remain human-owned.
+
+The [independent documentation review](reviews.md#documentation-closeout-review-after-user-acceptance)
+approved the closeout. Local documentation-validator tests passed 20/20 on
+Node 24.21.0, links passed across 169 Markdown files, and `git diff --check`
+passed. The complete R13 comparison found no runtime/test/configuration drift.

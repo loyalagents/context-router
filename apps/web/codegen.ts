@@ -16,7 +16,7 @@ const config: CodegenConfig = {
   // schema: 'https://your-production-api.com/graphql',
 
   // Scan all TypeScript/TSX files for GraphQL operations (queries/mutations)
-  documents: ['app/**/*.{ts,tsx}', 'lib/**/*.{ts,tsx}'],
+  documents: ['app/**/*.{ts,tsx}', 'lib/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
 
   generates: {
     // Output file for generated types

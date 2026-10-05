@@ -42,6 +42,7 @@ export type FilterReason =
   | 'UNKNOWN_SLUG';
 
 export interface PreferenceSuggestion {
+  review?: { definitionId: string; locationId?: string | null; expectedPreferenceId?: string | null; expectedRevision?: string | null };
   id: string;
   slug: string;
   operation: 'CREATE' | 'UPDATE';

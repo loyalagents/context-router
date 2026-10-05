@@ -2,7 +2,7 @@
   "schema": {
     "appliedDirectives": []
   },
-  "descriptionFingerprint": "sha256:45bce071bb943462256791cf1f6bc973883c5f52ae1d135e271c1ae5c03ebcef",
+  "descriptionFingerprint": "sha256:88ab744e16d37f155683cd1219b476a1d2d84d75a34fc78b95c18065323a126e",
   "roots": {
     "query": "Query",
     "mutation": "Mutation",
@@ -53,6 +53,127 @@
           "type": "ID!",
           "hasDefault": false,
           "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        }
+      }
+    },
+    "ApplyPreferenceSuggestionsV2Result": {
+      "kind": "OBJECT",
+      "appliedDirectives": [],
+      "interfaces": [],
+      "fields": {
+        "results": {
+          "type": "[ApplyPreferenceSuggestionV2ItemResult!]!",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "schemaVersion": {
+          "type": "Int!",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        }
+      }
+    },
+    "ApplyPreferenceSuggestionV2Input": {
+      "kind": "INPUT_OBJECT",
+      "isOneOf": false,
+      "appliedDirectives": [],
+      "inputFields": {
+        "confidence": {
+          "type": "Float",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "definitionId": {
+          "type": "ID!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "evidence": {
+          "type": "JSON",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "expectedPreferenceId": {
+          "type": "ID",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "expectedRevision": {
+          "type": "String",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "locationId": {
+          "type": "ID",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "newValue": {
+          "type": "JSON",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "operation": {
+          "type": "PreferenceOperation!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "slug": {
+          "type": "String!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "suggestionId": {
+          "type": "ID!",
+          "hasDefault": false,
+          "defaultValue": null,
+          "deprecationReason": null,
+          "appliedDirectives": []
+        }
+      }
+    },
+    "ApplyPreferenceSuggestionV2ItemResult": {
+      "kind": "OBJECT",
+      "appliedDirectives": [],
+      "interfaces": [],
+      "fields": {
+        "preference": {
+          "type": "Preference",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "status": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "suggestionId": {
+          "type": "ID!",
+          "args": [],
           "deprecationReason": null,
           "appliedDirectives": []
         }
@@ -191,6 +312,31 @@
       "kind": "SCALAR",
       "specifiedByURL": null,
       "appliedDirectives": []
+    },
+    "ClearMyHistoryResult": {
+      "kind": "OBJECT",
+      "appliedDirectives": [],
+      "interfaces": [],
+      "fields": {
+        "mcpAccessEventsDeleted": {
+          "type": "Int",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "preferenceAuditEventsDeleted": {
+          "type": "Int",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "status": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        }
+      }
     },
     "CreateLocationInput": {
       "kind": "INPUT_OBJECT",
@@ -364,6 +510,12 @@
         },
         "operation": {
           "type": "PreferenceOperation!",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "review": {
+          "type": "PreferenceReviewDescriptor",
           "args": [],
           "deprecationReason": null,
           "appliedDirectives": []
@@ -831,12 +983,50 @@
           "deprecationReason": null,
           "appliedDirectives": []
         },
+        "applyPreferenceSuggestionsV2": {
+          "type": "ApplyPreferenceSuggestionsV2Result!",
+          "args": [
+            {
+              "name": "analysisId",
+              "type": "ID!",
+              "hasDefault": false,
+              "defaultValue": null,
+              "deprecationReason": null,
+              "appliedDirectives": []
+            },
+            {
+              "name": "input",
+              "type": "[ApplyPreferenceSuggestionV2Input!]!",
+              "hasDefault": false,
+              "defaultValue": null,
+              "deprecationReason": null,
+              "appliedDirectives": []
+            }
+          ],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
         "archivePreferenceDefinition": {
           "type": "PreferenceDefinition!",
           "args": [
             {
               "name": "id",
               "type": "ID!",
+              "hasDefault": false,
+              "defaultValue": null,
+              "deprecationReason": null,
+              "appliedDirectives": []
+            }
+          ],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "clearMyHistory": {
+          "type": "ClearMyHistoryResult!",
+          "args": [
+            {
+              "name": "confirmation",
+              "type": "String!",
               "hasDefault": false,
               "defaultValue": null,
               "deprecationReason": null,
@@ -1296,6 +1486,12 @@
           "deprecationReason": null,
           "appliedDirectives": []
         },
+        "sensitivity": {
+          "type": "String!",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
         "subjectSlug": {
           "type": "String!",
           "args": [],
@@ -1525,6 +1721,37 @@
         }
       ]
     },
+    "PreferenceReviewDescriptor": {
+      "kind": "OBJECT",
+      "appliedDirectives": [],
+      "interfaces": [],
+      "fields": {
+        "definitionId": {
+          "type": "ID!",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "expectedPreferenceId": {
+          "type": "ID",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "expectedRevision": {
+          "type": "String",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "locationId": {
+          "type": "ID",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        }
+      }
+    },
     "PreferenceScope": {
       "kind": "ENUM",
       "appliedDirectives": [],
@@ -1605,6 +1832,12 @@
         },
         "operation": {
           "type": "PreferenceOperation!",
+          "args": [],
+          "deprecationReason": null,
+          "appliedDirectives": []
+        },
+        "review": {
+          "type": "PreferenceReviewDescriptor",
           "args": [],
           "deprecationReason": null,
           "appliedDirectives": []
@@ -1870,7 +2103,7 @@
               "appliedDirectives": []
             }
           ],
-          "deprecationReason": null,
+          "deprecationReason": "Use me for the authenticated account. Retained during the LM-008 compatibility window.",
           "appliedDirectives": []
         }
       }

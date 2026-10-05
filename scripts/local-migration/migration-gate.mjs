@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { assertLocalUiSmokeSuccessResources } from './local-ui-lifecycle.mjs';
+import { localUiBrowserPrerequisite } from './local-ui-browser.mjs';
 import { assertLocalMcpSmokeSuccessResources } from './local-mcp-lifecycle.mjs';
 import { assertLocalModelSmokeSuccessResources } from './local-model-lifecycle.mjs';
 
@@ -79,9 +81,9 @@ export const RESTART_SMOKE_TERMINATION_GRACE_MS =
 
 export const GATE_TIMELINE_MS = Object.freeze({
   preflight: 3 * 60_000,
-  phaseCancellation: 97 * 60_000,
-  childSettlement: 100 * 60_000,
-  finalCleanup: 103 * 60_000,
+  phaseCancellation: 107 * 60_000,
+  childSettlement: 110 * 60_000,
+  finalCleanup: 113 * 60_000,
 });
 
 const GATE_TIMELINE_LABELS = Object.freeze({
@@ -373,7 +375,7 @@ export async function runBoundedGateStages({
     try {
       timeline.assertBefore("childSettlement");
     } finally {
-      // Once every owned child has settled, T+97 must no longer be able to
+      // Once every owned child has settled, T+107 must no longer be able to
       // reclassify a valid final-cleanup window as cancelled.
       workDeadline.dispose();
     }
@@ -1602,6 +1604,7 @@ export async function assertRestartSmokeLifecycleEvidence(
     assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
     assertLocalModelSmokeSuccessResources(state, smokeLabel);
     assertLocalMcpSmokeSuccessResources(state, smokeLabel);
+    assertLocalUiSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }
@@ -1626,6 +1629,7 @@ export async function assertPackagedSmokeLifecycleEvidence(
     assertLocalDatabaseSmokeSuccessResources(state, smokeLabel);
     assertLocalModelSmokeSuccessResources(state, smokeLabel);
     assertLocalMcpSmokeSuccessResources(state, smokeLabel);
+    assertLocalUiSmokeSuccessResources(state, smokeLabel);
   }
   return state;
 }
@@ -1782,6 +1786,8 @@ async function executeFullGate({
       temporaryHome,
       corepackHome,
     );
+    const browserPrerequisite = localUiBrowserPrerequisite(workspace, sourceEnvironment);
+    gateEnvironment.LOCAL_UI_BROWSER_EXECUTABLE = browserPrerequisite.executable;
     addSensitiveCanaries([gateEnvironment.AUTH0_CLIENT_SECRET]);
     const pythonBin =
       sourceEnvironment.MIGRATION_GATE_PYTHON_BIN ??
@@ -1794,7 +1800,7 @@ async function executeFullGate({
       pythonBin,
       signal: preflightSignal,
     });
-    summary.versions = { ...versions, postgres: "pending" };
+    summary.versions = { ...versions, postgres: "pending", chromium: browserPrerequisite.version, playwright: browserPrerequisite.playwright };
     const trackedSdlSha256 = await sha256(
       path.join(workspace, "apps/backend/src/schema.gql"),
     );
@@ -2075,6 +2081,7 @@ async function executeSmokeOnly({
     temporaryHome,
     corepackHome,
   );
+  environment.LOCAL_UI_BROWSER_EXECUTABLE = localUiBrowserPrerequisite(workspace, sourceEnvironment).executable;
   if (sourceEnvironment.MIGRATION_TEST_ADMIN_URL) {
     environment.MIGRATION_TEST_ADMIN_URL = sourceEnvironment.MIGRATION_TEST_ADMIN_URL;
   }

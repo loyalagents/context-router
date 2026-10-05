@@ -6,6 +6,9 @@ import { PreferenceService } from '../preference/preference.service';
 import { Preference } from '../preference/models/preference.model';
 import { ApplyPreferenceSuggestionInput } from './dto/apply-suggestion.input';
 import { PreferenceOperation } from './dto/preference-suggestion.dto';
+import { ReviewedSuggestionService } from './reviewed-suggestion.service';
+import { ApplyPreferenceSuggestionV2Input } from './dto/apply-suggestion-v2.input';
+import { ApplyPreferenceSuggestionsV2Result } from './dto/apply-suggestion-v2-result.dto';
 import {
   AuditActorType,
   AuditOrigin,
@@ -17,7 +20,16 @@ import {
 export class DocumentAnalysisResolver {
   private readonly logger = new Logger(DocumentAnalysisResolver.name);
 
-  constructor(private readonly preferenceService: PreferenceService) {}
+  constructor(private readonly preferenceService: PreferenceService, private readonly reviewed: ReviewedSuggestionService) {}
+
+  @Mutation(() => ApplyPreferenceSuggestionsV2Result)
+  async applyPreferenceSuggestionsV2(
+    @Args('analysisId', { type: () => ID }) analysisId: string,
+    @Args('input', { type: () => [ApplyPreferenceSuggestionV2Input] }) input: ApplyPreferenceSuggestionV2Input[],
+    @CurrentUser() user: { userId: string },
+  ): Promise<ApplyPreferenceSuggestionsV2Result> {
+    return await this.reviewed.apply(user.userId, analysisId, input) as unknown as ApplyPreferenceSuggestionsV2Result;
+  }
 
   @Mutation(() => [Preference])
   async applyPreferenceSuggestions(

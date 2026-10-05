@@ -7,7 +7,8 @@
     "local-identity-preview",
     "local-database-preview",
     "local-model-preview",
-    "local-mcp"
+    "local-mcp",
+    "local-ui"
   ],
   "contractClasses": [
     "preserved-contract",
@@ -369,6 +370,594 @@
           "consumerId": "ref:docs/useful/MCP_LOCAL_SETUP.md:mcp:resource:schema://graphql",
           "path": "docs/useful/MCP_LOCAL_SETUP.md",
           "outcome": "migrated"
+        }
+      ]
+    },
+    {
+      "id": "step08-browser-ui-and-versioned-ai-controls",
+      "contract": "http",
+      "approval": "reviewed",
+      "fromFingerprint": "sha256:0decd923adc249b1ce70beb38646fff0bce56452d0880f3098ef87cf03a669fb",
+      "toFingerprint": "sha256:35d2d14ec3dfbaf79173759aabdcf0d3320e0775c980c50bec0a91922a841ec2",
+      "breakingChanges": [
+        "added $.routes.documentAnalysis.success.failureCategories = [\"unavailable\",\"unsupported\",\"busy\",\"input_limit\",\"context_limit\",\"cancelled\",\"deadline\",\"invalid_response\",\"unsafe_configuration\"]",
+        "added $.routes.documentAnalysis.success.optionalNullable value = \"failureCategory\"",
+        "added $.routes.documentAnalysis.success.suggestionOptional = {\"review\":{\"required\":[\"definitionId\"],\"optionalNullable\":[\"locationId\",\"expectedPreferenceId\",\"expectedRevision\"]}}",
+        "added $.routes.formFill.success.failureCategories = [\"unavailable\",\"unsupported\",\"busy\",\"input_limit\",\"context_limit\",\"cancelled\",\"deadline\",\"invalid_response\",\"unsafe_configuration\"]",
+        "added $.routes.formFill.success.optionalNullable = [\"failureCategory\"]"
+      ],
+      "compatibilityWindow": "Retain all hosted HTTP routes/envelopes, absent/v1 form-fill semantics, legacy apply and self-only user(id) throughout Step08 and until a later independently reviewed removal gate. Unknown external clients are assumed to exist.",
+      "migrationGuidance": "Local browser clients use the independent expiring same-origin browser session and capability-gated uploads. Local form fill always sends v2; hosted/eval/external clients may retain absent/v1 policies. Consumers may ignore optional review/failure fields. Review per-item v2 proposal outcomes; never automatically retry uncertain writes. See the Step08 consumer inventory.",
+      "rollback": "Stop the local UI and its clients to invalidate in-memory browser sessions. Retain the existing SQLite v2/identity pair and use the Step07-compatible CLI/runtime or hosted composition. No SQLite schema change or history backfill is introduced. Explicit history deletion has no undo; restoring an older matching backup restores old history and credential authority, so review/rotate or revoke before reconnecting.",
+      "additiveReplacement": {
+        "description": "A separate browser authority and same-service local dashboard, optional safe AI metadata, versioned preserve-existing form-fill policies and explicit reviewed proposal results retain the legacy external interfaces.",
+        "evidencePath": "docs/plans/active/local-migration/08-local-ui/consumers.md"
+      },
+      "consumerEvidence": [
+        {
+          "consumerId": "fp:eval-analysis-upload",
+          "path": "examples/eval/scripts/ingestor/client.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:eval-form-fill-upload",
+          "path": "examples/eval/scripts/fill-form.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:external-document-analysis-clients",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:external-form-fill-clients",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:external-graphql-consumers",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:external-health-monitors",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:health-shell-auth",
+          "path": "test-auth.sh",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:health-shell-graphql",
+          "path": "test-graphql.sh",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:orchestrator-analysis-upload",
+          "path": "apps/local-orchestrator/src/server/analysis-client.ts",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:orchestrator-graphql-apply",
+          "path": "apps/local-orchestrator/src/server/apply-client.ts",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:packaging-smoke-web-chat-support-route",
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:packaging-smoke-web-debug-token-support-route",
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:shell-document-analysis-upload",
+          "path": "test-document-upload.sh",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:web-auth-login-support-route",
+          "path": "apps/web/app/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:web-auth-logout-support-route",
+          "path": "apps/web/components/local/DashboardView.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:web-chat-support-route",
+          "path": "apps/web/app/dashboard/chat/ChatBox.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:web-debug-token-support-route",
+          "path": "docs/useful/local-orchestrator-commands.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "fp:web-document-analysis-upload",
+          "path": "apps/web/app/dashboard/preferences/components/DocumentUpload.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "fp:web-form-fill-upload",
+          "path": "apps/web/app/dashboard/form-fill/FormFillClient.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/backend/.env.example:http:route:/oauth/register",
+          "path": "apps/backend/.env.example",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:apps/local-orchestrator/src/server/analysis-client.ts:http:route:/api/preferences/analysis",
+          "path": "apps/local-orchestrator/src/server/analysis-client.ts",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:apps/local-orchestrator/src/server/apply-client.ts:http:route:/graphql",
+          "path": "apps/local-orchestrator/src/server/apply-client.ts",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:apps/web/.env.example:http:route:/graphql",
+          "path": "apps/web/.env.example",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/chat/ChatBox.tsx:http:route:/api/chat",
+          "path": "apps/web/app/dashboard/chat/ChatBox.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/form-fill/FormFillClient.tsx:http:route:/api/form-fill/pdf",
+          "path": "apps/web/app/dashboard/form-fill/FormFillClient.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/form-fill/page.tsx:http:route:/auth/*",
+          "path": "apps/web/app/dashboard/form-fill/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/history/page.tsx:http:route:/auth/*",
+          "path": "apps/web/app/dashboard/history/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/page.tsx:http:route:/api/debug/token",
+          "path": "apps/web/app/dashboard/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/page.tsx:http:route:/auth/*",
+          "path": "apps/web/app/dashboard/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/permissions/page.tsx:http:route:/auth/*",
+          "path": "apps/web/app/dashboard/permissions/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/preferences/components/DocumentUpload.tsx:http:route:/api/preferences/analysis",
+          "path": "apps/web/app/dashboard/preferences/components/DocumentUpload.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/preferences/page.tsx:http:route:/auth/*",
+          "path": "apps/web/app/dashboard/preferences/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/profile/page.tsx:http:route:/auth/*",
+          "path": "apps/web/app/dashboard/profile/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/schema/page.tsx:http:route:/auth/*",
+          "path": "apps/web/app/dashboard/schema/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/dashboard/search-lab/page.tsx:http:route:/auth/*",
+          "path": "apps/web/app/dashboard/search-lab/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/app/page.tsx:http:route:/auth/*",
+          "path": "apps/web/app/page.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/codegen.ts:http:route:/graphql",
+          "path": "apps/web/codegen.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/components/local/DashboardView.tsx:http:route:/api/debug/token",
+          "path": "apps/web/components/local/DashboardView.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/components/local/DashboardView.tsx:http:route:/auth/*",
+          "path": "apps/web/components/local/DashboardView.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/components/local/LocalDocumentUpload.tsx:http:route:/api/preferences/analysis",
+          "path": "apps/web/components/local/LocalDocumentUpload.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/components/local/LocalSession.tsx:http:route:/api/local/capabilities",
+          "path": "apps/web/components/local/LocalSession.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/components/local/LocalSession.tsx:http:route:/api/local/unlock",
+          "path": "apps/web/components/local/LocalSession.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/components/local/McpClients.tsx:http:route:/api/local/mcp/inspect",
+          "path": "apps/web/components/local/McpClients.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/components/local/McpClients.tsx:http:route:/api/local/mcp/list",
+          "path": "apps/web/components/local/McpClients.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/components/local/PreferenceSearch.tsx:http:route:/graphql",
+          "path": "apps/web/components/local/PreferenceSearch.tsx",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/authenticated-fetch.ts:http:route:/api/form-fill/pdf",
+          "path": "apps/web/lib/authenticated-fetch.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/authenticated-fetch.ts:http:route:/api/preferences/analysis",
+          "path": "apps/web/lib/authenticated-fetch.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/authenticated-fetch.ts:http:route:/graphql",
+          "path": "apps/web/lib/authenticated-fetch.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/local-transport.ts:http:route:/api/form-fill/pdf",
+          "path": "apps/web/lib/local-transport.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/local-transport.ts:http:route:/api/local/capabilities",
+          "path": "apps/web/lib/local-transport.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/local-transport.ts:http:route:/api/local/logout",
+          "path": "apps/web/lib/local-transport.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/local-transport.ts:http:route:/api/local/mcp/grant",
+          "path": "apps/web/lib/local-transport.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/local-transport.ts:http:route:/api/local/mcp/inspect",
+          "path": "apps/web/lib/local-transport.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/local-transport.ts:http:route:/api/local/mcp/list",
+          "path": "apps/web/lib/local-transport.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/local-transport.ts:http:route:/api/local/mcp/revoke",
+          "path": "apps/web/lib/local-transport.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/local-transport.ts:http:route:/api/local/unlock",
+          "path": "apps/web/lib/local-transport.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/local-transport.ts:http:route:/api/preferences/analysis",
+          "path": "apps/web/lib/local-transport.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/local-transport.ts:http:route:/graphql",
+          "path": "apps/web/lib/local-transport.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:apps/web/lib/runtime-config.ts:http:route:/graphql",
+          "path": "apps/web/lib/runtime-config.ts",
+          "outcome": "migrated"
+        },
+        {
+          "consumerId": "ref:docs/current/DOCUMENT_ANALYSIS.md:http:route:/api/preferences/analysis",
+          "path": "docs/current/DOCUMENT_ANALYSIS.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/FORM_FILL.md:http:route:/api/form-fill/pdf",
+          "path": "docs/current/FORM_FILL.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md:http:route:/api/form-fill/pdf",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md:http:route:/api/preferences/analysis",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md:http:route:/graphql",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md:http:route:/health",
+          "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/plans/active/local-migration/tracks/interface-evolution.md:http:route:/api/form-fill/pdf",
+          "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/plans/active/local-migration/tracks/interface-evolution.md:http:route:/api/preferences/analysis",
+          "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/plans/active/local-migration/tracks/interface-evolution.md:http:route:/graphql",
+          "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/plans/active/local-migration/tracks/interface-evolution.md:http:route:/health",
+          "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/useful/CLOUD_RUN_DEPLOY.md:http:route:/health",
+          "path": "docs/useful/CLOUD_RUN_DEPLOY.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/useful/LOCAL_MODEL.md:http:route:/health",
+          "path": "docs/useful/LOCAL_MODEL.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/useful/local-orchestrator-commands.md:http:route:/api/debug/token",
+          "path": "docs/useful/local-orchestrator-commands.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/useful/local-orchestrator-commands.md:http:route:/auth/*",
+          "path": "docs/useful/local-orchestrator-commands.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:docs/useful/local-orchestrator-commands.md:http:route:/graphql",
+          "path": "docs/useful/local-orchestrator-commands.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval-harbor/scripts/build_dynamicmem_task.py:http:route:/health",
+          "path": "examples/eval-harbor/scripts/build_dynamicmem_task.py",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/README.md:http:route:/api/form-fill/pdf",
+          "path": "examples/eval/README.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/README.md:http:route:/graphql",
+          "path": "examples/eval/README.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/scripts/claude-code-direct-packet.mjs:http:route:/graphql",
+          "path": "examples/eval/scripts/claude-code-direct-packet.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/scripts/direct-open-schema-packet.mjs:http:route:/graphql",
+          "path": "examples/eval/scripts/direct-open-schema-packet.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/scripts/e2e-known-schema.mjs:http:route:/graphql",
+          "path": "examples/eval/scripts/e2e-known-schema.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/scripts/e2e-mcp-agent.mjs:http:route:/graphql",
+          "path": "examples/eval/scripts/e2e-mcp-agent.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/scripts/e2e-mcp-packet.mjs:http:route:/graphql",
+          "path": "examples/eval/scripts/e2e-mcp-packet.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/scripts/export-memory-snapshot.mjs:http:route:/graphql",
+          "path": "examples/eval/scripts/export-memory-snapshot.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/scripts/export-stored-preferences.mjs:http:route:/graphql",
+          "path": "examples/eval/scripts/export-stored-preferences.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/scripts/fill-form.mjs:http:route:/api/form-fill/pdf",
+          "path": "examples/eval/scripts/fill-form.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/scripts/ingest-documents.mjs:http:route:/graphql",
+          "path": "examples/eval/scripts/ingest-documents.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/eval/scripts/ingestor/client.mjs:http:route:/api/preferences/analysis",
+          "path": "examples/eval/scripts/ingestor/client.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:examples/simple-eval-example-1/intermediary-files/json-mime-smoke.md:http:route:/api/preferences/analysis",
+          "path": "examples/simple-eval-example-1/intermediary-files/json-mime-smoke.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:README.md:http:route:/api/preferences/analysis",
+          "path": "README.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:README.md:http:route:/graphql",
+          "path": "README.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:README.md:http:route:/health",
+          "path": "README.md",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/packaging-smoke.mjs:http:route:/.well-known/oauth-protected-resource/mcp",
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/packaging-smoke.mjs:http:route:/api/chat",
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/packaging-smoke.mjs:http:route:/api/debug/token",
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/packaging-smoke.mjs:http:route:/graphql",
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/packaging-smoke.mjs:http:route:/health",
+          "path": "scripts/local-migration/packaging-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/restart-smoke.mjs:http:route:/.well-known/oauth-authorization-server",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/restart-smoke.mjs:http:route:/.well-known/oauth-authorization-server/mcp",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/restart-smoke.mjs:http:route:/.well-known/oauth-protected-resource",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/restart-smoke.mjs:http:route:/.well-known/oauth-protected-resource/mcp",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/restart-smoke.mjs:http:route:/graphql",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/restart-smoke.mjs:http:route:/health",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/restart-smoke.mjs:http:route:/oauth/register",
+          "path": "scripts/local-migration/restart-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/web-support-smoke.mjs:http:route:/api/chat",
+          "path": "scripts/local-migration/web-support-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/web-support-smoke.mjs:http:route:/api/debug/token",
+          "path": "scripts/local-migration/web-support-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/web-support-smoke.mjs:http:route:/auth/*",
+          "path": "scripts/local-migration/web-support-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:scripts/local-migration/web-support-smoke.mjs:http:route:/graphql",
+          "path": "scripts/local-migration/web-support-smoke.mjs",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:test-auth.sh:http:route:/graphql",
+          "path": "test-auth.sh",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:test-auth.sh:http:route:/health",
+          "path": "test-auth.sh",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:test-document-upload.sh:http:route:/api/preferences/analysis",
+          "path": "test-document-upload.sh",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:test-graphql.sh:http:route:/graphql",
+          "path": "test-graphql.sh",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:test-graphql.sh:http:route:/health",
+          "path": "test-graphql.sh",
+          "outcome": "verified-unaffected"
+        },
+        {
+          "consumerId": "ref:test-vertex-ai.sh:http:route:/graphql",
+          "path": "test-vertex-ai.sh",
+          "outcome": "verified-unaffected"
         }
       ]
     }
@@ -1090,7 +1679,7 @@
         {
           "path": "apps/web/middleware.ts",
           "fingerprints": [
-            "return await auth0.middleware(request);"
+            "return await getAuth0().middleware(request);"
           ]
         }
       ],
@@ -1122,70 +1711,70 @@
         {
           "path": "apps/web/app/dashboard/preferences/components/DocumentUpload.tsx",
           "fingerprints": [
-            "fetch(`${backendUrl}/api/preferences/analysis`, {",
+            "authenticatedFetch(`${backendUrl}/api/preferences/analysis`, {",
             "Authorization: `Bearer ${accessToken}`"
           ]
         },
         {
           "path": "apps/web/app/dashboard/form-fill/FormFillClient.tsx",
           "fingerprints": [
-            "fetch(`${backendUrl}/api/form-fill/pdf`, {",
+            "authenticatedFetch(`${backendUrl}/api/form-fill/pdf`, {",
             "Authorization: `Bearer ${accessToken}`"
           ]
         },
         {
           "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
           "fingerprints": [
-            "fetch(GRAPHQL_ENDPOINT, {",
+            "authenticatedFetch(GRAPHQL_ENDPOINT, {",
             "query: MCP_ACCESS_HISTORY_QUERY"
           ]
         },
         {
           "path": "apps/web/app/dashboard/permissions/PermissionsClient.tsx",
           "fingerprints": [
-            "fetch(GRAPHQL_ENDPOINT, {",
+            "authenticatedFetch(GRAPHQL_ENDPOINT, {",
             "Authorization: `Bearer ${accessToken}`"
           ]
         },
         {
           "path": "apps/web/app/dashboard/preferences/components/AuditHistoryTab.tsx",
           "fingerprints": [
-            "fetch(GRAPHQL_ENDPOINT, {",
+            "authenticatedFetch(GRAPHQL_ENDPOINT, {",
             "query: AUDIT_HISTORY_QUERY"
           ]
         },
         {
           "path": "apps/web/app/dashboard/preferences/components/ManualPreferenceForm.tsx",
           "fingerprints": [
-            "const createResponse = await fetch(graphqlUrl, {",
-            "const setResponse = await fetch(graphqlUrl, {"
+            "const createResponse = await authenticatedFetch(graphqlUrl, {",
+            "const setResponse = await authenticatedFetch(graphqlUrl, {"
           ]
         },
         {
           "path": "apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx",
           "fingerprints": [
-            "const response = await fetch(graphqlUrl, {",
+            "const response = await authenticatedFetch(graphqlUrl, {",
             "Authorization: `Bearer ${accessToken}`"
           ]
         },
         {
           "path": "apps/web/app/dashboard/preferences/components/PreferenceItem.tsx",
           "fingerprints": [
-            "const response = await fetch(graphqlUrl, {",
+            "const response = await authenticatedFetch(graphqlUrl, {",
             "Authorization: `Bearer ${accessToken}`"
           ]
         },
         {
           "path": "apps/web/app/dashboard/preferences/components/SuggestionInbox.tsx",
           "fingerprints": [
-            "const response = await fetch(graphqlUrl, {",
+            "const response = await authenticatedFetch(graphqlUrl, {",
             "Authorization: `Bearer ${accessToken}`"
           ]
         },
         {
           "path": "apps/web/app/dashboard/preferences/components/SuggestionsList.tsx",
           "fingerprints": [
-            "const response = await fetch(graphqlUrl, {",
+            "const response = await authenticatedFetch(graphqlUrl, {",
             "Authorization: `Bearer ${accessToken}`"
           ]
         },
@@ -1199,22 +1788,38 @@
         {
           "path": "apps/web/app/dashboard/profile/ProfileForm.tsx",
           "fingerprints": [
-            "const response = await fetch(graphqlUrl, {",
+            "const response = await authenticatedFetch(graphqlUrl, {",
             "Authorization: `Bearer ${accessToken}`"
           ]
         },
         {
           "path": "apps/web/app/dashboard/schema/SchemaClient.tsx",
           "fingerprints": [
-            "const response = await fetch(graphqlUrl, {",
+            "const response = await authenticatedFetch(graphqlUrl, {",
             "Authorization: `Bearer ${accessToken}`"
           ]
         },
         {
           "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
           "fingerprints": [
-            "fetch(GRAPHQL_ENDPOINT, {",
+            "authenticatedFetch(GRAPHQL_ENDPOINT, {",
             "Authorization: `Bearer ${accessToken}`"
+          ]
+        },
+        {
+          "path": "apps/web/lib/authenticated-fetch.ts",
+          "fingerprints": [
+            "return fetch(input, options)",
+            "return localTransport.request(aliases[input] ?? input, options)"
+          ]
+        },
+        {
+          "path": "apps/web/lib/local-transport.ts",
+          "fingerprints": [
+            "fetch(...args)",
+            "credentials: 'omit'",
+            "mode: 'same-origin'",
+            "redirect: 'error'"
           ]
         }
       ],
@@ -1818,6 +2423,26 @@
       "ownerSteps": [
         "07"
       ]
+    },
+    {
+      "id": "local-ui-browser-smoke",
+      "sources": [
+        {
+          "path": "scripts/local-migration/local-ui-smoke.mjs",
+          "fingerprints": [
+            "net.connect",
+            "chromium.connectOverCDP",
+            "context.routeWebSocket"
+          ]
+        }
+      ],
+      "destination": "Owned literal-loopback UI/MCP listeners and a separately owned Chromium CDP endpoint; application module/network policy inherits the exact selected deterministic TLS model peer. Browser page HTTP/WebSocket requests are confined by test routing, not an OS network sandbox.",
+      "payload": "Synthetic UI/MCP state, private bootstrap/session credentials, fixed readiness/version/semantic-proof and process-group cleanup evidence; no live model or personal client configuration.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "08"
+      ]
     }
   ],
   "externalClients": [
@@ -2176,7 +2801,7 @@
       "id": "web-auth-logout-support-route",
       "contract": "http",
       "kind": "web-support-route",
-      "path": "apps/web/app/dashboard/page.tsx",
+      "path": "apps/web/components/local/DashboardView.tsx",
       "method": "GET",
       "route": "/auth/*",
       "fingerprints": [
@@ -2410,6 +3035,14 @@
       ]
     },
     {
+      "path": "apps/web/app/dashboard/history/HistoryTabs.tsx",
+      "kind": "mutation",
+      "operation": "ClearHistory",
+      "rootFields": [
+        "clearMyHistory"
+      ]
+    },
+    {
       "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
       "kind": "query",
       "operation": "McpAccessHistoryForTab",
@@ -2539,6 +3172,14 @@
       ]
     },
     {
+      "path": "apps/web/app/dashboard/preferences/components/SuggestionsList.tsx",
+      "kind": "mutation",
+      "operation": "ApplyReviewed",
+      "rootFields": [
+        "applyPreferenceSuggestionsV2"
+      ]
+    },
+    {
       "path": "apps/web/app/dashboard/preferences/page.tsx",
       "kind": "query",
       "operation": "ActivePreferences",
@@ -2641,6 +3282,58 @@
       "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
       "kind": "query",
       "operation": "SmartSearchPreferences",
+      "rootFields": [
+        "smartSearchPreferences"
+      ]
+    },
+    {
+      "path": "apps/web/components/local/LocalPage.tsx",
+      "kind": "query",
+      "operation": "LocalDashboard",
+      "rootFields": [
+        "activePreferences",
+        "me"
+      ]
+    },
+    {
+      "path": "apps/web/components/local/LocalPage.tsx",
+      "kind": "query",
+      "operation": "LocalHistoryCatalog",
+      "rootFields": [
+        "preferenceCatalog"
+      ]
+    },
+    {
+      "path": "apps/web/components/local/LocalPage.tsx",
+      "kind": "query",
+      "operation": "LocalPreferences",
+      "rootFields": [
+        "activePreferences",
+        "preferenceCatalog",
+        "suggestedPreferences"
+      ]
+    },
+    {
+      "path": "apps/web/components/local/LocalPage.tsx",
+      "kind": "query",
+      "operation": "LocalProfile",
+      "rootFields": [
+        "activePreferences",
+        "me"
+      ]
+    },
+    {
+      "path": "apps/web/components/local/LocalPage.tsx",
+      "kind": "query",
+      "operation": "LocalSchema",
+      "rootFields": [
+        "preferenceCatalog"
+      ]
+    },
+    {
+      "path": "apps/web/components/local/PreferenceSearch.tsx",
+      "kind": "query",
+      "operation": "LocalSmartSearch",
       "rootFields": [
         "smartSearchPreferences"
       ]
@@ -2855,12 +3548,6 @@
       "path": "apps/web/app/dashboard/page.tsx",
       "contract": "http",
       "kind": "route",
-      "reference": "/api/debug/token"
-    },
-    {
-      "path": "apps/web/app/dashboard/page.tsx",
-      "contract": "http",
-      "kind": "route",
       "reference": "/auth/*"
     },
     {
@@ -2918,10 +3605,148 @@
       "reference": "/graphql"
     },
     {
+      "path": "apps/web/components/local/DashboardView.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/debug/token"
+    },
+    {
+      "path": "apps/web/components/local/DashboardView.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/auth/*"
+    },
+    {
+      "path": "apps/web/components/local/LocalDocumentUpload.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "apps/web/components/local/LocalSession.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/capabilities"
+    },
+    {
+      "path": "apps/web/components/local/LocalSession.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/unlock"
+    },
+    {
+      "path": "apps/web/components/local/McpClients.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/inspect"
+    },
+    {
+      "path": "apps/web/components/local/McpClients.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/list"
+    },
+    {
+      "path": "apps/web/components/local/PreferenceSearch.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/components/local/PreferenceSearch.tsx",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "smartSearchPreferences"
+    },
+    {
+      "path": "apps/web/lib/authenticated-fetch.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/form-fill/pdf"
+    },
+    {
+      "path": "apps/web/lib/authenticated-fetch.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "apps/web/lib/authenticated-fetch.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/form-fill/pdf"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/capabilities"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/logout"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/grant"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/inspect"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/list"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/revoke"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/unlock"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
       "path": "apps/web/lib/runtime-config.ts",
       "contract": "http",
       "kind": "route",
       "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/local-ui.mjs",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
     },
     {
       "path": "docs/current/AUDIT_AND_ACCESS_HISTORY.md",
@@ -3568,87 +4393,9 @@
       }
     },
     {
-      "path": "apps/web/app/dashboard/form-fill/FormFillClient.tsx",
-      "sinks": {
-        "fetch": 1
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
-      "sinks": {
-        "fetch": 1
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/permissions/PermissionsClient.tsx",
-      "sinks": {
-        "fetch": 1
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/AuditHistoryTab.tsx",
-      "sinks": {
-        "fetch": 1
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/DocumentUpload.tsx",
-      "sinks": {
-        "fetch": 1
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/ManualPreferenceForm.tsx",
-      "sinks": {
-        "fetch": 2
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/MemoryResetPanel.tsx",
-      "sinks": {
-        "fetch": 1
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/PreferenceItem.tsx",
-      "sinks": {
-        "fetch": 2
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/SuggestionInbox.tsx",
-      "sinks": {
-        "fetch": 2
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/preferences/components/SuggestionsList.tsx",
-      "sinks": {
-        "fetch": 1
-      }
-    },
-    {
       "path": "apps/web/app/dashboard/preferences/PreferencesClient.tsx",
       "sinks": {
         "apollo-http-link": 1
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/profile/ProfileForm.tsx",
-      "sinks": {
-        "fetch": 1
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/schema/SchemaClient.tsx",
-      "sinks": {
-        "fetch": 4
-      }
-    },
-    {
-      "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
-      "sinks": {
-        "fetch": 1
       }
     },
     {
@@ -3667,6 +4414,18 @@
       "path": "apps/web/lib/auth0.ts",
       "sinks": {
         "auth0-browser": 1
+      }
+    },
+    {
+      "path": "apps/web/lib/authenticated-fetch.ts",
+      "sinks": {
+        "fetch": 1
+      }
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "sinks": {
+        "fetch": 1
       }
     },
     {
@@ -3843,6 +4602,14 @@
       }
     },
     {
+      "path": "scripts/local-migration/local-ui-smoke.mjs",
+      "sinks": {
+        "fetch": 1,
+        "net-connect": 1,
+        "websocket": 1
+      }
+    },
+    {
       "path": "scripts/local-migration/migration-gate.mjs",
       "sinks": {
         "exec-file": 1,
@@ -3857,7 +4624,7 @@
         "http-client": 1,
         "net-connect": 2,
         "spawn": 2,
-        "subprocess-wrapper": 8
+        "subprocess-wrapper": 9
       }
     },
     {

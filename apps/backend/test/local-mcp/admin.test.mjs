@@ -31,8 +31,8 @@ function fixture(t) {
       fs.rmSync(root, { recursive: true, force: true });
     }
   });
-  function cli(args, expected = 0) {
-    const result = spawnSync(process.execPath, [entry, ...args], {
+  function cli(args, expected = 0, nodeArgs = []) {
+    const result = spawnSync(process.execPath, [...nodeArgs, entry, ...args], {
       cwd: root,
       env,
       encoding: 'utf8',
@@ -51,6 +51,80 @@ function fixture(t) {
   }
   return { cleanups, root, env, cli };
 }
+test('compiled admin accepts issued client IDs beginning with one or two hyphens', (t) => {
+  for (const id of ['-' + 'A'.repeat(21), '--' + 'A'.repeat(20)]) {
+    const f = fixture(t);
+    f.cli(['upgrade']);
+    const preload = path.join(f.root, 'id-fixture.cjs');
+    fs.writeFileSync(
+      preload,
+      `
+      const crypto = require('node:crypto');
+      const original = crypto.randomBytes;
+      crypto.randomBytes = (size, ...args) => size === 16
+        ? Buffer.from(${JSON.stringify(id)}, 'base64url')
+        : original(size, ...args);
+    `,
+      { mode: 0o600 },
+    );
+    assert.equal(
+      f.cli(
+        [
+          'provision',
+          '--label',
+          'synthetic',
+          '--out',
+          path.join(f.root, 'a.token'),
+        ],
+        0,
+        ['--require', preload],
+      ).result.id,
+      id,
+    );
+    f.cli([
+      'permissions',
+      '--id',
+      id,
+      '--capabilities',
+      'preferences:read',
+      '--targets',
+      'synthetic.*',
+    ]);
+    f.cli([
+      'permissions',
+      `--id=${id}`,
+      '--capabilities',
+      'preferences:read',
+      '--targets',
+      'synthetic.*',
+    ]);
+    f.cli([
+      'grant',
+      '--id',
+      id,
+      '--target',
+      'synthetic.private',
+      '--action',
+      'READ',
+      '--effect',
+      'DENY',
+    ]);
+    assert.equal(
+      f.cli(['rotate', '--id', id, '--out', path.join(f.root, 'b.token')])
+        .result.generation,
+      2,
+    );
+    assert.equal(f.cli(['revoke', '--id', id]).result.revoked, true);
+    // Missing values and unrelated/unknown option syntax stay strict.
+    f.cli(['revoke', '--id', '--allow-sensitive'], 2);
+    f.cli(['revoke', '--id'], 2);
+    f.cli(['revoke', '--id', '-bad'], 2);
+    f.cli(['revoke', '--id', '--unknown'], 2);
+    f.cli(['revoke', '--', '--id', id], 2);
+    f.cli(['list', '--id', id], 2);
+    f.cli(['revoke', '--id', id, '--unknown'], 2);
+  }
+});
 test('compiled admin provides upgrade, private provisioning, permissions, grants, rotate/revoke and matching backup/restore', (t) => {
   const f = fixture(t);
   assert.equal(f.cli(['upgrade']).result, 'upgraded');

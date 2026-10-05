@@ -11,6 +11,7 @@ export class PdfFieldFillerService {
   async fillPdf(
     fileBuffer: Buffer,
     actions: ValidatedFillAction[],
+    preserveAppearanceFields: ReadonlySet<string> = new Set(),
   ): Promise<Buffer> {
     const pdfDoc = await PDFDocument.load(fileBuffer);
     const form = pdfDoc.getForm();
@@ -50,6 +51,15 @@ export class PdfFieldFillerService {
     }
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    if (preserveAppearanceFields.size) {
+      // Generating an appearance can read an otherwise untouched rich-text value.
+      // Preserve those widgets verbatim and prevent save() from updating them again.
+      for (const field of form.getFields()) {
+        if (!preserveAppearanceFields.has(field.getName()) && field.needsAppearancesUpdate())
+          field.defaultUpdateAppearances(font);
+      }
+      return Buffer.from(await pdfDoc.save({ updateFieldAppearances: false }));
+    }
     form.updateFieldAppearances(font);
 
     return Buffer.from(await pdfDoc.save());

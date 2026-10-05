@@ -41,7 +41,7 @@ async function bounded(promise, ms = 15000) {
     clearTimeout(timer);
   }
 }
-export function decodeMcpSmokeProbe(text) {
+export function decodeMcpSmokeProbe(text, listenerCount = 1) {
   let p;
   try {
     p = JSON.parse(text);
@@ -58,12 +58,9 @@ export function decodeMcpSmokeProbe(text) {
     p.connections < 1 ||
     p.connections > 64 ||
     !Array.isArray(p.listeners) ||
-    p.listeners.length !== 1 ||
-    Object.keys(p.listeners[0]).sort().join() !== 'closed,port' ||
-    p.listeners[0].closed !== true ||
-    !Number.isSafeInteger(p.listeners[0].port) ||
-    p.listeners[0].port < 1 ||
-    p.listeners[0].port > 65535 ||
+    p.listeners.length !== listenerCount ||
+    p.listeners.some((r) => Object.keys(r).sort().join() !== 'closed,port' || r.closed !== true || !Number.isSafeInteger(r.port) || r.port < 1 || r.port > 65535) ||
+    new Set(p.listeners.map((r) => r.port)).size !== listenerCount ||
     !Array.isArray(p.sqliteThreads) ||
     !p.sqliteThreads.length ||
     p.sqliteThreads.length > 8 ||
@@ -192,6 +189,12 @@ async function client(port, token) {
     return response.value.result;
   };
 }
+export async function removeMcpSmokeStateAfterCleanup({ root, created, cleanup, cleanupExtension }) {
+  try { await cleanupExtension?.(); } catch (error) { cleanup.push(error); }
+  if (created && !cleanup.length) {
+    try { await rm(root, { recursive: true }); } catch (error) { cleanup.push(error); }
+  }
+}
 export async function runLocalMcpSmoke({
   entrypoint,
   cwd,
@@ -202,6 +205,7 @@ export async function runLocalMcpSmoke({
   environment = process.env,
   signal,
   verifyArtifact = async () => {},
+  localUi,
 }) {
   const root = path.join(
       await realpath(stateParent),
@@ -211,10 +215,10 @@ export async function runLocalMcpSmoke({
   const sourceBackend = await realpath(
     path.join(directory, '../../apps/backend'),
   );
-  const dependencies =
+  const dependencies = localUi?.dependencies ?? (
     path.dirname(dist) === sourceBackend
       ? await realpath(path.join(directory, '../../node_modules'))
-      : await realpath(path.join(dist, '../node_modules'));
+      : await realpath(path.join(dist, '../node_modules')));
   const env = {
     ...buildLocalDatabaseSmokeEnvironment(environment, {
       home,
@@ -223,6 +227,7 @@ export async function runLocalMcpSmoke({
       stateRoot: path.join(root, 'identity'),
       runtimeDist: dist,
     }),
+    ...(localUi ? { LOCAL_UI_SMOKE_WEB_ROOT: localUi.webRoot } : {}),
     LOCAL_MCP_SMOKE_ROOT: root,
     LOCAL_MCP_SMOKE_DEPENDENCIES: dependencies,
     LOCAL_MODEL_PORT: '1',
@@ -264,8 +269,10 @@ export async function runLocalMcpSmoke({
     });
     return owned;
   }
+  const uiStderr = (value) => localUi ? value.replace(' ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.\n', '') : value;
   async function finish(owned, code, extra = {}) {
-    const result = await bounded(owned.handle.result);
+    const rawResult = await bounded(owned.handle.result);
+    const result = { ...rawResult, stderr: uiStderr(rawResult.stderr) };
     try {
       assertLocalDatabaseChildResult(result, code);
     } catch {
@@ -334,6 +341,7 @@ export async function runLocalMcpSmoke({
     });
     await mkdir(root, { mode: 0o700 });
     created = true;
+    if (localUi) await mkdir(path.join(root, 'exports'), { mode: 0o700 });
     await mkdir(home, { mode: 0o700 });
     await mkdir(temporaryDirectory, { mode: 0o700 });
     await writeFile(
@@ -407,20 +415,27 @@ export async function runLocalMcpSmoke({
           for (;;) {
             const output = server.handle.output();
             if (
-              output.stderr ||
+              uiStderr(output.stderr) ||
               output.overflow ||
               server.handle.child.exitCode !== null ||
               server.handle.child.signalCode !== null
             )
               throw fail();
-            if (output.stdout.endsWith('\n')) {
-              readiness = JSON.parse(output.stdout);
-              break;
-            }
+            const line = localUi ? output.stdout.split('\n').find((value) => value.startsWith('{"type":"context-router.local-ui.ready"')) : output.stdout.endsWith('\n') ? output.stdout.trim() : undefined;
+            if (line) { readiness = JSON.parse(line); break; }
             await delay(10);
           }
         })(),
       );
+      const browserReadiness = localUi ? readiness : undefined;
+      if (localUi) {
+        assert.deepEqual(Object.keys(readiness).sort(), ['mcpOrigin', 'modelConfigured', 'origin', 'type', 'unlockFile', 'version']);
+        assert.equal(readiness.type, 'context-router.local-ui.ready');
+        for (const origin of [readiness.origin, readiness.mcpOrigin]) assert.match(origin, /^http:\/\/127\.0\.0\.1:[1-9][0-9]{0,4}(?:\/mcp)?$/u);
+        assert.equal(path.dirname(readiness.unlockFile), path.join(root, 'exports'));
+        readiness = { host: '127.0.0.1', modelConfigured: readiness.modelConfigured,
+          port: Number(new URL(readiness.mcpOrigin).port), type: 'context-router.local-mcp.ready', version: readiness.version };
+      }
       assert.deepEqual(Object.keys(readiness).sort(), [
         'host',
         'modelConfigured',
@@ -438,7 +453,7 @@ export async function runLocalMcpSmoke({
           env: buildListenerInspectionEnvironment(environment),
           signal,
         }),
-        1,
+        localUi ? 2 : 1,
       );
       const port = readiness.port,
         b = await client(port, tokens[1]);
@@ -488,11 +503,13 @@ export async function runLocalMcpSmoke({
       );
       const data = (await b('searchPreferences')).structuredContent;
       assert.equal(data.active.preferences[0].value, 'persisted');
-      assert.equal(
+      if (!localUi) assert.equal(
         (await b('smartSearchPreferences', { query: 'Synthetic' }))
           .structuredContent.matchedActivePreferences[0].value,
         'persisted',
       );
+      if (localUi) await localUi.verifyGeneration({ readiness: browserReadiness, root, generation,
+        identity: JSON.parse(identity), tokens, journal, signal, cwd, home, temporaryDirectory, readMcp: () => b('searchPreferences') });
       assert.equal(peer.counters.completions, 1);
       process.kill(
         -server.handle.child.pid,
@@ -501,11 +518,12 @@ export async function runLocalMcpSmoke({
       const result = await finish(server, generation === 1 ? 143 : 130);
       const lines = result.stdout.trim().split('\n');
       assert.equal(lines.length, 2);
-      const probe = decodeMcpSmokeProbe(lines[1]);
-      assert.equal(probe.listeners[0].port, port);
+      const probe = decodeMcpSmokeProbe(lines[1], localUi ? 2 : 1);
+      assert.ok(probe.listeners.some((listener) => listener.port === port));
       await journal.acquired(server.id, {
         identity: {
           port,
+          ...(localUi ? { uiPort: Number(new URL(browserReadiness.origin).port), listeners: probe.listeners } : {}),
           controls: probe.controls,
           connections: probe.connections,
           listenersClosed: true,
@@ -581,12 +599,7 @@ export async function runLocalMcpSmoke({
       } catch (e) {
         cleanup.push(e);
       }
-  if (created && !cleanup.length)
-    try {
-      await rm(root, { recursive: true });
-    } catch (e) {
-      cleanup.push(e);
-    }
+  await removeMcpSmokeStateAfterCleanup({ root, created, cleanup, cleanupExtension: localUi?.assertCleanup });
   try {
     await journal.cleanupFinished('local-mcp-state', {
       status: cleanup.length ? 'failed' : 'removed',

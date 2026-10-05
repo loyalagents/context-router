@@ -1,4 +1,5 @@
-import { Args, Query, Resolver } from '@nestjs/graphql';
+import { Args, Context, Query, Resolver } from '@nestjs/graphql';
+import { browserExecution, type LocalUiRequest } from '../../../../local-ui/local-ui-request';
 import { UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GqlAuthGuard } from '@common/guards/gql-auth.guard';
@@ -23,6 +24,7 @@ export class PreferenceSearchResolver {
   async smartSearchPreferences(
     @CurrentUser() user: User,
     @Args('input') input: SmartPreferenceSearchInput,
+    @Context() context?: { req?: LocalUiRequest },
   ): Promise<SmartPreferenceSearchResult> {
     const maxResults = this.configService.getOrThrow<number>(
       'mcp.tools.preferences.maxSearchResults',
@@ -36,7 +38,7 @@ export class PreferenceSearchResolver {
       locationId: input.locationId,
       includeSuggestions: input.includeSuggestions,
       maxResults,
-    });
+    }, ...(browserExecution(context?.req) ? [browserExecution(context.req)] : []));
 
     return result as SmartPreferenceSearchResult;
   }

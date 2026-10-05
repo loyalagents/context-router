@@ -1,3 +1,5 @@
+import { PostgresLocationRepository } from "./postgres-location.repository";
+import { EventTimeAudit } from "../../../modules/preferences/audit/event-sensitivity";
 import { PostgresIdentityStorage } from "./postgres-identity-storage";
 import { PostgresResetStorage } from "./postgres-reset-storage";
 import { Injectable } from "@nestjs/common";
@@ -49,6 +51,7 @@ export class PostgresStorageUnitOfWork implements StorageUnitOfWork {
             }
             return Object.freeze(closed);
           };
+          const definitions = guard(new PostgresPreferenceDefinitionRepository(client), ["create", "update", "archive", "getDefinitionById", "getDefinitionBySlug"]);
           const scope: StorageScope = Object.freeze({
             identity: guard(new PostgresIdentityStorage(client), [
               "findExact",
@@ -69,16 +72,16 @@ export class PostgresStorageUnitOfWork implements StorageUnitOfWork {
               "deleteGrants",
             ]),
             preferences: guard(new PostgresPreferenceRepository(client), [
-              "upsertActive",
+              "findActiveExact",
+          "compareAndSetActive",
+          "upsertActive",
               "upsertSuggested",
               "upsertRejected",
               "delete",
             ]),
-            definitions: guard(
-              new PostgresPreferenceDefinitionRepository(client),
-              ["create", "update", "archive"],
-            ),
-            audit: guard(new PostgresPreferenceAuditService(client), [
+            definitions,
+        locations: guard(new PostgresLocationRepository(client), ["findOne"]),
+        audit: guard(new EventTimeAudit(new PostgresPreferenceAuditService(client), definitions), [
               "record",
             ]),
           });

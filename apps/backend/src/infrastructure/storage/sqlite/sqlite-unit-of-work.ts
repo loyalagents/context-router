@@ -1,3 +1,5 @@
+import { SqliteLocationRepository } from "./sqlite-location.repository";
+import { EventTimeAudit } from "../../../modules/preferences/audit/event-sensitivity";
 import { setImmediate } from "node:timers/promises";
 import type {
   StorageUnitOfWork,
@@ -50,7 +52,8 @@ export class SqliteStorageUnitOfWork implements StorageUnitOfWork {
     };
     try {
       await connection.exec("BEGIN IMMEDIATE");
-      const scope: StorageScope = Object.freeze({
+      const definitions = guard(new SqlitePreferenceDefinitionRepository(connection), ["create", "update", "archive", "getDefinitionById", "getDefinitionBySlug"]);
+          const scope: StorageScope = Object.freeze({
         identity: guard(new SqliteIdentityStorage(connection), [
           "findExact",
           "createPrincipal",
@@ -59,16 +62,16 @@ export class SqliteStorageUnitOfWork implements StorageUnitOfWork {
           "countBindings",
         ]),
         preferences: guard(new SqlitePreferenceRepository(connection), [
+          "findActiveExact",
+          "compareAndSetActive",
           "upsertActive",
           "upsertSuggested",
           "upsertRejected",
           "delete",
         ]),
-        definitions: guard(
-          new SqlitePreferenceDefinitionRepository(connection),
-          ["create", "update", "archive"],
-        ),
-        audit: guard(new SqlitePreferenceAuditService(connection), ["record"]),
+        definitions,
+        locations: guard(new SqliteLocationRepository(connection), ["findOne"]),
+        audit: guard(new EventTimeAudit(new SqlitePreferenceAuditService(connection), definitions), ["record"]),
         reset: guard(new SqliteResetStorage(connection), [
           "deletePreferences",
           "appendMemoryResetAudit",

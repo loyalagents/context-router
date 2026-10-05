@@ -128,3 +128,20 @@ test("default backend test routes build compiled CLI and workers without droppin
     ["unit", "local-database", "integration", "e2e"],
   );
 });
+
+test('local UI consumers select both build owners and pinned Chromium coverage', async () => {
+  const workflow = parse(await readFile(ciPath, 'utf8'));
+  const filters = parse(workflow.jobs.changes.steps.find((s) => s.id === 'filter').with.filters);
+  assert.ok(selectedFilters(filters, 'apps/web/local-ui.mjs').includes('backend'));
+  assert.ok(selectedFilters(filters, 'apps/backend/src/local-ui/local-ui-http.ts').includes('frontend'));
+  const steps = workflow.jobs['frontend-build'].steps;
+  const commands = steps.map((s) => s.run);
+  assert.ok(commands.indexOf('pnpm --filter backend build') < commands.indexOf('pnpm build'));
+  assert.ok(commands.includes('pnpm test:local-ui'));
+  for (const [file, job] of [[ciPath, 'frontend-build'], [dedicatedPath, 'local-migration-baseline']]) {
+    const browserSteps = parse(await readFile(file, 'utf8')).jobs[job].steps;
+    const install = browserSteps.find((s) => s.run === 'pnpm --filter web exec playwright install --with-deps chromium');
+    assert.ok(install); assert.equal(install['timeout-minutes'], 10);
+    assert.equal(install.env.PLAYWRIGHT_BROWSERS_PATH, '${{ runner.temp }}/playwright');
+  }
+});

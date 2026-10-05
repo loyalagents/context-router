@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth0 } from '@/lib/auth0';
+import { getAuth0 } from '@/lib/auth0';
 import { getClient } from '@/lib/apollo-client';
 import { gql } from '@apollo/client';
 
@@ -16,7 +16,7 @@ interface AskVertexAIResponse {
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await auth0.getSession();
+    const session = await getAuth0().getSession();
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     // Get access token
     let accessToken;
     try {
-      const tokenResult = await auth0.getAccessToken();
+      const tokenResult = await getAuth0().getAccessToken();
       accessToken = tokenResult?.token;
     } catch (e) {
       console.error('Failed to get access token:', e);

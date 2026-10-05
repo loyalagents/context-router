@@ -1069,6 +1069,17 @@ export function diffGraphqlSignatures(previous, current) {
   };
 }
 
+/** Exact LM-008 expansion: no legacy query/mutation is retired in Step08. */
+export function validateGraphqlRootSurface(signature) {
+  const expectedQueries = ["activePreferences", "askVertexAI", "exportPreferenceSchema", "location", "locations", "locationsByType", "mcpAccessHistory", "me", "myPermissionGrants", "preference", "preferenceAuditHistory", "preferenceCatalog", "smartSearchPreferences", "suggestedPreferences", "user"];
+  const expectedMutations = ["acceptSuggestedPreference", "applyPreferenceSuggestions", "applyPreferenceSuggestionsV2", "archivePreferenceDefinition", "clearMyHistory", "createLocation", "createPreferenceDefinition", "deleteLocation", "deletePreference", "rejectSuggestedPreference", "removePermissionGrant", "resetMyMemory", "setPermissionGrant", "setPreference", "suggestPreference", "updateLocation", "updatePreferenceDefinition"];
+  const actualQueries = Object.keys(signature.types.Query?.fields ?? {}).sort();
+  const actualMutations = Object.keys(signature.types.Mutation?.fields ?? {}).sort();
+  return JSON.stringify(actualQueries) === JSON.stringify(expectedQueries) &&
+    JSON.stringify(actualMutations) === JSON.stringify(expectedMutations) && signature.roots.subscription === null
+    ? [] : ['GraphQL roots must retain the exact 15 queries and 17 reviewed mutations, with no subscription'];
+}
+
 function collectOperationRootFields(document, operation) {
   const fields = new Set();
   const fragments = new Map(
@@ -3319,19 +3330,7 @@ async function run() {
   if (!jsonEqual(graphqlSignature, expectedGraphql)) {
     errors.push("GraphQL semantic signature differs from the baseline fixture");
   }
-  const queryFields = Object.keys(graphqlSignature.types.Query?.fields ?? {});
-  const mutationFields = Object.keys(
-    graphqlSignature.types.Mutation?.fields ?? {},
-  );
-  if (
-    queryFields.length !== 15 ||
-    mutationFields.length !== 15 ||
-    graphqlSignature.roots.subscription !== null
-  ) {
-    errors.push(
-      `GraphQL roots must contain 15 queries, 15 mutations, and no subscription; found ${queryFields.length}/${mutationFields.length}/${graphqlSignature.roots.subscription ?? "none"}`,
-    );
-  }
+  errors.push(...validateGraphqlRootSurface(graphqlSignature));
 
   const catalog = await readJson(
     "apps/backend/src/config/preferences.catalog.json",

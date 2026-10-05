@@ -7,6 +7,7 @@ import { DocumentAnalysisResolver } from './document-analysis.resolver';
 import { PreferenceExtractionService } from './preference-extraction.service';
 import { PreferenceModule } from '../preference/preference.module';
 import { PreferenceDefinitionModule } from '../preference-definition/preference-definition.module';
+import { ReviewedSuggestionService } from './reviewed-suggestion.service';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { PreferenceDefinitionModule } from '../preference-definition/preference-
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         limits: {
+          ...configService.get<Record<string, number>>('documentUpload.multipartLimits'),
           fileSize: configService.getOrThrow<number>(
             'documentUpload.maxFileSizeBytes',
           ),
@@ -28,6 +30,7 @@ import { PreferenceDefinitionModule } from '../preference-definition/preference-
     DocumentAnalysisService,
     DocumentAnalysisResolver,
     PreferenceExtractionService,
+    ReviewedSuggestionService,
   ],
   exports: [DocumentAnalysisService],
 })

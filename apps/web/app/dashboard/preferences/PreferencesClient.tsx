@@ -7,7 +7,9 @@ import {
   ApolloClient,
   InMemoryCache,
 } from '@apollo/experimental-nextjs-app-support';
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
+import PreferenceSearch from '@/components/local/PreferenceSearch';
 import DocumentUpload from './components/DocumentUpload';
 import SuggestionsList from './components/SuggestionsList';
 import PreferenceItem from './components/PreferenceItem';
@@ -32,6 +34,7 @@ function createApolloClient(accessToken: string) {
   return new ApolloClient({
     link: new HttpLink({
       uri: GRAPHQL_URL,
+      fetch: authenticatedFetch,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -164,8 +167,7 @@ function PreferencesContent({
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Import from Documents</h2>
           <p className="text-gray-600 text-sm mb-4">
-            Upload documents (PDFs, images, or text files) and we&apos;ll extract preferences
-            for you to review.
+            Import supported documents to extract preference proposals for you to review.
           </p>
           {uploadBatch ? (
             <SuggestionsList
@@ -181,6 +183,8 @@ function PreferencesContent({
             />
           )}
         </div>
+
+        <PreferenceSearch preferences={activePreferences} definitions={preferenceDefinitions} />
 
         <ManualPreferenceForm
           accessToken={accessToken}

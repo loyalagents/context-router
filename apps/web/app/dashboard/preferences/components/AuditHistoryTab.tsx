@@ -1,5 +1,7 @@
 'use client';
 
+import { authenticatedFetch } from '@/lib/authenticated-fetch';
+
 import { gql } from '@apollo/client';
 import { print } from 'graphql';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,6 +31,7 @@ const AUDIT_HISTORY_QUERY = gql`
         beforeState
         afterState
         metadata
+        sensitivity
       }
     }
   }
@@ -126,6 +129,7 @@ interface AuditHistoryTabProps {
     isSensitive: boolean;
   }>;
   shouldLoad: boolean;
+  invalidationSignal?: AbortSignal;
   showHeader?: boolean;
 }
 
@@ -190,11 +194,13 @@ function sanitizeFilters(filters: HistoryFilters) {
 async function fetchAuditHistory(
   accessToken: string,
   input: Record<string, unknown>,
+  signal?: AbortSignal,
 ): Promise<AuditHistoryPage> {
   // Keep this request fetch-based to match the existing dashboard/preferences GraphQL
   // request convention rather than mixing raw fetch and Apollo hooks in the same UI area.
-  const response = await fetch(GRAPHQL_ENDPOINT, {
+  const response = await authenticatedFetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
+    signal,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
@@ -218,6 +224,7 @@ export default function AuditHistoryTab({
   accessToken,
   preferenceDefinitions,
   shouldLoad,
+  invalidationSignal,
   showHeader = true,
 }: AuditHistoryTabProps) {
   const [draftFilters, setDraftFilters] = useState<HistoryFilters>(DEFAULT_FILTERS);
@@ -236,19 +243,13 @@ export default function AuditHistoryTab({
     cursor: null,
   });
   const requestVersionRef = useRef(0);
+  const pendingRef = useRef<AbortController | null>(null);
+  useEffect(() => () => { requestVersionRef.current++; pendingRef.current?.abort(); }, []);
 
   const sanitizedAppliedFilters = useMemo(
     () => sanitizeFilters(appliedFilters),
     [appliedFilters],
   );
-
-  const sensitiveSlugs = useMemo(() => {
-    return new Set(
-      preferenceDefinitions
-        .filter((definition) => definition.isSensitive)
-        .map((definition) => definition.slug),
-    );
-  }, [preferenceDefinitions]);
 
   const activeFilterChips = useMemo(() => {
     const chips: Array<{ key: keyof HistoryFilters; label: string; value: string }> = [];
@@ -317,6 +318,9 @@ export default function AuditHistoryTab({
   }, [sanitizedAppliedFilters]);
 
   const loadHistory = useCallback(async (reset: boolean, cursor: string | null = null) => {
+    pendingRef.current?.abort();
+    const controller = new AbortController(); pendingRef.current = controller;
+    const signal = invalidationSignal ? AbortSignal.any([invalidationSignal, controller.signal]) : controller.signal;
     const requestVersion = requestVersionRef.current + 1;
     requestVersionRef.current = requestVersion;
     lastRequestRef.current = { reset, cursor };
@@ -362,9 +366,9 @@ export default function AuditHistoryTab({
         input.occurredTo = new Date(sanitizedAppliedFilters.occurredTo).toISOString();
       }
 
-      const page = await fetchAuditHistory(accessToken, input);
+      const page = await fetchAuditHistory(accessToken, input, signal);
 
-      if (requestVersion !== requestVersionRef.current) {
+      if (signal.aborted || requestVersion !== requestVersionRef.current) {
         return;
       }
 
@@ -378,18 +382,18 @@ export default function AuditHistoryTab({
         setExpandedIds({});
       }
     } catch (loadError) {
-      if (requestVersion === requestVersionRef.current) {
+      if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setError(
           loadError instanceof Error ? loadError.message : 'Failed to load audit history.',
         );
       }
     } finally {
-      if (requestVersion === requestVersionRef.current) {
+      if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setIsLoadingInitial(false);
         setIsLoadingMore(false);
       }
     }
-  }, [accessToken, sanitizedAppliedFilters]);
+  }, [accessToken, sanitizedAppliedFilters, invalidationSignal]);
 
   useEffect(() => {
     if (!shouldLoad) {
@@ -430,7 +434,7 @@ export default function AuditHistoryTab({
             <div>
               <h2 className="text-lg font-semibold">Audit History</h2>
               <p className="text-sm text-gray-600 mt-1">
-                Review the append-only history of preference and definition changes.
+                Review preference and definition changes retained until you clear history.
               </p>
             </div>
           ) : (
@@ -675,13 +679,14 @@ export default function AuditHistoryTab({
           <div className="divide-y divide-gray-200">
             {items.map((item) => {
               const isExpanded = Boolean(expandedIds[item.id]);
-              const isSensitive = sensitiveSlugs.has(item.subjectSlug);
+              const isSensitive = item.sensitivity !== 'NON_SENSITIVE';
 
               return (
                 <div key={item.id} className="p-4 sm:p-6">
                   <button
                     type="button"
                     onClick={() => toggleExpanded(item.id)}
+                    aria-expanded={isExpanded}
                     className="w-full text-left"
                   >
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -703,7 +708,7 @@ export default function AuditHistoryTab({
                           </span>
                           {isSensitive && !showSensitiveValues && (
                             <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
-                              Sensitive
+                              {item.sensitivity === 'SENSITIVE' ? 'Sensitive at event time' : 'Unknown sensitivity'}
                             </span>
                           )}
                         </div>
@@ -749,7 +754,7 @@ export default function AuditHistoryTab({
                     <div className="mt-5 space-y-4">
                       {isSensitive && !showSensitiveValues ? (
                         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                          This event references a live sensitive definition. Turn on “Show
+                          This event was sensitive when recorded, or its historical classification is unknown. Turn on “Show
                           sensitive values” to view stored payload details.
                         </div>
                       ) : (

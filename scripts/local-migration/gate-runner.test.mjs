@@ -848,7 +848,7 @@ test("decision replacement evidence resolves only exact accepted repository reco
   }
 });
 
-test("approved command policy rejects modes and phases outside the exact five-mode matrix", async () => {
+test("approved command policy rejects modes and phases outside the exact six-mode matrix", async () => {
   const manifest = JSON.parse(
     await readFile(
       new URL("./gate-phases.json", import.meta.url),
@@ -872,7 +872,7 @@ test("approved command policy rejects modes and phases outside the exact five-mo
     predecessors: [injected.phases.at(-1).id],
   });
   const errors = validateApprovedPhaseCommands(injected);
-  assert.ok(errors.some((error) => error.includes("exactly hosted-baseline, local-identity-preview, local-database-preview, local-model-preview, and local-mcp")));
+  assert.ok(errors.some((error) => error.includes("exactly hosted-baseline, local-identity-preview, local-database-preview, local-model-preview, local-mcp, and local-ui")));
   assert.ok(errors.some((error) => error.includes("outside the approved")));
 });
 

@@ -32,7 +32,9 @@ describe("PostgreSQL transaction capability ownership", () => {
     const row = await unit.run(async (scope) => {
       captured = scope;
       expect(Object.keys(scope.preferences).sort()).toEqual([
+        "compareAndSetActive",
         "delete",
+        "findActiveExact",
         "upsertActive",
         "upsertRejected",
         "upsertSuggested",
@@ -40,9 +42,12 @@ describe("PostgreSQL transaction capability ownership", () => {
       expect(Object.keys(scope.definitions).sort()).toEqual([
         "archive",
         "create",
+        "getDefinitionById",
+        "getDefinitionBySlug",
         "update",
       ]);
       expect(Object.keys(scope.audit)).toEqual(["record"]);
+      expect(Object.keys(scope.locations)).toEqual(["findOne"]);
       for (const facet of Object.values(scope)) {
         expect(Object.isFrozen(facet)).toBe(true);
         expect(Reflect.get(facet, "prisma")).toBeUndefined();
@@ -74,6 +79,11 @@ describe("PostgreSQL transaction capability ownership", () => {
     );
     await expect(captured.identity.findExact({} as never)).rejects.toBeInstanceOf(StorageScopeExpiredError);
     await expect(captured.reset.deletePreferences(userId)).rejects.toBeInstanceOf(StorageScopeExpiredError);
+    await expect(captured.preferences.findActiveExact({} as never)).rejects.toBeInstanceOf(StorageScopeExpiredError);
+    await expect(captured.preferences.compareAndSetActive({} as never, null, null, {} as never, {} as never)).rejects.toBeInstanceOf(StorageScopeExpiredError);
+    await expect(captured.definitions.getDefinitionById('expired')).rejects.toBeInstanceOf(StorageScopeExpiredError);
+    await expect(captured.definitions.getDefinitionBySlug('expired', 'owner')).rejects.toBeInstanceOf(StorageScopeExpiredError);
+    await expect(captured.locations.findOne('expired')).rejects.toBeInstanceOf(StorageScopeExpiredError);
     expect(await db.preference.count()).toBe(1);
   });
 
