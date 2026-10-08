@@ -484,3 +484,28 @@ restart coverage proves later CLI admission. All 50 portable tests, all 179 nati
 tests (zero skips, 265.195 s), Markdown links and the standalone contract baseline
 passed. Clean-commit package/installed smoke, full local gate and exact-head CI receipts
 are recorded on PR #168. Earlier failed runs are retained, not replaced by passes.
+
+### CI Saturation Fixture Follow-up (2026-10-07)
+
+At `9e2abbd`, Candidate 07 packaging and its eleven-phase installed non-AI smoke
+passed and received independent evidence approval. Standard CI passed seven jobs
+but failed the existing saturation test (178/179 native tests): after resuming
+stdout at 2.6 seconds, the guardian did not exit by the fixture deadline. A
+host-dependent buffer-fill/timer interleaving is the inferred cause, not a measured
+buffer size. Root changed only test synchronization: observe exact process `exit`
+while output stays paused, fail at fifteen seconds, then resume in `finally` so
+`close` can finish. Exact normal exit 1, failed quiescence and relaunch assertions
+remain, as do the independent queue/deadline test and all product limits.
+
+`/root/review_shutdown_revision` independently approved the plan and implementation
+at test SHA-256 `f83297fed4c312a46f167bcb54a82c4f3d0c42a9a0e61d063ab4b3105e2705f8`.
+All eight targeted tests passed (17.159 s), followed by all 179 native tests with
+zero skips (261.049 s). Earlier source approvals carry forward.
+Root gracefully cancelled the superseded local gate during phase eleven before
+tracked edits. Its retained summary records cancellation, caller integrity true
+and a SIGINT cleanup/evidence error; the external summary destination had not been
+precreated. The canonical retained resource journals show every owned resource
+closed/exited/removed, with no recovery required; the exact Docker ID was confirmed
+absent. This cancelled run is not a passing gate. Candidate 07 receipts and the CI
+failure remain historical. Final native, rebuilt candidate, installed smoke, full
+local gate and final-head CI receipts are tracked on PR #168.

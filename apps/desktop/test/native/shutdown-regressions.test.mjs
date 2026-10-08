@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import path from 'node:path';
+import {once} from 'node:events';
 import {ended} from '../fixtures/supervisor-fixture.mjs';
 import {editedFixture,replace,journal} from '../fixtures/revision-fixture.mjs';
 
@@ -11,8 +12,13 @@ test('ready diagnostic failure is failed quiescence rather than malformed applic
 });
 test('shell output saturation does not prevent child drain',async t=>{
   const f=await editedFixture(t,'normal',runtime=>replace(path.join(runtime,'application.mjs'),"if(cap.role==='application'", "if(command==='unlock')void(async()=>{for(let i=0;i<10000&&!control.signal.aborted;i++){await control.send('model-status',{state:'busy'});await new Promise(r=>setTimeout(r,1));}})();if(cap.role==='application'"));
-  const run=f.launch(),ready=await run.event('ready');run.child.stdout.pause();run.send('unlock',ready.generation);await new Promise(r=>setTimeout(r,2600));run.child.stdout.resume();
-  assert.equal((await ended(run.child))[0],1);assert.equal((await journal(f)).outcome,'failed');await relaunch(f);
+  const run=f.launch(),ready=await run.event('ready'),exited=once(run.child,'exit');let timer;
+  run.child.stdout.pause();run.send('unlock',ready.generation);
+  // Buffer capacity/timer scheduling vary by host. Keep pressure until exit;
+  // close waits for unread stdout, so observe exit before resuming the reader.
+  try{await Promise.race([exited,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('saturated guardian exit deadline')),15000);})]);}
+  finally{clearTimeout(timer);run.child.stdout.resume();}
+  assert.deepEqual(await ended(run.child),[1,null]);assert.equal((await journal(f)).outcome,'failed');await relaunch(f);
 });
 test('lost shell output does not discard a drained application while cancelling download',async t=>{
   const f=await editedFixture(t,'download',runtime=>replace(path.join(runtime,'application.mjs'),'await control.stopped;await control.send','await control.stopped;await new Promise(r=>setTimeout(r,200));await control.send'));
