@@ -1,6 +1,7 @@
 #import "supervisor.h"
 #import "process.h"
 #import "diagnostics.h"
+#import "unlock-file.h"
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
@@ -42,7 +43,6 @@ static void common(NSDictionary *record,NSString *generation){if(!CRInteger(reco
 static void unlock(NSDictionary *record,NSString *exports){
   NSString *file=record[@"unlockFile"];
   if(![file isKindOfClass:[NSString class]]||![file.stringByDeletingLastPathComponent isEqual:exports]||!CRPattern(file.lastPathComponent,@"unlock-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\\.token"))CRFail();
-  (void)CRPrivatePin(file,NO);
 }
 static void origin(id value,NSInteger requested,BOOL mcp){
   NSString *expression=mcp?@"http://127\\.0\\.0\\.1:[1-9][0-9]{0,4}/mcp":@"http://127\\.0\\.0\\.1:[1-9][0-9]{0,4}";
@@ -95,6 +95,8 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
               if(ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"mcpOrigin",@"unlockFile",@"modelEnabled"])||![record[@"modelEnabled"] isEqual:prepared[@"modelEnabled"]])CRFail();
               origin(record[@"origin"],uiPort,NO);origin(record[@"mcpOrigin"],mcpPort,YES);unlock(record,exports);ready=YES;
               if(stopping)continue;
+              // Readiness survives expiry of the initial code; the menu can request another.
+              (void)CRUnlockFileAvailable(record[@"unlockFile"]);
               @try{CRDiagnostic(owner,@"ready");}@catch(NSException *e){(void)e;failed=YES;stopping=YES;}
               if(stopping)continue;
               emit(output,generation,@"ready",@{@"origin":record[@"origin"],@"mcpOrigin":record[@"mcpOrigin"],@"unlockFile":record[@"unlockFile"],@"modelEnabled":record[@"modelEnabled"]});
@@ -103,6 +105,7 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
             }else if(child==app&&[type isEqual:@"unlock"]){
               if(!ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"unlockFile"]))CRFail();origin(record[@"origin"],uiPort,NO);unlock(record,exports);
               if(stopping)continue;
+              if(!CRUnlockFileAvailable(record[@"unlockFile"]))continue;
               emit(output,generation,@"unlock",@{@"origin":record[@"origin"],@"unlockFile":record[@"unlockFile"]});
             }else if(child==app&&[type isEqual:@"model-status"]){
               if(!ready||!CRExact(record,@[@"version",@"generation",@"type",@"state"])||![@[@"available",@"busy",@"unavailable",@"loading"] containsObject:record[@"state"]])CRFail();if(!stopping)emit(output,generation,@"model-status",@{@"state":record[@"state"]});

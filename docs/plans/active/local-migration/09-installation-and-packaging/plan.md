@@ -102,6 +102,46 @@ Each checkpoint has targeted tests. Existing tests remain intact; new fixtures
 cover the missed transitions. No model inference/download or human/signing result
 is inferred from these fixtures; the separately proposed live bounds still apply.
 
+### Re-review lifecycle corrections
+
+The user authorized these corrections on 2026-10-07 after N1–N3 were reproduced
+against Candidate06 (`9b9c5ab`). Root remains sole writer; affected independent
+reviewers are requested Astra `xhigh`, with serving settings unobservable.
+
+1. **Ephemeral unlock delivery:** retain exact generation, shape, origin and
+   export-path checks for every application record, including during stopping.
+   Skip file delivery checks for discarded late records. While running, a missing
+   token is an expired/replaced delivery, not malformed drain evidence. Drop stale
+   unlock events; retain readiness even if its initial token has disappeared so
+   the menu can request a fresh code. Apply the same missing-file handling in the
+   menu, which still validates existing files and rechecks before reading secrets.
+   Queued menu records retain wire/path validation during Quit/Restart but never
+   pin/read/display tokens then; deferred show/copy callbacks recheck lifecycle.
+   Missing-token reads clear only token display/copy state, preserving readiness
+   and the ability to request a replacement code.
+   A narrow shared unlock-file availability helper preserves strict private-file
+   validation and tolerates only observed ENOENT; persistent metadata validation
+   is unchanged. Tests cover deletion during close/startup, replacement, menu
+   delivery, unsafe files and malformed late records.
+2. **Direct child signals:** distinguish an orderly signal request from explicit
+   quit, EOF and protocol failure. SIGINT/SIGTERM/SIGHUP through the managed child
+   handler may acknowledge cancellation only after native-owner drain and normal
+   matching exit. Signals cannot upgrade prior EOF/failure or incomplete input
+   into successful completion. Tests use actual managed/maintenance/prepare-store
+   entrypoints with controlled backend work, both child-only and paired signals,
+   plus retained broken-channel/forced-exit negatives and real SQLite recovery.
+3. **Operator clarity and qualification:** retain strict root/models inventory;
+   document the exact Finder `.DS_Store` refusal and narrowly scoped offline
+   remedy, with a nonmutating-refusal regression. Correct the stale signal test
+   comment, conservative late-cancellation wording, crash/I/O cleanup limits and
+   journal-operation rollback rule. Label Candidate06 as historical once code
+   changes; bind the rebuilt candidate, installed smoke, full local gate and both
+   CI workflows to the new clean commit on the existing draft PR.
+
+Each checkpoint ends with targeted tests; affected plan review precedes product
+edits, and implementation review precedes qualification. No live inference,
+download, human acceptance, merge or distribution is added by these corrections.
+
 ### Retained consumer contracts
 
 Preserve all GraphQL, browser REST and MCP tool/resource payloads and credential

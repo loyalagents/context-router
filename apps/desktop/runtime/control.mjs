@@ -13,6 +13,7 @@ export class ControlProtocol {
   #ready = false;
   #failed = false;
   #quitRequested = false;
+  #signalRequested = false;
   #onStop;
   #onCommand;
   constructor(generation, { onStop, onCommand }) {
@@ -26,6 +27,12 @@ export class ControlProtocol {
   get signal() { return this.#abort.signal; }
   get failed() { return this.#failed; }
   get quitRequested() { return this.#quitRequested; }
+  get orderlyStopRequested() { return !this.failed && (this.#quitRequested || this.#signalRequested); }
+  requestSignalStop() {
+    // A later signal cannot upgrade EOF, protocol failure or an incomplete frame.
+    if (this.signal.aborted) return;
+    this.#signalRequested = true; this.end();
+  }
   push(bytes) {
     if (this.signal.aborted) return;
     try {

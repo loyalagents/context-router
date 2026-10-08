@@ -7,7 +7,7 @@ try{
 finally{
   authority.revokeManagedAdmission();await nativeOwners.waitForNativeOwners();
   try{
-    if(!control||control.failed||(control.signal.aborted&&!control.quitRequested))throw new Error();
+    if(!control||control.failed||(control.signal.aborted&&!control.orderlyStopRequested))throw new Error();
     if(control.signal.aborted){prepared=undefined;process.exitCode=1;}
     if(prepared)await control.send('store-prepared',{targetId:prepared.targetId});
     else await control.send('store-prepare-failed',{exitCode:1});

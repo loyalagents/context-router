@@ -32,8 +32,8 @@ acceptance with explicitly accepted evidence limits. [PR #167](https://github.co
 was human-merged at `7328ceea63a784577594d52af18062be8b583855`; final-head
 checks are recorded there. Step 09 installation and packaging is active after
 its passing clean-base gate. An unsigned managed Mac candidate is implemented;
-independent reviews, installed non-AI qualification and the full local gate passed.
-Exact-head CI is tracked on draft [PR #168](https://github.com/loyalagents/context-router/pull/168); live-model and
+revision-bound independent reviews, installed non-AI qualification, full local gate
+and exact-head CI receipts are tracked on draft [PR #168](https://github.com/loyalagents/context-router/pull/168); live-model and
 human acceptance remain pending. See the
 [installed Mac runbook](docs/useful/INSTALLED_MAC_APP.md).
 Small [UI usability improvements](docs/plans/active/ui-usability/README.md) are

@@ -2,6 +2,7 @@
 #import "menu.h"
 #import "maintenance.h"
 #import "process.h"
+#import "unlock-file.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
@@ -60,10 +61,12 @@
 - (void)origin:(id)value {
   if(!CRPattern(value,@"http://127\\.0\\.0\\.1:[1-9][0-9]{0,4}"))CRFail();NSURL *url=[NSURL URLWithString:value];if(url.port.integerValue>65535)CRFail();_origin=value;
 }
-- (void)unlock:(id)value {
+- (BOOL)unlock:(id)value {
   NSString *exports=[[_root stringByAppendingPathComponent:@"exports"] stringByAppendingPathComponent:_generation];
   if(![value isKindOfClass:[NSString class]]||![[value stringByDeletingLastPathComponent] isEqual:exports]||!CRPattern([value lastPathComponent],@"unlock-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\\.token"))CRFail();
-  (void)CRPrivatePin(exports,YES);(void)CRPrivatePin(value,NO);_unlockFile=value;_unlockUntil=CRNow()+300;
+  if(_stopping||_quitting)return NO;
+  if(!CRUnlockFileAvailable(value)){_unlockFile=nil;_unlockUntil=0;return NO;}
+  _unlockFile=value;_unlockUntil=CRNow()+300;return YES;
 }
 - (void)record:(NSDictionary *)record {
   if(!CRInteger(record[@"version"],1,1)||!CRPattern(record[@"generation"],@"[a-f0-9]{32}"))CRFail();NSString *type=record[@"type"];
@@ -74,12 +77,12 @@
   if(!_generation||![record[@"generation"] isEqual:_generation]||_stopped)CRFail();
   if([type isEqual:@"ready"]){
     if(_ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"mcpOrigin",@"unlockFile",@"modelEnabled"])||CFGetTypeID((__bridge CFTypeRef)record[@"modelEnabled"])!=CFBooleanGetTypeID()||!CRPattern(record[@"mcpOrigin"],@"http://127\\.0\\.0\\.1:[1-9][0-9]{0,4}/mcp")||[NSURL URLWithString:record[@"mcpOrigin"]].port.integerValue>65535)CRFail();
-    [self origin:record[@"origin"]];[self unlock:record[@"unlockFile"]];_ready=YES;_label.title=[record[@"modelEnabled"] boolValue]?@"Dashboard ready · AI loading":@"Dashboard ready · model not installed";
-    if(_sleepInvalidated)[self send:@"model-unavailable"];
+    [self origin:record[@"origin"]];[self unlock:record[@"unlockFile"]];_ready=YES;
+    if(!_stopping&&!_quitting){_label.title=[record[@"modelEnabled"] boolValue]?@"Dashboard ready · AI loading":@"Dashboard ready · model not installed";if(_sleepInvalidated)[self send:@"model-unavailable"];}
     if(_quitting){_stopping=YES;[self send:@"quit"];}
-    else if(_firstOpen){_firstOpen=NO;[self openDashboard:nil];}
+    else if(!_stopping&&_firstOpen){_firstOpen=NO;[self openDashboard:nil];}
   }else if([type isEqual:@"unlock"]){
-    if(!_ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"unlockFile"])||![_origin isEqual:record[@"origin"]])CRFail();[self unlock:record[@"unlockFile"]];[self performSelector:@selector(showUnlock) withObject:nil afterDelay:0];
+    if(!_ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"unlockFile"])||![_origin isEqual:record[@"origin"]])CRFail();if([self unlock:record[@"unlockFile"]])[self performSelector:@selector(showUnlock) withObject:nil afterDelay:0];
   }else if([type isEqual:@"model-status"]){
     if(!CRExact(record,@[@"version",@"generation",@"type",@"state"])||![@[@"available",@"busy",@"loading",@"unavailable"] containsObject:record[@"state"]])CRFail();
     _label.title=[record[@"state"] isEqual:@"available"]?@"Dashboard ready · AI available":[record[@"state"] isEqual:@"busy"]?@"Dashboard ready · AI working":[record[@"state"] isEqual:@"loading"]?@"Dashboard ready · AI loading":@"Dashboard ready · restart required for AI";
@@ -101,10 +104,11 @@
   [self update];
 }
 - (NSString *)code {
-  if(!_ready||!_unlockFile||CRNow()>=_unlockUntil)CRFail();NSString *exports=_unlockFile.stringByDeletingLastPathComponent;(void)CRPrivatePin(exports,YES);
+  if(!_ready||_stopping||_quitting||!_unlockFile||CRNow()>=_unlockUntil)CRFail();NSString *exports=_unlockFile.stringByDeletingLastPathComponent;(void)CRPrivatePin(exports,YES);
   NSString *code=[[NSString alloc] initWithData:CRReadData(_unlockFile,1024,YES) encoding:NSUTF8StringEncoding];if(!CRPattern(code,@"cr_ui_unlock_[A-Za-z0-9_-]{43}\\n"))CRFail();return [code substringToIndex:code.length-1];
 }
 - (void)showUnlock {
+  if(_stopping||_quitting)return;
   @try{NSAlert *alert=[NSAlert new];alert.messageText=@"Unlock Context Router";alert.informativeText=@"Paste this one-use code into the dashboard. It expires after five minutes.";
     NSTextField *field=[[NSTextField alloc] initWithFrame:NSMakeRect(0,0,460,44)];field.stringValue=[self code];field.editable=NO;field.selectable=YES;alert.accessoryView=field;[alert addButtonWithTitle:@"Copy code"];[alert addButtonWithTitle:@"Done"];
     [NSApp activateIgnoringOtherApps:YES];if([alert runModal]==NSAlertFirstButtonReturn)[self copyUnlock:nil];field.stringValue=@"";
@@ -112,7 +116,7 @@
 }
 - (void)openDashboard:(id)sender {(void)sender;if(_ready&&_origin)[NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:_origin]];}
 - (void)newUnlock:(id)sender {(void)sender;if(_ready)[self send:@"unlock"];}
-- (void)copyUnlock:(id)sender {(void)sender;@try{NSString *code=[self code];[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:code forType:NSPasteboardTypeString];}@catch(NSException *e){(void)e;_unlockFile=nil;_label.title=@"Request a new unlock code";}[self update];}
+- (void)copyUnlock:(id)sender {(void)sender;if(_stopping||_quitting)return;@try{NSString *code=[self code];[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:code forType:NSPasteboardTypeString];}@catch(NSException *e){(void)e;_unlockFile=nil;_label.title=@"Request a new unlock code";}[self update];}
 - (void)downloadModel:(id)sender {
   (void)sender;NSAlert *alert=[NSAlert new];alert.messageText=@"Download Qwen3.5 9B?";alert.informativeText=@"Download the pinned Q4_K_M model (5,680,522,464 bytes, about 5.7 GB) from unsloth on Hugging Face for local AI. Allow at least 6.8 GB free space. The dashboard stays available. A runtime restart is required afterward.";[alert addButtonWithTitle:@"Download"];[alert addButtonWithTitle:@"Cancel"];
   if([alert runModal]==NSAlertFirstButtonReturn&&_ready&&!_stopping){_download=YES;[self send:@"download"];}[self update];

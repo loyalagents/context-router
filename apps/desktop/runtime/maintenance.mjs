@@ -27,7 +27,7 @@ try{
 }catch{exitCode=1;}
 finally{
   authority.revokeManagedAdmission();await nativeOwners.waitForNativeOwners();
-  try{if(!control||control.failed||(control.signal.aborted&&!control.quitRequested))throw new Error();
+  try{if(!control||control.failed||(control.signal.aborted&&!control.orderlyStopRequested))throw new Error();
     if(control.signal.aborted)exitCode=1;await control.send('maintenance-complete',{exitCode});}catch{exitCode=1;}
   await control?.close().catch(()=>{exitCode=1;});process.exitCode=exitCode;
 }

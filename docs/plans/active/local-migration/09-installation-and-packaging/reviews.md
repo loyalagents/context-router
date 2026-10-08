@@ -437,3 +437,50 @@ required for these substantive corrections. Their final receipts and commit/arti
 bindings must be recorded on [PR #168](https://github.com/loyalagents/context-router/pull/168).
 Expanded live execution remains separately unapproved; human/signing acceptance
 is not satisfied by deterministic fixtures or CI.
+
+### External Re-review Lifecycle Corrections (2026-10-07)
+
+The user authorized fixing the confirmed N1/N2 findings and N3 operator clarity
+after root reproduced them against Candidate 06. Before product edits,
+`/root/review_shutdown_revision` approved the N1 plan including the menu delivery
+race at plan SHA-256
+`1cb8ef0a64699a5dbee4fa6795aa5afcfd0fea632764bdb872632bc21f1eaeb1`.
+`/root/review_persistence_revision` and `/root/final_compatibility` approved their
+N2/N3 mandates at the preceding plan SHA-256
+`a6b8e64ee97f88fdadc0635a31e224a82115788ff8e5831d8a9122c3d31b79cd`;
+the subsequent refinement concerned menu delivery only. All requested Astra
+`xhigh`; serving settings remain unobservable. Root remains sole writer.
+
+N1 separates strict wire validation from ephemeral token availability in the
+guardian and menu. Missing leaves are harmless only under a valid pinned export
+parent; unsafe existing files still fail. Stop-time records remain validated but
+do not read/display tokens. N2 records explicit signal cancellation separately
+from quit, EOF and failure; completion still requires native drain and matching
+normal exit, with the native maintenance proof unchanged. N3 retains strict
+inventories and documents only exact offline owned regular Finder-file removal.
+
+Candidate 06 at `9b9c5ab` completed its rebuilt installed smoke, all twelve local
+gate phases and both exact-head CI workflows. The re-review's N4 missing-evidence
+claim is therefore stale. Those receipts remain historical evidence after these
+new lifecycle changes; renewed revision-bound receipts belong on PR #168.
+
+Affected implementation approvals: `/root/review_shutdown_revision` approved N1,
+`/root/review_persistence_revision` approved N2/N3, and `/root/final_compatibility`
+approved the shared helper, documentation and compatibility delta. The complete
+21-file delta before this evidence bookkeeping had sorted `path NUL sha256 LF`
+aggregate `8d5604548a39522d4355053e87cc0cfe6865d5d7826d9372e30fe5a8bffbd4e3`.
+Unchanged earlier complete-diff coverage carries forward; no source blocker remains.
+
+Tests preceded product edits and reproduced N1/N2. The first menu fixture needed
+the missing `sys/stat.h` include. The first post-fix run exposed test markers
+inside the sealed bundle, causing correct package-refusal on relaunch; moving
+those fixture markers outside the bundle preserved the package invariant. A
+guardian availability check initially landed in the ready branch instead of the
+unlock branch; the initial-ready regression caught it and it was corrected.
+Then 35/35 targeted checks passed. Independent reviewers identified a scheduling
+assumption in the new double-unlock assertion; the corrected test accepts either
+valid delivery ordering and checks the final token. Additional actual-application
+restart coverage proves later CLI admission. All 50 portable tests, all 179 native
+tests (zero skips, 265.195 s), Markdown links and the standalone contract baseline
+passed. Clean-commit package/installed smoke, full local gate and exact-head CI receipts
+are recorded on PR #168. Earlier failed runs are retained, not replaced by passes.

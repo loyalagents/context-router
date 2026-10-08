@@ -1,6 +1,8 @@
 # Installed Mac Pilot
 
-Status: Step 09 local candidate; final qualification and human acceptance pending.
+Status: Step 09 local candidate. Revision-bound installed qualification, local gate
+and CI receipts are tracked on [draft PR #168](https://github.com/loyalagents/context-router/pull/168);
+final live-model and human acceptance remain pending.
 This is an unsigned private build, not a signed or notarized release. The declared
 pilot is MacBook Pro 18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Macs and
 native Windows/Linux are not qualified. The source/manual modes remain available.
@@ -110,8 +112,10 @@ abandoned-owner recovery is not qualified; no automatic repair is provided.
 SIGINT (Ctrl-C), SIGTERM and terminal SIGHUP request orderly cancellation of a
 running administration or setup child. A matching completion after native-owner
 drain and actual normal exit records a failed but quiescent operation, so its
-named recovery remains reachable. A completed operation can still report success
-when cancellation arrives too late. Forced termination, missing/mismatched
+named recovery remains reachable. Late cancellation can report failure after an
+operation has already made durable changes, or success after completion was
+acknowledged. Cancellation does not promise rollback: inspect the operation's
+state and use its named recovery when applicable before retrying. Forced termination, missing/mismatched
 completion, malformed private control or lost ownership still preserve uncertainty
 and block further commands. Do not delete the ownership journal to bypass this.
 
@@ -129,12 +133,28 @@ the exact same pinned model file. Unknown names, unexpected links, symlinks or
 invalid metadata cause refusal; preserve the files for diagnosis. The model's
 full size/hash verification still runs on restart. This bounded synchronous
 cleanup finishes its current operation on ordinary terminal signals; abrupt
-termination after journal publication retains an active journal and blocks
+termination or an I/O failure after journal publication can retain an active journal and block
 re-entry. It does not recover an abandoned active or uncertain owner.
 
 Candidate 05 predates this cleanup journal operation and refuses it. Use the
 revised qualified candidate after cleanup; rollback to Candidate 05 is not a
 qualified recovery procedure.
+
+### Finder Metadata Refusal
+
+Opening managed directories in Finder can create `.DS_Store`. The envelope root
+allowlist and the complete model-cleanup inventory deliberately reject that extra
+name; cleanup does not silently remove it. This refusal occurs before changing
+the owner journal or deleting download stages.
+
+After a successful **Quit Context Router**, with no installed CLI running and
+proven quiescence, inspect only the exact `.DS_Store` in `managed-v1` or its
+`models` directory. If it is a regular file owned by your user with exactly one
+hard link, remove that single Finder metadata file and retry. A symlink, directory,
+different owner, extra link or another unexpected name requires diagnosis instead.
+Do not recursively clean the envelope, edit ownership metadata, or use this remedy
+to bypass an active or uncertain journal. Keep Finder closed on these directories
+while retrying so it does not recreate the file.
 
 ## Replacement And Removal
 
@@ -146,8 +166,10 @@ or altered payloads before Node or database access. There is still a race if cod
 is modified after verification; a writable local candidate is a trusted local
 build, not a tamper-resistant distribution.
 
-Compatibility requires the supported platform, management/security epoch and
-SQLite/identity formats. The security floor lives outside code and backups and
+Compatibility requires the supported platform, management/security epoch,
+SQLite/identity formats and every persisted owner-journal operation name. An equal
+epoch alone does not make an older candidate compatible; new operation vocabulary
+must be included in future compatibility/epoch decisions. The security floor lives outside code and backups and
 cannot be lowered by reinstall or restore. Binary rollback is not database
 rollback; never launch an older source binary against managed roots.
 

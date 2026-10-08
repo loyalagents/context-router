@@ -15,7 +15,7 @@ export async function admit(role, onCommand = () => {}) {
     cap = await authority.admitManagedProcess(guardian);
     if (cap.role !== role) throw failure();
     control = await openManagedControl(cap.generation, { onStop: () => authority.revokeManagedAdmission(), onCommand });
-    for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => control.end());
+    for (const signal of ['SIGINT','SIGTERM','SIGHUP']) process.once(signal, () => control.requestSignalStop());
   } catch { authority.revokeManagedAdmission(); await control?.close().catch(() => {}); throw failure(); }
   const store = path.join(cap.envelope, 'stores', cap.storeId);
   return { cap, control, configuration: Object.freeze({ kind: 'sqlite', databaseRoot: path.join(store,'data'), stateRoot: path.join(store,'identity') }),

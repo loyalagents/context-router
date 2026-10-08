@@ -2,10 +2,10 @@
 
 - Status: active program
 - Last completed step: `08-local-ui` — [PR #167](https://github.com/loyalagents/context-router/pull/167), human-merged at `7328ceea63a784577594d52af18062be8b583855` from final tested head `e064e74b5fc30f6c3c24cee17e1c5b11d43ffa7b`; successful [standard CI](https://github.com/loyalagents/context-router/actions/runs/37255310437) and [migration gate](https://github.com/loyalagents/context-router/actions/runs/37255310441). See the [Step 08 closeout](08-local-ui/README.md) for retained evidence limits.
-- Current primary implementation step: `09-installation-and-packaging` — activated after the passing clean-base gate; P2.3 implemented, checkpoint 3 reviews/installed non-AI qualification/full local gate passed; exact-head CI tracked on the PR; live/human acceptance pending
+- Current primary implementation step: `09-installation-and-packaging` — activated after the passing clean-base gate; P2.3 implemented; revision-bound reviews/installed non-AI qualification/full local gate/exact-head CI receipts tracked on the PR; live/human acceptance pending
 - Coordinator and sole repository writer: `/root`, requested GPT-6 Astra Extra High (serving settings unobservable); existing checkout on `codex/local-migration-09-installation-and-packaging`
-- Concrete next action: verify exact-head CI on draft [PR #168](https://github.com/loyalagents/context-router/pull/168) for the reviewed [Step 09 candidate](09-installation-and-packaging/README.md) and complete pending acceptance
-- Review date: 2026-10-07 — implementation reviews, installed non-AI qualification and full local gate passed; pending acceptance remains explicit
+- Concrete next action: review revision-bound qualification receipts on draft [PR #168](https://github.com/loyalagents/context-router/pull/168) for the reviewed [Step 09 candidate](09-installation-and-packaging/README.md) and complete pending acceptance
+- Review date: 2026-10-07 — external re-review lifecycle corrections; refreshed qualification receipts tracked on the PR, pending acceptance remains explicit
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`

@@ -27,7 +27,7 @@ for(const signal of ['SIGINT','SIGTERM','SIGHUP'])test(`orderly installed CLI ${
   const run=f.launch(),ready=await run.event('ready');run.send('quit',ready.generation);await ended(run.child);
   const child=spawn(f.executable,['--root',f.envelope,'identity','rotate'],{env:{},stdio:['ignore','pipe','pipe']});child.ended=once(child,'close');child.stderr.resume();
   await once(child.stdout,'data');child.stdout.resume();child.kill(signal);const result=await ended(child);
-  // SIGHUP initially leaves an active journal: preserve that failed fixture for diagnosis.
+  // Orderly cancellation proves drain and leaves recovery reachable despite failure.
   assert.deepEqual(result,[1,null]);assert.equal((await journal(f)).outcome,'failed');
   const next=spawnSync(f.executable,['--root',f.envelope,'mcp','list'],{env:{},encoding:'utf8',timeout:6000});assert.equal(next.status,0,next.stderr);await journal(f);
 });
