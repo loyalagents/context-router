@@ -246,6 +246,14 @@
             "backend",
             "test:local-ui"
           ]
+        },
+        {
+          "argv": [
+            "pnpm",
+            "--filter",
+            "desktop",
+            "test"
+          ]
         }
       ]
     },

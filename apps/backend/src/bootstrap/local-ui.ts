@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { managedApplication } from '../infrastructure/managed/managed-admission';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { Server } from 'node:http';
 import type { LocalDatabaseConfiguration } from '../config/local-database.config';
@@ -51,7 +52,7 @@ export async function createLocalUiApplication(
     ready.state.principalId,
   );
   credentials.list(); // Existing explicit v2 upgrade remains required.
-  await seedLocalCatalog(identity.database);
+  if (!managedApplication()) await seedLocalCatalog(identity.database);
   const sessions = new LocalUiSessions({
     principalId: ready.state.principalId,
     exportRoot: options.exportRoot,

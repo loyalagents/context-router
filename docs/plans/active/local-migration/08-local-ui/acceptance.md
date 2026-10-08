@@ -7,8 +7,10 @@ migration CI, and explicitly accepted leaving the remaining observations
 unverified. Actual results and their provenance are in the
 [acceptance evidence](implementation.md#2026-10-04-user-run-browser-and-native-client-acceptance).
 The checklist below remains available for future runs; it is not a claim that
-every bullet has independent passing evidence. PR #167 remains draft and this
-disposition does not authorize merge or activate Step 09.
+every bullet has independent passing evidence. PR #167 was subsequently
+human-merged at `7328ceea63a784577594d52af18062be8b583855`. Step 09 was
+separately activated after its [passing clean-base gate](../09-installation-and-packaging/activation.md);
+this acceptance disposition itself granted neither merge nor activation authority.
 
 The main browser/client flows, selected document apply with saved-value protection,
 PDF preservation/overwrite, smart search, cancellation/manual responsiveness and

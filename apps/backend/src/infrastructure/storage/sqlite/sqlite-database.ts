@@ -38,9 +38,11 @@ import {
   unavailable,
 } from "./sqlite-files";
 import { installLike } from "./sqlite-like";
+import { assertManagedPathsAccess, assertManagedDatabasePaths, assertManagedTarget, assertManagedBackupDestination, withManagedBootstrapScratch } from "../../managed/managed-admission";
 
 export type SqliteRow = Record<string, any>;
 let nativeOwners = 0;
+const nativeOwnerWaiters = new Set<() => void>();
 /** Parent coordination also reserves ownership before starting a worker. */
 export function reserveSqliteOwner(): () => void {
   nativeOwners++;
@@ -49,11 +51,19 @@ export function reserveSqliteOwner(): () => void {
     if (held) {
       held = false;
       nativeOwners--;
+      if (nativeOwners === 0) {
+        for (const resolve of nativeOwnerWaiters) resolve();
+        nativeOwnerWaiters.clear();
+      }
     }
   };
 }
 export function requireNoNativeOwners(): void {
   if (nativeOwners !== 0) unavailable();
+}
+/** Caller must first stop admission; only actual connection close/worker exit releases ownership. */
+export function waitForNativeOwners(): Promise<void> {
+  return nativeOwners === 0 ? Promise.resolve() : new Promise(resolve => nativeOwnerWaiters.add(resolve));
 }
 /** Only call at a native provider boundary, never on application callback failures. */
 export function sqliteFailure(error: unknown): Error {
@@ -129,6 +139,7 @@ export class SqliteConnection {
   assertPinned(): void {
     if (this.lost || this.closed) unavailable();
     try {
+      assertManagedPathsAccess(this.root.path);
       assertDatabase(this.root, this.filePin);
     } catch {
       this.lost = true;
@@ -198,6 +209,7 @@ export class SqliteConnection {
   async backupTo(destination: string): Promise<void> {
     this.assertTransactionHealthy();
     try {
+      assertManagedBackupDestination(path.dirname(path.dirname(destination)));
       if (
         this.native.isTransaction ||
         !path.isAbsolute(destination) ||
@@ -256,12 +268,14 @@ export class SqliteDatabase {
     let db: DatabaseSync | undefined;
     let release: (() => void) | undefined;
     try {
+      assertManagedDatabasePaths(options.databaseRoot, options.identityRoot);
       validatePaths(options);
       const root = privateRoot(options.databaseRoot);
       const mainPin = admitFile(root);
       release = reserveSqliteOwner();
       db = driver(path.join(root.path, DATABASE_BASENAME));
       const target = validate(db, options.expectedTarget);
+      assertManagedTarget(target);
       assertDatabase(root, mainPin);
       return new SqliteDatabase(
         Object.freeze({ ...options }),
@@ -285,6 +299,7 @@ export class SqliteDatabase {
   }
   static bootstrap(options: LocalDatabasePaths): SqliteDatabase {
     try {
+      assertManagedDatabasePaths(options.databaseRoot, options.identityRoot, "bootstrap");
       validatePaths(options);
       const canonical = path.join(options.databaseRoot, DATABASE_BASENAME);
       if (exists(canonical)) return this.open(options);
@@ -363,6 +378,7 @@ export class SqliteDatabase {
   /** Explicit pre-acquire recovery; callers must have terminated AND reaped all original processes. */
   static recoverBootstrap(options: LocalDatabasePaths): "none" | "recovered" {
     try {
+      assertManagedDatabasePaths(options.databaseRoot, options.identityRoot, "recover-bootstrap");
       validatePaths(options);
       requireNoNativeOwners();
       requireEmptyIdentity(options.identityRoot);
@@ -402,20 +418,22 @@ export class SqliteDatabase {
         fs.copyFileSync(stage, copy, fs.constants.COPYFILE_EXCL);
         fs.chmodSync(copy, 0o600);
         copyPin = pin(regular(copy));
-        const checked = this.open({ ...options, databaseRoot: scratch });
-        const connection = checked.connect();
-        try {
-          if (
-            connection.get("PRAGMA integrity_check").integrity_check !== "ok" ||
-            connection.all("PRAGMA foreign_key_check").length
-          )
-            unavailable();
-          for (const table of SQLITE_TABLES)
-            if (connection.get(`SELECT count(*) n FROM ${table}`).n !== 0)
+        withManagedBootstrapScratch(options.databaseRoot, options.identityRoot, scratch, () => {
+          const checked = this.open({ ...options, databaseRoot: scratch });
+          const connection = checked.connect();
+          try {
+            if (
+              connection.get("PRAGMA integrity_check").integrity_check !== "ok" ||
+              connection.all("PRAGMA foreign_key_check").length
+            )
               unavailable();
-        } finally {
-          connection.close();
-        }
+            for (const table of SQLITE_TABLES)
+              if (connection.get(`SELECT count(*) n FROM ${table}`).n !== 0)
+                unavailable();
+          } finally {
+            connection.close();
+          }
+        });
         assertRoot(root);
         const after = regular(stage, linked ? 2 : 1);
         if (
@@ -460,17 +478,21 @@ export class SqliteDatabase {
     }
   }
   assertPinned(): void {
+    assertManagedDatabasePaths(this.paths.databaseRoot, this.paths.identityRoot);
+    assertManagedTarget(this.targetId);
     assertDatabase(this.root, this.mainPin);
   }
   connect(): SqliteConnection {
     let db: DatabaseSync | undefined;
     let release: (() => void) | undefined;
     try {
+      this.assertPinned();
       assertDatabase(this.root, this.mainPin);
       admitFile(this.root);
       release = reserveSqliteOwner();
       db = driver(path.join(this.root.path, DATABASE_BASENAME));
       validate(db, this.targetId);
+      assertManagedTarget(this.targetId);
       configure(db);
       assertDatabase(this.root, this.mainPin);
       return new SqliteConnection(db, this.root, this.mainPin, release);

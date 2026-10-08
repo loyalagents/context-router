@@ -1,6 +1,6 @@
 # Local Dashboard
 
-- Status: implemented on the Step 08 branch; independent reviews and full local gate passed; verify PR CI; manual acceptance pending
+- Status: merged in Step 08 PR #167; independent reviews, full local gate and final-head CI passed; user-run acceptance completed with explicit evidence limits
 - Read when: starting the dashboard, unlocking a browser, managing local MCP clients or testing local AI
 - Source of truth: `apps/web/local-ui.mjs`, `apps/backend/src/bootstrap/local-ui.ts`, `apps/backend/src/local-ui/`, `apps/web/components/local/`
 - Last reviewed: 2026-10-04
@@ -181,6 +181,9 @@ routing confines page HTTP/WebSocket requests; it is not an OS-wide browser or
 zero-egress claim. macOS arm64 and Linux CI evidence do not expand native model
 qualification. Windows, LAN and installers remain outside Step 08.
 
-The consolidated [human acceptance checklist](../plans/active/local-migration/08-local-ui/acceptance.md)
-remains pending until explicitly recorded. Use synthetic data and isolated client
-configuration; automation has not operated a live model or modified personal clients.
+The consolidated [human acceptance disposition](../plans/active/local-migration/08-local-ui/acceptance.md)
+records the completed 2026-10-04 user-run walkthrough and explicitly accepted
+unverified observations. Its reusable checklist does not turn those observations
+into independently passing tests. Use synthetic data and isolated client
+configuration for future runs; Step 09 managed installation and native model
+qualification require their own evidence and applicable authorization.

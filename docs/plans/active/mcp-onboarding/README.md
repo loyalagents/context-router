@@ -6,7 +6,7 @@
   explicitly makes terminal-free MCP onboarding a release requirement
 - Next action: assess actual setup friction in supported clients; choose the
   smallest useful slice before planning implementation
-- Last reviewed: 2026-10-03
+- Last reviewed: 2026-10-04
 
 This is product work outside the numbered local-first migration. It is not
 Step 09, Step 12, or a mandatory migration/release gate. The accepted deferral
@@ -15,10 +15,11 @@ is [LM-022](../local-migration/decision-log.md#lm-022-full-mcp-onboarding-is-add
 ## Starting Point And Future Options
 
 Step 07 provides CLI-managed, independently revocable client instances over
-loopback HTTP. Step 08 is planned to reuse the dashboard for listing those
+loopback HTTP. Merged Step 08 reuses the dashboard for listing those
 instances, explaining effective authority, editing narrowing grants and
-revoking access (discussion option B). Those Step 08 UI features are not yet
-implemented; credential issuance, rotation and maximum-policy changes stay CLI.
+revoking access (discussion option B). Credential issuance, rotation and
+maximum-policy changes remain CLI operations; Step 09 packages that supported
+manual administration path without activating full onboarding.
 
 Full onboarding (option C) would add UI creation, maximum-policy editing,
 rotation and secure one-time credential delivery with client-specific setup

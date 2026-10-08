@@ -1,4 +1,5 @@
 import type { LocalDatabasePaths } from "./sqlite-files";
+import type { ManagedWorkerAdmission } from "../../managed/managed-admission";
 
 /** Private, fixed operations on one owned connection; no SQL or credential crosses this channel. */
 export type CoordinationCommand =
@@ -30,6 +31,7 @@ export interface CoordinationReply {
 }
 export interface CoordinationWorkerData {
   paths: LocalDatabasePaths;
+  managedAdmission?: ManagedWorkerAdmission;
 }
 
 const exactKeys = (value: unknown, keys: string[]): boolean =>

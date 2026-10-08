@@ -45,6 +45,7 @@ const APPROVED_HOSTED_COMMANDS = new Map([
     ["pnpm", "--filter", "backend", "test:local-model"],
     ["pnpm", "--filter", "backend", "test:local-mcp"],
     ["pnpm", "--filter", "backend", "test:local-ui"],
+    ["pnpm", "--filter", "desktop", "test"],
   ]],
   ["backend-database", [
     ["pnpm", "--filter", "backend", "exec", "prisma", "migrate", "deploy"],
@@ -928,7 +929,8 @@ export function buildPhaseEnvironment(base, phaseId, values) {
   }
   // The standalone local project must prove it has no PostgreSQL setup dependency,
   // even when the caller inherited hosted fixture settings.
-  if (["test:local-database", "test:local-mcp", "test:local-ui"].some((name) => jsonArrayEqual(values.commandArgv ?? [], ["pnpm", "--filter", "backend", name]))) {
+  if (["test:local-database", "test:local-mcp", "test:local-ui"].some((name) => jsonArrayEqual(values.commandArgv ?? [], ["pnpm", "--filter", "backend", name])) ||
+    jsonArrayEqual(values.commandArgv ?? [], ["pnpm", "--filter", "desktop", "test"])) {
     delete environment.DATABASE_URL;
     delete environment.MIGRATION_TEST_ADMIN_URL;
   }

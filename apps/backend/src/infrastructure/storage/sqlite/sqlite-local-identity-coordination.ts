@@ -1,5 +1,6 @@
 import * as path from "node:path";
 import { Worker, type WorkerOptions } from "node:worker_threads";
+import { managedWorkerAdmission } from "../../managed/managed-admission";
 import type {
   LocalIdentityCoordination,
   LocalIdentitySession,
@@ -184,11 +185,13 @@ export class SqliteLocalIdentityCoordination
     const releaseOwner = reserveSqliteOwner();
     let worker: Worker;
     try {
+      const managedAdmission = managedWorkerAdmission();
       worker = this.factory(
         path.join(__dirname, "sqlite-coordination.worker.js"),
         {
           workerData: {
             paths: { ...database.paths, expectedTarget: database.targetId },
+            ...(managedAdmission === undefined ? {} : { managedAdmission }),
           },
           env: {},
           execArgv: ["--no-global-search-paths"],

@@ -1,6 +1,7 @@
 import { createHash, X509Certificate } from 'node:crypto';
 import { isAbsolute, parse as parsePath } from 'node:path';
 import { checkServerIdentity } from 'node:tls';
+import { managedEnvelopeForPath } from '../infrastructure/managed/managed-admission';
 
 import type { ClientConfig, PoolConfig } from 'pg';
 
@@ -65,6 +66,9 @@ function parseStateRoot(value: unknown): string {
   ) {
     invalidConfiguration();
   }
+  // PostgreSQL reference mode never admits a managed SQLite identity, even when
+  // invoked from a process that otherwise possesses managed admission.
+  if (managedEnvelopeForPath(value)) invalidConfiguration();
   return value;
 }
 

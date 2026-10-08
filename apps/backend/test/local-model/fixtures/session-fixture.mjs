@@ -1,6 +1,6 @@
 import https from 'node:https';
 import { once } from 'node:events';
-import { readFile, mkdtemp, mkdir, rm, realpath } from 'node:fs/promises';
+import { readFile, mkdtemp, mkdir, rm, realpath, rename } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
@@ -11,7 +11,7 @@ const { z } = require('zod');
 const { LocalModelService } = require('../../../dist/infrastructure/local-model/local-model.service.js');
 const template = await readFile(new URL('./qwen35-template.txt', import.meta.url), 'utf8');
 const send = (response, value) => response.write(`data: ${JSON.stringify(value)}\n\n`);
-export async function fixture(t) {
+export async function fixture(t, managedConfiguration) {
   const credentials = await createTlsFixture();
   const roots = await realpath(await mkdtemp(join(tmpdir(), 'local-model-app-test-')));
   await mkdir(join(roots, 'identity')); await mkdir(join(roots, 'database'));
@@ -38,7 +38,10 @@ export async function fixture(t) {
     send(response, { index: 0, stop: true, content: state.reply, tokens_predicted: 2, tokens_evaluated: state.tokens, stop_type: 'eos', truncated: false }); response.end();
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
-  const config = { root: await realpath(credentials.root), identityRoot: join(roots, 'identity'), databaseRoot: join(roots, 'database'), port: server.address().port };
+  if (managedConfiguration) await rename(credentials.root, managedConfiguration.root);
+  const config = { root: await realpath(managedConfiguration?.root ?? credentials.root),
+    identityRoot: managedConfiguration?.identityRoot ?? join(roots, 'identity'),
+    databaseRoot: managedConfiguration?.databaseRoot ?? join(roots, 'database'), port: server.address().port };
   const service = new LocalModelService(config);
   t.after(async () => { await service.onModuleDestroy(); server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); await credentials.remove(); await rm(roots, { recursive: true, force: true }); });
   return { service, state, config, credentials };

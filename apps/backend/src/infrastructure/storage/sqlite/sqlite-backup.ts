@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { createHash } from "node:crypto";
+import { assertManagedBackupDestination, assertManagedBackupSource, assertManagedRestoreDestination, assertManagedRestoreSourceDigest } from "../../managed/managed-admission";
 import { SqliteDatabase, requireNoNativeOwners } from "./sqlite-database";
 import {
   SqliteLocalIdentityCoordination,
@@ -171,6 +172,8 @@ export class SqliteBackup {
       | Awaited<ReturnType<SqliteLocalIdentityCoordination["acquire"]>>
       | undefined;
     try {
+      database.assertPinned();
+      assertManagedBackupDestination(bundlePath);
       disjoint(bundlePath, database.paths.databaseRoot);
       disjoint(bundlePath, database.paths.identityRoot);
       const store = new LocalIdentityFileStore({
@@ -181,6 +184,7 @@ export class SqliteBackup {
       session = await this.owner(database).acquire();
       const original = await store.openReadyState();
       await session.verify(original.state);
+      assertManagedBackupDestination(bundlePath);
       const bundle = claim(bundlePath),
         paths = childPaths(bundlePath);
       const data = privateRoot(paths.databaseRoot, true),
@@ -244,6 +248,8 @@ export class SqliteBackup {
       | Awaited<ReturnType<SqliteLocalIdentityCoordination["acquire"]>>
       | undefined;
     try {
+      assertManagedRestoreDestination(destinationPath);
+      assertManagedBackupSource(bundlePath);
       requireNoNativeOwners();
       disjoint(bundlePath, destinationPath);
       const bundle = privateRoot(bundlePath),
@@ -279,6 +285,8 @@ export class SqliteBackup {
         !/^[a-f0-9]{64}$/.test(marker.databaseDigest)
       )
         unavailable();
+      assertManagedRestoreSourceDigest(markerBytes);
+      assertManagedRestoreDestination(destinationPath);
       const destination = claim(destinationPath),
         paths = childPaths(destination.path),
         copyData = privateRoot(paths.databaseRoot, true),

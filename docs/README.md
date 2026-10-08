@@ -26,6 +26,9 @@ This file is for doc writers. For agent startup, follow `AGENTS.md`.
 
 ## Useful Runbooks
 
+- [Installed Mac pilot](useful/INSTALLED_MAC_APP.md) — menu, model, installed CLI,
+  private storage, backup/restore, replacement and removal of the local candidate.
+
 - [Storage boundaries](current/STORAGE_BOUNDARIES.md) — application-owned persistence,
   transaction lifetimes, SQLite local and PostgreSQL reference adapters, and local identity coordination.
 

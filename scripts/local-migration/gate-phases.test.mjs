@@ -922,6 +922,7 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
         ["pnpm", "--filter", "backend", "test:local-model"],
         ["pnpm", "--filter", "backend", "test:local-mcp"],
         ["pnpm", "--filter", "backend", "test:local-ui"],
+        ["pnpm", "--filter", "desktop", "test"],
       ],
       [
         ["pnpm", "--filter", "backend", "exec", "prisma", "migrate", "deploy"],

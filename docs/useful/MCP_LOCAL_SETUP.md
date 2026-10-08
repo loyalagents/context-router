@@ -1,5 +1,7 @@
 # MCP Client Setup
 
+For the Step 09 unsigned installed Mac candidate, use the [installed runbook](INSTALLED_MAC_APP.md). Its menu app uses the same loopback port 8787; run its bundled native CLI after Quit. The source commands below do not administer managed installation roots.
+
 - Status: useful
 - Read when: connecting Codex, Claude, or another MCP client to local or remote MCP
 - Source of truth: `apps/backend/src/mcp/**`, `apps/backend/src/config/mcp.config.ts`, `apps/backend/src/mcp/auth/mcp-client-registry.service.ts`
@@ -7,7 +9,7 @@
 
 Step 07 adds `local-mcp`, one manually started SQLite backend for Claude Code and Codex CLI on the same Mac. It exposes only direct Streamable HTTP at `http://127.0.0.1:8787/mcp` by default. There is no stdio bridge, browser UI, GraphQL listener, OAuth/DCR endpoint, public tunnel or LAN mode in this composition. The hosted composition remains separately supported below.
 
-The [Step 07 acceptance checklist](../plans/active/local-migration/07-local-mcp/acceptance.md) gives isolated synthetic setup, both client launches, expected results, restart/revocation, model readiness and cleanup. User-run acceptance is recorded for `d7e9d65` in [PR #166](https://github.com/loyalagents/context-router/pull/166), including its inconclusive live cancellation outcome. Follow-up session-recovery fixes require renewed automated validation and affected review; Step 07 is merged; renewed Step 08 human acceptance remains pending.
+The [Step 07 acceptance checklist](../plans/active/local-migration/07-local-mcp/acceptance.md) gives isolated synthetic setup, both client launches, expected results, restart/revocation, model readiness and cleanup. User-run acceptance is recorded for `d7e9d65` in [PR #166](https://github.com/loyalagents/context-router/pull/166), including its inconclusive live cancellation outcome. Steps 07 and 08 are merged; the [Step 08 acceptance disposition](../plans/active/local-migration/08-local-ui/acceptance.md) preserves its accepted evidence limits. Step 09 requires fresh installed-application evidence.
 
 ## Local SQLite Administration
 

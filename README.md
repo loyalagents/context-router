@@ -4,7 +4,8 @@ Context Router is a `pnpm` workspace monorepo with a retained hosted
 composition, explicit local database/model previews, and a loopback local MCP runtime:
 
 - `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and a hosted-JWT-protected MCP HTTP endpoint
-- `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens
+- `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 in hosted mode, or a separate local browser session in local mode
+- `apps/desktop`: the native Mac menu/guardian and isolated local-candidate packager
 - SQLite through the pinned Node builtin for the explicit local runtime; PostgreSQL via Prisma for the retained hosted/reference compositions and Docker-backed integration/e2e coverage
 
 ## Start Here
@@ -28,7 +29,12 @@ sessions, with shared MCP/model ownership. See [local dashboard setup](docs/usef
 Its [implementation and validation](docs/plans/active/local-migration/08-local-ui/implementation.md)
 record passing independent reviews, the full local gate, and completed user-run
 acceptance with explicitly accepted evidence limits. [PR #167](https://github.com/loyalagents/context-router/pull/167)
-remains draft pending human disposition; final-head checks are recorded there.
+was human-merged at `7328ceea63a784577594d52af18062be8b583855`; final-head
+checks are recorded there. Step 09 installation and packaging is active after
+its passing clean-base gate. An unsigned managed Mac candidate is implemented;
+independent reviews, installed non-AI qualification and the full local gate passed.
+Exact-head CI, live-model and human acceptance remain pending. See the
+[installed Mac runbook](docs/useful/INSTALLED_MAC_APP.md).
 Small [UI usability improvements](docs/plans/active/ui-usability/README.md) are
 tracked for follow-up after the packaged local workflow is usable.
 
