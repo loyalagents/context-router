@@ -1,7 +1,7 @@
 # Step 09 Implementation Evidence
 
 - Sole writer: `/root`; approved technical plan P2.3
-- State: unsigned installed candidate implemented; final qualification/review in progress; no PR yet
+- State: unsigned installed candidate implemented; reviews, installed non-AI checks and full local gate passed; draft [PR #168](https://github.com/loyalagents/context-router/pull/168); live/human acceptance pending
 - Source base: `7328ceea63a784577594d52af18062be8b583855`
 
 ## Managed Namespace Denial

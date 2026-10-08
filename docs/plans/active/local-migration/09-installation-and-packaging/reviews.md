@@ -374,4 +374,5 @@ The reviewer reconstructed the exact prior bytes and approved carry-forward
 without repeating the full build/gate for this nonsemantic byte and nine
 status/evidence documents. This paragraph and the corresponding explicit
 implementation-evidence exception record that verdict; PR-link updates are
-bookkeeping. No functional input changed. Unrun live/CI/human checks remain explicit.
+bookkeeping. No functional input changed. At this review, live/CI/human checks were unrun;
+final pushed-head CI evidence is tracked on PR #168.

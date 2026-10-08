@@ -1,13 +1,13 @@
 # Step 09: Installation And Packaging
 
-- Status: managed local candidate implemented; independent reviews, installed non-AI qualification and full local gate passed; CI/live/human acceptance pending
+- Status: managed local candidate implemented; independent reviews, installed non-AI qualification and full local gate passed; CI tracked on the PR; live/human acceptance pending
 - Coordinator and sole repository writer: `/root`
 - Branch: `codex/local-migration-09-installation-and-packaging`, existing checkout
 - Planning base: `7328ceea63a784577594d52af18062be8b583855`
-- Implementation PR: one cohesive draft PR planned; none opened yet
+- Implementation PR: one cohesive draft [PR #168](https://github.com/loyalagents/context-router/pull/168); not merged
 - Supported product today: merged Step 08 source/manual local UI and MCP modes
 - Intended outcome: a managed installed application on the explicitly qualified Apple Silicon pilot
-- Next action: open the single draft PR, complete exact-head CI and resolve pending live/human acceptance
+- Next action: verify exact-head CI on PR #168 and resolve pending live/human acceptance
 - Last updated: 2026-10-07
 
 The [activation evidence](activation.md) records the exact clean base, all twelve

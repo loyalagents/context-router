@@ -241,7 +241,6 @@
     }
   ],
   "remaining": [
-    "Exact-head CI, reported on the draft PR",
     "Real AppKit menu/clipboard and external-client human acceptance",
     "Real sleep/wake and reboot recovery qualification",
     "Signing, notarization, Gatekeeper and private distribution destination",
@@ -256,5 +255,6 @@
     "callerIntegrity": true,
     "cleanupErrors": [],
     "elapsedMs": 1435698
-  }
+  },
+  "ciEvidenceLocation": "https://github.com/loyalagents/context-router/pull/168/checks"
 }
