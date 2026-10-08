@@ -376,3 +376,64 @@ status/evidence documents. This paragraph and the corresponding explicit
 implementation-evidence exception record that verdict; PR-link updates are
 bookkeeping. No functional input changed. At this review, live/CI/human checks were unrun;
 final pushed-head CI evidence is tracked on PR #168.
+
+
+### External Review Corrections (2026-10-07)
+
+The user supplied an independent Claude Code review of `1211a20` and authorized
+root to implement the agreed corrections. The prior approvals missed lifecycle
+cases; they do not override these findings. Root reproduced F1, F2 and a stronger
+F4 late-unlock/drain lockout before editing. One cohesive PR remains in use.
+
+- F1: fixed shell output failure dropping child drain evidence. Append/flush
+  failure now discards the shell sink permanently while child records continue.
+  Diagnostic failure is distinct from malformed application evidence.
+- F2: fixed orderly CLI cancellation incorrectly becoming uncertain. Explicit
+  quit is distinct from EOF/failure; acknowledgment follows native drain and must
+  match actual normal exit without force. SIGHUP is handled. Independent review
+  found an additional quit-write/completion race; a deterministic failing fixture
+  preceded the narrow lone-quit EPIPE correction. Capability/start failures remain
+  fatal, and abnormal/forced exits remain uncertain.
+- F3: added executable model-child fixtures for FD3-only inheritance, early exit,
+  non-AI control continuity, drain-before-TERM, real bounded KILL escalation and
+  the actual application invalidation handler. These do not qualify real llama
+  inference or the packaged dynamic-library closure.
+- F4: fixed validated stale cancellation and late responses; Quit wins over
+  Restart. A late unlock could previously discard a batched drain and block
+  relaunch, so root assessed this as P2 rather than the review's P3.
+- F5: fixed transient independent lock contention with a 250 ms monotonic bound
+  on fresh-descriptor reacquisition. Persistent holders and changed metadata or
+  lock identity still refuse and poison the owner.
+- F6: added explicit native-only offline download cleanup, strict complete
+  preflight, exact two-link publication recovery, revalidation and directory
+  synchronization. It cannot clear an active/uncertain journal or overwrite the
+  recovery acknowledgment of a non-ready/pending installation.
+
+Read-only review mandates: `/root/review_shutdown_revision` approved F1/F3/F4;
+`/root/review_persistence_revision` approved F2/F5;
+`/root/final_compatibility` approved F6, documentation and installed-smoke changes.
+All requested Astra `xhigh`; serving settings remain unobservable. Root is sole
+writer and owns all test execution. These are affected-delta rechecks; unchanged
+complete base-to-candidate coverage above carries forward. No blocker remains in
+those source mandates. Aggregate of the 28-file correction snapshot before this
+ledger/status bookkeeping:
+`7c430fbbd7a497a8f9bcd0cfea0ed2447fe2572eee136530ff6700fad971bd91`.
+
+Targeted red/green runs covered the reported failures. A first saturation fixture
+exceeded the private protocol's frame bound; pacing corrected the fixture without
+weakening that limit. Its claim is output saturation; the existing native queue
+fixture separately proves the two-second deadline. The first real rotation fixture
+used the wrong operation basename; it was corrected to `identity.operation.json`,
+then actual cancellation and named recovery passed. Existing behavioral assertions
+were unchanged. The first complete native run passed 148/149 tests in 206.236 s;
+the menu fixture failed to link the newly required cleanup compilation unit. Its
+compiler source list was updated, with no assertion changes, and the targeted menu
+check passed in 1.624 s. A complete-suite rerun will be recorded with final PR evidence.
+All 44 portable tests, documentation links and the contract baseline also passed.
+
+Candidate 05 and its gates remain historical evidence. A clean-commit rebuild,
+renewed installed smoke (including cleanup), full local gate and exact-head CI are
+required for these substantive corrections. Their final receipts and commit/artifact
+bindings must be recorded on [PR #168](https://github.com/loyalagents/context-router/pull/168).
+Expanded live execution remains separately unapproved; human/signing acceptance
+is not satisfied by deterministic fixtures or CI.

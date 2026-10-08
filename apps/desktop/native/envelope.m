@@ -4,6 +4,7 @@
 #include <sys/sysctl.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <time.h>
 #include <unistd.h>
 
 NSString *CRRandom(NSUInteger count) {
@@ -20,6 +21,7 @@ NSString *CRBootID(void) {
   if (!CRPattern(result, @"[A-Za-z0-9-]{1,64}")) CRFail(); return result;
 }
 static NSDictionary *inode(struct stat info) { return @{@"dev": @(info.st_dev), @"ino": @(info.st_ino)}; }
+static double monotonicTime(void){struct timespec t;if(clock_gettime(CLOCK_MONOTONIC,&t))CRFail();return t.tv_sec+t.tv_nsec/1e9;}
 NSDictionary *CRPrivatePin(NSString *file, BOOL directory) {
   struct stat info; char resolved[PATH_MAX];
   if (lstat(file.fileSystemRepresentation, &info) || info.st_uid != getuid() ||
@@ -64,7 +66,7 @@ static void installationValid(NSDictionary *m) {
 }
 static BOOL roleOperationValid(NSString *role, NSString *operation) {
   NSDictionary *operations = @{@"prepare": @[@"initialize", @"initialize-recovered", @"verify", @"resume-setup"], @"application": @[@"serve"],
-    @"maintenance": @[@"admin", @"backup", @"restore", @"recover-bootstrap", @"recover-identity", @"resume-setup"],@"metadata":@[@"activate-restore",@"abandon-restore"]};
+    @"maintenance": @[@"admin", @"backup", @"restore", @"recover-bootstrap", @"recover-identity", @"resume-setup"],@"metadata":@[@"activate-restore",@"abandon-restore",@"cleanup-downloads"]};
   return [role isKindOfClass:[NSString class]] && [operation isKindOfClass:[NSString class]] && [operations[role] containsObject:operation];
 }
 static void journalValid(NSDictionary *j, NSDictionary *m) {
@@ -217,7 +219,7 @@ static void journalValid(NSDictionary *j, NSDictionary *m) {
 }
 - (void)beginMetadataOperation:(NSString *)operation pendingStore:(NSString *)store expectedSelection:(NSString *)selected {
   [self assertHeld];id pending=_installation[@"pendingRestore"];
-  if(!roleOperationValid(@"metadata",operation)||!CRPattern(store,@"[a-f0-9]{32}")||pending==[NSNull null]||
+  if(![@[@"activate-restore",@"abandon-restore"] containsObject:operation]||!CRPattern(store,@"[a-f0-9]{32}")||pending==[NSNull null]||
     ![pending[@"storeId"] isEqual:store]||![pending[@"expectedSelection"] isEqual:selected]||![_installation[@"selectedStore"] isEqual:selected]||
     ![_journal[@"lifecycle"] isEqual:@"quiescent"]||[_journal[@"outcome"] isEqual:@"uncertain"])CRFail();
   if([operation isEqual:@"activate-restore"]&&(![pending[@"status"] isEqual:@"complete"]||![_journal[@"outcome"] isEqual:@"ok"]||
@@ -225,6 +227,15 @@ static void journalValid(NSDictionary *j, NSDictionary *m) {
   _generation=CRRandom(16);
   _journal=@{@"version":@1,@"lifecycle":@"active",@"outcome":@"pending",@"generation":_generation,@"bootId":_boot,
     @"installationId":_installation[@"installationId"],@"storeId":store,@"role":@"metadata",@"operation":operation,@"nonceHash":CRRandom(32)};
+  NSString *file=[_root stringByAppendingPathComponent:@"owner.json"];CRAtomicJSON(file,_journal);_journalPin=CRPrivatePin(file,NO);
+}
+- (void)beginModelCleanup {
+  [self assertHeld];
+  if(![_installation[@"setup"] isEqual:@"ready"]||_installation[@"pendingRestore"]!=[NSNull null]||
+     ![_journal[@"lifecycle"] isEqual:@"quiescent"]||[_journal[@"outcome"] isEqual:@"uncertain"])CRFail();
+  _generation=CRRandom(16);
+  _journal=@{@"version":@1,@"lifecycle":@"active",@"outcome":@"pending",@"generation":_generation,@"bootId":_boot,
+    @"installationId":_installation[@"installationId"],@"storeId":_installation[@"selectedStore"],@"role":@"metadata",@"operation":@"cleanup-downloads",@"nonceHash":CRRandom(32)};
   NSString *file=[_root stringByAppendingPathComponent:@"owner.json"];CRAtomicJSON(file,_journal);_journalPin=CRPrivatePin(file,NO);
 }
 - (void)finishOutcome:(NSString *)outcome {
@@ -237,7 +248,15 @@ static void journalValid(NSDictionary *j, NSDictionary *m) {
   NSString *lock = [_root stringByAppendingPathComponent:@"owner.lock"];
   int next = open(lock.fileSystemRepresentation, O_RDWR | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
   if (next < 0) CRFail();
-  if (flock(next, LOCK_EX | LOCK_NB)) { close(next); CRFail(); }
+  // A rejected new launcher can briefly hold a separate lock description here.
+  // Success still proves extinction of the inherited description; elapsed time
+  // alone never does. All original metadata/inode pins are checked afterward.
+  double deadline=monotonicTime()+0.250;
+  while(flock(next,LOCK_EX|LOCK_NB)){
+    int error=errno;
+    if((error!=EWOULDBLOCK&&error!=EAGAIN&&error!=EINTR)||monotonicTime()>=deadline){close(next);CRFail();}
+    usleep(1000);
+  }
   _lockFD = next; _poisoned = NO;
   @try { [self assertHeld]; }
   @catch (NSException *exception) { _poisoned = YES; close(_lockFD); _lockFD = -1; @throw exception; }

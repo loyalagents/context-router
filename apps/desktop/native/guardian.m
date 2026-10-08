@@ -41,7 +41,7 @@ int main(int argc, const char *argv[]) {
         return 0;
       }
       if(argc>1){
-        if(argc==2&&!strcmp(argv[1],"--help")){puts("Context Router private Mac pilot\nQuit the app before maintenance.\n[--root /canonical/private/managed-v1] [--pending-store ID] mcp <list|provision|rotate|revoke|permissions|grant|upgrade> [arguments]\nidentity <rotate|recover-initialize|recover-rotation|recover-database-bootstrap>\ninspect CLIENT_ID | backup | restore --from /canonical/private/backup\nactivate-restore STORE_ID --acknowledge-restored-authority | abandon-restore STORE_ID\nresume-setup | initialize-recovered");return 0;}
+        if(argc==2&&!strcmp(argv[1],"--help")){puts("Context Router private Mac pilot\nQuit the app before maintenance.\n[--root /canonical/private/managed-v1] [--pending-store ID] mcp <list|provision|rotate|revoke|permissions|grant|upgrade> [arguments]\nidentity <rotate|recover-initialize|recover-rotation|recover-database-bootstrap>\ninspect CLIENT_ID | backup | restore --from /canonical/private/backup\nactivate-restore STORE_ID --acknowledge-restored-authority | abandon-restore STORE_ID\nresume-setup | initialize-recovered | cleanup-downloads");return 0;}
         NSString *bundle=CRBundleRoot();(void)CRVerifyPackage(bundle);NSMutableArray *arguments=[NSMutableArray array];for(int i=1;i<argc;i++){NSString *value=[NSString stringWithUTF8String:argv[i]];if(!value)CRFail();[arguments addObject:value];}return CRRunMaintenance(bundle,arguments);
       }
     } @catch (NSException *exception) { (void)exception; }

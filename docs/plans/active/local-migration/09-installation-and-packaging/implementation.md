@@ -357,3 +357,24 @@ so no new installed live-model run occurred. The original 128-token authorizatio
 is not treated as approval of this expansion. Real AppKit/clipboard, sleep/wake,
 reboot, external-client, signing/notarization and distribution acceptance also
 remain pending in the [consolidated checklist](acceptance.md).
+
+
+### Post-review revision
+
+The external-review corrections in [reviews.md](reviews.md#external-review-corrections-2026-10-07)
+supersede Candidate 05 as the candidate for acceptance. The guardian now preserves
+child drain evidence after shell loss, handles validated late controls, and retains
+strict uncertainty for malformed application protocol. Installed administrative
+cancellation can preserve access to named recovery after actual drain/normal exit;
+a completion racing its final quit write is handled without accepting missing or
+abnormal completion. Final lock reacquisition tolerates bounded transient contention.
+The new explicit `cleanup-downloads` command repairs owned download residue under
+native exclusion; it never clears abandoned ownership.
+
+New fixtures cover production model-process lifecycle, real SQLite rotation
+cancellation/recovery, output saturation, command/completion races, stale controls,
+lock contention and download cleanup interruption/replacement. The installed smoke
+now exercises cleanup/idempotence before real administration/MCP operations.
+Validation results, clean source commit and rebuilt artifact receipts for this
+revision are tracked on [PR #168](https://github.com/loyalagents/context-router/pull/168).
+The older candidate hashes and successful/failed runs above are retained as history.

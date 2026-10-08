@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {mkdtemp,realpath,readFile,writeFile,mkdir,cp,rename,rm} from 'node:fs/promises';
+import {mkdtemp,realpath,readFile,writeFile,mkdir,cp,rename,rm,lstat} from 'node:fs/promises';
 import {spawn,spawnSync} from 'node:child_process';import {once} from 'node:events';import {createHash} from 'node:crypto';
 import path from 'node:path';import os from 'node:os';
 import {createRequire} from 'node:module';
@@ -81,6 +81,8 @@ try{
   const parserProof=path.join(root,'pdf-proof.mjs');await writeFile(parserProof,`import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {PdfProcess} from ${JSON.stringify(path.join(dist,'infrastructure/local-model/engine/pdf-process.mjs'))};const parser=new PdfProcess({workerPath:${JSON.stringify(path.join(dist,'infrastructure/local-model/engine/pdf-worker.mjs'))}});await assert.rejects(parser.parse(await readFile(${JSON.stringify(unsupported)})),{message:'PDF_AUXILIARY'});const result=await parser.parse(await readFile(${JSON.stringify(pdf)}));assert.equal(result.text,${JSON.stringify(greek.expectedText)});assert.equal(parser.state,'ready');`,{mode:0o600});
   const parsed=spawnSync('/usr/bin/sandbox-exec',['-f',profile,node,'--no-global-search-paths',parserProof],{cwd:bundle,env:{PATH:'',LC_ALL:'C'},encoding:'utf8',timeout:10000});assert.equal(parsed.status,0,parsed.stderr);phase('installed-pdf-dependency-closure');
   const initial=launch(),first=await initial.event('ready');assert.equal(first.modelEnabled,false);assert.equal((await fetch(first.origin+'/dashboard/preferences',{signal})).status,200);command(['mcp','list'],1);await browserProof(initial,first);await stop(initial);phase('first-run-dashboard-cli-exclusion-clean-quit');
+  const downloadStage=path.join(envelope,`models/.download-${'a'.repeat(32)}-${'b'.repeat(32)}.part`);await writeFile(downloadStage,'interrupted synthetic download',{mode:0o600});
+  assert.equal(command(['cleanup-downloads'])[0].status,'model-download-cleanup-complete');await assert.rejects(lstat(downloadStage),{code:'ENOENT'});command(['cleanup-downloads']);phase('installed-native-download-cleanup-and-idempotence');
   const tokenFile=path.join(root,'mcp.token'),provision=command(['mcp','provision','--label','Installed fixture','--out',tokenFile])[0],token=(await readFile(tokenFile,'utf8')).trim();secrets.push(token);
   const editorFile=path.join(root,'editor.token'),editor=command(['mcp','provision','--label','Installed editor','--out',editorFile])[0],editorToken=(await readFile(editorFile,'utf8')).trim();secrets.push(editorToken);
   command(['mcp','permissions','--id',editor.result.id,'--capabilities','preferences:read,preferences:write,preferences:define','--targets','synthetic.*']);

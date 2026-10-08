@@ -78,6 +78,32 @@ configuration, LAN/stdio/hosting, cloud migration or bulk-import system.
 
 ## Contracts And Consumers
 
+### Post-review correction checkpoints
+
+The user authorized the external-review corrections on 2026-10-07. Root remains
+sole writer; independent read-only reviewers requested Astra `xhigh`, with actual
+serving settings unobservable. The reviewed correction plan preserves P2.3's
+ownership proofs and uses the existing PR:
+
+1. Separate shell delivery failure from child completion, tolerate fully validated
+   stale controls, and retain uncertainty for malformed application records.
+   Add deterministic model-child lifecycle/descriptor/termination coverage.
+2. Distinguish orderly maintenance cancellation from lost protocol/ownership.
+   Require matching acknowledgment, actual normal exit, native drain and no force;
+   preserve completion racing a late quit write. Retry the final fresh-descriptor
+   lock acquisition for at most 250 ms, then retain all identity checks and refusal.
+3. Add explicit native-only `cleanup-downloads` after complete inventory preflight,
+   only for ready/quiescent installations without pending restore. Bind its metadata
+   journal to the selected store; delete only verified private stages or the exact
+   two-link model publication pair. Preserve uncertainty on abrupt interruption.
+   Qualify a rebuilt committed candidate and rerun affected reviews/full gates.
+
+Each checkpoint has targeted tests. Existing tests remain intact; new fixtures
+cover the missed transitions. No model inference/download or human/signing result
+is inferred from these fixtures; the separately proposed live bounds still apply.
+
+### Retained consumer contracts
+
 Preserve all GraphQL, browser REST and MCP tool/resource payloads and credential
 boundaries. The native lifecycle channel is inherited and private; no new HTTP
 lifecycle authority. UI and MCP retain one application and one model admission

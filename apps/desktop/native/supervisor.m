@@ -26,7 +26,8 @@ static NSInteger vacantPort(void){
 static void emit(CRWriteQueue *output,NSString *generation,NSString *type,NSDictionary *payload){
   NSMutableDictionary *record=[@{@"version":@1,@"generation":generation,@"type":type} mutableCopy];[record addEntriesFromDictionary:payload?:@{}];
   NSMutableData *data=[[NSJSONSerialization dataWithJSONObject:record options:0 error:nil] mutableCopy];if(!data||data.length>16383)CRFail();[data appendBytes:"\n" length:1];
-  [output append:data];
+  // Shell delivery is independent of the private child protocol and drain proof.
+  @try{[output append:data];}@catch(NSException *e){(void)e;[output discard];}
 }
 static NSArray *nodeArgs(NSString *resources,NSString *role,NSArray *extra){
   return [@[@"--no-global-search-paths",[[resources stringByAppendingPathComponent:@"desktop/runtime"] stringByAppendingPathComponent:[role stringByAppendingString:@".mjs"]]] arrayByAddingObjectsFromArray:extra];
@@ -63,7 +64,7 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
     NSString *generation=owner.generation,*session=[[root stringByAppendingPathComponent:@"sessions"] stringByAppendingPathComponent:generation],*exports=[[root stringByAppendingPathComponent:@"exports"] stringByAppendingPathComponent:generation];
     NSMutableArray<CRChild *> *children=[NSMutableArray array];CRChild *prepare=nil,*app=nil,*model=nil,*download=nil;
     NSString *downloadTerminal=nil;BOOL downloadObserved=NO;long long downloadReceived=0;NSInteger downloadStage=0;double downloadDeadline=0;
-    NSDictionary *prepared=nil;BOOL ready=NO,drained=NO,failed=NO,stopping=NO,restart=NO,forcedApp=NO,modelStopped=NO,modelObserved=NO;
+    NSDictionary *prepared=nil;BOOL ready=NO,drained=NO,failed=NO,stopping=NO,restart=NO,quitRequested=NO,forcedApp=NO,appRecordsFailed=NO,modelStopped=NO,modelObserved=NO;
     NSInteger stopStage=0,modelPort=vacantPort();double startupDeadline=CRNow()+120,stopDeadline=0;
     @try{
       CRDiagnostic(owner,@"starting");
@@ -72,6 +73,8 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
       [children addObject:prepare];[prepare command:@"start" generation:generation];emit(output,generation,@"starting",@{@"phase":@"preparing"});
     }@catch(NSException *exception){(void)exception;failed=YES;stopping=YES;}
     while(YES){@autoreleasepool{
+      @try{[output flush];}@catch(NSException *e){(void)e;[output discard];}
+      if(output.discarded){failed=YES;stopping=YES;restart=NO;}
       // Observe every exact child before a malformed peer can interrupt dispatch.
       NSMutableArray *batches=[NSMutableArray array];
       for(CRChild *child in children){
@@ -81,26 +84,28 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
         if(child.exited&&child!=model&&![child.role isEqual:@"download"]&&!child.success)failed=YES;
         if(!stopping&&child==app&&child.statusEnded&&!drained&&!child.exited){failed=YES;stopping=YES;}
       }
-      @try{
-        [output flush];
         for(NSDictionary *batch in batches){
           CRChild *child=batch[@"child"];
           for(NSDictionary *record in batch[@"messages"]){
+            @try{
             common(record,generation);NSString *type=record[@"type"];
             if(child==prepare&&[type isEqual:@"prepared"]){
               if(prepared||!CRExact(record,@[@"version",@"generation",@"type",@"targetId",@"modelEnabled",@"modelPort"])||!CRPattern(record[@"targetId"],@"[A-Za-z0-9_-]{43}")||CFGetTypeID((__bridge CFTypeRef)record[@"modelEnabled"])!=CFBooleanGetTypeID()||!CRInteger(record[@"modelPort"],modelPort,modelPort))CRFail();prepared=record;
             }else if(child==app&&[type isEqual:@"ready"]){
-              if(ready||stopping||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"mcpOrigin",@"unlockFile",@"modelEnabled"])||![record[@"modelEnabled"] isEqual:prepared[@"modelEnabled"]])CRFail();
+              if(ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"mcpOrigin",@"unlockFile",@"modelEnabled"])||![record[@"modelEnabled"] isEqual:prepared[@"modelEnabled"]])CRFail();
               origin(record[@"origin"],uiPort,NO);origin(record[@"mcpOrigin"],mcpPort,YES);unlock(record,exports);ready=YES;
-              CRDiagnostic(owner,@"ready");
+              if(stopping)continue;
+              @try{CRDiagnostic(owner,@"ready");}@catch(NSException *e){(void)e;failed=YES;stopping=YES;}
+              if(stopping)continue;
               emit(output,generation,@"ready",@{@"origin":record[@"origin"],@"mcpOrigin":record[@"mcpOrigin"],@"unlockFile":record[@"unlockFile"],@"modelEnabled":record[@"modelEnabled"]});
             }else if(child==app&&[type isEqual:@"drained"]){
               if(drained||!CRExact(record,@[@"version",@"generation",@"type"]))CRFail();drained=YES;if(!stopping){failed=YES;stopping=YES;}
             }else if(child==app&&[type isEqual:@"unlock"]){
-              if(!ready||stopping||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"unlockFile"]))CRFail();origin(record[@"origin"],uiPort,NO);unlock(record,exports);
+              if(!ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"unlockFile"]))CRFail();origin(record[@"origin"],uiPort,NO);unlock(record,exports);
+              if(stopping)continue;
               emit(output,generation,@"unlock",@{@"origin":record[@"origin"],@"unlockFile":record[@"unlockFile"]});
             }else if(child==app&&[type isEqual:@"model-status"]){
-              if(!ready||!CRExact(record,@[@"version",@"generation",@"type",@"state"])||![@[@"available",@"busy",@"unavailable",@"loading"] containsObject:record[@"state"]])CRFail();emit(output,generation,@"model-status",@{@"state":record[@"state"]});
+              if(!ready||!CRExact(record,@[@"version",@"generation",@"type",@"state"])||![@[@"available",@"busy",@"unavailable",@"loading"] containsObject:record[@"state"]])CRFail();if(!stopping)emit(output,generation,@"model-status",@{@"state":record[@"state"]});
             }else if(child==download&&[type isEqual:@"download-progress"]){
               if(downloadTerminal||!CRExact(record,@[@"version",@"generation",@"type",@"received",@"total"])||!CRInteger(record[@"total"],5680522464LL,5680522464LL)||!CRInteger(record[@"received"],downloadReceived,5680522464LL))CRFail();
               downloadReceived=[record[@"received"] longLongValue];emit(output,generation,type,@{@"received":record[@"received"],@"total":record[@"total"]});
@@ -109,9 +114,11 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
             }else if((child==prepare||child==app)&&[type isEqual:@"failed"]){
               if(!CRExact(record,@[@"version",@"generation",@"type",@"category"])||![@[@"prepare-failed",@"application-failed"] containsObject:record[@"category"]])CRFail();failed=YES;stopping=YES;
             }else CRFail();
+            }@catch(NSException *e){(void)e;if(child==app)appRecordsFailed=YES;failed=YES;stopping=YES;}
           }
           if(child.protocolFailed){failed=YES;stopping=YES;}
         }
+      @try{
         [owner assertHeld];
         if(!stopping&&prepare.exited&&!app){
           if(!prepare.success||!prepared)CRFail();
@@ -143,17 +150,19 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
         for(NSDictionary *command in [shell readFrom:0]){
           if(!CRExact(command,@[@"version",@"generation",@"command"])||!CRInteger(command[@"version"],1,1)||![command[@"generation"] isEqual:generation]||![@[@"unlock",@"restart",@"quit",@"model-unavailable",@"download",@"cancel-download"] containsObject:command[@"command"]])CRFail();
           NSString *name=command[@"command"];
-          if([name isEqual:@"quit"]||[name isEqual:@"restart"]){stopping=YES;restart=[name isEqual:@"restart"]&&ready;}
+          if([name isEqual:@"quit"]){quitRequested=YES;stopping=YES;restart=NO;}
+          else if([name isEqual:@"restart"]){if(!stopping&&!quitRequested)restart=ready;stopping=YES;}
+          else if(stopping)continue;
           else if(!stopping&&ready&&[name isEqual:@"download"]){
             if(download&&!download.exited)CRFail();downloadTerminal=nil;downloadObserved=NO;downloadReceived=0;downloadStage=0;
             download=[[CRChild alloc] initWithExecutable:node arguments:nodeArgs(resources,@"download",@[[root stringByAppendingPathComponent:@"models"],generation]) directory:directory lock:owner.lockFD capability:nil role:@"download"];
             [children addObject:download];[download command:@"start" generation:generation];emit(output,generation,@"download-starting",nil);
           }else if(!stopping&&ready&&[name isEqual:@"cancel-download"]){
-            if(!download||download.exited||downloadStage)CRFail();[download command:@"quit" generation:generation];downloadStage=1;downloadDeadline=CRNow()+15;
+            if(!download||download.exited||downloadStage)continue;[download command:@"quit" generation:generation];downloadStage=1;downloadDeadline=CRNow()+15;
           }
           else if(!stopping&&app&&ready)[app command:name generation:generation];else CRFail();
         }
-        if(shell.ended||interrupted)stopping=YES;
+        if(shell.ended||interrupted||output.discarded){stopping=YES;restart=NO;if(output.discarded)failed=YES;}
         if(!ready&&!stopping&&CRNow()>=startupDeadline)CRFail();
       }@catch(NSException *exception){(void)exception;failed=YES;stopping=YES;}
       if(stopping){
@@ -163,9 +172,9 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
         if(model&&!model.exited&&!modelStopped&&(!app||drained)){@try{[model signal:SIGTERM];}@catch(NSException *e){(void)e;failed=YES;}modelStopped=YES;}
         BOOL allExited=YES;for(CRChild *child in children)if(!child.exited)allExited=NO;
         if(allExited){
-          BOOL certain=!app||(drained&&!forcedApp&&!app.protocolFailed);NSString *outcome=certain?(failed?@"failed":@"ok"):@"uncertain";
+          BOOL certain=!app||(drained&&!forcedApp&&!app.protocolFailed&&!appRecordsFailed);NSString *outcome=certain?(failed?@"failed":@"ok"):@"uncertain";
           @try{[owner finishOutcome:outcome];CRDiagnostic(owner,[@"stopped-" stringByAppendingString:outcome]);emit(output,generation,@"stopped",@{@"outcome":outcome});double delivery=CRNow()+2;while(!output.empty&&CRNow()<delivery){[output flush];if(!output.empty)usleep(10000);}if(!output.empty)CRFail();}@catch(NSException *e){(void)e;return 1;}
-          if(!certain||failed)return 1;again=restart&&!shell.ended&&!interrupted;break;
+          if(!certain||failed||output.discarded)return 1;again=restart&&!shell.ended&&!interrupted;break;
         }
         if(CRNow()>=stopDeadline){
           if(stopStage>=3)return 1;

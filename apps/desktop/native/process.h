@@ -7,9 +7,11 @@ double CRNow(void);
 @end
 @interface CRWriteQueue : NSObject
 @property(nonatomic, readonly) BOOL empty;
+@property(nonatomic, readonly) BOOL discarded;
 - (instancetype)initWithFD:(int)fd;
 - (void)append:(NSData *)data;
 - (void)flush;
+- (void)discard;
 @end
 @interface CRChild : NSObject
 @property(nonatomic, readonly) pid_t pid;

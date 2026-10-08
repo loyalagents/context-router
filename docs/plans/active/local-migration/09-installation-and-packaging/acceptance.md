@@ -2,9 +2,12 @@
 
 Status: pending. This checklist records human/platform acceptance separately from
 automated qualification. Do not mark it passed from component tests or a build.
-Use Candidate 05 named in the [implementation evidence](implementation.md), manifest
-`a3f624fb6dacf12e73b0a36a6dfdd0ce41713cf0d58076a5aac221a573f9d6eb`. Its unsigned
-status, actual hardware and unrun release checks remain visible in the PR.
+Use the rebuilt post-review candidate and exact commit/manifest named on
+[PR #168](https://github.com/loyalagents/context-router/pull/168). Candidate 05 is
+superseded for acceptance. Unsigned status, hardware and unrun release checks
+remain visible in the PR. Installed passes below refer to historical Candidate 05;
+renewed installed qualification must be recorded on the PR before accepting the
+rebuilt artifact.
 
 The [installed runbook](../../../../useful/INSTALLED_MAC_APP.md) contains exact
 CLI syntax and recovery constraints. Use synthetic pilot data and a private
@@ -21,11 +24,12 @@ installation; never clear ownership metadata to bypass a refusal.
 | Explicit model consent and Cancel | Correct pinned source/size shown; progress bounded; non-AI stays usable; no incomplete asset selected | Deterministic downloader passed; dialog/real download pending |
 | Selected model already installed, network unavailable | Local AI works within retained limits; no hosted fallback | Separately approved live series pending |
 | Real sleep/wake with installed model | AI remains unavailable until explicit Restart; no automatic replay; non-AI remains healthy | Pending actual pilot |
-| Certificate expiry or model failure | AI unavailable; explicit whole-generation restart required; preserved data/authority | Deterministic fixtures; human pending |
+| Certificate expiry or model failure | AI unavailable; explicit whole-generation restart required; preserved data/authority | Readiness and production guardian model fixtures; real bundled model/human pending |
 | Backup, pending restore, revoke/rotate restored authority, activate | Current selection retained until acknowledgment; resulting credential behavior matches explicit restored authority | Automated installed flow passed; human pending |
 | Compatible replacement and app-only uninstall/reinstall | Complete verified app starts; data/identity/MCP/models retained; altered payload refuses before state access | Automated installed checks passed; human pending |
 | Duplicate launch and occupied MCP port | Existing owner/listener untouched; no second ready listener or fallback | Native fixtures; actual menu pending |
 | Abrupt owner loss and reboot recovery | Uncertain state preserved and launch refused; no metadata deletion or inferred successful recovery | Cross-boot recovery unqualified |
+| Explicit offline `cleanup-downloads` | Owned partial stages removed; exact interrupted publication completed; unexpected files and uncertain ownership refused | Native fixtures; rebuilt installed smoke tracked on PR |
 | Signed private distribution | Real signing identity, nested signing, notarization, Gatekeeper and declared release destination verified | Blocked on missing access/destination |
 
 Record candidate manifest/archive digest, Mac model/RAM/macOS build, each observed

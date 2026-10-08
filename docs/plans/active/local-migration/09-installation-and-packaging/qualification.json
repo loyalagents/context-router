@@ -256,5 +256,10 @@
     "cleanupErrors": [],
     "elapsedMs": 1435698
   },
-  "ciEvidenceLocation": "https://github.com/loyalagents/context-router/pull/168/checks"
+  "ciEvidenceLocation": "https://github.com/loyalagents/context-router/pull/168/checks",
+  "postReviewCorrections": {
+    "status": "Candidate 05 superseded for acceptance by reviewed lifecycle and cleanup corrections",
+    "evidence": "https://github.com/loyalagents/context-router/pull/168",
+    "requirement": "Clean-commit package, installed smoke, full gate and exact-head CI; prior receipts retained as historical evidence"
+  }
 }

@@ -45,11 +45,14 @@ BOOL CRWriteBounded(int fd, NSData *bytes, double deadline) {
 @implementation CRWriteQueue { int _fd; NSMutableData *_bytes; double _deadline; }
 - (instancetype)initWithFD:(int)fd { self=[super init];if(self){_fd=fd;nonblocking(fd);_bytes=[NSMutableData data];}return self; }
 - (BOOL)empty { return !_bytes.length; }
+- (void)discard { _discarded=YES;[_bytes setLength:0]; }
 - (void)append:(NSData *)data {
+  if(_discarded)return;
   if(!data||data.length>16384||data.length+_bytes.length>32768)CRFail();
   if(!_bytes.length)_deadline=CRNow()+2;[_bytes appendData:data];
 }
 - (void)flush {
+  if(_discarded)return;
   if(!_bytes.length)return;
   ssize_t count=write(_fd,_bytes.bytes,_bytes.length);
   if(count>0)[_bytes replaceBytesInRange:NSMakeRange(0,(NSUInteger)count) withBytes:NULL length:0];
@@ -62,6 +65,7 @@ BOOL CRWriteBounded(int fd, NSData *bytes, double deadline) {
   NSMutableData *_commands, *_admission;
   CRFrames *_frames;
   double _sendDeadline;
+  BOOL _quitPending;
 }
 - (instancetype)initWithExecutable:(NSString *)file arguments:(NSArray<NSString *> *)arguments directory:(NSString *)directory lock:(int)lock capability:(NSDictionary *)capability role:(NSString *)role {
   self=[super init]; if(!self)return nil; _input=_output=_capability=_exitCode=-1; _role=[role copy];
@@ -108,21 +112,27 @@ BOOL CRWriteBounded(int fd, NSData *bytes, double deadline) {
   if(_input<0||_exited||_protocolFailed)CRFail();
   NSData *bytes=[NSJSONSerialization dataWithJSONObject:@{@"version":@1,@"generation":generation,@"command":command} options:0 error:nil];
   if(!bytes||bytes.length+_commands.length+1>16384)CRFail();
+  _quitPending=!_commands.length&&[command isEqual:@"quit"];
   if(!_commands.length)_sendDeadline=CRNow()+2;
   [_commands appendData:bytes];[_commands appendBytes:"\n" length:1];
 }
-- (void)flush:(NSMutableData *)data fd:(int)fd {
-  if(!data.length)return;
+- (BOOL)flush:(NSMutableData *)data fd:(int)fd allowClosedQuit:(BOOL)allowClosedQuit {
+  if(!data.length)return YES;
   ssize_t count=write(fd,data.bytes,data.length);
   if(count>0)[data replaceBytesInRange:NSMakeRange(0,(NSUInteger)count) withBytes:NULL length:0];
+  // A completed child may close its command reader before its final status is
+  // observed. Only a lone queued quit may tolerate EPIPE. Completion, exact exit
+  // and drain remain mandatory; capability/start and malformed status still fail.
+  else if(count<0&&errno==EPIPE&&allowClosedQuit){[data setLength:0];return NO;}
   else if(count==0||(errno!=EINTR&&errno!=EAGAIN&&errno!=EWOULDBLOCK))CRFail();
   if(data.length&&CRNow()>=_sendDeadline)CRFail();
+  return YES;
 }
 - (NSArray<NSDictionary *> *)pump {
   NSArray *messages=@[];
   if(!_protocolFailed) @try {
-    if(_capability>=0){[self flush:_admission fd:_capability];if(!_admission.length){close(_capability);_capability=-1;}}
-    if(_input>=0)[self flush:_commands fd:_input];
+    if(_capability>=0){[self flush:_admission fd:_capability allowClosedQuit:NO];if(!_admission.length){close(_capability);_capability=-1;}}
+    if(_input>=0&&![self flush:_commands fd:_input allowClosedQuit:_quitPending]){close(_input);_input=-1;}
     if(_output>=0){messages=[_frames readFrom:_output];_statusEnded=_frames.ended;}
   } @catch(NSException *exception) {
     (void)exception;_protocolFailed=YES;

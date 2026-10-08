@@ -14,6 +14,7 @@ void CRAtomicJSON(NSString *path, NSDictionary *value);
 - (void)assertHeld;
 - (NSDictionary *)beginRole:(NSString *)role operation:(NSString *)operation store:(NSString *)store;
 - (void)beginMetadataOperation:(NSString *)operation pendingStore:(NSString *)store expectedSelection:(NSString *)selected;
+- (void)beginModelCleanup;
 - (void)publishInstallation:(NSDictionary *)value;
 - (void)finishOutcome:(NSString *)outcome;
 @end

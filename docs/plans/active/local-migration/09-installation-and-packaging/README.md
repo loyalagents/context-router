@@ -7,7 +7,7 @@
 - Implementation PR: one cohesive draft [PR #168](https://github.com/loyalagents/context-router/pull/168); not merged
 - Supported product today: merged Step 08 source/manual local UI and MCP modes
 - Intended outcome: a managed installed application on the explicitly qualified Apple Silicon pilot
-- Next action: verify exact-head CI on PR #168 and resolve pending live/human acceptance
+- Next action: qualify the reviewed external-review corrections from a clean commit; track rebuilt artifact, local gate and exact-head CI on PR #168; then resolve live/human acceptance
 - Last updated: 2026-10-07
 
 The [activation evidence](activation.md) records the exact clean base, all twelve

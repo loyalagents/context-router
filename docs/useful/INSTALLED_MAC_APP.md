@@ -107,6 +107,35 @@ lost completion stays uncertain. None clears an abandoned active
 or uncertain owner journal. Preserve that state for explicit diagnosis. Cross-boot
 abandoned-owner recovery is not qualified; no automatic repair is provided.
 
+SIGINT (Ctrl-C), SIGTERM and terminal SIGHUP request orderly cancellation of a
+running administration or setup child. A matching completion after native-owner
+drain and actual normal exit records a failed but quiescent operation, so its
+named recovery remains reachable. A completed operation can still report success
+when cancellation arrives too late. Forced termination, missing/mismatched
+completion, malformed private control or lost ownership still preserve uncertainty
+and block further commands. Do not delete the ownership journal to bypass this.
+
+After Quit, explicitly remove interrupted model-download stages with:
+
+```sh
+"$router_cli" cleanup-downloads
+```
+
+This native-only command requires a ready installation, no pending restore, and
+proven prior quiescence. It checks the entire model directory before deleting any
+file, removes only private owned `.download-<generation>-<random>.part` stages,
+and completes an interrupted two-link publication only when both names identify
+the exact same pinned model file. Unknown names, unexpected links, symlinks or
+invalid metadata cause refusal; preserve the files for diagnosis. The model's
+full size/hash verification still runs on restart. This bounded synchronous
+cleanup finishes its current operation on ordinary terminal signals; abrupt
+termination after journal publication retains an active journal and blocks
+re-entry. It does not recover an abandoned active or uncertain owner.
+
+Candidate 05 predates this cleanup journal operation and refuses it. Use the
+revised qualified candidate after cleanup; rollback to Candidate 05 is not a
+qualified recovery procedure.
+
 ## Replacement And Removal
 
 Quit successfully before changing code. Stage and verify a complete compatible

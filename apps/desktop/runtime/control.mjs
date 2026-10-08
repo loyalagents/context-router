@@ -12,6 +12,7 @@ export class ControlProtocol {
   #timer;
   #ready = false;
   #failed = false;
+  #quitRequested = false;
   #onStop;
   #onCommand;
   constructor(generation, { onStop, onCommand }) {
@@ -24,6 +25,7 @@ export class ControlProtocol {
   }
   get signal() { return this.#abort.signal; }
   get failed() { return this.#failed; }
+  get quitRequested() { return this.#quitRequested; }
   push(bytes) {
     if (this.signal.aborted) return;
     try {
@@ -41,6 +43,7 @@ export class ControlProtocol {
           this.#ready = true; clearTimeout(this.#timer); this.#start();
         } else {
           if (!['unlock','quit','model-unavailable'].includes(frame.command)) throw failure();
+          if (frame.command === 'quit') this.#quitRequested = true;
           this.#onCommand(frame.command);
           if (frame.command === 'quit') { this.end(); return; }
         }
