@@ -54,6 +54,7 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
   private operation: Promise<unknown> = Promise.resolve();
   private settlement: Promise<void> = Promise.resolve();
   private readonly startup?: ModelStartupAdmission;
+  private observedReadiness: 'unqualified' | 'qualified' | 'failed' = 'unqualified';
 
   constructor(configuration: ManualModelConfiguration, startup?: ModelStartupAdmission) {
     this.configuration = Object.freeze({ root: configuration?.root, port: configuration?.port,
@@ -81,8 +82,16 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
     })();
   }
 
-  /** Private installed-shell status; public AI ports continue to report unavailable while loading. */
+  /** Private shell observation, not a recurring reachability probe or admission owner. */
   async getManagedStatus(options: AiExecutionOptions = {}): Promise<AiStatus | { readonly state: 'loading'; readonly configured: true }> {
+    // Authority/expiry and active settlement always override prior qualification.
+    // Only the initial unqualified observation may initiate a readiness check.
+    if (!this.closing && !this.unavailable && (!this.startup || this.startup.state === 'ready') &&
+        !this.active && this.observedReadiness !== 'unqualified') {
+      if (options.signal?.aborted) throw new AiError('cancelled');
+      if (options.deadline !== undefined && (!Number.isFinite(options.deadline) || performance.now() >= options.deadline)) throw new AiError('deadline');
+      return Object.freeze({ state: this.observedReadiness === 'qualified' ? 'available' : 'unavailable', configured: !!this.claimed });
+    }
     const status = await this.getStatus(options);
     if (status.state === 'unavailable' && !this.closing && !this.unavailable && this.startup?.state === 'loading')
       return Object.freeze({ state: 'loading', configured: true });
@@ -191,8 +200,11 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
       try { await this.initialize(); check(); const result = await body(controls, check); check(); return result; }
       catch (error) {
         check();
-        if (error instanceof AiError) throw error;
-        throw new AiError(Object.prototype.hasOwnProperty.call(errors, error?.message) ? errors[error.message] : 'unavailable');
+        const failure = error instanceof AiError ? error
+          : new AiError(Object.prototype.hasOwnProperty.call(errors, error?.message) ? errors[error.message] : 'unavailable');
+        // Record observed failure for the menu, without changing nonterminal recovery.
+        if (failure.kind === 'unavailable' || failure.kind === 'unsafe_configuration') this.observedReadiness = 'failed';
+        throw failure;
       } finally {
         this.settlement = (this.client?.settled() ?? Promise.resolve()).then(() => {
           if (this.client?.state === 'unavailable' || this.parser?.state === 'unavailable') this.unavailable = true;
@@ -229,6 +241,7 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
     } finally { socket?.destroy(); await closed; check(); }
   }
   private async readiness(controls: AiExecutionOptions, check: () => void) {
+    this.observedReadiness = 'failed';
     const end = Math.min(controls.deadline, performance.now() + 5000);
     const readinessControls = { ...controls, deadline: end };
     await this.json('/props', undefined, readinessControls, check, null, controls.deadline);
@@ -241,6 +254,8 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
         !Array.isArray(models?.data) || models.data.length !== 1 || models.data[0]?.id !== 'step06-qwen35') {
       this.unavailable = true; throw new AiError('unsafe_configuration');
     }
+    check();
+    this.observedReadiness = 'qualified';
   }
   private async render(message: string, controls: AiExecutionOptions, check: () => void): Promise<string> {
     const rendered = (await this.json('/apply-template', { messages: [{ role: 'user', content: message }] }, controls, check))?.prompt;

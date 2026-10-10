@@ -98,3 +98,16 @@ test('private managed status reports terminal startup failure as unavailable', a
   assert.equal((await f.service.getManagedStatus()).state, 'unavailable');
   await assert.rejects(access(join(f.config.root, 'backend-session.claim')));
 });
+
+for (const expiry of [false, true]) test(`qualified menu observation cannot outlive managed authority (expiry=${expiry})`, async t => {
+  let wall = Date.now();
+  const control = new AbortController(), f = await managed(t, { signal: control.signal, wallNow: () => wall });
+  f.ready(); await waitFor(() => f.startup.state === 'ready');
+  assert.equal((await f.service.getManagedStatus()).state, 'available'); await f.service.settled();
+  const before = f.state.calls.length;
+  if (expiry) wall = (await inspectManualSession(f.config)).expiresAt + 1;
+  else control.abort();
+  assert.equal((await f.service.getManagedStatus()).state, 'unavailable');
+  await assert.rejects(f.service.generateText('must not be sent'), { kind: 'unavailable' });
+  assert.equal(f.state.calls.length, before);
+});

@@ -605,3 +605,45 @@ native ownership, persistence and backend authorization review coverage. This
 is not live model-download/inference evidence or renewed final qualification:
 full local gate, applicable installed qualification, independent final review,
 exact-head CI and remaining human acceptance stay pending.
+
+### Upload Admission And Private Status Correction (2026-10-10)
+
+Candidate 11 human PDF upload failed busy with no other AI request running.
+A synthetic fixture independently reproduced private menu polling reserving
+admission and rejecting a file operation with zero active inference. Root remains
+sole writer; `/root/review_upload_status` (requested Astra `xhigh`, actual serving
+settings unobservable) approved the bounded plan at SHA-256
+`f88edc354cfd46241d528e438801ed0ebccb5667985288faf7cdf7aeb247f8a3`.
+
+Track observed readiness as unqualified/qualified/failed. Repeated private status
+reads the observation after current authority/expiry, lifecycle and busy checks;
+only initial unqualified status can initiate qualification. Observed operational
+unavailability updates the display without introducing a lifecycle latch. Public
+status and every real request keep full qualification, admission and recovery.
+Menu availability is the last qualification plus current ownership/admission,
+not continuous reachability. Native model exit still invalidates the generation.
+
+Tests preceded product edits: five regressions failed, including both text and
+PDF admission collisions, while four safety checks passed. The backend build and
+57 targeted adapter, managed startup, session and real Nest consumer checks then
+passed (17.257 s, zero skips). Coverage includes actual PDF parsing, failed
+observation and explicit recovery, preparation failure, settlement exclusion,
+caller controls, shutdown, authority/expiry, and generation authentication/model
+revalidation after observed availability with zero unsafe user-data dispatch.
+
+The reviewer approved implementation and bounded artifact probe without blockers,
+bound to service SHA-256
+`24a1e94be1e27e22c872cb227eccd8e05d04974f90c920f02e3a74305b2691b7`,
+new test `54709ddbc587a27946922c412399499813816cbedcf32f666d06ddec5175b722`
+and managed-readiness test
+`6fd4678fd902c7d3f7381b79d853ab175cc7a3810b51b82a91988b218ff3a8e5`.
+The approved retest build uses a clean local commit, package verification and
+the nine new regressions against packaged Node/adapter/PDF worker with disposable
+TLS fixtures. Repository fixture generation is a harness dependency; this is
+not source/toolchain-denial or complete installed qualification. No personal
+document, running installation or live model is accessed by the agent.
+
+Carry forward unaffected native ownership, browser authorization, storage and
+download review. Human PDF retest, full local gate, applicable installed/live
+qualification, independent final review and exact-head CI remain pending for the
+frozen end-of-round candidate. Keep the original human failure and red evidence.

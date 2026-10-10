@@ -21,9 +21,9 @@ installation; never clear ownership metadata to bypass a refusal.
 | Use preferences and a manual MCP client at `http://127.0.0.1:8787/mcp` | Shared state and per-client grants; browser code is rejected as MCP credential | Candidate 10 fresh Claude Code reads and read-only tool discovery confirmed before/after Restart; broader grant/guard acceptance pending |
 | Restart local runtime with an idle connected client | Connections interrupt; current dashboard opens when ready and accepts a fresh unlock; same MCP URL/credential and persisted state remain | Candidate 10 user-confirmed restart/unlock, disconnected old tab, persistence and MCP reread |
 | Quit, then reopen | Owned cohort exits; normal relaunch preserves state | Automated guardian; menu human pending |
-| Explicit model consent and Cancel | Correct pinned source/size shown; progress bounded; non-AI stays usable; no incomplete asset selected | Candidate 10 immediate download failure; documented CDN correction and human retest pending |
-| Selected model already installed, network unavailable | Local AI works within retained limits; no hosted fallback | Separately approved live series pending |
-| Real sleep/wake with installed model | AI remains unavailable until explicit Restart; no automatic replay; non-AI remains healthy | Pending actual pilot |
+| Explicit model consent and Cancel | Correct pinned source/size shown; progress bounded; non-AI stays usable; no incomplete asset selected | Candidate 11 download/install and AI readiness user-confirmed after CDN fix; actual cancellation not yet confirmed |
+| Selected model already installed, network unavailable | Local AI works within retained limits; no hosted fallback | Candidate 11 dashboard/MCP smart search and post-restart search user-confirmed; offline full Quit/reopen clarification and isolated live qualification pending |
+| Real sleep/wake with installed model | AI remains unavailable until explicit Restart; no automatic replay; non-AI remains healthy | Candidate 11 user-confirmed restart-required menu after sleep and successful explicit restart recovery; no in-flight operation tested |
 | Certificate expiry or model failure | AI unavailable; explicit whole-generation restart required; preserved data/authority | Readiness and production guardian model fixtures; real bundled model/human pending |
 | Backup, pending restore, revoke/rotate restored authority, activate | Current selection retained until acknowledgment; resulting credential behavior matches explicit restored authority | Automated installed flow passed; human pending |
 | Compatible replacement and app-only uninstall/reinstall | Complete verified app starts; data/identity/MCP/models retained; altered payload refuses before state access | Automated installed checks passed; human pending |
@@ -70,3 +70,33 @@ ready and no partial model. The pinned URL redirected to the documented
 `us.aws.cdn.hf.co` host, absent from the shipped allowlist. A narrow policy
 correction is under targeted validation; real download/cancellation, installed
 AI and the complete human checklist remain pending.
+
+Candidate 11 follow-up on 2026-10-10: after the reviewed CDN fix at local commit
+`351536c1117d1f33d0dafa399acb599586d22a0c`, the user reported the model downloaded
+and supplied native/browser screenshots showing AI available. Dashboard Smart
+search and one Claude Code `smartSearchPreferences` call returned the expected
+synthetic stored full name. A further search worked after restart. Clarification
+remains pending on full Quit/reopen versus menu Restart and whether internet
+stayed disconnected. The model-download cancellation step is also unconfirmed.
+
+Actual sleep/wake produced the native restart-required status; the user then
+reported successful restart recovery and showed the unlocked dashboard with AI
+available and profile preserved. This is human functional evidence, not an
+independent measurement of the running binary, inference timing, in-flight
+cancellation or forced-loss/reboot recovery. Deferred dashboard restart and
+installed-model menu presentation are tracked in the
+[UI follow-up](../../ui-usability/README.md). The final frozen candidate still
+needs the full local gate, applicable installed qualification, independent final
+review and exact-head CI; the separately bounded automated live series remains
+unapproved. Earlier artifact passes remain historical for changed inputs.
+
+Candidate 11 PDF acceptance then reported one failed upload with model busy while
+the dashboard showed AI available. The user confirmed only the upload was active;
+Claude was connected but not running an AI request. A synthetic TLS fixture
+reproduced the menu's automatic status check taking admission and rejecting a file
+request despite zero active inference requests. The correction makes repeated
+private menu status observational after initial qualification, preserving real
+request qualification and exclusion. This explains a reproducible possible cause;
+the exact timing of the user's request was not independently observed. Document
+contents were not inspected. Upload acceptance remains failed pending a rebuilt
+candidate retest; no automatic retry or write was performed.

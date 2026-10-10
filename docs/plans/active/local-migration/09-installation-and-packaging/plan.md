@@ -411,6 +411,39 @@ serving settings unobservable).
    remain pending for the end of the human acceptance round. No live inference,
    agent-run weight download or change to the user's running app is authorized.
 
+### Human acceptance: status polling must not block uploads
+
+On 2026-10-10 a single PDF upload reported model busy while no other AI operation
+was running. A deterministic TLS fixture reproduced busy rejection with zero
+inference requests: the menu's once-per-second `getManagedStatus` call reserved
+the shared admission slot through `getStatus`. Root remains sole writer; affected
+independent lifecycle/security review is requested on Astra `xhigh`, with actual
+serving settings unobservable.
+
+1. Add failing adapter regressions for private status polling followed immediately
+   by text/PDF generation, and repeated status inspection without endpoint I/O.
+   Track observed readiness as unqualified, qualified or failed. Initial private
+   status may perform the existing qualification; after an observed result,
+   private polling reads state only. Real readiness starts conservatively failed
+   and becomes qualified only after all existing checks pass. An operational
+   unavailable/configuration error also marks the observation failed; polling
+   must not silently retry qualification. Explicit public status or generation
+   retains existing qualification and nonterminal recovery behavior.
+2. Preserve startup authority/expiry checks, loading, active/settlement busy,
+   terminal unavailability, signal/deadline validation, shared single-operation
+   admission and native shutdown. No generation queue, dispatch retry or cached
+   authorization is introduced. Test cold qualification, failed observation and
+   explicit recovery, real text/PDF calls, active requests, invalidation, expiry,
+   caller controls and preparation failure. Run affected adapter, managed startup
+   and application-consumer tests, then affected independent implementation review.
+3. Build a clean-commit retest candidate, verify its package and exercise the
+   packaged adapter/PDF worker with isolated deterministic TLS responses and
+   status polling. No personal PDF, installed state or live model is used by the
+   agent. User PDF upload retest remains necessary. Carry forward unaffected
+   native owner, storage, browser authorization and downloader review; final full
+   gate, installed qualification, independent final review and exact-head CI wait
+   for the frozen end-of-round candidate.
+
 ## Browser Experience And Model Assets
 
 Menu actions: Open dashboard, New unlock code, Copy unlock code, Download model,
