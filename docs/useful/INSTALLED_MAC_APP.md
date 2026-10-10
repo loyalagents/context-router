@@ -45,6 +45,13 @@ redirects and publishes only complete verified bytes. Cancellation preserves
 existing assets. No automatic retry, resume, hosted fallback or model substitution
 occurs. An explicit new attempt needs another menu action and consent.
 
+If download fails immediately while the dashboard stays ready, the candidate
+may predate a change to Hugging Face's CDN redirects. The current pinned URL
+uses `us.aws.cdn.hf.co`, an exact host listed in Hugging Face's
+[download documentation](https://huggingface.co/docs/hub/models-downloading).
+Use a candidate with the updated allowlist; the pinned model size and checksum
+remain required. Do not disable verification or edit the installed bundle.
+
 After download, choose **Restart local runtime…** to enable AI. It interrupts
 browser/MCP connections, drains and reaps the previous generation, then creates
 new private model credentials. When ready, it opens the current dashboard; unlock

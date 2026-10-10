@@ -387,6 +387,30 @@ automatic restart or inference replay on wake. Non-AI services may continue if t
 process is healthy. Test native notification wiring and deterministic timing; actual
 sleep/wake remains visibly pending until exercised on the pilot host.
 
+### Human acceptance: documented model CDN redirect
+
+On 2026-10-10 Candidate 10 failed immediately after download consent. A bounded
+HEAD request to the unchanged pinned model URL returned a redirect to
+`us.aws.cdn.hf.co`, absent from the production allowlist. Hugging Face's
+[official downloading documentation](https://huggingface.co/docs/hub/models-downloading)
+identifies that exact host as its US CDN edge. Root remains sole writer; affected
+independent security/compatibility review is requested on Astra `xhigh` (actual
+serving settings unobservable).
+
+1. Add failing tests against the actual `MODEL` host policy: follow the observed
+   redirect using tiny verified fixture bytes, and reject lookalike/subdomain,
+   credential-bearing, non-HTTPS and nonstandard-port destinations before contact.
+   Add only the observed exact host; retain immutable source, size, SHA-256, TLS,
+   redirect limits, private staging, cancellation and exclusive publication.
+2. Run the targeted downloader suite and real-TLS cancellation test; obtain
+   affected implementation review. Check the public redirect using headers only,
+   with bounded requests and no model-body download or signed-URL logging. Build
+   one fresh clean-commit app for human retesting and verify its package and
+   copied policy. Carry forward unaffected browser/native/persistence reviews;
+   the final full gate, installed qualification, final review and exact-head CI
+   remain pending for the end of the human acceptance round. No live inference,
+   agent-run weight download or change to the user's running app is authorized.
+
 ## Browser Experience And Model Assets
 
 Menu actions: Open dashboard, New unlock code, Copy unlock code, Download model,

@@ -2,12 +2,12 @@
 
 Status: pending. This checklist records human/platform acceptance separately from
 automated qualification. Do not mark it passed from component tests or a build.
-Use the rebuilt post-review candidate and exact commit/manifest named on
-[PR #168](https://github.com/loyalagents/context-router/pull/168). Candidate 05 is
-superseded for acceptance. Unsigned status, hardware and unrun release checks
-remain visible in the PR. Installed passes below refer to historical Candidate 05;
-renewed installed qualification must be recorded on the PR before accepting the
-rebuilt artifact.
+Use the latest retest candidate and exact commit/manifest supplied in this chat;
+acceptance-round corrections can remain local until the final candidate is frozen.
+[PR #168](https://github.com/loyalagents/context-router/pull/168) retains historical
+qualification and the unsigned/hardware/release limits. Earlier installed passes
+do not qualify changed inputs; renewed final qualification must be recorded on the
+PR before accepting the final artifact.
 
 The [installed runbook](../../../../useful/INSTALLED_MAC_APP.md) contains exact
 CLI syntax and recovery constraints. Use synthetic pilot data and a private
@@ -18,10 +18,10 @@ installation; never clear ownership metadata to bypass a refusal.
 | Open the complete candidate in Finder | CR menu appears; dashboard opens; no developer tools or separately operated server needed | Pending human |
 | New unlock code, copy, unlock; Lock and repeat | One-use code works once, expires after five minutes, re-unlock needs a new code | Pending native menu/clipboard |
 | Close all dashboard windows | Menu/MCP remain available; Open dashboard returns to local UI | Automated browser passed; human pending |
-| Use preferences and a manual MCP client at `http://127.0.0.1:8787/mcp` | Shared state and per-client grants; browser code is rejected as MCP credential | Installed guard tested; external client human pending |
-| Restart local runtime with an idle connected client | Connections interrupt; current dashboard opens when ready and accepts a fresh unlock; same MCP URL/credential and persisted state remain | Candidate 08 human navigation failure; correction retest pending |
+| Use preferences and a manual MCP client at `http://127.0.0.1:8787/mcp` | Shared state and per-client grants; browser code is rejected as MCP credential | Candidate 10 fresh Claude Code reads and read-only tool discovery confirmed before/after Restart; broader grant/guard acceptance pending |
+| Restart local runtime with an idle connected client | Connections interrupt; current dashboard opens when ready and accepts a fresh unlock; same MCP URL/credential and persisted state remain | Candidate 10 user-confirmed restart/unlock, disconnected old tab, persistence and MCP reread |
 | Quit, then reopen | Owned cohort exits; normal relaunch preserves state | Automated guardian; menu human pending |
-| Explicit model consent and Cancel | Correct pinned source/size shown; progress bounded; non-AI stays usable; no incomplete asset selected | Deterministic downloader passed; dialog/real download pending |
+| Explicit model consent and Cancel | Correct pinned source/size shown; progress bounded; non-AI stays usable; no incomplete asset selected | Candidate 10 immediate download failure; documented CDN correction and human retest pending |
 | Selected model already installed, network unavailable | Local AI works within retained limits; no hosted fallback | Separately approved live series pending |
 | Real sleep/wake with installed model | AI remains unavailable until explicit Restart; no automatic replay; non-AI remains healthy | Pending actual pilot |
 | Certificate expiry or model failure | AI unavailable; explicit whole-generation restart required; preserved data/authority | Readiness and production guardian model fixtures; real bundled model/human pending |
@@ -61,3 +61,12 @@ failure, clears private browser state and removes the unlock form. Re-test with
 the exact new app after a successful Quit and closing previous dashboard tabs.
 Automated targeted passes and any new package verification do not constitute
 human acceptance or renewed final migration/CI qualification.
+
+Later Candidate 10 reports confirmed the restart fix, basic persistence and fresh
+Claude Code MCP reads before and after CR Restart. The configured read-only client
+did not expose a mutation tool; no unauthorized write was actually dispatched.
+Model download then failed immediately after consent, leaving the dashboard
+ready and no partial model. The pinned URL redirected to the documented
+`us.aws.cdn.hf.co` host, absent from the shipped allowlist. A narrow policy
+correction is under targeted validation; real download/cancellation, installed
+AI and the complete human checklist remain pending.

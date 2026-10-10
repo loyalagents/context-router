@@ -575,3 +575,33 @@ user's incremental-validation instruction, this is an acceptance-round correctio
 full local migration gate, complete installed qualification, final review and
 exact-head CI remain pending for the eventual frozen final candidate. Candidate
 09's broader passes remain historical for the changed browser inputs.
+
+### Model CDN Redirect Correction (2026-10-10)
+
+Candidate 10 human testing found an immediate consented-download failure. The
+pinned public URL returned a redirect to the exact documented Hugging Face CDN
+host `us.aws.cdn.hf.co`, absent from the shipped policy. Root is sole writer;
+`/root/review_download_cdn` (requested Astra `xhigh`, actual serving settings
+unobservable) approved the bounded plan at SHA-256
+`b306fdd5c4d234d5ac357dbea803636a045f55eaac552b141d693979800ddb0b`.
+
+Tests preceded the one-host production addition: both new CDN-path cases failed
+under the original policy. All 19 targeted downloader and real-TLS cancellation
+checks then passed, zero skips (244.798 ms). They exercise the production source
+URL/host policy with tiny bytes, accepted redirect, digest rejection, private
+stage cleanup and unsafe destinations rejected before contact. A 30-second
+header-only public probe with bundled Node followed the corrected policy to HTTP
+200 and exact pinned content length; it requested no model body. Immutable source,
+size, SHA-256, TLS and all existing download limits remain unchanged.
+
+The reviewer approved implementation without blockers, bound to model-assets
+SHA-256 `7fc8e03589a9e12953524022829ee1c2b5cd39e5deeb64630a88582215a77a6c`,
+download test `34b4c627a9222006fa9d3f29ecd055c00efa1696858b2605fe77522d8aba6afb`
+and bounded probe `32b744319440619e18e812c645c3e9ea7007ac500071cba8016e6dfc20a8e28d`.
+Clean-commit packaging, package verification, copied-policy identity and the same
+probe using packaged Node/runtime are the approved targeted artifact checks for
+the next human retest. Retain Candidate 10's failure and unaffected browser,
+native ownership, persistence and backend authorization review coverage. This
+is not live model-download/inference evidence or renewed final qualification:
+full local gate, applicable installed qualification, independent final review,
+exact-head CI and remaining human acceptance stay pending.
