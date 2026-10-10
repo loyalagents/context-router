@@ -509,3 +509,36 @@ closed/exited/removed, with no recovery required; the exact Docker ID was confir
 absent. This cancelled run is not a passing gate. Candidate 07 receipts and the CI
 failure remain historical. Final native, rebuilt candidate, installed smoke, full
 local gate and final-head CI receipts are tracked on PR #168.
+
+### Human Restart Navigation Correction (2026-10-09)
+
+Candidate 08 human testing exposed a stale dashboard tab after Restart: the UI
+port is ephemeral, while the menu opened the browser only at initial readiness.
+Root remains sole writer. `/root/review_restart_dashboard`, requested Astra
+`xhigh` with actual serving settings unobservable, independently approved the
+bounded plan and implementation over `15306f15e5823bbb144175f757ab7b0743461813`.
+The menu rearms browser opening only on explicit Restart and consumes it at
+validated readiness, suppressed during stopping/quitting/broken control. The
+confirmation, unlock screen and installed runbook explain fresh login and the
+current dashboard address; terminal instructions and 429 retry guidance remain.
+
+The new native regression failed before the production change, then all three
+targeted menu tests passed (5.301 s). It captures actual selected origins across
+three generations, exact opening counts, failed replacement startup and stopping,
+quitting/broken-control negatives without opening the user's browser. A preliminary
+fixture compilation failure from a superclass property-name collision was fixed
+before recording the expected behavioral failure. The reviewer bound approval to
+menu SHA-256 `d4c0cf868949fcbf34ddc9612fe59ddc1a2c5a2bea0fe2bf573f4ffa1bd04094`
+and fixture SHA-256 `b4851ba2a831028a9a91c7fb4171e2c77441fa52f6b21a89c851303ad557cae7`.
+The web production build passed. Three affected real-browser checks passed
+(8.089 s), retaining consumed-token rejection and capacity retry. Their first
+sandboxed attempt failed before readiness; the isolated loopback/browser run
+outside the sandbox passed without product or assertion changes. Markdown links
+and diff whitespace checks passed.
+
+Carry forward unaffected complete-diff coverage for supervisor draining/reaping,
+storage/recovery, session authorization, transport contracts, packaging integrity
+and model lifecycle. No backend behavior or HTTP contract changed. Rebuilt
+candidate, installed smoke, final full gate and exact-head CI evidence belong on
+PR #168; Candidate 08 remains historical and the user's running copy is untouched.
+Human retest, live-model and signing/platform acceptance remain separate.

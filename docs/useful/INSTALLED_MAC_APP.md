@@ -47,7 +47,10 @@ occurs. An explicit new attempt needs another menu action and consent.
 
 After download, choose **Restart local runtime…** to enable AI. It interrupts
 browser/MCP connections, drains and reaps the previous generation, then creates
-new private model credentials. It preserves the database, human identity, MCP
+new private model credentials. When ready, it opens the current dashboard; unlock
+there with a fresh code. Restart can change the dashboard's local address, so an
+older tab may no longer reach the app. Use **CR → Open dashboard** to return to the
+current address rather than trying new codes in that old tab. It preserves the database, human identity, MCP
 credentials/grants and model assets. Reconnect clients and obtain a fresh browser
 unlock. Sleep/wake or one-day certificate expiry invalidates AI until an explicit
 restart. Actual sleep/wake and reboot qualification remain pending. The retained

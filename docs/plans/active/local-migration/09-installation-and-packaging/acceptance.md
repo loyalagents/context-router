@@ -19,7 +19,7 @@ installation; never clear ownership metadata to bypass a refusal.
 | New unlock code, copy, unlock; Lock and repeat | One-use code works once, expires after five minutes, re-unlock needs a new code | Pending native menu/clipboard |
 | Close all dashboard windows | Menu/MCP remain available; Open dashboard returns to local UI | Automated browser passed; human pending |
 | Use preferences and a manual MCP client at `http://127.0.0.1:8787/mcp` | Shared state and per-client grants; browser code is rejected as MCP credential | Installed guard tested; external client human pending |
-| Restart local runtime with an idle connected client | Connections interrupt; fresh browser unlock works; same MCP URL/credential and persisted state remain | Automated installed restart; menu human pending |
+| Restart local runtime with an idle connected client | Connections interrupt; current dashboard opens when ready and accepts a fresh unlock; same MCP URL/credential and persisted state remain | Candidate 08 human navigation failure; correction retest pending |
 | Quit, then reopen | Owned cohort exits; normal relaunch preserves state | Automated guardian; menu human pending |
 | Explicit model consent and Cancel | Correct pinned source/size shown; progress bounded; non-AI stays usable; no incomplete asset selected | Deterministic downloader passed; dialog/real download pending |
 | Selected model already installed, network unavailable | Local AI works within retained limits; no hosted fallback | Separately approved live series pending |
@@ -39,3 +39,14 @@ its envelope and report the failure for diagnosis.
 
 Windows/Linux deferral is approved; this checklist does not expand the supported
 hardware claim. Steps 10–11 and full MCP onboarding/UI redesign remain deferred.
+
+Human report on 2026-10-09: Candidate 08 passed package verification, opened the
+dashboard and showed the CR menu without a model. After an initial login, Restart
+left the existing tab unable to use fresh codes; Open dashboard restored access.
+The confirmed cause is a new ephemeral dashboard address without automatic browser
+opening after Restart. The bounded correction opens the current address on each
+successful explicit Restart and clarifies menu/terminal unlock guidance. This
+report is partial acceptance, not a passing restart or complete human checklist;
+retest the rebuilt candidate named on the PR. The old browser session remains
+intentionally invalidated, and the old tab is not redirected or automatically
+authenticated.

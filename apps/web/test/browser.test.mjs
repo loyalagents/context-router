@@ -225,7 +225,7 @@ test(
       .click();
     await f.page
       .getByRole('alert')
-      .filter({ hasText: 'Use a fresh unlock file' })
+      .filter({ hasText: 'Use a fresh unlock code' })
       .waitFor();
     const replay = await f.context.request.post(
       f.ready.origin + '/api/local/unlock',

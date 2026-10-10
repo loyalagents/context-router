@@ -203,7 +203,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
       setError(
         !exchanged && error instanceof LocalRequestError && error.status === 429
           ? 'Unlock is busy. Wait for other unlock attempts to finish or lock another dashboard, then retry the same unexpired unlock token.'
-          : 'Unlock failed. Use a fresh unlock file and enable session storage.',
+          : 'Unlock failed. Use a fresh unlock code and enable session storage. After restarting the Mac app, choose CR → Open dashboard and unlock there.',
       );
     } finally {
       setBusy(false);
@@ -236,9 +236,9 @@ export default function LocalSession({ children }: { children: ReactNode }) {
         <form onSubmit={unlock} className="w-full max-w-lg space-y-5">
           <h1 className="text-3xl font-bold">Context Router</h1>
           <p>
-            Open the private unlock file printed by your local launcher, then
-            paste its contents here. It expires after five minutes and works
-            once.
+            In the Mac app, choose CR → New unlock code… in the menu bar, then
+            copy and paste the code here. It expires after five minutes and
+            works once.
           </p>
           <label htmlFor="local-unlock" className="block font-medium">
             Unlock token
@@ -265,8 +265,14 @@ export default function LocalSession({ children }: { children: ReactNode }) {
             {busy ? 'Unlocking…' : 'Unlock local dashboard'}
           </button>
           <p className="text-sm text-gray-600">
-            For a new file, enter <code>unlock</code> in the running launcher.
-            Restarting the launcher expires all browser sessions.
+            Using the terminal launcher? Open the private unlock file it prints
+            and paste its contents here. Enter <code>unlock</code> in the running
+            launcher for a new file.
+          </p>
+          <p className="text-sm text-gray-600">
+            Restarting signs out all browser sessions. In the Mac app, use the
+            dashboard opened after Restart, or choose CR → Open dashboard.
+            Older tabs may have an obsolete address.
           </p>
         </form>
       </main>

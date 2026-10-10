@@ -142,6 +142,29 @@ Each checkpoint ends with targeted tests; affected plan review precedes product
 edits, and implementation review precedes qualification. No live inference,
 download, human acceptance, merge or distribution is added by these corrections.
 
+### Human acceptance: dashboard navigation after Restart
+
+On 2026-10-09 the user reported that fresh unlock codes failed in the existing
+browser tab after Restart, while Open dashboard worked. The menu requests an
+ephemeral UI port for each generation but opens the browser only on first launch.
+The old tab therefore keeps addressing the stopped generation. Root remains sole
+writer; affected independent review is requested on Astra `xhigh` (actual serving
+settings unobservable), covering menu lifecycle, browser guidance and regression
+coverage. The bounded correction has two checkpoints:
+
+1. Add a failing native menu regression with distinct old/new origins. After an
+   explicit Restart, open the new validated dashboard origin exactly once at
+   readiness, never while stopping/quitting or on failed startup. Preserve fresh
+   browser authentication, ephemeral ports, private control, drain/reaping and
+   all persisted state. Tests intercept browser opening; they do not operate the
+   user's browser or installation.
+2. Clarify the restart confirmation and local unlock guidance for the Mac menu
+   and retained terminal launcher. Old tabs need Open dashboard; no port scanning,
+   redirects, credential transfer or automatic unlock is introduced. Run targeted
+   menu and browser checks, affected independent review, then qualify a separate
+   rebuilt candidate and final gates. Candidate 08 and the user's running copy
+   remain unchanged; no model download/inference or human acceptance is inferred.
+
 ### Retained consumer contracts
 
 Preserve all GraphQL, browser REST and MCP tool/resource payloads and credential

@@ -13,10 +13,10 @@
   NSString *_bundle,*_root,*_generation,*_origin,*_unlockFile;
   NSStatusItem *_status;NSMenuItem *_label;NSMutableDictionary<NSString *,NSMenuItem *> *_items;
   NSTask *_guardian;NSPipe *_input,*_output;CRWriteQueue *_commands;CRFrames *_frames;NSTimer *_timer;
-  BOOL _ready,_stopping,_quitting,_stopped,_broken,_download,_cancelPending,_sleepInvalidated,_firstOpen,_exitObserved;double _unlockUntil;
+  BOOL _ready,_stopping,_quitting,_stopped,_broken,_download,_cancelPending,_sleepInvalidated,_openOnReady,_exitObserved;double _unlockUntil;
 }
 - (instancetype)initWithBundle:(NSString *)bundle root:(NSString *)root {
-  self=[super init];if(self){_bundle=bundle;_root=root;_items=[NSMutableDictionary dictionary];_firstOpen=YES;}return self;
+  self=[super init];if(self){_bundle=bundle;_root=root;_items=[NSMutableDictionary dictionary];_openOnReady=YES;}return self;
 }
 - (void)add:(NSString *)title action:(SEL)action key:(NSString *)key menu:(NSMenu *)menu {
   NSMenuItem *item=[[NSMenuItem alloc] initWithTitle:title action:action keyEquivalent:@""];item.target=self;[menu addItem:item];_items[key]=item;
@@ -80,7 +80,7 @@
     [self origin:record[@"origin"]];[self unlock:record[@"unlockFile"]];_ready=YES;
     if(!_stopping&&!_quitting){_label.title=[record[@"modelEnabled"] boolValue]?@"Dashboard ready · AI loading":@"Dashboard ready · model not installed";if(_sleepInvalidated)[self send:@"model-unavailable"];}
     if(_quitting){_stopping=YES;[self send:@"quit"];}
-    else if(!_stopping&&_firstOpen){_firstOpen=NO;[self openDashboard:nil];}
+    else if(!_stopping&&!_broken&&_openOnReady){_openOnReady=NO;[self openDashboard:nil];}
   }else if([type isEqual:@"unlock"]){
     if(!_ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"unlockFile"])||![_origin isEqual:record[@"origin"]])CRFail();if([self unlock:record[@"unlockFile"]])[self performSelector:@selector(showUnlock) withObject:nil afterDelay:0];
   }else if([type isEqual:@"model-status"]){
@@ -122,9 +122,9 @@
   if([alert runModal]==NSAlertFirstButtonReturn&&_ready&&!_stopping){_download=YES;[self send:@"download"];}[self update];
 }
 - (void)cancelDownload:(id)sender {(void)sender;if(_download&&!_cancelPending){_cancelPending=YES;[self send:@"cancel-download"];}[self update];}
-- (void)beginRestart {_sleepInvalidated=NO;_stopping=YES;_label.title=@"Stopping local runtime…";[self send:@"restart"];[self update];}
+- (void)beginRestart {_sleepInvalidated=NO;_openOnReady=YES;_stopping=YES;_label.title=@"Stopping local runtime…";[self send:@"restart"];[self update];}
 - (void)restart:(id)sender {
-  (void)sender;NSAlert *alert=[NSAlert new];alert.messageText=@"Restart local runtime?";alert.informativeText=@"This interrupts dashboard and MCP connections, drains current work, and starts a fresh local AI session. Data, identity, client credentials and installed model assets are preserved.";[alert addButtonWithTitle:@"Restart"];[alert addButtonWithTitle:@"Cancel"];
+  (void)sender;NSAlert *alert=[NSAlert new];alert.messageText=@"Restart local runtime?";alert.informativeText=@"This signs out browser sessions, interrupts MCP connections, drains current work, and starts a fresh local AI session. The current dashboard will open when ready; unlock there with a new code. Older tabs may have an obsolete address. Data, identity, client credentials and installed model assets are preserved.";[alert addButtonWithTitle:@"Restart"];[alert addButtonWithTitle:@"Cancel"];
   if([alert runModal]==NSAlertFirstButtonReturn&&_ready&&!_stopping)[self beginRestart];[self update];
 }
 - (void)sleepWake:(NSNotification *)notification {(void)notification;_sleepInvalidated=YES;if(_ready&&!_stopping){[self send:@"model-unavailable"];_label.title=@"Dashboard ready · restart required after sleep";}}
