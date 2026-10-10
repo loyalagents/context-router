@@ -262,7 +262,7 @@ test(
     await f.page.evaluate(() => {
       const original = window.fetch;
       window.fetch = (input, options) => {
-        if (input === '/api/local/capabilities') {
+        if (input === '/api/local/session') {
           window.fetch = original;
           return new Promise((_, reject) => {
             window.releaseOldCapability = () => reject(new TypeError('Failed to fetch'));

@@ -647,3 +647,56 @@ Carry forward unaffected native ownership, browser authorization, storage and
 download review. Human PDF retest, full local gate, applicable installed/live
 qualification, independent final review and exact-head CI remain pending for the
 frozen end-of-round candidate. Keep the original human failure and red evidence.
+
+### Browser Focus And Successive Upload Admission Correction (2026-10-10)
+
+Candidate 12 human upload still reported busy. A deterministic browser/backend/
+TLS/PDF fixture reproduced a second self-race: file-picker focus started a full
+capability probe, which reserved model admission and rejected upload with zero
+inference completions. Root remains sole writer. The affected reviewer
+`/root/review_upload_status` (requested Astra `xhigh`, actual serving settings
+unobservable) approved the bounded plan before implementation and its final
+retest-packaging clarification at SHA-256
+`5a6e5507c39b52a79bf1df67d3970c4724324d2e23577c6a3d68ffe6b2e9e394`.
+
+Automatic focus/pageshow/visibility checks now use authenticated, non-renewing
+`POST /api/local/session`, returning only remaining lifetime without model I/O.
+Completion/cancellation no longer starts a competing full probe. Explicit model
+checks and initial unlock/restoration retain full qualification. The display
+identifies model availability as last checked; single model admission is unchanged.
+
+Tests preceded product edits: four HTTP regressions and two browser regressions
+failed as expected. Backend/web builds and all 34 HTTP/session checks passed.
+The first 12-case browser/transport run passed 11 tests; the new PDF test's empty
+synthetic suggestions correctly produced `no_matches`, exposing a fixture mistake.
+Only that test's response was corrected to a grounded Greek name proposal. Its
+recheck plus eight affected restart/session/MCP browser regressions passed, 9/9.
+Carry forward the 11 unaffected passes, not the earlier failed PDF assertion.
+This is 20 distinct green browser/transport cases across those two runs, not one
+all-green 12-case run. Keep every failure log. Contract inventory and Markdown
+checks passed; the contract check had no base comparison and is not a final gate.
+
+The reviewer approved implementation, tests and bounded artifact probe without
+blockers after adding the new route to the HTTP fixture and refreshing exactly
+four derived references. Approval binds HTTP boundary SHA-256
+`7bf20bd4d242493f95c7d9d7e2fdd5808c500580021701e38c206ab88f435730`,
+LocalSession `c1a1274bf3d5e14a8a5377765f7af2eabe7890bcb3d816f5dda0b4280a7c96e3`,
+AiControls `b09f0f746bd8e973df389ce248ba8a6572d3f00cbad175bffcb3452b1c0c95e8`,
+HTTP fixture `443018d9f07dd4dde2cfd5112d10bf879d4a157f7e23267eca100405cff738bb`,
+registry `b9a592a4d0e715101fef9b5bb15c5fae8cd3e93f9089ebc7851c9672fd5ee689`
+and probe generator
+`87937b855e60d67ddca30ed74f4c06cac20127da8aa02d1c43fdf53948b0ab71`.
+
+Commit only this correction's product/tests/contracts/docs. Concurrent unrelated
+documentation changes may remain: root README, Step 09 README, migration decision
+log/orchestration, UI follow-up README and the local-AI-scheduling plan directory.
+The retest receipt must retain `dirty: true`, enumerate that remainder and bind
+the exact copied-input digest. Packaged browser validation uses actual bundled
+Node/backend/web/PDF worker with fresh disposable roots and synthetic data.
+Repository Playwright, PDF/TLS fixtures and the peer fixture's unused source-dist
+LocalModelService remain harness dependencies. This is not native guardian,
+source/toolchain-denial, live-model or complete installed qualification.
+
+Carry forward unaffected lifecycle/native/storage/download implementation review.
+Human PDF retest and the frozen final candidate's full local gate, applicable
+installed qualification, independent final review and exact-head CI remain pending.

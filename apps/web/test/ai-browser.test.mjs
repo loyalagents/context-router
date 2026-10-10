@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { browserFixture } from './browser-fixture.mjs';
+import { greekPdfFixture } from '../../backend/test/local-model/fixtures/pdf-fixtures.mjs';
 const require = createRequire(
   new URL('../../backend/package.json', import.meta.url),
 );
@@ -13,6 +14,71 @@ async function unlock(f, route = '/dashboard/preferences') {
   await f.page.getByRole('button', { name: 'Unlock local dashboard' }).click();
   await f.page.getByRole('button', { name: 'Lock dashboard' }).waitFor();
 }
+
+test('file-picker focus and successive uploads never start competing model status checks', { timeout: 60000 }, async (t) => {
+  const f = await browserFixture(t, { model: true });
+  await unlock(f);
+  f.peer.state.reply = JSON.stringify({ suggestions: [{ slug: 'profile.full_name', operation: 'CREATE', newValue: 'Αθήνα', confidence: 1, sourceSnippet: 'Αθήνα' }], documentSummary: 'Synthetic PDF only' });
+  const pdf = { name: 'synthetic-focus.pdf', mimeType: 'application/pdf', buffer: Buffer.from((await greekPdfFixture()).bytes) };
+  let holdStatus = true, entered, release;
+  const reached = new Promise(resolve => { entered = resolve; });
+  const held = new Promise(resolve => { release = resolve; });
+  f.peer.state.hook = async request => {
+    if (holdStatus && request.url === '/props') { entered(); await held; }
+    return false;
+  };
+  const capabilityRequests = [];
+  f.page.on('request', request => { if (request.url().endsWith('/api/local/capabilities')) capabilityRequests.push(request.url()); });
+  await f.page.getByLabel('I reviewed the files', { exact: false }).check();
+  const recheckRequest = f.page.waitForRequest(request => /\/api\/local\/(session|capabilities)$/.test(request.url()));
+  const recheckResponse = f.page.waitForResponse(response => /\/api\/local\/(session|capabilities)$/.test(response.url()));
+  await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  const route = new URL((await recheckRequest).url()).pathname;
+  try {
+    if (route.endsWith('/capabilities')) await reached;
+    else { await recheckResponse; holdStatus = false; }
+    const uploaded = f.page.waitForResponse(response => response.url().endsWith('/api/preferences/analysis'));
+    await f.page.getByLabel('Choose documents', { exact: true }).setInputFiles(pdf);
+    const result = await (await uploaded).json();
+    console.log(JSON.stringify({ focusRoute: route, uploadStatus: result.status, completionCount: f.peer.state.completionBodies.length }));
+    assert.equal(result.status, 'success', result.statusReason);
+  } finally { holdStatus = false; release(); await recheckResponse; }
+  assert.equal(route, '/api/local/session');
+  await f.page.getByRole('button', { name: 'Try Another Upload' }).click();
+  await f.page.getByLabel('I reviewed the files', { exact: false }).check();
+  const second = f.page.waitForResponse(response => response.url().endsWith('/api/preferences/analysis'));
+  await f.page.getByLabel('Choose documents', { exact: true }).setInputFiles(pdf);
+  assert.equal((await (await second).json()).status, 'success');
+  await f.page.getByRole('button', { name: 'Try Another Upload' }).waitFor();
+  assert.equal(f.peer.state.completionBodies.length, 2);
+  assert.match(f.peer.state.completionBodies[0].prompt, /Αθήνα/);
+  assert.deepEqual((await f.graphql('{ activePreferences { id } }')).activePreferences, []);
+  for (const event of ['pageshow', 'visibilitychange']) {
+    const response = f.page.waitForResponse(r => r.url().endsWith('/api/local/session'));
+    await f.page.evaluate(event => (event === 'visibilitychange' ? document : window).dispatchEvent(new Event(event)), event);
+    assert.equal((await response).status(), 200);
+  }
+  assert.equal(capabilityRequests.length, 0, 'no automatic readiness probes');
+  const checked = f.page.waitForResponse(response => response.url().endsWith('/api/local/capabilities'));
+  await f.page.getByRole('button', { name: 'Check model status' }).last().click();
+  assert.equal((await checked).status(), 200);
+  assert.equal(capabilityRequests.length, 1, 'explicit check still qualifies the model');
+});
+
+for (const remainingMilliseconds of [0, 8 * 60 * 60 * 1000 + 1, 100])
+  test(`passive session revalidation fails closed for invalid or elapsed lifetime ${remainingMilliseconds}`, { timeout: 60000 }, async (t) => {
+    const f = await browserFixture(t);
+    await unlock(f);
+    await f.page.route('**/api/local/session', async route => {
+      // Hold the valid short lifetime beyond its request-start bound.
+      if (remainingMilliseconds === 100) await new Promise(resolve => setTimeout(resolve, 150));
+      await route.fulfill({ json: { remainingMilliseconds } });
+    });
+    await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await f.page.getByLabel('Unlock token').waitFor({ timeout: 3000 });
+    assert.equal(await f.page.evaluate(() => sessionStorage.length), 0);
+    assert.equal(await f.page.getByRole('button', { name: 'Lock dashboard' }).count(), 0);
+  });
 
 test(
   'no-model dashboard keeps literal search and manual memory usable while upload, smart search and form fill are disabled',
@@ -228,6 +294,10 @@ test(
   async (t) => {
     const f = await browserFixture(t, { model: true });
     await unlock(f);
+    const automaticStatusRequests = [];
+    f.page.on('request', request => {
+      if (request.url().endsWith('/api/local/capabilities')) automaticStatusRequests.push(request.url());
+    });
     f.peer.state.reply = JSON.stringify({
       suggestions: [
         {
@@ -281,6 +351,7 @@ test(
       2,
       'both replacement files complete',
     );
+    assert.equal(automaticStatusRequests.length, 0, 'cancellation and completion do not start background readiness checks');
     await f.page.reload();
     await f.page.getByLabel('I reviewed the files', { exact: false }).check();
     await f.page

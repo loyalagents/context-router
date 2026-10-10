@@ -92,20 +92,17 @@ export default function LocalSession({ children }: { children: ReactNode }) {
     setDisconnected(lostConnection);
     setError(lostConnection ? '' : message);
   };
-  const updateCapabilities = async (current: number) => {
-    const started = performance.now(),
-      wall = Date.now();
-    const next = await sessionJson<LocalCapabilities>('/api/local/capabilities');
+  const updateLifetime = (remainingMilliseconds: number, current: number, started: number, wall: number) => {
     if (current !== epoch.current) return false;
     if (
-      !Number.isFinite(next.remainingMilliseconds) ||
-      next.remainingMilliseconds <= 0 ||
-      next.remainingMilliseconds > 8 * 60 * 60 * 1000
+      !Number.isFinite(remainingMilliseconds) ||
+      remainingMilliseconds <= 0 ||
+      remainingMilliseconds > 8 * 60 * 60 * 1000
     )
       throw new Error('Invalid browser lifetime');
     deadline.current = {
-      monotonic: started + next.remainingMilliseconds,
-      wall: wall + next.remainingMilliseconds,
+      monotonic: started + remainingMilliseconds,
+      wall: wall + remainingMilliseconds,
     };
     const checkExpiry = () => {
       if (current !== epoch.current) return;
@@ -122,8 +119,19 @@ export default function LocalSession({ children }: { children: ReactNode }) {
     clearTimeout(expiryTimer.current);
     checkExpiry();
     if (current !== epoch.current) return false;
+    return true;
+  };
+  const updateCapabilities = async (current: number) => {
+    const started = performance.now(), wall = Date.now();
+    const next = await sessionJson<LocalCapabilities>('/api/local/capabilities');
+    if (!updateLifetime(next.remainingMilliseconds, current, started, wall)) return false;
     setCapabilities(next);
     return true;
+  };
+  const revalidateSession = async (current: number) => {
+    const started = performance.now(), wall = Date.now();
+    const next = await sessionJson<{ remainingMilliseconds: number }>('/api/local/session');
+    return updateLifetime(next.remainingMilliseconds, current, started, wall);
   };
   const accept = async (value: string, current: number) => {
     // Storage must work before exposing any authenticated UI state.
@@ -182,7 +190,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
       checking = true;
       const current = epoch.current;
       try {
-        await updateCapabilities(current);
+        await revalidateSession(current);
       } catch (error) {
         if (current !== epoch.current) return;
         failSession(error, 'Session could not be verified. Unlock again.');
@@ -329,7 +337,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
       }}
     >
       <div className="px-10 pt-5 flex justify-between gap-3 text-sm">
-        <span>Local dashboard · AI: {capabilities.status.state}</span>
+        <span>Local dashboard · AI: {capabilities.status.state} (last checked)</span>
         <button
           type="button"
           disabled={busy}

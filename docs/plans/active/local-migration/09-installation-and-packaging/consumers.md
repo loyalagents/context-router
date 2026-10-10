@@ -28,6 +28,17 @@ concurrently on managed data. Do not silently adopt/move an existing manual pair
 An explicit quiescent matching backup and restore into a new managed store is the
 supported import route. Preserve external state and all previous evidence limits.
 
+The Candidate 12 upload correction adds `POST /api/local/session` alongside the
+unchanged capabilities route. Its sole consumer is automatic dashboard session
+revalidation on focus/pageshow/visibility; it returns only non-renewing remaining
+lifetime through the same browser security boundary. The central frontend
+transport registers that exact destination. Initial/restored sessions and explicit
+model checks retain capabilities qualification; completion/cancellation no longer
+launch background model checks. This is an additive private browser contract, with
+no GraphQL/MCP/schema or native lifecycle API change. A complete app replacement
+updates backend/frontend together; code rollback restores the prior pair without
+changing stored state or browser credential format.
+
 ## New Entry Points And Trust Inputs
 
 Proposed concrete sources are `apps/desktop/native/menu.m`,

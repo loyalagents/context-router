@@ -3933,6 +3933,12 @@
       "path": "apps/web/components/local/LocalSession.tsx",
       "contract": "http",
       "kind": "route",
+      "reference": "/api/local/session"
+    },
+    {
+      "path": "apps/web/components/local/LocalSession.tsx",
+      "contract": "http",
+      "kind": "route",
       "reference": "/api/local/unlock"
     },
     {
@@ -4018,6 +4024,12 @@
       "contract": "http",
       "kind": "route",
       "reference": "/api/local/mcp/revoke"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/session"
     },
     {
       "path": "apps/web/lib/local-transport.ts",
@@ -4252,6 +4264,18 @@
       "contract": "http",
       "kind": "route",
       "reference": "/health"
+    },
+    {
+      "path": "docs/useful/LOCAL_UI.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/capabilities"
+    },
+    {
+      "path": "docs/useful/LOCAL_UI.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/session"
     },
     {
       "path": "docs/useful/local-orchestrator-commands.md",

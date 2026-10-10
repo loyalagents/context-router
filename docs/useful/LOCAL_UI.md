@@ -69,6 +69,14 @@ Closing the browser does not stop the backend or model. Closing terminal input
 alone also leaves the application running. Use Ctrl-C (SIGINT) or SIGTERM and
 wait for process exit; shutdown is bounded to ten seconds.
 
+Returning to a dashboard tab revalidates its browser session without probing the
+model. The authenticated, empty-body JSON `POST /api/local/session` returns only
+the remaining session lifetime and never renews it. Unlock/restoration and
+**Check model status** still use `/api/local/capabilities` for full qualification.
+The displayed AI state is the last checked result; completing or cancelling an
+operation does not start another model check. Every AI request still performs
+its own qualification and shares the existing one-operation admission limit.
+
 The HTTP boundary admits only documented page/static/API paths, exact Host/Origin
 and an explicit browser header. It rejects raw upgrades and CONNECT. Browser
 credentials cannot authenticate MCP; native MCP retains its Origin rejection.

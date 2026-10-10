@@ -444,6 +444,54 @@ serving settings unobservable.
    gate, installed qualification, independent final review and exact-head CI wait
    for the frozen end-of-round candidate.
 
+### Human acceptance: browser focus must not compete with uploads
+
+Candidate 12 retained a second automatic status path: browser focus/pageshow/
+visibility session revalidation calls `/api/local/capabilities`, whose full AI
+readiness check reserves model admission. A file chooser returning focus can
+overlap that check with document upload. The reported failure recurred with
+Candidate 12 confirmed running; a separately running Ollama instance does not
+share this admission owner. Exact historical timing is unobserved.
+
+Root remains sole writer. Renew affected browser/session and compatibility review
+with `/root/review_upload_status` (requested Astra `xhigh`, serving settings
+unobservable). Preserve all unrelated approved lifecycle/storage/download areas.
+
+1. Tests first: exercise the browser focus/upload overlap with a synthetic PDF,
+   real browser/backend/adapter and deterministic TLS model fixture. Add HTTP
+   regressions for a lightweight session check, no AI I/O, non-renewing lifetime,
+   expired/revoked/wrong authority and normal route/body/origin restrictions.
+2. Add exact-`{}` authenticated JSON `POST /api/local/session`, returning only
+   `remainingMilliseconds`, using existing Host/Origin/browser bearer, request
+   tracking, deadline, body limits and normal 32-request admission. Revalidate
+   after body consumption and before publishing; do not renew the session or
+   introduce model work. Add the exact destination to the frontend transport.
+   Automatic focus/pageshow/visibility revalidation uses this route and retains
+   request-start dual-clock expiry, epoch fencing and fail-closed disconnection/
+   revocation. Preserve displayed model capabilities. Initial unlock/restoration,
+   and explicit model status retain their existing full status semantics. Remove
+   automatic full status refresh after completion/cancellation as well: those
+   re-enable controls before probing and can compete with the next operation.
+   Displayed model state is labeled last checked. Test successive uploads and
+   cancellation before dispatch without a background capability probe. No AI
+   port, generation admission, retries or queue change.
+3. Run focused HTTP/session, transport, browser upload and restart/disconnection
+   regressions; build backend/web once for changed production inputs. After
+   affected implementation review, commit the reviewed product/tests and package
+   one retest candidate. Unrelated concurrent documentation edits may remain
+   uncommitted: enumerate that docs-only remainder and preserve `dirty: true`
+   plus the packager's exact copied-input digest. Do not include those edits in
+   this correction's commit or claim a clean final candidate from this receipt.
+   Verify it and run a bounded synthetic browser/upload check against its actual
+   packaged backend/web with repository harness dependencies explicitly recorded.
+   Bind bundled Node/backend/web paths; any temporary fixture shim changes only
+   resolution and uses owned roots/ports/children. Repository Playwright and
+   TLS/PDF generation remain harness dependencies. This is not native guardian
+   qualification or source/toolchain-denial evidence.
+   No live inference, personal files, personal runtime or external daemon changes.
+   User PDF retest and frozen end-of-round full gates remain pending; retain both
+   earlier failed human reports and all tests-first reproduction evidence.
+
 ## Browser Experience And Model Assets
 
 Menu actions: Open dashboard, New unlock code, Copy unlock code, Download model,

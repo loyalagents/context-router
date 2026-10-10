@@ -100,3 +100,13 @@ request qualification and exclusion. This explains a reproducible possible cause
 the exact timing of the user's request was not independently observed. Document
 contents were not inspected. Upload acceptance remains failed pending a rebuilt
 candidate retest; no automatic retry or write was performed.
+
+Candidate 12 subsequently produced the same PDF busy result. Read-only executable
+paths confirmed that Candidate 12 owned CR; a separate Ollama runtime was also
+running, but its involvement in the human failure is unproven. A deterministic
+browser/backend/TLS fixture reproduced a second CR race without Ollama: focus
+revalidation reserved model admission through `/api/local/capabilities`, and
+upload returned `ai_error` with zero inference dispatches. A separate regression
+also caught automatic status probes after cancellation/completion. The correction
+separates passive session validation from AI qualification and removes those
+automatic probes; the actual user PDF still requires a new candidate retest.
