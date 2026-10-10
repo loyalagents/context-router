@@ -165,6 +165,35 @@ coverage. The bounded correction has two checkpoints:
    rebuilt candidate and final gates. Candidate 08 and the user's running copy
    remain unchanged; no model download/inference or human acceptance is inferred.
 
+### Human acceptance: disconnected dashboard tabs
+
+On 2026-10-10 the user retried `$app` after staging Candidate 09 in `$next_app`;
+read-only process inspection confirmed the older app remained running. Separately,
+Candidate 09's auto-open behavior still leaves the old tab offering an unusable
+unlock form. The user requests either a reusable tab or an explicitly retired
+page. Root remains sole writer; the existing affected reviewer is requested on
+Astra `xhigh` (actual serving settings unobservable).
+
+1. Add real-browser regressions for an authenticated tab losing its original
+   runtime and an already locked tab attempting unlock at an unreachable address.
+   Clear private browser state and replace the entire authenticated/unlock UI with
+   a disconnected screen. Distinguish connection failure from a live server's
+   expired/invalid session or busy response; preserve valid same-origin re-unlock.
+2. Implement only browser connection-failure presentation at session restoration,
+   focus/visibility revalidation and unlock. Direct the user to close the obsolete
+   tab and use the dashboard opened by Restart or CR → Open dashboard; retain
+   terminal-launcher guidance. Do not close browser tabs programmatically, discover
+   ports, redirect credentials, retry writes, preserve authentication across
+   Restart or change native/backend/storage contracts.
+
+Run the focused new regressions plus affected session/browser cases against a
+fresh web production build, then renew affected independent review. Per the user's
+incremental-validation instruction, rebuild a separate app for human retesting
+with the necessary artifact checks, but defer the full local gate, complete
+installed qualification, final review and exact-head CI to the agreed final
+candidate. Existing candidate evidence remains historical for changed web inputs;
+unaffected native, storage and transport coverage is carried explicitly.
+
 ### Retained consumer contracts
 
 Preserve all GraphQL, browser REST and MCP tool/resource payloads and credential

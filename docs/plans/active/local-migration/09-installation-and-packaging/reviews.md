@@ -542,3 +542,36 @@ and model lifecycle. No backend behavior or HTTP contract changed. Rebuilt
 candidate, installed smoke, final full gate and exact-head CI evidence belong on
 PR #168; Candidate 08 remains historical and the user's running copy is untouched.
 Human retest, live-model and signing/platform acceptance remain separate.
+
+### Disconnected Dashboard Correction (2026-10-10)
+
+The user requested a usable current dashboard or an explicitly retired obsolete
+tab. Process inspection also confirmed the retest had launched the older `$app`
+after staging Candidate 09 separately. Root remains sole writer; the existing
+affected reviewer `/root/review_restart_dashboard` (requested Astra `xhigh`, actual
+serving settings unobservable) approved the bounded browser-only plan. Connection
+failures must be distinguished from HTTP rejection, malformed responses and
+storage errors; late failures must respect session epochs. No timeout, discovery,
+credential transfer, write retry or programmatic browser close is introduced.
+
+Two new browser regressions failed for the missing disconnected screen before
+implementation. An earlier fixture check incorrectly expected exit 0 after
+SIGTERM; it was corrected to the source launcher's explicit exit 143 before the
+behavioral red run. A fresh production web build and ten focused browser checks
+then passed (21.101 s), covering stopped-runtime authenticated/locked tabs,
+restoration failure, real session revocation/fresh unlock, delayed failure after
+Lock and new login, both 429 cases, normal profile editing, absolute expiry and
+late history/grant/revoke responses. The reviewer approved the affected
+implementation without blockers, bound to `LocalSession.tsx` SHA-256
+`bdb1e01d0ae41b211ed7a043b54b1f533d6893701dab5866936165e496a8a9bf`
+and `browser.test.mjs` SHA-256
+`457d29d3935263a0822ad3bb820a625510548eb7a4d79f939f5a841dfc7ba151`.
+Targeted rebuilt-artifact evidence is recorded with the retest candidate.
+
+Carry forward unaffected native menu/guardian, backend authorization, transport,
+storage/recovery, model lifecycle and packaging implementation reviews. The new
+browser presentation and epoch changes require renewed affected review. Per the
+user's incremental-validation instruction, this is an acceptance-round correction:
+full local migration gate, complete installed qualification, final review and
+exact-head CI remain pending for the eventual frozen final candidate. Candidate
+09's broader passes remain historical for the changed browser inputs.

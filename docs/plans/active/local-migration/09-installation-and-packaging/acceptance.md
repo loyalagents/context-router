@@ -50,3 +50,14 @@ report is partial acceptance, not a passing restart or complete human checklist;
 retest the rebuilt candidate named on the PR. The old browser session remains
 intentionally invalidated, and the old tab is not redirected or automatically
 authenticated.
+
+Human follow-up on 2026-10-10: the user staged Candidate 09 into `$next_app` and
+then launched the earlier `$app`. Read-only process inspection confirmed the older
+app owned the running menu/guardian, so this was not a Candidate 09 navigation
+failure. It nevertheless exposed a remaining UX gap: an obsolete tab still
+offered unusable unlock. The next correction replaces the page with a disconnected
+screen after session restoration/revalidation or unlock encounters a connection
+failure, clears private browser state and removes the unlock form. Re-test with
+the exact new app after a successful Quit and closing previous dashboard tabs.
+Automated targeted passes and any new package verification do not constitute
+human acceptance or renewed final migration/CI qualification.

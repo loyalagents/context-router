@@ -43,6 +43,19 @@ const SessionContext = createContext<{
 const storageKey = 'context-router.browser-session.v1';
 export const useLocalSession = () => useContext(SessionContext);
 
+class DashboardConnectionError extends Error {}
+
+// Only a failed session request means the address is unreachable. Storage,
+// response parsing and HTTP rejection errors keep their existing recovery paths.
+async function sessionJson<T>(route: string, body: unknown = {}): Promise<T> {
+  try {
+    return await localJson<T>(route, body);
+  } catch (error) {
+    if (error instanceof TypeError) throw new DashboardConnectionError();
+    throw error;
+  }
+}
+
 export default function LocalSession({ children }: { children: ReactNode }) {
   const [token, setToken] = useState('');
   const [capabilities, setCapabilities] = useState<LocalCapabilities | null>(
@@ -52,6 +65,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
   const [bootstrap, setBootstrap] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [disconnected, setDisconnected] = useState(false);
   const [version, setVersion] = useState(0);
   const epoch = useRef(0);
   const expiryTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
@@ -72,10 +86,16 @@ export default function LocalSession({ children }: { children: ReactNode }) {
     setBootstrap('');
     setVersion((v) => v + 1);
   };
+  const failSession = (error: unknown, message: string) => {
+    forget();
+    const lostConnection = error instanceof DashboardConnectionError;
+    setDisconnected(lostConnection);
+    setError(lostConnection ? '' : message);
+  };
   const updateCapabilities = async (current: number) => {
     const started = performance.now(),
       wall = Date.now();
-    const next = await localJson<LocalCapabilities>('/api/local/capabilities');
+    const next = await sessionJson<LocalCapabilities>('/api/local/capabilities');
     if (current !== epoch.current) return false;
     if (
       !Number.isFinite(next.remainingMilliseconds) ||
@@ -105,8 +125,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
     setCapabilities(next);
     return true;
   };
-  const accept = async (value: string) => {
-    const current = ++epoch.current;
+  const accept = async (value: string, current: number) => {
     // Storage must work before exposing any authenticated UI state.
     sessionStorage.setItem(storageKey, value);
     localTransport.setSession(value, () => {
@@ -122,19 +141,18 @@ export default function LocalSession({ children }: { children: ReactNode }) {
     enableLocalBrowser();
     let active = true;
     const sessionEpoch = epoch;
+    const current = ++epoch.current;
     void (async () => {
       try {
         const saved = sessionStorage.getItem(storageKey);
-        if (saved) await accept(saved);
+        if (saved) await accept(saved, current);
         else {
           sessionStorage.setItem(storageKey, '');
           sessionStorage.removeItem(storageKey);
         }
-      } catch {
-        if (active) {
-          forget();
-          setError('Unlock again. This browser must allow session storage.');
-        }
+      } catch (error) {
+        if (active && current === epoch.current)
+          failSession(error, 'Unlock again. This browser must allow session storage.');
       } finally {
         if (active) setReady(true);
       }
@@ -165,10 +183,9 @@ export default function LocalSession({ children }: { children: ReactNode }) {
       const current = epoch.current;
       try {
         await updateCapabilities(current);
-      } catch {
+      } catch (error) {
         if (current !== epoch.current) return;
-        forget();
-        setError('Session could not be verified. Unlock again.');
+        failSession(error, 'Session could not be verified. Unlock again.');
       } finally {
         checking = false;
       }
@@ -187,20 +204,23 @@ export default function LocalSession({ children }: { children: ReactNode }) {
     event.preventDefault();
     setBusy(true);
     setError('');
+    const current = ++epoch.current;
     const supplied = bootstrap.trim();
     setBootstrap('');
     let exchanged = false;
     try {
       sessionStorage.setItem(storageKey, '');
       sessionStorage.removeItem(storageKey);
-      const result = await localJson<{ token: string }>('/api/local/unlock', {
+      const result = await sessionJson<{ token: string }>('/api/local/unlock', {
         bootstrap: supplied,
       });
+      if (current !== epoch.current) return;
       exchanged = true;
-      await accept(result.token);
+      await accept(result.token, current);
     } catch (error) {
-      forget();
-      setError(
+      if (current !== epoch.current) return;
+      failSession(
+        error,
         !exchanged && error instanceof LocalRequestError && error.status === 429
           ? 'Unlock is busy. Wait for other unlock attempts to finish or lock another dashboard, then retry the same unexpired unlock token.'
           : 'Unlock failed. Use a fresh unlock code and enable session storage. After restarting the Mac app, choose CR → Open dashboard and unlock there.',
@@ -228,6 +248,26 @@ export default function LocalSession({ children }: { children: ReactNode }) {
     return (
       <main className="p-10" role="status">
         Opening local dashboard…
+      </main>
+    );
+  if (disconnected)
+    return (
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <section className="w-full max-w-lg space-y-5" aria-labelledby="disconnected-title">
+          <h1 id="disconnected-title" className="text-3xl font-bold">
+            Dashboard disconnected
+          </h1>
+          <p>This tab can no longer reach the local runtime. Its browser session has been cleared.</p>
+          <p>
+            Close this tab and use the dashboard opened after Restart, or choose
+            CR → Open dashboard from the Mac menu bar. Request a fresh unlock
+            code there.
+          </p>
+          <p className="text-sm text-gray-600">
+            Using the terminal launcher? Open the current dashboard address
+            printed by the running launcher.
+          </p>
+        </section>
       </main>
     );
   if (!token || !capabilities)

@@ -50,7 +50,13 @@ browser/MCP connections, drains and reaps the previous generation, then creates
 new private model credentials. When ready, it opens the current dashboard; unlock
 there with a fresh code. Restart can change the dashboard's local address, so an
 older tab may no longer reach the app. Use **CR → Open dashboard** to return to the
-current address rather than trying new codes in that old tab. It preserves the database, human identity, MCP
+current address rather than trying new codes in that old tab. When an open tab
+detects a connection failure on return to the tab or while unlocking, it clears
+its browser session and replaces the page with **Dashboard disconnected**, with
+no unlock form. Close that tab and unlock the current dashboard. Tabs loaded by
+an older app retain the older behavior until closed. A live server rejecting an
+expired session still permits a fresh unlock at its current address.
+Restart preserves the database, human identity, MCP
 credentials/grants and model assets. Reconnect clients and obtain a fresh browser
 unlock. Sleep/wake or one-day certificate expiry invalidates AI until an explicit
 restart. Actual sleep/wake and reboot qualification remain pending. The retained
@@ -168,6 +174,11 @@ candidate until verification succeeds. The native inventory refuses interrupted
 or altered payloads before Node or database access. There is still a race if code
 is modified after verification; a writable local candidate is a trusted local
 build, not a tamper-resistant distribution.
+
+When testing separately named candidates, launch the exact newly verified app.
+For example, staging a candidate in `$next_app` does not update an earlier `$app`
+variable. Quit the previous CR menu successfully, close its dashboard tabs, and
+launch only the new candidate against the same explicit test root.
 
 Compatibility requires the supported platform, management/security epoch,
 SQLite/identity formats and every persisted owner-journal operation name. An equal
