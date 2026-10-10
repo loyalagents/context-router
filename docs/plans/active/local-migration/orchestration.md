@@ -2,10 +2,10 @@
 
 - Status: active program
 - Last completed step: `08-local-ui` — [PR #167](https://github.com/loyalagents/context-router/pull/167), human-merged at `7328ceea63a784577594d52af18062be8b583855` from final tested head `e064e74b5fc30f6c3c24cee17e1c5b11d43ffa7b`; successful [standard CI](https://github.com/loyalagents/context-router/actions/runs/37255310437) and [migration gate](https://github.com/loyalagents/context-router/actions/runs/37255310441). See the [Step 08 closeout](08-local-ui/README.md) for retained evidence limits.
-- Current primary implementation step: `09-installation-and-packaging` — activated after the passing clean-base gate; P2.3 implemented; revision-bound reviews/installed non-AI qualification/full local gate/exact-head CI receipts tracked on the PR; live/human acceptance pending
+- Current primary implementation step: `09-installation-and-packaging` — Candidate 13 complete-diff reviews and installed/native/live checks passed; manual feedback round complete; full local gate passed; final-head CI tracked on the PR, with acceptance/release limits retained
 - Coordinator and sole repository writer: `/root`, requested GPT-6 Astra Extra High (serving settings unobservable); existing checkout on `codex/local-migration-09-installation-and-packaging`
-- Concrete next action: review revision-bound qualification receipts on draft [PR #168](https://github.com/loyalagents/context-router/pull/168) for the reviewed [Step 09 candidate](09-installation-and-packaging/README.md) and complete pending acceptance
-- Review date: 2026-10-07 — external re-review lifecycle corrections; refreshed qualification receipts tracked on the PR, pending acceptance remains explicit
+- Concrete next action: review final-head CI on draft [PR #168](https://github.com/loyalagents/context-router/pull/168), then present the [Step 09 acceptance disposition](09-installation-and-packaging/acceptance.md); no automatic merge or release
+- Review date: 2026-10-10 — fresh Candidate 13 review and installed/live receipt review passed; remaining acceptance limits stay explicit
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
@@ -80,6 +80,10 @@ The most important current decisions are:
   limits. Clearer grant feedback, client labels and history value summaries are
   tracked in the [UI usability follow-up](../ui-usability/README.md), to revisit
   after the packaged local workflow is usable without expanding Step 09 scope.
+- [Local AI scheduling](../local-ai-scheduling/README.md) is a separate deferred
+  follow-up after Step 09 (LM-024): bounded waiting with one active operation
+  first, followed by an optional measured two-slot evaluation. It does not
+  renumber Steps 10/11 or add a migration gate; current zero-queue behavior remains.
 
 ## Target Boundaries
 
@@ -264,12 +268,27 @@ sequential ownership transfer before writes resume; never have two writers on
 the same branch/worktree. Requested model/effort settings and actual availability
 are recorded separately. Higher effort does not waive independent review or tests.
 
-Use targeted validation between checkpoints, but retain the exact-base activation
-gate, final full local `pnpm migration:gate`, and applicable final pushed-head
-standard CI and dedicated migration workflow. Record base binding, caller
-integrity, phase results, cleanup, toolchain, and timing. Parallel review/testing
-requires a frozen candidate and isolated resources; changed inputs invalidate
-affected evidence. Do not substitute an earlier green run for final-head evidence.
+### Correction Rounds And Final Qualification
+
+Follow the canonical [validation policy](../../../useful/AGENT_WORKFLOW.md#validation-and-context-discipline):
+targeted correction checks, bounded trial builds for human feedback, then final
+qualification at the agreed end-of-round boundary. Batch related corrections;
+a trial handoff is not a new finalization cycle. Each step plan names that boundary,
+trial eligibility and check timing using the step template. Amend conflicting
+active-plan sequencing with affected review; never silently waive a gate.
+
+Retain the exact-base activation gate. After the candidate is frozen, retain the
+final full local `pnpm migration:gate`, applicable installed-artifact and manual
+acceptance, independent complete-diff review, and applicable final pushed-head
+standard CI and dedicated migration workflow. Runtime changes after qualification
+return to targeted iteration, then renewed required final qualification. Valid
+unaffected review/test coverage carries forward only with explicit impact evidence.
+
+Explain expensive runs and preflight toolchain/resources before execution. Record
+base binding, caller integrity, phase results, cleanup, toolchain, and timing.
+Parallel review/testing requires stable inputs and isolated resources; changed
+inputs invalidate affected evidence. CI triggers/requirements stay unchanged;
+do not substitute an earlier green run for final-head or changed-artifact evidence.
 
 ## Global PR Gates
 
@@ -338,7 +357,7 @@ accumulate; more than one may exist during an explicitly approved overlap.
 
 ## Parallel Work
 
-Steps 06–08 are merged. Step 09 is the sole active primary step after its [clean-base activation](09-installation-and-packaging/activation.md), in the existing checkout on `codex/local-migration-09-installation-and-packaging`. Root is the sole writer with parallel read-only investigation and independent reviews. Steps 10–11, MCP onboarding and UI-usability follow-ups remain inactive/deferred. The [review ledger](09-installation-and-packaging/reviews.md) records requested versus observable model settings, P1/P2.3 approvals and implementation review findings. No executable feasibility or product implementation begins before its applicable review gate.
+Steps 06–08 are merged. Step 09 is the sole active primary step after its [clean-base activation](09-installation-and-packaging/activation.md), in the existing checkout on `codex/local-migration-09-installation-and-packaging`. Root is the sole writer with parallel read-only investigation and independent reviews. Steps 10–11, MCP onboarding, UI-usability and local-AI scheduling follow-ups remain inactive/deferred. The [review ledger](09-installation-and-packaging/reviews.md) records requested versus observable model settings, P1/P2.3 approvals and implementation review findings. No executable feasibility or product implementation begins before its applicable review gate.
 
 Coordinate or serialize changes to these hotspots:
 

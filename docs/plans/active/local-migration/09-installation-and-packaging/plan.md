@@ -10,7 +10,7 @@
 - PR: one cohesive draft PR; no automatic merge or public release
 - Prerequisites: merged Steps 02–08; clean-base twelve-phase activation passed
 - Supported outcome: managed local candidate on the exact qualified Apple Silicon pilot, preserving all six source/reference modes
-- Last updated: 2026-10-06
+- Last updated: 2026-10-10
 
 ## Outcome And Authorization
 
@@ -96,7 +96,8 @@ ownership proofs and uses the existing PR:
    only for ready/quiescent installations without pending restore. Bind its metadata
    journal to the selected store; delete only verified private stages or the exact
    two-link model publication pair. Preserve uncertainty on abrupt interruption.
-   Qualify a rebuilt committed candidate and rerun affected reviews/full gates.
+   Renew affected reviews during correction; qualify the rebuilt committed
+   candidate/full gates at the [finalization boundary](#correction-rounds-and-finalization).
 
 Each checkpoint has targeted tests. Existing tests remain intact; new fixtures
 cover the missed transitions. No model inference/download or human/signing result
@@ -135,8 +136,8 @@ reviewers are requested Astra `xhigh`, with serving settings unobservable.
    remedy, with a nonmutating-refusal regression. Correct the stale signal test
    comment, conservative late-cancellation wording, crash/I/O cleanup limits and
    journal-operation rollback rule. Label Candidate06 as historical once code
-   changes; bind the rebuilt candidate, installed smoke, full local gate and both
-   CI workflows to the new clean commit on the existing draft PR.
+   changes; at finalization bind the rebuilt candidate, installed smoke, full
+   local gate and both CI workflows to the new clean commit on the existing draft PR.
 
 Each checkpoint ends with targeted tests; affected plan review precedes product
 edits, and implementation review precedes qualification. No live inference,
@@ -161,9 +162,11 @@ coverage. The bounded correction has two checkpoints:
 2. Clarify the restart confirmation and local unlock guidance for the Mac menu
    and retained terminal launcher. Old tabs need Open dashboard; no port scanning,
    redirects, credential transfer or automatic unlock is introduced. Run targeted
-   menu and browser checks, affected independent review, then qualify a separate
-   rebuilt candidate and final gates. Candidate 08 and the user's running copy
-   remain unchanged; no model download/inference or human acceptance is inferred.
+   menu and browser checks and affected independent review; a separate trial build
+   may support the bounded human retest before end-of-round final qualification.
+   Retain all final gates under the sequencing amendment below. Candidate 08 and
+   the user's running copy remain unchanged; no model download/inference or human
+   acceptance is inferred.
 
 ### Human acceptance: disconnected dashboard tabs
 
@@ -590,6 +593,40 @@ checkpoint 2 integration passes. Write backend tests first, record red signal, m
 small changes, and run targeted tests after each increment. Do not weaken existing
 assertions because new code fails them.
 
+### Correction Rounds And Finalization
+
+The user-requested 2026-10-10 sequencing amendment applies to remaining correction
+rounds, including the earlier lifecycle/Restart instructions above. It does not
+rewrite completed qualification, human reports or historical approvals. Follow the
+canonical [validation policy](../../../../useful/AGENT_WORKFLOW.md#validation-and-context-discipline);
+affected policy review is recorded in the [review ledger](reviews.md).
+
+During correction, run focused tests for the changed behavior and consumers,
+including real browser/native/storage/recovery coverage where affected, then renew
+affected independent reviews. Batch related findings. A named human retest may use
+a separate rebuilt trial app after package verification and the necessary affected
+artifact checks; it need not wait for the full migration gate or complete installed
+qualification. Bind the handoff to source revision, dirty/copied-input identity,
+artifact digest, permitted retest, passed checks and pending qualification. Preserve
+the existing correction-specific probe requirements and disclose harness dependencies.
+Use isolated synthetic state unless separately authorized; no new live-model,
+download, personal-installation/client or recovery permission is implied.
+
+Finalization occurs when known corrections and affected reviews are resolved and
+the user/coordinator agree the exploratory acceptance round is finished, with any
+remaining required final-candidate checks explicitly listed. Freeze one candidate
+for checkpoint 3's complete installed qualification, full local gate, independent
+complete-diff review, required human acceptance and exact-head standard/dedicated
+CI. A later runtime correction reopens iteration, then renews those final gates on
+the corrected candidate. Carry forward only explicitly unaffected evidence. Existing
+CI triggers remain unchanged even for trial pushes; "pending" is not a CI waiver.
+
+Explain each expensive run and preflight its toolchain/resources. Parallelize only
+independent stable-input checks with isolated outputs, ports, roots and processes.
+Trial handoffs say "Targeted checks passed; final validation pending" and never mark
+the full acceptance checklist, merge readiness or distribution qualified from a
+bounded retest. Preserve all safety, original E/H failures and release limitations.
+
 ### 1. Complete Measured Selection And Product Plan
 
 P1 measured bundle, TLS, AppKit, guardian and selected-model results are complete.
@@ -665,10 +702,11 @@ The concrete discovery contract is:
   separately against the frozen source-bound local artifact. Do not label the
   CI fixture payload as that full production closure.
 
-### 3. Installed Artifact, Failure Proof And Closeout
+### 3. Final Installed Artifact Qualification, Failure Proof And Closeout
 
-Exercise copied actual `.app` payload in a private temporary installation root with
-source/developer-tool reads denied, empty PATH and only bundled executable paths.
+After the finalization boundary above, exercise copied actual `.app` payload in a
+private temporary installation root with source/developer-tool reads denied,
+empty PATH and only bundled executable paths.
 Use the real UI/MCP/SQLite/PDF/CLI plus deterministic model fixtures first. Prove
 setup/seed failure, interrupted/corrupt download, duplicate/occupied-port startup,
 explicit Quit/Restart, application/guardian loss with surviving parser, offline
@@ -684,6 +722,13 @@ of uncertain calls, no intentional unbounded native orphan and stop at first fai
 or uncertain check. Fixture-only failures can be fixed and re-tested under normal
 implementation authority; changing live-series bounds renews affected review.
 The manifest must be concrete and reviewed after the actual candidate exists.
+
+On 2026-10-10 the user separately approved the reviewed
+[Candidate 13 bound amendment](installed-live-proposal.md): three generations,
+three requests, at most 2,048 output tokens per completion, 60 seconds per request
+and 15 minutes total including cleanup. That single series passed in 68.273 seconds
+and consumed its authorization. The original 128-token limit was not treated as
+permission for the expanded run; no continuing live-run authority is implied.
 
 Mac native CI must compile/test headless guardian/FD/lifecycle and package logic.
 AppKit WindowServer and actual native AI remain exact local-host evidence, not a

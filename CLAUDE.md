@@ -1,9 +1,7 @@
-Before starting always read `README.md`, run `./print-repo-structure.sh`, read `docs/README.md` to get a sense of the documents available in this repo, and read every file in `docs/IMPORTANT/` to understand what is going on. Then read `docs/current/`, `docs/useful/`, and `docs/plans/active/` as needed for your task.
+Read and follow [AGENTS.md](AGENTS.md), the canonical repository instructions,
+including startup reading, backend tests-first, checkpoints, and migration gates.
 
-Currently the repo is a `pnpm` workspace monorepo with a frontend app and a backend app.
-
-When adding/changing backend behavior: write or update tests first; don't change tests unless requirements changed; run targeted tests after each change; keep edits small and incremental; stop when tests are green and summarize what changed.
-
-When making plans for the backend: please make plans with checkpoints in mind. Checkpoints are areas where we can run tests and update our progression in our plan.
-
-When working on the local-first migration, first read `docs/plans/active/local-migration/orchestration.md`, `docs/plans/active/local-migration/decision-log.md`, and the active step's `README.md`. Follow the planning, independent-review, branch, and closeout gates in the orchestration document.
+For all changes, follow its incremental-validation rules and the detailed
+[validation policy](docs/useful/AGENT_WORKFLOW.md#validation-and-context-discipline).
+Distinguish targeted correction checks and bounded human retest builds from final
+candidate qualification; do not restart broad qualification after every small edit.

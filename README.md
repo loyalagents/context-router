@@ -32,12 +32,15 @@ acceptance with explicitly accepted evidence limits. [PR #167](https://github.co
 was human-merged at `7328ceea63a784577594d52af18062be8b583855`; final-head
 checks are recorded there. Step 09 installation and packaging is active after
 its passing clean-base gate. An unsigned managed Mac candidate is implemented;
-revision-bound independent reviews, installed non-AI qualification, full local gate
-and exact-head CI receipts are tracked on draft [PR #168](https://github.com/loyalagents/context-router/pull/168); live-model and
-human acceptance remain pending. See the
+Candidate 13 passed independent complete-diff review and installed/native/live checks.
+The manual feedback round is complete; all 12 local gate phases passed with clean cleanup; final-head CI results are recorded on draft [PR #168](https://github.com/loyalagents/context-router/pull/168).
+See the [qualification and acceptance limits](docs/plans/active/local-migration/09-installation-and-packaging/README.md), including unsigned distribution and unqualified recovery/platform cases, and the
 [installed Mac runbook](docs/useful/INSTALLED_MAC_APP.md).
 Small [UI usability improvements](docs/plans/active/ui-usability/README.md) are
 tracked for follow-up after the packaged local workflow is usable.
+[Local AI scheduling](docs/plans/active/local-ai-scheduling/README.md) is a separate
+follow-up after Step 09: bounded waiting first, then a measured concurrency
+evaluation. The current runtime still permits one active AI operation with no queue.
 
 ## How The Repo Works
 

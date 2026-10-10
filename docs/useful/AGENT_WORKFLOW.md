@@ -1,8 +1,8 @@
 # Agent Workflow And Model Selection
 
 - Status: reference and repository working preferences
-- Read when: assigning agents, choosing model/effort settings, or trading execution speed against task risk
-- Last reviewed: 2026-09-23
+- Read when: validating changes, assigning agents, choosing model/effort settings, or trading execution speed against task risk
+- Last reviewed: 2026-10-10
 
 Use this guide for general repository work. Explicit user instructions and
 [`AGENTS.md`](../../AGENTS.md) govern the task; an active program's approved
@@ -142,12 +142,75 @@ executable evidence and human review remain essential.
 
 ## Validation And Context Discipline
 
-Follow existing tests-first and required gate rules. Use targeted tests during
-implementation, and run required broader checks on the final candidate. Do not
-rerun identical checks solely for each reviewer when valid evidence already
-exists, but do not reuse results after their code, configuration, toolchain, or
-other relevant inputs change. Record revision, command, environment, result,
-and limitations. Changes to a gate require its own targeted tests too.
+This policy applies to backend, web, native, packaging, and documentation work.
+Preserve tests-first requirements, safety boundaries, and mandatory gates; change
+when broad qualification runs, not what is required for final acceptance.
+
+### Iterative Correction
+
+Run the smallest sufficient checks for changed behavior and affected consumers.
+Include real integration, browser, native, persistence, or recovery coverage when
+the risk requires it; a small diff is not proof of low risk. Docs-only edits normally
+need link/consistency and whitespace checks, not application builds or a full gate.
+Changes to a gate require that gate's own targeted tests too.
+
+Batch related corrections from a review/acceptance round. Renew affected reviews
+and tests; do not automatically restart every independent review, rebuild the
+entire package, or run the full migration gate after each edit. An approved plan
+may require an earlier broad check for a concrete risk: identify that requirement,
+or obtain an affected plan amendment rather than silently bypassing it.
+
+### Trial Build For Human Retesting
+
+If feedback needs a new app, rebuild it and perform the artifact verification and
+risk-appropriate checks/reviews necessary for the named retest. Record source
+revision, dirty status/copied-input identity where applicable, artifact identity,
+permitted test scope, passed checks and remaining qualification in the existing
+handoff or evidence record. Report: "Targeted checks passed; final validation pending."
+
+A trial label does not authorize unsafe testing, additional live-model runs,
+downloads, personal-state/client changes or recovery shortcuts. Use isolated
+synthetic state unless separately authorized. Relevant credential, persistence,
+process-ownership and recovery checks precede exposure, even during iteration.
+Trial observations are scoped evidence, not complete human acceptance or merge/
+release readiness. Keep known failures and untested cases visible.
+
+### Final Candidate Qualification
+
+Agree the finalization milestone once in the task/plan: known corrections and
+affected reviews resolved, and the agreed exploratory human-feedback round ended
+or its remaining checks explicitly scheduled for final qualification. During an
+active user acceptance round, agree that boundary with the user rather than treating
+each reported fix as a new final candidate. This is not permission to defer required
+checks beyond merge or create an approval request before every routine test.
+
+Freeze the source and relevant build/runtime/test inputs and identify the actual
+artifact. Complete every required final gate: full local migration gate when
+applicable, installed-artifact qualification, independent complete-diff review,
+required manual acceptance and exact-head CI. Valid trial evidence can contribute
+only after explicit input/impact assessment; do not rebuild solely to rename an
+unchanged trial artifact "final."
+
+If corrections follow, return to targeted iteration and renew affected review;
+then renew required final validation on the corrected frozen candidate. For
+migration runtime changes this includes the full final local gate and applicable
+installed qualification, not just the formerly failing test. Existing CI triggers
+still run during iteration; do not skip/cancel required checks or change CI rules
+to implement this policy. A previous head's CI cannot satisfy exact-head gates.
+
+### Evidence And Expensive Runs
+
+Keep a compact change-to-evidence record in the existing task/plan, not a new
+process document per fix. Record revision, relevant inputs (code, configuration,
+dependencies, toolchain, fixtures, environment and artifact), command, result and
+limitations. Reuse only unaffected evidence with an explicit impact assessment;
+never present an older pass for changed inputs. Do not repeat valid identical
+checks solely for each reviewer. Broaden checks/review when impact is uncertain.
+
+Before an expensive run, state its command/purpose, what relevant inputs changed
+since the previous pass, and why it is needed now, including any approved-plan
+requirement. Preflight the pinned toolchain and required resources before starting.
+The explanation is not a new permission gate; existing approval boundaries remain.
 
 Run review and validation concurrently only against a stable snapshot with
 isolated resources. Stronger models cannot replace real database, crash/restart,
@@ -188,7 +251,9 @@ Coordinator, sole writer, reviewers; requested and verified model/effort:
 Required reading and accepted contracts:
 Owned paths, shared hotspots, permitted parallel work and resource isolation:
 Internal checkpoints and intended PR count:
-Validation commands and evidence required for completion:
+Validation commands by iteration, trial handoff, and final qualification:
+Agreed finalization milestone; trial scope and outstanding checks:
+Evidence inputs, affected rechecks, and justified carry-forward:
 Review dimensions, finding disposition and re-review triggers:
 Decisions requiring user input; no automatic merge:
 ```

@@ -33,3 +33,8 @@ exposure or a blocked supported task should be brought forward.
 
 These improvements do not block Step 08 closeout or add mandatory Step 09 scope.
 Choose the smallest useful slice and its checks when this follow-up is activated.
+
+Waiting/running feedback for overlapping AI requests belongs with the separate
+[local AI scheduling follow-up](../local-ai-scheduling/README.md). Coordinate its
+dashboard presentation there with the backend/MCP queue contract; this UI cleanup
+does not introduce queues, retries or concurrent model execution independently.

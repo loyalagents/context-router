@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "evidenceKind": "coordinator-observed gate execution; original pre-cleanup summary retained unchanged",
+  "status": "passed",
+  "command": "PATH=/Users/lucasnovak/.nvm/versions/node/v24.21.0/bin:$PATH LC_ALL=C MIGRATION_GATE_BASE_SHA=7328ceea63a784577594d52af18062be8b583855 MIGRATION_GATE_PYTHON_BIN=/Users/lucasnovak/.pyenv/versions/3.12.8/bin/python3.12 pnpm migration:gate",
+  "terminal": {
+    "exitCode": 0,
+    "successLine": "migration-gate: ok; phases=12 baseComparison=performed caller-integrity=true elapsedMs=1409095",
+    "elapsedMs": 1409095,
+    "logSha256": "bc246659767f329d775a453e6e316380721bb954253637033f1fb5630ee2700e"
+  },
+  "observedGateSummary": {
+    "status": "running",
+    "source": {
+      "headSha": "5759b8f0ca07b4bebe5da579f941266f5d2a5127",
+      "dirty": true,
+      "copiedInputsSha256": "68b2dfbbb5de2011cea83df041a29f27920723a62195ec71cf91c24860148978"
+    },
+    "baseSha": "7328ceea63a784577594d52af18062be8b583855",
+    "versions": {
+      "node": "v24.21.0",
+      "pnpm": "10.25.0",
+      "python": "3.12.8",
+      "postgres": "15.19",
+      "chromium": "153.0.8010.12",
+      "playwright": "1.63.0"
+    },
+    "administrationSource": "created-loopback-container",
+    "databaseName": "context_router_48f29e4285738556ea8d4170_test",
+    "baseComparison": "performed",
+    "phases": [
+      {
+        "id": "contract-baseline",
+        "status": "passed",
+        "elapsedMs": 33383
+      },
+      {
+        "id": "documentation",
+        "status": "passed",
+        "elapsedMs": 1639
+      },
+      {
+        "id": "backend-unit-build",
+        "status": "passed",
+        "elapsedMs": 154297
+      },
+      {
+        "id": "backend-database",
+        "status": "passed",
+        "elapsedMs": 256988
+      },
+      {
+        "id": "local-orchestrator",
+        "status": "passed",
+        "elapsedMs": 6257
+      },
+      {
+        "id": "eval-fixtures",
+        "status": "passed",
+        "elapsedMs": 39135
+      },
+      {
+        "id": "eval-deterministic-scenarios",
+        "status": "passed",
+        "elapsedMs": 8292
+      },
+      {
+        "id": "web-production-build",
+        "status": "passed",
+        "elapsedMs": 109896
+      },
+      {
+        "id": "harbor-static",
+        "status": "passed",
+        "elapsedMs": 2576
+      },
+      {
+        "id": "restart-smoke",
+        "status": "passed",
+        "elapsedMs": 87738
+      },
+      {
+        "id": "packaged-composition-smoke",
+        "status": "passed",
+        "elapsedMs": 649600
+      },
+      {
+        "id": "repository-integrity",
+        "status": "passed",
+        "elapsedMs": 2330
+      }
+    ],
+    "cleanup": [
+      {
+        "resource": "database",
+        "status": "removed",
+        "name": "context_router_48f29e4285738556ea8d4170_test"
+      },
+      {
+        "resource": "administration",
+        "status": "clean"
+      }
+    ],
+    "cleanupPending": "caller-integrity-workspace-and-diagnostics-removal"
+  },
+  "finalCleanup": {
+    "workspaceRemoved": true,
+    "diagnosticsRemoved": true,
+    "ownedResources": [
+      {
+        "type": "local-administration-container",
+        "cleanup": "removed",
+        "recoveryRequired": false
+      },
+      {
+        "type": "owned-test-database",
+        "cleanup": "removed",
+        "recoveryRequired": false
+      }
+    ]
+  },
+  "collectionNote": "No external final-summary destination was configured. A read-only observer retained the original running/pre-cleanup summary and resource statuses before automatic diagnostics removal. Terminal success and process exit zero supply the final verdict; the original intermediate record is not relabeled passed.",
+  "inputImpact": "Gate copied source was frozen before later scheduling and qualification/status documentation edits; no product input changed. Independent affected review approved carrying product evidence forward, with renewed documentation checks."
+}

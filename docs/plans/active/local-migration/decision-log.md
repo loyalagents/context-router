@@ -454,6 +454,26 @@ step plan that resolves them.
   permissions are consumed. New live runs, large downloads and personal
   installation/client changes require separately bounded approval.
 
+### LM-024: Local AI scheduling is a separate product follow-up
+
+- Status: Accepted follow-up direction — user request 2026-10-10; implementation
+  remains deferred until separately activated and reviewed after Step 09.
+- Track [local AI scheduling](../local-ai-scheduling/README.md) outside the
+  numbered migration. Prefer a bounded shared UI/MCP queue with one active
+  operation, visible waiting/cancellation, per-client fairness and original
+  deadlines. Queue limits, scheduling unit and transport behavior require a
+  reviewed design; current one-operation/no-queue behavior remains unchanged.
+- Evaluate two model slots only as a later, separately bounded experiment.
+  Measure responsiveness, resources, context, quality and cancellation ownership
+  before changing the qualified runtime or accepting parallel operation.
+- Preserve authority revalidation, input privacy, non-AI availability and
+  fail-closed settlement/recovery; no automatic replay, persistent document-job
+  storage or hosted fallback. Keep accidental background-check contention a
+  Step 09 defect rather than hiding it behind a queue.
+- This adds no Step 09 acceptance gate, live-run authority or numbered Step 12.
+  Optional Steps 10/11 are not prerequisites. The product owner and next assigned
+  local-AI coordinator own activation and the smallest useful implementation.
+
 ## Step 06 Implementation And Evidence
 
 PR [#165](https://github.com/loyalagents/context-router/pull/165) implements the independently selected manual llama.cpp b11146 / Qwen3.5-9B Q4_K_M path on the qualified M1 Max/64 GiB/macOS 15.1.1. Actual application quality preserves the FAILED original scorer verdict and applies only human-approved E's known email omission. No other quality threshold changes. Both AI ports share one private claimed session; uncertain work latches unavailable. The explicit `preview-model` composition opens no listener and never owns inference lifecycle. Text and qualified PDF input are supported; images/OCR are unsupported locally, live Harbor comparison was not needed or run. See [selection](06-local-model/selection.md), [implementation evidence](06-local-model/implementation.md) and [manual operation](../../../useful/LOCAL_MODEL.md). The PR was human-merged at `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`; final head `f004702ef07df59f3cece36e0db0a79aea7055b7` passed standard CI `36487182884` and migration CI `36487183214`, reverified 2026-09-29. Step 07 has separately passed its activation gate; later steps remain inactive.
@@ -475,6 +495,7 @@ The independent-review follow-up passed repeat quality under unchanged E but fai
 | Basic client/grant management; retain-until-cleared history and whole-history deletion (LM-021) | `08-local-ui`; backup/restore remains Step 09 |
 | Full UI MCP credentials and optional assisted client setup (LM-022) | [Deferred product follow-up](../mcp-onboarding/README.md), outside numbered migration |
 | Grant feedback, readable client labels and compact history value changes from Step 08 acceptance | [UI usability follow-up](../ui-usability/README.md); revisit after the packaged Step 09 workflow is usable, outside mandatory migration scope |
+| Bounded shared AI waiting, fairness and a later measured concurrency evaluation (LM-024) | [Local AI scheduling follow-up](../local-ai-scheduling/README.md), after Step 09 and outside the numbered migration |
 | Application update channel and rollback mechanism | `09-installation-and-packaging` |
 | LAN pairing, credentials, discovery, and TLS expectations | `10-lan-mcp` |
 | Shape of a future hosted deployment | `11-hosting-portability-check` |

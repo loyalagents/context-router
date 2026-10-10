@@ -1,7 +1,7 @@
 # Step 09 Implementation Evidence
 
 - Sole writer: `/root`; approved technical plan P2.3
-- State: unsigned installed candidate implemented; reviews, installed non-AI checks and full local gate passed; draft [PR #168](https://github.com/loyalagents/context-router/pull/168); live/human acceptance pending
+- State: unsigned Candidate 13 in final qualification; complete-diff reviews and installed/native/live checks passed; full local gate passed; final-head CI tracked on the PR on draft [PR #168](https://github.com/loyalagents/context-router/pull/168); acceptance/release limits retained
 - Source base: `7328ceea63a784577594d52af18062be8b583855`
 
 ## Managed Namespace Denial
@@ -378,3 +378,38 @@ now exercises cleanup/idempotence before real administration/MCP operations.
 Validation results, clean source commit and rebuilt artifact receipts for this
 revision are tracked on [PR #168](https://github.com/loyalagents/context-router/pull/168).
 The older candidate hashes and successful/failed runs above are retained as history.
+
+### Candidate 13 End-Of-Round Qualification
+
+Human testing led to four reviewed corrections after Candidate 09: retiring
+disconnected dashboard tabs, accepting the documented pinned-model CDN redirect,
+making repeated native status observation noncompeting, and separating automatic
+browser session checks from model qualification. Backend regressions were written
+first, followed by affected integration/browser/package tests and reviews; detailed
+red/green evidence is retained in [reviews.md](reviews.md).
+
+The user completed the manual feedback round. Product head
+`5759b8f0ca07b4bebe5da579f941266f5d2a5127` and the existing Candidate 13 payload
+were frozen for final qualification. Independent reviewers verified unchanged
+product inputs and approved reuse of the exact artifact, retaining the original
+dirty-source/copied-input identity. No rebuild merely renamed it final.
+
+All three fresh complete-diff review mandates passed. The full native suite passed
+180 tests; installed qualification passed 11 phases in 210.315 seconds with five
+clean guardian exits. After explicit approval, the separately bounded actual-model
+series passed in 68.273 seconds with no retry and clean quiescence. See
+[Candidate 13 qualification](qualification-candidate13.json) for hashes, timings,
+full local gate and final-head CI disposition. Earlier candidate receipts in
+[qualification.json](qualification.json) and above remain historical and do not
+qualify changed inputs. Manual observations and unqualified cases remain explicit
+in [acceptance.md](acceptance.md); no merge or release is authorized.
+
+The final local migration gate passed all 12 phases in 1,409.095 seconds, including
+base comparison and caller integrity. Owned database/container resources, the
+disposable workspace and diagnostics were removed. Its
+[observation record](final-local-gate-candidate13.json) preserves the original
+pre-cleanup summary unchanged and separately records terminal success/exit zero;
+no external final-summary destination had been configured. Later differences are
+reviewed documentation/evidence only. Final pushed-head standard and migration CI
+results are recorded on the PR after this evidence commit, without another source
+change merely to record the CI links.

@@ -141,14 +141,27 @@ tested rollback or recovery paths.
 
 ## Validation Matrix
 
-| Surface | Automated command/test | Manual check | Required for merge |
-| --- | --- | --- | --- |
-| Unit |  |  | Yes/No |
-| Integration |  |  | Yes/No |
-| E2E/contract |  |  | Yes/No |
-| Frontend/build |  |  | Yes/No |
-| Clean install/process restart |  |  | Yes/No |
-| Persisted-state upgrade/recovery |  |  | Yes/No |
+| Surface | Automated command/test | Manual check | When run | Required for merge |
+| --- | --- | --- | --- | --- |
+| Unit |  |  |  | Yes/No |
+| Integration |  |  |  | Yes/No |
+| E2E/contract |  |  |  | Yes/No |
+| Frontend/build |  |  |  | Yes/No |
+| Clean install/process restart |  |  |  | Yes/No |
+| Persisted-state upgrade/recovery |  |  |  | Yes/No |
+
+Use the [validation policy](../../../useful/AGENT_WORKFLOW.md#validation-and-context-discipline).
+Distinguish activation, iterative correction, trial handoff, and final qualification
+in "When run"; explain any broad check required before finalization. Record:
+
+- The agreed end-of-correction/acceptance-round milestone for freezing a candidate.
+- Trial eligibility: named retest, necessary checks/reviews, artifact/source binding,
+  permitted state/resources, and pending final checks; use "not applicable" if none.
+- Relevant evidence inputs, invalidation/recheck rules and explicit carry-forward.
+
+Batch related fixes before final qualification. Trial handoffs do not automatically
+trigger full gates or every review; safety/approval boundaries and CI triggers stay
+unchanged. Explain expensive runs and preflight toolchain/resources first.
 
 For migration implementation, include the exact-base activation and final full
 local `pnpm migration:gate`, applicable final pushed-head standard CI and the

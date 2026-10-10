@@ -700,3 +700,106 @@ source/toolchain-denial, live-model or complete installed qualification.
 Carry forward unaffected lifecycle/native/storage/download implementation review.
 Human PDF retest and the frozen final candidate's full local gate, applicable
 installed qualification, independent final review and exact-head CI remain pending.
+
+### Iterative Validation Policy Amendment (2026-10-10)
+
+The user authorized a docs-only policy pass in the existing checkout. This chat's
+root is the sole writer for that pass; product implementation/qualification is not
+part of it. Preserve the pre-existing local-AI-scheduling changes and their owner.
+The amendment distinguishes iterative correction, bounded source/artifact-bound
+human retests, and frozen final qualification; it changes sequencing, not required
+gates, CI, safety/experiment authority, historical evidence or release readiness.
+
+`/root/step09_delivery_review` independently approved the proposed sequencing with
+no blockers (existing configured settings retained; actual serving settings
+unobservable). Fresh `/root/validation_policy_diff_review` approved the scoped
+nine-file diff with no blockers. The coordinator requested GPT-6 Astra `high` for
+that bounded policy-consistency review; actual serving settings were unobservable
+to the reviewer. Unrelated AI-scheduling edits were excluded from both mandates.
+
+Final review binds these file SHA-256 values; this evidence-only ledger append is
+not included in its own digest. This is policy approval, not product qualification:
+
+```text
+34b981098d210fe0ae92cd5278de5fcc80447ab4ead27a00051231b9d1bfa68f  AGENTS.md
+b253a3251b0624b4aeb8eaccf01c074aa932d6af6706e833e527db7bf8a8f2e9  CLAUDE.md
+200dc7444fd7756586ee96eb41b8bd0ac979148def9eead0b9a7659222c11cd7  docs/useful/AGENT_WORKFLOW.md
+c73fae9977dee803af020edacde4e9374b4dfc867606e90531fab5d9e6f11d23  docs/plans/active/local-migration/orchestration.md
+36ab3bbc7c94d1851cd1335d9eac3f750d20672c50829d14e80662c59c64254f  docs/plans/active/local-migration/agent-execution.md
+b69d8b19562b1f83b804963ee12571eb55f438b2c85fffacacb602309e466dcc  docs/plans/active/local-migration/step-template.md
+a7ab9abe33ca219fcc727f1bb52b068d1006a1012d34a8bbb9cd797fdeac4a21  docs/plans/active/local-migration/09-installation-and-packaging/README.md
+d782f372c99e54cae1be41f45a03f5ded9157a4fb07541f567e5a876c5723e3b  docs/plans/active/local-migration/09-installation-and-packaging/plan.md
+77389cd2bbd9fcf6cf56d3e0fe105a86ba5011d3d86ad1f87e59570ad2dad026  docs/plans/active/local-migration/09-installation-and-packaging/acceptance.md
+```
+
+Validation uses pinned Node 24.21.0/pnpm 10.25.0: `pnpm check:toolchain`,
+`node scripts/check-markdown-links.mjs` and `git diff --check` passed. No product
+tests, package rebuild, installed qualification, full migration gate or CI run was
+needed for this docs-only pass. All required final product checks remain pending
+for the end-of-round candidate; no commit, push or merge was performed here.
+
+### Candidate 13 Final Review And Execution Evidence (2026-10-10)
+
+After the user ended routine manual feedback, root resumed sole-writer/executor
+ownership for final qualification and evidence. The separate policy/documentation
+writers finished their bounded work and are idle; preserve their authorized edits.
+No product edits were made after `5759b8f0ca07b4bebe5da579f941266f5d2a5127`.
+
+Three fresh read-only reviewers covered the complete 188-file base-to-candidate
+snapshot, SHA-256 `4101e8a23fb3764ed7d88e375c104635edaaa19b9b9963c5cb2c939d2318e837`,
+against base `7328ceea63a784577594d52af18062be8b583855`. Requested versus actual
+settings remain distinct:
+
+| Reviewer | Requested model/effort | Verdict |
+| --- | --- | --- |
+| `/root/final13_architecture_security` | GPT-6 Astra / Extra High | PASS; no architecture, security or process-ownership blocker |
+| `/root/final13_persistence_recovery` | GPT-6 Astra / Extra High | PASS; no persistence, recovery or update-safety blocker |
+| `/root/final13_compatibility_evidence` | GPT-6 Astra / High | PASS; no compatibility, discovery, platform-scope or artifact-binding blocker |
+
+Actual serving settings were unobservable for every reviewer; no claim that the
+requested settings were verified is made. Each mandate verified the snapshot.
+Compatibility also reproduced the 2,458-file copied-input digest, verified all
+39,542 bundle entries and found only documentation differences from its retained
+build source. Reusing the identical Candidate 13 payload is approved; retain the
+original `dirty: true` receipt rather than relabeling it a clean rebuild.
+
+The complete native suite passed 180/180 with zero skips. Its isolated retained
+build has 813 matching product/test/script/toolchain inputs and a byte-identical
+native binary. The installed smoke passed 11 phases with five guardians exiting
+zero, all final events stopped/ok and empty cleanup. Compatibility independently
+inspected the receipt and matching quiescent journal.
+
+Compatibility approved the concrete live proposal before the user approved its
+expanded bound. The single execution passed in 68.273 seconds: three generations,
+two completions, one expected AI rejection after invalidation, continued authenticated
+non-AI access, new certificate after restart, preserved identity and clean exit.
+The reviewer verified proposal/artifact binding and final durable quiescence.
+The run consumed its authorization; no further run is implied.
+
+During qualification, the separate documentation owner completed a deferred
+scheduling clarification. Compatibility reviewed the one-file delta at SHA-256
+`84e2f8e3910dca98ea5c96ac82ce288d9a454442a81f973573a6887940fbdf3c`: planning only,
+no Step 09 product, gate or authority change. Carry forward complete product review
+and runtime evidence; renew documentation checks and review evidence/status edits.
+The [Candidate 13 evidence](qualification-candidate13.json) records artifact and
+execution receipt hashes. Full local gate completion and exact final-head CI remain
+separate requirements. Human observations, Step 06 E/H and all release/platform/
+recovery limits remain explicit in [acceptance](acceptance.md).
+
+Compatibility subsequently approved the 11-file evidence/status delta against the
+frozen gate workspace, aggregate SHA-256
+`61a13cca08e4dcd39a606336a9ff9418278485a121c91740cd3758b27886d0d3`
+(sorted `path NUL hex-digest LF`). No product input changed. Carry forward product
+review and installed/native/live validation; no rebuild or broad repetition is
+required for that delta. Later actual gate/CI receipt and status updates require
+accuracy/documentation checks without reopening unchanged product review. This
+review-record append is outside its own digest.
+
+The full local gate then passed all 12 phases and final cleanup in 1,409.095 seconds.
+Compatibility independently approved the observation-derived gate record at SHA-256
+`76564e0a0359c58d3ca17a426a5fd3b77b07076a80260931063e53c9c58ebaca`: the original
+running/pre-cleanup summary is unchanged, while terminal success/exit zero and
+resource removal support the separate final verdict. Markdown links and whitespace
+checks passed. Final-head CI is recorded on the PR after this evidence commit;
+these pre-push records do not assert a CI pass. Product approval and unchanged
+validation carry forward.
