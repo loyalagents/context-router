@@ -15,6 +15,13 @@ type Client = {
   };
 };
 type Grant = { id: string; target: string; action: string; effect: string };
+type ChangeOutcome = {
+  client: { id: string; label: string };
+  kind: 'grant' | 'revoke';
+  grant?: Omit<Grant, 'id'>;
+  status: 'confirmed' | 'rejected' | 'uncertain';
+  message: string;
+};
 type Snapshot = {
   status: 'AVAILABLE' | 'AUTHORITY_UNAVAILABLE';
   client: Client;
@@ -43,13 +50,45 @@ export default function McpClients() {
   const [action, setAction] = useState('READ');
   const [effect, setEffect] = useState('DENY');
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
+  const [outcome, setOutcome] = useState<ChangeOutcome | null>(null);
+  const outcomePanel = useRef<HTMLDivElement | null>(null);
+  const handledOutcome = useRef<ChangeOutcome | null>(null);
+  const pendingOutcomeFocus = useRef<{ interacted: boolean } | null>(null);
   const [readError, setReadError] = useState('');
   const [generation, setGeneration] = useState(0);
   const pending = useRef<AbortController | null>(null);
   const mutation = useRef<AbortController | null>(null);
   const revision = useRef(0);
   const channel = useRef<BroadcastChannel | null>(null);
+  useEffect(() => {
+    const interaction = (event: Event) => {
+      if (
+        event.type === 'focusin' &&
+        (event.target === document.body || event.target === document.documentElement)
+      ) return;
+      if (pendingOutcomeFocus.current)
+        pendingOutcomeFocus.current.interacted = true;
+    };
+    const events = ['focusin', 'pointerdown', 'keydown', 'input'];
+    events.forEach((event) => document.addEventListener(event, interaction, true));
+    return () => {
+      events.forEach((event) => document.removeEventListener(event, interaction, true));
+      pendingOutcomeFocus.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    // Wait for the list to settle so its rows cannot push the result offscreen.
+    // Later reads must not steal focus back to an already presented outcome.
+    if (!outcome || busy || handledOutcome.current === outcome) return;
+    handledOutcome.current = outcome;
+    const interacted = pendingOutcomeFocus.current?.interacted;
+    pendingOutcomeFocus.current = null;
+    // Preserve activity since submission, including typing without moving focus.
+    // An untouched input may retain focus when Safari clicks a submit button.
+    if (interacted) return;
+    outcomePanel.current?.focus({ preventScroll: true });
+    outcomePanel.current?.scrollIntoView({ block: 'nearest' });
+  }, [outcome, busy]);
   const invalidate = useCallback(() => {
     revision.current++;
     pending.current?.abort();
@@ -59,7 +98,8 @@ export default function McpClients() {
     // A background refresh cannot cancel an already submitted authority change.
     // Its settlement owns the next reload and the confirmed/uncertain outcome.
     if (mutation.current) return;
-    setBusy(false);
+    // Stay busy until the replacement list settles, before outcome focus/scroll.
+    setBusy(true);
     setGeneration((value) => value + 1);
   }, []);
   useEffect(() => {
@@ -158,13 +198,20 @@ export default function McpClients() {
     )
       return;
     const captured = snapshot;
+    const attempted = {
+      client: { id: captured.client.id, label: captured.client.label },
+      kind,
+      grant,
+    };
+    // The initiating pointer/key event has already run; track only later activity.
+    pendingOutcomeFocus.current = { interacted: false };
     revision.current++;
     pending.current?.abort();
     const controller = new AbortController();
     mutation.current = controller;
     setBusy(true);
     setSnapshot(null);
-    setMessage('');
+    setOutcome(null);
     setReadError('');
     try {
       const result = await localJson<{ changed?: boolean; reason?: string }>(
@@ -179,18 +226,24 @@ export default function McpClients() {
         controller.signal,
       );
       if (mutation.current === controller && !controller.signal.aborted)
-        setMessage(
-          result.reason === 'OUTSIDE_MAXIMUM'
-            ? 'ALLOW was not saved: it provides no authority under this instance’s current CLI maximum.'
+        setOutcome({
+          ...attempted,
+          status: result.reason === 'OUTSIDE_MAXIMUM' ? 'rejected' : 'confirmed',
+          message: result.reason === 'OUTSIDE_MAXIMUM'
+            ? 'ALLOW was not saved: it provides no authority under this instance’s current CLI maximum. Reload and inspect before editing again.'
             : kind === 'revoke'
               ? 'Client instance revoked. Reload to inspect current authority.'
-              : 'Grant saved. Reload to inspect current authority.',
-        );
+              : grant?.effect === 'REMOVE'
+                ? 'Grant removed. Reload to inspect current authority.'
+                : 'Grant saved. Reload to inspect current authority.',
+        });
     } catch {
       if (mutation.current === controller && !controller.signal.aborted)
-        setMessage(
-          'Change was not confirmed. Authority may have changed. Reload and inspect before deciding whether to submit again.',
-        );
+        setOutcome({
+          ...attempted,
+          status: 'uncertain',
+          message: 'Change was not confirmed. Authority may have changed. Reload and inspect before deciding whether to submit again.',
+        });
     } finally {
       if (mutation.current === controller && !controller.signal.aborted) {
         mutation.current = null;
@@ -211,7 +264,6 @@ export default function McpClients() {
         specific database DENY, but cannot expand that maximum. Write also
         requires read and suggest access.
       </p>
-      {message && <p role="status">{message}</p>}
       {readError && <p role="alert">{readError}</p>}
       <div className="flex gap-3">
         <button className={button} disabled={busy} onClick={invalidate}>
@@ -274,6 +326,48 @@ export default function McpClients() {
         >
           Inspect selected instance
         </button>
+      )}
+      {outcome && (
+        <div
+          ref={outcomePanel}
+          role={outcome.status === 'confirmed' ? 'status' : 'alert'}
+          aria-atomic="true"
+          aria-labelledby="mcp-change-title"
+          aria-describedby="mcp-change-context mcp-change-message"
+          tabIndex={-1}
+          className={`space-y-2 rounded border-2 p-4 [overflow-wrap:anywhere] focus:outline focus:outline-2 focus:outline-offset-2 ${
+            outcome.status === 'rejected'
+              ? 'border-red-700 bg-red-50 text-red-950'
+              : outcome.status === 'uncertain'
+                ? 'border-amber-700 bg-amber-50 text-amber-950'
+                : 'border-green-700 bg-green-50 text-green-950'
+          }`}
+        >
+          <h2 id="mcp-change-title" className="text-lg font-semibold">
+            {outcome.status === 'rejected'
+              ? 'Grant not saved'
+              : outcome.status === 'uncertain'
+                ? 'Change not confirmed'
+                : outcome.kind === 'revoke'
+                  ? 'Client instance revoked'
+                  : outcome.grant?.effect === 'REMOVE'
+                    ? 'Grant removed'
+                    : 'Grant saved'}
+          </h2>
+          <div id="mcp-change-context">
+            <p>Client: <strong>{outcome.client.label}</strong></p>
+            <p>Instance ID: <code>{outcome.client.id}</code></p>
+            {outcome.grant ? (
+              <p>
+                Attempted grant: <code>{outcome.grant.target}</code>
+                {' · '}{outcome.grant.action}{' · '}{outcome.grant.effect}
+              </p>
+            ) : (
+              <p>Attempted action: Revoke this instance</p>
+            )}
+          </div>
+          <p id="mcp-change-message">{outcome.message}</p>
+        </div>
       )}
       {snapshot && (
         <section
