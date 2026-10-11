@@ -33,7 +33,9 @@ and review. A future hosted-provider option needs separate opt-in, never fallbac
 The installed envelope keeps data/identity, model assets, private sessions/exports
 and ownership metadata separate. See [installed administration](../useful/INSTALLED_MAC_APP.md)
 for actual commands; never bypass failed ownership checks or edit managed metadata.
-The pilot's permission to reset designated releases is a future delivery policy,
+The [pilot reset policy](../plans/active/colleague-pilot/README.md#pilot-reset-policy)
+permits only product-owner-designated releases to reset; others preserve state or
+refuse incompatibility without modifying it. This is a future delivery policy,
 not a new command or a waiver of filesystem/process safety.
 
 ## Current User Flows

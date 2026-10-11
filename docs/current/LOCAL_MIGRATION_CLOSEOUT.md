@@ -55,6 +55,19 @@ documentation reference census move; historical consumer IDs remain historical.
   preserves exact transition evidence. Keep additive migration, external-client
   inventory, compatibility window and explicit removal review for future changes.
 
+## Referenced Decision IDs
+
+Surviving decision IDs refer to the immutable pre-reset decision log, not an
+active numbered program. Use the current policy below for new work; the original
+record explains the historical decision and does not reactivate its checkpoints.
+
+| ID and original decision | Current policy / implementation reference |
+| --- | --- |
+| [LM-008: expand, migrate, then remove public contracts](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/decision-log.md#lm-008-expand-migrate-then-remove-public-contracts) | [Interface evolution](../useful/INTERFACE_EVOLUTION.md); public deprecation strings still using this ID retain their meaning. |
+| [LM-014: Vercel outside local-first `main`](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/decision-log.md#lm-014-vercel-is-outside-the-local-first-main-contract) | [Contract baseline](LOCAL_MIGRATION_CONTRACT_BASELINE.md) and [hosted branch/deployment policy](../useful/HOSTED_DEVELOPMENT.md#branch-and-deployment-ownership). |
+| [LM-015: stable human principal and local identity](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/decision-log.md#lm-015-stable-human-principal-and-local-identity-preview) | [Storage boundaries](STORAGE_BOUNDARIES.md) and [identity administration/recovery](../useful/LOCAL_IDENTITY_ADMIN.md). |
+| [LM-021: reused UI, MCP management and history](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/decision-log.md#lm-021-reuse-the-ui-basic-mcp-management-and-simple-history-in-step-08) | [Current application](LOCAL_APPLICATION.md); the [pilot reset policy](../plans/active/colleague-pilot/README.md#pilot-reset-policy) narrowly permits designated release resets, not silent deletion or blanket backwards-compatibility promises. |
+
 ## Remaining Decision Ownership
 
 This table supplies current outcome ownership without changing protected registry
@@ -63,7 +76,7 @@ history. Activate a named writer in the linked brief before implementation.
 | Historical decision/work | Current disposition and owner |
 | --- | --- |
 | Installed delivery, no telemetry, transitive offline/dependency evidence, disk and recovery limits (09) | Pilot coordinator owns release readiness; stabilization owns explicitly delegated defects. No broad offline or supported-platform claim without evidence. |
-| Claude Desktop, ChatGPT desktop, fuller credential UI | Pilot coordinator prioritizes minimum Claude integration; [onboarding](../plans/backlog/mcp-onboarding/README.md) owns shared implementation/future conveniences. CLI remains available. |
+| Claude Desktop, ChatGPT desktop, fuller credential UI | Pilot coordinator owns the minimum Claude implementation plan under the [active pilot](../plans/active/colleague-pilot/README.md); [onboarding](../plans/backlog/mcp-onboarding/README.md) retains shared boundaries/future conveniences. CLI remains available. |
 | UI feedback, history presentation and restart guidance (08/09) | [UI usability](../plans/backlog/ui-usability/README.md); blocked tasks/false success/privacy defects are prioritized for the pilot. History remains until explicit clear; record-level rollback is not restored to scope. |
 | Quality/cancellation limits, image input and model alternatives (06) | Current E/H stay visible; [stabilization](../plans/backlog/stabilization/README.md), [evaluation](../plans/backlog/evaluation/README.md), [provider choice](../plans/backlog/model-provider-selection/README.md) own separately activated slices. Live Harbor comparison is not required to reopen model selection. |
 | Public removals including `user(id)` (03/08) | [Interface policy](../useful/INTERFACE_EVOLUTION.md) governs a future explicitly owned transition. A `REMOVE` disposition is not permission to delete a live compatibility surface. |
@@ -78,8 +91,10 @@ does not retire tests or CI. The [workflow](../useful/AGENT_WORKFLOW.md) now own
 iteration, independent review, trial handoff and final qualification instructions.
 
 For this documentation/evidence relocation, run strict Markdown links/whitespace,
-checker tests, baseline/reference validation and deterministic affected manifest
-tests; compare moved evidence bytes and the protected registry snapshot to the
+tests/checkers that read edited or moved docs (including root README content
+consumers), checker tests, baseline/reference validation and deterministic affected
+manifest tests. Discover readers by path, filename and asserted content as described
+in the workflow; compare moved evidence bytes and the protected registry snapshot to the
 reset base. No application behavior is changed or live model run implied. Existing
 exact-head CI still applies. A direct contract check without base artifacts is
 reported as `baseComparison=skipped`, never as the full aggregate/base-bound gate.

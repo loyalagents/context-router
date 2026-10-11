@@ -5,7 +5,7 @@
 - Trigger: the assisted colleague pilot requires Claude Desktop; ChatGPT desktop follows
 - Next action: assess actual setup friction in supported clients; choose the
   smallest useful slice before planning implementation
-- Last reviewed: 2026-10-04
+- Last reviewed: 2026-10-10
 
 This is the canonical onboarding brief, prioritized by the
 [assisted pilot](../../active/colleague-pilot/README.md). Claude Desktop is a
@@ -63,13 +63,17 @@ experience. Assistance and documented commands remain acceptable for the initial
 few Git-capable colleagues; full zero-terminal C+ is not an agreed requirement.
 Any bridge needs bounded startup/exit, private credential handling, version/asset
 ownership, clear errors and explicit reconnect behavior without replaying writes.
-Test discovery, reads, allowed/denied writes, revoke/rotate, more than 35 minutes
-idle, app/client restart and shared state on the exact supported client.
+Use the canonical [Claude Desktop acceptance checklist](../../active/colleague-pilot/README.md#claude-desktop-acceptance)
+for the minimum pilot slice rather than maintaining a second test list here.
 
 Explain that CR is local while a cloud-backed assistant may send tool results
 off-device. ChatGPT qualification must name the actual desktop app/mode/account;
 support in Codex does not prove support in ordinary ChatGPT conversations.
 
-Once activated, create a reviewed implementation plan here. Once shipped,
+The minimum Claude Desktop implementation plan belongs in the active pilot's
+`plan.md`; this backlog brief supplies shared boundaries, not a second active plan.
+If broader C/C+ work is separately activated, move its remaining brief under
+`docs/plans/active/` and create its reviewed plan there. Once a slice ships,
 distill durable behavior into the MCP setup/current-system documentation and
-remove this planning material; Git remains the archive.
+remove superseded planning material; retain only wanted unactivated work here.
+Git remains the archive.

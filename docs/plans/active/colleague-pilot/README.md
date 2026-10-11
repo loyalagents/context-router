@@ -27,6 +27,15 @@ local storage/inference from the assistant's processing and retention. The user
 chooses appropriate documents and grants; never promise end-to-end offline use
 of a cloud-backed assistant.
 
+## Pilot Reset Policy
+
+The product owner must explicitly designate each reset release in its release
+handoff before distribution; an agent must not infer designation from "pilot" or
+a version number. Other releases must preserve existing state on replacement or
+refuse incompatible state without modifying it; never silently reset it. This
+does not require supporting arbitrary backwards migrations or cross-version restores.
+Decide and record whether the first pilot release is a reset release at activation.
+
 Early designated pilot releases may intentionally reset all **CR-managed user
 state**. Backwards data migration and cross-version restore are not requirements
 for those releases. Warn before installation/reset, obtain confirmation before
@@ -53,7 +62,9 @@ keeps a supported runtime. Do not create separate planning or closeout PRs.
    Treat new hardware as compatibility testing until measured. Review the plan
    across implementation, packaging/trust, persistence/recovery and client security.
 2. **Prove Claude Desktop on the installed app.** Own the minimum setup and
-   reconnect work in the [MCP onboarding brief](../../backlog/mcp-onboarding/README.md).
+   reconnect implementation in this active pilot's `plan.md`, following the shared
+   boundaries in the [MCP onboarding brief](../../backlog/mcp-onboarding/README.md).
+   Broader C/C+ onboarding remains backlog unless separately activated.
    Investigate current first-party client documentation and an actual client.
    Keep loopback HTTP as the server contract. A thin local stdio adapter is a
    candidate if required by the client, not a second backend or credential system.
@@ -64,8 +75,11 @@ keeps a supported runtime. Do not create separate planning or closeout PRs.
 3. **Make install/replacement/reset tolerable.** Identify source/artifact/checksum
    and publisher trust; qualify the actual download/quarantine/launch route on a
    clean colleague-like Mac. Decide signing/notarization or another supported
-   assisted path before inviting users; disabling Gatekeeper/stripping quarantine
-   is not acceptance evidence. Measure old-to-new app replacement and peak/retained
+   assisted path before inviting users. A pinned-source build with the existing
+   packager is an assisted fallback candidate, not a qualified route; assess its
+   exact toolchain prerequisites, trust/launch behavior and colleague effort.
+   Disabling Gatekeeper/stripping quarantine is not acceptance evidence.
+   Measure old-to-new app replacement and peak/retained
    disk usage, including model reuse, partial downloads, previous app archives,
    logs and backups. Name safe cleanup ownership/retention and any explicit reset.
    A same-candidate fixture replacement is not real version A-to-B evidence.
@@ -88,10 +102,7 @@ keeps a supported runtime. Do not create separate planning or closeout PRs.
   honestly, review proposals before apply, show the applied values without a
   misleading stale display. Investigate possible wrong-person attribution as a
   separate correctness/privacy issue; the accepted email omission is not a waiver.
-- Claude Desktop: discover tools, read, explicitly permitted write, denied write,
-  independent revoke/rotate and reconnect. Exercise more than 35 minutes idle,
-  app/client restart, stale sessions and uncertain mutation outcomes. No automatic
-  replay of ambiguous writes; a transport connection is not durable authority.
+- Complete the [Claude Desktop acceptance](#claude-desktop-acceptance) below.
 - Ordinary Quit/reopen and explicit restart preserve state. Exercise occupied
   port, duplicate launch and interrupted startup; classify sleep/owner-loss/reboot
   honestly. Provide a supported safe recovery or explicitly supported reset path
@@ -106,6 +117,17 @@ Use deterministic synthetic fixtures for automated tests; the human pilot is
 explicitly for colleagues' own data. Repository work itself does not authorize
 agents to upload private files, download weights, spend provider credits, configure
 personal clients or reset personal state. Request bounded approvals when needed.
+
+### Claude Desktop Acceptance
+
+This is the canonical minimum client checklist; the onboarding brief links here.
+On the exact supported client/version/account mode and installed artifact, verify:
+
+- Tool discovery, reads, explicitly permitted writes and denied writes.
+- Independent revoke/rotate and reconnect, with shared app state visible correctly.
+- More than 35 minutes idle, app/client restart, stale sessions and uncertain
+  mutation outcomes. Never automatically replay ambiguous writes; a transport
+  connection is not durable authority.
 
 ## Execution And Handoff
 

@@ -25,8 +25,10 @@ is wanted but nonblocking. Neither is yet qualified for the local app. Existing
 Claude Code/Codex CLI evidence is scoped; auto-reconnect after idle expiry remains
 unqualified. External assistants may send tool results off-device.
 
-Early designated pilot builds may explicitly reset CR-managed user data rather
-than maintain backwards migration. This is a policy, not an implemented reset
+Early pilot builds explicitly designated by the product owner may reset CR-managed
+user data rather than maintain backwards migration. Other releases preserve state
+or refuse incompatibility without modifying it; see the [reset policy](../plans/active/colleague-pilot/README.md#pilot-reset-policy).
+This is a policy, not an implemented reset
 command: require warning/consent, preserve original documents, compatible model
 weights, security floor and ownership checks. Do not delete metadata to bypass
 uncertain state. Personal data, downloads, client configuration and live model

@@ -177,7 +177,7 @@ Important observed boundaries include:
 - the default backend listener is not code-confined to loopback;
 - MCP Origin checks do not cover the entire browser trust boundary, and proxy
   headers are trusted for DCR rate limiting;
-- Step 07 replaces rejected DCR redirect-URI logging with fixed rejection class and count; query strings and raw URI arrays are not logged. Its local composition does not mount OAuth/DCR. Signed hosted tokens with absent/empty/unrecognized scopes now have empty authority; local authority is explicitly provisioned per instance. The exact LM-008 transition and affected consumers are recorded in the registry;
+- Step 07 replaces rejected DCR redirect-URI logging with fixed rejection class and count; query strings and raw URI arrays are not logged. Its local composition does not mount OAuth/DCR. Signed hosted tokens with absent/empty/unrecognized scopes now have empty authority; local authority is explicitly provisioned per instance. The exact [LM-008](LOCAL_MIGRATION_CLOSEOUT.md#referenced-decision-ids) transition and affected consumers are recorded in the registry;
 - provider prompt prefixes, extracted old/new preference values, and upload
   filenames/user IDs can enter untouched current logs; the Step 03 hosted
   identity, Auth0, user, Prisma, JWT, and MCP-auth paths use fixed diagnostics,
@@ -283,7 +283,7 @@ native safe executable-resolution design and full gate evidence.
 
 Vercel is an external build topology, not a repository-controlled exact-version
 selector. It exposes a Node major selection and may roll minor/patch releases,
-so it cannot durably select Node 24.21.0. LM-014 therefore excludes Vercel
+so it cannot durably select Node 24.21.0. [LM-014](LOCAL_MIGRATION_CLOSEOUT.md#referenced-decision-ids) therefore excludes Vercel
 preview builds from the supported local-first `main` product and its required
 merge evidence. The external Vercel project uses `Only build production`: a
 local-first push may create a canceled preview deployment record or

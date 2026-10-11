@@ -18,6 +18,7 @@ Validation for all repository changes (backend, web, native, packaging, and docs
 - Follow the [validation policy](docs/useful/AGENT_WORKFLOW.md#validation-and-context-discipline).
   During iteration, run focused checks for changed behavior and affected consumers;
   include integration, browser, native, persistence, or recovery tests as risk requires.
+  Documentation edits/moves also require affected tests/checkers that read those files.
 - Batch related corrections. Do not automatically run the full migration gate,
   complete package qualification, or every independent review after each small edit.
 - A source/artifact-bound trial build may support a named human retest after the

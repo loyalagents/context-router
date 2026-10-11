@@ -158,7 +158,12 @@ when broad qualification runs, not what is required for final acceptance.
 Run the smallest sufficient checks for changed behavior and affected consumers.
 Include real integration, browser, native, persistence, or recovery coverage when
 the risk requires it; a small diff is not proof of low risk. Docs-only edits normally
-need link/consistency and whitespace checks, not application builds or a full gate.
+need link/consistency and whitespace checks **plus affected tests/checkers that read
+the edited or moved files**, not application builds or a full gate. Discover those
+consumers with `rg` across tests/scripts and other repository readers: search the
+old/new paths, filename alone, and distinctive asserted content. Full-path searches
+alone miss readers such as `read("README.md")` and constructed paths. Preserve
+content assertions when updating a reader to an intentionally moved document.
 Changes to a gate require that gate's own targeted tests too.
 
 Batch related corrections from a review/acceptance round. Renew affected reviews
