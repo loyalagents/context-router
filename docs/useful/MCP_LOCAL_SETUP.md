@@ -102,13 +102,29 @@ cached descriptors; their deployed behavior has not been observed.
 The source bridge is implemented for the [first pilot connection slice](../plans/active/colleague-pilot/plan.md).
 Automated SDK/SQLite tests are separate from real Claude Desktop acceptance;
 **Desktop remains unqualified until the canonical client checklist is completed**.
-This bridge is not bundled in the installed app. It requires the reviewed source
-checkout or a source-bound snapshot of all three bridge modules, plus an absolute
-Node **24.21.0** executable. Keep both at stable paths. For a named trial, use the
-retained `/private/tmp/context-router-claude-bridge-trial-<commit>/cli.mjs` snapshot
-when supplied, with its receipt identifying the exact commit and module hashes.
-Verify those hashes and leave the snapshot unchanged throughout the trial; if it
-is removed, obtain another reviewed snapshot instead of silently switching inputs.
+This bridge is not bundled in the installed app. Persistent client configuration
+requires a commit-bound copy of all three modules (`bridge.mjs`, `cli.mjs` and
+`credential.mjs`) and its receipt, plus a trusted absolute Node **24.21.0**
+executable. Place the copy in a new, durable, user-owned private `0700` directory
+outside `managed-v1`, such as a versioned directory beneath the user's private
+application-support area. Do not configure persistent clients to execute from
+`/tmp`, `/private/tmp` or other shared temporary locations; earlier temporary
+trial snapshots are historical evidence, not persistent installation guidance.
+
+Before configuring Claude, verify the snapshot directory, modules and receipt
+belong to the user, resolve without symlink components, and have no group/other
+write permissions; retain the module/receipt files read-only and unchanged.
+Check every higher ancestor for trusted user/root ownership and no group/other
+write permission. Require the absolute Node binary to be a regular file owned by
+the user or root, without group/other write permission, under the same trusted
+ancestry; verify its version/hash against the trusted receipt. Verify the receipt's
+source revision and all three module hashes against independently reviewed source;
+a receipt found beside executable files is not itself a trust anchor. Create only
+a new private directory under already trusted ancestry; do not chmod existing
+roots to make them qualify. Use actual resolved absolute paths, without shell
+expansion, in client configuration. If any input disappears or changes, stop and
+verify a new copy from the reviewed source before explicitly updating/restarting
+Claude; do not silently recreate a predictable temporary path or switch inputs.
 Claude launches only the bridge; open Context Router separately through its menu.
 No local model is needed for ordinary preference reads/writes.
 
@@ -133,7 +149,7 @@ MCP. This is an assisted manual edit, not an automatic configuration step:
       "command": "/absolute/path/to/node-v24.21.0/bin/node",
       "args": [
         "--no-global-search-paths",
-        "/absolute/path/to/context-router/apps/backend/scripts/mcp-bridge/cli.mjs",
+        "/absolute/private/context-router-bridges/<source-commit>/cli.mjs",
         "--credential-file",
         "/absolute/private/claude-desktop.token"
       ],

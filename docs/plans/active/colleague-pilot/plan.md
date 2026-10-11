@@ -524,9 +524,10 @@ result-envelope change was made.
 
 The registry preserves prior migration records, protected ownership/dispositions,
 authority, consumers and outbound inventory; only the new transition and four
-new documentation reference rows are added. Consumer outcomes classify schema
-readers/guidance as migrated and unchanged auth/transport/resource/reference
-surfaces as unaffected. Unknown external-client evidence remains published
+new documentation reference rows are added. Consumer outcomes classify actually
+updated compatibility guidance as migrated; unchanged schema readers and
+reference/auth/transport/resource surfaces are verified-unaffected. Unknown
+external-client evidence remains published
 migration guidance, not observed deployed behavior.
 
 The bridge modules, storage/domain/auth/native code and dependencies remain
@@ -853,3 +854,62 @@ passed 75 checker/Markdown tests, links across 145 Markdown files, whitespace an
 the required real-base comparison (`performed`). Unchanged behavioral-test and
 independent source-review coverage carries forward.
 **Targeted checks passed; final validation pending.**
+
+### Draft review correction checkpoint (2026-10-11)
+
+The user authorized three focused review corrections on PR #172 at `d5aab13`.
+Independent plan review approved the bounded delta before edits: persistent
+executable-location guidance, explicit credential-ancestor regressions, and eight
+unchanged consumer-evidence labels. Writer/reviewers retain requested Astra
+`xhigh` settings without independent runtime attestation. No production defect or
+reader change is assumed by adding tests.
+
+Owned changes are limited to `MCP_LOCAL_SETUP.md`, `bridge-credentials.test.mjs`,
+the eight outcomes in `pilot-nullable-search-confidence`, and this plan. The runbook
+now requires a durable private user-owned snapshot and verified code/receipt/Node
+ancestry outside managed state; temporary snapshots remain historical trial
+evidence. It pins all three modules and the receipt to reviewed source rather
+than treating a colocated receipt or read-only file mode as an independent trust
+anchor. No live files, client configuration or credentials are moved or changed.
+
+Credential regressions cover higher group/world-writable and symlink ancestors,
+root-owned sticky acceptance and its non-root-owner/root-owned-child rejection
+boundaries, and mid-read higher-ancestor replacement while preserving credential
+inode/content, private-parent inode and outer-directory link count. Synthetic
+metadata seams avoid privileged ownership changes and are restored in `finally`;
+serial tests retain real file I/O. Production reader bytes remain unchanged.
+
+The eight unchanged consumer labels are corrected to `verified-unaffected`:
+the eval tool wildcard; authorization search/smart-search references; preference
+schema and workflow smart-search references; Harbor mode search, sensitive-policy
+check and overhead-report search references. All 64 consumer identities, contract
+fingerprints, exact transition changes and prior history remain intact. The
+older wording above now distinguishes actually migrated guidance from unchanged
+readers/references. No checker implementation or fixture change is intended.
+
+Link evidence has two scopes: the earlier workspace pass covered 145 Markdown
+files including the preserved untracked onboarding document; the draft's exact
+tracked head contains 144. Do not describe the workspace count as an exact-head
+pass. The accepted historical composite idle evidence above remains valid within
+its stated limits. The user has additionally required **one actual uninterrupted
+interval exceeding 35 minutes on the final trial pair in this PR, only after all
+other corrections/reviews settle**. That direct observation is pending and has
+not started; this timing agreement does not authorize live setup now.
+
+Focused validation is the credential test file, required real-base contract
+comparison, strict Markdown links, whitespace and an exact eight-outcome JSON
+delta assertion. The registry's web-runtime reader consumes unchanged outbound
+and reference sections; no web suite, unchanged checker unit suite, build or full
+gate is needed for this delta. Both affected security/runbook/test and
+evidence-label reviews approved the frozen batch without findings; no independent
+behavioral rerun was claimed. Prior unaffected code and trial evidence carry
+forward; final validation remains pending.
+
+Focused results: pinned toolchain preflight passed; the credential-only suite
+passed **9 tests, 0 failures, 0 skips**, without production reader changes. Required
+real-base comparison passed with `baseComparison=performed`; strict workspace
+links passed across 145 Markdown files and whitespace passed. The exact-delta
+assertion confirmed only eight outcome values changed in the registry, with all
+64 consumer identities and every other parsed field preserved. Tracked HEAD
+contains 144 Markdown files; no exact-head 145-file claim is made. No broad suite,
+build, app/client/credential action or timed idle interval was run.

@@ -984,7 +984,7 @@
         {
           "consumerId": "fp:eval-mcp-tool-wildcard",
           "path": "examples/eval/scripts/e2e-mcp-agent.mjs",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "fp:harbor-mcp-list-slugs",
@@ -1144,12 +1144,12 @@
         {
           "consumerId": "ref:docs/current/MCP_AUTHORIZATION.md:mcp:tool:searchPreferences",
           "path": "docs/current/MCP_AUTHORIZATION.md",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:docs/current/MCP_AUTHORIZATION.md:mcp:tool:smartSearchPreferences",
           "path": "docs/current/MCP_AUTHORIZATION.md",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:docs/current/PREFERENCE_SCHEMA.md:mcp:tool:consolidateSchema",
@@ -1169,7 +1169,7 @@
         {
           "consumerId": "ref:docs/current/PREFERENCE_SCHEMA.md:mcp:tool:smartSearchPreferences",
           "path": "docs/current/PREFERENCE_SCHEMA.md",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:docs/current/WORKFLOWS.md:mcp:tool:consolidateSchema",
@@ -1179,7 +1179,7 @@
         {
           "consumerId": "ref:docs/current/WORKFLOWS.md:mcp:tool:smartSearchPreferences",
           "path": "docs/current/WORKFLOWS.md",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:docs/IMPORTANT/CURRENT_STATE.md:mcp:route:/mcp",
@@ -1234,7 +1234,7 @@
         {
           "consumerId": "ref:examples/eval-harbor/modes/cr-mcp.md:mcp:tool:searchPreferences",
           "path": "examples/eval-harbor/modes/cr-mcp.md",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:examples/eval-harbor/scripts/build_dynamicmem_task.py:mcp:route:/mcp",
@@ -1249,7 +1249,7 @@
         {
           "consumerId": "ref:examples/eval-harbor/scripts/check_sensitive_policy.py:mcp:tool:searchPreferences",
           "path": "examples/eval-harbor/scripts/check_sensitive_policy.py",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:examples/eval-harbor/scripts/report_cr_overhead.py:mcp:tool:listPreferenceSlugs",
@@ -1264,7 +1264,7 @@
         {
           "consumerId": "ref:examples/eval-harbor/scripts/report_cr_overhead.py:mcp:tool:searchPreferences",
           "path": "examples/eval-harbor/scripts/report_cr_overhead.py",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:examples/eval-harbor/scripts/sensitive_policy.py:mcp:tool:mutatePreferences",
