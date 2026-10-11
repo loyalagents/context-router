@@ -123,7 +123,22 @@ test("packaging timing projection never repairs tainted or partial sequences int
     timingLine("cleanup-started", 2) + timingLine("cleanup-complete", 3) + timingLine("finalization-complete", 4),
   ));
   assert.equal(failed.availability, "partial");
+  assert.equal(failed.reason, "failed-before-finalization");
   assert.equal(failed.milestones.length, 5);
+});
+
+test("packaging timing projection distinguishes failure before finalization from missing milestones", () => {
+  const names = timingNames.flatMap((name) => name === "runtime-verified" ? [name, "failed"] : [name]);
+  const milestones = names.map((milestone, elapsedMs) => ({ milestone, elapsedMs }));
+  const log = milestones.map(({ milestone, elapsedMs }) => timingLine(milestone, elapsedMs)).join("");
+  const parse = (input, options) => packagingProgress.parsePackagingTimings(Buffer.from(input), options);
+  assert.deepEqual(parse(log), {
+    schemaVersion: 1, availability: "partial", milestones, reason: "failed-before-finalization",
+  });
+  assert.equal(parse(completeTimingLog().replace(timingLine("build-complete", 1), "")).reason,
+    "incomplete-sequence");
+  assert.equal(parse(log + "packaging-smoke: milestone=unknown elapsedMs=16\n").reason, "invalid-sequence");
+  assert.equal(parse(log, { truncated: true }).reason, "truncated");
 });
 
 test("packaging timing projection bounds bytes and excludes unrelated output and secrets", () => {

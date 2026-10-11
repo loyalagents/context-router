@@ -25,7 +25,7 @@ export const PACKAGING_TIMING_MAX_BYTES = 16_384;
 /** Project diagnostics only. Capture completeness never attests smoke success. */
 export function parsePackagingTimings(input, { truncated = false } = {}) {
   truncated ||= input.length > PACKAGING_TIMING_MAX_BYTES;
-  // runCommand labels chunks, including chunks split in the middle of a line.
+  // Normalize runCommand's stream labels before inspecting milestone lines.
   const text = input.subarray(0, PACKAGING_TIMING_MAX_BYTES).toString('utf8')
     .replace(/\[(?:stdout|stderr)\] /g, '');
   const lines = text.split('\n');
@@ -61,7 +61,7 @@ export function parsePackagingTimings(input, { truncated = false } = {}) {
   return {
     schemaVersion: 1, availability, milestones,
     ...(!complete && { reason: truncated ? 'truncated' : invalid ? 'invalid-sequence' :
-      milestones.length ? 'incomplete-sequence' : 'no-milestones' }),
+      earlyFailure ? 'failed-before-finalization' : milestones.length ? 'incomplete-sequence' : 'no-milestones' }),
   };
 }
 

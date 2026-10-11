@@ -105,7 +105,10 @@ test("packaging timing collection reads only a bounded regular log in owned diag
 
 test("packaging timing read and close failures or replaced files cannot escape or leak diagnostics", async () => {
   await withTimingLog(async ({ ownership, logPath }) => {
-    for (const failure of ["open", "identity", "nonregular", "read", "changed", "close"]) {
+    for (const [failure, reason] of Object.entries({
+      open: "log-unavailable", identity: "log-changed", nonregular: "log-changed",
+      read: "read-failed", changed: "log-changed", close: "close-failed",
+    })) {
       let closed = false;
       let stats = 0;
       const result = await timingGate.readPackagingTimings(ownership, logPath, {
@@ -131,8 +134,9 @@ test("packaging timing read and close failures or replaced files cannot escape o
           };
         },
       });
-      assert.equal(result.availability, "unavailable", failure);
-      assert.deepEqual(result.milestones, []);
+      assert.deepEqual(result, {
+        schemaVersion: 1, availability: "unavailable", milestones: [], reason,
+      }, failure);
       assert.equal(JSON.stringify(result).includes("private-canary"), false);
       assert.equal(closed, failure !== "open");
     }
