@@ -370,6 +370,8 @@ export default function SuggestionsList({
           const result = data.data?.applyPreferenceSuggestionsV2;
           if (result?.schemaVersion !== 2 || !Array.isArray(result.results) || result.results.length !== attempted.length || result.results.some((item: { suggestionId: string; status: string }, index: number) => item.suggestionId !== attempted[index] || !outcomes[item.status])) throw new Error('Invalid reviewed result');
           record(result.results);
+          attempted = [];
+          if (result.results.some((item: { status: string }) => item.status === 'APPLIED')) onApplied();
         }
         attempted = [];
       }
