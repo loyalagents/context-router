@@ -65,6 +65,7 @@ for (const kind of ['grant', 'revoke'])
           if (outcome === 'confirmed') await route.fulfill({ response });
           else await route.abort('failed');
         });
+        let releaseRefresh;
         try {
           if (kind === 'revoke')
             f.page.once('dialog', (dialog) => dialog.accept());
@@ -109,11 +110,20 @@ for (const kind of ['grant', 'revoke'])
             true,
           );
           const failedRefresh = kind === 'grant' && outcome === 'confirmed';
+          let refreshed, refreshedAgain, refreshes = 0;
+          const refreshStarted = new Promise((resolve) => { refreshed = resolve; });
+          const refreshRestarted = new Promise((resolve) => { refreshedAgain = resolve; });
+          const refreshHeld = new Promise((resolve) => { releaseRefresh = resolve; });
           if (failedRefresh)
             await f.page.route(
               '**/api/local/mcp/list',
-              (route) => route.fulfill({ status: 503, body: '{}' }),
-              { times: 1 },
+              async (route) => {
+                if (++refreshes === 1) refreshed();
+                else refreshedAgain();
+                await refreshHeld;
+                await route.fulfill({ status: 503, body: '{}' });
+              },
+              { times: 2 },
             );
           release();
           await f.page
@@ -127,11 +137,38 @@ for (const kind of ['grant', 'revoke'])
             )
             .waitFor();
           await peer.waitForFunction(() => window.managementInvalidations > 0);
+          const feedback = f.page.getByRole(
+            outcome === 'confirmed' ? 'status' : 'alert',
+            {
+              name: outcome === 'lost-response'
+                ? 'Change not confirmed'
+                : kind === 'grant'
+                  ? 'Grant saved'
+                  : 'Client instance revoked',
+              exact: true,
+            },
+          );
+          assert.equal(await feedback.getAttribute('aria-atomic'), 'true');
+          assert.ok((await feedback.innerText()).includes(client.label));
+          assert.ok((await feedback.innerText()).includes(client.id));
+          assert.ok((await feedback.innerText()).includes(
+            kind === 'grant' ? '* · READ · DENY' : 'Attempted action: Revoke this instance',
+          ));
           if (failedRefresh) {
+            await refreshStarted;
+            await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
+            await refreshRestarted;
+            assert.equal(await feedback.evaluate(
+              (element) => element === document.activeElement,
+            ), false, 'focus waits while the post-mutation list is unsettled');
+            assert.ok((await feedback.innerText()).includes('Grant saved.'));
+            releaseRefresh();
             await f.page
               .getByRole('alert')
               .filter({ hasText: 'Unable to load client instances.' })
               .waitFor();
+            await f.page.waitForFunction(() =>
+              document.activeElement?.getAttribute('aria-labelledby') === 'mcp-change-title');
             assert.equal(
               await f.page
                 .getByText('Grant saved.', { exact: false })
@@ -141,6 +178,23 @@ for (const kind of ['grant', 'revoke'])
             await f.page
               .getByRole('button', { name: 'Reload clients' })
               .click();
+            await f.page.getByRole('button', {
+              name: `Inspect ${client.id}`, exact: true,
+            }).waitFor();
+            await f.page.route('**/api/local/mcp/inspect',
+              (route) => route.fulfill({ status: 503, body: '{}' }),
+              { times: 1 });
+            const inspectSelected = f.page.getByRole('button', {
+              name: 'Inspect selected instance',
+            });
+            await inspectSelected.click();
+            await f.page.getByRole('alert').filter({
+              hasText: 'Authority could not be inspected.',
+            }).waitFor();
+            assert.equal(await feedback.isVisible(), true);
+            assert.equal(await feedback.evaluate(
+              (element) => element === document.activeElement,
+            ), false, 'read failure does not refocus the mutation result');
           }
           await f.page
             .getByRole('button', { name: `Inspect ${client.id}`, exact: true })
@@ -161,6 +215,7 @@ for (const kind of ['grant', 'revoke'])
             1,
             'an uncertain write is never retried automatically',
           );
+          assert.ok((await feedback.innerText()).includes(client.id));
           assert.equal(
             await inspected
               .getByRole('cell', { name: 'Denied', exact: true })
@@ -169,6 +224,7 @@ for (const kind of ['grant', 'revoke'])
           );
         } finally {
           release();
+          releaseRefresh?.();
           await peer.close();
         }
       },
@@ -577,6 +633,97 @@ test(
     assert.deepEqual(data.mcpAccessHistory.items, []);
   },
 );
+
+for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 }])
+  test(
+    `rejected MCP grant feedback retains attempted context and focus at ${viewport.width}px`,
+    { timeout: 60000 },
+    async (t) => {
+      const f = await browserFixture(t);
+      await f.page.setViewportSize(viewport);
+      const first = JSON.parse(f.cli('local-mcp.js', 'list').stdout).result[0];
+      f.cli('local-mcp.js', 'provision', '--label', first.label,
+        '--out', f.root + '/second.token');
+      const second = JSON.parse(f.cli('local-mcp.js', 'list').stdout)
+        .result.find((client) => client.id !== first.id);
+      f.cli('local-mcp.js', 'grant', '--id', first.id,
+        '--target', 'profile.first_name', '--action', 'READ', '--effect', 'DENY');
+      const storedGrants = () => {
+        const connection = f.database.connect();
+        try {
+          return connection.all('SELECT * FROM permission_grants ORDER BY id');
+        } finally {
+          connection.close();
+        }
+      };
+      const before = storedGrants();
+      assert.equal(before.length, 1);
+      let writes = 0;
+      f.page.on('request', (request) => {
+        if (request.url().endsWith('/api/local/mcp/grant')) writes++;
+      });
+      await f.page.goto(f.ready.origin + '/dashboard/permissions');
+      await f.page.getByLabel('Unlock token').fill(f.bootstrap);
+      await f.page.getByRole('button', { name: 'Unlock local dashboard' }).click();
+      await f.page.getByRole('button', { name: `Inspect ${first.id}`, exact: true }).click();
+      const attemptedTarget = 'profile.' + 'outside_maximum_'.repeat(6);
+      await f.page.getByLabel('Target', { exact: true }).fill(attemptedTarget);
+      await f.page.getByLabel('Action', { exact: true }).selectOption('DEFINE');
+      await f.page.getByLabel('Effect', { exact: true }).selectOption('ALLOW');
+      await f.page.getByRole('button', { name: 'Save grant' }).click();
+      const feedback = f.page.getByRole('alert', { name: 'Grant not saved', exact: true });
+      await feedback.waitFor();
+      await f.page.getByRole('button', { name: `Inspect ${first.id}`, exact: true }).waitFor();
+      await f.page.waitForFunction(() =>
+        document.activeElement?.getAttribute('aria-labelledby') === 'mcp-change-title');
+      assert.equal(await feedback.getAttribute('aria-atomic'), 'true');
+      assert.equal(await feedback.evaluate((element) => element === document.activeElement), true);
+      const bounds = await feedback.boundingBox();
+      assert.ok(bounds.y >= 0 && bounds.y + bounds.height <= viewport.height,
+        'settled feedback is in the viewport without the test scrolling to it');
+      assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= viewport.width);
+      assert.equal(await feedback.evaluate((element) => element.scrollWidth <= element.clientWidth), true);
+      const content = await feedback.innerText();
+      assert.ok(content.includes(first.label));
+      assert.ok(content.includes(first.id));
+      assert.ok(!content.includes(second.id));
+      assert.ok(content.includes(attemptedTarget + ' · DEFINE · ALLOW'));
+      assert.ok(content.includes('ALLOW was not saved:'));
+      assert.ok(content.includes('Reload and inspect before editing again.'));
+      assert.equal(await f.page.getByRole('button', { name: 'Save grant' }).count(), 0);
+      assert.deepEqual(storedGrants(), before);
+      await feedback.evaluate((element) => {
+        window.outcomeRefocusCount = 0;
+        element.addEventListener('focus', () => window.outcomeRefocusCount++);
+      });
+
+      await f.page.route('**/api/local/mcp/list',
+        (route) => route.fulfill({ status: 503, body: '{}' }), { times: 1 });
+      await f.page.getByRole('button', { name: 'Reload clients' }).click();
+      await f.page.getByRole('alert').filter({ hasText: 'Unable to load client instances.' }).waitFor();
+      assert.equal(await feedback.innerText(), content);
+      assert.equal(await feedback.evaluate((element) => element === document.activeElement), false);
+      await f.page.route('**/api/local/mcp/inspect',
+        (route) => route.fulfill({ status: 503, body: '{}' }), { times: 1 });
+      const inspectSelected = f.page.getByRole('button', { name: 'Inspect selected instance' });
+      await inspectSelected.click();
+      await f.page.getByRole('alert').filter({ hasText: 'Authority could not be inspected.' }).waitFor();
+      assert.equal(await feedback.innerText(), content);
+      assert.equal(await f.page.evaluate(() => window.outcomeRefocusCount), 0);
+
+      await f.page.getByRole('button', { name: 'Reload clients' }).click();
+      const peerButton = f.page.getByRole('button', { name: `Inspect ${second.id}`, exact: true });
+      await peerButton.click();
+      const authority = f.page.getByRole('region', { name: 'Selected client authority' });
+      await authority.getByText(second.id, { exact: true }).waitFor();
+      assert.equal(await feedback.innerText(), content, 'another same-label instance cannot relabel the outcome');
+      assert.equal(await f.page.evaluate(() => window.outcomeRefocusCount), 0);
+      await f.page.getByRole('button', { name: `Inspect ${first.id}`, exact: true }).click();
+      await authority.getByText('profile.first_name · READ · DENY', { exact: true }).waitFor();
+      assert.deepEqual(storedGrants(), before);
+      assert.equal(writes, 1, 'rejection and failed reads never retry a mutation');
+    },
+  );
 
 test(
   'MCP clients show per-instance maximum and effective grants, reject stale edits and revoke only the selected instance',
