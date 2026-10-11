@@ -3239,3 +3239,18 @@ test('Step08 GraphQL roots retain exact legacy surfaces and add only reviewed cl
   const subscribed = structuredClone(baseline); subscribed.roots.subscription = 'Subscription';
   assert.ok(validateGraphqlRootSurface(subscribed).length);
 });
+
+test('source-only MCP bridge is included in both censuses and new outbound sinks fail closed', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'bridge-contract-discovery-'));
+  const bridge = 'apps/backend/scripts/mcp-bridge/extra.mjs';
+  try {
+    for (const name of [...CONTRACT_REFERENCE_ROOTS, ...OUTBOUND_SINK_ROOTS,
+      'examples/eval-harbor/tasks/dynamicmem-user001-cp00-02-memory-final-v1/tests/score_dynamicmem_prediction.py',
+      'apps/backend/scripts/mcp-bridge']) await mkdir(path.join(root, name), { recursive: true });
+    await writeFile(path.join(root, bridge), "import http from 'node:http'; http.request({path:'/mcp'});");
+    for (const files of [await collectContractReferenceFiles(root), await collectOutboundSinkFiles(root)]) assert.ok(files.has(bridge));
+    const discovered = collectOutboundSinkInventory(await collectOutboundSinkFiles(root));
+    assert.ok(discovered.some((row) => row.path === bridge));
+    assert.ok(validateOutboundSinkInventory(discovered, [], []).some((message) => message.includes(`unclassified outbound sink ${bridge}`)));
+  } finally { await rm(root, { recursive: true, force: true }); }
+});

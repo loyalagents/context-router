@@ -95,7 +95,9 @@ router_cli="$HOME/Applications/Context Router.app/Contents/MacOS/context-router"
 
 The token export must be absent and have a private parent directory. Use the
 existing [manual MCP client setup](MCP_LOCAL_SETUP.md) with port 8787 and that
-client's credential. Browser unlock, human identity, MCP and inference credentials
+client's credential. For the source-only Claude Desktop trial, use the
+[private-file bridge recipe](MCP_LOCAL_SETUP.md#claude-desktop-assisted-source-bridge-trial);
+the current installed bundle does not include that bridge. Browser unlock, human identity, MCP and inference credentials
 are distinct. A client credential is not a browser unlock code. Provision/rotate
 exports are sensitive; routine menu diagnostics do not contain them. Permission
 and grant syntax is unchanged from the existing CLI. The installed wrapper also

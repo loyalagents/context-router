@@ -2931,6 +2931,7 @@ const GRAPHQL_CONSUMER_ROOTS = [
   "scripts/local-migration/restart-smoke.mjs",
 ];
 export const CONTRACT_REFERENCE_ROOTS = [
+  "apps/backend/scripts/mcp-bridge",
   "README.md",
   "apps/web",
   "apps/desktop",
@@ -2959,6 +2960,7 @@ export const CONTRACT_REFERENCE_ROOTS = [
   "scripts/local-migration/web-support-smoke.mjs",
 ];
 export const OUTBOUND_SINK_ROOTS = [
+  "apps/backend/scripts/mcp-bridge",
   "apps/backend/src",
   "apps/web",
   "apps/desktop",

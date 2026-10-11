@@ -2726,6 +2726,28 @@
         "06",
         "09"
       ]
+    },
+    {
+      "id": "claude-desktop-source-bridge",
+      "sources": [
+        {
+          "path": "apps/backend/scripts/mcp-bridge/bridge.mjs",
+          "fingerprints": [
+            "import http from 'node:http';",
+            "hostname: '127.0.0.1'",
+            "path: '/mcp'",
+            "agent: false",
+            "Bearer ${credential}"
+          ]
+        }
+      ],
+      "destination": "User-launched source bridge to fixed authenticated http://127.0.0.1:8787/mcp only; no DNS, proxy, redirects, provider or backend startup. Imported synthetic harness alone selects ephemeral loopback ports. Current ownership: colleague-pilot connection slice plan.",
+      "payload": "Existing per-instance MCP bearer and requested JSON-RPC payload/results; no diagnostic payload recording, credential reload, ambiguous request replay or new authority.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "07"
+      ]
     }
   ],
   "externalClients": [
@@ -3780,6 +3802,12 @@
       "reference": "/oauth/register"
     },
     {
+      "path": "apps/backend/scripts/mcp-bridge/bridge.mjs",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
       "path": "apps/desktop/native/menu.m",
       "contract": "mcp",
       "kind": "route",
@@ -4224,6 +4252,12 @@
       "reference": "/mcp"
     },
     {
+      "path": "docs/plans/active/colleague-pilot/plan.md",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
       "path": "docs/useful/CLOUD_RUN_DEPLOY.md",
       "contract": "http",
       "kind": "route",
@@ -4627,6 +4661,13 @@
     }
   ],
   "outboundSinkInventory": [
+    {
+      "path": "apps/backend/scripts/mcp-bridge/bridge.mjs",
+      "sinks": {
+        "http-client": 1,
+        "node-http-import": 1
+      }
+    },
     {
       "path": "apps/backend/src/infrastructure/local-model/engine/client.mjs",
       "sinks": {
