@@ -1,6 +1,6 @@
 # Claude Desktop connection slice
 
-- Status: implementation and targeted checks complete; review corrections awaiting independent recheck
+- Status: independently reviewed source trial ready; real-client acceptance and final validation pending
 - Scope: first connection slice of the [pilot brief](README.md), one cohesive pilot PR
 - Base: `855e8734b919871eac82415465b456add38a3084`; branch `codex/colleague-pilot`
 - Owner: connection coordinator `/root`; sole checkout writer/integrator `/root/writer`
@@ -42,7 +42,7 @@ can disable local development MCP. No real client trial has run.
 | Sole writer `/root/writer` | Astra Extra High (`xhigh`) | Explicit spawn settings accepted; no independent runtime attestation; all branch/files/staging/commits |
 | Inventory `/root/inventory` | Astra High | Explicit spawn request; read-only code/consumer evidence |
 | Plan reviewer `/root/plan_review` | Astra Extra High (`xhigh`) | Explicit spawn settings accepted; no independent runtime attestation; security, lifecycle, compatibility, scope and test coverage |
-| Complete-diff reviewer `/root/diff_review` | Astra Extra High (`xhigh`) | Explicit spawn request; no independent runtime attestation; complete checkpoint diff reviewed, affected correction recheck pending |
+| Complete-diff reviewer `/root/diff_review` | Astra Extra High (`xhigh`) | Explicit spawn request; no independent runtime attestation; complete checkpoint diff and affected correction recheck approved for bounded source trial |
 
 Only the writer edits this checkout. Coordinator/reviewers remain read-only.
 Existing foreign edits in `docs/plans/README.md` and
@@ -279,7 +279,7 @@ that relationship does not replace installed/client acceptance.
 
 **Targeted checks passed; final validation pending.** The complete-diff review
 of local trial checkpoint `96809067cc1f1548b7a6b13becab2051291eb536` found two blockers;
-corrections and their evidence are recorded below, pending affected recheck.
+corrections and their approved recheck are recorded below.
 Real Claude Desktop account/
 policy/configuration, >35-minute inactivity, dashboard visibility, app/client
 restart and the complete canonical acceptance checklist remain unverified.
@@ -322,13 +322,40 @@ approved product or validation scope.
   broader C/C+ ergonomics remain backlog. Foreign agent-assisted onboarding edits
   remain untouched and excluded from commits.
 
-The reviewer must recheck the exact correction commit's privacy/protocol changes,
-new regressions and affected guidance. Unchanged dimensions of the complete
-`96809067cc1f1548b7a6b13becab2051291eb536` review can carry forward explicitly; the
-reviewer's disposition will identify that carry-forward. After recheck, retain
-the three reviewed modules under a private
+The reviewer rechecked the exact correction commit's privacy/protocol changes,
+new regressions and affected guidance, with the disposition below. Retain the
+three reviewed modules under a private
 `/private/tmp/context-router-claude-bridge-trial-<commit>/` directory with a JSON
 receipt of exact commit, module hashes, Node identity and source-only limits.
 The local trial still requires the real-client approval/acceptance and finalization
 gates above. The retained Candidate 14 integrity evidence does not identify a
 currently running app; choose the exact app before any stop/admin/restart.
+
+
+### Review disposition and trial handoff (2026-10-11)
+
+`/root/diff_review` approved correction commit
+`38d6f052d347c14bb7d25d003563c2d58971529b` for the bounded source trial, with no
+remaining blockers. Both P1 and P2 are resolved. The reviewer independently ran
+**17 selected correction regressions: 17 passed, 0 failed** on Node 24.21.0 with
+isolated temporary resources and ephemeral sockets. The eight-file correction
+diff, including initialization projection, observation fixture and guidance, was
+reviewed. Unchanged complete-diff coverage from
+`96809067cc1f1548b7a6b13becab2051291eb536` explicitly carries forward for credential
+handling, lifecycle/recovery, authority, no replay, checker/census coverage,
+integration scope and delivery boundaries.
+
+The subsequent disposition commit changes only this plan. All three bridge
+modules remain byte-identical to reviewed `38d6f05` and the 49-test isolated
+inputs; their hashes, final source revision, pinned Node identity, retained
+Candidate 14 integrity evidence and outstanding limits belong in the external
+snapshot receipt. Applicable Markdown/contract checks are rerun for this record;
+unchanged code tests and the independent code review carry forward.
+
+**Targeted checks passed; final validation pending.** This approves only a named
+source-bound trial artifact, not client configuration, cloud-backed requests,
+installed qualification, publication, merge or final pilot readiness. No app or
+client was launched or modified by this slice. The next human decision is bounded
+approval of the exact app, one preserved client configuration entry/restart,
+dedicated synthetic-only credential/grants and synthetic provider-bound requests.
+The canonical client checklist and agreed end-of-round finalization remain open.
