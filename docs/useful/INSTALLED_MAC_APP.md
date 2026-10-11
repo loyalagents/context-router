@@ -66,7 +66,10 @@ expired session still permits a fresh unlock at its current address.
 Restart preserves the database, human identity, MCP
 credentials/grants and model assets. Reconnect clients and obtain a fresh browser
 unlock. Sleep/wake or one-day certificate expiry invalidates AI until an explicit
-restart. Actual sleep/wake and reboot qualification remain pending. The retained
+restart. Native process, shutdown and control-write budgets count awake time, so
+system sleep cannot consume the drain allowance. Unlock codes still expire during
+sleep. Real sleep during shutdown and reboot recovery remain unqualified; the
+clock correction does not repair already uncertain owner journals. The retained
 [model E/H limitations](LOCAL_MODEL.md) are not resolved by packaging.
 
 ## Data And Offline Administration

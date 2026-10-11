@@ -1,7 +1,10 @@
 # Consolidated Installed-App Acceptance
 
 Status: manual feedback round complete; consolidated acceptance/release disposition
-remains pending. Candidate 13 installed/native/live checks passed; all 12 local gate phases passed with clean cleanup, and exact-head CI results are tracked on the PR. This checklist records human/platform acceptance separately from
+remains pending. Candidate 14 corrects sleep-during-shutdown timing; 184 native tests
+and all 11 installed phases passed. Final local gate and exact-head CI results are
+tracked on the PR and in its external final receipt. Candidate 13 live evidence
+remains historical and does not qualify Candidate 14 lifecycle. This checklist records human/platform acceptance separately from
 automated qualification. Do not mark it passed from component tests or a build.
 Use the latest retest candidate and exact source/manifest identified in its handoff;
 acceptance-round corrections can remain local until the final candidate is frozen.

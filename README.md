@@ -32,8 +32,9 @@ acceptance with explicitly accepted evidence limits. [PR #167](https://github.co
 was human-merged at `7328ceea63a784577594d52af18062be8b583855`; final-head
 checks are recorded there. Step 09 installation and packaging is active after
 its passing clean-base gate. An unsigned managed Mac candidate is implemented;
-Candidate 13 passed independent complete-diff review and installed/native/live checks.
-The manual feedback round is complete; all 12 local gate phases passed with clean cleanup; final-head CI results are recorded on draft [PR #168](https://github.com/loyalagents/context-router/pull/168).
+Candidate 14 fixes sleep consuming the native shutdown budget and passed affected
+review, 184 native tests and all 11 installed phases. The manual feedback round is
+complete; final local gate and exact-head CI results are tracked on draft [PR #168](https://github.com/loyalagents/context-router/pull/168).
 See the [qualification and acceptance limits](docs/plans/active/local-migration/09-installation-and-packaging/README.md), including unsigned distribution and unqualified recovery/platform cases, and the
 [installed Mac runbook](docs/useful/INSTALLED_MAC_APP.md).
 Small [UI usability improvements](docs/plans/active/ui-usability/README.md) are

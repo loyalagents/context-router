@@ -1,7 +1,7 @@
 # Step 09 Implementation Evidence
 
 - Sole writer: `/root`; approved technical plan P2.3
-- State: unsigned Candidate 13 in final qualification; complete-diff reviews and installed/native/live checks passed; full local gate passed; final-head CI tracked on the PR on draft [PR #168](https://github.com/loyalagents/context-router/pull/168); acceptance/release limits retained
+- State: unsigned Candidate 14; affected review and native/installed qualification passed; final local gate and exact-head CI evidence tracked on draft [PR #168](https://github.com/loyalagents/context-router/pull/168); acceptance/release limits retained
 - Source base: `7328ceea63a784577594d52af18062be8b583855`
 
 ## Managed Namespace Denial
@@ -434,3 +434,19 @@ checks passed. Independent affected review passed; unrelated Candidate 13 review
 coverage carries forward. Final native, installed artifact, local gate and exact-head
 CI are pending for Candidate 14. Evidence is retained under
 `/private/tmp/step09-final-20261010-14`. No live inference or real machine sleep was run.
+
+Candidate 14 was rebuilt from clean product commit `529bf4cbddb51bfc1562673e43673c5eb7649bb1`
+in 242.651 seconds; package verification and caller integrity passed.
+The complete native suite passed 184/184, zero skips, in 303.676 seconds.
+Local, isolated-build and bundled native executables are byte-identical. The actual
+installed smoke passed all 11 phases in 182.811 seconds with five
+zero-exit guardians, stopped/ok final events, matching durable quiescence and no
+cleanup errors. The initial approval-review timeout did not start an installed run;
+the permitted retry started the single passing series.
+
+[Candidate 14 qualification](qualification-candidate14.json) records bindings and
+receipt hashes. Final local gate and exact-head CI results are published on PR #168
+and in the external final receipt after completion; this pre-push source record
+does not assert their outcome. Later source changes in this closeout are documentation
+only. Unaffected reviews carry forward; affected lifecycle and documentation review
+remain distinct from test outcomes. No new live inference was run.

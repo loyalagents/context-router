@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "candidate": "14",
+  "scope": "sleep-safe native lifecycle budgets; final local gate and exact-head CI results are published on PR #168 and the external final receipt",
+  "base": "7328ceea63a784577594d52af18062be8b583855",
+  "productHead": "529bf4cbddb51bfc1562673e43673c5eb7649bb1",
+  "build": {
+    "version": 1,
+    "distribution": "local-candidate",
+    "status": "packaged",
+    "source": {
+      "headSha": "529bf4cbddb51bfc1562673e43673c5eb7649bb1",
+      "dirty": false,
+      "copiedInputsSha256": "c5542b2b07032b89feeacbdfccadbd4a8864d052557388c74022874ef2bc7d70"
+    },
+    "phases": [
+      {
+        "name": "isolated-source",
+        "elapsedMs": 73968
+      },
+      {
+        "name": "fresh-builds",
+        "elapsedMs": 117470
+      },
+      {
+        "name": "complete-bundle-verified",
+        "elapsedMs": 156718
+      },
+      {
+        "name": "archive-and-caller-integrity",
+        "elapsedMs": 230701
+      }
+    ],
+    "limitations": [
+      "Unsigned local candidate; no publisher authentication, notarization or Gatekeeper qualification.",
+      "Runtime and human acceptance are recorded separately; successful packaging is not qualification."
+    ],
+    "buildWorkspace": "/var/folders/pn/rnjt7b1d5xb4pckyss2s55qc0000gn/T/context-router-lmbg-workspace-4oXQJZ",
+    "bundle": {
+      "path": "/private/tmp/context-router-step09-candidate-20261010-14/Context Router.app",
+      "files": 39542,
+      "bytes": 816912054,
+      "manifestSha256": "944c5be0eb2e44e5c215fdacac3f8ad12546dd190cdddd8afa45c78285d8ff38"
+    },
+    "archive": {
+      "path": "/private/tmp/context-router-step09-candidate-20261010-14/Context Router.local-candidate.zip",
+      "bytes": 281996863,
+      "sha256": "ee7f4aaf16a77ad8cf6929cf3909bae3645b804f565f48b4f34894df915e783b"
+    },
+    "callerIntegrity": true,
+    "elapsedMs": 242651
+  },
+  "review": {
+    "reviewer": "/root/sleep_clock_review",
+    "requestedModel": "gpt-6-astra",
+    "requestedEffort": "xhigh",
+    "servingSettings": "unobservable",
+    "verdict": "affected plan and implementation PASS; no blockers",
+    "productTestDigest": "9bb2815cdd4d7372a67c314db9df2558b59aa1b9c19c5bf283d96fbcc1385cbe",
+    "priorCoverage": "Candidate 13 complete-diff reviews carried only outside native lifecycle, tests and documentation delta"
+  },
+  "targeted": {
+    "status": "passed",
+    "tests": 20,
+    "redEvidence": "Two sleep regression failures before fix; awake-time and expiry controls passed. Separate initial sandbox socket refusal is not product regression evidence.",
+    "redLogSha256": "047a64a9f417d5e3d289e221fe9ed95abf3de73b7ecd528d5d25cf4b932cf089",
+    "greenLogSha256": "bff59804076ecc39ee82b28be9250a195a42b768d995d3bf98ac7d75f92686ea"
+  },
+  "native": {
+    "status": "passed",
+    "tests": 184,
+    "failures": 0,
+    "skipped": 0,
+    "elapsedMs": 303675.915417,
+    "logSha256": "7008180a47e056da907529064eab52faacba0a98d49ad450ac4359cf301aad44",
+    "binding": {
+      "sourceHead": "529bf4cbddb51bfc1562673e43673c5eb7649bb1",
+      "differences": [],
+      "nativeBinaries": {
+        "local": "9807e44effed50ce6214d45caea74f6e88a4a233289392f1ab7059e3185fa7f3",
+        "build": "9807e44effed50ce6214d45caea74f6e88a4a233289392f1ab7059e3185fa7f3",
+        "bundle": "9807e44effed50ce6214d45caea74f6e88a4a233289392f1ab7059e3185fa7f3"
+      },
+      "identical": true
+    }
+  },
+  "installed": {
+    "status": "passed",
+    "phases": [
+      {
+        "name": "source-toolchain-exec-denial",
+        "elapsedMs": 2945
+      },
+      {
+        "name": "installed-pdf-dependency-closure",
+        "elapsedMs": 3306
+      },
+      {
+        "name": "browser-unlock-reunlock-close-persistence",
+        "elapsedMs": 16023
+      },
+      {
+        "name": "first-run-dashboard-cli-exclusion-clean-quit",
+        "elapsedMs": 16231
+      },
+      {
+        "name": "installed-native-download-cleanup-and-idempotence",
+        "elapsedMs": 28127
+      },
+      {
+        "name": "installed-cli-mcp-and-explicit-fresh-restart",
+        "elapsedMs": 55854
+      },
+      {
+        "name": "post-backup-revocation-rotation-and-grant-denial",
+        "elapsedMs": 83995
+      },
+      {
+        "name": "acknowledged-restore-credential-and-grant-cutover-with-pending-revocation",
+        "elapsedMs": 121539
+      },
+      {
+        "name": "interrupted-replacement-refuses-before-durable-state",
+        "elapsedMs": 126117
+      },
+      {
+        "name": "complete-compatible-replacement-preserves-pair-and-assets",
+        "elapsedMs": 151189
+      },
+      {
+        "name": "app-only-uninstall-reinstall-preserves-durable-state",
+        "elapsedMs": 182811
+      }
+    ],
+    "owners": 5,
+    "allOwnersExitedZero": true,
+    "allFinalEventsStoppedOk": true,
+    "finalJournal": "matching quiescent/ok directly checked",
+    "cleanup": [],
+    "elapsedMs": 182811,
+    "receiptSha256": "5b2089d5b75019a8d980ecaedb0d5111124802b91d5d70d797fbb4c65ab8882b",
+    "harnessSha256": "f792807bc8a1a86e488ec80b508ec878440bebf19874e4d40b8f1ee54e9b3695"
+  },
+  "finalGateEvidence": {
+    "pr": "https://github.com/loyalagents/context-router/pull/168",
+    "externalReceipt": "/private/tmp/context-router-step09-candidate-20261010-14/final-qualification.json",
+    "localSummary": "/private/tmp/context-router-step09-candidate-20261010-14/final-validation-20261010/local-migration-gate-summary.json",
+    "publication": "Final local-gate and exact-head CI outcomes are recorded after execution at these locations; this source record makes no advance pass claim."
+  },
+  "liveEvidence": {
+    "candidate": "13",
+    "status": "historical only",
+    "scope": "unchanged model/runtime/configuration/output evidence; not Candidate 14 lifecycle or real-sleep qualification",
+    "authorization": "consumed; no new live run performed or required solely for this clock correction"
+  },
+  "limitations": [
+    "Unsigned Apple Silicon pilot; no signing/notarization/Gatekeeper or distribution qualification.",
+    "Simulated sleep regressions; no actual sleep during shutdown, in-flight inference sleep, expiry or cross-boot recovery qualification.",
+    "Existing forced/uncertain installations are not repaired.",
+    "Prior human reports remain bound to their original candidates and observation limits; no routine repeat claimed.",
+    "Step 06 E/H, unsupported hardware/platforms and deferred follow-ups remain unchanged."
+  ]
+}

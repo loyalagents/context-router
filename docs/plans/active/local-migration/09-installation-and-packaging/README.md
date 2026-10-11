@@ -1,13 +1,13 @@
 # Step 09: Installation And Packaging
 
-- Status: Candidate 14 sleep-clock correction; affected review and targeted checks passed; renewed final validation pending; Candidate 13 evidence retained historically
+- Status: Candidate 14 frozen; affected review and native/installed checks passed; final local gate and exact-head CI outcomes tracked on the PR; acceptance/release limits retained
 - Coordinator and sole repository writer: `/root`
 - Branch: `codex/local-migration-09-installation-and-packaging`, existing checkout
 - Planning base: `7328ceea63a784577594d52af18062be8b583855`
 - Implementation PR: one cohesive draft [PR #168](https://github.com/loyalagents/context-router/pull/168); not merged
 - Supported product today: merged Step 08 source/manual local UI and MCP modes
 - Intended outcome: a managed installed application on the explicitly qualified Apple Silicon pilot
-- Next action: freeze and qualify Candidate 14 after the external-review F1 correction; the manual feedback round is complete
+- Next action: reconcile final gate/CI evidence on the PR and present acceptance disposition; no automatic merge/release
 - Last updated: 2026-10-10
 
 The [activation evidence](activation.md) records the exact clean base, all twelve
@@ -26,7 +26,10 @@ planning, independent review, implementation and a draft PR; it does not approve
 any additional unreviewed mechanism, a merge or publication. Subsequent user and
 independent reviews approved P2.3 implementation. Candidate 13 passed actual
 installed-artifact qualification, 180 native tests and the separately approved
-bounded live-model series. See [current qualification](qualification-candidate13.json)
+bounded live-model series. Candidate 14 corrects the subsequent sleep-during-shutdown finding; its 184 native
+tests and 11 installed phases passed. Final local gate and exact-head CI outcomes
+are tracked on the PR and in the external final receipt. See
+[current qualification](qualification-candidate14.json)
 and the [acceptance disposition](acceptance.md) for confirmed human flows and
 remaining platform, recovery and release limits. Earlier receipts remain historical.
 See the [installed runbook](../../../../useful/INSTALLED_MAC_APP.md).

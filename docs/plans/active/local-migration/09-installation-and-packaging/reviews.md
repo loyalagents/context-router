@@ -842,3 +842,20 @@ Other dispositions from that review:
   should assess generation/server binding before wider release. Current disconnected
   retirement detects network failure only; users should open the current dashboard
   from the menu after Restart. No protection against port reuse is claimed.
+
+The same reviewer subsequently passed the eight-file documentation/evidence delta
+at aggregate SHA-256
+`2ccbe280040e9eece5811f81999f9fa610129048732e38a07e011c09ca2871a8`,
+bound to product commit `529bf4cbddb51bfc1562673e43673c5eb7649bb1`.
+The approved product/test digest still matches retained build sources. Archive,
+manifest, native binary, harness and receipt hashes were independently checked;
+the reviewer confirmed 184/184 native tests, 11 installed phases, five zero-exit
+guardians, matching stopped/ok durable quiescence and empty cleanup. No local-gate
+or CI pass was asserted while those checks were outstanding.
+
+This documentation-only delta does not require another build or native/installed
+run. Carry forward unaffected complete-diff review and record actual final local
+gate and exact-head CI outcomes in the external final receipt and PR, binding the
+tested source/artifact and pushed head. Failures or runtime changes require affected
+reassessment. This ledger append is outside its own digest. The reviewer remained
+read-only and executed no tests or live-model work.
