@@ -6,7 +6,7 @@ import { runConsumer, fixtureCapabilities, grammarSchema, fixtureReply } from '.
 import { digest } from './freeze.mjs';
 import { renderForCompletion } from './protocol.mjs';
 
-const manifestPath = resolve(repoRoot, 'docs/plans/active/local-migration/06-local-model/evidence/schema-probe-manifest.json');
+const manifestPath = resolve(repoRoot, 'docs/evidence/local-migration/06-local-model/schema-probe-manifest.json');
 const snippet = 'Preferred channels: email and phone.';
 const jsonExpected = { documentSummary: 'Schema probe', suggestions: [{ slug: 'probe.payload', operation: 'CREATE',
   newValue: { code: '0012', count: 12, enabled: true, missing: null, items: ['x', 2, false, null, { nested: 'y' }] },

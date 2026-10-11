@@ -34,7 +34,9 @@ the PDF bytes themselves.
 This describes the hosted composition. Both the SQLite local preview and explicit PostgreSQL reference preview
 bind the AI ports to a fixed unavailable adapter that performs no model I/O,
 and neither preview has a listener. They provide composition evidence, not a usable local
-form-fill surface; Step 06 owns the local model implementation.
+form-fill surface. The separately selected model/MCP/UI and installed compositions
+now use the [qualified local adapter](../useful/LOCAL_MODEL.md) without sending
+model inputs off-device; its E/H limitations and capability bounds still apply.
 
 ### Supported fields and policies
 

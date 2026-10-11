@@ -11,7 +11,7 @@ const dist = resolve(repoRoot, 'apps/backend/dist');
 const { localJsonSchema } = req(join(dist, 'infrastructure/local-model/schema.js'));
 const { LOCAL_AI_CAPABILITIES } = req(join(dist, 'domains/shared/ports/ai-execution.js'));
 // Historical manifests remain immutable; current qualification binds the review follow-up build.
-export const productionManifestPath = resolve(repoRoot, 'docs/plans/active/local-migration/06-local-model/evidence/production-quality-manifest-review.json');
+export const productionManifestPath = resolve(repoRoot, 'docs/evidence/local-migration/06-local-model/production-quality-manifest-review.json');
 const correction = '\n\nThe previous response did not satisfy the required JSON schema. Return valid JSON only.';
 async function buildDigest(directory = dist, prefix = '') {
   const values = [];
@@ -24,7 +24,7 @@ async function buildDigest(directory = dist, prefix = '') {
   return values;
 }
 export async function buildProductionManifest() {
-  const original = JSON.parse(await readFile(resolve(repoRoot, 'docs/plans/active/local-migration/06-local-model/evidence/quality-manifest.json'), 'utf8'));
+  const original = JSON.parse(await readFile(resolve(repoRoot, 'docs/evidence/local-migration/06-local-model/quality-manifest.json'), 'utf8'));
   const entries = [];
   for (const entry of cases) {
     const calls = [];

@@ -2891,7 +2891,7 @@ test("derived references cover maintained root, eval, and configuration runbooks
     "README.md",
     "apps/web/.env.example",
     "docs/IMPORTANT/CURRENT_STATE.md",
-    "docs/plans/active/local-migration/orchestration.md",
+    "docs/current/LOCAL_APPLICATION.md",
     "examples/eval/README.md",
     "examples/simple-eval-example-1/intermediary-files/json-mime-smoke.md",
     "scripts/local-migration/packaging-smoke.mjs",

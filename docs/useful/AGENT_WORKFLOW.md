@@ -22,7 +22,8 @@ need a migration-sized planning/review ceremony.
   More agents, more PRs, and more reasoning are not evidence of correctness.
 - Prefer one cohesive PR with internal testable checkpoints. Split only for a
   real independently useful landing boundary, not one PR per agent or phase.
-  Migration-specific limits are in its orchestration document.
+  Use the [portfolio](../plans/README.md) and the relevant brief for current scope;
+  the completed migration's numbered plans are historical, not activation gates.
 
 ## Choose A Profile, Then Assign Roles
 
@@ -92,6 +93,12 @@ do not assume similarly named models or effort levels are interchangeable.
 
 ## Parallel Work And Ownership
 
+The user's main checkout is the integrated playground. Assign one writer/
+integrator there and do not switch its branch or overwrite build/runtime state
+under another active task. Independent implementation uses separately owned
+worktrees with an agreed base and landing order. A task's pilot priority does
+not establish worktree safety. Read-only investigation/review needs no worktree.
+
 Start with independent read-only discovery, consumer inventory, test design,
 and specialist review. Delegation is useful only when its result affects a
 decision or validation; avoid several copies of "review everything."
@@ -151,7 +158,12 @@ when broad qualification runs, not what is required for final acceptance.
 Run the smallest sufficient checks for changed behavior and affected consumers.
 Include real integration, browser, native, persistence, or recovery coverage when
 the risk requires it; a small diff is not proof of low risk. Docs-only edits normally
-need link/consistency and whitespace checks, not application builds or a full gate.
+need link/consistency and whitespace checks **plus affected tests/checkers that read
+the edited or moved files**, not application builds or a full gate. Discover those
+consumers with `rg` across tests/scripts and other repository readers: search the
+old/new paths, filename alone, and distinctive asserted content. Full-path searches
+alone miss readers such as `read("README.md")` and constructed paths. Preserve
+content assertions when updating a reader to an intentionally moved document.
 Changes to a gate require that gate's own targeted tests too.
 
 Batch related corrections from a review/acceptance round. Renew affected reviews

@@ -126,7 +126,7 @@ reviewed change that keeps all semantic consumers and byte-integrity evidence
 aligned:
 
 1. Edit `apps/backend/src/config/preferences.catalog.json` using LF line
-   endings. Treat a semantic definition change as an LM-008 contract change and
+   endings. Treat a semantic definition change as an [LM-008](LOCAL_MIGRATION_CLOSEOUT.md#referenced-decision-ids) contract change and
    update affected fixtures, fingerprints, consumers, and migration guidance in
    the same checkpoint.
 2. From the repository root, print the new exact byte count and SHA-256:

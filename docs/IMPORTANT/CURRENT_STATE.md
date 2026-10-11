@@ -1,42 +1,54 @@
 # Current State
 
-- Status: important
-- Read when: startup
-- Source of truth: `apps/backend/src/**`, `apps/backend/test/**`, `apps/web/app/dashboard/**`, `README.md`
-- Last reviewed: 2026-10-10
+- Status: mandatory startup reference
+- Source of truth: application code/tests; [Local Application](../current/LOCAL_APPLICATION.md)
+- Current priorities: [work portfolio](../plans/README.md)
 
-## What This Is
+The cloud-to-local migration foundation is delivered through human-merged
+[PR #168](https://github.com/loyalagents/context-router/pull/168). The numbered
+program is closed; optional LAN/hosting work is backlog, not the next mandatory
+step. [Closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md) preserves exact merge/CI,
+historical contract transitions and remaining limitations.
 
-A pnpm monorepo with a NestJS backend (`apps/backend/`) and a Next.js frontend
-(`apps/web/`). The default hosted root uses PostgreSQL/Prisma, verifies Auth0
-JWTs at an edge adapter, calls Vertex AI for AI-backed features, and exposes
-HTTP GraphQL, REST, OAuth/DCR, and MCP surfaces.
+The installed Apple Silicon Mac candidate owns a native menu/guardian, Node
+backend, Next.js dashboard and selected llama.cpp/Qwen model. Application data
+uses SQLite; human identity, browser sessions, MCP client credentials and
+inference credentials are distinct. Dashboard and loopback HTTP MCP share
+services/data and one active AI operation, with no queue or hosted fallback.
+MCP is `http://127.0.0.1:8787/mcp`; the UI composition also serves `/graphql`.
+Hosted PostgreSQL/Auth0/Vertex and developer/reference compositions remain;
+`pnpm dev` still selects the hosted root.
 
-The explicit `local-database-preview` now uses SQLite through pinned Node 24.21.0 and the default `local-identity` command. It keeps a stable random principal and independent bearer in a separate private identity root, seeds catalog definitions only, and initializes the real local Nest composition without a listener. It needs no PostgreSQL, Docker, Auth0/JWKS or model runtime. The previous `local-identity-preview` remains an explicit PostgreSQL reference command with its own original state. Hosted defaults stay unchanged. Both no-model previews exclude the web app and MCP transport, and both AI ports return a fixed unavailable result. Merged Step 06 adds explicit non-listening `preview-model` with the manually operated selected local adapter; its accepted E/H limitations remain. Merged Step 07 adds separately selected `local-mcp serve` / `serve-model`: narrow loopback HTTP, explicit preserving SQLite v2 upgrade, independent MCP credentials, shared services/model ownership and real-guard tests. Its [closeout](../plans/active/local-migration/07-local-mcp/README.md) records final CI and acceptance limits, including inconclusive live server/native cancellation. Step 08 is human-merged; see its [closeout](../plans/active/local-migration/08-local-ui/README.md). The separately selected local dashboard now uses a single-use unlock and independent browser session, with the same SQLite principal/services/model owner as MCP. Hosted authentication remains in the hosted launch. See [local dashboard setup](../useful/LOCAL_UI.md); all four independent review mandates and the full local gate passed; user-run acceptance is complete with explicitly accepted evidence limits recorded in the [acceptance disposition](../plans/active/local-migration/08-local-ui/acceptance.md). [PR #167](https://github.com/loyalagents/context-router/pull/167) merged at `7328ceea63a784577594d52af18062be8b583855` from the verified CI-tested head. Step 09 is now the sole primary migration step on `codex/local-migration-09-installation-and-packaging`, after its [passing clean-base gate](../plans/active/local-migration/09-installation-and-packaging/activation.md). Measured feasibility and all independent [P2.3 plan](../plans/active/local-migration/09-installation-and-packaging/plan.md) reviews passed. The unsigned native menu/guardian candidate, installed CLI, pinned downloader and inherited storage admission are implemented. Candidate 14 corrects the subsequent sleep-during-shutdown finding and passed affected independent review, all 184 native tests and 11 installed qualification phases. Unaffected complete-diff reviews carry forward; Candidate 13 live-model evidence stays historical. The manual feedback round is complete. Final local gate and exact-head CI outcomes are tracked on draft [PR #168](https://github.com/loyalagents/context-router/pull/168); the [acceptance disposition](../plans/active/local-migration/09-installation-and-packaging/acceptance.md) retains unqualified recovery, hardware/platform and signing/distribution limits. See the [installed Mac runbook](../useful/INSTALLED_MAC_APP.md). [UI usability improvements](../plans/active/ui-usability/README.md) are deferred until the packaged local workflow is usable. See [local identity administration](../useful/LOCAL_IDENTITY_ADMIN.md) for roots, recovery, backup constraints and reference commands.
+Next: an [assisted colleague pilot](../plans/active/colleague-pilot/README.md),
+using colleagues' own documents. Claude Desktop is required first; ChatGPT desktop
+is wanted but nonblocking. Neither is yet qualified for the local app. Existing
+Claude Code/Codex CLI evidence is scoped; auto-reconnect after idle expiry remains
+unqualified. External assistants may send tool results off-device.
 
-Run `./print-repo-structure.sh` for the full layout. See `README.md` for setup and dev workflows.
+Early pilot builds explicitly designated by the product owner may reset CR-managed
+user data rather than maintain backwards migration. Other releases preserve state
+or refuse incompatibility without modifying it; see the [reset policy](../plans/active/colleague-pilot/README.md#pilot-reset-policy).
+This is a policy, not an implemented reset
+command: require warning/consent, preserve original documents, compatible model
+weights, security floor and ownership checks. Do not delete metadata to bypass
+uncertain state. Personal data, downloads, client configuration and live model
+runs need their own bounded authorization.
 
-## Implemented Systems
+Do not claim a general release: the app is unsigned/unnotarized; measured installed
+hardware is M1 Max/64 GiB/macOS 15.1.1. Other hardware, signed distribution,
+cross-boot/forced-loss recovery and real version replacement/disk budgets need
+evidence. Model quality/cancellation exceptions E/H and reported PDF/attribution/
+stale-display findings remain visible in the current application doc.
 
-- GraphQL and hosted MCP share a provider-neutral verified-human identity
-  resolver keyed by the exact `(provider, issuer, subject)` tuple;
-  within backend human-identity resolution, Auth0-specific code is limited to
-  JWT/JWKS validation and claim adaptation. The web app still owns its Auth0
-  SDK/session integration. Email is a non-authoritative, non-unique profile
-  hint and is never an identity-link key. The main-line Step 03 migration
-  intentionally deletes historical user-owned data instead of translating it.
-- Preference definitions are stored in the database, with global and user-owned namespaces, archive support, GraphQL mutations, and an MCP tool for creating user definitions.
-- User preferences support active and suggested states, location-scoped values, and AI-backed document analysis for extracting suggestions from uploaded files.
-- Hosted MCP retains HTTP transport, OAuth/DCR, registry, schema resource, grants and workflow tools. Local MCP reuses the tools/services with its own fresh SQLite credential guard and bounded sessions, excludes OAuth/DCR, and adds a local capability resource. Empty or unrecognized hosted scopes now deny explicitly.
-- Permission grants narrow MCP access per client key and slug target. The web dashboard includes a permissions page for testing and managing grants.
-- The workflow layer currently powers `smartSearchPreferences` and `consolidateSchema`.
-- The web app has dashboard pages for profile, preferences, schema, permissions, and chat.
+Follow [AGENTS.md](../../AGENTS.md) and [the workflow](../useful/AGENT_WORKFLOW.md).
+One writer owns the main playground checkout; independent worktree tasks need
+isolated resources and an integration order. Keep backend tests first, targeted
+iteration and batch corrections; qualify a frozen candidate only at the agreed
+finalization milestone. Existing migration/contract gates and exact-head CI remain.
+No automatic merge, publication, reset, or weakening of safety/compatibility.
 
-## Where To Look Next
-
-- Live repo layout: run `./print-repo-structure.sh`
-- Runbooks: `docs/useful/`
-- Implemented-system docs: `docs/current/`
-- Active follow-up work: `docs/plans/active/`
-- Local-first migration control plane:
-  `docs/plans/active/local-migration/orchestration.md`
+Use runbooks on demand: [installed Mac](../useful/INSTALLED_MAC_APP.md),
+[local UI](../useful/LOCAL_UI.md), [MCP](../useful/MCP_LOCAL_SETUP.md),
+[identity](../useful/LOCAL_IDENTITY_ADMIN.md), [model](../useful/LOCAL_MODEL.md).
+Run `./print-repo-structure.sh` for the live layout; don't load historical plans
+or large evidence files merely for orientation.

@@ -7,7 +7,7 @@ import { renderForCompletion } from './protocol.mjs';
 import { scoreQuality } from './quality.mjs';
 
 export async function runQuality(configuration, client, { render = renderForCompletion, onProgress = () => {} } = {}) {
-  const manifest = JSON.parse(await readFile(resolve(repoRoot, 'docs/plans/active/local-migration/06-local-model/evidence/quality-manifest.json'), 'utf8'));
+  const manifest = JSON.parse(await readFile(resolve(repoRoot, 'docs/evidence/local-migration/06-local-model/quality-manifest.json'), 'utf8'));
   if (digest(manifest) !== digest(await freezeManifest())) throw new Error('Frozen quality manifest changed');
   const trials = []; const measurements = [];
   for (const entry of cases) for (let repetition = 0; repetition < 3; repetition++) {

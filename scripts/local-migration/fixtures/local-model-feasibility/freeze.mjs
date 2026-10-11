@@ -25,6 +25,6 @@ export async function freezeManifest() {
 }
 if (process.argv[1] === new URL(import.meta.url).pathname) {
   const manifest = await freezeManifest();
-  await writeFile(resolve(repoRoot, 'docs/plans/active/local-migration/06-local-model/evidence/quality-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, { flag: 'wx' });
+  await writeFile(resolve(repoRoot, 'docs/evidence/local-migration/06-local-model/quality-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, { flag: 'wx' });
   console.log(JSON.stringify({ manifestSha256: digest(manifest), cases: manifest.cases.length }));
 }

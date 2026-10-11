@@ -1,6 +1,11 @@
 # MCP Client Setup
 
-For the Step 09 unsigned installed Mac candidate, use the [installed runbook](INSTALLED_MAC_APP.md). Its menu app uses the same loopback port 8787; run its bundled native CLI after Quit. The source commands below do not administer managed installation roots.
+For the unsigned installed Mac candidate, use the [installed runbook](INSTALLED_MAC_APP.md). Its menu app uses the same loopback port 8787; run its bundled native CLI after Quit. The source commands below do not administer managed installation roots.
+
+Local Claude Code/Codex CLI evidence does **not** qualify Claude Desktop or
+ChatGPT desktop. Those integrations are [pilot/onboarding work](../plans/active/colleague-pilot/README.md).
+The hosted recipes later in this document are a separate Auth0-backed composition;
+do not use them as proof or instructions for the installed SQLite app.
 
 - Status: useful
 - Read when: connecting Codex, Claude, or another MCP client to local or remote MCP
@@ -9,7 +14,7 @@ For the Step 09 unsigned installed Mac candidate, use the [installed runbook](IN
 
 Step 07 adds `local-mcp`, one manually started SQLite backend for Claude Code and Codex CLI on the same Mac. It exposes only direct Streamable HTTP at `http://127.0.0.1:8787/mcp` by default. There is no stdio bridge, browser UI, GraphQL listener, OAuth/DCR endpoint, public tunnel or LAN mode in this composition. The hosted composition remains separately supported below.
 
-The [Step 07 acceptance checklist](../plans/active/local-migration/07-local-mcp/acceptance.md) gives isolated synthetic setup, both client launches, expected results, restart/revocation, model readiness and cleanup. User-run acceptance is recorded for `d7e9d65` in [PR #166](https://github.com/loyalagents/context-router/pull/166), including its inconclusive live cancellation outcome. Steps 07 and 08 are merged; the [Step 08 acceptance disposition](../plans/active/local-migration/08-local-ui/acceptance.md) preserves its accepted evidence limits. Step 09 requires fresh installed-application evidence.
+The [Step 07 acceptance checklist](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/07-local-mcp/acceptance.md) gives isolated synthetic setup, both client launches, expected results, restart/revocation, model readiness and cleanup. User-run acceptance is recorded for `d7e9d65` in [PR #166](https://github.com/loyalagents/context-router/pull/166), including its inconclusive live cancellation outcome. Steps 07 and 08 are merged; the [Step 08 acceptance disposition](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/08-local-ui/acceptance.md) preserves its accepted evidence limits. Installed qualification and remaining pilot limits are recorded in [current closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md).
 
 ## Local SQLite Administration
 
@@ -75,7 +80,7 @@ Domain audit remains atomic with each mutation; access append is best effort. Lo
 
 Initial help/version inspection and user setup reported Claude Code **2.1.284** and Codex CLI **0.142.3**; Codex **0.160.0** was installed by later closeout, with the per-call transition unknown. Automated compatibility uses SDK 1.27.1 against the production local guard/HTTP/SQLite path. PR #166 records the user-run functional checks against `d7e9d65`, including durable shared state, permissions, independent revocation and bounded model checks. A client interruption and a successful result were both displayed during the cancellation attempt; server/native cancellation remains unconfirmed. Both clients and the backend/model processes were subsequently stopped. Official references: [Claude MCP](https://code.claude.com/docs/en/mcp), [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp), [2025-11-25 transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports), [cancellation](https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/cancellation).
 
-Cloud-backed CLI assistants may send tool results to their model providers. Use synthetic data. Those client tests do not prove the whole assistant is offline. The local application is separately tested under source/relocated-package policies that deny hosted providers/DNS/other endpoints and permit only its literal loopback listener and selected pinned synthetic TLS peer.
+Cloud-backed CLI assistants may send tool results to their model providers. Use synthetic data for repository tests; the assisted pilot permits colleagues' own data with explicit destination/privacy guidance and narrow grants. Those client tests do not prove the whole assistant is offline. The local application is separately tested under source/relocated-package policies that deny hosted providers/DNS/other endpoints and permit only its literal loopback listener and selected pinned synthetic TLS peer.
 
 ## Hosted Composition Copy/Paste Summary
 

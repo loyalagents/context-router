@@ -10,7 +10,7 @@ const failed = () => new Error('Client diagnostic preflight failed');
 if (process.argv.length !== 3 || process.argv[2] !== '--run-approved-client-diagnostic') throw failed();
 const assets = '/private/tmp/context-router-step06-assets', evidence = '/private/tmp/step06-evidence';
 const profile = '(version 1)(allow default)(deny network*)(allow network-bind network-inbound (local tcp "localhost:PORT"))(allow network-outbound (remote tcp "localhost:PORT"))(deny mach-lookup (global-name "com.apple.dnssd.service"))';
-const manifestPath = resolve('docs/plans/active/local-migration/06-local-model/evidence/client-diagnostic-manifest.json');
+const manifestPath = resolve('docs/evidence/local-migration/06-local-model/client-diagnostic-manifest.json');
 const digestFile = async path => {
   const hash = createHash('sha256'); for await (const chunk of createReadStream(path)) hash.update(chunk); return hash.digest('hex');
 };

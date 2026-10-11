@@ -16,7 +16,7 @@ async function mockManifest(t, manifest) {
 }
 
 test('production manifest preserves all original expectations and rejects changed build/prompt/schema inputs', async () => {
-  const original = JSON.parse(await readFile(new URL('../../../../docs/plans/active/local-migration/06-local-model/evidence/quality-manifest.json', import.meta.url)));
+  const original = JSON.parse(await readFile(new URL('../../../../docs/evidence/local-migration/06-local-model/quality-manifest.json', import.meta.url)));
   const manifest = await buildProductionManifest();
   assert.equal(manifest.cases.length, 16); assert.equal(manifest.repetitions, 3);
   for (const [i, entry] of manifest.cases.entries()) {

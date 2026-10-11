@@ -115,12 +115,12 @@ test("APP_BASE_URL remains the Auth0-only server-runtime origin", () => {
 });
 
 test("operator docs distinguish build-time endpoints from the Auth0 runtime origin", () => {
-  const rootReadme = read("README.md");
+  const hostedDevelopment = read("docs/useful/HOSTED_DEVELOPMENT.md");
 
-  assert.match(rootReadme, /NEXT_PUBLIC_GRAPHQL_URL/);
-  assert.match(rootReadme, /NEXT_PUBLIC_BACKEND_URL/);
-  assert.match(rootReadme, /captur(?:e|es) both public values at build time/i);
-  assert.match(rootReadme, /APP_BASE_URL.*Auth0 server-runtime origin/);
+  assert.match(hostedDevelopment, /NEXT_PUBLIC_GRAPHQL_URL/);
+  assert.match(hostedDevelopment, /NEXT_PUBLIC_BACKEND_URL/);
+  assert.match(hostedDevelopment, /captur(?:e|es) both public values at build time/i);
+  assert.match(hostedDevelopment, /APP_BASE_URL.*Auth0 server-runtime origin/);
 });
 
 test("the contract registry records centralized endpoint ownership", () => {

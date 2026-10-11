@@ -31,7 +31,9 @@ that the model provider has no retention policy.
 This describes the hosted composition. Both the SQLite local preview and explicit PostgreSQL reference preview
 bind the AI ports to a fixed unavailable adapter that performs no model I/O,
 and neither preview has a listener. They provide composition evidence, not a usable local
-document-analysis surface; Step 06 owns the local model implementation.
+document-analysis surface. The separately selected model/MCP/UI and installed
+compositions now provide the [qualified local adapter](../useful/LOCAL_MODEL.md);
+its text/PDF capability limits are not the hosted MIME support promise.
 
 The first model response is Zod-validated and capped at
 `DOC_UPLOAD_MAX_SUGGESTIONS`, which defaults to 25.
@@ -67,10 +69,14 @@ item so the UI can show how it was combined. If the merge equals the current
 value, a synthetic consolidated-no-change item is also returned in the filtered
 set.
 
-If the consolidation call or its validation fails, the service keeps the first
+For failures other than a typed local `AiError`, the service keeps the first
 valid normalized candidate and marks the remaining candidates as filtered
 duplicates. This fallback is deterministic but can lose useful complementary
 facts from later candidates.
+
+A typed local AI failure instead propagates and rejects the entire analysis with
+no proposals. Busy, unavailable or failed local inference must not be disguised
+as a successful partial extraction; see [local model semantics](../useful/LOCAL_MODEL.md).
 
 Public ids retain their extraction position and role after the analysis id is
 prefixed. Their stable forms are:

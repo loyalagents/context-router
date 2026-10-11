@@ -144,19 +144,22 @@ describe("runtime composition contract", () => {
   });
 
   it("documents every known launch topology and its env migration path", () => {
-    const rootReadme = read("README.md");
+    const hostedDevelopment = read("docs/useful/HOSTED_DEVELOPMENT.md");
     const cloudRun = read("docs/useful/CLOUD_RUN_DEPLOY.md");
 
-    expect(rootReadme).toContain("apps/backend/.env.local");
-    expect(rootReadme).toContain("apps/backend/.env");
-    expect(rootReadme).toContain("docker compose --env-file");
-    expect(rootReadme).toContain("root `.env`");
-    expect(rootReadme).toContain("pnpm dev:backend");
-    expect(rootReadme).toContain("pnpm --filter backend start");
-    expect(rootReadme).toContain("pnpm --filter backend start:dev");
-    expect(rootReadme).toContain("pnpm --filter backend start:prod");
-    expect(rootReadme).toContain("Docker");
-    expect(rootReadme).toContain("tests and staged runtime");
+    expect(read("README.md")).toMatch(
+      /\]\(docs\/useful\/HOSTED_DEVELOPMENT\.md\)/,
+    );
+    expect(hostedDevelopment).toContain("apps/backend/.env.local");
+    expect(hostedDevelopment).toContain("apps/backend/.env");
+    expect(hostedDevelopment).toContain("docker compose --env-file");
+    expect(hostedDevelopment).toContain("root `.env`");
+    expect(hostedDevelopment).toContain("pnpm dev:backend");
+    expect(hostedDevelopment).toContain("pnpm --filter backend start");
+    expect(hostedDevelopment).toContain("pnpm --filter backend start:dev");
+    expect(hostedDevelopment).toContain("pnpm --filter backend start:prod");
+    expect(hostedDevelopment).toContain("Docker");
+    expect(hostedDevelopment).toContain("tests and staged runtime");
     expect(cloudRun).toContain("process environment");
   });
 });
