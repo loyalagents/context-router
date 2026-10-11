@@ -53,6 +53,7 @@ export default function McpClients() {
   const [outcome, setOutcome] = useState<ChangeOutcome | null>(null);
   const outcomePanel = useRef<HTMLDivElement | null>(null);
   const handledOutcome = useRef<ChangeOutcome | null>(null);
+  const pendingOutcomeFocus = useRef<{ interacted: boolean } | null>(null);
   const [readError, setReadError] = useState('');
   const [generation, setGeneration] = useState(0);
   const pending = useRef<AbortController | null>(null);
@@ -60,16 +61,31 @@ export default function McpClients() {
   const revision = useRef(0);
   const channel = useRef<BroadcastChannel | null>(null);
   useEffect(() => {
+    const interaction = (event: Event) => {
+      if (
+        event.type === 'focusin' &&
+        (event.target === document.body || event.target === document.documentElement)
+      ) return;
+      if (pendingOutcomeFocus.current)
+        pendingOutcomeFocus.current.interacted = true;
+    };
+    const events = ['focusin', 'pointerdown', 'keydown', 'input'];
+    events.forEach((event) => document.addEventListener(event, interaction, true));
+    return () => {
+      events.forEach((event) => document.removeEventListener(event, interaction, true));
+      pendingOutcomeFocus.current = null;
+    };
+  }, []);
+  useEffect(() => {
     // Wait for the list to settle so its rows cannot push the result offscreen.
     // Later reads must not steal focus back to an already presented outcome.
     if (!outcome || busy || handledOutcome.current === outcome) return;
     handledOutcome.current = outcome;
-    // Preserve focus the user moved elsewhere while the list was loading.
-    const active = document.activeElement;
-    if (
-      active && active !== document.body && active !== document.documentElement &&
-      active.isConnected && !active.matches(':disabled')
-    ) return;
+    const interacted = pendingOutcomeFocus.current?.interacted;
+    pendingOutcomeFocus.current = null;
+    // Preserve activity since submission, including typing without moving focus.
+    // An untouched input may retain focus when Safari clicks a submit button.
+    if (interacted) return;
     outcomePanel.current?.focus({ preventScroll: true });
     outcomePanel.current?.scrollIntoView({ block: 'nearest' });
   }, [outcome, busy]);
@@ -187,6 +203,8 @@ export default function McpClients() {
       kind,
       grant,
     };
+    // The initiating pointer/key event has already run; track only later activity.
+    pendingOutcomeFocus.current = { interacted: false };
     revision.current++;
     pending.current?.abort();
     const controller = new AbortController();

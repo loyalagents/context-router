@@ -634,6 +634,105 @@ test(
   },
 );
 
+for (const submission of ['Save grant', 'Remove grant', 'Revoke this instance', 'keyboard Save grant'])
+  test(
+    `MCP outcome focuses after ${submission} without later interaction`,
+    { timeout: 60000 },
+    async (t) => {
+      const f = await browserFixture(t);
+      await f.page.setViewportSize({ width: 390, height: 844 });
+      const client = JSON.parse(f.cli('local-mcp.js', 'list').stdout).result[0];
+      if (submission === 'Remove grant')
+        f.cli('local-mcp.js', 'grant', '--id', client.id,
+          '--target', '*', '--action', 'READ', '--effect', 'DENY');
+      await f.page.goto(f.ready.origin + '/dashboard/permissions');
+      await f.page.getByLabel('Unlock token').fill(f.bootstrap);
+      await f.page.getByRole('button', { name: 'Unlock local dashboard' }).click();
+      const slugs = f.page.getByLabel('Exact slugs to inspect', { exact: false });
+      await slugs.fill('profile.first_name');
+      await f.page.getByRole('button', { name: `Inspect ${client.id}`, exact: true }).dispatchEvent('click');
+      const submit = f.page.getByRole('button', {
+        name: submission === 'keyboard Save grant' ? 'Save grant' : submission,
+        exact: true,
+      });
+      await submit.waitFor();
+      assert.equal(await slugs.evaluate((element) => element === document.activeElement), true);
+      let writes = 0;
+      f.page.on('request', (request) => {
+        if (/\/api\/local\/mcp\/(grant|revoke)$/.test(request.url())) writes++;
+      });
+      if (submission === 'Revoke this instance')
+        f.page.once('dialog', (dialog) => dialog.accept());
+      if (submission === 'keyboard Save grant') await submit.press('Enter');
+      else await submit.dispatchEvent('click');
+      const feedback = f.page.getByRole('status', { name:
+        submission === 'Revoke this instance' ? 'Client instance revoked'
+          : submission === 'Remove grant' ? 'Grant removed' : 'Grant saved', exact: true });
+      await feedback.waitFor();
+      await f.page.getByRole('button', { name: `Inspect ${client.id}`, exact: true }).waitFor();
+      await f.page.evaluate(() => new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      assert.equal(await feedback.evaluate((element) => element === document.activeElement), true,
+        'focus retained from before submission must not suppress result presentation');
+      const bounds = await feedback.boundingBox();
+      assert.ok(bounds.y >= 0 && bounds.y + bounds.height <= 844);
+      assert.equal(writes, 1);
+    },
+  );
+
+for (const phase of ['mutation', 'refresh'])
+  test(
+    `MCP outcome preserves typing in the already focused input during ${phase}`,
+    { timeout: 60000 },
+    async (t) => {
+      const f = await browserFixture(t);
+      const client = JSON.parse(f.cli('local-mcp.js', 'list').stdout).result[0];
+      await f.page.goto(f.ready.origin + '/dashboard/permissions');
+      await f.page.getByLabel('Unlock token').fill(f.bootstrap);
+      await f.page.getByRole('button', { name: 'Unlock local dashboard' }).click();
+      await f.page.getByRole('button', { name: `Inspect ${client.id}`, exact: true }).click();
+      const slugs = f.page.getByLabel('Exact slugs to inspect', { exact: false });
+      await slugs.fill('profile.');
+      await f.page.evaluate(() => {
+        window.outcomeFocusCount = 0;
+        document.addEventListener('focusin', (event) => {
+          if (event.target.getAttribute('aria-labelledby') === 'mcp-change-title')
+            window.outcomeFocusCount++;
+        });
+      });
+      let release, started, writes = 0;
+      const held = new Promise((resolve) => { release = resolve; });
+      const reached = new Promise((resolve) => { started = resolve; });
+      f.page.on('request', (request) => {
+        if (request.url().endsWith('/api/local/mcp/grant')) writes++;
+      });
+      await f.page.route(`**/api/local/mcp/${phase === 'mutation' ? 'grant' : 'list'}`, async (route) => {
+        const response = await route.fetch();
+        started();
+        await held;
+        await route.fulfill({ response });
+      }, { times: 1 });
+      try {
+        await f.page.getByRole('button', { name: 'Save grant' }).dispatchEvent('click');
+        await reached;
+        assert.equal(await slugs.evaluate((element) => element === document.activeElement), true);
+        await f.page.keyboard.type('first_');
+        release();
+        await f.page.getByRole('status', { name: 'Grant saved', exact: true }).waitFor();
+        await f.page.getByRole('button', { name: `Inspect ${client.id}`, exact: true }).waitFor();
+        await f.page.evaluate(() => new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        assert.equal(await slugs.evaluate((element) => element === document.activeElement), true);
+        await f.page.keyboard.type('name');
+        assert.equal(await slugs.inputValue(), 'profile.first_name');
+        assert.equal(await f.page.evaluate(() => window.outcomeFocusCount), 0);
+        assert.equal(writes, 1);
+      } finally {
+        release();
+      }
+    },
+  );
+
 for (const focusTarget of ['slugs input', 'dashboard link'])
   test(
     `MCP outcome respects deliberate focus on the ${focusTarget} during refresh`,
