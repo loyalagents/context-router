@@ -26,7 +26,8 @@ explicitly approved the combined confidence-correction app (`3dd4f7e`) and bridg
 snapshot (`c29efc5`) retest and manually unlocked the dashboard. The coordinator
 owns those bounded live actions; approval is not a general state-mutation mandate.
 No writer live actions, local model runs/downloads, private-document submissions,
-resets, publication or merging are authorized. Broader distribution/signing,
+resets, binary publication or merging are authorized. The user has now explicitly
+authorized source-branch publication and a draft PR for review. Broader distribution/signing,
 real replacement/disk qualification and native owner-loss work remain with the
 pilot coordinator. Reset designation stays undecided and is not needed for a
 bridge that never administers state.
@@ -842,10 +843,10 @@ final installed qualification and exact-head CI remain pending. Cheap read-only
 preflight found the pinned Node/pnpm, explicit Python, browser and clang available;
 the local Docker daemon and cached PostgreSQL image were available without a pull,
 with approximately 17 GiB disk headroom. That preflight is not a gate pass.
-The user has not yet chosen between handing off this tested connection slice and
-beginning final qualification here. This commit is an evidence checkpoint, not an
-agreed final-candidate freeze. Dashboard verification and that decision remain
-pending; no new milestone or broad-run authorization is inferred from silence.
+The user has requested source-branch publication and a draft PR for review at this
+checkpoint. This does not establish a final-candidate freeze or authorize broad
+qualification, binary publication or merge; dashboard verification and the agreed
+finalization milestone remain pending.
 No writer app/client/live-port, credential or provider action was taken for this
 evidence update, and no executable/test bytes changed. The evidence-only batch
 passed 75 checker/Markdown tests, links across 145 Markdown files, whitespace and
