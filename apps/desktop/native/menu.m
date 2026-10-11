@@ -47,7 +47,7 @@
 - (void)update {
   BOOL active=_ready&&!_stopping&&!_broken&&_guardian.running;
   for(NSString *key in @[@"open",@"unlock",@"restart"])_items[key].enabled=active;
-  _items[@"copy"].enabled=active&&_unlockFile&&CRNow()<_unlockUntil;
+  _items[@"copy"].enabled=active&&_unlockFile&&CRExpiryNow()<_unlockUntil;
   _items[@"download"].enabled=active&&!_download;_items[@"cancel"].enabled=active&&_download&&!_cancelPending;_items[@"quit"].enabled=!_quitting;
 }
 - (void)breakControl {
@@ -66,7 +66,7 @@
   if(![value isKindOfClass:[NSString class]]||![[value stringByDeletingLastPathComponent] isEqual:exports]||!CRPattern([value lastPathComponent],@"unlock-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\\.token"))CRFail();
   if(_stopping||_quitting)return NO;
   if(!CRUnlockFileAvailable(value)){_unlockFile=nil;_unlockUntil=0;return NO;}
-  _unlockFile=value;_unlockUntil=CRNow()+300;return YES;
+  _unlockFile=value;_unlockUntil=CRExpiryNow()+300;return YES;
 }
 - (void)record:(NSDictionary *)record {
   if(!CRInteger(record[@"version"],1,1)||!CRPattern(record[@"generation"],@"[a-f0-9]{32}"))CRFail();NSString *type=record[@"type"];
@@ -104,7 +104,7 @@
   [self update];
 }
 - (NSString *)code {
-  if(!_ready||_stopping||_quitting||!_unlockFile||CRNow()>=_unlockUntil)CRFail();NSString *exports=_unlockFile.stringByDeletingLastPathComponent;(void)CRPrivatePin(exports,YES);
+  if(!_ready||_stopping||_quitting||!_unlockFile||CRExpiryNow()>=_unlockUntil)CRFail();NSString *exports=_unlockFile.stringByDeletingLastPathComponent;(void)CRPrivatePin(exports,YES);
   NSString *code=[[NSString alloc] initWithData:CRReadData(_unlockFile,1024,YES) encoding:NSUTF8StringEncoding];if(!CRPattern(code,@"cr_ui_unlock_[A-Za-z0-9_-]{43}\\n"))CRFail();return [code substringToIndex:code.length-1];
 }
 - (void)showUnlock {

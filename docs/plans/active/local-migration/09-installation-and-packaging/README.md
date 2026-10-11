@@ -1,13 +1,13 @@
 # Step 09: Installation And Packaging
 
-- Status: Candidate 13 finalization; complete-diff reviews and installed/native/live checks passed; full local gate passed; final-head CI tracked on the PR; acceptance/release limits retained
+- Status: Candidate 14 sleep-clock correction; affected review and targeted checks passed; renewed final validation pending; Candidate 13 evidence retained historically
 - Coordinator and sole repository writer: `/root`
 - Branch: `codex/local-migration-09-installation-and-packaging`, existing checkout
 - Planning base: `7328ceea63a784577594d52af18062be8b583855`
 - Implementation PR: one cohesive draft [PR #168](https://github.com/loyalagents/context-router/pull/168); not merged
 - Supported product today: merged Step 08 source/manual local UI and MCP modes
 - Intended outcome: a managed installed application on the explicitly qualified Apple Silicon pilot
-- Next action: review exact-head CI and the consolidated acceptance disposition; the manual feedback round is complete
+- Next action: freeze and qualify Candidate 14 after the external-review F1 correction; the manual feedback round is complete
 - Last updated: 2026-10-10
 
 The [activation evidence](activation.md) records the exact clean base, all twelve

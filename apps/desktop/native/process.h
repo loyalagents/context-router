@@ -1,6 +1,6 @@
 #import "package.h"
+#import "clocks.h"
 #include <sys/types.h>
-double CRNow(void);
 @interface CRFrames : NSObject
 @property(nonatomic, readonly) BOOL ended;
 - (NSArray<NSDictionary *> *)readFrom:(int)fd;

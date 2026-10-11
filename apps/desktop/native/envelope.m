@@ -1,10 +1,10 @@
 #import "envelope.h"
+#import "clocks.h"
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <time.h>
 #include <unistd.h>
 
 NSString *CRRandom(NSUInteger count) {
@@ -21,7 +21,6 @@ NSString *CRBootID(void) {
   if (!CRPattern(result, @"[A-Za-z0-9-]{1,64}")) CRFail(); return result;
 }
 static NSDictionary *inode(struct stat info) { return @{@"dev": @(info.st_dev), @"ino": @(info.st_ino)}; }
-static double monotonicTime(void){struct timespec t;if(clock_gettime(CLOCK_MONOTONIC,&t))CRFail();return t.tv_sec+t.tv_nsec/1e9;}
 NSDictionary *CRPrivatePin(NSString *file, BOOL directory) {
   struct stat info; char resolved[PATH_MAX];
   if (lstat(file.fileSystemRepresentation, &info) || info.st_uid != getuid() ||
@@ -251,10 +250,10 @@ static void journalValid(NSDictionary *j, NSDictionary *m) {
   // A rejected new launcher can briefly hold a separate lock description here.
   // Success still proves extinction of the inherited description; elapsed time
   // alone never does. All original metadata/inode pins are checked afterward.
-  double deadline=monotonicTime()+0.250;
+  double deadline=CRLifecycleNow()+0.250;
   while(flock(next,LOCK_EX|LOCK_NB)){
     int error=errno;
-    if((error!=EWOULDBLOCK&&error!=EAGAIN&&error!=EINTR)||monotonicTime()>=deadline){close(next);CRFail();}
+    if((error!=EWOULDBLOCK&&error!=EAGAIN&&error!=EINTR)||CRLifecycleNow()>=deadline){close(next);CRFail();}
     usleep(1000);
   }
   _lockFD = next; _poisoned = NO;

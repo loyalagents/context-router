@@ -595,6 +595,28 @@ assertions because new code fails them.
 
 ### Correction Rounds And Finalization
 
+The 2026-10-10 external review found F1: macOS `CLOCK_MONOTONIC` includes sleep,
+so sleeping during an armed Quit/Restart drain can consume its entire deadline,
+force a still-exiting application and leave an uncertain owner. The user authorized
+correction. Root remains sole writer. The affected lifecycle/recovery reviewer
+requested GPT-6 Astra Extra High; actual serving settings are unobservable.
+
+1. Reproduce with a test-only `clock_gettime` shim: advance sleep-inclusive time
+   after the guardian sends Quit, keep awake time unchanged, and require clean
+   Quit/Restart, a fresh generation and relaunch. Keep negative evidence that real
+   awake-time expiry forces uncertainty and refuses relaunch; menu unlock expiry
+   must still include sleep. No real host suspension or production test switch.
+2. Use shared awake-time native lifecycle budgets for supervisor, maintenance,
+   control writes and final lock retry. Keep menu TTL sleep-inclusive. Preserve
+   all durations, drain/exit/force predicates, lock proof, and backend/model/auth
+   clocks. Run affected native checks and independent delta review.
+3. Freeze Candidate 14, rebuild and verify its production payload, then renew the
+   native suite, complete isolated installed smoke, full local gate and exact-head
+   CI. Carry forward Candidate 13 complete-diff review only outside this affected
+   delta. Its consumed live-model run remains historical model/output evidence,
+   never Candidate 14 lifecycle or real-sleep evidence. This correction grants no
+   new live-run authority and does not repair already uncertain installations.
+
 The user-requested 2026-10-10 sequencing amendment applies to remaining correction
 rounds, including the earlier lifecycle/Restart instructions above. It does not
 rewrite completed qualification, human reports or historical approvals. Follow the

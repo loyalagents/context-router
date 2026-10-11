@@ -65,7 +65,7 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
     NSMutableArray<CRChild *> *children=[NSMutableArray array];CRChild *prepare=nil,*app=nil,*model=nil,*download=nil;
     NSString *downloadTerminal=nil;BOOL downloadObserved=NO;long long downloadReceived=0;NSInteger downloadStage=0;double downloadDeadline=0;
     NSDictionary *prepared=nil;BOOL ready=NO,drained=NO,failed=NO,stopping=NO,restart=NO,quitRequested=NO,forcedApp=NO,appRecordsFailed=NO,modelStopped=NO,modelObserved=NO;
-    NSInteger stopStage=0,modelPort=vacantPort();double startupDeadline=CRNow()+120,stopDeadline=0;
+    NSInteger stopStage=0,modelPort=vacantPort();double startupDeadline=CRLifecycleNow()+120,stopDeadline=0;
     @try{
       CRDiagnostic(owner,@"starting");
       CRPrivateDirectory(session,YES);CRPrivateDirectory(exports,YES);
@@ -132,7 +132,7 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
           NSDictionary *application=[owner beginRole:@"application" operation:@"serve" store:owner.installation[@"selectedStore"]];
           if([prepared[@"modelEnabled"] boolValue]){model=[[CRChild alloc] initWithExecutable:[resources stringByAppendingPathComponent:@"model/llama-server"] arguments:modelArgs(root,session,modelPort) directory:directory lock:owner.lockFD capability:nil role:@"model"];[children addObject:model];}
           app=[[CRChild alloc] initWithExecutable:node arguments:nodeArgs(resources,@"application",@[[ @(uiPort) stringValue],[ @(mcpPort) stringValue]]) directory:directory lock:owner.lockFD capability:application role:@"application"];
-          [children addObject:app];[app command:@"start" generation:generation];startupDeadline=CRNow()+60;
+          [children addObject:app];[app command:@"start" generation:generation];startupDeadline=CRLifecycleNow()+60;
         }
         if(!stopping&&app.exited){failed=YES;stopping=YES;}
         if(!stopping&&model.exited&&!modelObserved){modelObserved=YES;[app command:@"model-unavailable" generation:generation];emit(output,generation,@"model-status",@{@"state":@"unavailable"});}
@@ -145,10 +145,10 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
           [children removeObject:download];download=nil;
         }
         if(download&&!download.exited&&download.statusEnded&&!downloadTerminal&&!downloadStage){
-          [download command:@"quit" generation:generation];downloadStage=1;downloadDeadline=CRNow()+15;
+          [download command:@"quit" generation:generation];downloadStage=1;downloadDeadline=CRLifecycleNow()+15;
         }
-        if(download&&!download.exited&&downloadStage&&CRNow()>=downloadDeadline){
-          if(downloadStage>=3)CRFail();[download signal:downloadStage==1?SIGTERM:SIGKILL];downloadStage++;downloadDeadline=CRNow()+5;
+        if(download&&!download.exited&&downloadStage&&CRLifecycleNow()>=downloadDeadline){
+          if(downloadStage>=3)CRFail();[download signal:downloadStage==1?SIGTERM:SIGKILL];downloadStage++;downloadDeadline=CRLifecycleNow()+5;
         }
         for(NSDictionary *command in [shell readFrom:0]){
           if(!CRExact(command,@[@"version",@"generation",@"command"])||!CRInteger(command[@"version"],1,1)||![command[@"generation"] isEqual:generation]||![@[@"unlock",@"restart",@"quit",@"model-unavailable",@"download",@"cancel-download"] containsObject:command[@"command"]])CRFail();
@@ -161,28 +161,28 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcp
             download=[[CRChild alloc] initWithExecutable:node arguments:nodeArgs(resources,@"download",@[[root stringByAppendingPathComponent:@"models"],generation]) directory:directory lock:owner.lockFD capability:nil role:@"download"];
             [children addObject:download];[download command:@"start" generation:generation];emit(output,generation,@"download-starting",nil);
           }else if(!stopping&&ready&&[name isEqual:@"cancel-download"]){
-            if(!download||download.exited||downloadStage)continue;[download command:@"quit" generation:generation];downloadStage=1;downloadDeadline=CRNow()+15;
+            if(!download||download.exited||downloadStage)continue;[download command:@"quit" generation:generation];downloadStage=1;downloadDeadline=CRLifecycleNow()+15;
           }
           else if(!stopping&&app&&ready)[app command:name generation:generation];else CRFail();
         }
         if(shell.ended||interrupted||output.discarded){stopping=YES;restart=NO;if(output.discarded)failed=YES;}
-        if(!ready&&!stopping&&CRNow()>=startupDeadline)CRFail();
+        if(!ready&&!stopping&&CRLifecycleNow()>=startupDeadline)CRFail();
       }@catch(NSException *exception){(void)exception;failed=YES;stopping=YES;}
       if(stopping){
-        if(!stopStage){stopStage=1;stopDeadline=CRNow()+15;
+        if(!stopStage){stopStage=1;stopDeadline=CRLifecycleNow()+15;
           for(CRChild *child in children)if(!child.exited&&![child.role isEqual:@"model"])@try{[child command:@"quit" generation:generation];}@catch(NSException *e){(void)e;}
         }
         if(model&&!model.exited&&!modelStopped&&(!app||drained)){@try{[model signal:SIGTERM];}@catch(NSException *e){(void)e;failed=YES;}modelStopped=YES;}
         BOOL allExited=YES;for(CRChild *child in children)if(!child.exited)allExited=NO;
         if(allExited){
           BOOL certain=!app||(drained&&!forcedApp&&!app.protocolFailed&&!appRecordsFailed);NSString *outcome=certain?(failed?@"failed":@"ok"):@"uncertain";
-          @try{[owner finishOutcome:outcome];CRDiagnostic(owner,[@"stopped-" stringByAppendingString:outcome]);emit(output,generation,@"stopped",@{@"outcome":outcome});double delivery=CRNow()+2;while(!output.empty&&CRNow()<delivery){[output flush];if(!output.empty)usleep(10000);}if(!output.empty)CRFail();}@catch(NSException *e){(void)e;return 1;}
+          @try{[owner finishOutcome:outcome];CRDiagnostic(owner,[@"stopped-" stringByAppendingString:outcome]);emit(output,generation,@"stopped",@{@"outcome":outcome});double delivery=CRLifecycleNow()+2;while(!output.empty&&CRLifecycleNow()<delivery){[output flush];if(!output.empty)usleep(10000);}if(!output.empty)CRFail();}@catch(NSException *e){(void)e;return 1;}
           if(!certain||failed||output.discarded)return 1;again=restart&&!shell.ended&&!interrupted;break;
         }
-        if(CRNow()>=stopDeadline){
+        if(CRLifecycleNow()>=stopDeadline){
           if(stopStage>=3)return 1;
           for(CRChild *child in children)if(!child.exited){if(child==app)forcedApp=YES;@try{[child signal:stopStage==1?SIGTERM:SIGKILL];}@catch(NSException *e){(void)e;failed=YES;}}
-          stopStage++;stopDeadline=CRNow()+5;
+          stopStage++;stopDeadline=CRLifecycleNow()+5;
         }
       }
       usleep(10000);

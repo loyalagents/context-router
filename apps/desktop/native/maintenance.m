@@ -18,7 +18,7 @@ static int runJob(NSString *bundle,CREnvelope *owner,NSString *role,NSString *op
   NSDictionary *cap=[owner beginRole:role operation:operation store:store];BOOL prepare=[role isEqual:@"prepare"];
   NSString *resources=[bundle stringByAppendingPathComponent:@"Contents/Resources"],*entry=[resources stringByAppendingPathComponent:prepare?@"desktop/runtime/prepare-store.mjs":@"desktop/runtime/maintenance.mjs"];
   CRChild *child=nil;NSNumber *ack=nil;NSString *target=nil;BOOL stopping=NO,forced=NO,unsafe=NO;NSInteger stage=0;
-  double deadline=CRNow()+([@[@"backup",@"restore"] containsObject:operation]?600:120);
+  double deadline=CRLifecycleNow()+([@[@"backup",@"restore"] containsObject:operation]?600:120);
   @try{
     child=[[CRChild alloc] initWithExecutable:[resources stringByAppendingPathComponent:@"bin/node"] arguments:[@[@"--no-global-search-paths",entry] arrayByAddingObjectsFromArray:arguments] directory:[resources stringByAppendingPathComponent:@"app"] lock:owner.lockFD capability:cap role:role];
     [child command:@"start" generation:owner.generation];
@@ -51,10 +51,10 @@ static int runJob(NSString *bundle,CREnvelope *owner,NSString *role,NSString *op
       }
       return child.exitCode;
     }
-    if(interrupted||CRNow()>=deadline)stopping=YES;
-    if(stopping&&!stage){stage=1;deadline=CRNow()+15;if(!ack)@try{[child command:@"quit" generation:owner.generation];}@catch(NSException *e){(void)e;unsafe=YES;}}
-    else if(stopping&&CRNow()>=deadline){
-      if(stage>=3)return 1;forced=YES;@try{[child signal:stage==1?SIGTERM:SIGKILL];}@catch(NSException *e){(void)e;}stage++;deadline=CRNow()+5;
+    if(interrupted||CRLifecycleNow()>=deadline)stopping=YES;
+    if(stopping&&!stage){stage=1;deadline=CRLifecycleNow()+15;if(!ack)@try{[child command:@"quit" generation:owner.generation];}@catch(NSException *e){(void)e;unsafe=YES;}}
+    else if(stopping&&CRLifecycleNow()>=deadline){
+      if(stage>=3)return 1;forced=YES;@try{[child signal:stage==1?SIGTERM:SIGKILL];}@catch(NSException *e){(void)e;}stage++;deadline=CRLifecycleNow()+5;
     }
     usleep(10000);
   }}

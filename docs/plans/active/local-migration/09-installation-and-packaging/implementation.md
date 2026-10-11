@@ -413,3 +413,24 @@ no external final-summary destination had been configured. Later differences are
 reviewed documentation/evidence only. Final pushed-head standard and migration CI
 results are recorded on the PR after this evidence commit, without another source
 change merely to record the CI links.
+
+## Candidate 14: Sleep-Safe Native Lifecycle Budgets
+
+External-review F1 was reproduced before the implementation change with a test-only
+clock shim. Both Quit and Restart returned uncertain after a simulated hour asleep
+while the application was draining. The awake-time expiry and menu TTL controls
+already passed. The first sandbox invocation could not start the socket-owning
+fixtures; the host-access run supplies the behavioral red evidence (2 pass/2 fail).
+
+The shared header now distinguishes awake-time lifecycle deadlines from
+sleep-inclusive unlock expiry. All supervisor/maintenance/control-write/lock-retry
+consumers use awake time. No duration, drain predicate, authority/force rule or
+backend/model clock changed. Injection exists only in compiled test fixtures.
+
+The 20 affected tests passed in 42.920 seconds, including clean Quit/Restart and
+relaunch after simulated sleep, forced uncertainty after elapsed awake time, and
+unlock expiry during sleep. Native compilation, Markdown links and whitespace
+checks passed. Independent affected review passed; unrelated Candidate 13 review
+coverage carries forward. Final native, installed artifact, local gate and exact-head
+CI are pending for Candidate 14. Evidence is retained under
+`/private/tmp/step09-final-20261010-14`. No live inference or real machine sleep was run.

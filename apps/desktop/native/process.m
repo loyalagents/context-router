@@ -4,14 +4,12 @@
 #include <poll.h>
 #include <signal.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
 
-double CRNow(void) { struct timespec t; if (clock_gettime(CLOCK_MONOTONIC, &t)) CRFail(); return t.tv_sec + t.tv_nsec / 1e9; }
 static void nonblocking(int fd) { int flags = fcntl(fd, F_GETFL); if (flags < 0 || fcntl(fd, F_SETFL, flags | O_NONBLOCK)) CRFail(); }
 BOOL CRWriteBounded(int fd, NSData *bytes, double deadline) {
   NSUInteger offset = 0;
-  while (offset < bytes.length && CRNow() < deadline) {
+  while (offset < bytes.length && CRLifecycleNow() < deadline) {
     ssize_t count = write(fd, (const char *)bytes.bytes + offset, bytes.length - offset);
     if (count > 0) offset += (NSUInteger)count;
     else if (count < 0 && (errno == EAGAIN || errno == EINTR)) { struct pollfd p = {.fd=fd,.events=POLLOUT}; (void)poll(&p,1,10); }
@@ -49,7 +47,7 @@ BOOL CRWriteBounded(int fd, NSData *bytes, double deadline) {
 - (void)append:(NSData *)data {
   if(_discarded)return;
   if(!data||data.length>16384||data.length+_bytes.length>32768)CRFail();
-  if(!_bytes.length)_deadline=CRNow()+2;[_bytes appendData:data];
+  if(!_bytes.length)_deadline=CRLifecycleNow()+2;[_bytes appendData:data];
 }
 - (void)flush {
   if(_discarded)return;
@@ -57,7 +55,7 @@ BOOL CRWriteBounded(int fd, NSData *bytes, double deadline) {
   ssize_t count=write(_fd,_bytes.bytes,_bytes.length);
   if(count>0)[_bytes replaceBytesInRange:NSMakeRange(0,(NSUInteger)count) withBytes:NULL length:0];
   else if(count==0||(errno!=EINTR&&errno!=EAGAIN&&errno!=EWOULDBLOCK))CRFail();
-  if(_bytes.length&&CRNow()>=_deadline)CRFail();
+  if(_bytes.length&&CRLifecycleNow()>=_deadline)CRFail();
 }
 @end
 @implementation CRChild {
@@ -88,7 +86,7 @@ BOOL CRWriteBounded(int fd, NSData *bytes, double deadline) {
       nonblocking(pipes[3]);nonblocking(pipes[4]);
     }
     if(cliOutput){copies[4]=fcntl(STDOUT_FILENO,F_DUPFD_CLOEXEC,10);if(copies[4]<0)CRFail();}
-    _sendDeadline=CRNow()+5;
+    _sendDeadline=CRLifecycleNow()+5;
     // Prepare all Objective-C and allocation work before fork. Child is POSIX-only.
     _pid=fork(); if(_pid<0)CRFail();
     if(!_pid) {
@@ -113,7 +111,7 @@ BOOL CRWriteBounded(int fd, NSData *bytes, double deadline) {
   NSData *bytes=[NSJSONSerialization dataWithJSONObject:@{@"version":@1,@"generation":generation,@"command":command} options:0 error:nil];
   if(!bytes||bytes.length+_commands.length+1>16384)CRFail();
   _quitPending=!_commands.length&&[command isEqual:@"quit"];
-  if(!_commands.length)_sendDeadline=CRNow()+2;
+  if(!_commands.length)_sendDeadline=CRLifecycleNow()+2;
   [_commands appendData:bytes];[_commands appendBytes:"\n" length:1];
 }
 - (BOOL)flush:(NSMutableData *)data fd:(int)fd allowClosedQuit:(BOOL)allowClosedQuit {
@@ -125,7 +123,7 @@ BOOL CRWriteBounded(int fd, NSData *bytes, double deadline) {
   // and drain remain mandatory; capability/start and malformed status still fail.
   else if(count<0&&errno==EPIPE&&allowClosedQuit){[data setLength:0];return NO;}
   else if(count==0||(errno!=EINTR&&errno!=EAGAIN&&errno!=EWOULDBLOCK))CRFail();
-  if(data.length&&CRNow()>=_sendDeadline)CRFail();
+  if(data.length&&CRLifecycleNow()>=_sendDeadline)CRFail();
   return YES;
 }
 - (NSArray<NSDictionary *> *)pump {

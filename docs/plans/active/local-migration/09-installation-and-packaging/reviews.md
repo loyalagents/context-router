@@ -803,3 +803,42 @@ resource removal support the separate final verdict. Markdown links and whitespa
 checks passed. Final-head CI is recorded on the PR after this evidence commit;
 these pre-push records do not assert a CI pass. Product approval and unchanged
 validation carry forward.
+
+### External Review F1: Sleep During Shutdown (2026-10-10)
+
+Claude reviewed exact head `0aa8e870faf8c8cfc44eac6c833a8488c7e9d33b` and raised
+one P2 blocker. Root confirmed the native clock includes system sleep and an
+expired stop deadline can force the application, creating uncertain state that
+blocks supported reopening/maintenance. This is a scheduling race, not every sleep,
+and does not establish data loss. The user authorized correction.
+
+`/root/sleep_clock_review` independently approved the bounded plan: shared
+`CLOCK_UPTIME_RAW` lifecycle timing, separate sleep-inclusive menu TTL, unchanged
+durations/ownership/drain rules, deterministic sleep and awake-time regressions.
+Requested GPT-6 Astra Extra High; actual serving settings unobservable. Root is
+sole writer. Affected implementation review passed on the 12 product/test files at aggregate
+SHA-256 `9bb2815cdd4d7372a67c314db9df2558b59aa1b9c19c5bf283d96fbcc1385cbe`
+and the three documentation files at
+`24e131af80638ed99203587687e650a710ea8b9bef2079e494ea6172a60fe566`.
+Both use sorted `path NUL hex-digest LF`. The reviewer audited every clock consumer
+and the red/green evidence, found no blocker and approved the final-validation
+carry-forward scope. Candidate 14 final validation remains pending; this ledger
+update and later factual receipt/status additions are outside their own digest.
+
+Other dispositions from that review:
+
+- First private status qualification can take admission once; repeated observation
+  remains passive. This matches the accepted plan, not a claim of zero startup probes.
+- Existing gate/artifact receipt provenance and pending human cases remain disclosed.
+  The reviewer verified recorded hashes/CI and did not run tests or real sleep.
+- Reverification on Restart is deferred hardening; supported replacement requires
+  successful Quit first. The future packaging owner should assess it before wider release.
+- Generation-directory retention is deferred to packaging maintenance. Cleanup must
+  distinguish disposable session/unlock material from retained backup exports; never
+  delete every `exports/<generation>` after successful maintenance.
+- Sleep-without-model and recoverable AI status wording join the UI usability follow-up.
+- A different local listener reusing an old dashboard port is a deferred browser
+  security concern, not cosmetic polish. The future local-browser security owner
+  should assess generation/server binding before wider release. Current disconnected
+  retirement detects network failure only; users should open the current dashboard
+  from the menu after Restart. No protection against port reuse is claimed.

@@ -25,6 +25,10 @@ Keep this a focused cleanup of the existing dashboard and packaged menu:
 5. Make the model-download menu reflect an already installed model, instead of
    continuing to offer Download. The user explicitly deferred this during Step 09
    acceptance; preserve verified-asset checks and explicit download consent.
+6. Distinguish an AI check that can be retried from terminal states requiring
+   Restart, and avoid the sleep-related AI label when no model is installed.
+   The Step 09 external review identified both conservative presentation cases;
+   preserve unavailable states and explicit recovery requirements underneath.
 
 Preserve truthful confirmed/uncertain mutation outcomes, per-instance authority,
 and masking of sensitive or unknown-sensitivity history. Labels are display
