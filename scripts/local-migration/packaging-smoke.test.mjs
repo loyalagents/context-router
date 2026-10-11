@@ -19,6 +19,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import * as packagingProgress from "./packaging-progress.mjs";
 
 import {
   assertCallerIntegrity,
@@ -74,6 +75,89 @@ import {
 } from "./packaging-smoke.mjs";
 
 const repositoryRoot = path.resolve(import.meta.dirname, "../..");
+
+const timingNames = packagingProgress.PACKAGING_MILESTONES.filter((name) => name !== "failed");
+const timingLine = (name, elapsedMs) => `packaging-smoke: milestone=${name} elapsedMs=${elapsedMs}\n`;
+const completeTimingLog = () => timingNames.map((name, index) => timingLine(name, index)).join("");
+
+test("packaging timing projection preserves a complete sequence across command chunk tags", () => {
+  const expected = timingNames.map((milestone, elapsedMs) => ({ milestone, elapsedMs }));
+  const log = completeTimingLog();
+  for (const chunks of [[log], [...log], [log.slice(0, 23), log.slice(23)]]) {
+    const input = Buffer.from(chunks.map((chunk) => `[stdout] ${chunk}`).join(""));
+    assert.deepEqual(packagingProgress.parsePackagingTimings(input), {
+      schemaVersion: 1, availability: "complete", milestones: expected,
+    });
+  }
+  const lateFailure = packagingProgress.parsePackagingTimings(Buffer.from(log + timingLine("failed", 20)));
+  assert.equal(lateFailure.availability, "complete");
+  assert.deepEqual(lateFailure.milestones.at(-1), { milestone: "failed", elapsedMs: 20 });
+});
+
+test("packaging timing projection never repairs tainted or partial sequences into completeness", () => {
+  const log = completeTimingLog();
+  for (const inserted of [
+    timingLine("context-prepared", 0), timingLine("private-canary", 0),
+    timingLine("build-complete", -1), timingLine("build-complete", "NaN"),
+    timingLine("build-complete", "1.5"), timingLine("build-complete", Number.MAX_SAFE_INTEGER + 1),
+    "packaging-smoke: milestone=private-canary\n",
+    "private-canary " + timingLine("context-prepared", 0),
+  ]) {
+    const result = packagingProgress.parsePackagingTimings(Buffer.from(inserted + log));
+    assert.equal(result.availability, "partial");
+    assert.equal(result.reason, "invalid-sequence");
+    assert.equal(JSON.stringify(result).includes("private-canary"), false);
+    assert.ok(result.milestones.length <= 16);
+  }
+  for (const input of [
+    log.replace(timingLine("build-complete", 1), ""),
+    log.replace(timingLine("build-complete", 1), timingLine("build-complete", 100)),
+    log.replace(timingLine("context-prepared", 0), timingLine("build-complete", 0) + timingLine("context-prepared", 1)),
+    timingLine("failed", 0) + log,
+    log.slice(0, -1),
+  ]) {
+    assert.equal(packagingProgress.parsePackagingTimings(Buffer.from(input)).availability, "partial");
+  }
+  const failed = packagingProgress.parsePackagingTimings(Buffer.from(
+    timingLine("context-prepared", 0) + timingLine("failed", 1) +
+    timingLine("cleanup-started", 2) + timingLine("cleanup-complete", 3) + timingLine("finalization-complete", 4),
+  ));
+  assert.equal(failed.availability, "partial");
+  assert.equal(failed.reason, "failed-before-finalization");
+  assert.equal(failed.milestones.length, 5);
+});
+
+test("packaging timing projection distinguishes failure before finalization from missing milestones", () => {
+  const names = timingNames.flatMap((name) => name === "runtime-verified" ? [name, "failed"] : [name]);
+  const milestones = names.map((milestone, elapsedMs) => ({ milestone, elapsedMs }));
+  const log = milestones.map(({ milestone, elapsedMs }) => timingLine(milestone, elapsedMs)).join("");
+  const parse = (input, options) => packagingProgress.parsePackagingTimings(Buffer.from(input), options);
+  assert.deepEqual(parse(log), {
+    schemaVersion: 1, availability: "partial", milestones, reason: "failed-before-finalization",
+  });
+  assert.equal(parse(completeTimingLog().replace(timingLine("build-complete", 1), "")).reason,
+    "incomplete-sequence");
+  assert.equal(parse(log + "packaging-smoke: milestone=unknown elapsedMs=16\n").reason, "invalid-sequence");
+  assert.equal(parse(log, { truncated: true }).reason, "truncated");
+});
+
+test("packaging timing projection bounds bytes and excludes unrelated output and secrets", () => {
+  const parse = packagingProgress.parsePackagingTimings;
+  assert.deepEqual(parse(Buffer.from("[stderr] Bearer private-canary\n")), {
+    schemaVersion: 1, availability: "unavailable", reason: "no-milestones", milestones: [],
+  });
+  assert.equal(parse(Buffer.from("private-canary\n" + completeTimingLog())).availability, "complete");
+  for (const input of [
+    Buffer.from(completeTimingLog() + "x".repeat(16_384)),
+    Buffer.from("x".repeat(16_384) + completeTimingLog()),
+  ]) {
+    const result = parse(input);
+    assert.equal(result.availability, "partial");
+    assert.equal(result.reason, "truncated");
+    assert.ok(Buffer.byteLength(JSON.stringify(result)) < 4096);
+  }
+  assert.equal(parse(Buffer.from(completeTimingLog()), { truncated: true }).availability, "partial");
+});
 
 async function temporaryDirectory(prefix, operation) {
   const directory = await mkdtemp(path.join(os.tmpdir(), prefix));

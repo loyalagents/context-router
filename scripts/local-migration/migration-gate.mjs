@@ -6,9 +6,11 @@ import { assertLocalModelSmokeSuccessResources } from './local-model-lifecycle.m
 
 import { execFile } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
+import { constants } from "node:fs";
 import {
   lstat,
   mkdir,
+  open,
   readFile,
   readlink,
   realpath,
@@ -57,6 +59,7 @@ import {
   queryDatabase,
 } from "./test-database.mjs";
 import { RESTART_SMOKE_BOUNDED_CLEANUP_BUDGET_MS } from "./restart-smoke.mjs";
+import { PACKAGING_TIMING_MAX_BYTES, parsePackagingTimings } from "./packaging-progress.mjs";
 import {
   checkCurrentToolchain,
   EXPECTED_PNPM_VERSION,
@@ -333,6 +336,66 @@ export async function assertGateDiagnosticsOwnership(ownership) {
   return ownership.directory;
 }
 
+function unavailablePackagingTimings(reason) {
+  return { schemaVersion: 1, availability: "unavailable", milestones: [], reason };
+}
+
+/** Best-effort projection from the settled command's owned log, never raw output. */
+export async function readPackagingTimings(ownership, logPath, {
+  openFile = open,
+} = {}) {
+  let handle;
+  let result;
+  let failureReason = "ownership-invalid";
+  try {
+    const directory = await assertGateDiagnosticsOwnership(ownership);
+    failureReason = "unsafe-log";
+    if (logPath !== path.join(directory, "phase-11-packaged-composition-smoke-1.log")) {
+      throw new Error("unexpected packaging log");
+    }
+    if (!constants.O_NOFOLLOW || !constants.O_NONBLOCK) {
+      failureReason = "unsupported-safe-open";
+      throw new Error("safe open unavailable");
+    }
+    failureReason = "log-unavailable";
+    const inspected = await lstat(logPath);
+    failureReason = "unsafe-log";
+    if (!inspected.isFile() || inspected.isSymbolicLink()) throw new Error("unsafe log");
+    failureReason = "log-unavailable";
+    handle = await openFile(logPath, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    failureReason = "log-changed";
+    const before = await handle.stat();
+    if (!before.isFile() || before.dev !== inspected.dev || before.ino !== inspected.ino) {
+      throw new Error("log replaced");
+    }
+    failureReason = "read-failed";
+    const length = Math.min(before.size, PACKAGING_TIMING_MAX_BYTES);
+    const buffer = Buffer.alloc(length);
+    let offset = 0;
+    while (offset < length) {
+      const { bytesRead } = await handle.read(buffer, offset, length - offset, offset);
+      if (!Number.isInteger(bytesRead) || bytesRead <= 0 || bytesRead > length - offset) {
+        throw new Error("short log read");
+      }
+      offset += bytesRead;
+    }
+    failureReason = "log-changed";
+    const after = await handle.stat();
+    if (after.size !== before.size || after.mtimeMs !== before.mtimeMs || after.ctimeMs !== before.ctimeMs) {
+      throw new Error("log changed during read");
+    }
+    result = parsePackagingTimings(buffer, { truncated: before.size > length });
+  } catch {
+    result = unavailablePackagingTimings(failureReason);
+  } finally {
+    if (handle) {
+      try { await handle.close(); }
+      catch { result = unavailablePackagingTimings("close-failed"); }
+    }
+  }
+  return result;
+}
+
 export async function runBoundedGateStages({
   timeline,
   cancellationSignal,
@@ -521,6 +584,9 @@ export async function finalizeGateAttemptEvidence({
     rm(directory, { recursive: true, force: true }),
 }) {
   summary.source = structuredClone(source);
+  summary.packagingTimings ??= unavailablePackagingTimings(
+    mode === "smoke-only" ? "mode-not-applicable" : "phase-not-run",
+  );
   const evidenceErrors = [];
   const recordError = (error) => {
     const normalized = error ?? new Error("gate evidence operation failed");
@@ -1670,6 +1736,7 @@ export async function executeGatePhaseCommand({
   executeCommand,
   validateRestartLifecycle,
   validatePackagedLifecycle,
+  packagingDiagnostics,
 }) {
   if (phase.kind === "restart-smoke") {
     if (typeof validateRestartLifecycle !== "function") {
@@ -1685,10 +1752,17 @@ export async function executeGatePhaseCommand({
   if (typeof validatePackagedLifecycle !== "function") {
     throw new Error("packaged smoke phase requires lifecycle validation");
   }
-  return executePackagedSmokeCommand({
-    executeCommand,
-    validateLifecycle: validatePackagedLifecycle,
-  });
+  try {
+    return await executePackagedSmokeCommand({
+      executeCommand,
+      validateLifecycle: validatePackagedLifecycle,
+    });
+  } finally {
+    if (packagingDiagnostics) {
+      const { ownership, logPath, summary } = packagingDiagnostics;
+      summary.packagingTimings = await readPackagingTimings(ownership, logPath);
+    }
+  }
 }
 
 async function sha256(filePath) {
@@ -1699,6 +1773,7 @@ async function executeFullGate({
   workspace,
   source,
   diagnosticsDirectory,
+  diagnosticsOwnership,
   baseSha,
   baseDirectory,
   baseManifestSha256,
@@ -1716,6 +1791,7 @@ async function executeFullGate({
 }) {
   const summary = {
     status: "running",
+    packagingTimings: unavailablePackagingTimings("phase-not-run"),
     source,
     baseSha,
     versions: {
@@ -1878,15 +1954,16 @@ async function executeFullGate({
             corepackHome,
           },
         );
+        const logPath = path.join(
+          diagnosticsDirectory,
+          `phase-${String(phase.order).padStart(2, "0")}-${phase.id}-${commandIndex}.log`,
+        );
         const executeCommand = () =>
           runCommand(command.argv, {
             cwd: workspace,
             env: phaseEnvironment,
             timeoutMs: remaining,
-            logPath: path.join(
-              diagnosticsDirectory,
-              `phase-${String(phase.order).padStart(2, "0")}-${phase.id}-${commandIndex}.log`,
-            ),
+            logPath,
             signal: workSignal,
             terminationGraceMs: terminationGraceForPhase(phase),
             canaries: sensitiveCanaries,
@@ -1894,6 +1971,7 @@ async function executeFullGate({
         const commandResult = await executeGatePhaseCommand({
           phase,
           executeCommand,
+          packagingDiagnostics: { ownership: diagnosticsOwnership, logPath, summary },
           validateRestartLifecycle: ({ commandSucceeded }) =>
             assertRestartSmokeLifecycleEvidence(
               phaseEnvironment.MIGRATION_RESTART_SMOKE_DIAGNOSTICS_DIR,
@@ -2193,6 +2271,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       source,
       workspace: disposable.workspace,
       diagnosticsDirectory,
+      diagnosticsOwnership,
       baseSha,
       baseDirectory: baseBundle.baseDirectory,
       baseManifestSha256: baseBundle.manifestSha256,
