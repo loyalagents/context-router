@@ -1,6 +1,6 @@
 # Claude Desktop connection slice
 
-- Status: independently approved plan; implementation and focused validation underway
+- Status: implementation and targeted checks complete; review corrections awaiting independent recheck
 - Scope: first connection slice of the [pilot brief](README.md), one cohesive pilot PR
 - Base: `855e8734b919871eac82415465b456add38a3084`; branch `codex/colleague-pilot`
 - Owner: connection coordinator `/root`; sole checkout writer/integrator `/root/writer`
@@ -15,7 +15,8 @@ app continues to own backend/model startup and shutdown. Existing Claude Code an
 Codex CLI direct HTTP clients remain supported.
 
 The first delivery is a **source-bound standalone bridge**, requiring an absolute
-Node 24.21.0 executable and checkout entrypoint. It is not yet included in the
+Node 24.21.0 executable and reviewed checkout entrypoint or retained source
+snapshot with the same three module bytes. It is not yet included in the
 installed bundle. No extension, native launcher, new backend, database, registry,
 OAuth, public/LAN listener, tunnel, app replacement or personal-client automation
 is part of this slice. No provider calls, model runs/downloads, private documents,
@@ -41,7 +42,7 @@ can disable local development MCP. No real client trial has run.
 | Sole writer `/root/writer` | Astra Extra High (`xhigh`) | Explicit spawn settings accepted; no independent runtime attestation; all branch/files/staging/commits |
 | Inventory `/root/inventory` | Astra High | Explicit spawn request; read-only code/consumer evidence |
 | Plan reviewer `/root/plan_review` | Astra Extra High (`xhigh`) | Explicit spawn settings accepted; no independent runtime attestation; security, lifecycle, compatibility, scope and test coverage |
-| Complete-diff reviewer | Astra Extra High (`xhigh`) | Fresh independent review before handoff; actual assignment recorded when started |
+| Complete-diff reviewer `/root/diff_review` | Astra Extra High (`xhigh`) | Explicit spawn request; no independent runtime attestation; complete checkpoint diff reviewed, affected correction recheck pending |
 
 Only the writer edits this checkout. Coordinator/reviewers remain read-only.
 Existing foreign edits in `docs/plans/README.md` and
@@ -55,7 +56,8 @@ Owned implementation paths are `apps/backend/scripts/mcp-bridge/` and new
 `apps/backend/test/local-mcp/bridge*.test.mjs`. These stay under existing backend
 CI filters and the existing local MCP test command; no new package/dependency or
 CI trigger change is needed. Owned guidance is this plan,
-`docs/useful/MCP_LOCAL_SETUP.md`, and narrowly affected current/installed guidance.
+`docs/useful/MCP_LOCAL_SETUP.md`, narrowly affected current/installed guidance, and
+status/link correction in `docs/plans/backlog/mcp-onboarding/README.md`.
 Add the exact bridge directory to reference/outbound discovery in
 `scripts/local-migration/check-contract-baseline.mjs`, with focused discovery
 regression coverage in its test. Update only accurate bridge classification and
@@ -78,6 +80,10 @@ paths, never token bytes. Production destination is compiled/fixed literal
 inject an ephemeral loopback port without making that a CLI capability.
 Use Node core `http` directly: no proxy/environment routing, DNS, redirects,
 OAuth fallback, automatic request retries or resumable streams.
+
+The CLI refuses nonempty inherited `NODE_DEBUG`, `NODE_DEBUG_NATIVE` or
+`NODE_OPTIONS` before credential access or HTTP. The manual config clears all three;
+deleting debug flags after Node startup would not disable cached core logging.
 
 Credential is read once at startup. Require canonical absolute path (at most
 4096 characters, no controls), non-symlink safe ancestors, same-user 0700 parent,
@@ -271,9 +277,58 @@ This identifies an available unchanged artifact, not the user's currently runnin
 app. Its backend production sources/dependency manifests match this slice's base;
 that relationship does not replace installed/client acceptance.
 
-**Targeted checks passed; final validation pending.** Fresh complete-diff review
-is pending against the local trial checkpoint commit. Real Claude Desktop account/
+**Targeted checks passed; final validation pending.** The complete-diff review
+of local trial checkpoint `96809067cc1f1548b7a6b13becab2051291eb536` found two blockers;
+corrections and their evidence are recorded below, pending affected recheck.
+Real Claude Desktop account/
 policy/configuration, >35-minute inactivity, dashboard visibility, app/client
 restart and the complete canonical acceptance checklist remain unverified.
 The full migration gate, final installed qualification, exact-head CI and agreed
 finalization milestone remain pending. No branch was pushed or artifact published.
+
+### Independent review correction checkpoint (2026-10-11)
+
+The complete review by `/root/diff_review` requested changes for two blocking
+findings. The coordinator authorized this correction batch without changing the
+approved product or validation scope.
+
+- **P1, inherited debug credential disclosure:** Node 24.21.0 core network logging
+  under `NODE_DEBUG=net` could write bearer bytes to stderr. The CLI now refuses
+  nonempty Node debug/native-debug/options settings before credential access or
+  requests; the manual config explicitly clears them. Subprocess regressions use
+  only a synthetic token and test-only access/request observers, assert no
+  credential access or HTTP attempt, and never print token bytes.
+- **P2, SDK-invalid response forwarding:** null/primitive/array results, invalid
+  result metadata, unsafe error codes and extra response-envelope keys could pass
+  the adapter but fail the pinned SDK parser. The bridge now validates the generic
+  result/error envelope and projects known response fields. Invalid dispatched
+  responses produce SDK-valid fixed outcome-unknown errors without replay.
+  Uncorrelatable invalid input omits its ID instead of emitting SDK-invalid null.
+  Initialization also validates optional instructions and projects the supported
+  server identity fields, preventing malformed optional metadata from escaping.
+- The review regressions failed before correction. After the corrections, **49
+  bridge tests passed** in the unchanged isolated backend build, including all
+  four real SDK stdio/SQLite integration cases. Added focused checks also cover
+  fragmented multibyte UTF-8, malformed typed IDs, lifetime ID exhaustion with
+  explicit restart, and bounded shutdown with active/hung HTTP.
+- **75 contract/Markdown checker tests passed**. Strict Markdown links (145
+  documents), direct contract check (`baseComparison=skipped`) and whitespace
+  checks passed after the guidance updates; no census refresh was needed.
+  Backend production sources,
+  dependency inputs, auth/persistence/lifecycle implementation and native/package
+  inputs are unchanged; their unrelated coverage from the earlier 88-test local
+  MCP pass carries forward. No full gate or package qualification was repeated.
+- The MCP onboarding backlog now links to this implemented source trial; its
+  broader C/C+ ergonomics remain backlog. Foreign agent-assisted onboarding edits
+  remain untouched and excluded from commits.
+
+The reviewer must recheck the exact correction commit's privacy/protocol changes,
+new regressions and affected guidance. Unchanged dimensions of the complete
+`96809067cc1f1548b7a6b13becab2051291eb536` review can carry forward explicitly; the
+reviewer's disposition will identify that carry-forward. After recheck, retain
+the three reviewed modules under a private
+`/private/tmp/context-router-claude-bridge-trial-<commit>/` directory with a JSON
+receipt of exact commit, module hashes, Node identity and source-only limits.
+The local trial still requires the real-client approval/acceptance and finalization
+gates above. The retained Candidate 14 integrity evidence does not identify a
+currently running app; choose the exact app before any stop/admin/restart.

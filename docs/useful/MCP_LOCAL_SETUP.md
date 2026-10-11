@@ -88,7 +88,12 @@ The source bridge is implemented for the [first pilot connection slice](../plans
 Automated SDK/SQLite tests are separate from real Claude Desktop acceptance;
 **Desktop remains unqualified until the canonical client checklist is completed**.
 This bridge is not bundled in the installed app. It requires the reviewed source
-checkout and an absolute Node **24.21.0** executable. Keep both at stable paths.
+checkout or a source-bound snapshot of all three bridge modules, plus an absolute
+Node **24.21.0** executable. Keep both at stable paths. For a named trial, use the
+retained `/private/tmp/context-router-claude-bridge-trial-<commit>/cli.mjs` snapshot
+when supplied, with its receipt identifying the exact commit and module hashes.
+Verify those hashes and leave the snapshot unchanged throughout the trial; if it
+is removed, obtain another reviewed snapshot instead of silently switching inputs.
 Claude launches only the bridge; open Context Router separately through its menu.
 No local model is needed for ordinary preference reads/writes.
 
@@ -117,7 +122,7 @@ MCP. This is an assisted manual edit, not an automatic configuration step:
         "--credential-file",
         "/absolute/private/claude-desktop.token"
       ],
-      "env": { "NODE_OPTIONS": "" }
+      "env": { "NODE_OPTIONS": "", "NODE_DEBUG": "", "NODE_DEBUG_NATIVE": "" }
     }
   }
 }
@@ -126,8 +131,12 @@ MCP. This is an assisted manual edit, not an automatic configuration step:
 Fully quit and reopen Claude Desktop to start/restart the bridge, then inspect
 its local server status and tool menu. The connection is always authenticated
 HTTP to `127.0.0.1:8787/mcp`; URL/port/proxy overrides and redirects are unsupported.
-There are no token bytes in the config. The credential is read once at process
-startup; rotation must export a new file and update only the credential-file path
+There are no token bytes in the config. Clear the three Node environment settings
+shown above: inherited Node debugging can print HTTP credentials before the bridge
+can redact them. The bridge refuses nonempty debug/options settings before reading
+the credential; it does not try to disable already-cached debug behavior. The
+credential is read once at process startup; rotation must export a new file and
+update only the credential-file path
 before explicitly restarting Claude. Revocation of one instance leaves others'
 authority unchanged. Do not rewrite a live token file expecting credential reload.
 
@@ -149,7 +158,9 @@ reach Claude and may be sent to its hosted provider; do not include credentials,
 private documents or result payloads in shared diagnostics/screenshots.
 
 A trial needs separate approval for the exact installed app, client config and
-synthetic cloud-backed requests. Follow the [canonical acceptance checklist](../plans/active/colleague-pilot/README.md#claude-desktop-acceptance),
+synthetic cloud-backed requests. Verify and select that app before stopping,
+administering or restarting anything; a retained candidate integrity receipt does
+not identify the app currently running. Follow the [canonical acceptance checklist](../plans/active/colleague-pilot/README.md#claude-desktop-acceptance),
 including real inactivity exceeding 35 minutes and dashboard visibility. Synthetic
 age manipulation is not evidence of actual Desktop idle recovery. Extension
 packaging, ordinary ChatGPT support and installed bridge delivery remain separate.

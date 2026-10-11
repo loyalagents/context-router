@@ -12,6 +12,10 @@ if (args.length === 1 && ['--help', '--version'].includes(args[0])) {
 } else {
   try {
     if (
+      // Node caches debug flags before this module; deleting them here is unsafe.
+      ['NODE_DEBUG', 'NODE_DEBUG_NATIVE', 'NODE_OPTIONS'].some(
+        (name) => process.env[name],
+      ) ||
       process.versions.node !== '24.21.0' ||
       args.length !== 2 ||
       args[0] !== '--credential-file'
@@ -33,7 +37,7 @@ if (args.length === 1 && ['--help', '--version'].includes(args[0])) {
     process.exit(0);
   } catch {
     process.stderr.write(
-      'Context Router bridge: startup unavailable; check Node version, arguments and private credential file.\n',
+      'Context Router bridge: startup unavailable; check Node version, arguments, private credential file and disabled Node debugging.\n',
     );
     process.exitCode = 1;
   }

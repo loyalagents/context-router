@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const {
+  deserializeMessage,
+} = require('@modelcontextprotocol/sdk/shared/stdio.js');
+const {
+  InitializeResultSchema,
+} = require('@modelcontextprotocol/sdk/types.js');
 import { PassThrough, Writable } from 'node:stream';
 import { createBridge } from '../../scripts/mcp-bridge/bridge.mjs';
 
@@ -500,4 +508,136 @@ test('aggregate response buffering is bounded across concurrent requests', async
     1,
   );
   assert.equal(responses.filter((r) => r.result).length, 1);
+});
+test('SDK-invalid upstream envelopes become valid fixed unknown errors without replay', async (t) => {
+  const variants = [
+    { result: null },
+    { result: [] },
+    { result: 3 },
+    { result: { _meta: null } },
+    { result: { _meta: { progressToken: null } } },
+    {
+      result: {
+        _meta: { 'io.modelcontextprotocol/related-task': { taskId: 3 } },
+      },
+    },
+    { result: {}, method: 'unexpected' },
+    { result: {}, debug: token },
+    { error: { code: Number.MAX_SAFE_INTEGER + 1, message: token } },
+  ];
+  for (const [index, variant] of variants.entries())
+    await t.test(`invalid envelope ${index + 1}`, async (t) => {
+      const f = await fixture(t, (req, res, msg) => {
+        if (msg?.method !== 'tools/call') return;
+        const payload = JSON.stringify({
+          jsonrpc: '2.0',
+          id: msg.id,
+          ...variant,
+        });
+        assert.throws(() => deserializeMessage(payload));
+        res.writeHead(200, { 'content-type': 'application/json' }).end(payload);
+        return true;
+      });
+      await f.ready();
+      f.send(1, 'tools/call');
+      const reply = await f.reply(1);
+      assert.equal(reply.error?.data?.outcome, 'unknown');
+      assert.doesNotThrow(() => deserializeMessage(JSON.stringify(reply)));
+      assert.equal(JSON.stringify(reply).includes(token), false);
+      assert.equal(
+        f.requests.filter((r) => r.message?.method === 'tools/call').length,
+        1,
+      );
+    });
+});
+test('malformed input and typed IDs emit SDK-valid uncorrelated errors', async (t) => {
+  const f = await fixture(t);
+  f.input.write('{malformed}\n');
+  for (const id of [null, 1.5, 'x'.repeat(129)]) f.send(id, 'tools/list');
+  await until(() => f.replies.length === 4);
+  for (const reply of f.replies) {
+    assert.equal(Object.hasOwn(reply, 'id'), false);
+    assert.doesNotThrow(() => deserializeMessage(JSON.stringify(reply)));
+  }
+  assert.equal(f.requests.length, 0);
+});
+test('fragmented multibyte UTF-8 survives framing and lifetime IDs require explicit restart', async (t) => {
+  const f = await fixture(t, () => false, { limits: { ids: 2 } });
+  await f.ready();
+  const frame = Buffer.from(
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: { name: 'synthetic', arguments: { value: 'café🍎' } },
+    }) + '\n',
+  );
+  const split = frame.indexOf(Buffer.from('🍎')) + 2;
+  f.input.write(frame.subarray(0, split));
+  f.input.write(frame.subarray(split));
+  assert.ok((await f.reply(1)).result);
+  assert.equal(
+    f.requests.find((r) => r.message?.method === 'tools/call').message.params
+      .arguments.value,
+    'café🍎',
+  );
+  f.send(2, 'tools/list');
+  assert.match((await f.reply(2)).error.message, /Restart/);
+  assert.equal(
+    f.requests.filter((r) => r.message?.method === 'tools/list').length,
+    0,
+  );
+});
+test('shutdown remains bounded with an active request and unresponsive DELETE', async (t) => {
+  const f = await fixture(
+    t,
+    (req, _res, msg) => req.method === 'DELETE' || msg?.method === 'tools/call',
+    { limits: { shutdownMs: 50, controlMs: 500 } },
+  );
+  await f.ready();
+  f.send(1, 'tools/call');
+  await until(() => f.requests.some((r) => r.message?.method === 'tools/call'));
+  const started = Date.now();
+  await f.bridge.close();
+  assert.ok(Date.now() - started < 1000);
+  assert.equal(f.requests.filter((r) => r.method === 'DELETE').length, 1);
+});
+test('initialization never forwards SDK-invalid optional instructions or server metadata', async (t) => {
+  for (const badInstructions of [true, false])
+    await t.test(String(badInstructions), async (t) => {
+      const f = await fixture(t, (_req, res, msg) => {
+        if (msg?.method !== 'initialize') return;
+        const result = {
+          protocolVersion: '2025-11-25',
+          capabilities: { tools: {}, resources: {} },
+          serverInfo: {
+            name: 'context-router-local',
+            version: '1',
+            icons: 'invalid',
+          },
+          ...(badInstructions ? { instructions: { value: token } } : {}),
+        };
+        res
+          .writeHead(200, {
+            'content-type': 'application/json',
+            'mcp-session-id': 's'.repeat(43),
+          })
+          .end(JSON.stringify({ jsonrpc: '2.0', id: msg.id, result }));
+        return true;
+      });
+      f.send('init', 'initialize', {
+        protocolVersion: '2025-11-25',
+        capabilities: {},
+        clientInfo: { name: 'test', version: '1' },
+      });
+      const reply = await f.reply('init');
+      if (badInstructions) assert.ok(reply.error);
+      else {
+        assert.equal(
+          InitializeResultSchema.safeParse(reply.result).success,
+          true,
+        );
+        assert.equal(reply.result.serverInfo.icons, undefined);
+      }
+    });
 });

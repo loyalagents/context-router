@@ -72,3 +72,55 @@ test('CLI handles EOF and termination without connecting or starting an app', as
     assert.equal(stderr, '');
   }
 });
+test('CLI refuses inherited debug settings before credential access or any HTTP request', (t) => {
+  const root = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-cli-debug-')),
+  );
+  fs.chmodSync(root, 0o700);
+  const file = path.join(root, 'token');
+  fs.writeFileSync(file, token, { mode: 0o600 });
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const observer = fileURLToPath(
+    new URL('./fixtures/bridge-cli-observer.mjs', import.meta.url),
+  );
+  for (const unsafe of [
+    { NODE_DEBUG: 'net' },
+    { NODE_DEBUG: '*' },
+    { NODE_DEBUG_NATIVE: 'NET' },
+    { NODE_OPTIONS: '--trace-sync-io' },
+  ]) {
+    const r = spawnSync(
+      process.execPath,
+      ['--import', observer, cli, '--credential-file', file],
+      {
+        env: { ...unsafe, CR_TEST_CREDENTIAL_FILE: file },
+        encoding: 'utf8',
+        timeout: 5000,
+        input:
+          JSON.stringify({
+            jsonrpc: '2.0',
+            id: 0,
+            method: 'initialize',
+            params: {
+              protocolVersion: '2025-11-25',
+              capabilities: {},
+              clientInfo: { name: 'synthetic', version: '1' },
+            },
+          }) + '\n',
+      },
+    );
+    assert.equal(r.status, 1);
+    assert.equal(r.stdout, '');
+    assert.equal(r.stderr.includes(token), false, 'no credential bytes');
+    assert.equal(
+      r.stderr.includes('TEST_CREDENTIAL_READ'),
+      false,
+      'no credential access',
+    );
+    assert.equal(
+      r.stderr.includes('TEST_HTTP_ATTEMPT'),
+      false,
+      'no outbound request',
+    );
+  }
+});

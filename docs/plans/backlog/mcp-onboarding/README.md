@@ -1,10 +1,10 @@
 # MCP Onboarding Product Follow-Up
 
-- Status: minimum Claude Desktop slice prioritized for pilot; implementation plan pending
-- Outcome owner: product owner and next assigned coordinator
+- Status: source bridge implemented for the pilot trial; real Claude Desktop acceptance pending
+- Outcome owner: product owner and assigned colleague-pilot coordinator
 - Trigger: the assisted colleague pilot requires Claude Desktop; ChatGPT desktop follows
-- Next action: assess actual setup friction in supported clients; choose the
-  smallest useful slice before planning implementation
+- Next action: complete the reviewed [connection slice](../../active/colleague-pilot/plan.md)
+  trial and real-client acceptance; broader C/C+ onboarding remains backlog
 - Last reviewed: 2026-10-10
 
 This is the canonical onboarding brief, prioritized by the

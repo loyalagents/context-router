@@ -24,7 +24,25 @@ const validId = (id) =>
 const object = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const owns = (v, k) => Object.hasOwn(v, k);
 const validError = (v) =>
-  object(v) && Number.isInteger(v.code) && typeof v.message === 'string';
+  object(v) && Number.isSafeInteger(v.code) && typeof v.message === 'string';
+// Match the pinned SDK's generic ResultSchema without importing backend dependencies.
+function validResult(value) {
+  if (!object(value)) return false;
+  if (!owns(value, '_meta')) return true;
+  const meta = value._meta;
+  if (!object(meta)) return false;
+  if (
+    owns(meta, 'progressToken') &&
+    typeof meta.progressToken !== 'string' &&
+    !Number.isSafeInteger(meta.progressToken)
+  )
+    return false;
+  const related = 'io.modelcontextprotocol/related-task';
+  return (
+    !owns(meta, related) ||
+    (object(meta[related]) && typeof meta[related].taskId === 'string')
+  );
+}
 const fault = (kind, status) =>
   Object.assign(new Error(kind), { kind, status });
 const decode = (bytes) =>
@@ -40,6 +58,8 @@ const messages = Object.freeze({
     'Context Router connection unavailable. Open the app, then reconnect explicitly.',
   contract: 'Connection contract changed. Restart this bridge explicitly.',
   capacity: 'Bridge capacity reached. This request was not dispatched.',
+  exhausted:
+    'Request ID limit reached. Restart the bridge explicitly; this request was not dispatched.',
   invalid: 'Invalid MCP request.',
   notReady: 'Initialize the connection before making requests.',
   cancelled: 'Request cancelled before dispatch.',
@@ -115,7 +135,7 @@ export function createBridge({
   function error(id, category, outcome = 'not_dispatched') {
     send({
       jsonrpc: '2.0',
-      id,
+      ...(validId(id) ? { id } : {}),
       error: {
         code: category === 'invalid' ? -32600 : -32000,
         message: messages[category],
@@ -266,7 +286,12 @@ export function createBridge({
                   !message ||
                   reply.id !== message.id ||
                   owns(reply, 'result') === owns(reply, 'error') ||
-                  (owns(reply, 'error') && !validError(reply.error))
+                  (owns(reply, 'error') && !validError(reply.error)) ||
+                  (owns(reply, 'result') && !validResult(reply.result)) ||
+                  Object.keys(reply).some(
+                    (name) =>
+                      !['jsonrpc', 'id', 'result', 'error'].includes(name),
+                  )
                 )
                   throw fault('transport');
                 settle(null, {
@@ -306,7 +331,8 @@ export function createBridge({
       ) &&
       object(result.serverInfo) &&
       typeof result.serverInfo.name === 'string' &&
-      typeof result.serverInfo.version === 'string'
+      typeof result.serverInfo.version === 'string' &&
+      (!owns(result, 'instructions') || typeof result.instructions === 'string')
     );
   }
   async function initialize(renew = false) {
@@ -320,13 +346,24 @@ export function createBridge({
       { timeout: limits.handshakeMs, control: true },
     );
     if (stopping) throw fault('transport');
-    const result = value.reply?.result;
+    const rawResult = value.reply?.result;
     if (
-      !compatible(result) ||
+      !compatible(rawResult) ||
       typeof value.sessionId !== 'string' ||
       !/^[A-Za-z0-9_-]{43}$/.test(value.sessionId)
     )
       throw fault('contract');
+    const result = {
+      protocolVersion: rawResult.protocolVersion,
+      capabilities: rawResult.capabilities,
+      serverInfo: {
+        name: rawResult.serverInfo.name,
+        version: rawResult.serverInfo.version,
+      },
+      ...(owns(rawResult, 'instructions')
+        ? { instructions: rawResult.instructions }
+        : {}),
+    };
     const session = {
       id: value.sessionId,
       protocol: result.protocolVersion,
@@ -422,7 +459,7 @@ export function createBridge({
       return;
     }
     if (seen.size >= limits.ids) {
-      error(id, 'capacity');
+      error(id, 'exhausted');
       return;
     }
     seen.add(idKey);
@@ -503,7 +540,7 @@ export function createBridge({
             message: 'Invalid MCP request',
           },
         });
-      else send({ ...value.reply, id });
+      else send({ jsonrpc: '2.0', id, result: value.reply.result });
     } catch (e) {
       if (item.dispatched && e.kind === 'stale') {
         retire(item.session);
