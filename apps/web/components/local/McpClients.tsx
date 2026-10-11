@@ -52,7 +52,7 @@ export default function McpClients() {
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<ChangeOutcome | null>(null);
   const outcomePanel = useRef<HTMLDivElement | null>(null);
-  const focusedOutcome = useRef<ChangeOutcome | null>(null);
+  const handledOutcome = useRef<ChangeOutcome | null>(null);
   const [readError, setReadError] = useState('');
   const [generation, setGeneration] = useState(0);
   const pending = useRef<AbortController | null>(null);
@@ -62,8 +62,14 @@ export default function McpClients() {
   useEffect(() => {
     // Wait for the list to settle so its rows cannot push the result offscreen.
     // Later reads must not steal focus back to an already presented outcome.
-    if (!outcome || busy || focusedOutcome.current === outcome) return;
-    focusedOutcome.current = outcome;
+    if (!outcome || busy || handledOutcome.current === outcome) return;
+    handledOutcome.current = outcome;
+    // Preserve focus the user moved elsewhere while the list was loading.
+    const active = document.activeElement;
+    if (
+      active && active !== document.body && active !== document.documentElement &&
+      active.isConnected && !active.matches(':disabled')
+    ) return;
     outcomePanel.current?.focus({ preventScroll: true });
     outcomePanel.current?.scrollIntoView({ block: 'nearest' });
   }, [outcome, busy]);
@@ -76,6 +82,7 @@ export default function McpClients() {
     // A background refresh cannot cancel an already submitted authority change.
     // Its settlement owns the next reload and the confirmed/uncertain outcome.
     if (mutation.current) return;
+    // Stay busy until the replacement list settles, before outcome focus/scroll.
     setBusy(true);
     setGeneration((value) => value + 1);
   }, []);
@@ -208,7 +215,9 @@ export default function McpClients() {
             ? 'ALLOW was not saved: it provides no authority under this instance’s current CLI maximum. Reload and inspect before editing again.'
             : kind === 'revoke'
               ? 'Client instance revoked. Reload to inspect current authority.'
-              : 'Grant saved. Reload to inspect current authority.',
+              : grant?.effect === 'REMOVE'
+                ? 'Grant removed. Reload to inspect current authority.'
+                : 'Grant saved. Reload to inspect current authority.',
         });
     } catch {
       if (mutation.current === controller && !controller.signal.aborted)
@@ -323,7 +332,9 @@ export default function McpClients() {
                 ? 'Change not confirmed'
                 : outcome.kind === 'revoke'
                   ? 'Client instance revoked'
-                  : 'Grant saved'}
+                  : outcome.grant?.effect === 'REMOVE'
+                    ? 'Grant removed'
+                    : 'Grant saved'}
           </h2>
           <div id="mcp-change-context">
             <p>Client: <strong>{outcome.client.label}</strong></p>

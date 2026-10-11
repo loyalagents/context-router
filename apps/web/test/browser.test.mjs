@@ -634,6 +634,83 @@ test(
   },
 );
 
+for (const focusTarget of ['slugs input', 'dashboard link'])
+  test(
+    `MCP outcome respects deliberate focus on the ${focusTarget} during refresh`,
+    { timeout: 60000 },
+    async (t) => {
+      const f = await browserFixture(t);
+      const client = JSON.parse(f.cli('local-mcp.js', 'list').stdout).result[0];
+      await f.page.goto(f.ready.origin + '/dashboard/permissions');
+      await f.page.getByLabel('Unlock token').fill(f.bootstrap);
+      await f.page.getByRole('button', { name: 'Unlock local dashboard' }).click();
+      await f.page.getByRole('button', { name: `Inspect ${client.id}`, exact: true }).click();
+      const releases = [], started = [], held = [], reached = [];
+      for (let index = 0; index < 2; index++) {
+        held.push(new Promise((resolve) => { releases.push(resolve); }));
+        reached.push(new Promise((resolve) => { started.push(resolve); }));
+      }
+      let reads = 0, writes = 0;
+      f.page.on('request', (request) => {
+        if (request.url().endsWith('/api/local/mcp/grant')) writes++;
+      });
+      await f.page.route('**/api/local/mcp/list', async (route) => {
+        const index = reads++;
+        const response = await route.fetch();
+        started[index]();
+        await held[index];
+        await route.fulfill({ response });
+      }, { times: 2 });
+      try {
+        await f.page.getByRole('button', { name: 'Save grant' }).click();
+        await reached[0];
+        const feedback = f.page.getByRole('status', { name: 'Grant saved', exact: true });
+        await feedback.waitFor();
+        await feedback.evaluate((element) => {
+          window.outcomeFocusCount = 0;
+          element.addEventListener('focus', () => window.outcomeFocusCount++);
+        });
+        const control = focusTarget === 'slugs input'
+          ? f.page.getByLabel('Exact slugs to inspect', { exact: false })
+          : f.page.getByRole('link', { name: 'Back to Dashboard', exact: true });
+        if (focusTarget === 'slugs input') await control.fill('profile.first_');
+        else await control.focus();
+        const scrollBefore = await f.page.evaluate(() => window.scrollY);
+        releases[0]();
+        await f.page.getByRole('button', { name: `Inspect ${client.id}`, exact: true }).waitFor();
+        await f.page.evaluate(() => new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        assert.equal(await control.evaluate((element) => element === document.activeElement), true,
+          'settling a read must not interrupt the user’s new focus');
+        if (focusTarget === 'slugs input') {
+          await f.page.keyboard.type('name');
+          assert.equal(await control.inputValue(), 'profile.first_name');
+        } else {
+          assert.equal(await f.page.evaluate(() => window.scrollY), scrollBefore,
+            'settlement must not scroll away from the focused navigation link');
+        }
+        assert.equal(await f.page.evaluate(() => window.outcomeFocusCount), 0);
+        assert.ok((await feedback.innerText()).includes(client.id));
+        assert.ok((await feedback.innerText()).includes('* · READ · DENY'));
+
+        await f.page.getByRole('button', { name: 'Reload clients' }).click();
+        await reached[1];
+        await f.page.evaluate(() => document.activeElement?.blur());
+        assert.equal(await f.page.evaluate(() => document.activeElement === document.body), true);
+        releases[1]();
+        await f.page.getByRole('button', { name: `Inspect ${client.id}`, exact: true }).waitFor();
+        await f.page.evaluate(() => new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        assert.equal(await f.page.evaluate(() => window.outcomeFocusCount), 0,
+          'a skipped focus is consumed, not deferred to a later read');
+        assert.equal(await f.page.evaluate(() => document.activeElement === document.body), true);
+        assert.equal(writes, 1);
+      } finally {
+        releases.forEach((release) => release());
+      }
+    },
+  );
+
 for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 }])
   test(
     `rejected MCP grant feedback retains attempted context and focus at ${viewport.width}px`,
@@ -790,7 +867,13 @@ test(
       4,
     );
     await selected.getByRole('button', { name: 'Remove grant' }).click();
-    await f.page.getByText('Grant saved.', { exact: false }).waitFor();
+    const removed = f.page.getByRole('status').filter({ hasText: 'profile.* · READ · REMOVE' });
+    await removed.waitFor();
+    assert.equal(await removed.getByRole('heading', { name: 'Grant removed', exact: true }).count(), 1);
+    assert.ok((await removed.innerText()).includes('Grant removed. Reload to inspect current authority.'));
+    assert.ok((await removed.innerText()).includes(first.label));
+    assert.ok((await removed.innerText()).includes(first.id));
+    assert.equal(await f.page.getByRole('button', { name: 'Save grant' }).count(), 0);
     await f.page
       .getByRole('button', { name: `Inspect ${first.id}`, exact: true })
       .click();
