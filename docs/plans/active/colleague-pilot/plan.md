@@ -1,6 +1,6 @@
 # Claude Desktop connection slice
 
-- Status: confidence and visible-error corrections reviewed; trial app packaged and unlaunched; combined live retest approval and final validation pending
+- Status: corrected app/bridge pair approved and running; discovery-cached nullable reads, allowed write/read-back and denied write observed; remaining live acceptance and final validation pending
 - Scope: first connection slice of the [pilot brief](README.md), one cohesive pilot PR
 - Base: `855e8734b919871eac82415465b456add38a3084`; branch `codex/colleague-pilot`
 - Owner: connection coordinator `/root`; sole checkout writer/integrator `/root/writer`
@@ -21,8 +21,10 @@ installed bundle. No extension, native launcher, new backend, database, registry
 OAuth, public/LAN listener, tunnel or personal-client automation is part of the
 source implementation. Subsequent bounded approval authorized the coordinator's
 Candidate 14 trial with a dedicated synthetic credential, one preserved Claude
-configuration entry, restarts and synthetic requests to Anthropic. That approval
-does not extend to the new confidence-correction app or revised bridge path.
+configuration entry, restarts and synthetic requests to Anthropic. The user later
+explicitly approved the combined confidence-correction app (`3dd4f7e`) and bridge
+snapshot (`c29efc5`) retest and manually unlocked the dashboard. The coordinator
+owns those bounded live actions; approval is not a general state-mutation mandate.
 No writer live actions, local model runs/downloads, private-document submissions,
 resets, publication or merging are authorized. Broader distribution/signing,
 real replacement/disk qualification and native owner-loss work remain with the
@@ -34,11 +36,12 @@ describes cloud-origin connections, which cannot reach this loopback service.
 The MCP [local-server guide](https://modelcontextprotocol.io/docs/2026-07-28/develop/connect-local-servers)
 documents Desktop command/arguments subprocess setup; an extension is optional.
 The coordinator observed Claude Desktop 2.31226.1, Pro, in ordinary chat during
-the approved Candidate 14 trial. The local entry initialized and discovered tools;
+the original and corrected-pair trials. The local entry initialized and discovered tools;
 this establishes that instance's connection, not a general organization-policy
 claim. [Enterprise settings](https://support.claude.com/en/articles/12622667-enterprise-configuration-for-claude-desktop)
-can disable local development MCP. The trial exposed two corrected compatibility
-issues; complete acceptance remains pending as recorded below.
+can disable local development MCP. The original trial exposed two corrected
+compatibility issues; the nullable-confidence correction now passes in that actual
+client. Visible operational-error recovery and complete acceptance remain pending.
 
 ## Ownership and review
 
@@ -229,11 +232,12 @@ may send tool results to its provider. No actual personal config change or cloud
 request is authorized by writing an example or completing local tests.
 
 Local test evidence cannot approve client changes/provider requests. The
-coordinator obtained bounded approval for the original Candidate 14 trial; the
-reviewed corrections require a new explicit combined approval identifying the
-confidence-correction app and final bridge snapshot. The user has not answered
-that new-candidate approval request. Distribution/reset/cohort decisions stay
-with the overall pilot; none activates further state mutation.
+coordinator obtained explicit bounded approval for both the original Candidate 14
+trial and the subsequent exact corrected app/bridge pair. The user performed the
+requested dashboard unlock and normal app quit. Further checklist actions remain
+coordinator-owned and bounded by that approval; a pending physical restart action
+is not evidence that restart or recovery succeeded. Distribution/reset/cohort
+decisions stay with the overall pilot.
 
 ## Change-to-evidence record
 
@@ -574,16 +578,17 @@ The coordinator also observed an intentional Claude transport shutdown at
 successful first explicit post-restart catalog read returning one synthetic
 definition. Candidate 14 and the credential were unchanged. This is restart
 recovery evidence for the previous bridge, not acceptance of the presentation
-change or the unlaunched confidence-correction app.
+change or the confidence-correction app, which was unlaunched at that checkpoint.
 
 The confidence-correction app has since been packaged and verified at source
 `3dd4f7e635936524afa04e96261df4d6c803c89d`, with production inputs matching reviewed
 `828ef86`. Its external `trial-receipt.json` under
 `/private/tmp/context-router-colleague-pilot-confidence-828ef86` records exact
 source/foreign-doc hashes, copied inputs, compiled-byte equality, manifest/archive
-integrity and limitations. It remains unlaunched and unchanged. The new bridge
-work below does not rebuild or replace that app. No new candidate approval has
-been inferred from the earlier Candidate 14 approval.
+integrity and limitations. It was unchanged and unlaunched at this amendment's
+implementation checkpoint; the later explicitly approved launch is recorded in
+the current evidence below. The new bridge work did not rebuild or replace that
+app, and no approval was inferred from the earlier Candidate 14 approval.
 
 **Scope and ownership.** After independent approval of this amendment, the sole
 writer changes only `apps/backend/scripts/mcp-bridge/bridge.mjs`, affected/new
@@ -746,40 +751,78 @@ reviewed/tested source commit.
 
 #### Current trial evidence and remaining acceptance
 
-The coordinator's approved Candidate 14 trial established six-tool discovery in
-ordinary Claude Desktop chat, successful synthetic definition creation and value
-setting with confidence omitted, and an explicit catalog read. The discovered
-search schema rejected the stored null confidence; the reviewed four-field
-metadata correction addresses that source bug without changing stored/result
-values. After more than 36 minutes of observed inactivity, the first catalog call
-produced a generic connector error; a separate explicit call succeeded. A stale
-session is an inference because sanitized evidence did not preserve HTTP status
-or the exact error body. An intentional Claude restart then produced fresh
-initialization/discovery and a successful first explicit catalog read. These
-observations concern the original app/bridge; neither correction has yet been
-accepted in that actual client.
+Evidence update: 2026-10-11, coordinator observations through 12:08:32 UTC. The
+writer read only the approved acceptance record, without token files or personal
+configuration backups. Private state paths, client/request/process identifiers
+and synthetic value payloads are omitted here. Requested writer setting remains
+Astra `xhigh`, accepted at spawn but not independently runtime-verified.
 
-The confidence-correction app is retained at
-`/private/tmp/context-router-colleague-pilot-confidence-828ef86/Context Router.app`,
-built from `3dd4f7e` with disclosed foreign documentation and production inputs
-matching reviewed `828ef86`. Native package verification passed. Its manifest
-SHA-256 is `5399bf71478ecac4e9d89aa46867a8391b1b66b97585d0629c43ac8bccefa0e9`;
-its external `trial-receipt.json` SHA-256 is
-`5155955c467b5454ca9bdb3aaefa7501852905427635fd3dabf4f99946aff33d`.
-It remains unchanged and unlaunched. After the narrow evidence recheck, prepare a
-new private three-module bridge snapshot from the final frozen source and retain
-the old snapshot. The new receipt will bind source/review/module/Node hashes and
-that unchanged app identity, without credentials or personal configuration.
+The user explicitly approved the combined corrected-pair retest. Artifact identity
+is unchanged from the reviewed handoff:
 
-Remaining acceptance requires the user's combined bounded approval of the exact
-new app and bridge path/configuration delta plus planned restarts and synthetic
-provider-bound requests. Dashboard visibility still requires the user's unlock.
-App restart with the corrected candidate, independent live credential rotation and
-revocation, actual client-visible fixed tool errors with deliberate recovery,
-canonical idle/uncertain-outcome acceptance and the rest of the checklist remain
-pending. The previous client-restart observation does not qualify the new pair.
-No writer personal configuration/app/client/provider action has been taken. No
-new approval is inferred, no current snapshot is overwritten, and no app is
-launched while preparing artifacts. Full migration/installed qualification gates,
-exact-head CI and the finalization milestone remain pending.
+- App source `3dd4f7e635936524afa04e96261df4d6c803c89d`, production inputs matching
+  reviewed `828ef86`, with the previously disclosed foreign documentation. Manifest
+  SHA-256 `5399bf71478ecac4e9d89aa46867a8391b1b66b97585d0629c43ac8bccefa0e9`;
+  app trial-receipt SHA-256
+  `5155955c467b5454ca9bdb3aaefa7501852905427635fd3dabf4f99946aff33d`.
+- Bridge snapshot source `c29efc5b0d733087eb24eab1fecb0c9095ae3def`, whose three
+  module bytes match reviewed/tested `a3a41d9`. Snapshot receipt SHA-256
+  `3b380150857e0c87bb0895613992b5c800fc84ea0d1f6f11b75f0486eb65ce74`;
+  bridge module SHA-256
+  `cf9c46f929f1edfe69d81c3a97fcb38830c6f7f8843ab60895d9ce0337a62f86`.
+  Node remains 24.21.0, SHA-256
+  `e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b`.
+
+The user normally quit Candidate 14. The coordinator observed its owner lifecycle
+quiescent, outcome `ok`, and all old owned processes exited. The corrected app then
+launched against the same retained state, without a reset or model download.
+Only the pilot entry's bridge-script argument changed while Claude was exited;
+other MCP configuration fields/entries were preserved. Claude restarted on the
+approved bridge, with fresh initialization at 12:00:59.801 UTC followed by
+successful tools/resources discovery. This establishes clean replacement/startup
+and client reconnect on preserved state, not the still-pending runtime restart
+while the bridge stays alive.
+
+| Corrected-pair check | Observed result | Limit |
+| --- | --- | --- |
+| Read original synthetic preference after discovery | Succeeded with original value and null confidence preserved | Corrected schema accepted by the actual discovery-cached client |
+| New allowed write and explicit read-back | Write succeeded with `changed: true`; read-back returned the new value with null confidence | Synthetic scope only; no private value payload is recorded |
+| Denied write | Claude displayed `MCP_PERMISSION_DENIED`, `success: false`, `changed: false` | Does not establish live independent revocation or rotation |
+| Dashboard | Prior pair's synthetic record and MCP attribution were observed after manual unlock | Corrected pair's new-session dashboard still needs unlock/verification |
+| Runtime restart with Claude left running | User was asked to invoke the app's normal restart control | Physical action, visible stale rejection and new explicit recovery remain pending |
+
+The protocol summary records exactly one request/response pair for each original
+read, new write, read-back and denied write. No extra call is inferred from Claude's
+prose. The runtime restart has not yet been performed by the user.
+
+The original Candidate 14/previous-bridge trial also observed a real idle interval
+of at least **2,136.801 seconds**, exceeding 35 minutes. Its first subsequent
+catalog request, after more than 36 minutes without protocol traffic, received a
+generic connector error; a separate explicit request succeeded with no automatic
+retry observed. Stale session remains an inference because sanitized evidence did
+not retain HTTP status or the exact error body. An intentional prior Claude
+restart also produced fresh discovery and a successful first explicit catalog
+read. Those observations remain attributed to that original pair.
+
+The independent reviewer accepted a conditional composite: carry that actual idle
+interval forward only if the corrected pair visibly demonstrates the same stale
+404 presentation path, no replay and separate explicit read recovery after runtime
+restart. The unchanged-input assessment covers backend idle pruning/session/auth
+and bridge request/reconnect behavior; the intervening changes are nullable search
+output metadata and ordinary tool operational-error presentation. **That composite
+condition is not yet fulfilled.** No directly observed 35-minute idle pass is
+claimed for the corrected pair, and the original error's hidden cause is not
+promoted to a proven HTTP status.
+
+Remaining live acceptance includes the physical restart and visible-error/recovery
+check, current-pair dashboard unlock/visibility, independent credential rotation
+and revocation, live lost-reply/uncertain-mutation and client-independence evidence,
+and the remaining canonical checklist. Automated no-replay/committed-mutation
+coverage is retained separately; it does not establish a live lost-reply exercise.
+The agreed finalization milestone, full migration gate, final installed
+qualification and exact-head CI remain pending. No writer app/client/live-port,
+credential or provider action was taken for this evidence update; no broad gate
+was run and no executable/test bytes changed. This evidence-only batch passed
+75 checker/Markdown tests, links across 145 Markdown files, whitespace and the
+required real-base comparison (`performed`).
 **Targeted checks passed; final validation pending.**
