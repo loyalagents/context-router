@@ -14,7 +14,7 @@ steps, to understand the starting point. Historical plans remain in Git.
 | --- | --- | --- |
 | Assisted colleague pilot — first priority | Get a few Git-capable colleagues using their own data, with Claude Desktop and tolerable install/update/reconnect friction | [Pilot](active/colleague-pilot/README.md) |
 | Stabilization | Bounded correctness, recovery, diagnostics and usability fixes; eligible slices can run in parallel worktrees | [Stabilization](backlog/stabilization/README.md), [UI usability](backlog/ui-usability/README.md) |
-| Future capabilities | Wanted features, prioritized individually rather than extending a completed migration | [MCP onboarding](backlog/mcp-onboarding/README.md), [AI scheduling](backlog/local-ai-scheduling/README.md), [provider choice](backlog/model-provider-selection/README.md), [evaluation](backlog/evaluation/README.md), [platform/network/hosting](backlog/platform-and-hosting/README.md) |
+| Future capabilities | Wanted features, prioritized individually rather than extending a completed migration | [MCP onboarding](backlog/mcp-onboarding/README.md), [agent-assisted onboarding](backlog/agent-assisted-onboarding/README.md), [AI scheduling](backlog/local-ai-scheduling/README.md), [provider choice](backlog/model-provider-selection/README.md), [evaluation](backlog/evaluation/README.md), [platform/network/hosting](backlog/platform-and-hosting/README.md) |
 
 Priority and parallel eligibility are separate attributes. A stabilization item
 can be a pilot blocker; that does not make it safe to implement concurrently.
