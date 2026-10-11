@@ -12,7 +12,7 @@ do not use them as proof or instructions for the installed SQLite app.
 - Source of truth: `apps/backend/src/mcp/**`, `apps/backend/src/config/mcp.config.ts`, `apps/backend/src/mcp/auth/mcp-client-registry.service.ts`
 - Last reviewed: 2026-10-03
 
-Step 07 adds `local-mcp`, one manually started SQLite backend for Claude Code and Codex CLI on the same Mac. It exposes only direct Streamable HTTP at `http://127.0.0.1:8787/mcp` by default. There is no stdio bridge, browser UI, GraphQL listener, OAuth/DCR endpoint, public tunnel or LAN mode in this composition. The hosted composition remains separately supported below.
+Step 07 adds `local-mcp`, one manually started SQLite backend for Claude Code and Codex CLI on the same Mac. It exposes only direct Streamable HTTP at `http://127.0.0.1:8787/mcp` by default. This server composition has no browser UI, GraphQL listener, OAuth/DCR endpoint, public tunnel or LAN mode. The separate source-only stdio bridge below adapts that same HTTP edge for assisted Claude Desktop trials. The hosted composition remains separately supported below.
 
 The [Step 07 acceptance checklist](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/07-local-mcp/acceptance.md) gives isolated synthetic setup, both client launches, expected results, restart/revocation, model readiness and cleanup. User-run acceptance is recorded for `d7e9d65` in [PR #166](https://github.com/loyalagents/context-router/pull/166), including its inconclusive live cancellation outcome. Steps 07 and 08 are merged; the [Step 08 acceptance disposition](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/08-local-ui/acceptance.md) preserves its accepted evidence limits. Installed qualification and remaining pilot limits are recorded in [current closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md).
 
@@ -81,6 +81,129 @@ Domain audit remains atomic with each mutation; access append is best effort. Lo
 Initial help/version inspection and user setup reported Claude Code **2.1.284** and Codex CLI **0.142.3**; Codex **0.160.0** was installed by later closeout, with the per-call transition unknown. Automated compatibility uses SDK 1.27.1 against the production local guard/HTTP/SQLite path. PR #166 records the user-run functional checks against `d7e9d65`, including durable shared state, permissions, independent revocation and bounded model checks. A client interruption and a successful result were both displayed during the cancellation attempt; server/native cancellation remains unconfirmed. Both clients and the backend/model processes were subsequently stopped. Official references: [Claude MCP](https://code.claude.com/docs/en/mcp), [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp), [2025-11-25 transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports), [cancellation](https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/cancellation).
 
 Cloud-backed CLI assistants may send tool results to their model providers. Use synthetic data for repository tests; the assisted pilot permits colleagues' own data with explicit destination/privacy guidance and narrow grants. Those client tests do not prove the whole assistant is offline. The local application is separately tested under source/relocated-package policies that deny hosted providers/DNS/other endpoints and permit only its literal loopback listener and selected pinned synthetic TLS peer.
+
+## Search Result Confidence Compatibility
+
+`searchPreferences` and `smartSearchPreferences` return stored confidence as a
+number or `null` in both active and suggested results. Null means confidence was
+not recorded; preserve it rather than treating it as zero or changing storage.
+The pilot schema correction declares this existing behavior in tool discovery.
+Reconnect/restart explicitly to refresh cached tool schemas when upgrading the
+backend; discovery-first SDK tests cover both direct HTTP and the stdio bridge.
+Older candidates can reject a read containing null after discovery, even when the
+preceding mutation succeeded. Inspect the result/state before deciding to repeat
+a write. This metadata correction changes no grants, mutation requirements,
+transport, OAuth, stored data or return values; known numeric responses remain
+valid. Unknown external clients must support nullable confidence and refresh
+cached descriptors; their deployed behavior has not been observed.
+
+## Claude Desktop: Assisted Source Bridge Trial
+
+The source bridge is implemented for the [first pilot connection slice](../plans/active/colleague-pilot/plan.md).
+Automated SDK/SQLite tests are separate from real Claude Desktop acceptance;
+**Desktop remains unqualified until the canonical client checklist is completed**.
+This bridge is not bundled in the installed app. Persistent client configuration
+requires a commit-bound copy of all three modules (`bridge.mjs`, `cli.mjs` and
+`credential.mjs`) and its receipt, plus a trusted absolute Node **24.21.0**
+executable. Place the copy in a new, durable, user-owned private `0700` directory
+outside `managed-v1`, such as a versioned directory beneath the user's private
+application-support area. Do not configure persistent clients to execute from
+`/tmp`, `/private/tmp` or other shared temporary locations; earlier temporary
+trial snapshots are historical evidence, not persistent installation guidance.
+
+Before configuring Claude, verify the snapshot directory, modules and receipt
+belong to the user, resolve without symlink components, and have no group/other
+write permissions; retain the module/receipt files read-only and unchanged.
+Check every higher ancestor for trusted user/root ownership and no group/other
+write permission. Require the absolute Node binary to be a regular file owned by
+the user or root, without group/other write permission, under the same trusted
+ancestry; verify its version/hash against the trusted receipt. Verify the receipt's
+source revision and all three module hashes against independently reviewed source;
+a receipt found beside executable files is not itself a trust anchor. Create only
+a new private directory under already trusted ancestry; do not chmod existing
+roots to make them qualify. Use actual resolved absolute paths, without shell
+expansion, in client configuration. If any input disappears or changes, stop and
+verify a new copy from the reviewed source before explicitly updating/restarting
+Claude; do not silently recreate a predictable temporary path or switch inputs.
+Claude launches only the bridge; open Context Router separately through its menu.
+No local model is needed for ordinary preference reads/writes.
+
+After successfully quitting CR, use its installed `mcp provision` command to issue
+one new credential for this Desktop instance into a new file beneath an existing
+private `0700` directory. Narrow its policy with the same installed `mcp permissions`
+and `mcp grant` commands described above, then reopen CR. Defaults allow no targets.
+Use a separate credential for another client/instance. The bridge accepts only
+same-user `0600` regular single-link files under a canonical private `0700` parent;
+symlink aliases, relative paths, extra token lines and unsafe permissions fail.
+Do not move an export into the managed database/identity directories.
+
+With the user's approval, preserve existing Claude Desktop configuration and add
+one entry through **Settings → Developer → Edit Config**, using actual absolute
+paths in this example. Account/organization policy must permit local development
+MCP. This is an assisted manual edit, not an automatic configuration step:
+
+```json
+{
+  "mcpServers": {
+    "context-router-pilot": {
+      "command": "/absolute/path/to/node-v24.21.0/bin/node",
+      "args": [
+        "--no-global-search-paths",
+        "/absolute/private/context-router-bridges/<source-commit>/cli.mjs",
+        "--credential-file",
+        "/absolute/private/claude-desktop.token"
+      ],
+      "env": { "NODE_OPTIONS": "", "NODE_DEBUG": "", "NODE_DEBUG_NATIVE": "" }
+    }
+  }
+}
+```
+
+Fully quit and reopen Claude Desktop to start/restart the bridge, then inspect
+its local server status and tool menu. The connection is always authenticated
+HTTP to `127.0.0.1:8787/mcp`; URL/port/proxy overrides and redirects are unsupported.
+There are no token bytes in the config. Clear the three Node environment settings
+shown above: inherited Node debugging can print HTTP credentials before the bridge
+can redact them. The bridge refuses nonempty debug/options settings before reading
+the credential; it does not try to disable already-cached debug behavior. The
+credential is read once at process startup; rotation must export a new file and
+update only the credential-file path
+before explicitly restarting Claude. Revocation of one instance leaves others'
+authority unchanged. Do not rewrite a live token file expecting credential reload.
+
+For a valid ordinary tool call after initialization, bridge operational failures
+are tool results with `isError: true` and one fixed text block, without
+`structuredContent`. A discovered-schema SDK client resolves `callTool()` with
+that error result; callers must inspect `isError` rather than treating every
+resolved Promise as success. Lifecycle, malformed/duplicate/task-related requests,
+non-tool methods and sanitized backend protocol errors retain protocol errors.
+This gives Claude a tool-result text to consume; actual display/model behavior
+requires a real-client retest and does not guarantee how it chooses later calls.
+
+After thirty minutes idle, the first call can report **Session expired; this
+request was not dispatched**. Make an explicit new request to establish a fresh
+session; the bridge never replays the original. A missing/lost/invalid response,
+timeout or cancellation instead reports **Outcome unknown**: a mutation may have
+committed. Inspect preferences/history before deciding whether to issue another
+write. A cancellation or cleanup response does not prove rollback. Backend restart
+can produce either stale-session or uncertain-transport outcomes. If initialization
+or authority fails, inspect the fixed message, open CR/check grants as appropriate,
+then explicitly reconnect. Never delete state or ownership journals to recover.
+
+The bridge uses bounded messages/requests, a 190-second operation deadline and
+bounded shutdown. Closing Claude stops its bridge and attempts to close its MCP
+sessions; it does not stop CR or the managed model. It emits protocol messages
+only to stdout and fixed error categories to stderr. Tool results necessarily
+reach Claude and may be sent to its hosted provider; do not include credentials,
+private documents or result payloads in shared diagnostics/screenshots.
+
+A trial needs separate approval for the exact installed app, client config and
+synthetic cloud-backed requests. Verify and select that app before stopping,
+administering or restarting anything; a retained candidate integrity receipt does
+not identify the app currently running. Follow the [canonical acceptance checklist](../plans/active/colleague-pilot/README.md#claude-desktop-acceptance),
+including real inactivity exceeding 35 minutes and dashboard visibility. Synthetic
+age manipulation is not evidence of actual Desktop idle recovery. Extension
+packaging, ordinary ChatGPT support and installed bridge delivery remain separate.
 
 ## Hosted Composition Copy/Paste Summary
 
@@ -213,22 +336,14 @@ The backend maps clients into internal buckets. Today the important local callba
 
 The DCR shim and client registry map callback URLs to these buckets. Read the source files above if you need the exact logic.
 
-## Claude Desktop
+## Hosted Claude Desktop Connections
 
-Add MCP entries to your Claude Desktop config:
-
-```json
-{
-  "mcpServers": {
-    "context-router-local": {
-      "url": "http://localhost:3000/mcp"
-    },
-    "context-router-remote": {
-      "url": "https://context-router-tvvjziqt3a-uc.a.run.app/mcp"
-    }
-  }
-}
-```
+The old URL-only `mcpServers` example did not establish supported Desktop setup.
+Use Anthropic's [remote connector guidance](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp)
+for a separately configured hosted endpoint. Remote connectors originate from
+Anthropic's cloud and cannot reach this Mac's loopback-only installed app. Use
+the source bridge above for the local pilot, subject to real-client acceptance;
+existing Claude Code/Codex direct HTTP and hosted OAuth remain separate paths.
 
 ## ChatGPT or Other Remote Clients
 

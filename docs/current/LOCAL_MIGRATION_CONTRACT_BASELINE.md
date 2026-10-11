@@ -112,6 +112,19 @@ replaced it with explicit denial; local authority is separately per-instance.
 look configurable but are not complete working modes. They are explicitly
 listed as configuration-shaped non-capabilities.
 
+The pilot correction `pilot-nullable-search-confidence` declares existing
+nullable confidence in the active/suggested outputs of `searchPreferences` and
+`smartSearchPreferences`. Four descriptor fields change from number to
+number-or-null; payload/storage values and mutation input requirements remain
+unchanged. The exact fixture transition is reviewed through the existing registry
+mechanism because output-domain widening requires review. Same-client discovery
+then call regressions cover direct HTTP and stdio, with deterministic smart-search
+selection and no live model. The [plan evidence](../plans/active/colleague-pilot/plan.md#plan-amendment-nullable-search-confidence-2026-10-11-approved)
+and [consumer guidance](../useful/MCP_LOCAL_SETUP.md#search-result-confidence-compatibility)
+record compatibility, explicit descriptor refresh and rollback limits. Unknown
+external-client entries mean guidance was migrated, not that their deployments
+were tested. Auth/tool/resource visibility and authority remain unchanged.
+
 ### Catalog And Seed
 
 [`preference-catalog.v1.json`](../../apps/backend/test/contracts/fixtures/preference-catalog.v1.json)

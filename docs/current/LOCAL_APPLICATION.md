@@ -47,7 +47,9 @@ not a new command or a waiver of filesystem/process safety.
   rotation and maximum-policy administration remain installed/manual CLI work.
   See [MCP setup](../useful/MCP_LOCAL_SETUP.md). Claude Code and Codex CLI have
   scoped user-run evidence; **Claude Desktop and ChatGPT desktop are not qualified
-  local integrations yet**. Their next work belongs to the pilot/onboarding brief.
+  local integrations yet**. A source-only stdio bridge now supports an assisted
+  Claude Desktop trial; automated SDK/SQLite evidence does not complete actual
+  Desktop acceptance. See the [connection plan](../plans/active/colleague-pilot/plan.md).
 - Model download is explicit and verified, about 5.7 GB; compatible assets live
   outside the app bundle for reuse. Menu Restart enables/recovers AI and opens the
   current dashboard with a fresh unlock. Browser close leaves the app running;
