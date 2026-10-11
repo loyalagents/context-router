@@ -1064,17 +1064,17 @@
         {
           "consumerId": "ref:apps/web/app/dashboard/history/McpAccessHistoryTab.tsx:mcp:tool:searchPreferences",
           "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:apps/web/app/dashboard/search-lab/SearchLabClient.tsx:mcp:tool:smartSearchPreferences",
           "path": "apps/web/app/dashboard/search-lab/SearchLabClient.tsx",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:apps/web/components/local/PreferenceSearch.tsx:mcp:tool:smartSearchPreferences",
           "path": "apps/web/components/local/PreferenceSearch.tsx",
-          "outcome": "migrated"
+          "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:apps/web/local-ui.mjs:mcp:route:/mcp",

@@ -1,6 +1,6 @@
 # Claude Desktop connection slice
 
-- Status: bridge trial reviewed; nullable-confidence correction awaiting code review and a new candidate retest
+- Status: nullable-confidence correction reviewed; separately named artifact and approved real-client retest pending
 - Scope: first connection slice of the [pilot brief](README.md), one cohesive pilot PR
 - Base: `855e8734b919871eac82415465b456add38a3084`; branch `codex/colleague-pilot`
 - Owner: connection coordinator `/root`; sole checkout writer/integrator `/root/writer`
@@ -492,7 +492,10 @@ result-envelope change was made.
 
 - Full affected isolated `pnpm test:local-mcp`: **110 passed, 0 failed**.
 - The two search tool unit suites and MCP contract/runtime-composition suites:
-  **13 passed across four suites**.
+  **13 passed across four suites**, run in the checkout against current TypeScript
+  source and the newly collected fixture. This did not build checkout production
+  output. The isolated tree supplied the 110-test compiled local MCP run; its
+  unused copied contract fixture was not an input to the 13-test contract run.
 - Contract/Markdown checker unit tests: **75 passed**.
 - MCP collector delta: exactly the four confidence schema fields. Transition
   `pilot-nullable-search-confidence` pins prior fingerprint
@@ -519,3 +522,30 @@ read tests' missing discovery step is now explicitly corrected. Candidate 14 and
 its ongoing idle observation were not contacted or modified by this work. Fresh
 amendment code review, a separately named candidate and bounded replacement/retest
 approval remain pending. **Targeted checks passed; final validation pending.**
+
+
+### Nullable-confidence review disposition (2026-10-11)
+
+`/root/diff_review` approved `828ef86c7c12119eca873fe823b98b816955ef07` for the
+bounded source/artifact trial with no blocking findings. The reviewer independently
+passed all **five discovery-first regressions**, the real-base contract checker
+(`baseComparison=performed`), and verification that the manifest and seven base
+artifact bytes match Git base `855e8734b919871eac82415465b456add38a3084`.
+Prior bridge security/lifecycle/authority/no-replay review coverage carries forward
+unchanged; the discovery-gap regression coverage is now corrected.
+
+One nonblocking evidence-label correction marks the three web history/search
+reference consumers as `verified-unaffected`: they contain display/GraphQL
+references and do not consume the changed MCP confidence schema. The three labels
+and the suite-provenance clarification above form an evidence-only batch, with no
+production, test or fixture-byte changes. Applicable documentation/checker checks
+and the reviewer's evidence-only recheck bind that batch before packaging.
+
+A separately named output is proposed at
+`/private/tmp/context-router-colleague-pilot-confidence-828ef86`. The unchanged
+packager will record its actual final source SHA and copied-input digest. The
+working tree retains two foreign documentation edits, so `dirty: true` must be
+reported alongside their exact paths/hashes and proof that production inputs equal
+the reviewed commit; do not label the build a clean-commit artifact. Packaging
+awaits coordinator go-ahead after this evidence recheck. Launch/replacement/retest
+still requires the user's separately bounded approval for the exact new candidate.
