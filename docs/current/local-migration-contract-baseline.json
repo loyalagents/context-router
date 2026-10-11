@@ -3748,6 +3748,14 @@
       ]
     },
     {
+      "path": "apps/web/app/dashboard/preferences/PreferencesClient.tsx",
+      "kind": "query",
+      "operation": "LocalSavedPreferences",
+      "rootFields": [
+        "activePreferences"
+      ]
+    },
+    {
       "path": "apps/web/app/dashboard/preferences/components/AuditHistoryTab.tsx",
       "kind": "query",
       "operation": "PreferenceAuditHistoryForTab",

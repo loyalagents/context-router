@@ -67,7 +67,8 @@ model, grants, native lifecycle, dependencies and CI configuration are excluded.
   accepted those settings, but execution-internal model/effort are not independently
   observable. Requested coordinator Astra Extra High is unverified.
 - Owned paths: `PreferencesClient.tsx`, `SuggestionsList.tsx`,
-  `PreferenceItem.tsx`, focused `ai-browser.test.mjs` coverage and this brief.
+  `PreferenceItem.tsx`, focused `ai-browser.test.mjs` coverage, this brief and
+  the additive query-consumer row in the current contract baseline registry.
   Generated GraphQL types may change only as required by the new read query.
   No changes to LocalPage, authenticated helpers, contracts or browser fixture
   are planned. Existing fixture isolation provides fresh state, ephemeral UI/MCP
@@ -141,3 +142,19 @@ record fresh complete-diff review, final local gate and exact-head CI in the PR
 handoff rather than modifying the frozen source solely to append receipts. No
 installed artifact or personal client was changed, and Claude Desktop acceptance
 is not repeated for this display-only slice.
+
+Final qualification correction: the first full gate at `fed2a29` stopped at
+contract-baseline because `LocalSavedPreferences` was absent from the exact
+consumer census. The gate reported caller integrity intact, database removed,
+administration clean and no cleanup errors. Independent review approved adding
+only this query's path/kind/name/root-fields row to
+[`local-migration-contract-baseline.json`](../../../current/local-migration-contract-baseline.json),
+as required by the existing interface policy. This is an additive consumer
+registration, with no schema/semantic fixture, fingerprint or gate change.
+Application source, browser tests and build inputs remain unchanged, so their
+targeted evidence and source review carry forward. Contract/registry checks,
+documentation checks, the full final gate and exact-head CI must run on the
+corrected frozen candidate; the registry delta also receives independent review.
+The amended census passed the checker with a verified merge-base bundle
+(`baseComparison=performed`, 58 consumers), its 55 existing tests, Markdown links
+and whitespace checks. Full final qualification remains pending.
