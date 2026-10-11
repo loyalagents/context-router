@@ -42,3 +42,7 @@ Waiting/running feedback for overlapping AI requests belongs with the separate
 [local AI scheduling follow-up](../local-ai-scheduling/README.md). Coordinate its
 dashboard presentation there with the backend/MCP queue contract; this UI cleanup
 does not introduce queues, retries or concurrent model execution independently.
+
+Provider/model settings and local-versus-cloud destination/consent UX belong to
+the separate [model provider selection follow-up](../model-provider-selection/README.md).
+Coordinate presentation there; this cleanup does not activate provider support.

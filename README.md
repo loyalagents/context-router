@@ -42,6 +42,10 @@ tracked for follow-up after the packaged local workflow is usable.
 [Local AI scheduling](docs/plans/active/local-ai-scheduling/README.md) is a separate
 follow-up after Step 09: bounded waiting first, then a measured concurrency
 evaluation. The current runtime still permits one active AI operation with no queue.
+[Choosing a model provider](docs/plans/active/model-provider-selection/README.md)
+is another deferred follow-up after Step 09: keep CR-managed local inference as
+the default, with optional existing Ollama and explicitly opted-in OpenAI or
+Anthropic APIs. These are proposed choices, not current supported configurations.
 
 ## How The Repo Works
 

@@ -29,6 +29,14 @@ gate. Corrections for automatic status/session checks competing with a lone
 upload remain Step 09 defects; a queue must not conceal those defects. This
 document changes no current runtime, API, queue limit or supported configuration.
 
+Coordinate with the separate [model provider selection follow-up](../model-provider-selection/README.md)
+before extending scheduling to other providers. The one-slot starting point and
+two-slot experiment below concern the existing selected local runtime. Future
+providers need capacity, cancellation and settlement contracts suited to their
+capabilities; do not impose this runtime's slot count or E/H evidence universally.
+Provider switching must not silently redirect or replay queued/active requests,
+and CR never stops or unloads a user-owned external Ollama service.
+
 ## Proposed Checkpoints
 
 Keep the initial queue work in one cohesive PR with internal checkpoints by

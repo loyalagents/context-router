@@ -84,6 +84,11 @@ The most important current decisions are:
   follow-up after Step 09 (LM-024): bounded waiting with one active operation
   first, followed by an optional measured two-slot evaluation. It does not
   renumber Steps 10/11 or add a migration gate; current zero-queue behavior remains.
+- [Choosing a model provider](../model-provider-selection/README.md) is a separate
+  deferred follow-up after Step 09 (LM-025): CR-managed local by default,
+  optional existing Ollama, then explicitly opted-in hosted providers. The
+  reviewed future design must coordinate scheduling and local/cloud destination
+  checks; this direction does not change LM-005's current product boundary.
 
 ## Target Boundaries
 

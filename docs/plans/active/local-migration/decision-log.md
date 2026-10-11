@@ -75,6 +75,9 @@ step plan that resolves them.
   supported capabilities remain deferred to Step 06.
 - Consequence: tests and UI must never imply that a local-only operation stayed
   on-device if it invoked a remote provider.
+- Future direction: [LM-025](#lm-025-choosing-a-model-provider-is-a-separate-product-follow-up)
+  tracks optional provider selection after Step 09. Hosted product inference
+  needs a separately reviewed extension; this entry's current boundary remains.
 
 ### LM-006: Loopback-first service exposure
 
@@ -474,6 +477,25 @@ step plan that resolves them.
   Optional Steps 10/11 are not prerequisites. The product owner and next assigned
   local-AI coordinator own activation and the smallest useful implementation.
 
+### LM-025: Choosing a model provider is a separate product follow-up
+
+- Status: Accepted follow-up direction — user request 2026-10-10; implementation
+  remains deferred until separately activated and reviewed after Step 09.
+- Track [choosing a model provider](../model-provider-selection/README.md)
+  outside the numbered migration. Keep CR-managed local as the default; offer
+  existing Ollama without a duplicate CR model store, and optional OpenAI and
+  Anthropic APIs with explicit off-device opt-in. One provider/model selection
+  initially serves CR's AI features; it does not configure an MCP client's model.
+- Start with the selection contract and Ollama, prove one hosted adapter, then
+  add the second. Runtime ownership, destination checks, credentials, capabilities
+  and scheduling coordination are defined in the canonical follow-up. Per-feature
+  routing, automatic fallback and a broad provider framework remain deferred.
+- This is a future extension to LM-005, not shipped support or present permission
+  for hosted product inference. Preserve application authority/validation and
+  current local evidence; choosing a provider waives no safety or live-run rules.
+- The product owner and next assigned AI-provider coordinator own activation.
+  This adds no Step 09 gate or numbered step; optional Steps 10/11 are not prerequisites.
+
 ## Step 06 Implementation And Evidence
 
 PR [#165](https://github.com/loyalagents/context-router/pull/165) implements the independently selected manual llama.cpp b11146 / Qwen3.5-9B Q4_K_M path on the qualified M1 Max/64 GiB/macOS 15.1.1. Actual application quality preserves the FAILED original scorer verdict and applies only human-approved E's known email omission. No other quality threshold changes. Both AI ports share one private claimed session; uncertain work latches unavailable. The explicit `preview-model` composition opens no listener and never owns inference lifecycle. Text and qualified PDF input are supported; images/OCR are unsupported locally, live Harbor comparison was not needed or run. See [selection](06-local-model/selection.md), [implementation evidence](06-local-model/implementation.md) and [manual operation](../../../useful/LOCAL_MODEL.md). The PR was human-merged at `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`; final head `f004702ef07df59f3cece36e0db0a79aea7055b7` passed standard CI `36487182884` and migration CI `36487183214`, reverified 2026-09-29. Step 07 has separately passed its activation gate; later steps remain inactive.
@@ -496,6 +518,7 @@ The independent-review follow-up passed repeat quality under unchanged E but fai
 | Full UI MCP credentials and optional assisted client setup (LM-022) | [Deferred product follow-up](../mcp-onboarding/README.md), outside numbered migration |
 | Grant feedback, readable client labels and compact history value changes from Step 08 acceptance | [UI usability follow-up](../ui-usability/README.md); revisit after the packaged Step 09 workflow is usable, outside mandatory migration scope |
 | Bounded shared AI waiting, fairness and a later measured concurrency evaluation (LM-024) | [Local AI scheduling follow-up](../local-ai-scheduling/README.md), after Step 09 and outside the numbered migration |
+| Shared provider/model selection, optional existing Ollama and opted-in hosted APIs (LM-025) | [Model provider selection follow-up](../model-provider-selection/README.md), after Step 09 and outside the numbered migration |
 | Application update channel and rollback mechanism | `09-installation-and-packaging` |
 | LAN pairing, credentials, discovery, and TLS expectations | `10-lan-mcp` |
 | Shape of a future hosted deployment | `11-hosting-portability-check` |
