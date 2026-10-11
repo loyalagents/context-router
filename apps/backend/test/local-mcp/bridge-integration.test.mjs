@@ -63,6 +63,14 @@ const set = (client, slug, value) =>
   mutation(client, 'SET_PREFERENCE', {
     preference: { slug, value: JSON.stringify(value) },
   });
+function toolFailure(result, pattern) {
+  assert.deepEqual(Object.keys(result).sort(), ['content', 'isError']);
+  assert.equal(result.isError, true);
+  assert.equal(result.content.length, 1);
+  assert.equal(result.content[0].type, 'text');
+  assert.match(result.content[0].text, pattern);
+  return result;
+}
 function rows(f, sql) {
   const c = f.db.connect();
   try {
@@ -120,6 +128,10 @@ test('real SDK stdio bridge preserves tools/resources, SQLite authority, indepen
     2,
   );
   f.store.rotate(f.a.id, path.join(f.root, 'rotated.token'));
+  toolFailure(
+    await a.client.callTool({ name: 'searchPreferences', arguments: {} }),
+    /Access denied/,
+  );
   await assert.rejects(a.client.listTools(), /Access denied/);
   assert.equal(
     (await b.client.listTools()).tools.some(
@@ -146,14 +158,26 @@ test('real expired session and backend restart require explicit new calls and ne
   // Deterministic server-age manipulation is not evidence of real 35-minute inactivity.
   for (const session of f.runtime.http.sessions.values())
     session.touched -= 36 * 60 * 1000;
-  await assert.rejects(client.listTools(), /not dispatched/);
-  assert.equal((await client.listTools()).tools.length, 5);
+  toolFailure(
+    await client.callTool({ name: 'searchPreferences', arguments: {} }),
+    /Session expired.*not dispatched/,
+  );
+  assert.ok(
+    (await client.callTool({ name: 'searchPreferences', arguments: {} }))
+      .structuredContent,
+  );
   const port = f.runtime.port;
   await f.runtime.close();
   const replacement = await createLocalMcpApplication(f.config, { port });
   f.cleanups.unshift(() => replacement.close());
-  await assert.rejects(client.listTools(), /not dispatched/);
-  assert.equal((await client.listTools()).tools.length, 5);
+  toolFailure(
+    await client.callTool({ name: 'searchPreferences', arguments: {} }),
+    /Session expired.*not dispatched/,
+  );
+  assert.ok(
+    (await client.callTool({ name: 'searchPreferences', arguments: {} }))
+      .structuredContent,
+  );
 });
 test('lost successful mutation response is unknown, commits once, and remains readable without replay', async (t) => {
   const f = await fixture(t);
@@ -163,8 +187,20 @@ test('lost successful mutation response is unknown, commits once, and remains re
     allowSensitive: false,
   });
   const { client } = await connect(f);
+  await client.listTools();
   await create(client, 'synthetic.lost');
-  let injected = 0;
+  const auditBefore = rows(
+    f,
+    'SELECT count(*) n FROM preference_audit_events',
+  )[0].n;
+  let injected = 0,
+    mutationDispatches = 0;
+  const tool = f.runtime.application.get(PreferenceMutateTool),
+    execute = tool.execute.bind(tool);
+  tool.execute = (...args) => {
+    mutationDispatches++;
+    return execute(...args);
+  };
   f.runtime.http.server.on('request', (req, res) => {
     const end = res.end;
     res.end = function (chunk, ...args) {
@@ -178,21 +214,23 @@ test('lost successful mutation response is unknown, commits once, and remains re
       return end.call(this, chunk, ...args);
     };
   });
-  await assert.rejects(
-    set(client, 'synthetic.lost', 'once'),
-    /Outcome unknown/,
+  toolFailure(
+    await set(client, 'synthetic.lost', 'once'),
+    /Outcome unknown.*may have completed.*Inspect state before retrying a write; no request was replayed/,
   );
   await pause(30);
   assert.equal(injected, 1);
+  assert.equal(mutationDispatches, 1);
   assert.equal(
     rows(f, 'SELECT count(*) n FROM preference_audit_events')[0].n,
-    2,
+    auditBefore + 1,
   );
   assert.equal(
     (await client.callTool({ name: 'searchPreferences', arguments: {} }))
       .structuredContent.active.preferences[0].value,
     'once',
   );
+  assert.equal(mutationDispatches, 1);
 });
 test('cancelled admitted mutation may commit once; empty SSE never becomes a confirmed failure', async (t) => {
   const f = await fixture(t);
@@ -202,6 +240,7 @@ test('cancelled admitted mutation may commit once; empty SSE never becomes a con
     allowSensitive: false,
   });
   const { client, transport } = await connect(f);
+  await client.listTools();
   await create(client, 'synthetic.cancel_bridge');
   const tool = f.runtime.application.get(PreferenceMutateTool),
     execute = tool.execute.bind(tool);
@@ -216,7 +255,7 @@ test('cancelled admitted mutation may commit once; empty SSE never becomes a con
     await barrier;
     return execute(...args);
   };
-  // Send a raw request through the actual stdio transport to observe its terminal error.
+  // Send a raw request through the actual stdio transport to observe its terminal tool-error result.
   const prior = transport.onmessage;
   let result;
   transport.onmessage = (message) => {
@@ -242,7 +281,7 @@ test('cancelled admitted mutation may commit once; empty SSE never becomes a con
     params: { requestId: 'cancel-observe' },
   });
   await until(() => result);
-  assert.equal(result.error.data.outcome, 'unknown');
+  toolFailure(result.result, /Outcome unknown.*may have completed/);
   release();
   await until(() => f.runtime.http.diagnostics.active === 0);
   assert.equal(

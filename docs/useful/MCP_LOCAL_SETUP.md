@@ -155,6 +155,15 @@ update only the credential-file path
 before explicitly restarting Claude. Revocation of one instance leaves others'
 authority unchanged. Do not rewrite a live token file expecting credential reload.
 
+For a valid ordinary tool call after initialization, bridge operational failures
+are tool results with `isError: true` and one fixed text block, without
+`structuredContent`. A discovered-schema SDK client resolves `callTool()` with
+that error result; callers must inspect `isError` rather than treating every
+resolved Promise as success. Lifecycle, malformed/duplicate/task-related requests,
+non-tool methods and sanitized backend protocol errors retain protocol errors.
+This gives Claude a tool-result text to consume; actual display/model behavior
+requires a real-client retest and does not guarantee how it chooses later calls.
+
 After thirty minutes idle, the first call can report **Session expired; this
 request was not dispatched**. Make an explicit new request to establish a fresh
 session; the bridge never replays the original. A missing/lost/invalid response,

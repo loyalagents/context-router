@@ -116,6 +116,21 @@ async function fixture(t, custom = () => false, options = {}) {
     stderr: () => stderr,
   };
 }
+const toolParams = { name: 'synthetic', arguments: {} };
+function toolFailure(reply, pattern) {
+  assert.deepEqual(Object.keys(reply).sort(), ['id', 'jsonrpc', 'result']);
+  assert.deepEqual(Object.keys(reply.result).sort(), ['content', 'isError']);
+  assert.equal(reply.result.isError, true);
+  assert.equal(reply.result.content.length, 1);
+  assert.deepEqual(Object.keys(reply.result.content[0]).sort(), [
+    'text',
+    'type',
+  ]);
+  assert.equal(reply.result.content[0].type, 'text');
+  assert.match(reply.result.content[0].text, pattern);
+  assert.doesNotThrow(() => deserializeMessage(JSON.stringify(reply)));
+  return reply.result.content[0].text;
+}
 test('stdio handshake, exact typed IDs, headers and clean EOF preserve backend ownership', async (t) => {
   const f = await fixture(t);
   await f.ready();
@@ -148,7 +163,7 @@ test('404 never replays rejected calls and concurrent next requests share one co
   });
   await f.ready();
   f.send(1, 'tools/call', { name: 'mutatePreferences', arguments: {} });
-  assert.equal((await f.reply(1)).error.data.outcome, 'not_dispatched');
+  toolFailure(await f.reply(1), /Session expired.*not dispatched/);
   assert.equal(
     f.requests.filter((r) => r.message?.method === 'tools/call').length,
     1,
@@ -221,7 +236,10 @@ test('lost or invalid terminal responses are unknown and are not replayed or lea
         arguments: { value: token },
       });
       const r = await f.reply(1);
-      assert.equal(r.error.data.outcome, 'unknown');
+      toolFailure(
+        r,
+        /Outcome unknown.*may have completed.*no request was replayed/,
+      );
       await pause(15);
       assert.equal(
         f.requests.filter((r) => r.message?.method === 'tools/call').length,
@@ -258,13 +276,13 @@ test('cancellation targets original generation and remains usable at request cap
     { limits: { activeRequests: 2 } },
   );
   await f.ready();
-  f.send(1, 'tools/call');
-  f.send(2, 'tools/call');
+  f.send(1, 'tools/call', toolParams);
+  f.send(2, 'tools/call', toolParams);
   await until(() => held.size === 2);
-  f.send(3, 'tools/list');
-  assert.equal((await f.reply(3)).error.data.outcome, 'not_dispatched');
+  f.send(3, 'tools/call', toolParams);
+  toolFailure(await f.reply(3), /capacity reached.*not dispatched/);
   f.send(undefined, 'notifications/cancelled', { requestId: 1, reason: token });
-  assert.equal((await f.reply(1)).error.data.outcome, 'unknown');
+  toolFailure(await f.reply(1), /Outcome unknown.*may have completed/);
   assert.equal(
     f.requests.find((r) => r.message?.method === 'notifications/cancelled')
       .message.params.reason,
@@ -357,14 +375,14 @@ test('cancellation during session renewal prevents dispatch and targets no new g
     }
   });
   await f.ready();
-  f.send(1, 'tools/call');
+  f.send(1, 'tools/call', toolParams);
   await f.reply(1);
-  f.send(2, 'tools/list');
+  f.send(2, 'tools/call', toolParams);
   f.send(undefined, 'notifications/cancelled', { requestId: 2 });
-  assert.equal((await f.reply(2)).error.data.outcome, 'not_dispatched');
+  toolFailure(await f.reply(2), /cancelled before dispatch/);
   assert.equal(
-    f.requests.filter((r) => r.message?.method === 'tools/list').length,
-    0,
+    f.requests.filter((r) => r.message?.method === 'tools/call').length,
+    1,
   );
   assert.equal(
     f.requests.filter((r) => r.message?.method === 'notifications/cancelled')
@@ -402,13 +420,13 @@ test('changed renewal protocol fails before dispatching a new call', async (t) =
     }
   });
   await f.ready();
-  f.send(1, 'tools/call');
+  f.send(1, 'tools/call', toolParams);
   await f.reply(1);
-  f.send(2, 'tools/list');
-  assert.match((await f.reply(2)).error.message, /contract changed/);
+  f.send(2, 'tools/call', toolParams);
+  toolFailure(await f.reply(2), /contract changed/);
   assert.equal(
-    f.requests.filter((r) => r.message?.method === 'tools/list').length,
-    0,
+    f.requests.filter((r) => r.message?.method === 'tools/call').length,
+    1,
   );
 });
 test('renewal notification failure disposes its unpublishable session without dispatching work', async (t) => {
@@ -426,14 +444,14 @@ test('renewal notification failure disposes its unpublishable session without di
     }
   });
   await f.ready();
-  f.send(1, 'tools/call');
+  f.send(1, 'tools/call', toolParams);
   await f.reply(1);
-  f.send(2, 'tools/list');
-  assert.equal((await f.reply(2)).error.data.outcome, 'not_dispatched');
+  f.send(2, 'tools/call', toolParams);
+  toolFailure(await f.reply(2), /connection unavailable/);
   await until(() => f.requests.some((r) => r.method === 'DELETE'));
   assert.equal(
-    f.requests.filter((r) => r.message?.method === 'tools/list').length,
-    0,
+    f.requests.filter((r) => r.message?.method === 'tools/call').length,
+    1,
   );
 });
 test('old-generation cancellation 404 does not settle admitted work or target replacement', async (t) => {
@@ -539,9 +557,9 @@ test('SDK-invalid upstream envelopes become valid fixed unknown errors without r
         return true;
       });
       await f.ready();
-      f.send(1, 'tools/call');
+      f.send(1, 'tools/call', toolParams);
       const reply = await f.reply(1);
-      assert.equal(reply.error?.data?.outcome, 'unknown');
+      toolFailure(reply, /Outcome unknown/);
       assert.doesNotThrow(() => deserializeMessage(JSON.stringify(reply)));
       assert.equal(JSON.stringify(reply).includes(token), false);
       assert.equal(
@@ -553,7 +571,8 @@ test('SDK-invalid upstream envelopes become valid fixed unknown errors without r
 test('malformed input and typed IDs emit SDK-valid uncorrelated errors', async (t) => {
   const f = await fixture(t);
   f.input.write('{malformed}\n');
-  for (const id of [null, 1.5, 'x'.repeat(129)]) f.send(id, 'tools/list');
+  for (const id of [null, 1.5, 'x'.repeat(129)])
+    f.send(id, 'tools/call', toolParams);
   await until(() => f.replies.length === 4);
   for (const reply of f.replies) {
     assert.equal(Object.hasOwn(reply, 'id'), false);
@@ -581,11 +600,11 @@ test('fragmented multibyte UTF-8 survives framing and lifetime IDs require expli
       .arguments.value,
     'café🍎',
   );
-  f.send(2, 'tools/list');
+  f.send(2, 'tools/call', toolParams);
   assert.match((await f.reply(2)).error.message, /Restart/);
   assert.equal(
-    f.requests.filter((r) => r.message?.method === 'tools/list').length,
-    0,
+    f.requests.filter((r) => r.message?.method === 'tools/call').length,
+    1,
   );
 });
 test('shutdown remains bounded with an active request and unresponsive DELETE', async (t) => {
@@ -640,4 +659,112 @@ test('initialization never forwards SDK-invalid optional instructions or server 
         assert.equal(reply.result.serverInfo.icons, undefined);
       }
     });
+});
+
+test('only well-formed ordinary ready tool requests receive fixed tool failures', async (t) => {
+  const sentinel = 'private-name-path-payload-sentinel';
+  const f = await fixture(t, (_req, res, msg) => {
+    if (!msg || msg.method === 'initialize' || !Object.hasOwn(msg, 'id'))
+      return;
+    res.writeHead(403, { 'content-type': 'application/json' }).end(sentinel);
+    return true;
+  });
+  f.send('before-init', 'tools/call', toolParams);
+  assert.match((await f.reply('before-init')).error.message, /Initialize/);
+  assert.equal(f.requests.length, 0);
+  await f.ready();
+  const negatives = [
+    { method: 'tools/list' },
+    { method: 'tools/call' },
+    { method: 'tools/call', params: {} },
+    { method: 'tools/call', params: { name: null } },
+    { method: 'tools/call', params: { name: sentinel, arguments: [] } },
+    { method: 'tools/call', params: { name: sentinel, arguments: null } },
+    { method: 'tools/call', params: toolParams, extra: sentinel },
+    { method: 'tools/call', params: { name: sentinel, task: null } },
+    { method: 'tools/call', params: { name: sentinel, task: {} } },
+    { method: 'tools/call', params: { name: sentinel, _meta: [] } },
+    { method: 'tools/call', params: { name: sentinel, _meta: null } },
+    ...[null, 1.5, Number.MAX_SAFE_INTEGER + 1].map((progressToken) => ({
+      method: 'tools/call',
+      params: { name: sentinel, _meta: { progressToken } },
+    })),
+    ...[null, {}, { taskId: 'valid' }, { taskId: 3 }].map((related) => ({
+      method: 'tools/call',
+      params: {
+        name: sentinel,
+        _meta: { 'io.modelcontextprotocol/related-task': related },
+      },
+    })),
+  ];
+  for (const [index, request] of negatives.entries()) {
+    const id = `ineligible-${index}`;
+    f.input.write(`${JSON.stringify({ jsonrpc: '2.0', id, ...request })}\n`);
+    const reply = await f.reply(id);
+    assert.match(reply.error.message, /Access denied/);
+    assert.equal(reply.result, undefined);
+    assert.doesNotThrow(() => deserializeMessage(JSON.stringify(reply)));
+  }
+  // Unknown domain arguments and extension metadata remain opaque; this is not
+  // a second tool validator. Valid progress tokens do not alter the fixed result.
+  const positives = [
+    { name: sentinel },
+    { name: sentinel, arguments: { payload: sentinel }, opaque: sentinel },
+    ...['token', 0].map((progressToken) => ({
+      name: sentinel,
+      _meta: { progressToken, opaque: sentinel },
+    })),
+  ];
+  for (const [index, params] of positives.entries()) {
+    const id = `eligible-${index}`;
+    f.send(id, 'tools/call', params);
+    toolFailure(await f.reply(id), /Access denied/);
+  }
+  const beforeDuplicate = f.requests.length;
+  f.send('eligible-0', 'tools/call', { name: sentinel });
+  await until(
+    () => f.replies.filter((r) => r.id === 'eligible-0').length === 2,
+  );
+  assert.match(f.replies.at(-1).error.message, /Invalid MCP request/);
+  assert.equal(f.requests.length, beforeDuplicate);
+  assert.equal(JSON.stringify(f.replies).includes(sentinel), false);
+  assert.equal(f.stderr().includes(sentinel), false);
+  assert.equal(JSON.stringify(f.replies).includes(token), false);
+});
+test('backend success, tool errors and sanitized protocol errors keep existing projection', async (t) => {
+  const sentinel = 'upstream-secret-path-payload';
+  const results = [
+    { content: [{ type: 'text', text: 'success' }] },
+    {
+      isError: true,
+      content: [{ type: 'text', text: 'backend tool failure' }],
+    },
+  ];
+  let calls = 0;
+  const f = await fixture(t, (_req, res, msg) => {
+    if (msg?.method !== 'tools/call') return;
+    const value =
+      calls < results.length
+        ? { result: results[calls++] }
+        : {
+            error: { code: -32602, message: sentinel, data: { secret: token } },
+          };
+    res
+      .writeHead(200, { 'content-type': 'application/json' })
+      .end(JSON.stringify({ jsonrpc: '2.0', id: msg.id, ...value }));
+    return true;
+  });
+  await f.ready();
+  for (let i = 0; i < results.length; i++) {
+    f.send(i, 'tools/call', toolParams);
+    assert.deepEqual((await f.reply(i)).result, results[i]);
+  }
+  f.send(2, 'tools/call', toolParams);
+  assert.deepEqual((await f.reply(2)).error, {
+    code: -32602,
+    message: 'Invalid MCP request',
+  });
+  assert.equal(JSON.stringify(f.replies).includes(sentinel), false);
+  assert.equal(JSON.stringify(f.replies).includes(token), false);
+  assert.equal(f.stderr(), '');
 });

@@ -43,6 +43,34 @@ function validResult(value) {
     (object(meta[related]) && typeof meta[related].taskId === 'string')
   );
 }
+// Presentation only: routing and backend validation remain authoritative. Task
+// requests keep protocol errors because this fixed result carries no correlation.
+function ordinaryToolCall(message) {
+  if (
+    !Object.keys(message).every((k) =>
+      ['jsonrpc', 'id', 'method', 'params'].includes(k),
+    ) ||
+    message.method !== 'tools/call' ||
+    !object(message.params)
+  )
+    return false;
+  const params = message.params;
+  if (
+    typeof params.name !== 'string' ||
+    (owns(params, 'arguments') && !object(params.arguments)) ||
+    owns(params, 'task')
+  )
+    return false;
+  if (!owns(params, '_meta')) return true;
+  const meta = params._meta;
+  return (
+    object(meta) &&
+    !owns(meta, 'io.modelcontextprotocol/related-task') &&
+    (!owns(meta, 'progressToken') ||
+      typeof meta.progressToken === 'string' ||
+      Number.isSafeInteger(meta.progressToken))
+  );
+}
 const fault = (kind, status) =>
   Object.assign(new Error(kind), { kind, status });
 const decode = (bytes) =>
@@ -140,6 +168,20 @@ export function createBridge({
         code: category === 'invalid' ? -32600 : -32000,
         message: messages[category],
         data: { outcome },
+      },
+    });
+  }
+  function operationalError(message, category, outcome = 'not_dispatched') {
+    if (!ordinaryToolCall(message)) {
+      error(message.id, category, outcome);
+      return;
+    }
+    send({
+      jsonrpc: '2.0',
+      id: message.id,
+      result: {
+        isError: true,
+        content: [{ type: 'text', text: messages[category] }],
       },
     });
   }
@@ -505,7 +547,7 @@ export function createBridge({
       return;
     }
     if (active.size >= limits.activeRequests) {
-      error(id, 'capacity');
+      operationalError(message, 'capacity');
       return;
     }
     const item = {
@@ -522,7 +564,7 @@ export function createBridge({
       item.session = await ensureSession();
       if (stopping) return;
       if (item.cancelled) {
-        error(id, 'cancelled');
+        operationalError(message, 'cancelled');
         return;
       }
       item.dispatched = true;
@@ -530,7 +572,7 @@ export function createBridge({
         { ...message, id: item.wireId },
         { session: item.session },
       );
-      if (value.cancelled) error(id, 'unknown', 'unknown');
+      if (value.cancelled) operationalError(message, 'unknown', 'unknown');
       else if (value.reply.error)
         send({
           jsonrpc: '2.0',
@@ -544,13 +586,17 @@ export function createBridge({
     } catch (e) {
       if (item.dispatched && e.kind === 'stale') {
         retire(item.session);
-        error(id, 'stale');
+        operationalError(message, 'stale');
       } else if (e.kind === 'authority')
-        error(id, 'authority', item.dispatched ? 'rejected' : 'not_dispatched');
+        operationalError(
+          message,
+          'authority',
+          item.dispatched ? 'rejected' : 'not_dispatched',
+        );
       else {
         retire(item.session);
-        error(
-          id,
+        operationalError(
+          message,
           item.dispatched
             ? 'unknown'
             : e.kind === 'contract'

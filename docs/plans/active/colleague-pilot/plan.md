@@ -549,3 +549,186 @@ reported alongside their exact paths/hashes and proof that production inputs equ
 the reviewed commit; do not label the build a clean-commit artifact. Packaging
 awaits coordinator go-ahead after this evidence recheck. Launch/replacement/retest
 still requires the user's separately bounded approval for the exact new candidate.
+
+### Plan amendment: visible bridge tool failures (2026-10-11, implemented for review)
+
+The approved live Candidate 14 trial recorded no protocol traffic between
+08:29:47.721 and 09:06:12.260 UTC, more than 36 minutes. A catalog tool request
+then received JSON-RPC `-32000` at 09:06:12.271; Claude presented a generic connector
+error and could not distinguish stale-session, unknown-outcome or schema failure.
+The sanitized logs/UI do not retain the exact error body or HTTP status, so stale
+session is an inference, not a proven 404 diagnosis. A separate explicit catalog
+request at 09:07:41.079 succeeded at 09:07:41.111 and returned one synthetic
+definition. No automatic retry was observed. This establishes elapsed inactivity,
+an error and later explicit recovery; it does not complete the canonical idle
+acceptance or prove the hidden error text reached the model.
+
+The coordinator also observed an intentional Claude transport shutdown at
+09:08:47.354 UTC, fresh initialization and discovery at 09:08:55.657, and a
+successful first explicit post-restart catalog read returning one synthetic
+definition. Candidate 14 and the credential were unchanged. This is restart
+recovery evidence for the previous bridge, not acceptance of the presentation
+change or the unlaunched confidence-correction app.
+
+The confidence-correction app has since been packaged and verified at source
+`3dd4f7e635936524afa04e96261df4d6c803c89d`, with production inputs matching reviewed
+`828ef86`. Its external `trial-receipt.json` under
+`/private/tmp/context-router-colleague-pilot-confidence-828ef86` records exact
+source/foreign-doc hashes, copied inputs, compiled-byte equality, manifest/archive
+integrity and limitations. It remains unlaunched and unchanged. The new bridge
+work below does not rebuild or replace that app. No new candidate approval has
+been inferred from the earlier Candidate 14 approval.
+
+**Scope and ownership.** After independent approval of this amendment, the sole
+writer changes only `apps/backend/scripts/mcp-bridge/bridge.mjs`, affected/new
+`apps/backend/test/local-mcp/bridge*.test.mjs` and the test-only
+`apps/backend/test/local-mcp/fixtures/bridge-child.mjs` if needed for bounded
+fixture controls. Documentation ownership is this plan and
+`docs/useful/MCP_LOCAL_SETUP.md`; update derived reference/sink census in
+`docs/current/local-migration-contract-baseline.json` only if these edits actually
+change discovery. No backend output descriptor/contract-fixture, domain/storage,
+auth, lifecycle, native/package, dependency or gate/CI change is intended. The
+coordinator remains repository-read-only and owns all app/client actions. Writer
+and independent reviewer requested Astra `xhigh`; coordinator requested Astra
+Ultra. These are requested/accepted settings, not independently verified runtime
+model/effort claims. Existing foreign files remain untouched and uncommitted.
+
+**Smallest presentation change.** For an already initialized, well-formed ordinary
+`tools/call` request, bridge-origin operational failures become a JSON-RPC success
+envelope containing a `CallToolResult` with `isError: true` and exactly one text
+content block selected from the bridge's fixed allowlisted messages. Include no
+`structuredContent`, custom result payload, upstream text, arguments, credential,
+path or exception. The pinned SDK permits error results without structured
+content after discovery; it still validates structured content when supplied.
+This intentionally changes `Client.callTool()` from a rejected Promise to a
+resolved error result. Callers must inspect `isError`; a resolved Promise does
+not mean the tool succeeded. Actual Claude rendering/model visibility remains a
+human retest question, not a promise from SDK compatibility.
+
+The eligibility guard uses plain-object checks without an SDK runtime dependency.
+It requires a ready stdio lifecycle, the existing valid JSON-RPC request/typed ID,
+only `jsonrpc`, `id`, `method` and `params` envelope keys,
+`method === 'tools/call'`, object params, a string tool name, and arguments absent
+or an object (not null or an array). Any own `params.task` key is ineligible.
+Optional `_meta` must be an object; its optional `progressToken` must be a string
+or safe integer. Any own `_meta['io.modelcontextprotocol/related-task']` key is
+ineligible, whether its value is valid or malformed: task correlation requires
+metadata that this minimal fixed result deliberately does not emit. Other params
+and metadata remain opaque. This is only an error-presentation decision; retain
+existing dispatch/validation behavior and do not validate domain arguments in the
+bridge. Initialization/readiness failures before the stdio lifecycle is ready,
+malformed requests/IDs, duplicate IDs, lifetime ID exhaustion, notifications and
+non-tool methods keep protocol-error behavior. Errors for valid ready tool calls
+cover actual-request stale 404, pre-dispatch unavailability/renewal incompatibility,
+authority refusal, active-request capacity, pre-dispatch cancellation, and
+post-dispatch cancellation/timeout/socket loss/malformed upstream response.
+Keep the existing sanitized backend JSON-RPC error projection and backend success
+or `isError` results unchanged; do not begin forwarding raw upstream errors.
+
+The stale text may say the actual rejected request was not dispatched only when
+that request received the existing verified stale response. Unknown-outcome text
+must retain that a mutation may already have completed, that the bridge replayed
+nothing, and that state must be inspected before retrying a write. Cancellation,
+DELETE and reinitialization responses cannot settle an earlier mutation's outcome.
+No automatic replay, renewal trigger, retry count, generation ownership, session
+cleanup or credential behavior changes. Visible text offers the model guidance;
+it cannot enforce Claude's decisions about later explicit tool calls.
+
+Checkpoints:
+
+1. **Plan review first.** Independent review approves exact guard, semantic-change,
+   fixed-message and evidence boundaries before product edits. Record its hash.
+2. **Tests first, then one rendering change.** Write regressions that fail under
+   the current protocol-error behavior. Through the actual pinned SDK stdio
+   client, call `listTools()` and then a tool on that same client; verify the
+   new fixed `isError` result resolves, contains no structured content, and survives
+   cached read-tool schemas. Exercise stale rejection followed only by a new
+   explicit request/reinitialization; lost mutation reply after exactly one
+   committed mutation/audit, unknown text, no bridge replay, then an explicit read.
+   Cover authority, pre/post-dispatch cancellation, timeout, capacity and failed
+   renewal. Sentinel inputs/upstream errors must not appear in result or stderr.
+   Strict negative cases preserve protocol errors for lifecycle/non-tool/malformed/
+   duplicate/exhausted-ID requests, unknown envelope keys, malformed optional
+   `_meta`/`progressToken`, any own task key, and valid or malformed related-task
+   metadata presence; preserve sanitized backend errors/results.
+   Existing assertions change only for this approved presentation requirement;
+   retain dispatch/commit counts, generation/cancellation and no-replay checks.
+3. **Focused validation and diff review.** Run all `bridge*.test.mjs` plus affected
+   `http.test.mjs`, `lifecycle.test.mjs` and `tools-output-schema.test.mjs` against
+   the existing isolated confidence-corrected backend build after proving its
+   production inputs still match reviewed `828ef86`. No unchanged backend rebuild
+   or app qualification is needed. Run applicable Markdown/checker tests, links,
+   whitespace and real-base contract comparison to detect unintended contract
+   drift. Independently review the complete amendment diff; carry only unchanged
+   prior bridge/backend/package coverage, explicitly excluding superseded error
+   presentation assertions. Resolve blockers before freezing a new bridge commit.
+4. **New bridge snapshot and bounded retest.** Retain all three bridge modules in
+   a new private source-bound snapshot with exact commit/module/Node hashes and
+   review/check receipts; do not overwrite the currently configured snapshot.
+   Keep the confidence-correction app artifact unchanged. Present exact new
+   bridge path, client configuration delta/restart and chosen app for separate
+   bounded approval before any personal-client change or new-app launch. Retest
+   visible failure text and deliberate recovery using approved synthetic data.
+   Do not claim actual Claude acceptance from local SDK tests alone.
+
+No live app/client/endpoint, credential or provider actions belong to the writer.
+The full migration gate, final installed qualification, exact-head CI and remaining
+canonical acceptance still wait for the agreed finalization milestone. This
+amendment prepares a named trial and does not declare final pilot readiness.
+
+#### Visible-failure implementation checkpoint
+
+Independent review approved the clarified plan at full-file SHA-256
+`f69de2b4dbfbe8226d1d820627ef861f14bfa9ba7db8a5cffb6b50f827fa80b1`,
+superseding the provisional earlier hash; the coordinator then authorized
+implementation. There were no remaining plan blockers. Product edits are confined
+to the bridge's eligibility predicate and operational-error renderer. The exact
+fixed messages, HTTP/session/cancellation behavior and existing sanitized backend
+error projection are unchanged. No descriptor, contract fixture, registry,
+dependency, native or packaged-app input changed.
+
+Tests were updated first. Under the unchanged production bridge, the transport
+run reported 14 passed and 25 failed out of 39, with expected protocol-error versus
+tool-result shape failures. All four updated real SDK/SQLite integration scenarios
+then failed for the same old error semantics before the product edit. After the
+minimal renderer change, transport 39/39 and integration 4/4 passed. The final
+focused run after stronger mutation-dispatch assertions and formatting passed:
+
+- `node --test test/local-mcp/bridge*.test.mjs test/local-mcp/http.test.mjs test/local-mcp/lifecycle.test.mjs test/local-mcp/tools-output-schema.test.mjs`:
+  **73 passed, 0 failed**, including all 51 bridge tests. The command ran from the
+  previously isolated backend workspace with updated bridge/test bytes, private
+  synthetic SQLite roots and ephemeral loopback ports.
+- Real SDK cases discover on the same client before authority/stale/lost-response
+  calls, so cached output schemas consume the new error result. The lost successful
+  mutation dispatches exactly once, adds exactly one audit event, reports unknown
+  completion with no replay, and a later explicit read returns the committed
+  value. Cancellation still permits admitted work to commit; no rollback is claimed.
+- Guard/projection cases preserve protocol errors for malformed envelopes, metadata,
+  typed IDs, task/related-task presence, lifecycle, duplicate/exhausted IDs and
+  non-tool methods. They cover capacity, pre/post-dispatch cancellation, timeout,
+  changed renewal, malformed/lost replies and sentinel redaction. Backend success,
+  tool-error results and sanitized backend protocol errors retain prior projection.
+- `node --test scripts/local-migration/check-contract-baseline.test.mjs scripts/check-markdown-links.test.mjs`:
+  **75 passed, 0 failed**. Derived fixture refresh produced no registry delta.
+- Markdown links passed across 145 files; whitespace passed. The required
+  real-base checker passed with `baseComparison=performed` against the previously
+  verified seven-artifact `855e8734` bundle and its recorded manifest hash.
+
+Build provenance is deliberately narrower than whole-tree equality: all **344**
+tracked backend `src` files and build configuration/package inputs present in the
+isolated build were compared byte-for-byte to reviewed `828ef86` and the checkout,
+with zero mismatches. The actual source trees, including copied generated client
+files, also match across all 358 files; the build asset plugin matches reviewed
+`828ef86`. Root package/lock/workspace manifests match that commit, and both
+workspaces resolve dependency symlinks to the same targets. The isolated harness
+omits the hosted Prisma schema/migration and seed tree; those are not inputs to
+this SQLite test build, and equality of those absent files is not claimed. The
+previously built confidence-corrected `dist` remains unchanged. No backend or app
+rebuild was performed for this bridge-only change.
+
+Independent review of the complete amendment diff is next. Prior security,
+credential, lifecycle, no-replay and nullable-confidence coverage may carry only
+where unchanged; prior assertions of protocol-error presentation are superseded.
+No new bridge snapshot has been created, no current snapshot overwritten, and no
+personal configuration/app/client/provider action taken by the writer.
+**Targeted checks passed; final validation pending.**
