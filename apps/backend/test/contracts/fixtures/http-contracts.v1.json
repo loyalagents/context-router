@@ -403,6 +403,17 @@
       },
       "sharedBoundary": "localBrowser"
     },
+    "localSession": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/session",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser"
+    },
     "localMcpList": {
       "mode": "local-ui",
       "method": "POST",

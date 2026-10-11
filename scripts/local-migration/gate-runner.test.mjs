@@ -355,6 +355,8 @@ test("phase environments expose database credentials only to their named consume
   assert.equal(local.DATABASE_URL, undefined); assert.equal(local.MIGRATION_TEST_ADMIN_URL, undefined); assert.equal(local.NODE_ENV, "test");
   const localMcp = buildPhaseEnvironment({ ...base, DATABASE_URL: "ambient-private", MIGRATION_TEST_ADMIN_URL: "ambient-admin" }, "backend-unit-build", { ...values, commandArgv: ["pnpm", "--filter", "backend", "test:local-mcp"] });
   assert.equal(localMcp.DATABASE_URL, undefined); assert.equal(localMcp.MIGRATION_TEST_ADMIN_URL, undefined); assert.equal(localMcp.NODE_ENV, "test");
+  const desktop = buildPhaseEnvironment({ ...base, DATABASE_URL: "ambient-private", MIGRATION_TEST_ADMIN_URL: "ambient-admin" }, "backend-unit-build", { ...values, commandArgv: ["pnpm", "--filter", "desktop", "test"] });
+  assert.equal(desktop.DATABASE_URL, undefined); assert.equal(desktop.MIGRATION_TEST_ADMIN_URL, undefined); assert.equal(desktop.NODE_ENV, "test");
   const smoke = buildPhaseEnvironment(base, "restart-smoke", values);
   assert.equal(smoke.DATABASE_URL, undefined);
   assert.equal(smoke.MIGRATION_TEST_ADMIN_URL, values.administrationUrl);

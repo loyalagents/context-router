@@ -23,9 +23,6 @@ export function useAiOperation(operation: 'analysis' | 'formFill' | 'search') {
   const available =
     supported &&
     (!session || session.capabilities.status.state === 'available');
-  const refresh = () => {
-    void session?.refresh().catch(() => {});
-  };
   const begin = () => {
     if (current.current || !available)
       throw new Error('AI is not ready. Check model status.');
@@ -53,14 +50,12 @@ export function useAiOperation(operation: 'analysis' | 'formFill' | 'search') {
     if (current.current !== controller) return;
     current.current = null;
     setPending(false);
-    refresh();
   };
   const cancel = () => {
     const active = current.current;
     active?.abort();
     current.current = null;
     setPending(false);
-    if (active) refresh();
   };
   return {
     session,
@@ -89,7 +84,7 @@ export function AiControls({
   return (
     <div className="space-y-2 text-sm my-3">
       <p role="status">
-        AI: {capabilities.status.state}.{' '}
+        AI: {capabilities.status.state} (last checked).{' '}
         {!operation.supported &&
           'This operation is not supported by the selected runtime. '}
         {!capabilities.status.configured &&

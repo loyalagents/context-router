@@ -36,6 +36,7 @@ const apiRoutes = new Set([
   '/api/local/unlock',
   '/api/local/logout',
   '/api/local/capabilities',
+  '/api/local/session',
   '/api/local/mcp/list',
   '/api/local/mcp/inspect',
   '/api/local/mcp/grant',
@@ -346,15 +347,16 @@ export class LocalUiBoundary {
     if (
       control ||
       route === '/api/local/capabilities' ||
+      route === '/api/local/session' ||
       route.startsWith('/api/local/mcp/')
     ) {
       const chunks: Buffer[] = [];
       for await (const chunk of req) {
         if (
-          (req as LocalUiRequest & LocalBrowserRequest).bodyBytes > limit ||
-          abort.signal.aborted
+          (req as LocalUiRequest & LocalBrowserRequest).bodyBytes > limit
         )
           return;
+        if (abort.signal.aborted) return rejectUiRequest(res, 401);
         chunks.push(Buffer.from(chunk));
       }
       if (res.writableEnded || res.destroyed) return;
@@ -392,12 +394,13 @@ export class LocalUiBoundary {
           this.sessions.logout(token);
           reply(res, 200, { loggedOut: true });
         } else {
-          const status = await this.ai.getStatus(req[UI_EXECUTION]);
+          const status = route === '/api/local/capabilities'
+            ? await this.ai.getStatus(req[UI_EXECUTION]) : undefined;
           req[UI_REVALIDATE]();
           const remainingMilliseconds =
             this.sessions.remainingMilliseconds(token);
           if (remainingMilliseconds === null) return rejectUiRequest(res, 401);
-          reply(res, 200, {
+          reply(res, 200, route === '/api/local/session' ? { remainingMilliseconds } : {
             capabilities: this.ai.capabilities,
             status,
             remainingMilliseconds,

@@ -17,6 +17,7 @@ import {
   resolve,
   sep,
 } from 'node:path';
+import { assertManagedPathsAccess, assertManagedIdentityMutation } from '../../infrastructure/managed/managed-admission';
 
 import {
   LOCAL_IDENTITY_CANONICAL_BASENAME,
@@ -215,12 +216,20 @@ export class LocalIdentityFileStore {
     return this.databaseTargetId;
   }
 
+  assertAccess(): void {
+    assertManagedPathsAccess(this.stateRoot);
+  }
+
   async prepareRoot(options: {
     create: boolean;
     assertMutationAllowed?: () => void;
   }): Promise<LocalIdentityRootLease> {
-    const assertMutationAllowed =
-      options.assertMutationAllowed ?? (() => undefined);
+    if (options.create) assertManagedIdentityMutation();
+    const assertMutationAllowed = () => {
+      this.assertAccess();
+      options.assertMutationAllowed?.();
+    };
+    assertMutationAllowed();
     const parentPath = dirname(this.stateRoot);
     let rootStats: BigIntStats;
     try {
@@ -760,6 +769,7 @@ export class LocalIdentityFileStore {
   }
 
   private async assertLease(lease: LocalIdentityRootLease): Promise<void> {
+    this.assertAccess();
     if (
       lease.path !== this.stateRoot ||
       lease.parentPath !== dirname(this.stateRoot)
@@ -1263,6 +1273,7 @@ export class LocalIdentityFileStore {
   }
 
   private assertMutationAllowed(lease: LocalIdentityRootLease): void {
+    assertManagedIdentityMutation();
     lease.assertMutationAllowed();
   }
 }

@@ -12,6 +12,10 @@ import {
   contractFingerprint,
   collectGraphqlOperations,
   collectOutboundSinkInventory,
+  collectOutboundSinkFiles,
+  collectContractReferenceFiles,
+  CONTRACT_REFERENCE_ROOTS,
+  OUTBOUND_SINK_ROOTS,
   diffCatalogContracts,
   diffGraphqlSignatures,
   diffHttpContracts,
@@ -644,6 +648,7 @@ test("packaging smoke has exact derived consumers, references, sinks, and curate
         "exec-file": 2,
         fetch: 3,
         "http-client": 1,
+        "node-http-import": 1,
         "net-connect": 2,
         spawn: 2,
         "subprocess-wrapper": 9,
@@ -3023,6 +3028,44 @@ test("automatic outbound inventory pins sink paths, kinds, counts, and classific
       outboundCalls,
     ).some((error) => error.includes("stale outbound sink inventory")),
   );
+});
+
+test("configured discovery includes desktop native sources, excludes generated output and rejects unregistered sinks", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "desktop-contract-discovery-"));
+  try {
+    for (const name of [...CONTRACT_REFERENCE_ROOTS, ...OUTBOUND_SINK_ROOTS,
+      "examples/eval-harbor/tasks/dynamicmem-user001-cp00-02-memory-final-v1/tests/score_dynamicmem_prediction.py",
+      "apps/desktop/native", "apps/desktop/build", "apps/desktop/src", "apps/desktop/test"]) {
+      await mkdir(path.join(root, name), { recursive: true });
+    }
+    for (const [name, body] of [
+      ["apps/desktop/native/extra.mm", 'pid_t owner = fork(); execv(file, argv); connect(fd, address, size); [task launchAndReturnError:&error]; [workspace openURL:url];'],
+      ["apps/desktop/src/extra.mjs", "fetch(url); spawnSync(binary, []); execFileSync(binary, []);"],
+      ["apps/desktop/build/generated.m", "fork();"],
+      ["apps/desktop/test/fixture.m", "fork();"],
+    ]) await writeFile(path.join(root, name), body);
+    const outbound = await collectOutboundSinkFiles(root);
+    const references = await collectContractReferenceFiles(root);
+    for (const files of [outbound, references]) {
+      assert.ok(files.has("apps/desktop/native/extra.mm"));
+      assert.ok(files.has("apps/desktop/src/extra.mjs"));
+      assert.equal(files.has("apps/desktop/build/generated.m"), false);
+      assert.equal(files.has("apps/desktop/test/fixture.m"), false);
+    }
+    const discovered = collectOutboundSinkInventory(outbound);
+    assert.deepEqual(discovered.find(row => row.path.endsWith('.mm')).sinks,
+      { 'native-connect': 1, 'native-exec': 1, 'native-fork': 1, 'native-task-launch': 1, 'native-url-open': 1 });
+    assert.deepEqual(discovered.find(row => row.path.endsWith('.mjs')).sinks,
+      { 'exec-file': 1, fetch: 1, spawn: 1 });
+    const errors = validateOutboundSinkInventory(discovered, [], []);
+    assert.ok(errors.some(error => error.includes('missing outbound sink inventory apps/desktop/native/extra.mm')));
+    assert.ok(errors.some(error => error.includes('unclassified outbound sink apps/desktop/src/extra.mjs')));
+    assert.deepEqual(collectOutboundSinkInventory(new Map([["example.mjs", "object.connect(); fork();"]])), []);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+test('aliased Node HTTP imports remain outbound tripwires when transport is dependency-injected',()=>{
+  const files=new Map([['apps/desktop/runtime/download-engine.mjs',"import {request as connect} from 'node:https'; const transport=connect; transport(url, options);"]]);
+  assert.deepEqual(collectOutboundSinkInventory(files),[{path:'apps/desktop/runtime/download-engine.mjs',sinks:{'node-http-import':1}}]);
 });
 
 test("base comparison mode fails closed when the aggregate gate requires evidence", () => {

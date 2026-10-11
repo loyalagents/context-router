@@ -2,6 +2,9 @@ import * as fs from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { X509Certificate } from 'node:crypto';
 import { isAbsolute, join, resolve } from 'node:path';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const { managedModelAuthority } = require('../../managed/managed-admission.js');
 
 const unavailable = () => new Error('MODEL_UNAVAILABLE');
 const marker = Buffer.from('context-router/local-model-session/v1\n');
@@ -15,9 +18,14 @@ function rootPath(value) {
 const overlaps = (left, right) => left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`);
 
 /** Exclusive manual-session claim. No network, runtime control, claim deletion or recovery. */
-export async function claimManualSession(configuration, { fileSystem = fs, uid = process.getuid(), now = Date.now() } = {}) {
+export function claimManualSession(configuration, options) { return inspectSession(configuration, options, true); }
+/** Strict read-only input for public health polling; returns no credential and creates no claim. */
+export function inspectManualSession(configuration, options) { return inspectSession(configuration, options, false); }
+async function inspectSession(configuration, { fileSystem = fs, uid = process.getuid(), now = Date.now() } = {}, claimSession) {
   let directory;
   try {
+    const authority = managedModelAuthority(configuration);
+    authority?.assertHeld();
     const { root: rootInput, identityRoot: identityInput, databaseRoot: databaseInput, port } = configuration;
     const root = rootPath(rootInput); const identityRoot = rootPath(identityInput); const databaseRoot = rootPath(databaseInput);
     if (!Number.isInteger(port) || port < 1 || port > 65535 || !Number.isInteger(uid) || uid < 0 || !Number.isFinite(now) ||
@@ -46,6 +54,7 @@ export async function claimManualSession(configuration, { fileSystem = fs, uid =
     }
     const pins = await ancestry();
     async function recheck() {
+      authority?.assertHeld();
       const current = await ancestry();
       if (current.length !== pins.length || current.some((entry, index) => !same(entry.stats, pins[index].stats)) ||
           !same(await directory.stat({ bigint: true }), pins.at(-1).stats)) throw unavailable();
@@ -78,15 +87,19 @@ export async function claimManualSession(configuration, { fileSystem = fs, uid =
       if (!same(before, after, true)) throw unavailable();
       await recheck(); return bytes;
     }
-    const keyBytes = await readPrivate('api-key.txt', 65);
-    const apiKeyText = new TextDecoder('utf-8', { fatal: true }).decode(keyBytes);
-    if (!/^[0-9a-f]{64}\n?$/.test(apiKeyText)) throw unavailable();
+    let apiKeyText;
+    if (claimSession) {
+      const keyBytes = await readPrivate('api-key.txt', 65);
+      apiKeyText = new TextDecoder('utf-8', { fatal: true }).decode(keyBytes);
+      if (!/^[0-9a-f]{64}\n?$/.test(apiKeyText)) throw unavailable();
+    }
     const certificate = new TextDecoder('utf-8', { fatal: true }).decode(await readPrivate('server-cert.pem', 32768));
     if (!/^-----BEGIN CERTIFICATE-----\r?\n(?:[A-Za-z0-9+/]{1,80}={0,2}\r?\n)+-----END CERTIFICATE-----\r?\n?$/.test(certificate)) throw unavailable();
     const x509 = new X509Certificate(certificate);
     if (!x509.ca || x509.issuer !== x509.subject || !x509.verify(x509.publicKey) || x509.checkIP('127.0.0.1') !== '127.0.0.1' ||
         !(Date.parse(x509.validFrom) <= now && now < Date.parse(x509.validTo))) throw unavailable();
     await recheck();
+    if (!claimSession) return Object.freeze({ port, certificate, expiresAt: Date.parse(x509.validTo) });
     const claimPath = join(root, 'backend-session.claim');
     const claim = await fileSystem.open(claimPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW | constants.O_NONBLOCK, 0o600);
     let written;

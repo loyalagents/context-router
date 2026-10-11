@@ -2,7 +2,7 @@
 
 - Status: agreed execution preferences; future steps remain inactive until activated
 - Owner: migration coordinator; sole writer is assigned per activated branch
-- Last reviewed: 2026-10-03
+- Last reviewed: 2026-10-10
 - Read when: activating/planning Steps 04–11 or assigning their agents
 
 This is a staffing, risk, and sequencing guide, not an approved implementation
@@ -247,6 +247,13 @@ OS evidence cannot be replaced by a model review; do not imply Windows support
 from macOS/Linux tests. A second PR is justified only by a genuinely useful,
 safe landing boundary, not by separating scripts, tests, and docs.
 
+During human feedback, provide source/artifact-bound trial builds after the
+necessary package checks and affected safety/compatibility reviews. State the
+bounded retest and pending qualification; do not make every trial wait for full
+final qualification. Batch corrections, then qualify the frozen end-of-round
+artifact under the [validation policy](../../../useful/AGENT_WORKFLOW.md#validation-and-context-discipline).
+Trial status changes no personal-state, live-model or recovery authority.
+
 Use the Step 06 manual setup as evidence for an app-private model runtime and
 assets. Re-review the process/download/credential/update ownership transition;
 manual setup does not by itself qualify a managed sidecar or final shell choice.
@@ -287,8 +294,14 @@ parallel lanes, internal checkpoints, intended PR count, review dimensions,
 failure evidence, and exact validation commands using
 [`step-template.md`](step-template.md).
 
-Use targeted tests between checkpoints and retain the final full local migration
-gate plus applicable final pushed-head CI. Review and validation may overlap on
-a frozen candidate with isolated resources; fixes invalidate affected evidence.
+Assign targeted checks and affected reviewer rechecks during correction rounds;
+batch findings rather than restarting all mandates after each fix. Record the
+agreed finalization milestone and trial handoff criteria. At finalization retain
+the full local migration gate, applicable installed/manual qualification,
+independent complete-diff review and final pushed-head CI. Existing CI triggers
+are unchanged. Review and validation may overlap on stable inputs with isolated
+resources; explain expensive runs, preflight prerequisites, and renew affected
+evidence after changes. Follow the canonical validation policy, not per-agent
+duplicate test runs or new approval ceremonies.
 Keep human merge ownership and close the previous step while activating the
 next, not through a standalone closeout PR.

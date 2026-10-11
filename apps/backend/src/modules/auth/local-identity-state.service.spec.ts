@@ -543,7 +543,7 @@ describe('LocalIdentityStateService', () => {
       }),
     };
     const service = new LocalIdentityStateService({
-      fileStore: { openReadyState } as never,
+      fileStore: { openReadyState, assertAccess: jest.fn() } as never,
       repository: {
         acquire: jest.fn(async () => {
           events.push('acquire');
@@ -570,6 +570,7 @@ describe('LocalIdentityStateService', () => {
     };
     const service = new LocalIdentityStateService({
       fileStore: {
+        assertAccess: jest.fn(),
         openReadyState: jest
           .fn()
           .mockResolvedValueOnce(first)
@@ -596,7 +597,7 @@ describe('LocalIdentityStateService', () => {
     };
     const openReadyState = jest.fn(async () => readyState());
     const service = new LocalIdentityStateService({
-      fileStore: { openReadyState } as never,
+      fileStore: { openReadyState, assertAccess: jest.fn() } as never,
       repository: {
         acquire: jest.fn(async () => session as never),
       },

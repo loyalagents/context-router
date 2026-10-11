@@ -1,0 +1,861 @@
+# Step 09 Independent Review Ledger
+
+- Current plan revision: P2.3; all named dimensions approved for implementation
+- Product implementation: starting with failing managed-admission tests
+- Sole writer: `/root`; all other agents read-only
+- Last updated: 2026-10-06
+
+## Inventory And Settings
+
+The user requested coordinator GPT-6 Astra Extra High. The current serving
+model/effort is not independently exposed, so that setting is recorded as
+requested, not verified. Each child dispatch below explicitly requested its
+model/effort with a fresh context; dispatch acceptance does not verify serving
+internals. No model fallback has been silently assumed.
+
+| Agent | Requested | Mandate | Observable limitation |
+| --- | --- | --- | --- |
+| `/root` | `gpt-6-astra`, `xhigh` | Coordinator and sole writer of all repository files, tests, generated output, Git and PR | Serving settings unobservable |
+| `/root/packaging_inventory` | `gpt-6-astra`, `high` | Production closure/platform inventory; separate acceptance/compatibility inventory; provenance and certificate metadata | Explicit dispatch accepted; serving internals unobservable |
+| `/root/lifecycle_inventory` | `gpt-6-astra`, `xhigh` | Browser authority, model admission and exact process-ownership inventory | Explicit dispatch accepted; serving internals unobservable |
+| `/root/recovery_inventory` | `gpt-6-astra`, `xhigh` | Persistent roots, matching-pair backup/restore, interrupted updates and recovery inventory | Explicit dispatch accepted; serving internals unobservable |
+
+All investigators made no edits, builds, tests, native executable experiments,
+downloads, Git changes or personal configuration changes. The available agent
+capacity initially rejected a fourth investigator, so the High investigator
+received the separate acceptance mandate after completing packaging inventory.
+Inventory observations are inputs, not technical-plan or release approvals.
+
+## Plan Reviews
+
+| Revision | Reviewer and named dimensions | Findings/disposition | Verdict |
+| --- | --- | --- | --- |
+| P1, SHA-256 `af7a18bf75989db450d0a6fd068b246e5f8e9994fa6785d15cce58ad336ca973` | Fresh `/root/plan_architecture_security`, requested Astra `xhigh`; dispatch accepted, serving internals unobservable | No blockers; preserves shared owner, separate credentials, admission, irreversible claims and fail-closed uncertainty. Native selected-model and concrete P2 mechanisms remain gates. | Approved for bounded checkpoint 1 only |
+| Same P1 | Fresh `/root/plan_persistence_recovery`, requested Astra `xhigh`; dispatch accepted, serving internals unobservable | No blockers; matching-pair, post-identity initialization failure, explicit restore authority and code/data separation preserved. P2 obligations below. | Approved for bounded checkpoint 1 only |
+| Same P1 | Fresh `/root/plan_compatibility_platform`, requested Astra `high`; dispatch accepted, serving internals unobservable | No blockers. Preserves six modes/twelve phases and consumer contracts; source isolation requires more than PATH, exact CI discovery and native scoped deferral remain P2 gates. | Approved for bounded checkpoint 1 only |
+
+P1's review boundary is the full plan with a bounded executable checkpoint 1.
+The recorded hash binds its reviewed technical text before root updated the
+approval/status metadata. Only those editorial status lines changed afterward;
+the technical scope and checkpoint bounds are unchanged.
+Passing that review permits only its enumerated probes. Broad implementation
+requires measured selection evidence and an approved P2 revision. Material
+changes renew affected review; unrelated approvals can carry only with an
+explicit impact assessment. Final implementation review must be fresh,
+independent and cover the entire frozen base-to-candidate diff.
+
+## Obligations Carried Into Measured Selection And P2
+
+The persistence reviewer explicitly requires these before implementation approval:
+
+1. Enumerate durable generation states/crash points. Uncertain state precedes
+   child admission; clean completion follows observed exits. Partial, missing
+   or corrupt metadata and crashes during cleanup remain fail-closed; lock
+   availability is not proof of old-operation quiescence.
+2. Define every actor in maintenance exclusion, including installed CLI and
+   preserved source/manual commands. SQLite locking alone does not prove all
+   original administrators stopped/reaped.
+3. Define restore destination selection and explicit cutover with listeners
+   stopped. Exercise restored revoked/rotated MCP authority and grants, not
+   merely byte/principal matching.
+4. Establish update authenticity, compatibility/security-floor authority and
+   enforcement order before accepting distribution. Checks precede every
+   version-specific persistent mutation, including initialize/seed/upgrade.
+
+The architecture reviewer also found stale Step 08 status in LOCAL_UI and the
+acceptance introduction; root reconciled those descriptions without changing
+acceptance results or P1 technical content. Plan links and diff checks passed.
+
+The compatibility reviewer requires exact child source/toolchain isolation,
+actual custom-server UI/MCP/SQLite/PDF/CLI evidence, named test commands plus CI
+discovery (current native tests cannot be assumed to run on Ubuntu), explicit
+native Windows/Linux results or scoped deferral, and fresh installed evidence
+rather than reusing Step 08's accepted unverified observations. These remain P2
+and installed-product evidence gates. All three reviewers independently verified
+P1's SHA-256 and made no writes or executable experiments.
+
+## Checkpoint 1 Probe Reviews
+
+See [measured evidence](feasibility.md) for exact file/payload bindings, red/green
+results and limitations. Architecture/security reviewer approved the initial
+three-file native fixture implementation as synthetic probe evidence only.
+Compatibility reviewer approved the exact acquired certificate closure for
+isolated generation/TLS/claim tests. Both reviewers remained read-only. Neither
+approval authorizes product adoption or substitutes for actual native model,
+installed recovery, platform or signing evidence.
+
+## Proposed Native Proof P1-N.1
+
+The first security/process review requested changes: cancellation during setup
+could still launch inference, memory failure could write after control EOF, and
+cleanup was outside the advertised time bound. Root wrote failing deterministic
+tests and added a shared stop controller with a monotonic budget and cleanup
+reserve. Re-review required monotonic per-stage timing and rejection of a health
+response received after its readiness deadline; root corrected both.
+
+Architecture/security reviewer explicitly approved P1-N.1 for presentation to
+the user for separate execution approval, with all blockers resolved:
+
+| Input | SHA-256 |
+| --- | --- |
+| `native-probe.md` proposal | `bea1d9f653262be22dd4714f80869cff38a18e2e6c3199cb6de3b58f5e7949a1` |
+| `native-measurement.mjs` | `1aba588abde72477a3633af94f3b5a42924b7a4e571d4e4e17e17d7edac23d18` |
+| `native-control.mjs` | `e6b801f471ebe265c9a31913fd8d902de3afdea44c732a7092a00b7995eda0a2` |
+| `native-control.test.mjs` | `509aab104f4ee00bd25d493f6e9b374822b9b807f6d62d937f70bd696f4f2e09` |
+| `native-owner-probe.c` | `bf15bf86da0f77f281e0c265fffb0fed4acaad3c06ea1a1aa77038a73db089ba` |
+| `native-owner.test.mjs` | `d00a1097ad3f1c5a2851ebdd537555a1b7ff18f4345e2da772dee4b67b83cf5b` |
+| `certificate-generator.mjs` | `5927a60206b130b477bd26efb843cd2602e0e5f9538ef8ff7b2dfcbe72a31c2b` |
+
+Root requested explicit user approval for the exact two-session/two-completion,
+six-minute cached-asset experiment and scoped native Windows/Linux qualification
+deferral. On 2026-10-06 the user replied **“approve both”** to those two requests.
+This authorizes one P1-N.1 command within the fixed reviewed limits and defers
+native Windows/Linux product qualification for the Apple Silicon pilot. Neither
+platform may be represented as supported. It does not extend native execution
+limits or authorize a release, personal installation or public distribution.
+The frozen proposal above retains its pre-approval wording for hash binding;
+this ledger records the subsequent approval. No live execution had occurred
+when this approval was recorded. Signing identity and private release destination
+remain missing inputs and distribution limitations.
+
+## Native Proof Preflight Failure And P1-N.2 Review
+
+P1-N.1 stopped before certificate closure import or any native model launch:
+`sessions: []`, `cleanupErrors: []`, 5.023 seconds. Its failed receipt is retained
+under private root `context-router-step09-native-6YirQd`; see the
+[evidence](feasibility.md#native-proof-preflight-failure-before-model-execution).
+
+The compatibility reviewer independently established a sorting-only discrepancy:
+the exact same 814 files / 2,266,576 bytes reproduce the original reviewed hash
+under Python Path component ordering and the runner's actual hash under full-path
+string ordering. Receipt and generator remain unchanged. Root corrected the
+expected pin, documented its ordering, and changed only the revision and approval
+guard. A read-only Node closure check passed without package imports or model
+starts. Syntax, 177-file Markdown links and diff checks passed.
+
+Architecture/security reviewer independently approved P1-N.2 for presentation
+to the user for renewed execution approval, with no blocking findings:
+
+| Input | SHA-256 |
+| --- | --- |
+| `native-probe.md` P1-N.2 | `21c61e12204afe176dc9301784c372bd654a84e0b586a536ebc61d5d093c4a6c` |
+| `native-measurement.mjs` P1-N.2 | `10a879107166633b51ab4279a94963dfdff9d8e4eb7afee03a9ae55f7eaab144` |
+
+Reversing exactly those changes reconstructs the prior approved runner hash
+`1aba588abde72477a3633af94f3b5a42924b7a4e571d4e4e17e17d7edac23d18`.
+Control, control tests, native owner, owner tests and generator retain their
+approved hashes; affected review explicitly carries their approval forward.
+All lifecycle, resource, time and privacy bounds are unchanged. The frozen
+proposal retains its pre-review status line; this ledger records the verdict.
+The reviewer performed reads/hashing only. Requested Astra/xhigh remains
+unobservable beyond accepted dispatch.
+
+The user subsequently instructed **“could you approve all of those items and
+implement it?”** This supplies renewed execution approval for the concrete
+reviewed P1-N.2 proposal and authorizes continuing implementation and bounded
+installed-app qualification. Root will define and independently review those
+later bounds before execution; this does not authorize unbounded experimentation.
+The P1-N.1 failure remains preserved. The Windows/Linux deferral remains in force.
+Actual signing credentials/access and private release destination cannot be
+supplied by an approval statement; their evidence remains missing. Root cannot
+perform the user's human acceptance or assert it passed. The requested outcome
+remains one draft PR, with no automatic merge or public release.
+
+## Node Signature Probe P1-V.1
+
+The compatibility reviewer rejected the initial plan's circular use of staged
+target Node as its own verifier. Root changed it to the established trusted host
+Node and renewed review. P1-V.1 was explicitly approved, followed by actual
+43-file payload inspection before any import. No other package/dependency was
+installed, and no GPG/personal configuration changed.
+
+| Approved input | SHA-256 |
+| --- | --- |
+| P1-V.1 plan | `fda0d25dcdca3607a2a69e20f04d2acd4f63c2277b89ab23d52794cae75ae964` |
+| Private acquisition receipt | `5b7349dde7016c7a2f58bcfc9fa89f3f071a3f91e6a359abcfe6fcd312a630bd` |
+| Package file aggregate | `790d7fcc974b20537c36db113d4ae415d51b466254818237f55b6d9e66019da5` |
+| Node ESM entry | `9274be7afb7fe902c39acb686066c379874e8a444b7d10fea3f5eab60596f95e` |
+| Acquisition script | `33c518957310404193b6f462063c8e10277904de2ea4eeb55e14f87162fc8374` |
+
+Aggregate construction hashes sorted `package/`-relative-to-temp-root paths,
+NUL and binary file SHA-256, with no additional separator. The actual signature,
+tamper, fingerprint and process/network-denial tests subsequently passed; see
+[evidence](feasibility.md#node-archive-signature-verification). This closes the
+Node archive proof only, not application signing/distribution acceptance.
+
+## P2 Measured Selection And Implementation Approval
+
+P1-N.2 passed after renewed user approval: two fresh sessions/completions in
+33.394 seconds, selected native FD retention and exact cleanup, no errors.
+Receipt SHA-256 `e712a01190edc7c3fd9e3f0367c8ce9fd727aab66f70f253a81f3ec5ec98adc5`.
+The P1-N.1 failure is retained. Broad implementation waited for the following
+independent plan reviews; no product files were changed before these approvals.
+
+| Revision | Finding/disposition | Independent approval |
+| --- | --- | --- |
+| P2 `05879eb1374fb2ba8d1c15245f2840c0da9f0f2dfdb31f5f58478e8b141aa7f0` | Measured native/AppKit/production closure selection; finite prepare, one application/model owner, role capability, exact shutdown and uncertainty | Architecture/security approved; persistence requested retained SQLite intrinsic-recovery exception |
+| P2.1 `f0bab47a96cb7711000c74e7254ce99176163bd98b7a0e81bb68da6fce36dec1` | Package/management/floor before state access, filesystem before native open, exact schema/target before application mutation with intrinsic hot-journal exception; valid v1 setup resume explicitly upgrades | Persistence approved; architecture/security approval carried forward |
+| P2.2 `4e2226af53bf5aafd5fef422e11e34a50d14abbd41dbd5c38a29b7ef46f4eca3` | Concrete desktop commands, existing gate phase/allowlist/matrix, Darwin arm64 job/filter prerequisites and fixture/local-artifact evidence split | Architecture and persistence approvals carried forward; compatibility requested native registry discovery coverage |
+| P2.3 `44927f62ffc256f634eda99200fc9b349eaf49ba843764452ea440de0d2e5b54` | Explicit desktop package/reference/outbound roots, native extensions/sink tripwires and negative discovery tests | All named dimensions approved; no remaining blockers |
+
+Final P2.3 mandates: `/root/plan_architecture_security` approves architecture,
+scope, measured selection, process ownership, security, credentials and privacy;
+`/root/p2_persistence_review` approves initialization, persistence, backup/restore,
+updates and recovery; `/root/recovery_inventory` approves critical compatibility,
+testing, platform and scope evidence. All requested Astra `xhigh`, with accepted
+dispatch but serving internals unobservable. Three attempts to dispatch a separate
+Astra `high` compatibility reviewer were rejected by agent-thread capacity; root
+reused the existing Extra High reviewer for the cross-cutting process/storage test
+mandate. This is not a claim that a separate High review ran. Earlier P1 ordinary
+High inventory remains factual input only.
+
+Each reviewer independently verified hashes and carried forward only explicitly
+unaffected coverage. All remained read-only. Root subsequently changed only P2.3's
+status line to approved; its reviewed technical text remains unchanged. The planned
+[consumer map](consumers.md) was captured before product edits; actual paths and
+fingerprints must land with code. These approvals do not substitute for final
+full-diff review, actual installed qualification, exact-head CI or human acceptance.
+
+## Checkpoint 2 Incremental Implementation Reviews
+
+The read-only persistence reviewer `/root/p2_persistence_review` approved managed
+storage admission after purpose-guard, observable rollback/worker-exit and uncertain
+fixture-cleanup findings were corrected. Reviewed 14-file aggregate SHA-256:
+`440e3987b1d02e4dbc2fb5a3796bcc7e28b9d3e4c0be5401bd4bfc093be01f55`
+(sorted relative path + NUL + binary file digest). Admission-file binding at that
+storage review: `e42fa11908c14fe6495c72d26ad290548381bdd5f738588d181a369fa1ac592d`.
+Root reported 26 native and 183 targeted backend tests green; reviewer did not execute.
+Approval assumes the trusted guardian path and excludes guardian/control/menu.
+
+The read-only architecture/security reviewer `/root/plan_architecture_security`
+approved the next readiness/model-revocation/PDF increment after three corrections:
+all main-thread authority failures abort model work, every worker-establishment
+failure notifies the supplied validated shared flag, and the parser's drain promise
+does not retain completed document results. Missing/malformed-journal active-model
+fixtures failed before the fix and passed after it. Current approval bindings:
+
+| Source | SHA-256 |
+| --- | --- |
+| `managed-admission.ts` | `1f511e8f63eaa132ef45e2f86e26cef9aee0afd09d6ecc522067c8d1e6de8512` |
+| `managed-readiness.mjs` | `7e3bf18468e7faaadc1c7d9fae92c131db6a7ddd720af3af9fc7bdd2b33b263b` |
+| `manual-session.mjs` | `20d4444546aa6cb67249e70771c8270c372b1a4238c0a461f7a9b550671fb68a` |
+| `local-model.service.ts` | `d6ef3e56c8b3599636192e2a6cc9a7a8964ec543a30335f7cf83b3fc0ed5b14b` |
+| `pdf-process.mjs` | `07dfee7e06b83e6f313a7e9155328a051036078b40d562c2b76663321ca8faa8` |
+
+Root subsequently completed the full ten-test PDF rerun successfully. Both roles
+requested Astra `xhigh`; serving settings remain unobservable. These are incremental
+reviews; neither substitutes for fresh independent final full-diff review.
+
+### Native integration, installed CLI and download follow-up
+
+Read-only architecture/security approved runtime control, native guardian and
+later menu/download corrections. Persistence approved the named recovery delta
+at eight-file aggregate `433513a8b048ab20527eaf4c2aa02a059680f0378c807ae11bf2f170c5649c8f`;
+native guardian's earlier seven-file binding was
+`11242512944cf28e8198833800bf8e8294842888e797059ffbc8aaff737118cc`.
+The affected maintenance/download/diagnostics approval from
+`/root/p2_persistence_review` binds its fourteen files to
+`5810addf498b2c96a1e0f10b3f34700a422a12783eba00846731556b5ec0b55e`
+(sorted relative path + NUL + binary file SHA-256). EOF acknowledgment failure,
+reaped downloader descriptor release, required offline-prepare entrypoint and
+pre-Node FD4 isolation were corrected and tested. The reviewer inspected the
+passing actual installed receipt and empty cleanup list; it did not execute tests.
+
+`/root/plan_architecture_security` approved menu sleep-notification ordering,
+post-launch exit observation, duplicate cancel coalescing and download transport
+cleanup. Binding before subsequent status/port changes: menu
+`ab6373b94c0e6f4c1b4bf97cc3c688832785d21cb707561c73baf1f854ed19c0`,
+process `97b5bf62a97ea7a2249d4db46a36b4986e55258076febddc53da397c77900e6e`,
+download engine `9520eccd38c8084565ca5e1ce4a4eb49c282c5291e3bda9a1b5a1c82c0edccdc`,
+download entry `91648fa8140f2a8bff903cda5be563d75d71723c9984c750d451b3d56bb95a28`,
+lifetime `8e3d106fbe378e470479345c1dddfb145c1a5f62d64d79008ed66f5fdcd4e411`.
+
+Affected architecture/security rechecks approved accepting the backend's legitimate
+`busy` status, exact model/runtime metadata pins and mandatory `prepare-store.mjs`.
+Manifest JS binding `65fe09bab4c6a29d0a12d423e6512fa6aa6e20d36910dccdfd4d18b15984a516`;
+native package `ab550f1ead0cd70fea3c6f7aa24af004bf0d4c4eb5225642170d63c3d8e14b3c`.
+The busy regression reproduced erroneous shutdown before correction, then passed.
+
+The same reviewer approved the narrow fixed-MCP-port clarification before its
+implementation and the resulting code afterward: menu
+`36f6f4a10d8cd06c2f062b85a838ef3554897679854ff2e31ab4faba1f30ba26`,
+supervisor `8ca826d2d5d0018972ebc414f59e3c4b62a4603a0c32c9c201898cdb919185c5`.
+Requested nonzero ports are probed with SO_REUSEADDR before envelope admission;
+the probe closes and does not reserve the port. A later race still fails closed.
+The test now asserts absence of the whole fresh envelope, unchanged existing
+metadata and a still-usable occupying listener. Final installed restart after real
+MCP traffic must renew TIME_WAIT evidence against that code.
+
+### Proposed installed live bound
+
+`/root/recovery_inventory` approved the corrected opt-in executable read-only:
+`live-installed.mjs` SHA-256
+`dd323fa303a33b95371296e88c93f377fb49f88405c956a4e1453a65e02d95e2`;
+proposal SHA-256
+`9097eecbd74f10e19f1763b91e5711ec8466b0ecf4c0673d281b67c7e33bbf99`.
+It accepts legitimate loading status, rejects late protocol failure, binds final
+journal generation, memoizes cleanup observation and terminates the harness at
+the absolute deadline while preserving uncertainty. The actual public route
+enforces 2,048 output tokens, so the original 128-token execution authorization
+cannot cover it. No new live execution occurred. The final candidate binding and
+explicit expanded-limit user approval remain required by the
+[proposal](installed-live-proposal.md). Code review is not execution approval.
+
+These reviewers requested Astra Extra High; serving settings remain unobservable.
+All incremental approvals carry forward only unaffected dimensions and do not
+substitute for the fresh final complete base-to-candidate review.
+
+
+## Fresh Final Reviews And Affected Rechecks
+
+Fresh role reviewers `/root/final_architecture`, `/root/final_persistence` and
+`/root/final_compatibility` verified the complete 144-file initial snapshot,
+aggregate `454abfbffb26efad7ee0daccbc2034398123297abb73e890be4491bc01e89572`.
+Their blocking findings were corrected: provider coupling through filesystem
+helpers, healthy model-loading presentation, absent-identity bootstrap recovery,
+controlled prepare failure versus uncertain exit, installed post-backup authority
+coverage, and authenticated non-AI continuity after model invalidation. The
+[implementation evidence](implementation.md) preserves tests and failed gates.
+
+Each verified the 147-file R2 snapshot at aggregate
+`ce85a1f10326f9e4c734060c5a3da9e3c85ed1dd8931821115553d9bae12f96a` and approved
+its affected source dimensions, carrying unaffected complete-diff coverage forward.
+Compatibility additionally approved the installed MCP success-shape correction:
+`installed-smoke.mjs` SHA-256
+`89920048a85203fbe9a7e7e2be53d6387c337ec73344f95a800479a12e069bf8`.
+Its updated live-harness binding is
+`1cfc136c528207b53eb0da6e328343c52d6fc7e59266ef53bab2d443c05e39c3`, with proposal
+`080140af73edf0e7c4857b8f8ecb74b08099231c2f1d7f57c5b805a61a880f0b`.
+These supersede the earlier harness bindings only; execution remains separately
+bounded and requires the explicit proposed token-limit approval.
+
+The second gate exposed an unmanaged workerData compatibility regression. The
+unchanged strict fixture policy remained intact. `/root/final_compatibility`
+approved the conditional admission field and new real-worker regression, binding
+`sqlite-local-identity-coordination.ts` to
+`641a6e4e4c098c872f53cbe4cb7b341a72a5ca773c5cdf20088ad637021aaea1` and
+`coordination.spec.ts` to
+`b0b77adfadfdefd26fbc4e5518dc6e27dd866a972cb8427d0c0d0e3ac43aae0c`.
+Managed authority/revocation and native lifecycle are unchanged. Corresponding
+source-model, coordination and real managed-worker tests passed after review.
+
+All fresh reviewers requested Astra Extra High, with actual serving settings
+unobservable. Root remains sole writer. Source approval is complete for these
+bindings; final artifact qualification, full gate and exact-head CI remain required.
+
+
+### Candidate 05 Artifact Evidence
+
+`/root/final_persistence` inspected Candidate 05's actual installed smoke and closed
+the post-backup authority-restoration finding. Binding: package manifest
+`a3f624fb6dacf12e73b0a36a6dfdd0ce41713cf0d58076a5aac221a573f9d6eb`, harness
+`89920048a85203fbe9a7e7e2be53d6387c337ec73344f95a800479a12e069bf8`, receipt
+`18fd47c308d6f47c737cf3cb580dfaa20850203a6235c9e7c77e7d4c88979f26`.
+All five exact guardians exited zero; final journal was matching/quiescent/ok and
+cleanup empty. Persistence/recovery approval covers this candidate. Unaffected
+architecture and compatibility coverage carries forward.
+
+`/root/final_compatibility` verified the unchanged reviewed live executable and
+concrete candidate-binding JSON at
+`19b49efdf891c9eefb487bd54b01d64f0663b82bfdf6cf3da55d03354b90d90a` and found it
+ready for an explicit user approval request. This is not execution approval.
+The final local gate passed on the same copied source inputs as Candidate 05;
+exact-head CI and pending acceptance classes remain separate.
+
+
+Compatibility independently checked all 149 closeout files at aggregate
+`158df68d45856997d78a0b746b96ddc25d6222d303d2be9c8fe9302c9d77673d`, including
+actual build, installed-smoke and final-gate receipts. It found no evidence or
+compatibility blocker. The only non-document delta after R3 is removal of one
+trailing ASCII space on `diagnostics.m` line 3: old SHA-256
+`8de913e8b4dff4b53208f84709643d460d9aace0de78b285184c980090e212a6`, new
+`5aaeaecb3ee91982fc4c2f5e686688172cd9df1cef3a971bf9cc8e2443564f70`.
+The reviewer reconstructed the exact prior bytes and approved carry-forward
+without repeating the full build/gate for this nonsemantic byte and nine
+status/evidence documents. This paragraph and the corresponding explicit
+implementation-evidence exception record that verdict; PR-link updates are
+bookkeeping. No functional input changed. At this review, live/CI/human checks were unrun;
+final pushed-head CI evidence is tracked on PR #168.
+
+
+### External Review Corrections (2026-10-07)
+
+The user supplied an independent Claude Code review of `1211a20` and authorized
+root to implement the agreed corrections. The prior approvals missed lifecycle
+cases; they do not override these findings. Root reproduced F1, F2 and a stronger
+F4 late-unlock/drain lockout before editing. One cohesive PR remains in use.
+
+- F1: fixed shell output failure dropping child drain evidence. Append/flush
+  failure now discards the shell sink permanently while child records continue.
+  Diagnostic failure is distinct from malformed application evidence.
+- F2: fixed orderly CLI cancellation incorrectly becoming uncertain. Explicit
+  quit is distinct from EOF/failure; acknowledgment follows native drain and must
+  match actual normal exit without force. SIGHUP is handled. Independent review
+  found an additional quit-write/completion race; a deterministic failing fixture
+  preceded the narrow lone-quit EPIPE correction. Capability/start failures remain
+  fatal, and abnormal/forced exits remain uncertain.
+- F3: added executable model-child fixtures for FD3-only inheritance, early exit,
+  non-AI control continuity, drain-before-TERM, real bounded KILL escalation and
+  the actual application invalidation handler. These do not qualify real llama
+  inference or the packaged dynamic-library closure.
+- F4: fixed validated stale cancellation and late responses; Quit wins over
+  Restart. A late unlock could previously discard a batched drain and block
+  relaunch, so root assessed this as P2 rather than the review's P3.
+- F5: fixed transient independent lock contention with a 250 ms monotonic bound
+  on fresh-descriptor reacquisition. Persistent holders and changed metadata or
+  lock identity still refuse and poison the owner.
+- F6: added explicit native-only offline download cleanup, strict complete
+  preflight, exact two-link publication recovery, revalidation and directory
+  synchronization. It cannot clear an active/uncertain journal or overwrite the
+  recovery acknowledgment of a non-ready/pending installation.
+
+Read-only review mandates: `/root/review_shutdown_revision` approved F1/F3/F4;
+`/root/review_persistence_revision` approved F2/F5;
+`/root/final_compatibility` approved F6, documentation and installed-smoke changes.
+All requested Astra `xhigh`; serving settings remain unobservable. Root is sole
+writer and owns all test execution. These are affected-delta rechecks; unchanged
+complete base-to-candidate coverage above carries forward. No blocker remains in
+those source mandates. Aggregate of the 28-file correction snapshot before this
+ledger/status bookkeeping:
+`7c430fbbd7a497a8f9bcd0cfea0ed2447fe2572eee136530ff6700fad971bd91`.
+
+Targeted red/green runs covered the reported failures. A first saturation fixture
+exceeded the private protocol's frame bound; pacing corrected the fixture without
+weakening that limit. Its claim is output saturation; the existing native queue
+fixture separately proves the two-second deadline. The first real rotation fixture
+used the wrong operation basename; it was corrected to `identity.operation.json`,
+then actual cancellation and named recovery passed. Existing behavioral assertions
+were unchanged. The first complete native run passed 148/149 tests in 206.236 s;
+the menu fixture failed to link the newly required cleanup compilation unit. Its
+compiler source list was updated, with no assertion changes, and the targeted menu
+check passed in 1.624 s. A complete-suite rerun will be recorded with final PR evidence.
+All 44 portable tests, documentation links and the contract baseline also passed.
+
+Candidate 05 and its gates remain historical evidence. A clean-commit rebuild,
+renewed installed smoke (including cleanup), full local gate and exact-head CI are
+required for these substantive corrections. Their final receipts and commit/artifact
+bindings must be recorded on [PR #168](https://github.com/loyalagents/context-router/pull/168).
+Expanded live execution remains separately unapproved; human/signing acceptance
+is not satisfied by deterministic fixtures or CI.
+
+### External Re-review Lifecycle Corrections (2026-10-07)
+
+The user authorized fixing the confirmed N1/N2 findings and N3 operator clarity
+after root reproduced them against Candidate 06. Before product edits,
+`/root/review_shutdown_revision` approved the N1 plan including the menu delivery
+race at plan SHA-256
+`1cb8ef0a64699a5dbee4fa6795aa5afcfd0fea632764bdb872632bc21f1eaeb1`.
+`/root/review_persistence_revision` and `/root/final_compatibility` approved their
+N2/N3 mandates at the preceding plan SHA-256
+`a6b8e64ee97f88fdadc0635a31e224a82115788ff8e5831d8a9122c3d31b79cd`;
+the subsequent refinement concerned menu delivery only. All requested Astra
+`xhigh`; serving settings remain unobservable. Root remains sole writer.
+
+N1 separates strict wire validation from ephemeral token availability in the
+guardian and menu. Missing leaves are harmless only under a valid pinned export
+parent; unsafe existing files still fail. Stop-time records remain validated but
+do not read/display tokens. N2 records explicit signal cancellation separately
+from quit, EOF and failure; completion still requires native drain and matching
+normal exit, with the native maintenance proof unchanged. N3 retains strict
+inventories and documents only exact offline owned regular Finder-file removal.
+
+Candidate 06 at `9b9c5ab` completed its rebuilt installed smoke, all twelve local
+gate phases and both exact-head CI workflows. The re-review's N4 missing-evidence
+claim is therefore stale. Those receipts remain historical evidence after these
+new lifecycle changes; renewed revision-bound receipts belong on PR #168.
+
+Affected implementation approvals: `/root/review_shutdown_revision` approved N1,
+`/root/review_persistence_revision` approved N2/N3, and `/root/final_compatibility`
+approved the shared helper, documentation and compatibility delta. The complete
+21-file delta before this evidence bookkeeping had sorted `path NUL sha256 LF`
+aggregate `8d5604548a39522d4355053e87cc0cfe6865d5d7826d9372e30fe5a8bffbd4e3`.
+Unchanged earlier complete-diff coverage carries forward; no source blocker remains.
+
+Tests preceded product edits and reproduced N1/N2. The first menu fixture needed
+the missing `sys/stat.h` include. The first post-fix run exposed test markers
+inside the sealed bundle, causing correct package-refusal on relaunch; moving
+those fixture markers outside the bundle preserved the package invariant. A
+guardian availability check initially landed in the ready branch instead of the
+unlock branch; the initial-ready regression caught it and it was corrected.
+Then 35/35 targeted checks passed. Independent reviewers identified a scheduling
+assumption in the new double-unlock assertion; the corrected test accepts either
+valid delivery ordering and checks the final token. Additional actual-application
+restart coverage proves later CLI admission. All 50 portable tests, all 179 native
+tests (zero skips, 265.195 s), Markdown links and the standalone contract baseline
+passed. Clean-commit package/installed smoke, full local gate and exact-head CI receipts
+are recorded on PR #168. Earlier failed runs are retained, not replaced by passes.
+
+### CI Saturation Fixture Follow-up (2026-10-07)
+
+At `9e2abbd`, Candidate 07 packaging and its eleven-phase installed non-AI smoke
+passed and received independent evidence approval. Standard CI passed seven jobs
+but failed the existing saturation test (178/179 native tests): after resuming
+stdout at 2.6 seconds, the guardian did not exit by the fixture deadline. A
+host-dependent buffer-fill/timer interleaving is the inferred cause, not a measured
+buffer size. Root changed only test synchronization: observe exact process `exit`
+while output stays paused, fail at fifteen seconds, then resume in `finally` so
+`close` can finish. Exact normal exit 1, failed quiescence and relaunch assertions
+remain, as do the independent queue/deadline test and all product limits.
+
+`/root/review_shutdown_revision` independently approved the plan and implementation
+at test SHA-256 `f83297fed4c312a46f167bcb54a82c4f3d0c42a9a0e61d063ab4b3105e2705f8`.
+All eight targeted tests passed (17.159 s), followed by all 179 native tests with
+zero skips (261.049 s). Earlier source approvals carry forward.
+Root gracefully cancelled the superseded local gate during phase eleven before
+tracked edits. Its retained summary records cancellation, caller integrity true
+and a SIGINT cleanup/evidence error; the external summary destination had not been
+precreated. The canonical retained resource journals show every owned resource
+closed/exited/removed, with no recovery required; the exact Docker ID was confirmed
+absent. This cancelled run is not a passing gate. Candidate 07 receipts and the CI
+failure remain historical. Final native, rebuilt candidate, installed smoke, full
+local gate and final-head CI receipts are tracked on PR #168.
+
+### Human Restart Navigation Correction (2026-10-09)
+
+Candidate 08 human testing exposed a stale dashboard tab after Restart: the UI
+port is ephemeral, while the menu opened the browser only at initial readiness.
+Root remains sole writer. `/root/review_restart_dashboard`, requested Astra
+`xhigh` with actual serving settings unobservable, independently approved the
+bounded plan and implementation over `15306f15e5823bbb144175f757ab7b0743461813`.
+The menu rearms browser opening only on explicit Restart and consumes it at
+validated readiness, suppressed during stopping/quitting/broken control. The
+confirmation, unlock screen and installed runbook explain fresh login and the
+current dashboard address; terminal instructions and 429 retry guidance remain.
+
+The new native regression failed before the production change, then all three
+targeted menu tests passed (5.301 s). It captures actual selected origins across
+three generations, exact opening counts, failed replacement startup and stopping,
+quitting/broken-control negatives without opening the user's browser. A preliminary
+fixture compilation failure from a superclass property-name collision was fixed
+before recording the expected behavioral failure. The reviewer bound approval to
+menu SHA-256 `d4c0cf868949fcbf34ddc9612fe59ddc1a2c5a2bea0fe2bf573f4ffa1bd04094`
+and fixture SHA-256 `b4851ba2a831028a9a91c7fb4171e2c77441fa52f6b21a89c851303ad557cae7`.
+The web production build passed. Three affected real-browser checks passed
+(8.089 s), retaining consumed-token rejection and capacity retry. Their first
+sandboxed attempt failed before readiness; the isolated loopback/browser run
+outside the sandbox passed without product or assertion changes. Markdown links
+and diff whitespace checks passed.
+
+Carry forward unaffected complete-diff coverage for supervisor draining/reaping,
+storage/recovery, session authorization, transport contracts, packaging integrity
+and model lifecycle. No backend behavior or HTTP contract changed. Rebuilt
+candidate, installed smoke, final full gate and exact-head CI evidence belong on
+PR #168; Candidate 08 remains historical and the user's running copy is untouched.
+Human retest, live-model and signing/platform acceptance remain separate.
+
+### Disconnected Dashboard Correction (2026-10-10)
+
+The user requested a usable current dashboard or an explicitly retired obsolete
+tab. Process inspection also confirmed the retest had launched the older `$app`
+after staging Candidate 09 separately. Root remains sole writer; the existing
+affected reviewer `/root/review_restart_dashboard` (requested Astra `xhigh`, actual
+serving settings unobservable) approved the bounded browser-only plan. Connection
+failures must be distinguished from HTTP rejection, malformed responses and
+storage errors; late failures must respect session epochs. No timeout, discovery,
+credential transfer, write retry or programmatic browser close is introduced.
+
+Two new browser regressions failed for the missing disconnected screen before
+implementation. An earlier fixture check incorrectly expected exit 0 after
+SIGTERM; it was corrected to the source launcher's explicit exit 143 before the
+behavioral red run. A fresh production web build and ten focused browser checks
+then passed (21.101 s), covering stopped-runtime authenticated/locked tabs,
+restoration failure, real session revocation/fresh unlock, delayed failure after
+Lock and new login, both 429 cases, normal profile editing, absolute expiry and
+late history/grant/revoke responses. The reviewer approved the affected
+implementation without blockers, bound to `LocalSession.tsx` SHA-256
+`bdb1e01d0ae41b211ed7a043b54b1f533d6893701dab5866936165e496a8a9bf`
+and `browser.test.mjs` SHA-256
+`457d29d3935263a0822ad3bb820a625510548eb7a4d79f939f5a841dfc7ba151`.
+Targeted rebuilt-artifact evidence is recorded with the retest candidate.
+
+Carry forward unaffected native menu/guardian, backend authorization, transport,
+storage/recovery, model lifecycle and packaging implementation reviews. The new
+browser presentation and epoch changes require renewed affected review. Per the
+user's incremental-validation instruction, this is an acceptance-round correction:
+full local migration gate, complete installed qualification, final review and
+exact-head CI remain pending for the eventual frozen final candidate. Candidate
+09's broader passes remain historical for the changed browser inputs.
+
+### Model CDN Redirect Correction (2026-10-10)
+
+Candidate 10 human testing found an immediate consented-download failure. The
+pinned public URL returned a redirect to the exact documented Hugging Face CDN
+host `us.aws.cdn.hf.co`, absent from the shipped policy. Root is sole writer;
+`/root/review_download_cdn` (requested Astra `xhigh`, actual serving settings
+unobservable) approved the bounded plan at SHA-256
+`b306fdd5c4d234d5ac357dbea803636a045f55eaac552b141d693979800ddb0b`.
+
+Tests preceded the one-host production addition: both new CDN-path cases failed
+under the original policy. All 19 targeted downloader and real-TLS cancellation
+checks then passed, zero skips (244.798 ms). They exercise the production source
+URL/host policy with tiny bytes, accepted redirect, digest rejection, private
+stage cleanup and unsafe destinations rejected before contact. A 30-second
+header-only public probe with bundled Node followed the corrected policy to HTTP
+200 and exact pinned content length; it requested no model body. Immutable source,
+size, SHA-256, TLS and all existing download limits remain unchanged.
+
+The reviewer approved implementation without blockers, bound to model-assets
+SHA-256 `7fc8e03589a9e12953524022829ee1c2b5cd39e5deeb64630a88582215a77a6c`,
+download test `34b4c627a9222006fa9d3f29ecd055c00efa1696858b2605fe77522d8aba6afb`
+and bounded probe `32b744319440619e18e812c645c3e9ea7007ac500071cba8016e6dfc20a8e28d`.
+Clean-commit packaging, package verification, copied-policy identity and the same
+probe using packaged Node/runtime are the approved targeted artifact checks for
+the next human retest. Retain Candidate 10's failure and unaffected browser,
+native ownership, persistence and backend authorization review coverage. This
+is not live model-download/inference evidence or renewed final qualification:
+full local gate, applicable installed qualification, independent final review,
+exact-head CI and remaining human acceptance stay pending.
+
+### Upload Admission And Private Status Correction (2026-10-10)
+
+Candidate 11 human PDF upload failed busy with no other AI request running.
+A synthetic fixture independently reproduced private menu polling reserving
+admission and rejecting a file operation with zero active inference. Root remains
+sole writer; `/root/review_upload_status` (requested Astra `xhigh`, actual serving
+settings unobservable) approved the bounded plan at SHA-256
+`f88edc354cfd46241d528e438801ed0ebccb5667985288faf7cdf7aeb247f8a3`.
+
+Track observed readiness as unqualified/qualified/failed. Repeated private status
+reads the observation after current authority/expiry, lifecycle and busy checks;
+only initial unqualified status can initiate qualification. Observed operational
+unavailability updates the display without introducing a lifecycle latch. Public
+status and every real request keep full qualification, admission and recovery.
+Menu availability is the last qualification plus current ownership/admission,
+not continuous reachability. Native model exit still invalidates the generation.
+
+Tests preceded product edits: five regressions failed, including both text and
+PDF admission collisions, while four safety checks passed. The backend build and
+57 targeted adapter, managed startup, session and real Nest consumer checks then
+passed (17.257 s, zero skips). Coverage includes actual PDF parsing, failed
+observation and explicit recovery, preparation failure, settlement exclusion,
+caller controls, shutdown, authority/expiry, and generation authentication/model
+revalidation after observed availability with zero unsafe user-data dispatch.
+
+The reviewer approved implementation and bounded artifact probe without blockers,
+bound to service SHA-256
+`24a1e94be1e27e22c872cb227eccd8e05d04974f90c920f02e3a74305b2691b7`,
+new test `54709ddbc587a27946922c412399499813816cbedcf32f666d06ddec5175b722`
+and managed-readiness test
+`6fd4678fd902c7d3f7381b79d853ab175cc7a3810b51b82a91988b218ff3a8e5`.
+The approved retest build uses a clean local commit, package verification and
+the nine new regressions against packaged Node/adapter/PDF worker with disposable
+TLS fixtures. Repository fixture generation is a harness dependency; this is
+not source/toolchain-denial or complete installed qualification. No personal
+document, running installation or live model is accessed by the agent.
+
+Carry forward unaffected native ownership, browser authorization, storage and
+download review. Human PDF retest, full local gate, applicable installed/live
+qualification, independent final review and exact-head CI remain pending for the
+frozen end-of-round candidate. Keep the original human failure and red evidence.
+
+### Browser Focus And Successive Upload Admission Correction (2026-10-10)
+
+Candidate 12 human upload still reported busy. A deterministic browser/backend/
+TLS/PDF fixture reproduced a second self-race: file-picker focus started a full
+capability probe, which reserved model admission and rejected upload with zero
+inference completions. Root remains sole writer. The affected reviewer
+`/root/review_upload_status` (requested Astra `xhigh`, actual serving settings
+unobservable) approved the bounded plan before implementation and its final
+retest-packaging clarification at SHA-256
+`5a6e5507c39b52a79bf1df67d3970c4724324d2e23577c6a3d68ffe6b2e9e394`.
+
+Automatic focus/pageshow/visibility checks now use authenticated, non-renewing
+`POST /api/local/session`, returning only remaining lifetime without model I/O.
+Completion/cancellation no longer starts a competing full probe. Explicit model
+checks and initial unlock/restoration retain full qualification. The display
+identifies model availability as last checked; single model admission is unchanged.
+
+Tests preceded product edits: four HTTP regressions and two browser regressions
+failed as expected. Backend/web builds and all 34 HTTP/session checks passed.
+The first 12-case browser/transport run passed 11 tests; the new PDF test's empty
+synthetic suggestions correctly produced `no_matches`, exposing a fixture mistake.
+Only that test's response was corrected to a grounded Greek name proposal. Its
+recheck plus eight affected restart/session/MCP browser regressions passed, 9/9.
+Carry forward the 11 unaffected passes, not the earlier failed PDF assertion.
+This is 20 distinct green browser/transport cases across those two runs, not one
+all-green 12-case run. Keep every failure log. Contract inventory and Markdown
+checks passed; the contract check had no base comparison and is not a final gate.
+
+The reviewer approved implementation, tests and bounded artifact probe without
+blockers after adding the new route to the HTTP fixture and refreshing exactly
+four derived references. Approval binds HTTP boundary SHA-256
+`7bf20bd4d242493f95c7d9d7e2fdd5808c500580021701e38c206ab88f435730`,
+LocalSession `c1a1274bf3d5e14a8a5377765f7af2eabe7890bcb3d816f5dda0b4280a7c96e3`,
+AiControls `b09f0f746bd8e973df389ce248ba8a6572d3f00cbad175bffcb3452b1c0c95e8`,
+HTTP fixture `443018d9f07dd4dde2cfd5112d10bf879d4a157f7e23267eca100405cff738bb`,
+registry `b9a592a4d0e715101fef9b5bb15c5fae8cd3e93f9089ebc7851c9672fd5ee689`
+and probe generator
+`87937b855e60d67ddca30ed74f4c06cac20127da8aa02d1c43fdf53948b0ab71`.
+
+Commit only this correction's product/tests/contracts/docs. Concurrent unrelated
+documentation changes may remain: root README, Step 09 README, migration decision
+log/orchestration, UI follow-up README and the local-AI-scheduling plan directory.
+The retest receipt must retain `dirty: true`, enumerate that remainder and bind
+the exact copied-input digest. Packaged browser validation uses actual bundled
+Node/backend/web/PDF worker with fresh disposable roots and synthetic data.
+Repository Playwright, PDF/TLS fixtures and the peer fixture's unused source-dist
+LocalModelService remain harness dependencies. This is not native guardian,
+source/toolchain-denial, live-model or complete installed qualification.
+
+Carry forward unaffected lifecycle/native/storage/download implementation review.
+Human PDF retest and the frozen final candidate's full local gate, applicable
+installed qualification, independent final review and exact-head CI remain pending.
+
+### Iterative Validation Policy Amendment (2026-10-10)
+
+The user authorized a docs-only policy pass in the existing checkout. This chat's
+root is the sole writer for that pass; product implementation/qualification is not
+part of it. Preserve the pre-existing local-AI-scheduling changes and their owner.
+The amendment distinguishes iterative correction, bounded source/artifact-bound
+human retests, and frozen final qualification; it changes sequencing, not required
+gates, CI, safety/experiment authority, historical evidence or release readiness.
+
+`/root/step09_delivery_review` independently approved the proposed sequencing with
+no blockers (existing configured settings retained; actual serving settings
+unobservable). Fresh `/root/validation_policy_diff_review` approved the scoped
+nine-file diff with no blockers. The coordinator requested GPT-6 Astra `high` for
+that bounded policy-consistency review; actual serving settings were unobservable
+to the reviewer. Unrelated AI-scheduling edits were excluded from both mandates.
+
+Final review binds these file SHA-256 values; this evidence-only ledger append is
+not included in its own digest. This is policy approval, not product qualification:
+
+```text
+34b981098d210fe0ae92cd5278de5fcc80447ab4ead27a00051231b9d1bfa68f  AGENTS.md
+b253a3251b0624b4aeb8eaccf01c074aa932d6af6706e833e527db7bf8a8f2e9  CLAUDE.md
+200dc7444fd7756586ee96eb41b8bd0ac979148def9eead0b9a7659222c11cd7  docs/useful/AGENT_WORKFLOW.md
+c73fae9977dee803af020edacde4e9374b4dfc867606e90531fab5d9e6f11d23  docs/plans/active/local-migration/orchestration.md
+36ab3bbc7c94d1851cd1335d9eac3f750d20672c50829d14e80662c59c64254f  docs/plans/active/local-migration/agent-execution.md
+b69d8b19562b1f83b804963ee12571eb55f438b2c85fffacacb602309e466dcc  docs/plans/active/local-migration/step-template.md
+a7ab9abe33ca219fcc727f1bb52b068d1006a1012d34a8bbb9cd797fdeac4a21  docs/plans/active/local-migration/09-installation-and-packaging/README.md
+d782f372c99e54cae1be41f45a03f5ded9157a4fb07541f567e5a876c5723e3b  docs/plans/active/local-migration/09-installation-and-packaging/plan.md
+77389cd2bbd9fcf6cf56d3e0fe105a86ba5011d3d86ad1f87e59570ad2dad026  docs/plans/active/local-migration/09-installation-and-packaging/acceptance.md
+```
+
+Validation uses pinned Node 24.21.0/pnpm 10.25.0: `pnpm check:toolchain`,
+`node scripts/check-markdown-links.mjs` and `git diff --check` passed. No product
+tests, package rebuild, installed qualification, full migration gate or CI run was
+needed for this docs-only pass. All required final product checks remain pending
+for the end-of-round candidate; no commit, push or merge was performed here.
+
+### Candidate 13 Final Review And Execution Evidence (2026-10-10)
+
+After the user ended routine manual feedback, root resumed sole-writer/executor
+ownership for final qualification and evidence. The separate policy/documentation
+writers finished their bounded work and are idle; preserve their authorized edits.
+No product edits were made after `5759b8f0ca07b4bebe5da579f941266f5d2a5127`.
+
+Three fresh read-only reviewers covered the complete 188-file base-to-candidate
+snapshot, SHA-256 `4101e8a23fb3764ed7d88e375c104635edaaa19b9b9963c5cb2c939d2318e837`,
+against base `7328ceea63a784577594d52af18062be8b583855`. Requested versus actual
+settings remain distinct:
+
+| Reviewer | Requested model/effort | Verdict |
+| --- | --- | --- |
+| `/root/final13_architecture_security` | GPT-6 Astra / Extra High | PASS; no architecture, security or process-ownership blocker |
+| `/root/final13_persistence_recovery` | GPT-6 Astra / Extra High | PASS; no persistence, recovery or update-safety blocker |
+| `/root/final13_compatibility_evidence` | GPT-6 Astra / High | PASS; no compatibility, discovery, platform-scope or artifact-binding blocker |
+
+Actual serving settings were unobservable for every reviewer; no claim that the
+requested settings were verified is made. Each mandate verified the snapshot.
+Compatibility also reproduced the 2,458-file copied-input digest, verified all
+39,542 bundle entries and found only documentation differences from its retained
+build source. Reusing the identical Candidate 13 payload is approved; retain the
+original `dirty: true` receipt rather than relabeling it a clean rebuild.
+
+The complete native suite passed 180/180 with zero skips. Its isolated retained
+build has 813 matching product/test/script/toolchain inputs and a byte-identical
+native binary. The installed smoke passed 11 phases with five guardians exiting
+zero, all final events stopped/ok and empty cleanup. Compatibility independently
+inspected the receipt and matching quiescent journal.
+
+Compatibility approved the concrete live proposal before the user approved its
+expanded bound. The single execution passed in 68.273 seconds: three generations,
+two completions, one expected AI rejection after invalidation, continued authenticated
+non-AI access, new certificate after restart, preserved identity and clean exit.
+The reviewer verified proposal/artifact binding and final durable quiescence.
+The run consumed its authorization; no further run is implied.
+
+During qualification, the separate documentation owner completed a deferred
+scheduling clarification. Compatibility reviewed the one-file delta at SHA-256
+`84e2f8e3910dca98ea5c96ac82ce288d9a454442a81f973573a6887940fbdf3c`: planning only,
+no Step 09 product, gate or authority change. Carry forward complete product review
+and runtime evidence; renew documentation checks and review evidence/status edits.
+The [Candidate 13 evidence](qualification-candidate13.json) records artifact and
+execution receipt hashes. Full local gate completion and exact final-head CI remain
+separate requirements. Human observations, Step 06 E/H and all release/platform/
+recovery limits remain explicit in [acceptance](acceptance.md).
+
+Compatibility subsequently approved the 11-file evidence/status delta against the
+frozen gate workspace, aggregate SHA-256
+`61a13cca08e4dcd39a606336a9ff9418278485a121c91740cd3758b27886d0d3`
+(sorted `path NUL hex-digest LF`). No product input changed. Carry forward product
+review and installed/native/live validation; no rebuild or broad repetition is
+required for that delta. Later actual gate/CI receipt and status updates require
+accuracy/documentation checks without reopening unchanged product review. This
+review-record append is outside its own digest.
+
+The full local gate then passed all 12 phases and final cleanup in 1,409.095 seconds.
+Compatibility independently approved the observation-derived gate record at SHA-256
+`76564e0a0359c58d3ca17a426a5fd3b77b07076a80260931063e53c9c58ebaca`: the original
+running/pre-cleanup summary is unchanged, while terminal success/exit zero and
+resource removal support the separate final verdict. Markdown links and whitespace
+checks passed. Final-head CI is recorded on the PR after this evidence commit;
+these pre-push records do not assert a CI pass. Product approval and unchanged
+validation carry forward.
+
+### External Review F1: Sleep During Shutdown (2026-10-10)
+
+Claude reviewed exact head `0aa8e870faf8c8cfc44eac6c833a8488c7e9d33b` and raised
+one P2 blocker. Root confirmed the native clock includes system sleep and an
+expired stop deadline can force the application, creating uncertain state that
+blocks supported reopening/maintenance. This is a scheduling race, not every sleep,
+and does not establish data loss. The user authorized correction.
+
+`/root/sleep_clock_review` independently approved the bounded plan: shared
+`CLOCK_UPTIME_RAW` lifecycle timing, separate sleep-inclusive menu TTL, unchanged
+durations/ownership/drain rules, deterministic sleep and awake-time regressions.
+Requested GPT-6 Astra Extra High; actual serving settings unobservable. Root is
+sole writer. Affected implementation review passed on the 12 product/test files at aggregate
+SHA-256 `9bb2815cdd4d7372a67c314db9df2558b59aa1b9c19c5bf283d96fbcc1385cbe`
+and the three documentation files at
+`24e131af80638ed99203587687e650a710ea8b9bef2079e494ea6172a60fe566`.
+Both use sorted `path NUL hex-digest LF`. The reviewer audited every clock consumer
+and the red/green evidence, found no blocker and approved the final-validation
+carry-forward scope. Candidate 14 final validation remains pending; this ledger
+update and later factual receipt/status additions are outside their own digest.
+
+Other dispositions from that review:
+
+- First private status qualification can take admission once; repeated observation
+  remains passive. This matches the accepted plan, not a claim of zero startup probes.
+- Existing gate/artifact receipt provenance and pending human cases remain disclosed.
+  The reviewer verified recorded hashes/CI and did not run tests or real sleep.
+- Reverification on Restart is deferred hardening; supported replacement requires
+  successful Quit first. The future packaging owner should assess it before wider release.
+- Generation-directory retention is deferred to packaging maintenance. Cleanup must
+  distinguish disposable session/unlock material from retained backup exports; never
+  delete every `exports/<generation>` after successful maintenance.
+- Sleep-without-model and recoverable AI status wording join the UI usability follow-up.
+- A different local listener reusing an old dashboard port is a deferred browser
+  security concern, not cosmetic polish. The future local-browser security owner
+  should assess generation/server binding before wider release. Current disconnected
+  retirement detects network failure only; users should open the current dashboard
+  from the menu after Restart. No protection against port reuse is claimed.
+
+The same reviewer subsequently passed the eight-file documentation/evidence delta
+at aggregate SHA-256
+`2ccbe280040e9eece5811f81999f9fa610129048732e38a07e011c09ca2871a8`,
+bound to product commit `529bf4cbddb51bfc1562673e43673c5eb7649bb1`.
+The approved product/test digest still matches retained build sources. Archive,
+manifest, native binary, harness and receipt hashes were independently checked;
+the reviewer confirmed 184/184 native tests, 11 installed phases, five zero-exit
+guardians, matching stopped/ok durable quiescence and empty cleanup. No local-gate
+or CI pass was asserted while those checks were outstanding.
+
+This documentation-only delta does not require another build or native/installed
+run. Carry forward unaffected complete-diff review and record actual final local
+gate and exact-head CI outcomes in the external final receipt and PR, binding the
+tested source/artifact and pushed head. Failures or runtime changes require affected
+reassessment. This ledger append is outside its own digest. The reviewer remained
+read-only and executed no tests or live-model work.

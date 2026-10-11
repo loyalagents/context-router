@@ -3,7 +3,7 @@ import * as path from "node:path";
 import { Worker } from "node:worker_threads";
 import { localCoordinationContract } from "../integration/storage-contracts/local-coordination.contract";
 import { coordinationFixture } from "./coordination.fixture";
-import { SqliteDatabase } from "@/infrastructure/storage/sqlite/sqlite-database";
+import { SqliteDatabase, waitForNativeOwners } from "@/infrastructure/storage/sqlite/sqlite-database";
 import { SqliteLocalIdentityCoordination } from "@/infrastructure/storage/sqlite/sqlite-local-identity-coordination";
 
 localCoordinationContract("SQLite real held worker", async () =>
@@ -14,6 +14,46 @@ describe("local held-worker ownership and deadlines", () => {
   let fixture: ReturnType<typeof coordinationFixture>;
   afterEach(async () => {
     await fixture?.dispose();
+  });
+  it("preserves the unmanaged worker input contract without an admission field", async () => {
+    fixture = coordinationFixture();
+    const coordination = new SqliteLocalIdentityCoordination({
+      database: fixture.db,
+      workerFactory: (_file, options) => {
+        expect(Object.keys(options.workerData)).toEqual(["paths"]);
+        const worker = new Worker(path.resolve(__dirname,
+          "../../dist/infrastructure/storage/sqlite/sqlite-coordination.worker.js"), options);
+        fixture.workers.push(worker);
+        return worker;
+      },
+    });
+    const held = await coordination.acquire();
+    await held.release();
+  });
+  it("drains an unhealthy coordination owner only after the real worker exit", async () => {
+    let actualTerminate: () => Promise<number>;
+    fixture = coordinationFixture({ deadlineMs: 100, intercept(worker) {
+      actualTerminate = worker.terminate.bind(worker);
+      worker.terminate = () => new Promise(() => {});
+      const post = worker.postMessage.bind(worker);
+      worker.postMessage = (message, transfer) => {
+        if (message.command !== "begin") post(message, transfer);
+      };
+    } });
+    const held = await fixture.acquire();
+    try {
+      await expect(held.initialize(fixture.state)).rejects.toThrow("deadline exceeded");
+      await held.release(); // Inactive release is not actual native-owner release.
+      let drained = false;
+      const drain = waitForNativeOwners().then(() => { drained = true; });
+      await new Promise(resolve => setTimeout(resolve, 30));
+      expect(drained).toBe(false);
+      await actualTerminate(); await drain;
+      expect(drained).toBe(true);
+    } finally {
+      fixture.workers[0].terminate = actualTerminate;
+      await actualTerminate();
+    }
   });
   it("sanitizes pre-acquire path failures without starting a worker", async () => {
     fixture = coordinationFixture();

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
+import { once } from 'node:events';
 import { browserFixture } from './browser-fixture.mjs';
 
 for (const kind of ['grant', 'revoke'])
@@ -174,6 +175,119 @@ for (const kind of ['grant', 'revoke'])
     );
 
 test(
+  'disconnected authenticated and locked tabs retire their unusable unlock forms',
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t);
+    await f.page.goto(f.ready.origin + '/dashboard');
+    await f.page.getByLabel('Unlock token').fill(f.bootstrap);
+    await f.page.getByRole('button', { name: 'Unlock local dashboard' }).click();
+    await f.page.getByRole('heading', { name: 'Dashboard', exact: true }).waitFor();
+    const locked = await f.context.newPage();
+    await locked.goto(f.ready.origin + '/dashboard');
+    await locked.getByLabel('Unlock token').waitFor();
+    // Stop the actual fixture runtime, without navigating or reloading either tab.
+    const closed = once(f.child, 'close');
+    f.child.kill('SIGTERM');
+    assert.deepEqual(await closed, [143, null]);
+    await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await locked.getByLabel('Unlock token').fill('fresh-code-cannot-reach-old-address');
+    await locked.getByRole('button', { name: 'Unlock local dashboard' }).click();
+    for (const page of [f.page, locked]) {
+      await page.getByRole('heading', { name: 'Dashboard disconnected' }).waitFor({ timeout: 3000 });
+      assert.equal(await page.getByLabel('Unlock token').count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Unlock local dashboard' }).count(), 0);
+      assert.equal(await page.getByRole('heading', { name: 'Dashboard', exact: true }).count(), 0);
+      assert.equal(await page.evaluate(() => sessionStorage.length), 0);
+      await page.getByText('CR → Open dashboard', { exact: false }).waitFor();
+      await page.getByText('Close this tab', { exact: false }).waitFor();
+    }
+  },
+);
+
+test(
+  'disconnected session restoration retires the unlock form',
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t);
+    await f.page.goto(f.ready.origin + '/dashboard');
+    await f.page.getByLabel('Unlock token').fill(f.bootstrap);
+    await f.page.getByRole('button', { name: 'Unlock local dashboard' }).click();
+    await f.page.getByRole('heading', { name: 'Dashboard', exact: true }).waitFor();
+    await f.page.route('**/api/local/capabilities', (route) => route.abort('connectionrefused'));
+    await f.page.reload();
+    await f.page.getByRole('heading', { name: 'Dashboard disconnected' }).waitFor({ timeout: 3000 });
+    assert.equal(await f.page.getByLabel('Unlock token').count(), 0);
+    assert.equal(await f.page.evaluate(() => sessionStorage.length), 0);
+  },
+);
+
+test(
+  'live session rejection permits a fresh unlock and ignores a delayed failure after Lock',
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t);
+    const unlock = async (code) => {
+      await f.page.getByLabel('Unlock token').fill(code);
+      await f.page.getByRole('button', { name: 'Unlock local dashboard' }).click();
+      await f.page.getByRole('heading', { name: 'Dashboard', exact: true }).waitFor();
+    };
+    const newCode = async () => {
+      const before = f.stdout().length;
+      f.child.stdin.write('unlock\n');
+      const deadline = Date.now() + 5000;
+      for (;;) {
+        const line = f.stdout().slice(before).split('\n').find((value) =>
+          value.startsWith('{"type":"context-router.local-ui.unlock"'),
+        );
+        if (line) return readFileSync(JSON.parse(line).unlockFile, 'utf8').trim();
+        assert.ok(Date.now() < deadline, 'fresh unlock export deadline');
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+    };
+    await f.page.goto(f.ready.origin + '/dashboard');
+    await unlock(f.bootstrap);
+    const token = await f.page.evaluate(() => sessionStorage.getItem('context-router.browser-session.v1'));
+    const revoked = await f.context.request.post(f.ready.origin + '/api/local/logout', {
+      headers: { origin: f.ready.origin, 'x-context-router-ui': '1', authorization: `Bearer ${token}` },
+      data: {},
+    });
+    assert.equal(revoked.status(), 200);
+    await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await f.page.getByLabel('Unlock token').waitFor();
+    assert.equal(await f.page.getByRole('heading', { name: 'Dashboard disconnected' }).count(), 0);
+    await unlock(await newCode());
+
+    // Delay an old generation's connection failure until a new session is active.
+    await f.page.evaluate(() => {
+      const original = window.fetch;
+      window.fetch = (input, options) => {
+        if (input === '/api/local/session') {
+          window.fetch = original;
+          return new Promise((_, reject) => {
+            window.releaseOldCapability = () => reject(new TypeError('Failed to fetch'));
+          });
+        }
+        return original(input, options);
+      };
+      window.dispatchEvent(new Event('focus'));
+    });
+    await f.page.waitForFunction(() => typeof window.releaseOldCapability === 'function');
+    await f.page.getByRole('button', { name: 'Lock dashboard' }).click();
+    await f.page.getByRole('button', { name: 'Unlock local dashboard' }).waitFor();
+    await unlock(await newCode());
+    const current = await f.page.evaluate(() => sessionStorage.getItem('context-router.browser-session.v1'));
+    await f.page.evaluate(async () => {
+      window.releaseOldCapability();
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    assert.equal(await f.page.getByRole('heading', { name: 'Dashboard', exact: true }).isVisible(), true);
+    assert.equal(await f.page.evaluate(() => sessionStorage.getItem('context-router.browser-session.v1')), current);
+    assert.equal(await f.page.getByRole('heading', { name: 'Dashboard disconnected' }).count(), 0);
+  },
+);
+
+test(
   'unlock capacity feedback permits retry of the same unconsumed token',
   { timeout: 60000 },
   async (t) => {
@@ -225,7 +339,7 @@ test(
       .click();
     await f.page
       .getByRole('alert')
-      .filter({ hasText: 'Use a fresh unlock file' })
+      .filter({ hasText: 'Use a fresh unlock code' })
       .waitFor();
     const replay = await f.context.request.post(
       f.ready.origin + '/api/local/unlock',

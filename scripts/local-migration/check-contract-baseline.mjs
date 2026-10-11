@@ -27,6 +27,7 @@ const Ajv2020 = require("ajv/dist/2020").default;
 const EXPECTED_PACKAGES = new Map([
   ["apps/backend", "hosted-product"],
   ["apps/web", "hosted-product"],
+  ["apps/desktop", "local-product"],
   ["apps/local-orchestrator", "temporary-developer-tooling"],
   ["examples/eval", "developer-evaluation-tooling"],
   ["examples/eval-harbor", "research-tooling"],
@@ -1277,9 +1278,9 @@ export function validateContractReferenceMap(discovered, declared) {
 
 const OUTBOUND_SINK_PATTERNS = [
   ["fetch", /\b(?:fetch|fetchImpl)\s*\(/g],
-  ["spawn", /\b(?:spawn|spawnProcess)\s*\(/g],
+  ["spawn", /\b(?:spawn|spawnSync|spawnProcess)\s*\(/g],
   ["subprocess-wrapper", /(?<!function\s)\b(?:runCommand|commandRunner)\s*\(/g],
-  ["exec-file", /\bexecFile(?:Async)?\s*\(/g],
+  ["exec-file", /\bexecFile(?:Async|Sync)?\s*\(/g],
   ["dns-lookup", /\bdns\.lookup\s*\(/g],
   [
     "postgresql-client",
@@ -1292,15 +1293,27 @@ const OUTBOUND_SINK_PATTERNS = [
   ["auth0-browser", /new\s+Auth0Client\s*\(/g],
   ["apollo-http-link", /new\s+HttpLink\s*\(/g],
   ["postgresql", /new\s+PrismaPg\s*\(new\s+Pool\s*\(/g],
-  ["python-urlopen", /urllib\.request\.urlopen\s*\(/g],
+  ["python-urlopen", /(?:urllib\.request\.urlopen|opener\.open)\s*\(/g],
   [
     "python-subprocess",
     /\bsubprocess\.(?:run|Popen|check_call|check_output)\s*\(/g,
   ],
   ["huggingface-download", /\bsnapshot_download\s*\(/g],
   ["http-client", /(?:https?\.(?:get|request)|axios\.(?:get|post|request))\s*\(/g],
+  // Import-level tripwire also covers aliases and injected transport functions.
+  ["node-http-import", /(?:\bimport\s+(?:[A-Za-z_$][\w$]*(?:\s*,\s*\{[^}]*\})?|\*\s+as\s+[A-Za-z_$][\w$]*|\{[^}]*\b(?:get|request)\b[^}]*\})\s+from\s*|\b(?:require|import)\s*\(\s*)["'](?:node:)?https?["']/g],
   ["net-connect", /\bnet\.connect\s*\(/g],
   ["websocket", /new\s+(?:WebSocket|EventSource)\s*\(/g],
+];
+
+// Bounded source tripwire, not a C/Objective-C security parser.
+const NATIVE_SINK_PATTERNS = [
+  ["native-fork", /\bfork\s*\(/g],
+  ["native-exec", /\b(?:execl|execle|execlp|execv|execve|execvp|posix_spawn|posix_spawnp)\s*\(/g],
+  ["native-task-launch", /\b(?:launchAndReturnError|launchedTaskWithExecutableURL)\s*:/g],
+  ["native-url-open", /\b(?:openURL|openURLs)\s*:/g],
+  ["native-connect", /\b(?:socket|connect|getaddrinfo)\s*\(/g],
+  ["native-request", /(?:\b(?:dataTaskWithURL|dataTaskWithRequest|downloadTaskWithURL|downloadTaskWithRequest)\s*:|\b(?:CFReadStreamCreateForHTTPRequest|CFReadStreamCreateForStreamedHTTPRequest)\s*\()/g],
 ];
 
 export function collectOutboundSinkInventory(files) {
@@ -1309,7 +1322,8 @@ export function collectOutboundSinkInventory(files) {
     ([left], [right]) => left.localeCompare(right),
   )) {
     const sinks = {};
-    for (const [name, pattern] of OUTBOUND_SINK_PATTERNS) {
+    const patterns = /\.(?:c|m|mm)$/.test(filePath) ? NATIVE_SINK_PATTERNS : OUTBOUND_SINK_PATTERNS;
+    for (const [name, pattern] of patterns) {
       pattern.lastIndex = 0;
       const count = [...content.matchAll(pattern)].length;
       if (count) sinks[name] = count;
@@ -2887,12 +2901,13 @@ async function collectSourceFiles(
   {
     filePattern = /\.(?:ts|tsx|js|mjs|graphql|gql)$/,
     excludePattern,
+    rootDirectory = repositoryRoot,
   } = {},
 ) {
   const files = new Map();
   async function visit(relativePath) {
     if (excludePattern?.test(relativePath)) return;
-    const absolutePath = path.join(repositoryRoot, relativePath);
+    const absolutePath = path.join(rootDirectory, relativePath);
     const info = await stat(absolutePath);
     if (info.isDirectory()) {
       for (const entry of (await readdir(absolutePath)).sort()) {
@@ -2915,9 +2930,10 @@ const GRAPHQL_CONSUMER_ROOTS = [
   "scripts/local-migration/packaging-smoke.mjs",
   "scripts/local-migration/restart-smoke.mjs",
 ];
-const CONTRACT_REFERENCE_ROOTS = [
+export const CONTRACT_REFERENCE_ROOTS = [
   "README.md",
   "apps/web",
+  "apps/desktop",
   "apps/web/.env.example",
   "apps/backend/.env.example",
   "apps/local-orchestrator/src",
@@ -2946,9 +2962,10 @@ const CONTRACT_REFERENCE_ROOTS = [
   "scripts/local-migration/restart-smoke.mjs",
   "scripts/local-migration/web-support-smoke.mjs",
 ];
-const OUTBOUND_SINK_ROOTS = [
+export const OUTBOUND_SINK_ROOTS = [
   "apps/backend/src",
   "apps/web",
+  "apps/desktop",
   "apps/local-orchestrator/src",
   "apps/local-orchestrator/scripts",
   "examples/eval/scripts",
@@ -2961,25 +2978,27 @@ const OUTBOUND_SINK_ROOTS = [
   "scripts/local-migration",
 ];
 const DERIVED_SOURCE_EXCLUSIONS =
-  /(?:^|\/)(?:__tests__|test|tests)(?:\/|$)|\.(?:spec|test)\.[^/]+$/;
+  /(?:^|\/)(?:__tests__|test|tests)(?:\/|$)|\.(?:spec|test)\.[^/]+$|^apps\/desktop\/build(?:\/|$)/;
 
-async function collectContractReferenceFiles() {
+export async function collectContractReferenceFiles(rootDirectory = repositoryRoot) {
   return collectSourceFiles(CONTRACT_REFERENCE_ROOTS, {
-    filePattern: /\.(?:ts|tsx|js|mjs|md|sh|py|example)$/,
+    filePattern: /\.(?:ts|tsx|js|mjs|md|sh|py|example|c|m|mm)$/,
     excludePattern: DERIVED_SOURCE_EXCLUSIONS,
+    rootDirectory,
   });
 }
 
-async function collectOutboundSinkFiles() {
+export async function collectOutboundSinkFiles(rootDirectory = repositoryRoot) {
   const files = await collectSourceFiles(OUTBOUND_SINK_ROOTS, {
-    filePattern: /\.(?:ts|tsx|js|mjs|sh|py)$/,
+    filePattern: /\.(?:ts|tsx|js|mjs|sh|py|c|m|mm)$/,
     excludePattern: DERIVED_SOURCE_EXCLUSIONS,
+    rootDirectory,
   });
   const scoringFiles = await collectSourceFiles(
     [
       "examples/eval-harbor/tasks/dynamicmem-user001-cp00-02-memory-final-v1/tests/score_dynamicmem_prediction.py",
     ],
-    { filePattern: /\.py$/ },
+    { filePattern: /\.py$/, rootDirectory },
   );
   return new Map([...files, ...scoringFiles]);
 }

@@ -29,14 +29,33 @@ export class PdfProcess {
   #sandboxProfile;
   #onSpawn;
   #beforeCleanup;
-  constructor({ workerPath, sandboxProfile, onSpawn = () => {}, beforeCleanup = () => {} }) {
+  #lifetimeDescriptor;
+  #shutdown = new AbortController();
+  #operation = Promise.resolve();
+  #actualExits = new Set();
+  constructor({ workerPath, sandboxProfile, onSpawn = () => {}, beforeCleanup = () => {}, lifetimeDescriptor = () => undefined }) {
     if (!isAbsolute(workerPath)) throw failure();
     this.#workerPath = workerPath; this.#sandboxProfile = sandboxProfile; this.#onSpawn = onSpawn;
     this.#beforeCleanup = beforeCleanup;
+    this.#lifetimeDescriptor = lifetimeDescriptor;
   }
   get state() { return this.#state; }
 
-  async parse(bytes, { signal, deadline = performance.now() + 10000 } = {}) {
+  parse(bytes, options = {}) {
+    if (this.#shutdown.signal.aborted) return Promise.reject(failure('PDF_UNAVAILABLE'));
+    const operation = this.#parse(bytes, { ...options,
+      signal: AbortSignal.any([this.#shutdown.signal, ...(options.signal ? [options.signal] : [])]) });
+    // A rejected concurrent caller must not replace the owned operation's drain.
+    this.#operation = Promise.allSettled([this.#operation, operation]).then(() => undefined);
+    return operation;
+  }
+  async drain() {
+    this.#shutdown.abort();
+    await this.#operation;
+    // An observation deadline settles the caller, never this proof of actual exit.
+    await Promise.all(this.#actualExits);
+  }
+  async #parse(bytes, { signal, deadline = performance.now() + 10000 } = {}) {
     if (this.#state !== 'ready') throw failure(this.#state === 'active' ? 'PDF_BUSY' : 'PDF_UNAVAILABLE');
     if (signal?.aborted) throw failure('PDF_CANCELLED');
     if (!Buffer.isBuffer(bytes) || bytes.length === 0 || bytes.length > 10 * 1024 * 1024) throw failure('PDF_LIMIT');
@@ -60,10 +79,16 @@ export class PdfProcess {
       root = await mkdtemp(join(tmpdir(), 'step06-pdf-process-'));
       if (signal?.aborted || code) throw failure('PDF_CANCELLED');
       if (performance.now() >= end - 1000) throw failure('PDF_TIMEOUT');
+      const lifetime = this.#lifetimeDescriptor();
+      if (lifetime !== undefined && lifetime !== 3) throw failure('PDF_UNAVAILABLE');
       const args = ['--no-global-search-paths', '--max-old-space-size=256', '--unhandled-rejections=strict', this.#workerPath];
       child = spawn(this.#sandboxProfile ? '/usr/bin/sandbox-exec' : process.execPath,
         this.#sandboxProfile ? ['-p', this.#sandboxProfile, process.execPath, ...args] : args,
-        { cwd: root, env: { PATH: '/usr/bin:/bin', TMPDIR: root, LC_ALL: 'C' }, stdio: ['pipe', 'pipe', 'pipe'] });
+        { cwd: root, env: { PATH: '/usr/bin:/bin', TMPDIR: root, LC_ALL: 'C' },
+          stdio: ['pipe', 'pipe', 'pipe', ...(lifetime === undefined ? [] : [3])] });
+      let actualExit;
+      const actual = new Promise(resolve => { actualExit = resolve; });
+      this.#actualExits.add(actual);
       let outputBytes = 0; let diagnosticBytes = 0; const chunks = [];
       child.stdout.on('data', (chunk) => {
         outputBytes += chunk.length;
@@ -75,6 +100,7 @@ export class PdfProcess {
       child.once('error', () => stop('PDF_INVALID'));
       child.once('close', (status, terminatedBy) => {
         closed = true; clearTimeout(timer); clearTimeout(reapTimer); resolveExit({ status, terminatedBy });
+        actualExit(); this.#actualExits.delete(actual);
       });
       child.once('spawn', () => {
         try { this.#onSpawn(child.pid); } catch { stop('PDF_INVALID'); }

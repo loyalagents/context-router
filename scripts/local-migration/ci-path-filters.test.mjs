@@ -29,6 +29,7 @@ test("toolchain and aggregate-gate files select the required standard CI jobs", 
   );
   const buildJobs = [
     "backend",
+    "desktop",
     "eval_fixtures",
     "frontend",
     "local_orchestrator",
@@ -144,4 +145,34 @@ test('local UI consumers select both build owners and pinned Chromium coverage',
     assert.ok(install); assert.equal(install['timeout-minutes'], 10);
     assert.equal(install.env.PLAYWRIGHT_BROWSERS_PATH, '${{ runner.temp }}/playwright');
   }
+});
+
+test('desktop changes select native CI plus both shared product owners with exact prerequisites', async () => {
+  const workflow = parse(await readFile(ciPath, 'utf8'));
+  const filters = parse(workflow.jobs.changes.steps.find(s => s.id === 'filter').with.filters);
+  for (const file of ['apps/desktop/native/guardian.m', 'apps/desktop/src/prepare.mjs', 'apps/desktop/package.json']) {
+    assert.deepEqual(selectedFilters(filters, file), ['backend', 'desktop', 'frontend']);
+  }
+  for (const file of ['apps/backend/src/main.ts', 'apps/web/local-ui.mjs']) assert.ok(selectedFilters(filters, file).includes('desktop'));
+  assert.equal(workflow.jobs.changes.outputs.desktop, '${{ steps.filter.outputs.desktop }}');
+  const job = workflow.jobs['desktop-native'];
+  assert.equal(job.needs, 'changes');
+  assert.equal(job.if, "needs.changes.outputs.desktop == 'true'");
+  assert.equal(job['runs-on'], 'macos-15');
+  assert.equal(job.steps.find(s => s.uses === 'pnpm/action-setup@v6.0.8').with.version, '10.25.0');
+  assert.equal(job.steps.find(s => s.uses === 'actions/setup-node@v4').with['node-version'], '24.21.0');
+  const commands = job.steps.map(s => s.run).filter(Boolean);
+  assert.deepEqual(commands, [
+    `node -e "if(process.platform!=='darwin'||process.arch!=='arm64')process.exit(1)"`,
+    'node scripts/check-toolchain.mjs', '/usr/bin/clang --version && /usr/bin/xcrun --show-sdk-path',
+    'pnpm install --frozen-lockfile', 'pnpm --filter backend prisma:generate', 'pnpm --filter backend build',
+    'pnpm --filter desktop test', 'pnpm --filter desktop build:native', 'pnpm --filter desktop test:native',
+  ]);
+  const manifest = JSON.parse(await readFile(new URL('../../apps/desktop/package.json', import.meta.url), 'utf8'));
+  assert.equal(manifest.scripts.test, 'node --test test/*.test.mjs');
+  assert.equal(manifest.scripts['test:native'], 'node --test --test-concurrency=1 test/native/*.test.mjs');
+  const native = await readFile(new URL('../../apps/desktop/test/native/admission.test.mjs', import.meta.url), 'utf8');
+  assert.match(native, /assert.equal\(process.platform, 'darwin'/);
+  assert.match(native, /assert.equal\(process.arch, 'arm64'/);
+  assert.doesNotMatch(native, /skip:/);
 });

@@ -1,4 +1,5 @@
 import { randomBytes as nodeRandomBytes, timingSafeEqual } from 'node:crypto';
+import { assertManagedIdentityOperation } from '../../infrastructure/managed/managed-admission';
 
 import {
   type LocalIdentityArtifactSnapshot,
@@ -86,6 +87,7 @@ export class LocalIdentityStateService {
   }
 
   async initialize(): Promise<OpenLocalIdentityState> {
+    assertManagedIdentityOperation('initialize');
     return this.withSession(async (session) => {
       const lease = await this.prepareRoot(session, true);
       const snapshot = await this.fileStore.inspect(lease);
@@ -131,6 +133,7 @@ export class LocalIdentityStateService {
   }
 
   async rotate(): Promise<OpenLocalIdentityState> {
+    assertManagedIdentityOperation('rotate');
     return this.withSession(async (session) => {
       const lease = await this.prepareRoot(session, false);
       const snapshot = await this.fileStore.inspect(lease);
@@ -173,6 +176,7 @@ export class LocalIdentityStateService {
   }
 
   async recoverInitialize(): Promise<OpenLocalIdentityState | null> {
+    assertManagedIdentityOperation('recover');
     return this.withSession(async (session) => {
       const lease = await this.prepareRoot(session, false);
       let snapshot = await this.fileStore.inspect(lease);
@@ -294,6 +298,7 @@ export class LocalIdentityStateService {
   }
 
   async recoverRotation(): Promise<OpenLocalIdentityState> {
+    assertManagedIdentityOperation('recover');
     return this.withSession(async (session) => {
       const lease = await this.prepareRoot(session, false);
       const snapshot = await this.fileStore.inspect(lease);
@@ -405,6 +410,7 @@ export class LocalIdentityStateService {
   private async withSession<T>(
     operation: (session: LocalIdentitySession) => Promise<T>,
   ): Promise<T> {
+    this.fileStore.assertAccess();
     const session = await this.repository.acquire();
     let primaryError: unknown;
     try {

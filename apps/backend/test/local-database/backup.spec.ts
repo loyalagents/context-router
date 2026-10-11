@@ -191,6 +191,21 @@ describe("same-held-connection matching-pair backup and new-root restore", () =>
       throw new Error("Worker exit uncertain; backup fixture preserved");
     fs.rmSync(root, { recursive: true, force: true });
   });
+  it("refuses unmanaged backup into the reserved namespace before creating its destination", async () => {
+    const envelope = path.join(root, "managed-v1");
+    fs.mkdirSync(envelope, { mode: 0o700 });
+    const destination = path.join(envelope, "backup");
+    await expect(backup.create(db, destination)).rejects.toThrow();
+    expect(fs.existsSync(destination)).toBe(false);
+  });
+  it("refuses unmanaged restore into the reserved namespace before copying a valid bundle", async () => {
+    await backup.create(db, bundle);
+    const envelope = path.join(root, "managed-v1");
+    fs.mkdirSync(envelope, { mode: 0o700 });
+    const destination = path.join(envelope, "restored");
+    await expect(backup.restore(bundle, destination)).rejects.toThrow();
+    expect(fs.existsSync(destination)).toBe(false);
+  });
   it("restores every table, exact identity bytes and old credential, then rotates the restored pair without changing source or bundle", async () => {
     const before = snapshot(db),
       identity = bytes(db),

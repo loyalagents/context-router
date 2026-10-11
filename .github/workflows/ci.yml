@@ -20,6 +20,7 @@ jobs:
       eval_fixtures: ${{ steps.filter.outputs.eval_fixtures }}
       eval_harbor: ${{ steps.filter.outputs.eval_harbor }}
       frontend: ${{ steps.filter.outputs.frontend }}
+      desktop: ${{ steps.filter.outputs.desktop }}
 
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +43,22 @@ jobs:
               - 'scripts/local-migration/**'
               - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/backend/**'
+              - 'apps/desktop/**'
               - 'apps/web/local-ui.mjs'
+            desktop:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/local-migration-baseline.yml'
+              - '.nvmrc'
+              - '.npmrc'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'scripts/check-toolchain.mjs'
+              - 'scripts/local-migration/**'
+              - 'docs/current/local-migration-contract-baseline.json'
+              - 'apps/desktop/**'
+              - 'apps/backend/**'
+              - 'apps/web/**'
             local_orchestrator:
               - '.github/workflows/ci.yml'
               - '.github/workflows/local-migration-baseline.yml'
@@ -91,6 +107,7 @@ jobs:
               - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/web/**'
               - 'apps/backend/**'
+              - 'apps/desktop/**'
 
   documentation-checks:
     runs-on: ubuntu-latest
@@ -319,3 +336,37 @@ jobs:
         run: pnpm test:local-ui
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+
+  desktop-native:
+    needs: changes
+    if: needs.changes.outputs.desktop == 'true'
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+          cache: 'pnpm'
+      - name: Assert native pilot architecture
+        run: node -e "if(process.platform!=='darwin'||process.arch!=='arm64')process.exit(1)"
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+      - name: Verify compiler and SDK
+        run: /usr/bin/clang --version && /usr/bin/xcrun --show-sdk-path
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate backend Prisma client
+        run: pnpm --filter backend prisma:generate
+      - name: Build backend and workers
+        run: pnpm --filter backend build
+      - name: Test portable desktop contracts
+        run: pnpm --filter desktop test
+      - name: Compile native guardian and shell
+        run: pnpm --filter desktop build:native
+      - name: Test headless native fixtures
+        run: pnpm --filter desktop test:native

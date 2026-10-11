@@ -1,4 +1,5 @@
 import { parentPort, workerData } from "node:worker_threads";
+import { admitManagedWorker, assertManagedIdentityMutation } from "../../managed/managed-admission";
 import { SqliteDatabase, type SqliteConnection } from "./sqlite-database";
 import { StorageConflictError } from "../../../domains/shared/storage/storage-errors";
 import { createSyntheticPrincipalEmail } from "../../../modules/auth/principal-identity";
@@ -12,6 +13,7 @@ import type {
 const port = parentPort;
 if (!port) throw new Error("Local identity database unavailable");
 const data = workerData as CoordinationWorkerData;
+admitManagedWorker(data.managedAdmission);
 let connection: SqliteConnection | undefined;
 let terminal = false;
 let lastId = 0;
@@ -66,6 +68,7 @@ port.on("message", async (request: CoordinationRequest) => {
           };
           break;
         case "insert-principal": {
+          assertManagedIdentityMutation();
           const id = request.principalId;
           if (
             typeof id !== "string" ||

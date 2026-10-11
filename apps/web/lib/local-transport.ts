@@ -5,6 +5,7 @@ const routes = new Set([
   '/api/local/unlock',
   '/api/local/logout',
   '/api/local/capabilities',
+  '/api/local/session',
   '/api/local/mcp/list',
   '/api/local/mcp/inspect',
   '/api/local/mcp/grant',

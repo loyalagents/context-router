@@ -1,0 +1,265 @@
+{
+  "version": 1,
+  "status": "local-automated-checks-passed-live-and-human-acceptance-pending",
+  "pilot": {
+    "model": "MacBookPro18,2",
+    "processor": "Apple M1 Max",
+    "memoryGiB": 64,
+    "os": "macOS 15.1.1",
+    "build": "24B91",
+    "architecture": "arm64"
+  },
+  "reviewSnapshot": {
+    "fileCount": 147,
+    "aggregateSha256": "42a01fcf3707ddb1aee0c47d1606ffc0acba80a97e37c2b6cd05a88c5cbd7d41"
+  },
+  "build": {
+    "status": "packaged",
+    "source": {
+      "headSha": "7328ceea63a784577594d52af18062be8b583855",
+      "dirty": true,
+      "copiedInputsSha256": "79db0aaf7648d58394f748e9789d55f16ac839e8d9ead116f1a04d9d8e918153"
+    },
+    "bundle": {
+      "path": "/private/tmp/context-router-step09-candidate-20261007-05/Context Router.app",
+      "files": 39541,
+      "bytes": 816892790,
+      "manifestSha256": "a3f624fb6dacf12e73b0a36a6dfdd0ce41713cf0d58076a5aac221a573f9d6eb"
+    },
+    "archive": {
+      "path": "/private/tmp/context-router-step09-candidate-20261007-05/Context Router.local-candidate.zip",
+      "bytes": 281991587,
+      "sha256": "de0b4ed031ec03a18903a08ae38753b6d4a96df8b8214ac1b405ff1c0444e643"
+    },
+    "callerIntegrity": true,
+    "elapsedMs": 206144
+  },
+  "installedSmoke": {
+    "status": "passed",
+    "manifestSha256": "a3f624fb6dacf12e73b0a36a6dfdd0ce41713cf0d58076a5aac221a573f9d6eb",
+    "receiptSha256": "18fd47c308d6f47c737cf3cb580dfaa20850203a6235c9e7c77e7d4c88979f26",
+    "harnessSha256": "89920048a85203fbe9a7e7e2be53d6387c337ec73344f95a800479a12e069bf8",
+    "phases": [
+      {
+        "name": "source-toolchain-exec-denial",
+        "elapsedMs": 2944
+      },
+      {
+        "name": "installed-pdf-dependency-closure",
+        "elapsedMs": 3309
+      },
+      {
+        "name": "browser-unlock-reunlock-close-persistence",
+        "elapsedMs": 17103
+      },
+      {
+        "name": "first-run-dashboard-cli-exclusion-clean-quit",
+        "elapsedMs": 17316
+      },
+      {
+        "name": "installed-cli-mcp-and-explicit-fresh-restart",
+        "elapsedMs": 43351
+      },
+      {
+        "name": "post-backup-revocation-rotation-and-grant-denial",
+        "elapsedMs": 66389
+      },
+      {
+        "name": "acknowledged-restore-credential-and-grant-cutover-with-pending-revocation",
+        "elapsedMs": 93607
+      },
+      {
+        "name": "interrupted-replacement-refuses-before-durable-state",
+        "elapsedMs": 97656
+      },
+      {
+        "name": "complete-compatible-replacement-preserves-pair-and-assets",
+        "elapsedMs": 122117
+      },
+      {
+        "name": "app-only-uninstall-reinstall-preserves-durable-state",
+        "elapsedMs": 152923
+      }
+    ],
+    "actualNativeOwners": 5,
+    "allOwnersExitedZero": true,
+    "allFinalEventsStoppedOk": true,
+    "cleanup": [],
+    "elapsedMs": 152924
+  },
+  "liveModel": {
+    "status": "not-run-awaiting-explicit-expanded-limit-approval",
+    "proposalSha256": "19b49efdf891c9eefb487bd54b01d64f0663b82bfdf6cf3da55d03354b90d90a",
+    "manifestSha256": "a3f624fb6dacf12e73b0a36a6dfdd0ce41713cf0d58076a5aac221a573f9d6eb"
+  },
+  "failedFinalGates": [
+    {
+      "status": "failed",
+      "source": {
+        "headSha": "7328ceea63a784577594d52af18062be8b583855",
+        "dirty": true,
+        "copiedInputsSha256": "1e82448b27a0978e21bdcc4d9fcea7aa78e0c9c5b87f3a7736a5fe0caab43bb5"
+      },
+      "phases": [
+        {
+          "id": "contract-baseline",
+          "status": "passed",
+          "elapsedMs": 31828
+        },
+        {
+          "id": "documentation",
+          "status": "passed",
+          "elapsedMs": 1538
+        },
+        {
+          "id": "backend-unit-build",
+          "status": "failed",
+          "elapsedMs": 31335,
+          "exitCode": 1,
+          "signal": null
+        },
+        {
+          "id": "backend-database",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "local-orchestrator",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "eval-fixtures",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "eval-deterministic-scenarios",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "web-production-build",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "harbor-static",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "restart-smoke",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "packaged-composition-smoke",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "repository-integrity",
+          "status": "skipped",
+          "elapsedMs": 0
+        }
+      ],
+      "callerIntegrity": true
+    },
+    {
+      "status": "failed",
+      "source": {
+        "headSha": "7328ceea63a784577594d52af18062be8b583855",
+        "dirty": true,
+        "copiedInputsSha256": "902a324cd63e25b6c4314ac0582c33f37351bf144fa271cfe1bb2dab90536daa"
+      },
+      "phases": [
+        {
+          "id": "contract-baseline",
+          "status": "passed",
+          "elapsedMs": 31626
+        },
+        {
+          "id": "documentation",
+          "status": "passed",
+          "elapsedMs": 1780
+        },
+        {
+          "id": "backend-unit-build",
+          "status": "failed",
+          "elapsedMs": 68520,
+          "exitCode": 1,
+          "signal": null
+        },
+        {
+          "id": "backend-database",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "local-orchestrator",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "eval-fixtures",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "eval-deterministic-scenarios",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "web-production-build",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "harbor-static",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "restart-smoke",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "packaged-composition-smoke",
+          "status": "skipped",
+          "elapsedMs": 0
+        },
+        {
+          "id": "repository-integrity",
+          "status": "skipped",
+          "elapsedMs": 0
+        }
+      ],
+      "callerIntegrity": true
+    }
+  ],
+  "remaining": [
+    "Real AppKit menu/clipboard and external-client human acceptance",
+    "Real sleep/wake and reboot recovery qualification",
+    "Signing, notarization, Gatekeeper and private distribution destination",
+    "Other hardware; native Windows/Linux deferral approved"
+  ],
+  "finalLocalGate": {
+    "receipt": "final-local-gate-summary.json",
+    "receiptSha256": "3e6882a1e8d4919aeb9baf7ff66ff58fdb484df8eea13da275b7e1300f0ac1c0",
+    "status": "passed",
+    "phases": 12,
+    "baseComparison": "performed",
+    "callerIntegrity": true,
+    "cleanupErrors": [],
+    "elapsedMs": 1435698
+  },
+  "ciEvidenceLocation": "https://github.com/loyalagents/context-router/pull/168/checks",
+  "postReviewCorrections": {
+    "status": "Candidate 05 superseded for acceptance by reviewed lifecycle and cleanup corrections",
+    "evidence": "https://github.com/loyalagents/context-router/pull/168",
+    "requirement": "Clean-commit package, installed smoke, full gate and exact-head CI; prior receipts retained as historical evidence"
+  }
+}

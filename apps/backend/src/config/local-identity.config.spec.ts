@@ -36,6 +36,12 @@ function validEnvironment(
 }
 
 describe('createLocalIdentityConfiguration', () => {
+  it('refuses a managed identity namespace before producing PostgreSQL client configuration', () => {
+    expect(() => createLocalIdentityConfiguration(validEnvironment({
+      LOCAL_IDENTITY_STATE_ROOT: '/private/tmp/managed-v1/stores/pair/identity',
+    }))).toThrow('Invalid local identity configuration');
+  });
+
   it('removes ambient native-driver selectors before the database driver loads', () => {
     const environment: NodeJS.ProcessEnv = {
       NODE_PG_FORCE_NATIVE: '1',

@@ -4,7 +4,8 @@ Context Router is a `pnpm` workspace monorepo with a retained hosted
 composition, explicit local database/model previews, and a loopback local MCP runtime:
 
 - `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and a hosted-JWT-protected MCP HTTP endpoint
-- `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 and talks to the backend with bearer tokens
+- `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 in hosted mode, or a separate local browser session in local mode
+- `apps/desktop`: the native Mac menu/guardian and isolated local-candidate packager
 - SQLite through the pinned Node builtin for the explicit local runtime; PostgreSQL via Prisma for the retained hosted/reference compositions and Docker-backed integration/e2e coverage
 
 ## Start Here
@@ -28,9 +29,19 @@ sessions, with shared MCP/model ownership. See [local dashboard setup](docs/usef
 Its [implementation and validation](docs/plans/active/local-migration/08-local-ui/implementation.md)
 record passing independent reviews, the full local gate, and completed user-run
 acceptance with explicitly accepted evidence limits. [PR #167](https://github.com/loyalagents/context-router/pull/167)
-remains draft pending human disposition; final-head checks are recorded there.
+was human-merged at `7328ceea63a784577594d52af18062be8b583855`; final-head
+checks are recorded there. Step 09 installation and packaging is active after
+its passing clean-base gate. An unsigned managed Mac candidate is implemented;
+Candidate 14 fixes sleep consuming the native shutdown budget and passed affected
+review, 184 native tests and all 11 installed phases. The manual feedback round is
+complete; final local gate and exact-head CI results are tracked on draft [PR #168](https://github.com/loyalagents/context-router/pull/168).
+See the [qualification and acceptance limits](docs/plans/active/local-migration/09-installation-and-packaging/README.md), including unsigned distribution and unqualified recovery/platform cases, and the
+[installed Mac runbook](docs/useful/INSTALLED_MAC_APP.md).
 Small [UI usability improvements](docs/plans/active/ui-usability/README.md) are
 tracked for follow-up after the packaged local workflow is usable.
+[Local AI scheduling](docs/plans/active/local-ai-scheduling/README.md) is a separate
+follow-up after Step 09: bounded waiting first, then a measured concurrency
+evaluation. The current runtime still permits one active AI operation with no queue.
 
 ## How The Repo Works
 

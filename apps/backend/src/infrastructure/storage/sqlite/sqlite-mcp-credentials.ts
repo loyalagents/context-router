@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { assertManagedSchemaUpgrade } from '../../managed/managed-admission';
 import {
   createHash,
   randomBytes,
@@ -78,6 +79,7 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
     }
   }
   upgrade(): 'upgraded' | 'already-upgraded' {
+    assertManagedSchemaUpgrade();
     const c = this.connection(false);
     try {
       c.exec('BEGIN EXCLUSIVE');

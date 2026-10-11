@@ -1541,6 +1541,11 @@
       "migrationOwner": "08"
     },
     {
+      "path": "apps/desktop",
+      "role": "local-product",
+      "migrationOwner": "09"
+    },
+    {
       "path": "apps/local-orchestrator",
       "role": "temporary-developer-tooling",
       "migrationOwner": "09"
@@ -2351,6 +2356,24 @@
           "fingerprints": [
             "runMissingAsset"
           ]
+        },
+        {
+          "path": "scripts/local-migration/fixtures/local-model-feasibility/dns-control.c",
+          "fingerprints": [
+            "getaddrinfo(name"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/local-model-client-diagnostic.mjs",
+          "fingerprints": [
+            "execFileSync"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/local-model-client-reproducibility.mjs",
+          "fingerprints": [
+            "execFileSync"
+          ]
         }
       ],
       "destination": "opt-in pinned local native runtime, exact owned parser/observer/diagnostic-worker/OpenSSL children, isolated permission-denied loopback/nonloopback/DNS control targets; no remote judge",
@@ -2434,6 +2457,12 @@
             "chromium.connectOverCDP",
             "context.routeWebSocket"
           ]
+        },
+        {
+          "path": "scripts/local-migration/local-ui-browser.mjs",
+          "fingerprints": [
+            "spawnSync(executable, ['--version']"
+          ]
         }
       ],
       "destination": "Owned literal-loopback UI/MCP listeners and a separately owned Chromium CDP endpoint; application module/network policy inherits the exact selected deterministic TLS model peer. Browser page HTTP/WebSocket requests are confined by test routing, not an OS network sandbox.",
@@ -2442,6 +2471,260 @@
       "disposition": "RETAIN",
       "ownerSteps": [
         "08"
+      ]
+    },
+    {
+      "id": "managed-native-admission",
+      "sources": [
+        {
+          "path": "apps/backend/src/infrastructure/managed/managed-admission.ts",
+          "fingerprints": [
+            "spawnSync(executable, [\"verify-inherited\"]",
+            "new Socket({ fd: 4"
+          ]
+        },
+        {
+          "path": "apps/desktop/native/guardian.m",
+          "fingerprints": [
+            "flock(3, LOCK_EX | LOCK_NB)",
+            "kern.bootsessionuuid"
+          ]
+        },
+        {
+          "path": "apps/desktop/runtime/lifetime.mjs",
+          "fingerprints": [
+            "execFileSync(guardian,['verify-inherited']"
+          ]
+        }
+      ],
+      "destination": "Explicit managed installation only: fixed trusted sibling native verifier and anonymous inherited capability pipe; no network destination.",
+      "payload": "Inherited FD3 and bounded boot-session identity response. Capability remains private memory/FD4, never argv or environment. Cooperative lifecycle exclusion, not arbitrary same-user isolation.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "desktop-build-tools",
+      "sources": [
+        {
+          "path": "apps/desktop/src/build.mjs",
+          "fingerprints": [
+            "spawnSync(process.execPath, ['--check'"
+          ]
+        },
+        {
+          "path": "apps/desktop/src/build-native.mjs",
+          "fingerprints": [
+            "spawnSync('/usr/bin/clang'"
+          ]
+        },
+        {
+          "path": "apps/desktop/src/package.mjs",
+          "fingerprints": [
+            "runCommand(args,",
+            "prepareDisposableWorkspace(root,signal"
+          ]
+        }
+      ],
+      "destination": "Contributor/CI Node syntax checking and Apple compiler in the existing checkout.",
+      "payload": "Fixed local source and output paths; no runtime compiler requirement, user state or network request.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "installation-opt-in-feasibility",
+      "sources": [
+        {
+          "path": "scripts/local-migration/installation/bundle-feasibility.mjs",
+          "fingerprints": [
+            "runCommand(argv",
+            "spawn('/usr/bin/sandbox-exec'",
+            "fetch(ready.origin"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/installation/native-measurement.mjs",
+          "fingerprints": [
+            "spawnSync(executable, args",
+            "const child = spawn(owner"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/installation/process-fixture.mjs",
+          "fingerprints": [
+            "parser = spawn(process.execPath"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/installation/appkit-probe.m",
+          "fingerprints": [
+            "launchAndReturnError:"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/installation/guardian-probe.c",
+          "fingerprints": [
+            "pid_t child = fork();",
+            "execl(node, node"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/installation/native-owner-probe.c",
+          "fingerprints": [
+            "pid_t child = fork();",
+            "execv(argv[4]"
+          ]
+        }
+      ],
+      "destination": "Historical separately reviewed Step09 P1 bounded native/AppKit/bundle probes with owned local children, loopback servers and cached selected model assets.",
+      "payload": "Synthetic inputs, private temporary session material and numeric/hash/exit evidence only. No personal app installation/client changes, remote AI or background execution.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "installation-opt-in-acquisition",
+      "sources": [
+        {
+          "path": "scripts/local-migration/installation/provenance-acquire.py",
+          "fingerprints": [
+            "with opener.open(url, timeout=15)",
+            "https://registry.npmjs.org/openpgp/"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/installation/certificate-acquire.py",
+          "fingerprints": [
+            "with opener.open(url, timeout=15)"
+          ]
+        }
+      ],
+      "destination": "Explicit P1 artifact acquisition from npm registry, Node release archive signatures and release-maintainer public key sources.",
+      "payload": "Pinned artifact requests and provenance verification inputs; no application state, credentials or user content.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "managed-native-lifecycle",
+      "sources": [
+        {
+          "path": "apps/desktop/native/process.m",
+          "fingerprints": [
+            "_pid=fork()",
+            "execve(args[0],args,environment)"
+          ]
+        },
+        {
+          "path": "apps/desktop/native/supervisor.m",
+          "fingerprints": [
+            "socket(AF_INET,SOCK_STREAM,0)"
+          ]
+        },
+        {
+          "path": "apps/desktop/native/menu.m",
+          "fingerprints": [
+            "launchAndReturnError:",
+            "openURL:[NSURL URLWithString:_origin]"
+          ]
+        }
+      ],
+      "destination": "Explicit managed installation: fixed own-bundle child executables, anonymous pipes, and validated literal-loopback dashboard URL. The native socket reserves a loopback port; it is not an outbound service connection.",
+      "payload": "Bounded role/generation status and commands; separate private FD4 storage admission, FD3 lifetime. Unlock codes are deliberately read/displayed/copied from private files, never browser URLs or process arguments.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "managed-consented-model-download",
+      "sources": [
+        {
+          "path": "apps/desktop/runtime/download-engine.mjs",
+          "fingerprints": [
+            "import {request} from 'node:https'",
+            "req=connect(url,",
+            "asset.redirectHosts.includes(url.hostname)"
+          ]
+        }
+      ],
+      "destination": "Explicit per-download user consent to immutable Qwen3.5 9B Q4_K_M Hugging Face revision and pinned size/SHA256; HTTPS redirects restricted to the recorded Hugging Face/CDN host allowlist, maximum five.",
+      "payload": "GET request for public pinned model bytes only. Public CA validation, no auth/user data; private exclusive staging, bounded idle/total timers, no automatic retry or resume.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "installation-opt-in-qualification",
+      "sources": [
+        {
+          "path": "scripts/local-migration/installation/installed-smoke.mjs",
+          "fingerprints": [
+            "spawn('/usr/bin/sandbox-exec'",
+            "spawnSync('/usr/bin/sandbox-exec'",
+            "chromium.connectOverCDP",
+            "fetch(ready.origin"
+          ]
+        }
+      ],
+      "destination": "Opt-in actual installed bundle qualification with private synthetic state, bundled-only execution and source/toolchain read denial; application outbound restricted by OS policy to loopback. Separately owned Chromium uses fixed test browser routing.",
+      "payload": "Synthetic browser, SQLite, PDF and MCP inputs; private temporary credentials, exact-child cleanup and hash/status evidence. No live model, remote download or personal client configuration in this smoke.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "installation-reviewed-live-qualification",
+      "sources": [
+        {
+          "path": "scripts/local-migration/installation/live-installed.mjs",
+          "fingerprints": [
+            "spawn('/usr/bin/sandbox-exec'",
+            "fetch(ready.origin",
+            "proposal.maxCompletionTokens,2048"
+          ]
+        }
+      ],
+      "destination": "Opt-in separately reviewed and user-approved installed candidate only; manifest-bound local app, cached pinned model and literal loopback public routes. Never scheduled by CI or the aggregate gate.",
+      "payload": "Synthetic bounded public text requests and private transient browser credentials. Three generations, three requests, 2048 tokens per dispatched completion, 60 seconds per request, 15 minutes including cleanup. Code inclusion is not execution approval.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "native-model-passive-transport-observer",
+      "sources": [
+        {
+          "path": "scripts/local-migration/fixtures/local-model-feasibility/client-observer.mjs",
+          "fingerprints": [
+            "import https from 'node:https'",
+            "const original = transport.request"
+          ]
+        }
+      ],
+      "destination": "Historical opt-in Step06 native model feasibility transport instrumentation; observes the existing pinned literal-loopback HTTPS client without selecting another peer.",
+      "payload": "Bounded numeric/timing/control marks only; no request payload or credential logging. Import tripwire classification adds coverage, not a new execution path.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "06",
+        "09"
       ]
     }
   ],
@@ -3497,6 +3780,24 @@
       "reference": "/oauth/register"
     },
     {
+      "path": "apps/desktop/native/menu.m",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
+      "path": "apps/desktop/native/supervisor.m",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
+      "path": "apps/desktop/runtime/application.mjs",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
       "path": "apps/local-orchestrator/src/server/analysis-client.ts",
       "contract": "http",
       "kind": "route",
@@ -3632,6 +3933,12 @@
       "path": "apps/web/components/local/LocalSession.tsx",
       "contract": "http",
       "kind": "route",
+      "reference": "/api/local/session"
+    },
+    {
+      "path": "apps/web/components/local/LocalSession.tsx",
+      "contract": "http",
+      "kind": "route",
       "reference": "/api/local/unlock"
     },
     {
@@ -3717,6 +4024,12 @@
       "contract": "http",
       "kind": "route",
       "reference": "/api/local/mcp/revoke"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/session"
     },
     {
       "path": "apps/web/lib/local-transport.ts",
@@ -3941,10 +4254,28 @@
       "reference": "/health"
     },
     {
+      "path": "docs/useful/INSTALLED_MAC_APP.md",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
       "path": "docs/useful/LOCAL_MODEL.md",
       "contract": "http",
       "kind": "route",
       "reference": "/health"
+    },
+    {
+      "path": "docs/useful/LOCAL_UI.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/capabilities"
+    },
+    {
+      "path": "docs/useful/LOCAL_UI.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/session"
     },
     {
       "path": "docs/useful/local-orchestrator-commands.md",
@@ -4311,7 +4642,8 @@
     {
       "path": "apps/backend/src/infrastructure/local-model/engine/client.mjs",
       "sinks": {
-        "http-client": 2
+        "http-client": 2,
+        "node-http-import": 1
       }
     },
     {
@@ -4324,6 +4656,12 @@
       "path": "apps/backend/src/infrastructure/local-model/engine/pdf.mjs",
       "sinks": {
         "fetch": 1
+      }
+    },
+    {
+      "path": "apps/backend/src/infrastructure/managed/managed-admission.ts",
+      "sinks": {
+        "spawn": 1
       }
     },
     {
@@ -4360,6 +4698,56 @@
       "path": "apps/backend/src/modules/auth/strategies/jwt.strategy.ts",
       "sinks": {
         "auth0-jwks": 1
+      }
+    },
+    {
+      "path": "apps/desktop/native/menu.m",
+      "sinks": {
+        "native-task-launch": 1,
+        "native-url-open": 1
+      }
+    },
+    {
+      "path": "apps/desktop/native/process.m",
+      "sinks": {
+        "native-exec": 1,
+        "native-fork": 1
+      }
+    },
+    {
+      "path": "apps/desktop/native/supervisor.m",
+      "sinks": {
+        "native-connect": 2
+      }
+    },
+    {
+      "path": "apps/desktop/runtime/download-engine.mjs",
+      "sinks": {
+        "node-http-import": 1
+      }
+    },
+    {
+      "path": "apps/desktop/runtime/lifetime.mjs",
+      "sinks": {
+        "exec-file": 1
+      }
+    },
+    {
+      "path": "apps/desktop/src/build-native.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "apps/desktop/src/build.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "apps/desktop/src/package.mjs",
+      "sinks": {
+        "subprocess-wrapper": 1
       }
     },
     {
@@ -4540,15 +4928,28 @@
       }
     },
     {
+      "path": "scripts/local-migration/fixtures/local-model-feasibility/client-observer.mjs",
+      "sinks": {
+        "node-http-import": 1
+      }
+    },
+    {
       "path": "scripts/local-migration/fixtures/local-model-feasibility/client.mjs",
       "sinks": {
-        "http-client": 2
+        "http-client": 2,
+        "node-http-import": 1
       }
     },
     {
       "path": "scripts/local-migration/fixtures/local-model-feasibility/diagnostic-worker-runner.mjs",
       "sinks": {
         "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/fixtures/local-model-feasibility/dns-control.c",
+      "sinks": {
+        "native-connect": 1
       }
     },
     {
@@ -4582,10 +4983,83 @@
       }
     },
     {
+      "path": "scripts/local-migration/fixtures/local-model-feasibility/tls-fixture.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
       "path": "scripts/local-migration/gate-runner.mjs",
       "sinks": {
         "dns-lookup": 2,
         "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/appkit-probe.m",
+      "sinks": {
+        "native-task-launch": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/bundle-feasibility.mjs",
+      "sinks": {
+        "fetch": 1,
+        "spawn": 2,
+        "subprocess-wrapper": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/certificate-acquire.py",
+      "sinks": {
+        "python-urlopen": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/guardian-probe.c",
+      "sinks": {
+        "native-exec": 1,
+        "native-fork": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/installed-smoke.mjs",
+      "sinks": {
+        "fetch": 4,
+        "spawn": 5
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/live-installed.mjs",
+      "sinks": {
+        "fetch": 2,
+        "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/native-measurement.mjs",
+      "sinks": {
+        "spawn": 4
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/native-owner-probe.c",
+      "sinks": {
+        "native-exec": 1,
+        "native-fork": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/process-fixture.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/provenance-acquire.py",
+      "sinks": {
+        "fetch": 3,
+        "python-urlopen": 1
       }
     },
     {
@@ -4598,7 +5072,57 @@
     {
       "path": "scripts/local-migration/local-mcp-smoke.mjs",
       "sinks": {
-        "http-client": 1
+        "http-client": 1,
+        "node-http-import": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/local-model-allocation-probe.mjs",
+      "sinks": {
+        "exec-file": 2
+      }
+    },
+    {
+      "path": "scripts/local-migration/local-model-client-diagnostic.mjs",
+      "sinks": {
+        "exec-file": 3
+      }
+    },
+    {
+      "path": "scripts/local-migration/local-model-client-reproducibility.mjs",
+      "sinks": {
+        "exec-file": 3
+      }
+    },
+    {
+      "path": "scripts/local-migration/local-model-live-probe.mjs",
+      "sinks": {
+        "exec-file": 3
+      }
+    },
+    {
+      "path": "scripts/local-migration/local-model-negative-probe.mjs",
+      "sinks": {
+        "exec-file": 2
+      }
+    },
+    {
+      "path": "scripts/local-migration/local-model-pdf-closure-probe.mjs",
+      "sinks": {
+        "exec-file": 4
+      }
+    },
+    {
+      "path": "scripts/local-migration/local-model-smoke.mjs",
+      "sinks": {
+        "node-http-import": 1,
+        "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/local-ui-browser.mjs",
+      "sinks": {
+        "spawn": 1
       }
     },
     {
@@ -4623,6 +5147,7 @@
         "fetch": 3,
         "http-client": 1,
         "net-connect": 2,
+        "node-http-import": 1,
         "spawn": 2,
         "subprocess-wrapper": 9
       }
@@ -4632,6 +5157,7 @@
       "sinks": {
         "fetch": 1,
         "net-connect": 1,
+        "node-http-import": 1,
         "spawn": 1,
         "subprocess-wrapper": 10
       }
@@ -4646,7 +5172,8 @@
     {
       "path": "scripts/local-migration/web-support-smoke.mjs",
       "sinks": {
-        "fetch": 1
+        "fetch": 1,
+        "node-http-import": 1
       }
     },
     {

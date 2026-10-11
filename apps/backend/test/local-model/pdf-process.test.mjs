@@ -120,3 +120,49 @@ test('expiry during the spawn callback prevents even a local stdin write attempt
     assert.throws(() => process.kill(pid, 0), (error) => error.code === 'ESRCH');
   } finally { Socket.prototype.end = original; }
 });
+
+test('drain during asynchronous setup stops new parser admission and waits for the operation', async t => {
+  const worker = await fixture(t, good); let descriptors = 0, spawned = 0;
+  const parser = new PdfProcess({ workerPath: worker, lifetimeDescriptor: () => { descriptors++; return undefined; }, onSpawn: () => { spawned++; } });
+  const pending = parser.parse(Buffer.from('x'));
+  const rejected = assert.rejects(pending, /^Error: PDF_CANCELLED$/);
+  await parser.drain(); await rejected;
+  assert.equal(descriptors, 0); assert.equal(spawned, 0);
+  await assert.rejects(parser.parse(Buffer.from('x')), /^Error: PDF_UNAVAILABLE$/);
+});
+
+test('invalid inherited descriptor is rejected before spawning or writing input', async t => {
+  const worker = await fixture(t, good); let spawned = 0;
+  const parser = new PdfProcess({ workerPath: worker, lifetimeDescriptor: () => 4, onSpawn: () => { spawned++; } });
+  await assert.rejects(parser.parse(Buffer.from('x')), /^Error: PDF_UNAVAILABLE$/);
+  assert.equal(spawned, 0); await parser.drain();
+});
+
+test('drain does not treat the bounded reap-observation timeout as actual child exit', async t => {
+  const { ChildProcess } = await import('node:child_process');
+  const worker = await fixture(t, 'process.stdin.resume();setInterval(()=>{},1000)');
+  let pid, child, observed;
+  const spawned = new Promise(resolve => { observed = resolve; });
+  const original = ChildProcess.prototype.kill;
+  ChildProcess.prototype.kill = function (...args) {
+    if (this.pid === pid) { child = this; return true; }
+    return original.apply(this, args);
+  };
+  const parser = new PdfProcess({ workerPath: worker, onSpawn: value => { pid = value; observed(); } });
+  try {
+    const pending = parser.parse(Buffer.from('x'), { deadline: performance.now() + 1500 });
+    const rejected = assert.rejects(pending, /^Error: PDF_UNAVAILABLE$/);
+    await spawned; await rejected;
+    let drained = false;
+    const drainage = parser.drain().then(() => { drained = true; });
+    await new Promise(resolve => setTimeout(resolve, 30));
+    assert.equal(drained, false);
+    assert.equal(process.kill(pid, 0), true);
+    original.call(child, 'SIGKILL'); await drainage;
+    assert.throws(() => process.kill(pid, 0), error => error.code === 'ESRCH');
+  } finally {
+    ChildProcess.prototype.kill = original;
+    if (child) { try { original.call(child, 'SIGKILL'); } catch {} }
+    await parser.drain();
+  }
+});

@@ -1,0 +1,281 @@
+{
+  "version": 1,
+  "candidate": "13",
+  "status": "local-installed-native-live-full-gate-passed-final-head-ci-recorded-on-pr",
+  "base": "7328ceea63a784577594d52af18062be8b583855",
+  "productHead": "5759b8f0ca07b4bebe5da579f941266f5d2a5127",
+  "pilot": {
+    "model": "MacBookPro18,2",
+    "processor": "Apple M1 Max",
+    "memoryGiB": 64,
+    "os": "macOS 15.1.1",
+    "build": "24B91",
+    "architecture": "arm64"
+  },
+  "build": {
+    "version": 1,
+    "distribution": "local-candidate",
+    "status": "packaged",
+    "source": {
+      "headSha": "5759b8f0ca07b4bebe5da579f941266f5d2a5127",
+      "dirty": true,
+      "copiedInputsSha256": "fb91076103b026188da2d8da48f07dca53a863eca3180b4b72a3697834779479"
+    },
+    "phases": [
+      {
+        "name": "isolated-source",
+        "elapsedMs": 48143
+      },
+      {
+        "name": "fresh-builds",
+        "elapsedMs": 86310
+      },
+      {
+        "name": "complete-bundle-verified",
+        "elapsedMs": 122844
+      },
+      {
+        "name": "archive-and-caller-integrity",
+        "elapsedMs": 181662
+      }
+    ],
+    "limitations": [
+      "Unsigned local candidate; no publisher authentication, notarization or Gatekeeper qualification.",
+      "Runtime and human acceptance are recorded separately; successful packaging is not qualification."
+    ],
+    "buildWorkspace": "/var/folders/pn/rnjt7b1d5xb4pckyss2s55qc0000gn/T/context-router-lmbg-workspace-EUL4Wu",
+    "bundle": {
+      "path": "/private/tmp/context-router-step09-candidate-20261010-13/Context Router.app",
+      "files": 39542,
+      "bytes": 816895342,
+      "manifestSha256": "6729b70ec1d4767b72ff43ad4d98110d34e0941ec46bf394cf5e4ace08ec15c0"
+    },
+    "archive": {
+      "path": "/private/tmp/context-router-step09-candidate-20261010-13/Context Router.local-candidate.zip",
+      "bytes": 281995551,
+      "sha256": "d948c64d8821161e982cb42c8b66c23ba5a4ace51815fc618f2824f96b3b76d8"
+    },
+    "callerIntegrity": true,
+    "elapsedMs": 198078
+  },
+  "reuse": {
+    "candidate": "Candidate13",
+    "manifestSha256": "6729b70ec1d4767b72ff43ad4d98110d34e0941ec46bf394cf5e4ace08ec15c0",
+    "archiveSha256": "d948c64d8821161e982cb42c8b66c23ba5a4ace51815fc618f2824f96b3b76d8",
+    "copiedInputsSha256": "fb91076103b026188da2d8da48f07dca53a863eca3180b4b72a3697834779479",
+    "originalBuildDirty": true,
+    "reviewedComparison": "2458-file copied input digest reproduced; only10 documentation files differ from current frozen source; no non-doc tracked differences; all39542 bundle entries verified"
+  },
+  "review": {
+    "snapshotSha256": "4101e8a23fb3764ed7d88e375c104635edaaa19b9b9963c5cb2c939d2318e837",
+    "changedFiles": 188,
+    "mandates": [
+      {
+        "reviewer": "/root/final13_architecture_security",
+        "modelRequested": "gpt-6-astra",
+        "effortRequested": "xhigh",
+        "servingSettings": "unobservable",
+        "verdict": "scoped PASS; no actionable architecture/security/process-ownership blocker",
+        "scope": "complete base-to-candidate diff within mandate; all188 listed hashes verified"
+      },
+      {
+        "reviewer": "/root/final13_persistence_recovery",
+        "modelRequested": "gpt-6-astra",
+        "effortRequested": "xhigh",
+        "servingSettings": "unobservable",
+        "verdict": "scoped PASS; no actionable persistence/recovery/update-safety blocker",
+        "scope": "complete base-to-candidate diff within mandate; all188 listed hashes verified"
+      },
+      {
+        "reviewer": "/root/final13_compatibility_evidence",
+        "modelRequested": "gpt-6-astra",
+        "effortRequested": "high",
+        "servingSettings": "unobservable",
+        "verdict": "scoped PASS; no blocking compatibility/test-discovery/platform-scope/artifact-binding finding",
+        "scope": "complete base-to-candidate diff within mandate; all188 listed hashes and actual payload/source digests verified"
+      }
+    ],
+    "executionReceiptFollowup": "Compatibility/evidence reviewer passed installed, native and live receipts and matching quiescent journals",
+    "supplementalDocsReview": {
+      "file": "docs/plans/active/local-ai-scheduling/README.md",
+      "sha256": "84e2f8e3910dca98ea5c96ac82ce288d9a454442a81f973573a6887940fbdf3c",
+      "verdict": "PASS; deferred planning clarification only; product review and runtime evidence unaffected"
+    },
+    "closeoutDocsReview": {
+      "verdict": "PASS",
+      "changedFiles": 11,
+      "aggregateSha256": "61a13cca08e4dcd39a606336a9ff9418278485a121c91740cd3758b27886d0d3",
+      "aggregateAlgorithm": "sorted path NUL hex-digest LF",
+      "scope": "Evidence/status documentation only; later actual gate/CI receipt and status updates require accuracy and documentation checks"
+    }
+  },
+  "native": {
+    "status": "passed",
+    "tests": 180,
+    "failed": 0,
+    "skipped": 0,
+    "elapsedMs": 295887.485,
+    "logSha256": "9fc210605cc918399cb61e6d421623703935bd972e627e70ad3ef8a322a74352",
+    "inputBinding": {
+      "workspace": "/var/folders/pn/rnjt7b1d5xb4pckyss2s55qc0000gn/T/context-router-lmbg-workspace-EUL4Wu",
+      "comparedInputs": 813,
+      "differences": [],
+      "nativeSha256": "37231c290e75c005ee6acaaa0e945ee993b828548b107742351539e8d5e46ebd",
+      "artifactNativeIdentical": true
+    }
+  },
+  "installedSmoke": {
+    "status": "passed",
+    "receiptSha256": "aaa97e0b8a4e48352d2db871db16b34d17a3bccd597666049bb15a28fe2f8bcc",
+    "harnessSha256": "f792807bc8a1a86e488ec80b508ec878440bebf19874e4d40b8f1ee54e9b3695",
+    "phases": [
+      {
+        "name": "source-toolchain-exec-denial",
+        "elapsedMs": 3705
+      },
+      {
+        "name": "installed-pdf-dependency-closure",
+        "elapsedMs": 4110
+      },
+      {
+        "name": "browser-unlock-reunlock-close-persistence",
+        "elapsedMs": 17894
+      },
+      {
+        "name": "first-run-dashboard-cli-exclusion-clean-quit",
+        "elapsedMs": 18131
+      },
+      {
+        "name": "installed-native-download-cleanup-and-idempotence",
+        "elapsedMs": 27730
+      },
+      {
+        "name": "installed-cli-mcp-and-explicit-fresh-restart",
+        "elapsedMs": 60865
+      },
+      {
+        "name": "post-backup-revocation-rotation-and-grant-denial",
+        "elapsedMs": 101953
+      },
+      {
+        "name": "acknowledged-restore-credential-and-grant-cutover-with-pending-revocation",
+        "elapsedMs": 131861
+      },
+      {
+        "name": "interrupted-replacement-refuses-before-durable-state",
+        "elapsedMs": 136377
+      },
+      {
+        "name": "complete-compatible-replacement-preserves-pair-and-assets",
+        "elapsedMs": 169516
+      },
+      {
+        "name": "app-only-uninstall-reinstall-preserves-durable-state",
+        "elapsedMs": 210315
+      }
+    ],
+    "actualNativeOwners": 5,
+    "allOwnersExitedZero": true,
+    "allFinalEventsStoppedOk": true,
+    "finalJournal": "matching quiescent/ok independently verified",
+    "cleanup": [],
+    "elapsedMs": 210315
+  },
+  "liveModel": {
+    "status": "passed",
+    "authorization": "Explicit user approval on 2026-10-10 of exact reviewed proposal; consumed by this single series",
+    "proposalSha256": "961ff557a4e88a777744de9d5a1c03f291f378761824aee0b6a89eaf8d39a0ea",
+    "proposal": {
+      "artifact": "/private/tmp/context-router-step09-candidate-20261010-13/Context Router.app",
+      "manifestSha256": "6729b70ec1d4767b72ff43ad4d98110d34e0941ec46bf394cf5e4ace08ec15c0",
+      "maxCompletionTokens": 2048,
+      "maxGenerations": 3,
+      "maxRequests": 3,
+      "series": "step09-installed-live-v1",
+      "totalSeconds": 900
+    },
+    "receiptSha256": "aa44562da19cb730ca9cb4b7f55d76f79f80bb65d7d53e89929e1c4d6ace539c",
+    "harnessSha256": "1cfc136c528207b53eb0da6e328343c52d6fc7e59266ef53bab2d443c05e39c3",
+    "phases": [
+      {
+        "name": "fresh-non-ai-installation",
+        "elapsedMs": 12904
+      },
+      {
+        "name": "actual-installed-ai-completion",
+        "elapsedMs": 61842
+      },
+      {
+        "name": "explicit-invalidation-keeps-authenticated-non-ai-and-refuses-generation",
+        "elapsedMs": 62341
+      },
+      {
+        "name": "fresh-native-restart-new-certificate-preserved-identity",
+        "elapsedMs": 68273
+      }
+    ],
+    "generations": 3,
+    "requests": [
+      {
+        "generation": "71872af68bd7aec2f235e2ca93d5ed9f",
+        "expectedAvailable": true,
+        "startedMs": 61319,
+        "elapsedMs": 523,
+        "outputBytes": 2,
+        "status": "completed"
+      },
+      {
+        "generation": "71872af68bd7aec2f235e2ca93d5ed9f",
+        "expectedAvailable": false,
+        "startedMs": 62245,
+        "elapsedMs": 5,
+        "status": "rejected-after-invalidation"
+      },
+      {
+        "generation": "177c9d1d32a223bdab8b8e8c0daec34e",
+        "expectedAvailable": true,
+        "startedMs": 67731,
+        "elapsedMs": 231,
+        "outputBytes": 2,
+        "status": "completed"
+      }
+    ],
+    "newCertificateAfterRestart": true,
+    "finalOwnerExitedZero": true,
+    "finalJournal": "matching quiescent/ok independently verified",
+    "cleanup": [],
+    "elapsedMs": 68273
+  },
+  "fullLocalGate": {
+    "status": "passed",
+    "receipt": "final-local-gate-candidate13.json",
+    "receiptSha256": "76564e0a0359c58d3ca17a426a5fd3b77b07076a80260931063e53c9c58ebaca",
+    "evidenceKind": "coordinator-observed gate execution; original pre-cleanup summary retained unchanged",
+    "source": {
+      "headSha": "5759b8f0ca07b4bebe5da579f941266f5d2a5127",
+      "dirty": true,
+      "copiedInputsSha256": "68b2dfbbb5de2011cea83df041a29f27920723a62195ec71cf91c24860148978"
+    },
+    "baseComparison": "performed",
+    "phases": 12,
+    "callerIntegrity": true,
+    "cleanupErrors": [],
+    "elapsedMs": 1409095,
+    "postSnapshotDocumentation": "Affected review passed; product inputs unchanged; documentation checks renewed separately"
+  },
+  "exactHeadCI": {
+    "status": "Recorded on the PR after this evidence commit is pushed; no pass is asserted by this pre-push record",
+    "evidenceLocation": "https://github.com/loyalagents/context-router/pull/168/checks",
+    "requirement": "Standard CI and dedicated migration workflow must both pass on the final pushed head; no automatic merge"
+  },
+  "humanAcceptance": "Confirmed flows and observation limits in acceptance.md; no routine repetition of unaffected checks requested",
+  "limitations": [
+    "Unsigned local pilot; signing/notarization/Gatekeeper/private release destination missing",
+    "Other hardware and Windows/Linux unsupported; Windows/Linux deferral approved",
+    "Real expiry, forced-loss and cross-boot recovery unqualified",
+    "Human backup/replacement and duplicate-menu/occupied-port observations remain unperformed; automated coverage is separate",
+    "Step06 E/H and historical quality/cancellation failures remain; short live series does not restore them",
+    "Rejected PDF, stale-list refresh and possible proposal attribution remain deferred as recorded; no universal extraction/race guarantee",
+    "No merge or release"
+  ]
+}

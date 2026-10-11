@@ -6,6 +6,7 @@ import { AiError, AiErrorKind, AiExecutionOptions, AiStatus, LOCAL_AI_CAPABILITI
 import type { AiTextGeneratorPort, FileInput } from '../../domains/shared/ports/ai-text-generator.port';
 import type { AiStructuredOptions, AiStructuredOutputPort } from '../../domains/shared/ports/ai-structured-output.port';
 import { localJsonSchema } from './schema';
+import { managedLifetimeDescriptor, managedModelAuthority } from '../managed/managed-admission';
 
 export interface ManualModelConfiguration {
   readonly root: string;
@@ -20,7 +21,12 @@ interface CompletionClient {
   settled(): Promise<void>;
   close(): Promise<void>;
 }
-interface Parser { readonly state: string; parse(bytes: Buffer, options: AiExecutionOptions): Promise<{ text: string }> }
+interface Parser { readonly state: string; parse(bytes: Buffer, options: AiExecutionOptions): Promise<{ text: string }>; drain(): Promise<void> }
+interface ModelStartupAdmission {
+  readonly state: 'loading' | 'ready' | 'failed';
+  readonly signal: AbortSignal;
+  close(): Promise<void>;
+}
 const templateHash = '7f0e529032c25183bcd66c7f238da2d377f43be754a94e2725a58c4e16d2ed67';
 const capabilities = Object.freeze({ ...LOCAL_AI_CAPABILITIES,
   runtime: 'llama.cpp b11146', model: 'Qwen3.5-9B Q4_K_M; step06-qwen35' });
@@ -47,10 +53,18 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
   private closing = false;
   private operation: Promise<unknown> = Promise.resolve();
   private settlement: Promise<void> = Promise.resolve();
+  private readonly startup?: ModelStartupAdmission;
+  private observedReadiness: 'unqualified' | 'qualified' | 'failed' = 'unqualified';
 
-  constructor(configuration: ManualModelConfiguration) {
+  constructor(configuration: ManualModelConfiguration, startup?: ModelStartupAdmission) {
     this.configuration = Object.freeze({ root: configuration?.root, port: configuration?.port,
       identityRoot: configuration?.identityRoot, databaseRoot: configuration?.databaseRoot });
+    const authority = managedModelAuthority(this.configuration);
+    if (authority && startup) throw new AiError('unsafe_configuration');
+    this.startup = authority
+      ? new (require('./engine/managed-readiness.mjs').ManagedModelReadiness)(this.configuration,
+        { signal: authority.signal, checkAuthority: authority.assertHeld })
+      : startup;
   }
 
   private initialize(): Promise<void> {
@@ -62,13 +76,34 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
         const { PdfProcess } = require('./engine/pdf-process.mjs');
         this.claimed = await claimManualSession(this.configuration);
         this.client = new NativeCompletionClient(this.claimed);
-        this.parser = new PdfProcess({ workerPath: join(__dirname, 'engine/pdf-worker.mjs') });
+        this.parser = new PdfProcess({ workerPath: join(__dirname, 'engine/pdf-worker.mjs'), lifetimeDescriptor: managedLifetimeDescriptor });
         this.probe = probeJson;
       } catch { this.unavailable = true; throw new AiError('unsafe_configuration'); }
     })();
   }
 
+  /** Private shell observation, not a recurring reachability probe or admission owner. */
+  async getManagedStatus(options: AiExecutionOptions = {}): Promise<AiStatus | { readonly state: 'loading'; readonly configured: true }> {
+    // Authority/expiry and active settlement always override prior qualification.
+    // Only the initial unqualified observation may initiate a readiness check.
+    if (!this.closing && !this.unavailable && (!this.startup || this.startup.state === 'ready') &&
+        !this.active && this.observedReadiness !== 'unqualified') {
+      if (options.signal?.aborted) throw new AiError('cancelled');
+      if (options.deadline !== undefined && (!Number.isFinite(options.deadline) || performance.now() >= options.deadline)) throw new AiError('deadline');
+      return Object.freeze({ state: this.observedReadiness === 'qualified' ? 'available' : 'unavailable', configured: !!this.claimed });
+    }
+    const status = await this.getStatus(options);
+    if (status.state === 'unavailable' && !this.closing && !this.unavailable && this.startup?.state === 'loading')
+      return Object.freeze({ state: 'loading', configured: true });
+    return status;
+  }
+
   async getStatus(options: AiExecutionOptions = {}): Promise<AiStatus> {
+    if (this.startup && this.startup.state !== 'ready') {
+      if (options.signal?.aborted) throw new AiError('cancelled');
+      if (options.deadline !== undefined && (!Number.isFinite(options.deadline) || performance.now() >= options.deadline)) throw new AiError('deadline');
+      return Object.freeze({ state: 'unavailable', configured: true });
+    }
     if (this.closing || this.unavailable) return Object.freeze({ state: 'unavailable', configured: !!this.claimed });
     if (this.active) return Object.freeze({ state: 'busy', configured: !!this.claimed });
     const requested = { ...options };
@@ -145,15 +180,18 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
 
   private run<T>(requested: AiExecutionOptions = {}, body: (controls: Readonly<AiExecutionOptions>, check: () => void) => Promise<T>): Promise<T> {
     if (this.closing || this.unavailable) return Promise.reject(new AiError('unavailable'));
+    if (this.startup && this.startup.state !== 'ready') return Promise.reject(new AiError('unavailable'));
     if (this.active) return Promise.reject(new AiError('busy'));
     let workflow: ReturnType<typeof createAiWorkflow>;
     try {
       workflow = createAiWorkflow(capabilities, { ...requested,
-        signal: requested.signal ? AbortSignal.any([requested.signal, this.shutdown.signal]) : this.shutdown.signal });
+        signal: AbortSignal.any([this.shutdown.signal, ...(requested.signal ? [requested.signal] : []),
+          ...(this.startup ? [this.startup.signal] : [])]) });
     } catch (error) { return Promise.reject(error instanceof AiError ? error : new AiError('input_limit')); }
     const controls = Object.freeze({ ...workflow.options, deadline: Math.min(workflow.options.deadline, performance.now() + 120000) });
     const check = () => {
       workflow.check();
+      if (this.startup && this.startup.state !== 'ready') throw new AiError('unavailable');
       if (this.closing) throw new AiError('unavailable');
       if (performance.now() >= controls.deadline) throw new AiError('deadline');
     };
@@ -162,8 +200,11 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
       try { await this.initialize(); check(); const result = await body(controls, check); check(); return result; }
       catch (error) {
         check();
-        if (error instanceof AiError) throw error;
-        throw new AiError(Object.prototype.hasOwnProperty.call(errors, error?.message) ? errors[error.message] : 'unavailable');
+        const failure = error instanceof AiError ? error
+          : new AiError(Object.prototype.hasOwnProperty.call(errors, error?.message) ? errors[error.message] : 'unavailable');
+        // Record observed failure for the menu, without changing nonterminal recovery.
+        if (failure.kind === 'unavailable' || failure.kind === 'unsafe_configuration') this.observedReadiness = 'failed';
+        throw failure;
       } finally {
         this.settlement = (this.client?.settled() ?? Promise.resolve()).then(() => {
           if (this.client?.state === 'unavailable' || this.parser?.state === 'unavailable') this.unavailable = true;
@@ -200,6 +241,7 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
     } finally { socket?.destroy(); await closed; check(); }
   }
   private async readiness(controls: AiExecutionOptions, check: () => void) {
+    this.observedReadiness = 'failed';
     const end = Math.min(controls.deadline, performance.now() + 5000);
     const readinessControls = { ...controls, deadline: end };
     await this.json('/props', undefined, readinessControls, check, null, controls.deadline);
@@ -212,6 +254,8 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
         !Array.isArray(models?.data) || models.data.length !== 1 || models.data[0]?.id !== 'step06-qwen35') {
       this.unavailable = true; throw new AiError('unsafe_configuration');
     }
+    check();
+    this.observedReadiness = 'qualified';
   }
   private async render(message: string, controls: AiExecutionOptions, check: () => void): Promise<string> {
     const rendered = (await this.json('/apply-template', { messages: [{ role: 'user', content: message }] }, controls, check))?.prompt;
@@ -227,7 +271,8 @@ export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutpu
   async settled(): Promise<void> { await this.operation; await this.settlement; }
   async onModuleDestroy(): Promise<void> {
     this.closing = true; this.shutdown.abort();
-    await this.operation; await this.settlement; await this.client?.close();
+    await this.startup?.close();
+    await this.operation; await this.settlement; await this.client?.close(); await this.parser?.drain();
     this.unavailable = true;
   }
 }

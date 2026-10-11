@@ -66,7 +66,7 @@ import {
 const execFileAsync = promisify(execFile);
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(scriptDirectory, "../..");
-const dependencyRoots = ["", "apps/backend", "apps/web", "apps/local-orchestrator"];
+const dependencyRoots = ["", "apps/backend", "apps/web", "apps/local-orchestrator", "apps/desktop"];
 const disposableWorkspaceMarkerRelativePath = path.join(
   ".git",
   "lmbg-workspace-owner.json",

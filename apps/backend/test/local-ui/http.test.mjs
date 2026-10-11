@@ -144,6 +144,75 @@ async function fixture(t, options = {}) {
 }
 const me = { query: '{ me { userId } }' };
 
+test('session observation is non-renewing, returns no model data and never probes AI', async (t) => {
+  const f = await configuredFixture(t);
+  const { LocalUiSessions } = require('../../dist/local-ui/local-ui-sessions.js');
+  const { AI_TEXT_GENERATOR_PORT } = require('../../dist/domains/shared/ports/ai.tokens.js');
+  const sessions = f.runtime.application.get(LocalUiSessions);
+  let now = 1000, probes = 0;
+  sessions.now = () => now;
+  const ai = f.runtime.application.get(AI_TEXT_GENERATOR_PORT);
+  ai.getStatus = async () => { probes++; throw new Error('No model probe permitted'); };
+  const { token } = await f.unlock();
+  for (let i = 0; i < 3; i++) {
+    now += 1000;
+    const response = await f.request('/api/local/session', { token });
+    assert.equal(response.status, 200, response.text);
+    assert.deepEqual(response.json(), { remainingMilliseconds: 8 * 60 * 60 * 1000 - (i + 1) * 1000 });
+    assert.match(response.headers['cache-control'], /no-store/);
+    assert.equal(response.headers['set-cookie'], undefined);
+  }
+  assert.equal(probes, 0);
+  assert.deepEqual(f.peer.state.calls, []);
+  now += 8 * 60 * 60 * 1000;
+  assert.equal((await f.request('/api/local/session', { token })).status, 401);
+});
+
+test('session observation enforces exact body and browser route authority', async (t) => {
+  const f = await fixture(t);
+  const { token, bootstrap } = await f.unlock();
+  assert.equal((await f.request('/api/local/session', { token, chunked: true })).status, 200);
+  for (const wrong of [undefined, f.identity.credential, f.mcpToken, bootstrap])
+    assert.equal((await f.request('/api/local/session', { token: wrong })).status, 401);
+  for (const body of [{ probe: true }, [], null, 'session'])
+    assert.equal((await f.request('/api/local/session', { token, body })).status, 400);
+  for (const headers of [{ origin: 'http://attacker.invalid' }, { host: 'attacker.invalid' }, { 'x-context-router-ui': '0' }])
+    assert.notEqual((await f.request('/api/local/session', { token, headers })).status, 200);
+  assert.notEqual((await f.request('/api/local/session', { token, method: 'GET' })).status, 200);
+  assert.equal((await f.request('/api/local/session', { token, headers: { 'content-type': 'text/plain' } })).status, 415);
+  assert.equal((await f.request('/api/local/session', { token, chunked: true, rawBody: ' '.repeat(256 * 1024) + '{}' })).status, 413);
+  assert.equal((await f.request('/api/local/logout', { token })).status, 200);
+  assert.equal((await f.request('/api/local/session', { token })).status, 401);
+});
+
+for (const outcome of ['logout', 'expiry']) test(`session observation rejects ${outcome} during a delayed body`, { timeout: 10000 }, async (t) => {
+  const f = await fixture(t);
+  const { LocalUiSessions } = require('../../dist/local-ui/local-ui-sessions.js');
+  const sessions = f.runtime.application.get(LocalUiSessions);
+  let now = 0;
+  sessions.now = () => now;
+  const { token } = await f.unlock();
+  assert.equal((await f.request('/api/local/session', { token })).status, 200);
+  let entered;
+  const tracked = new Promise(resolve => { entered = resolve; });
+  const track = sessions.track.bind(sessions);
+  sessions.track = (...args) => { const release = track(...args); entered(); return release; };
+  let request;
+  const result = new Promise((resolve, reject) => {
+    request = http.request(f.origin + '/api/local/session', { method: 'POST', headers: {
+      origin: f.origin, authorization: `Bearer ${token}`, 'x-context-router-ui': '1', 'content-type': 'application/json',
+    } }, res => { res.resume(); res.once('end', () => resolve(res.statusCode)); });
+    request.on('error', reject);
+    request.write('{');
+  });
+  t.after(() => request.destroy());
+  await tracked;
+  if (outcome === 'logout') sessions.logout(token);
+  else now = 8 * 60 * 60 * 1000;
+  request.end('}');
+  assert.equal(await result, 401);
+});
+
 test('chunked bodies enforce actual route limits before use cases and release admission capacity', async (t) => {
   const f = await configuredFixture(t);
   const { token } = await f.unlock();

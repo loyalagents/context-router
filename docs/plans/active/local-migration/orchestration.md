@@ -1,11 +1,11 @@
 # Local-First Migration Orchestration
 
 - Status: active program
-- Last completed step: `07-local-mcp` — [PR #166](https://github.com/loyalagents/context-router/pull/166), human-merged at `5e2a67dd785500ba053b2e836c47166e8adeada8` from final tested head `a1a3e0167579f20839b5f91e2a5e52b5a2fd2a6e`; successful [standard CI](https://github.com/loyalagents/context-router/actions/runs/37168124820) and [migration gate](https://github.com/loyalagents/context-router/actions/runs/37168124816). See the [Step 07 closeout](07-local-mcp/README.md) for evidence limits.
-- Current primary implementation step: `08-local-ui` — implemented; independent reviews and full local gate passed; user-run acceptance complete with accepted evidence limits; awaiting human PR disposition
-- Coordinator and sole repository writer: `/root`, requested GPT-6 Astra Extra High; existing checkout on `codex/local-migration-08-local-ui`
-- Concrete next action: publish documentation closeout and verify final pushed-head CI on draft PR #167, then await human disposition; do not mark ready or merge
-- Review date: 2026-10-04 — Step 08 final implementation approvals and user-run acceptance disposition
+- Last completed step: `08-local-ui` — [PR #167](https://github.com/loyalagents/context-router/pull/167), human-merged at `7328ceea63a784577594d52af18062be8b583855` from final tested head `e064e74b5fc30f6c3c24cee17e1c5b11d43ffa7b`; successful [standard CI](https://github.com/loyalagents/context-router/actions/runs/37255310437) and [migration gate](https://github.com/loyalagents/context-router/actions/runs/37255310441). See the [Step 08 closeout](08-local-ui/README.md) for retained evidence limits.
+- Current primary implementation step: `09-installation-and-packaging` — Candidate 14 sleep-clock correction; affected review and native/installed qualification passed; final local gate and exact-head CI outcomes tracked on the PR; acceptance/release limits retained
+- Coordinator and sole repository writer: `/root`, requested GPT-6 Astra Extra High (serving settings unobservable); existing checkout on `codex/local-migration-09-installation-and-packaging`
+- Concrete next action: review final-head CI on draft [PR #168](https://github.com/loyalagents/context-router/pull/168), then present the [Step 09 acceptance disposition](09-installation-and-packaging/acceptance.md); no automatic merge or release
+- Review date: 2026-10-10 — Candidate 13 complete-diff review retained outside the independently reviewed Candidate 14 clock delta; acceptance limits stay explicit
 - Primary development branch: `main`
 - Preserved hosted branch: `hosted-v1-maintenance`
 - Hosted baseline tag: `hosted-v1-baseline-2026-09-13`
@@ -80,6 +80,10 @@ The most important current decisions are:
   limits. Clearer grant feedback, client labels and history value summaries are
   tracked in the [UI usability follow-up](../ui-usability/README.md), to revisit
   after the packaged local workflow is usable without expanding Step 09 scope.
+- [Local AI scheduling](../local-ai-scheduling/README.md) is a separate deferred
+  follow-up after Step 09 (LM-024): bounded waiting with one active operation
+  first, followed by an optional measured two-slot evaluation. It does not
+  renumber Steps 10/11 or add a migration gate; current zero-queue behavior remains.
 
 ## Target Boundaries
 
@@ -264,12 +268,27 @@ sequential ownership transfer before writes resume; never have two writers on
 the same branch/worktree. Requested model/effort settings and actual availability
 are recorded separately. Higher effort does not waive independent review or tests.
 
-Use targeted validation between checkpoints, but retain the exact-base activation
-gate, final full local `pnpm migration:gate`, and applicable final pushed-head
-standard CI and dedicated migration workflow. Record base binding, caller
-integrity, phase results, cleanup, toolchain, and timing. Parallel review/testing
-requires a frozen candidate and isolated resources; changed inputs invalidate
-affected evidence. Do not substitute an earlier green run for final-head evidence.
+### Correction Rounds And Final Qualification
+
+Follow the canonical [validation policy](../../../useful/AGENT_WORKFLOW.md#validation-and-context-discipline):
+targeted correction checks, bounded trial builds for human feedback, then final
+qualification at the agreed end-of-round boundary. Batch related corrections;
+a trial handoff is not a new finalization cycle. Each step plan names that boundary,
+trial eligibility and check timing using the step template. Amend conflicting
+active-plan sequencing with affected review; never silently waive a gate.
+
+Retain the exact-base activation gate. After the candidate is frozen, retain the
+final full local `pnpm migration:gate`, applicable installed-artifact and manual
+acceptance, independent complete-diff review, and applicable final pushed-head
+standard CI and dedicated migration workflow. Runtime changes after qualification
+return to targeted iteration, then renewed required final qualification. Valid
+unaffected review/test coverage carries forward only with explicit impact evidence.
+
+Explain expensive runs and preflight toolchain/resources before execution. Record
+base binding, caller integrity, phase results, cleanup, toolchain, and timing.
+Parallel review/testing requires stable inputs and isolated resources; changed
+inputs invalidate affected evidence. CI triggers/requirements stay unchanged;
+do not substitute an earlier green run for final-head or changed-artifact evidence.
 
 ## Global PR Gates
 
@@ -331,14 +350,14 @@ accumulate; more than one may exist during an explicitly approved overlap.
 | `05-local-database-runtime` | Complete — [PR #164](https://github.com/loyalagents/context-router/pull/164), merge `837701b3633eed669dd2c2c518ffebc0e46d55d8`; final head `91b86b1b412cc8b2b914ffe4f321a7a0cf1f370b` passed standard CI `35957573071` and migration gate `35957573023`; [retained plan](05-local-database-runtime/plan.md) | Implemented selected SQLite storage, worker-held identity coordination, actual local composition, recovery/backup and source/package evidence; retain explicit PostgreSQL reference coverage. | Step 04 |
 | `06-local-model` | Complete — [PR #165](https://github.com/loyalagents/context-router/pull/165), merge `cf18207e1197d0a1ffe5f598b5828c77c4711ad5`; final tested head `f004702ef07df59f3cece36e0db0a79aea7055b7` passed standard CI `36487182884` and migration CI `36487183214`; [retained plan](06-local-model/plan.md) | Manual Apple Silicon local-model adapter with truthful capabilities, bounded execution and explicit E/H limitations; original failures retained. | Step 02 boundaries and Step 05 local composition |
 | `07-local-mcp` | Complete — [PR #166](https://github.com/loyalagents/context-router/pull/166), merge `5e2a67dd785500ba053b2e836c47166e8adeada8`; [retained plan](07-local-mcp/plan.md) and [closeout](07-local-mcp/README.md) | Direct loopback HTTP for Claude Code and Codex CLI, per-instance credentials, SQLite tools and shared Step 06 inference. | Steps 03, 05 and 06 complete |
-| `08-local-ui` | Active — implemented; independent reviews and [full local gate](08-local-ui/final-gate-summary.json) passed; [user-run acceptance](08-local-ui/acceptance.md) complete with accepted evidence limits; awaiting human PR disposition | Reuse the dashboard without Auth0/hosted dependencies, with a separate safe browser session, shared UI/MCP state and inference, basic client/grant management, and retained history with explicit whole-history clearing (LM-021). | Merged Steps 03, 05–07 |
-| `09-installation-and-packaging` | Not started | Early native Windows/Linux qualification after the Mac model path; then managed first-run setup, process supervision, data locations, model assets, clean-install smoke, logs, backup/recovery and updates. | Final product depends on Steps 06–08; early qualification needs explicit non-overlap review |
+| `08-local-ui` | Complete — [PR #167](https://github.com/loyalagents/context-router/pull/167), merge `7328ceea63a784577594d52af18062be8b583855`; independent reviews, full local gate and exact final-head CI passed; [accepted user-run evidence limits](08-local-ui/acceptance.md) retained | Reuse the dashboard without Auth0/hosted dependencies, with a separate safe browser session, shared UI/MCP state and inference, basic client/grant management, and retained history with explicit whole-history clearing (LM-021). | Merged Steps 03, 05–07 |
+| `09-installation-and-packaging` | Active — [clean-base activation](09-installation-and-packaging/activation.md) passed; [P2.3 plan](09-installation-and-packaging/plan.md) implemented; reviews/full local gate passed; draft [PR #168](https://github.com/loyalagents/context-router/pull/168), acceptance pending | Early native Windows/Linux qualification after the Mac model path; then managed first-run setup, process supervision, data locations, model assets, clean-install smoke, logs, backup/recovery and updates. | Final product depends on Steps 06–08; early qualification needs explicit non-overlap review |
 | `10-lan-mcp` | Deferred/optional | Add explicit LAN enablement, pairing/authentication, exposure warnings, and network tests. | Step 09 |
 | `11-hosting-portability-check` | Deferred/optional | Prove a hosted composition can be added at the boundaries without cloud sync or changes to the application core. | Stable local application |
 
 ## Parallel Work
 
-Steps 06 and 07 are merged. Step 08 is the sole active primary step after its [clean-base gate and verified restoration](08-local-ui/activation.md), in the existing checkout on `codex/local-migration-08-local-ui`. Root is the sole writer with parallel read-only investigation and fresh independent reviews. Steps 09–11 and MCP onboarding remain inactive. All four independent P2 plan approvals are recorded in the [review ledger](08-local-ui/reviews.md); implementation follows tests-first checkpoints.
+Steps 06–08 are merged. Step 09 is the sole active primary step after its [clean-base activation](09-installation-and-packaging/activation.md), in the existing checkout on `codex/local-migration-09-installation-and-packaging`. Root is the sole writer with parallel read-only investigation and independent reviews. Steps 10–11, MCP onboarding, UI-usability and local-AI scheduling follow-ups remain inactive/deferred. The [review ledger](09-installation-and-packaging/reviews.md) records requested versus observable model settings, P1/P2.3 approvals and implementation review findings. No executable feasibility or product implementation begins before its applicable review gate.
 
 Coordinate or serialize changes to these hotspots:
 

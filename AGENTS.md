@@ -11,13 +11,32 @@ This repo is a `pnpm` workspace monorepo with:
 - `apps/backend`: NestJS + GraphQL + Prisma + MCP
 - `apps/web`: Next.js dashboard and support routes
 
+Validation for all repository changes (backend, web, native, packaging, and docs):
+
+- Follow the [validation policy](docs/useful/AGENT_WORKFLOW.md#validation-and-context-discipline).
+  During iteration, run focused checks for changed behavior and affected consumers;
+  include integration, browser, native, persistence, or recovery tests as risk requires.
+- Batch related corrections. Do not automatically run the full migration gate,
+  complete package qualification, or every independent review after each small edit.
+- A source/artifact-bound trial build may support a named human retest after the
+  necessary checks and affected reviews. Report its scope and outstanding checks:
+  "Targeted checks passed; final validation pending." A trial is not merge-ready.
+- Agree the end-of-round finalization milestone, then freeze a candidate and run
+  all required final gates. Changed inputs invalidate affected evidence; explicitly
+  carry forward only unaffected coverage. Preserve backend tests-first rules below.
+- Before an expensive broad run, explain its purpose, relevant changes since the
+  last pass, and any plan requirement to run it now. Check toolchain prerequisites;
+  parallelize independent checks only with isolated resources and stable inputs.
+- Do not weaken tests, alter CI requirements/triggers, bypass safety or live-run
+  approvals, overstate readiness, or merge automatically to shorten iteration.
+
 When adding or changing backend behavior:
 
 - Write or update tests first.
 - Do not change tests unless requirements changed.
 - Run targeted tests after each change.
 - Keep edits small and incremental.
-- Stop when tests are green and summarize what changed.
+- Report targeted results and any pending final validation at each checkpoint.
 
 When making plans for backend work:
 
