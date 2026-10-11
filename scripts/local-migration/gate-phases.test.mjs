@@ -3,11 +3,13 @@ import { localMcpLifecycleResources } from './fixtures/local-mcp-lifecycle.mjs';
 import { localModelLifecycleResources } from './fixtures/local-model-lifecycle.mjs';
 import { localDatabaseLifecycleResources } from "./fixtures/local-database-lifecycle.mjs";
 import assert from "node:assert/strict";
+import { constants } from "node:fs";
 import {
   chmod,
   lstat,
   mkdir,
   mkdtemp,
+  open,
   readFile,
   realpath,
   rm,
@@ -18,6 +20,8 @@ import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import * as timingGate from "./migration-gate.mjs";
+import { PACKAGING_MILESTONES } from "./packaging-progress.mjs";
 
 import {
   validateApprovedPhaseCommands,
@@ -54,6 +58,207 @@ const { parse: parseYaml } = require("yaml");
 const schema = JSON.parse(
   await readFile(new URL("./gate-phases.schema.json", import.meta.url), "utf8"),
 );
+
+async function withTimingLog(operation) {
+  const ownership = await prepareGateDiagnosticsRoot(path.join(os.tmpdir(), "gate-timing-test-"));
+  const logPath = path.join(ownership.directory, "phase-11-packaged-composition-smoke-1.log");
+  const log = PACKAGING_MILESTONES.filter((name) => name !== "failed")
+    .map((name, index) => `packaging-smoke: milestone=${name} elapsedMs=${index}\n`).join("");
+  await writeFile(logPath, log, { mode: 0o600 });
+  try { await operation({ ownership, logPath, log }); }
+  finally { await rm(ownership.directory, { recursive: true, force: true }); }
+}
+
+test("packaging timing collection reads only a bounded regular log in owned diagnostics", async () => {
+  await withTimingLog(async ({ ownership, logPath, log }) => {
+    const read = (options) => timingGate.readPackagingTimings(ownership, logPath, options);
+    assert.equal((await read()).availability, "complete");
+    await writeFile(logPath, log + "x".repeat(20_000));
+    let bytesRequested = 0;
+    let closed = false;
+    const result = await read({ openFile: async (file, flags) => {
+      assert.equal(file, logPath);
+      assert.ok(flags & constants.O_NOFOLLOW);
+      assert.ok(flags & constants.O_NONBLOCK);
+      const handle = await open(file, flags);
+      return {
+        stat: () => handle.stat(),
+        read: async (...args) => { bytesRequested += args[2]; return handle.read(...args); },
+        close: async () => { closed = true; await handle.close(); },
+      };
+    } });
+    assert.equal(result.availability, "partial");
+    assert.equal(result.reason, "truncated");
+    assert.ok(bytesRequested <= 16_384);
+    assert.equal(closed, true);
+    await rm(logPath);
+    assert.equal((await read()).reason, "log-unavailable");
+    await symlink(ownership.markerPath, logPath);
+    assert.equal((await read()).reason, "unsafe-log");
+    await rm(logPath);
+    await mkdir(logPath);
+    assert.equal((await read()).reason, "unsafe-log");
+    assert.equal((await timingGate.readPackagingTimings(ownership, ownership.markerPath)).reason, "unsafe-log");
+    assert.equal((await timingGate.readPackagingTimings({ ...ownership, nonce: "wrong" }, logPath)).reason, "ownership-invalid");
+  });
+});
+
+test("packaging timing read and close failures or replaced files cannot escape or leak diagnostics", async () => {
+  await withTimingLog(async ({ ownership, logPath }) => {
+    for (const failure of ["open", "identity", "nonregular", "read", "changed", "close"]) {
+      let closed = false;
+      let stats = 0;
+      const result = await timingGate.readPackagingTimings(ownership, logPath, {
+        openFile: async (file, flags) => {
+          if (failure === "open") throw new Error("private-canary");
+          const handle = await open(file, flags);
+          return {
+            stat: async () => {
+              const info = await handle.stat(); stats++;
+              if (failure === "identity") info.ino++;
+              if (failure === "nonregular") info.isFile = () => false;
+              if (failure === "changed" && stats > 1) info.size++;
+              return info;
+            },
+            read: (...args) => {
+              if (failure === "read") throw new Error("private-canary");
+              return handle.read(...args);
+            },
+            close: async () => {
+              closed = true; await handle.close();
+              if (failure === "close") throw new Error("private-canary");
+            },
+          };
+        },
+      });
+      assert.equal(result.availability, "unavailable", failure);
+      assert.deepEqual(result.milestones, []);
+      assert.equal(JSON.stringify(result).includes("private-canary"), false);
+      assert.equal(closed, failure !== "open");
+    }
+  });
+});
+
+test("packaged dispatch collects timings after settlement without changing command or lifecycle failure", async () => {
+  await withTimingLog(async ({ ownership, logPath }) => {
+    for (const failure of [null, "command", "lifecycle", "both", "cancelled"]) {
+      const summary = {};
+      const events = [];
+      const dispatched = timingGate.executeGatePhaseCommand({
+        phase: { kind: "packaged-smoke" },
+        packagingDiagnostics: { ownership, logPath, summary },
+        executeCommand: async () => {
+          events.push("command");
+          if (["command", "both", "cancelled"].includes(failure)) {
+            throw Object.assign(new Error("command failure"), { exitCode: failure === "cancelled" ? 143 : 23 });
+          }
+          return { outputTail: "unchanged result" };
+        },
+        validatePackagedLifecycle: async ({ commandSucceeded }) => {
+          events.push("lifecycle");
+          assert.equal(commandSucceeded, !["command", "both", "cancelled"].includes(failure));
+          assert.equal(summary.packagingTimings, undefined, "collection follows lifecycle validation");
+          if (["lifecycle", "both"].includes(failure)) throw new Error("lifecycle failure");
+        },
+      });
+      if (failure) await assert.rejects(dispatched, (error) => {
+        if (failure !== "lifecycle") assert.match(error.message, /command failure/);
+        if (["lifecycle", "both"].includes(failure)) assert.match(error.message, /lifecycle failure/);
+        if (failure === "cancelled") assert.equal(error.exitCode, 143);
+        return true;
+      });
+      else assert.deepEqual(await dispatched, { outputTail: "unchanged result" });
+      assert.deepEqual(events, ["command", "lifecycle"]);
+      assert.equal(summary.packagingTimings.availability, "complete");
+    }
+    await rm(logPath);
+    const summary = {};
+    assert.equal(await timingGate.executeGatePhaseCommand({
+      phase: { kind: "packaged-smoke" }, packagingDiagnostics: { ownership, logPath, summary },
+      executeCommand: async () => 42, validatePackagedLifecycle: async () => {},
+    }), 42);
+    assert.equal(summary.packagingTimings.availability, "unavailable");
+    const primary = Object.assign(new Error("original failure"), { exitCode: 23 });
+    await assert.rejects(timingGate.executeGatePhaseCommand({
+      phase: { kind: "packaged-smoke" }, packagingDiagnostics: { ownership, logPath, summary },
+      executeCommand: async () => { throw primary; }, validatePackagedLifecycle: async () => {},
+    }), (error) => error === primary && error.exitCode === 23);
+  });
+});
+
+test("packaging timings survive external persistence and cleanup without conferring gate success", async () => {
+  for (const outcome of ["passed", "failed", "cancelled", "cleanup-failed"]) {
+    await withTimingLog(async ({ ownership, logPath }) => {
+      const timings = await timingGate.readPackagingTimings(ownership, logPath);
+      const lifecycle = await createResourceLifecycleJournal(ownership.directory, { filename: "gate-resource-lifecycle.json" });
+      const persisted = [];
+      const controller = new AbortController();
+      if (outcome === "cancelled") controller.abort(new Error("cancelled"));
+      const result = await finalizeGateAttemptEvidence({
+        timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+        diagnosticsDirectory: ownership.directory, diagnosticsOwnership: ownership, lifecycle,
+        summary: { status: "running", packagingTimings: timings }, wallStartedAt: Date.now(),
+        callerIntegrityVerified: true, signals: [controller.signal],
+        attemptError: outcome === "failed" ? new Error("failed") : undefined,
+        async persistExternal(_env, value) { persisted.push(structuredClone(value)); },
+        async removeDiagnostics(directory) {
+          assert.ok(persisted.every((value) => value.status !== "passed"));
+          if (outcome === "cleanup-failed") throw new Error("cleanup failed");
+          await rm(directory, { recursive: true });
+        },
+      });
+      assert.equal(result.summary.status, outcome === "cleanup-failed" ? "failed" : outcome);
+      assert.deepEqual(persisted.at(-1).packagingTimings, timings);
+      if (outcome === "passed") assert.equal(result.diagnosticsDirectory, null);
+      else assert.ok(persisted.every((value) => value.status !== "passed"));
+    });
+  }
+});
+
+test("gate evidence distinguishes packaging not reached from smoke-only mode", async () => {
+  for (const mode of ["full", "smoke-only"]) {
+    const persisted = [];
+    const result = await finalizeGateAttemptEvidence({
+      timeline: createGateTimeline(), mode, summary: { status: "failed" },
+      wallStartedAt: Date.now(), callerIntegrityVerified: false,
+      attemptError: new Error("early preflight failure"),
+      async persistExternal(_env, value) { persisted.push(structuredClone(value)); },
+    });
+    const expected = { schemaVersion: 1, availability: "unavailable", milestones: [],
+      reason: mode === "smoke-only" ? "mode-not-applicable" : "phase-not-run" };
+    assert.deepEqual(result.summary.packagingTimings, expected);
+    assert.deepEqual(persisted.at(-1).packagingTimings, expected);
+    assert.equal(persisted.at(-1).status, "failed");
+  }
+});
+
+test("partial and unavailable packaging timings persist through the real sanitized summary writer", async () => {
+  const runnerTemp = await mkdtemp(path.join(os.tmpdir(), "gate-timing-export-"));
+  try {
+    for (const sample of ["partial", "unavailable"]) {
+      await withTimingLog(async ({ ownership, logPath }) => {
+        if (sample === "partial") {
+          await writeFile(logPath, "[stderr] Bearer private-canary\n[stdout] packaging-smoke: milestone=failed elapsedMs=1\n");
+        } else await rm(logPath);
+        const packagingTimings = await timingGate.readPackagingTimings(ownership, logPath);
+        assert.equal(packagingTimings.availability, sample);
+        const lifecycle = await createResourceLifecycleJournal(ownership.directory, { filename: "gate-resource-lifecycle.json" });
+        const summaryPath = path.join(runnerTemp, "local-migration-gate-summary.json");
+        await finalizeGateAttemptEvidence({
+          timeline: createGateTimeline({ startedAt: 0, now: () => 1 }),
+          diagnosticsDirectory: ownership.directory, diagnosticsOwnership: ownership, lifecycle,
+          summary: { status: "running", packagingTimings }, wallStartedAt: Date.now(),
+          callerIntegrityVerified: true, attemptError: new Error("Bearer private-canary"),
+          externalEnvironment: { RUNNER_TEMP: runnerTemp, MIGRATION_GATE_CI_SUMMARY_PATH: summaryPath },
+        });
+        const text = await readFile(summaryPath, "utf8");
+        assert.equal(text.includes("private-canary"), false);
+        assert.deepEqual(JSON.parse(text).packagingTimings, packagingTimings);
+        assert.equal(JSON.parse(text).status, "failed");
+      });
+    }
+  } finally { await rm(runnerTemp, { recursive: true, force: true }); }
+});
 
 test("administration redaction canaries include encoded and decoded credentials", () => {
   assert.deepEqual(
