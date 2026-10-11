@@ -43,7 +43,7 @@ for (const root of [assets, evidence]) {
 }
 const testedRevision = execFileSync('/usr/bin/git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 if (execFileSync('/usr/bin/git', ['status', '--porcelain'], { encoding: 'utf8' }).trim()) throw failed();
-const manifestRoot = resolve('docs/plans/active/local-migration/06-local-model/evidence');
+const manifestRoot = resolve('docs/evidence/local-migration/06-local-model');
 const seriesBytes = await readFile(join(manifestRoot, 'client-reproducibility-manifest.json')), series = JSON.parse(seriesBytes);
 const originalBytes = await readFile(join(manifestRoot, 'client-diagnostic-manifest.json')), manifest = JSON.parse(originalBytes);
 assert.deepEqual(series, { mode: 'client-only-cancellation-reproducibility', qualification: false,

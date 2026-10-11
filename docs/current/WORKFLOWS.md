@@ -21,15 +21,17 @@ Current workflows:
 Supporting pieces:
 
 - `AiStructuredOutputPort` for Zod-validated structured AI responses
-- `VertexAiStructuredService` as the current implementation
+- `VertexAiStructuredService` as the hosted implementation
 - `PreferenceSchemaSnapshotService` for prompt-ready schema snapshots
 - `WorkflowStepRecorder` for per-step timing and summaries
 - `WorkflowsModule` for wiring workflows into the backend
 
-These usable AI surfaces belong to the hosted composition. The Step 03 local
+These workflows are shared; the hosted composition supplies Vertex AI. The local
 identity preview binds both AI ports to a fixed unavailable adapter that makes
-no model call, and it has no listener. That preview proves composition only;
-Step 06 owns a usable local model runtime.
+no model call, and it has no listener. That preview proves composition only.
+Separately selected model/MCP/UI and installed compositions now bind the
+[qualified local adapter](../useful/LOCAL_MODEL.md); do not confuse the no-model
+preview with the local product's AI capabilities or assume hosted fallback.
 
 ## Execution Pattern
 

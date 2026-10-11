@@ -12,12 +12,12 @@ unavailable and require manual recovery. The five-second cancellation recovery
 test remains failed; later diagnostic successes did not establish its cause or
 frequency. This is a documented availability limitation, not a passing recovery
 qualification. The deadline and safeguards remain unchanged. See the
-[accepted selection limitation](../plans/active/local-migration/06-local-model/selection.md#accepted-cancellation-recovery-limitation)
+[accepted selection limitation](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/06-local-model/selection.md#accepted-cancellation-recovery-limitation)
 and recovery instructions below.
 
-Use pinned llama.cpp **b11146**, source `7fe450e19305b828c199d602c23a8337aaa1f03b`, and **Qwen3.5-9B Q4_K_M** on the qualified M1 Max, 64 GiB, macOS 15.1.1 arm64 machine. Other hardware/operating systems remain unqualified. Node must be 24.21.0 and pnpm 10.25.0. The [selection](../plans/active/local-migration/06-local-model/selection.md) records provenance, licenses, historical failures, cancellation/resource evidence and the accepted email-omission limitation; [implementation evidence](../plans/active/local-migration/06-local-model/implementation.md) distinguishes application qualification from CP1.
+Use pinned llama.cpp **b11146**, source `7fe450e19305b828c199d602c23a8337aaa1f03b`, and **Qwen3.5-9B Q4_K_M** on the qualified M1 Max, 64 GiB, macOS 15.1.1 arm64 machine. Other hardware/operating systems remain unqualified. Node must be 24.21.0 and pnpm 10.25.0. The [selection](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/06-local-model/selection.md) records provenance, licenses, historical failures, cancellation/resource evidence and the accepted email-omission limitation; [implementation evidence](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/06-local-model/implementation.md) distinguishes application qualification from CP1.
 
-The operator installs and starts inference. The application owns its HTTPS connections and a bounded PDF parsing child. It never downloads, starts, kills or restarts inference, selects another runtime, or falls back to a hosted provider. The manual server arrangement is a Step 06 boundary; Step 09 owns managed installation, storage and process supervision.
+In this manual composition, the operator installs and starts inference. The application owns its HTTPS connections and a bounded PDF parsing child, not the inference process. It never downloads, starts, kills or restarts that manual server, selects another runtime, or falls back to a hosted provider. The separately implemented [installed app](INSTALLED_MAC_APP.md) owns its managed runtime/storage/lifecycle.
 
 Keep runtime binaries and model weights **outside the repository**. They are not Git assets or package dependencies. The current consented experiment stores them under `/private/tmp/context-router-step06-assets`; the 9B GGUF is about 5.68 GB. Temporary storage may be cleared by the OS or an operator, so it is not durable storage. Losing these files makes inference unavailable without deleting application data. The application will not download replacements automatically. Keep database/identity data in their separately chosen durable private roots.
 
@@ -26,7 +26,7 @@ Keep runtime binaries and model weights **outside the repository**. They are not
 | `llama-b11146-bin-macos-arm64.tar.gz` | 11,189,714 | `1ad3f9eff80edb9dbef4259ad564d1720612ef7eea48fa4afed0e54f5f3d5711` |
 | `Qwen3.5-9B-Q4_K_M.gguf` | 5,680,522,464 | `03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8` |
 
-Obtain only these pinned artifacts from the [plan's exact source revisions](../plans/active/local-migration/06-local-model/plan.md#checkpoints), verify byte counts and SHA-256 before extraction/use, and retain the MIT runtime and Apache-2.0 model licenses. Do not substitute the failed 4B candidate or a newer runtime without qualification. PDF.js 6.3.289 is pinned as a build dependency; the ordinary backend build verifies and copies only its required license/package/two bundles into the installed parser closure. No model weights are embedded in the application.
+Obtain only these pinned artifacts from the [plan's exact source revisions](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/06-local-model/plan.md#checkpoints), verify byte counts and SHA-256 before extraction/use, and retain the MIT runtime and Apache-2.0 model licenses. Do not substitute the failed 4B candidate or a newer runtime without qualification. PDF.js 6.3.289 is pinned as a build dependency; the ordinary backend build verifies and copies only its required license/package/two bundles into the installed parser closure. No model weights are embedded in the application.
 
 ## One Fresh Exclusive Session
 
@@ -100,7 +100,7 @@ One operation can run; there is no queue. Cancellation rejects promptly. Reuse r
 
 For recovery or a normal restart, stop **both exact old processes and wait for their actual exits**. Provision a new private root, API key, certificate and private key, then start a new runtime/backend pair. Never delete a claim to reuse its credentials. Application shutdown closes only application-owned connections/parser work; it does not stop the manually owned runtime. Same UID/root/debugger access and compromised host/runtime are outside this protection boundary. Keep the existing database and identity roots and downloaded model/runtime assets; recovery does not require deleting application data or downloading the model again.
 
-Step 09 owns revisiting this recovery burden during runtime and packaging qualification. Bring forward a local-model maintenance investigation if manual recovery becomes disruptive. Future supervision must preserve ownership and must not clear uncertain work merely because a timeout occurred.
+The installed app provides owned-generation Restart, but packaging does not erase failed cancellation qualification H. Bring disruptive recovery to [pilot/stabilization triage](../plans/backlog/stabilization/README.md). Any future supervision must preserve ownership and must not clear uncertain work merely because a timeout occurred.
 
 ## Capabilities And Limits
 

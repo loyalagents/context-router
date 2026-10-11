@@ -189,7 +189,7 @@ routing confines page HTTP/WebSocket requests; it is not an OS-wide browser or
 zero-egress claim. macOS arm64 and Linux CI evidence do not expand native model
 qualification. Windows, LAN and installers remain outside Step 08.
 
-The consolidated [human acceptance disposition](../plans/active/local-migration/08-local-ui/acceptance.md)
+The consolidated [human acceptance disposition](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/08-local-ui/acceptance.md)
 records the completed 2026-10-04 user-run walkthrough and explicitly accepted
 unverified observations. Its reusable checklist does not turn those observations
 into independently passing tests. Use synthetic data and isolated client

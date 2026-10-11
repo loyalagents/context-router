@@ -37,8 +37,12 @@ before installing the required provider-neutral external-identity key, while
 retaining unrelated global definitions. There is no legacy-user translation,
 email claim, or audit/backfill path.
 
-The local preview does not expose an account-deletion surface. Step 09 owns an
-explicit destructive local-identity reset and its backup/recovery policy.
+The local preview does not expose an account-deletion surface. Installed
+backup/restore/removal follows the [runbook](../useful/INSTALLED_MAC_APP.md).
+The [pilot](../plans/active/colleague-pilot/README.md) may designate releases that
+reset user data, but that is not a new GraphQL mode or a command implemented here.
+Any reset needs reviewed scope/consent, preserved source files/model assets,
+security floor and process-ownership checks; never clear journals to bypass refusal.
 
 Every mode runs in one application-owned unit of work, implemented by a
 PostgreSQL transaction for hosted/reference composition or SQLite transaction for the local composition, and deletes preferences before owned

@@ -37,7 +37,7 @@
       ],
       "additiveReplacement": {
         "description": "A provider-neutral exact external-identity key and explicit local-identity-preview mode replace the removed Auth0 profile-copy and backend SDK-client dependencies.",
-        "evidencePath": "docs/plans/active/local-migration/03-local-identity/plan.md"
+        "evidencePath": "docs/current/LOCAL_MIGRATION_CLOSEOUT.md"
       },
       "consumerEvidence": [
         {
@@ -103,7 +103,7 @@
       "rollback": "Stop this binary and clients. Use the retained hosted composition if needed; do not restore the unsafe absent-scope fallback. For local schema rollback, restore an explicit pre-upgrade matching database/identity backup into new roots with the compatible binary. Restoring older credentials can revive their authority; rotate or revoke before reconnecting. Never open upgraded v2 state with v1-only code.",
       "additiveReplacement": {
         "description": "Reviewed Step07 HTTP-only local mode, least-privilege signed-scope profiles, independent credentials, sensitivity checks, execution controls and deterministic real-HTTP/SQLite evidence.",
-        "evidencePath": "docs/plans/active/local-migration/07-local-mcp/plan.md"
+        "evidencePath": "docs/current/LOCAL_MIGRATION_CLOSEOUT.md"
       },
       "consumerEvidence": [
         {
@@ -273,12 +273,12 @@
         },
         {
           "consumerId": "ref:docs/plans/active/local-migration/orchestration.md:mcp:tool:mutatePreferences",
-          "path": "docs/plans/active/local-migration/orchestration.md",
+          "path": "docs/current/LOCAL_MIGRATION_CLOSEOUT.md",
           "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:docs/plans/active/local-migration/tracks/interface-evolution.md:mcp:route:/mcp",
-          "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+          "path": "docs/current/LOCAL_MIGRATION_CLOSEOUT.md",
           "outcome": "verified-unaffected"
         },
         {
@@ -391,7 +391,7 @@
       "rollback": "Stop the local UI and its clients to invalidate in-memory browser sessions. Retain the existing SQLite v2/identity pair and use the Step07-compatible CLI/runtime or hosted composition. No SQLite schema change or history backfill is introduced. Explicit history deletion has no undo; restoring an older matching backup restores old history and credential authority, so review/rotate or revoke before reconnecting.",
       "additiveReplacement": {
         "description": "A separate browser authority and same-service local dashboard, optional safe AI metadata, versioned preserve-existing form-fill policies and explicit reviewed proposal results retain the legacy external interfaces.",
-        "evidencePath": "docs/plans/active/local-migration/08-local-ui/consumers.md"
+        "evidencePath": "docs/current/LOCAL_MIGRATION_CLOSEOUT.md"
       },
       "consumerEvidence": [
         {
@@ -721,22 +721,22 @@
         },
         {
           "consumerId": "ref:docs/plans/active/local-migration/tracks/interface-evolution.md:http:route:/api/form-fill/pdf",
-          "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+          "path": "docs/current/LOCAL_MIGRATION_CLOSEOUT.md",
           "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:docs/plans/active/local-migration/tracks/interface-evolution.md:http:route:/api/preferences/analysis",
-          "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+          "path": "docs/current/LOCAL_MIGRATION_CLOSEOUT.md",
           "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:docs/plans/active/local-migration/tracks/interface-evolution.md:http:route:/graphql",
-          "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+          "path": "docs/current/LOCAL_MIGRATION_CLOSEOUT.md",
           "outcome": "verified-unaffected"
         },
         {
           "consumerId": "ref:docs/plans/active/local-migration/tracks/interface-evolution.md:http:route:/health",
-          "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+          "path": "docs/current/LOCAL_MIGRATION_CLOSEOUT.md",
           "outcome": "verified-unaffected"
         },
         {
@@ -1062,7 +1062,7 @@
         "apps/backend/prisma/migrations/step03_20260922_external_identity_issuer/migration.sql",
         "apps/backend/src/modules/auth/verified-human-identity.resolver.ts",
         "apps/backend/src/domains/shared/ports/verified-human-identity.ts",
-        "docs/plans/active/local-migration/decision-log.md"
+        "docs/current/LOCAL_MIGRATION_CLOSEOUT.md"
       ]
     },
     {
@@ -1076,7 +1076,7 @@
       "acceptanceQuestion": "After backup and restore are defined, is a separate consented versioned conflict-aware bulk data format still needed, and if so what fresh design is justified without inheriting hosted-era dedupe/resume, retry/pacing, durable run-history, or definition-aware-writer TODOs?",
       "evidence": [
         "apps/local-orchestrator/README.md",
-        "docs/plans/active/local-migration/orchestration.md"
+        "docs/current/LOCAL_MIGRATION_CLOSEOUT.md"
       ]
     },
     {
@@ -1116,7 +1116,7 @@
         "09"
       ],
       "evidence": [
-        "docs/plans/active/local-migration/decision-log.md"
+        "docs/current/LOCAL_MIGRATION_CLOSEOUT.md"
       ]
     },
     {
@@ -1143,7 +1143,7 @@
       ],
       "evidence": [
         "apps/backend/src/modules/preferences/document-analysis/document-analysis.controller.ts",
-        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/current/LOCAL_APPLICATION.md",
         "docs/useful/LOCAL_MODEL.md"
       ]
     },
@@ -1170,7 +1170,7 @@
       "acceptanceQuestion": "Resolved for Step 06: local PNG/JPEG/OCR unsupported; retained hosted/public MIME contracts are not a local capability claim. Future expansion needs separate qualification.",
       "evidence": [
         "apps/backend/src/config/document-upload.config.ts",
-        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/current/LOCAL_APPLICATION.md",
         "docs/useful/LOCAL_MODEL.md"
       ]
     },
@@ -1185,7 +1185,7 @@
       ],
       "evidence": [
         "apps/backend/src/modules/preferences/form-fill/form-fill.types.ts",
-        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/current/LOCAL_APPLICATION.md",
         "docs/useful/LOCAL_MODEL.md"
       ]
     },
@@ -1213,7 +1213,7 @@
       ],
       "evidence": [
         "apps/backend/src/mcp/tools/preference-search.tool.ts",
-        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/current/LOCAL_APPLICATION.md",
         "docs/useful/LOCAL_MODEL.md"
       ]
     },
@@ -1230,7 +1230,7 @@
       "evidence": [
         "apps/backend/src/modules/workflows/preferences/schema-consolidation/schema-consolidation.workflow.spec.ts",
         "apps/backend/test/e2e/workflows.e2e-spec.ts",
-        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/current/LOCAL_APPLICATION.md",
         "docs/useful/LOCAL_MODEL.md"
       ]
     },
@@ -1472,7 +1472,7 @@
       "acceptanceQuestion": "Resolved for Step 06: selected local evidence is sufficient; no live Harbor/provider comparison was run or required.",
       "evidence": [
         "examples/eval-harbor/README.md",
-        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/current/LOCAL_APPLICATION.md",
         "docs/useful/LOCAL_MODEL.md"
       ]
     },
@@ -1497,7 +1497,7 @@
         "09"
       ],
       "evidence": [
-        "docs/plans/active/local-migration/decision-log.md"
+        "docs/current/LOCAL_MIGRATION_CLOSEOUT.md"
       ]
     },
     {
@@ -1510,7 +1510,7 @@
       ],
       "acceptanceQuestion": "Which packaged dependencies attempt network access after installation, and which checks must be disabled or disclosed?",
       "evidence": [
-        "docs/plans/active/local-migration/orchestration.md"
+        "docs/current/LOCAL_MIGRATION_CLOSEOUT.md"
       ]
     },
     {
@@ -1523,7 +1523,7 @@
       ],
       "evidence": [
         "docs/useful/LOCAL_MODEL.md",
-        "docs/plans/active/local-migration/06-local-model/selection.md",
+        "docs/current/LOCAL_APPLICATION.md",
         "apps/backend/src/infrastructure/local-model/local-model.service.ts",
         "apps/backend/test/local-model/application.test.mjs"
       ]
@@ -4080,6 +4080,18 @@
       "reference": "/api/form-fill/pdf"
     },
     {
+      "path": "docs/current/LOCAL_APPLICATION.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "docs/current/LOCAL_APPLICATION.md",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
       "path": "docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md",
       "contract": "http",
       "kind": "route",
@@ -4201,48 +4213,12 @@
     },
     {
       "path": "docs/IMPORTANT/CURRENT_STATE.md",
-      "contract": "mcp",
-      "kind": "tool",
-      "reference": "consolidateSchema"
-    },
-    {
-      "path": "docs/IMPORTANT/CURRENT_STATE.md",
-      "contract": "mcp",
-      "kind": "tool",
-      "reference": "smartSearchPreferences"
-    },
-    {
-      "path": "docs/plans/active/local-migration/orchestration.md",
-      "contract": "mcp",
-      "kind": "tool",
-      "reference": "mutatePreferences"
-    },
-    {
-      "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/api/form-fill/pdf"
-    },
-    {
-      "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/api/preferences/analysis"
-    },
-    {
-      "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
       "contract": "http",
       "kind": "route",
       "reference": "/graphql"
     },
     {
-      "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/health"
-    },
-    {
-      "path": "docs/plans/active/local-migration/tracks/interface-evolution.md",
+      "path": "docs/IMPORTANT/CURRENT_STATE.md",
       "contract": "mcp",
       "kind": "route",
       "reference": "/mcp"
@@ -4252,6 +4228,30 @@
       "contract": "http",
       "kind": "route",
       "reference": "/health"
+    },
+    {
+      "path": "docs/useful/HOSTED_DEVELOPMENT.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/preferences/analysis"
+    },
+    {
+      "path": "docs/useful/HOSTED_DEVELOPMENT.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/graphql"
+    },
+    {
+      "path": "docs/useful/HOSTED_DEVELOPMENT.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/health"
+    },
+    {
+      "path": "docs/useful/HOSTED_DEVELOPMENT.md",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
     },
     {
       "path": "docs/useful/INSTALLED_MAC_APP.md",
@@ -4455,19 +4455,7 @@
       "path": "README.md",
       "contract": "http",
       "kind": "route",
-      "reference": "/api/preferences/analysis"
-    },
-    {
-      "path": "README.md",
-      "contract": "http",
-      "kind": "route",
       "reference": "/graphql"
-    },
-    {
-      "path": "README.md",
-      "contract": "http",
-      "kind": "route",
-      "reference": "/health"
     },
     {
       "path": "README.md",

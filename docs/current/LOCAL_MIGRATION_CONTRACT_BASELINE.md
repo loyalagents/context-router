@@ -1,5 +1,12 @@
 # Local Migration Contract Baseline
 
+The numbered program is closed; this executable compatibility reference remains.
+Read [current behavior/limits](LOCAL_APPLICATION.md) and the
+[closeout/owner mapping](LOCAL_MIGRATION_CLOSEOUT.md) first. Numeric owner steps
+are protected historical metadata, not instructions to activate old plans.
+Some observations below characterize the original hosted baseline; later transition
+records and runtime-specific fixtures are authoritative for changed behavior.
+
 This document is the human-readable companion to the versioned
 [`local-migration-contract-baseline.json`](local-migration-contract-baseline.json)
 registry. The version-two registry and its referenced fixtures are the
@@ -36,7 +43,7 @@ and 4 defer. The detailed rationale, evidence path, owner, external callback
 allowlists, outbound inventory, and exact consumer map live in the JSON registry.
 The checker regenerates an exact census of public-route/tool/resource references
 and outbound sink paths/kinds/counts across product, operator, evaluation, and
-local-migration orchestration/smoke source trees; missing, stale, changed-count,
+maintained planning/runbook and migration-smoke source trees; missing, stale, changed-count,
 or unclassified rows fail automatically alongside the curated semantic
 fingerprints.
 
@@ -97,10 +104,9 @@ six mutation operations.
 
 Claude and Codex client buckets can see all six tools. The fallback and a
 read-narrowed recognized client can see the five read tools. Unknown clients
-see no tools or resources. An absent, empty, or wholly unrecognized token scope
-currently restores a recognized client's configured maximum; that unsafe
-behavior is observed-not-promised and Step 07 owns replacement with explicit
-least privilege.
+see no tools or resources. The original baseline's absent/empty/unrecognized
+scope fallback was observed-not-promised, not a permission guarantee. Step 07
+replaced it with explicit denial; local authority is separately per-instance.
 
 `MCP_HTTP_PATH`, `MCP_HTTP_REQUIRE_AUTH=false`, and `MCP_STDIO_ENABLED=true`
 look configurable but are not complete working modes. They are explicitly
@@ -288,8 +294,9 @@ deployments are infrequent. On 2026-09-16, PR 02B head
 `e84e39867797801c2ab8cbfe1547ebb4d34c1a1f` received a successful Vercel status
 labeled `Canceled by Ignored Build Step`; separate repository inspection found
 no rulesets and no `main` branch protection that required Vercel. Production
-remains on the operator-confirmed `hosted-v1-maintenance` branch recorded in the
-orchestration document, and that external topology must be reverified before a
+was last operator-confirmed on `hosted-v1-maintenance`; follow the
+[branch policy](../useful/HOSTED_DEVELOPMENT.md#branch-and-deployment-ownership)
+and reverify that external topology before a
 branch-role change. GitHub Actions provides the required exact Node and pnpm
 final-head evidence; an informational Vercel status cannot replace it. No
 repository `vercel.json` branch allowlist is added for this infrequent hosted
@@ -427,7 +434,7 @@ monotonic elapsed milliseconds through the existing sanitized capture. They loca
 completed boundaries in failure tails without replacing lifecycle/success evidence
 or enabling live streaming. Unknown labels and reporting errors cannot expose
 private input or interrupt cleanup. The
-[P3 plan](../plans/active/local-migration/08-local-ui/plan.md#p3-validation-budget-addendum)
+[P3 plan](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/08-local-ui/plan.md#p3-validation-budget-addendum)
 records the timeout evidence, affected review and required renewed validation.
 
 On 2026-09-18, the Step 02E correction tree passed all 244 local-migration tests.
@@ -491,7 +498,7 @@ node -r ts-node/register -r tsconfig-paths/register \
 Fixture updates are review actions, not fixes for a failing compatibility test.
 The same change must update its evidence, classification and owner; public
 breakage must follow the compatibility policy in
-[`orchestration.md`](../plans/active/local-migration/orchestration.md). The
+[interface evolution](../useful/INTERFACE_EVOLUTION.md). The
 aggregate migration gate compares semantic fixtures to a validated merge base
 and fails on unreviewed breaking drift or a manifest shape change without a
 version bump.
@@ -529,20 +536,20 @@ domains as closed.
 
 `local-model-preview` selects the actual SQLite composition with one manually provisioned pinned llama.cpp/Qwen3.5-9B session behind both AI ports. It opens no application listener and owns no inference process. Ordinary no-model previews retain their original denial proof. A separate source/sealed-package smoke verifies two fresh authenticated TLS fixture sessions, actual lazy configured CLI startup, text/structured/PDF calls, unsupported images, fixed credential claims, SQLite worker denial controls and exact owned parser/process cleanup. Deterministic CI uses no model weights or external provider.
 
-See [manual configuration](../useful/LOCAL_MODEL.md) for the qualified Mac, private session requirements, unavailable recovery, limits, accepted email omission and user-accepted cancellation-recovery limitation. A cancelled model operation can permanently disable its session when fresh idle is not verified within five seconds; manual fresh-session recovery is required, with unknown frequency. The native failed qualification remains failed under the explicit H selection exception. Text and qualified PDF processing are local capabilities; local images/OCR and live Harbor comparison remain unsupported/unrun as documented in the [selection](../plans/active/local-migration/06-local-model/selection.md). Public wire fixtures, hosted behavior, grant narrowing, protected definitions and domain validation remain unchanged. Managed assets/processes and native Windows/Linux or smaller-hardware qualification belong to Step 09.
+See [manual configuration](../useful/LOCAL_MODEL.md) for the qualified Mac, private session requirements, unavailable recovery, limits, accepted email omission and user-accepted cancellation-recovery limitation. A cancelled model operation can permanently disable its session when fresh idle is not verified within five seconds; manual fresh-session recovery is required, with unknown frequency. The native failed qualification remains failed under the explicit H selection exception. Text and qualified PDF processing are local capabilities; local images/OCR and live Harbor comparison remain unsupported/unrun as documented in the [selection](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/06-local-model/selection.md). Public wire fixtures, hosted behavior, grant narrowing, protected definitions and domain validation remain unchanged. Managed assets/processes are implemented; further platform/hardware qualification is owned by the [pilot and backlog](../plans/README.md), not another Step 09 activation.
 
 ## Step 07 Local MCP Evolution
 
 `local-mcp` is an additive supported mode under the same twelve gate phases. Direct literal-loopback Streamable HTTP exposes the six registered tools, six mutation operations, schema resource and a local capability resource. The hosted transport remains separate. The reviewed least-privilege visibility transition is recorded as `step07-local-mcp-least-privilege`, including exact fixture fingerprints and the union of 53 affected consumer identities. Unknown external clients receive migration guidance, not an invented claim of live-client verification.
 
-[Local setup](../useful/MCP_LOCAL_SETUP.md) covers explicit v1→v2 upgrade, matching-pair rollback, token generation races and client setup. [Step 07's plan](../plans/active/local-migration/07-local-mcp/plan.md) records minimal dispositions for combined writes, no-op/partial responses, definition restore, audit rollback and narrowing. Actual Claude/Codex acceptance remains pending until the user records results.
+[Local setup](../useful/MCP_LOCAL_SETUP.md) covers explicit v1→v2 upgrade, matching-pair rollback, token generation races and client setup. [Step 07's plan](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/07-local-mcp/plan.md) records minimal dispositions for combined writes, no-op/partial responses, definition restore, audit rollback and narrowing. Scoped user-run Claude Code/Codex CLI acceptance is recorded in the [closeout](LOCAL_MIGRATION_CLOSEOUT.md); cancellation and automatic reconnect limits remain, and Desktop integrations are not qualified.
 
 ## Step 08 Local UI Evolution
 
 `local-ui` is an additive custom Next/Nest composition with a separate browser
 session, the same principal/SQLite/services/model owner as MCP, and unchanged
 native MCP Origin denial. The [runbook](../useful/LOCAL_UI.md) gives build, explicit
-upgrade and launch commands. [Consumer guidance](../plans/active/local-migration/08-local-ui/consumers.md)
+upgrade and launch commands. [Consumer guidance](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/08-local-ui/consumers.md)
 retains `me`, deprecated `user(id)`, legacy apply and absent/v1 form-fill semantics.
 The new reviewed apply, history clear, event-time sensitivity, optional safe AI
 failure categories and form-fill v2 are bound to canonical fixtures and exact

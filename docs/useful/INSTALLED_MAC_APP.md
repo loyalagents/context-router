@@ -1,8 +1,10 @@
 # Installed Mac Pilot
 
-Status: Step 09 local candidate. Revision-bound installed qualification, local gate
-and CI receipts are tracked on [draft PR #168](https://github.com/loyalagents/context-router/pull/168);
-final live-model and human acceptance remain pending.
+Status: implemented foundation from merged [PR #168](https://github.com/loyalagents/context-router/pull/168).
+Final-head CI passed; see [scoped closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md)
+for evidence and [pilot preparation](../plans/active/colleague-pilot/README.md)
+for the next acceptance work. Original human acceptance was partial; neither merge
+nor this runbook qualifies distribution or every recovery scenario.
 This is an unsigned private build, not a signed or notarized release. The declared
 pilot is MacBook Pro 18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Macs and
 native Windows/Linux are not qualified. The source/manual modes remain available.
@@ -216,6 +218,6 @@ pnpm --filter desktop package \
 
 The packager copies source and dependencies to an isolated build, makes fresh
 production builds, verifies the native inventory and records caller integrity.
-Weights are not bundled. The [Step 09 evidence](../plans/active/local-migration/09-installation-and-packaging/implementation.md)
+Weights are not bundled. The [Step 09 evidence](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/09-installation-and-packaging/implementation.md)
 distinguishes deterministic fixtures, installed-artifact checks, live model tests
 and unperformed human/signing/platform acceptance. Do not infer one from another.

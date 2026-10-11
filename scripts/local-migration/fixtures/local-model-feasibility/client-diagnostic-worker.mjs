@@ -20,7 +20,7 @@ const local = { kind: 'sqlite', databaseRoot: join(root, 'data'), stateRoot: joi
 let app, stage = 'manifest';
 let receipt = { mode: 'client-only-cancellation-diagnostic', qualification: false, diagnosticValid: false };
 try {
-  const manifest = JSON.parse(await readFile(resolve(repoRoot, 'docs/plans/active/local-migration/06-local-model/evidence/client-diagnostic-manifest.json'), 'utf8'));
+  const manifest = JSON.parse(await readFile(resolve(repoRoot, 'docs/evidence/local-migration/06-local-model/client-diagnostic-manifest.json'), 'utf8'));
   assert.equal((await buildProductionManifest()).buildSha256, manifest.buildSha256);
   assert.deepEqual(productionCancellationInputs(), manifest.originalInputs);
   assert.deepEqual(manifest.operations, { baselines: 5, prefill: 1, decode: 0, followups: 0, maximum: 6 });

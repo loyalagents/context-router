@@ -1,109 +1,55 @@
 # Context Router
 
-Context Router is a `pnpm` workspace monorepo with a retained hosted
-composition, explicit local database/model previews, and a loopback local MCP runtime:
+A local-first preference/context application: import documents, review suggested
+preferences, manage scoped access, and share context with MCP clients. The managed
+Apple Silicon Mac candidate runs its database, dashboard and selected model locally.
 
-- `apps/backend`: a NestJS backend that exposes GraphQL, a document-analysis upload API, health checks, and a hosted-JWT-protected MCP HTTP endpoint
-- `apps/web`: a Next.js 15 dashboard that authenticates with Auth0 in hosted mode, or a separate local browser session in local mode
-- `apps/desktop`: the native Mac menu/guardian and isolated local-candidate packager
-- SQLite through the pinned Node builtin for the explicit local runtime; PostgreSQL via Prisma for the retained hosted/reference compositions and Docker-backed integration/e2e coverage
+The migration foundation is delivered. **An assisted colleague pilot is next—not
+a qualified general release.** Claude Code/Codex CLI have scoped local evidence;
+Claude Desktop is the next required integration, and ChatGPT desktop follows.
+See [current support and limitations](docs/current/LOCAL_APPLICATION.md).
 
-## Start Here
+## Use Or Work On The App
 
-If you are orienting yourself in the repo:
+- [Installed Mac runbook](docs/useful/INSTALLED_MAC_APP.md): menu, model download,
+  unlock, installed CLI, restart, backup/restore and removal. The current candidate
+  is unsigned; broader hardware and distribution still need qualification.
+- [Local dashboard](docs/useful/LOCAL_UI.md) and [MCP setup](docs/useful/MCP_LOCAL_SETUP.md):
+  explicit manual/developer paths. Local MCP uses `http://127.0.0.1:8787/mcp`;
+  the installed dashboard opens at its current loopback address.
+- [Work portfolio](docs/plans/README.md): colleague pilot, parallel stabilization,
+  wanted future features. Active briefs are not blanket implementation approval.
+- [Contributor/hosted development](docs/useful/HOSTED_DEVELOPMENT.md): exact
+  toolchain, environment, commands and testing. **`pnpm dev` still starts the
+  retained hosted composition**, not the installed local application.
 
-1. Run `./print-repo-structure.sh`.
-2. Read every file in [`docs/IMPORTANT/`](docs/IMPORTANT/).
-3. Use [`docs/current/`](docs/current/), [`docs/useful/`](docs/useful/), and [`docs/plans/active/`](docs/plans/active/) as needed for your task.
+## Architecture
 
-For docs writing rules, see [`docs/README.md`](docs/README.md).
+- `apps/backend`: NestJS application services, GraphQL `/graphql`, MCP and
+  storage/model/identity adapters. Local SQLite and retained PostgreSQL reference
+  paths share application-owned persistence boundaries.
+- `apps/web`: existing Next.js dashboard with separately selected local browser
+  sessions or hosted Auth0 integration.
+- `apps/desktop`: native Mac menu/guardian, managed inference lifecycle and
+  installed-app packaging.
+- `apps/local-orchestrator`, `examples/eval*`: developer/evaluation tooling,
+  not bundled product dependencies.
 
-For local-first migration work, start with
-[`docs/plans/active/local-migration/orchestration.md`](docs/plans/active/local-migration/orchestration.md).
+The dashboard and MCP share data and domain services but use separate credentials.
+Local inference has no silent hosted fallback. Cloud-backed MCP assistants may
+send tool results to their providers; local storage is not a claim that those
+assistants operate offline.
 
-For the explicit Step 06 model configuration, see [manual local model preview](docs/useful/LOCAL_MODEL.md). Runtime binaries and weights stay outside Git.
+## Contributor Start
 
-Step 07's local MCP runtime is merged; see [local MCP setup](docs/useful/MCP_LOCAL_SETUP.md).
-Step 08 adds an explicitly selected local dashboard using SQLite and separate browser
-sessions, with shared MCP/model ownership. See [local dashboard setup](docs/useful/LOCAL_UI.md).
-Its [implementation and validation](docs/plans/active/local-migration/08-local-ui/implementation.md)
-record passing independent reviews, the full local gate, and completed user-run
-acceptance with explicitly accepted evidence limits. [PR #167](https://github.com/loyalagents/context-router/pull/167)
-was human-merged at `7328ceea63a784577594d52af18062be8b583855`; final-head
-checks are recorded there. Step 09 installation and packaging is active after
-its passing clean-base gate. An unsigned managed Mac candidate is implemented;
-Candidate 14 fixes sleep consuming the native shutdown budget and passed affected
-review, 184 native tests and all 11 installed phases. The manual feedback round is
-complete; final local gate and exact-head CI results are tracked on draft [PR #168](https://github.com/loyalagents/context-router/pull/168).
-See the [qualification and acceptance limits](docs/plans/active/local-migration/09-installation-and-packaging/README.md), including unsigned distribution and unqualified recovery/platform cases, and the
-[installed Mac runbook](docs/useful/INSTALLED_MAC_APP.md).
-Small [UI usability improvements](docs/plans/active/ui-usability/README.md) are
-tracked for follow-up after the packaged local workflow is usable.
-[Local AI scheduling](docs/plans/active/local-ai-scheduling/README.md) is a separate
-follow-up after Step 09: bounded waiting first, then a measured concurrency
-evaluation. The current runtime still permits one active AI operation with no queue.
-[Choosing a model provider](docs/plans/active/model-provider-selection/README.md)
-is another deferred follow-up after Step 09: keep CR-managed local inference as
-the default, with optional existing Ollama and explicitly opted-in OpenAI or
-Anthropic APIs. These are proposed choices, not current supported configurations.
+Read [AGENTS.md](AGENTS.md), run `./print-repo-structure.sh`, then read the short
+[Current State](docs/IMPORTANT/CURRENT_STATE.md) and [Docs Guide](docs/README.md).
+Use the task's current brief and [agent workflow](docs/useful/AGENT_WORKFLOW.md);
+obsolete numbered migration plans are historical, not current instructions.
 
-## How The Repo Works
+Use **Node 24.21.0 and pnpm 10.25.0 exactly**:
 
-The hosted request flow looks like this:
-
-1. A user signs into the Next.js app through Auth0.
-2. The frontend fetches an access token and calls the backend GraphQL API or the document upload endpoint.
-3. The backend validates the token through the current Auth0 adapter, resolves a provider-neutral `(provider, issuer, subject)` identity, reads and writes data through Prisma/PostgreSQL, and calls Vertex AI for AI-assisted flows.
-4. External MCP clients can also talk to the backend over `POST /mcp` using the repo's Auth0-backed MCP OAuth and JWT setup.
-
-Major product areas currently in the repo:
-
-- Account and profile management
-- Preferences and preference definitions
-- Location-scoped preferences
-- Permission grants
-- Document analysis and AI-generated preference suggestions
-- Preference schema and search workflows
-- MCP tools and resources for preference access
-
-## Repo Layout
-
-```text
-.
-├── apps
-│   ├── backend   # NestJS + GraphQL + Prisma + MCP
-│   └── web       # Next.js dashboard
-├── docs          # canonical docs tree
-├── docker-compose.yml
-└── print-repo-structure.sh
-```
-
-Key backend areas:
-
-- `apps/backend/src/modules`: domain modules such as auth, preferences, permission grants, user, and workflows
-- `apps/backend/src/mcp`: MCP transport, auth, tools, and resources
-- `apps/backend/prisma`: schema, migrations, and seed script
-- `apps/backend/test`: unit, integration, and e2e test suites
-
-Key frontend areas:
-
-- `apps/web/app/dashboard`: authenticated dashboard pages for profile, preferences, schema, permissions, and chat
-- `apps/web/app/api`: Next.js route handlers that proxy authenticated actions to the backend
-- `apps/web/lib`: Auth0 and Apollo client setup
-
-## Prerequisites
-
-- Node.js 24.21.0 exactly
-- pnpm 10.25.0 exactly, activated through Corepack
-- Docker with `docker compose`
-- Auth0 issuer/audience values for the backend API and Auth0 credentials for the frontend web app
-- Optional: Google Cloud application default credentials if you want the
-  hosted composition's Vertex AI-backed features to work on your development
-  machine
-
-Install dependencies from the repo root:
-
-```bash
+```sh
 nvm install 24.21.0
 nvm use 24.21.0
 corepack enable
@@ -112,231 +58,7 @@ pnpm check:toolchain
 pnpm install --frozen-lockfile
 ```
 
-The tracked `.nvmrc`, strict package metadata, CI, Docker stages, builds, and
-migration gate all use this exact pair. Other Node.js 24 patch releases and
-other pnpm versions are intentionally unsupported until a reviewed atomic
-toolchain update changes every source together.
-
-The checked contributor and gate path currently covers macOS and Linux only.
-Windows remains analysis-only: common Corepack/npm pnpm shims are `.cmd` files,
-while the version probe deliberately does not start a shell. Use a validated
-macOS or Linux environment until native Windows executable resolution and gate
-evidence land.
-
-## Hosted Composition Environment Setup
-
-Create the env files the apps expect:
-
-```bash
-cp apps/backend/.env.example apps/backend/.env
-cp apps/web/.env.example apps/web/.env.local
-```
-
-Important backend env notes:
-
-- The backend loads only `apps/backend/.env.local` and then `apps/backend/.env`, regardless of the directory from which it is launched. Existing process environment values win over both files.
-- `apps/backend/.env` is also the container-oriented service environment file used by `docker compose`
-- `apps/backend/.env.local` is the right place for local-only overrides
-- Docker Compose interpolation is separate from the service `env_file`. Copy `docker-compose.env.example` to the root `.env`, or run commands with `docker compose --env-file docker-compose.env.example ...`.
-- `PORT` is the backend listener port. Root `APP_PORT` is only the Docker Compose host-publication port that maps to the container's listener.
-- Authenticated flows require `AUTH0_ISSUER` and `AUTH0_AUDIENCE` in the backend plus the web app's Auth0 session/client values
-- Invite-only login and signup gating is configured in Auth0 Actions; see [`docs/useful/AUTH0_LOGIN_GATING.md`](docs/useful/AUTH0_LOGIN_GATING.md)
-- Vertex AI-backed flows need `GCP_PROJECT_ID`, `VERTEX_*`, and usable Google application default credentials
-- MCP OAuth flows additionally need `MCP_SERVER_URL` and the relevant `AUTH0_MCP_*` client IDs
-
-Important frontend env notes:
-
-- `apps/web/.env.local` must point `NEXT_PUBLIC_GRAPHQL_URL` (usually `http://localhost:3000/graphql`) and `NEXT_PUBLIC_BACKEND_URL` (usually `http://localhost:3000`) at the backend. Next captures both public values at build time, so rebuild the web app after changing them.
-- `APP_BASE_URL` is the Auth0 server-runtime origin and should match the frontend server, usually `http://localhost:3002` in development.
-
-### Hosted Development Database Hostname Rule
-
-Use different `DATABASE_URL` hostnames depending on where the backend runs:
-
-- Backend in Docker: use `postgres` as the hostname
-- Backend on your host machine: use `localhost` as the hostname
-
-Example override file for running the hosted backend composition on the host:
-
-```bash
-cat > apps/backend/.env.local <<'EOF'
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/context_router?schema=public
-PORT=3000
-EOF
-```
-
-The `localhost` hostname and `?schema=public` query above are for hosted
-development only. The explicit PostgreSQL reference preview requires literal
-`127.0.0.1`, an explicit port, no URL query, and a verified TLS CA. The default SQLite local command ignores hosted database configuration and requires its two explicit private roots.
-
-### Hosted Vertex AI Note
-
-The root `docker-compose.yml` mounts `~/.config/gcloud/application_default_credentials.json` into the backend container. If you want containerized Vertex AI calls to work, run:
-
-```bash
-gcloud auth application-default login
-```
-
-## Running The Repo
-
-### Recommended Hosted Development Loop
-
-This is the best workflow if you are actively changing backend code and want hot reload:
-
-1. Start only PostgreSQL in Docker:
-   ```bash
-   docker compose up -d postgres
-   ```
-2. Make sure `apps/backend/.env.local` points `DATABASE_URL` at `localhost`.
-3. Run Prisma migrations from the repo root:
-   ```bash
-   pnpm --filter backend exec prisma migrate dev
-   ```
-4. Start the backend:
-   ```bash
-   pnpm dev:backend
-   ```
-5. In another terminal, start the frontend:
-   ```bash
-   pnpm dev:web
-   ```
-
-You can also run both apps locally with:
-
-```bash
-pnpm dev
-```
-
-That still assumes your backend is using a host-based `DATABASE_URL`, not the Docker hostname.
-
-The supported direct backend launch paths are:
-
-```bash
-pnpm --filter backend start
-pnpm --filter backend start:dev
-pnpm --filter backend start:prod
-```
-
-The root `pnpm dev` and `pnpm dev:backend` commands delegate to these package
-scripts. Docker and Cloud Run inject their process environment before starting
-the same hosted entrypoint. The tests and staged runtime harnesses inject an
-explicit backend package root and environment so they exercise the same
-configuration contract without depending on the caller's working directory.
-
-### Local Database Preview
-
-The explicit `local-database-preview` uses the compiled `local-identity` command and a fresh SQLite store. Set separate canonical absolute `LOCAL_DATABASE_ROOT` and `LOCAL_IDENTITY_STATE_ROOT` paths below a private current-user-owned parent. Initialize once, then run preview. It retains one random principal and independent private bearer, seeds catalog definitions only, and starts the real local Nest composition without calling `listen()`.
-
-The local command needs no PostgreSQL, Docker, Auth0 or hosted model, loads no dotenv files and has no hosted fallback. It exposes no web UI, HTTP or MCP endpoint; both AI ports return the fixed unavailable result. Rotation, named recovery, matching database/identity backup constraints and failed-catalog retry are documented in the [local identity administration runbook](docs/useful/LOCAL_IDENTITY_ADMIN.md).
-
-Existing PostgreSQL preview data remains separately usable through `local-identity:postgres-reference`, which preserves the `local-identity-preview` gate mode and its explicit loopback TLS configuration. Do not reuse that identity root for SQLite; no automatic import or data conversion exists. Hosted commands below remain unchanged.
-
-### Local MCP
-
-Step 07 adds one manually started `local-mcp serve` backend for Claude Code and Codex CLI, using the same stable local identity and SQLite data with separate per-instance MCP credentials. It binds only `127.0.0.1` and exposes `/mcp`; it has no GraphQL/browser/OAuth endpoints. An explicit v1→v2 upgrade preserves existing data. `serve-model` reuses the manually operated Step 06 model adapter and its accepted E/H limitations; ordinary tools need no model.
-
-Follow [local MCP setup and administration](docs/useful/MCP_LOCAL_SETUP.md) and the [synthetic real-client checklist](docs/plans/active/local-migration/07-local-mcp/acceptance.md). Step 07 is merged; its [closeout](docs/plans/active/local-migration/07-local-mcp/README.md) records final CI and the limits of earlier manual acceptance. The non-listening previews and hosted modes remain supported.
-
-### Containerized Backend Workflow
-
-Use this if you want the backend to run inside Docker instead of on the host:
-
-1. Keep `apps/backend/.env` using `postgres` as the database hostname.
-2. Start the backend and database:
-   ```bash
-   docker compose up -d postgres app
-   ```
-3. Run migrations inside the container:
-   ```bash
-   docker compose exec app npx prisma migrate dev
-   ```
-4. Start the frontend locally:
-   ```bash
-   pnpm dev:web
-   ```
-
-Important: this is not a hot-reload backend workflow. The backend image is built from source, and code changes require rebuilding or restarting the container.
-
-## Hosted Development URLs And Endpoints
-
-- Frontend dashboard: `http://localhost:3002`
-- Backend GraphQL API: `http://localhost:3000/graphql`
-- Backend health check: `http://localhost:3000/health`
-- Document analysis upload endpoint: `POST http://localhost:3000/api/preferences/analysis`
-- MCP HTTP endpoint: `POST http://localhost:3000/mcp`
-
-## MCP Client Setup
-
-Copy/paste setup commands for Claude Code and Codex, with both local and Cloud Run remote server entries, live in [`docs/useful/MCP_LOCAL_SETUP.md`](docs/useful/MCP_LOCAL_SETUP.md).
-
-## Common Commands
-
-From the repo root:
-
-```bash
-pnpm dev
-pnpm dev:backend
-pnpm dev:web
-pnpm build
-pnpm build:backend
-pnpm build:web
-pnpm test:backend
-pnpm test:backend:unit
-pnpm test:backend:integration
-pnpm test:backend:e2e
-```
-
-Backend-specific commands:
-
-```bash
-pnpm --filter backend prisma:generate
-pnpm --filter backend schema:check
-pnpm --filter backend schema:generate
-pnpm --filter backend test:db:up
-pnpm --filter backend test:db:down
-pnpm --filter backend test:db:migrate
-pnpm --filter backend test:e2e:tests-only
-```
-
-`apps/backend/src/schema.gql` is the tracked GraphQL consumer fixture used by
-the web code generator and migration contract checks. After changing a GraphQL
-resolver or DTO, run `schema:generate` and commit the resulting fixture;
-`schema:check` is the read-only drift check. Both commands build the application
-schema in memory and resolve the fixture independently of the caller's working
-directory. They require installed dependencies and a generated Prisma client,
-but do not require a running database or provider credentials.
-An intentional SDL change still follows the
-[`interface-evolution` policy](docs/plans/active/local-migration/tracks/interface-evolution.md):
-review and update affected contract fixtures and consumers in the same change.
-Generating the file is not, by itself, approval for a contract change.
-
-More targeted operational commands live in [`docs/useful/PRISMA_COMMANDS.md`](docs/useful/PRISMA_COMMANDS.md).
-
-## Testing
-
-Backend tests live under `apps/backend` and are split into:
-
-- Unit tests for isolated services and utilities
-- Integration tests for Prisma and repository behavior against a real test database
-- E2E tests for GraphQL, MCP, health, and preference-related flows
-- `pnpm --filter backend test:local-database` for file-backed SQLite contracts, actual application/auth/reset, owned process/recovery and matching-pair backup; its build prerequisite needs no `DATABASE_URL` or PostgreSQL setup
-
-The default `pnpm test:backend` (also reached by workspace `pnpm test`) generates the Prisma client and builds the backend once before running all four Jest projects. The dedicated local command has the same prerequisite; unit-only and hosted integration commands remain independently selectable. Default all-project runs still require the configured PostgreSQL test database.
-
-Test database details:
-
-- `apps/backend/docker-compose.test.yml` starts PostgreSQL on `localhost:5433`
-- `pnpm --filter backend test:db:migrate` runs migrations against `context_router_test`
-- `pnpm test:backend:e2e` starts the test DB, migrates it, and then runs the e2e suite
-
-CI currently validates:
-
-- Backend unit tests
-- Backend integration tests
-- Backend e2e tests against the test database
-- Standalone local database tests plus the twelve-phase migration gate, including both PostgreSQL reference and SQLite source/relocated-package restart evidence
-- Frontend production build and authenticated local dashboard browser coverage
-
-## Docs
-
-[`docs/README.md`](docs/README.md) explains the docs layout and writing rules. Start there to find the right doc for your task.
+Backend behavior changes are tests first. Validate affected behavior during
+iteration, then qualify a frozen candidate with all applicable final checks.
+Existing `pnpm migration:gate`, contract fixtures and CI remain in force despite
+the completed program. See [scoped closeout/evidence](docs/current/LOCAL_MIGRATION_CLOSEOUT.md).

@@ -1,0 +1,47 @@
+# Work Portfolio
+
+- Status: current priorities; individual briefs are not implementation approval
+- Owner: product owner, with a named coordinator/writer assigned at activation
+
+The cloud-to-local migration foundation is delivered through merged Step 09.
+Use the [current application](../current/LOCAL_APPLICATION.md) and
+[scoped closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md), not the old numbered
+steps, to understand the starting point. Historical plans remain in Git.
+
+## Three Lanes
+
+| Lane | Purpose | Canonical brief |
+| --- | --- | --- |
+| Assisted colleague pilot — first priority | Get a few Git-capable colleagues using their own data, with Claude Desktop and tolerable install/update/reconnect friction | [Pilot](active/colleague-pilot/README.md) |
+| Stabilization | Bounded correctness, recovery, diagnostics and usability fixes; eligible slices can run in parallel worktrees | [Stabilization](backlog/stabilization/README.md), [UI usability](backlog/ui-usability/README.md) |
+| Future capabilities | Wanted features, prioritized individually rather than extending a completed migration | [MCP onboarding](backlog/mcp-onboarding/README.md), [AI scheduling](backlog/local-ai-scheduling/README.md), [provider choice](backlog/model-provider-selection/README.md), [evaluation](backlog/evaluation/README.md), [platform/network/hosting](backlog/platform-and-hosting/README.md) |
+
+Priority and parallel eligibility are separate attributes. A stabilization item
+can be a pilot blocker; that does not make it safe to implement concurrently.
+Keep one canonical item, link it from the pilot, and assign a named owner and
+landing order. Do not copy tasks between lists or activate every backlog brief.
+
+`active/` contains currently coordinated work. `backlog/` holds useful but
+unactivated briefs; promotion requires an explicit scope/owner/acceptance decision.
+After shipping, distill actual behavior into current docs/runbooks and remove
+obsolete plans. Git is the prose archive; [frozen evidence](../evidence/local-migration/README.md)
+is retained separately where tests or audit bindings still need it.
+
+## Starting A Task
+
+Use the [workflow task brief](../useful/AGENT_WORKFLOW.md#reusable-task-brief).
+Record outcome/non-goals, priority, risk, owner, paths/contracts, dependencies,
+parallel eligibility, internal checkpoints, acceptance evidence and finalization
+milestone. Prefer one cohesive PR; split only for independently useful outcomes,
+not separate planning/review/closeout PRs. Human review and merging remain required.
+
+The main checkout is the user's playground: one writer/integrator owns it.
+Worktree tasks need separate resources and a reviewed integration order. Default
+to read-only parallel investigation/review until independent boundaries exist.
+Do not launch, reset or change the user's app/state/client configuration as a
+side effect of repository work.
+
+After this documentation reset merges, a fresh coordinator should activate the
+pilot from the exact merged base, read these canonical docs and propose the
+smallest independently reviewed implementation plan. Do not inherit stale step
+activation, branch or acceptance assumptions from the previous conversation.
