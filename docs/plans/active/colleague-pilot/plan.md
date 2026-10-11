@@ -1,6 +1,6 @@
 # Claude Desktop connection slice
 
-- Status: independently reviewed source trial ready; real-client acceptance and final validation pending
+- Status: bridge trial reviewed; nullable-confidence correction awaiting code review and a new candidate retest
 - Scope: first connection slice of the [pilot brief](README.md), one cohesive pilot PR
 - Base: `855e8734b919871eac82415465b456add38a3084`; branch `codex/colleague-pilot`
 - Owner: connection coordinator `/root`; sole checkout writer/integrator `/root/writer`
@@ -359,3 +359,163 @@ client was launched or modified by this slice. The next human decision is bounde
 approval of the exact app, one preserved client configuration entry/restart,
 dedicated synthetic-only credential/grants and synthetic provider-bound requests.
 The canonical client checklist and agreed end-of-round finalization remain open.
+
+### Plan amendment: nullable search confidence (2026-10-11, approved)
+
+The user approved the bounded Candidate 14/Claude trial described above. The
+coordinator observed ordinary Claude Desktop 2.31226.1 Pro discover six tools;
+creating a synthetic definition and setting a value with omitted confidence
+succeeded, then a preference read failed schema validation. A narrow same-client
+SDK discovery/read probe reproduced `-32602`: active preference confidence must
+be a number. Independent diagnosis reproduced discovery-cached validation and
+confirmed that both search descriptors declare number while existing result
+mapping returns stored nullable confidence. Earlier automated read clients had
+not listed tools on those same clients, so the SDK had no cached output schema.
+This is a failed read compatibility check, not evidence that the writes failed.
+No private paths, client identifiers, credentials or value payloads are recorded.
+
+This amendment authorizes implementation only after independent plan approval.
+The current source is `acdce558bde0f004fccba7066e6f917ab6788777`; the bridge remains
+at reviewed `38d6f05` bytes. The sole writer/coordinator/reviewer ownership and
+requested-versus-observed model settings above continue unchanged.
+
+**Smallest correction and owned paths.** Change only the four confidence schema
+properties in `apps/backend/src/mcp/tools/preference-search.tool.ts` and
+`apps/backend/src/mcp/tools/smart-search.tool.ts`: active and suggested confidence
+become `anyOf: [{ type: 'number' }, { type: 'null' }]`. Keep stored/result values,
+mutation requirements, domain/storage behavior, result mapping, authority,
+transport, native code and dependencies unchanged. Tests may change/add only in
+these tools' existing `.spec.ts` files, `apps/backend/test/local-mcp/tools-output-schema.test.mjs`,
+`apps/backend/test/local-mcp/bridge-integration.test.mjs`, and the affected MCP
+contract tests/fixture under `apps/backend/test/contracts/`. Guidance/evidence
+ownership adds this amendment, `docs/useful/MCP_LOCAL_SETUP.md`, the MCP section of
+`docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md`, and a new explicit record plus
+necessary derived census in `docs/current/local-migration-contract-baseline.json`.
+No production bridge or checker/CI/gate implementation changes are planned.
+
+**Contract evolution.** The checker deliberately treats output-domain widening
+as breaking even though this corrects metadata for already-returned values.
+Preserve that enforcement. After tests expose the defect, collect the exact new
+MCP fixture and add one reviewed transition using the existing `migrationRecords`
+mechanism: exact prior/new fingerprints, exact breaking diff, compatibility
+window, migration/rollback guidance, evidence path, and the union of affected
+consumer identities from both sides. Preserve all historical records and protected
+ownership/dispositions. Known consumers retain numeric results and accept null
+without coercing it to zero or inventing certainty; clients must refresh discovery
+on explicit reconnect/restart. Unknown external clients receive the same nullable
+confidence guidance without claiming deployed-client verification. Reverting code
+requires no data rollback, but restores the known schema mismatch for null rows;
+it must not silently rewrite stored confidence to satisfy the old descriptor.
+
+Checkpoints:
+
+1. **Reviewed amendment.** Independent reviewer checks the four-field scope,
+   tests-first matrix, shared hosted/local contract transition and artifact/trial
+   boundaries. Record the approval hash before product edits.
+2. **Reproduce before correcting.** Add same-client `listTools()` then
+   `callTool()` regressions for direct HTTP and the actual SDK stdio bridge.
+   Exercise permitted mutation with omitted confidence, then discovery-cached
+   read on that same client against the real isolated SQLite/backend fixture.
+   Cover null and numeric confidence in active and suggested arrays for both
+   search tools. Use synthetic persisted fixtures for nullable suggestion rows
+   where normal suggestion mutation requires confidence; do not loosen that
+   requirement. Smart-search coverage uses a deterministic workflow fixture and
+   the real tool/result path, with no provider or live model. Assert unchanged
+   structured content and its JSON text counterpart; retain authority checks.
+   Run these tests red against the current isolated build, then implement the
+   four metadata changes and run them green. Refresh only the reviewed MCP
+   fixture/transition, never tests merely to match an accidental implementation.
+3. **Affected validation and code review.** Freshly build the amended backend in
+   an isolated source copy; never overwrite the running app or checkout `dist`.
+   Run the two search tool unit suites, MCP contract/runtime-composition suites,
+   all local MCP tests (including direct HTTP and stdio discovery-first reads),
+   contract/Markdown checker tests, strict links and whitespace. Validate the
+   exact transition against the real base artifacts using the existing checker
+   mechanism; a `baseComparison=skipped` run alone is insufficient evidence for
+   this amendment. Independently review the complete amendment diff, including
+   transition/consumer evidence. Carry unchanged bridge/native/authority coverage
+   explicitly, while qualifying the earlier read assertions' discovery gap.
+4. **Source/artifact-bound retest.** Freeze a reviewed local trial commit after
+   targeted checks. If a new installed candidate is needed, use the unchanged
+   packager in an absent, separately named private output directory and record
+   exact source, copied inputs, app manifest/archive hashes and package integrity.
+   Explain the build's purpose and recheck pinned tools, input hashes, disk and
+   isolated resources before starting. Packaging success is not full installed
+   qualification. Preserve Candidate 14 and all existing app/state/model assets.
+   Current user approval names Candidate 14 only: obtain separate bounded approval
+   before replacing/relaunching another candidate or restarting the client for
+   its trial. Retest the known ordinary-chat discovery/write/read sequence on
+   synthetic data after approval, without automatic replay of prior writes.
+
+Read-only packaging inventory: Node 24.21.0/pnpm 10.25.0 preflight and Apple clang
+16.0.0 are available. The cached Node archive matches packager SHA-256
+`6239d4cf92d864487ec8cd3615038f7b67e7f58b77b21cd2f09ea9fbd68065fe`; retained
+`/private/tmp/step09-restart-llama-b11146-bin-macos-arm64.tar.gz` matches
+`1ad3f9eff80edb9dbef4259ad564d1720612ef7eea48fa4afed0e54f5f3d5711`; Candidate 14's
+bundled model license matches
+`bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a`.
+The former Step 06 asset paths no longer contain those inputs. Available disk was
+approximately 15 GiB at inventory; Candidate 14's bundle/archive were about
+817/282 MB, which excludes temporary build/dependency overhead. Check sufficient
+headroom before packaging; do not delete retained inputs, personal state or
+unrelated temporary roots to make space. No build or cleanup has started.
+
+The agreed boundary remains targeted source/artifact retesting. The full migration
+gate, complete installed qualification, exact-head CI, actual >35-minute idle
+observation and remaining canonical client acceptance are pending the finalization
+milestone. Do not treat the metadata fix or a successful retest as final pilot
+readiness, and do not alter gate requirements to shorten this correction.
+
+Independent amendment review: `/root/diff_review` approved full plan hash
+`8be09c3dd7a55d16b1e48919671418fb4af2ae31410fed2ab07e0397d6c06144` with no blockers;
+the coordinator authorized tests-first implementation. Code review remains pending.
+
+### Nullable-confidence implementation checkpoint (2026-10-11)
+
+The five new discovery-first regressions failed before production edits with the
+same `-32602` confidence schema error: one actual SDK stdio integration and four
+HTTP cases covering both result branches of both tools. Only the four descriptor
+fields were changed. The new direct tests persist null/numeric values in isolated
+SQLite; suggestion-null coverage seeds an existing nullable row without changing
+normal mutation validation. The smart workflow fixture reads those same stored
+rows; the real tool still filters authority and constructs the result. Existing
+stdio integration now discovers tools on each exact writer/reader/direct client
+before reading. Assertions preserve null/numeric confidence and equal structured
+and JSON-text content.
+
+After an isolated Nest rebuild, all five regressions passed. One test-only
+assumption was corrected to the existing successful-read contract: `isError` is
+optional and omitted by the helper, so the assertion rejects true and separately
+requires `success: true` plus exact content/value preservation. The initial
+schema failures were observed before that assertion was reached. No product
+result-envelope change was made.
+
+- Full affected isolated `pnpm test:local-mcp`: **110 passed, 0 failed**.
+- The two search tool unit suites and MCP contract/runtime-composition suites:
+  **13 passed across four suites**.
+- Contract/Markdown checker unit tests: **75 passed**.
+- MCP collector delta: exactly the four confidence schema fields. Transition
+  `pilot-nullable-search-confidence` pins prior fingerprint
+  `sha256:51437088a1c3bdf2bdb07e04f0fb020ed561f457c49e5241cd4ab56093cb4018`
+  and new fingerprint
+  `sha256:abeddf85b98ad62f30a5e70caec6ca76c347fe88d6d6835377a7cd2fbc173b08`,
+  the exact breaking diff and **64 consumer identities from both sides**.
+- Required real-base contract comparison passed with **`baseComparison=performed`**
+  against Git base `855e8734b919871eac82415465b456add38a3084`. The extracted artifact
+  manifest SHA-256 is
+  `3857a3efc2b110fdb4cebca4a2690a1873545569742491eda31567a0a5ececc8`.
+  This focused comparison is not the complete migration gate.
+
+The registry preserves prior migration records, protected ownership/dispositions,
+authority, consumers and outbound inventory; only the new transition and four
+new documentation reference rows are added. Consumer outcomes classify schema
+readers/guidance as migrated and unchanged auth/transport/resource/reference
+surfaces as unaffected. Unknown external-client evidence remains published
+migration guidance, not observed deployed behavior.
+
+The bridge modules, storage/domain/auth/native code and dependencies remain
+unchanged. Their independent review coverage carries forward; the old client
+read tests' missing discovery step is now explicitly corrected. Candidate 14 and
+its ongoing idle observation were not contacted or modified by this work. Fresh
+amendment code review, a separately named candidate and bounded replacement/retest
+approval remain pending. **Targeted checks passed; final validation pending.**

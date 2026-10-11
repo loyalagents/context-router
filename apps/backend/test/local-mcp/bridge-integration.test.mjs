@@ -106,12 +106,15 @@ test('real SDK stdio bridge preserves tools/resources, SQLite authority, indepen
     (await set(b.client, 'synthetic.bridge', 'denied')).isError,
     true,
   );
-  for (const client of [b.client, direct])
+  for (const client of [a.client, b.client, direct]) {
+    // Discovery caches output schemas on this exact SDK client, as Claude does.
+    await client.listTools();
     assert.equal(
       (await client.callTool({ name: 'searchPreferences', arguments: {} }))
         .structuredContent.active.preferences[0].value,
       'blue',
     );
+  }
   assert.equal(
     rows(f, 'SELECT count(*) n FROM preference_audit_events')[0].n,
     2,

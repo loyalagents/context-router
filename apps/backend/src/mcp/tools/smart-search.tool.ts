@@ -74,7 +74,7 @@ export class SmartSearchTool implements McpToolInterface {
               value: {},
               status: { type: 'string' },
               sourceType: { type: 'string' },
-              confidence: { type: 'number' },
+              confidence: { anyOf: [{ type: 'number' }, { type: 'null' }] },
               locationId: {
                 anyOf: [{ type: 'string' }, { type: 'null' }],
               },
@@ -94,7 +94,7 @@ export class SmartSearchTool implements McpToolInterface {
               value: {},
               status: { type: 'string' },
               sourceType: { type: 'string' },
-              confidence: { type: 'number' },
+              confidence: { anyOf: [{ type: 'number' }, { type: 'null' }] },
               locationId: {
                 anyOf: [{ type: 'string' }, { type: 'null' }],
               },

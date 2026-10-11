@@ -82,6 +82,21 @@ Initial help/version inspection and user setup reported Claude Code **2.1.284** 
 
 Cloud-backed CLI assistants may send tool results to their model providers. Use synthetic data for repository tests; the assisted pilot permits colleagues' own data with explicit destination/privacy guidance and narrow grants. Those client tests do not prove the whole assistant is offline. The local application is separately tested under source/relocated-package policies that deny hosted providers/DNS/other endpoints and permit only its literal loopback listener and selected pinned synthetic TLS peer.
 
+## Search Result Confidence Compatibility
+
+`searchPreferences` and `smartSearchPreferences` return stored confidence as a
+number or `null` in both active and suggested results. Null means confidence was
+not recorded; preserve it rather than treating it as zero or changing storage.
+The pilot schema correction declares this existing behavior in tool discovery.
+Reconnect/restart explicitly to refresh cached tool schemas when upgrading the
+backend; discovery-first SDK tests cover both direct HTTP and the stdio bridge.
+Older candidates can reject a read containing null after discovery, even when the
+preceding mutation succeeded. Inspect the result/state before deciding to repeat
+a write. This metadata correction changes no grants, mutation requirements,
+transport, OAuth, stored data or return values; known numeric responses remain
+valid. Unknown external clients must support nullable confidence and refresh
+cached descriptors; their deployed behavior has not been observed.
+
 ## Claude Desktop: Assisted Source Bridge Trial
 
 The source bridge is implemented for the [first pilot connection slice](../plans/active/colleague-pilot/plan.md).

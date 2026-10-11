@@ -210,7 +210,14 @@
                         "type": "string"
                       },
                       "confidence": {
-                        "type": "number"
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "locationId": {
                         "anyOf": [
@@ -261,7 +268,14 @@
                         "type": "string"
                       },
                       "confidence": {
-                        "type": "number"
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "locationId": {
                         "anyOf": [
@@ -375,7 +389,14 @@
                     "type": "string"
                   },
                   "confidence": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "locationId": {
                     "anyOf": [
@@ -418,7 +439,14 @@
                     "type": "string"
                   },
                   "confidence": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "locationId": {
                     "anyOf": [
