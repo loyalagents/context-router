@@ -40,7 +40,7 @@ const APPLY_REVIEWED_MUTATION = /* GraphQL */ `mutation ApplyReviewed($analysisI
 const outcomes: Record<string, string> = {
   APPLIED: 'Applied.', VALIDATION_FAILED: 'Validation failed. Review the current schema and analyze again.',
   CONFLICT: 'Saved state changed since review. Reload and analyze again.',
-  UNCERTAIN: 'Write outcome is uncertain. Inspect saved preferences before deciding on another change; do not blindly retry.',
+  UNCERTAIN: 'Write outcome is uncertain. Inspect saved preferences before deciding on another change. An unchanged list does not prove the write failed; it may still complete. Do not blindly retry.',
 };
 
 const FILTER_REASON_LABELS: Record<FilterReason, string> = {
@@ -370,6 +370,8 @@ export default function SuggestionsList({
           const result = data.data?.applyPreferenceSuggestionsV2;
           if (result?.schemaVersion !== 2 || !Array.isArray(result.results) || result.results.length !== attempted.length || result.results.some((item: { suggestionId: string; status: string }, index: number) => item.suggestionId !== attempted[index] || !outcomes[item.status])) throw new Error('Invalid reviewed result');
           record(result.results);
+          attempted = [];
+          if (result.results.some((item: { status: string }) => item.status === 'APPLIED' || item.status === 'UNCERTAIN')) onApplied();
         }
         attempted = [];
       }
@@ -377,7 +379,11 @@ export default function SuggestionsList({
       if (!local && !controller.signal.aborted) onApplied();
     } catch (error) {
       if (controller.signal.aborted) return;
-      if (local) record(attempted.map((suggestionId) => ({ suggestionId, status: 'UNCERTAIN' })));
+      if (local && attempted.length > 0) {
+        record(attempted.map((suggestionId) => ({ suggestionId, status: 'UNCERTAIN' })));
+        attempted = [];
+        onApplied();
+      }
       setApplyError(
         local ? 'Apply was not confirmed. Inspect saved preferences before making another change.' : error instanceof Error ? error.message : 'Failed to apply suggestions',
       );

@@ -11,7 +11,7 @@ and **worktree eligible** independently after investigation.
 
 | Candidate | First evidence and likely boundary | Parallelism caution |
 | --- | --- | --- |
-| Stale saved-preference display after apply | Reproduce and make confirmed changes visible without manual refresh; [UI brief](../ui-usability/README.md) owns the fix | Potentially isolated UI slice; preserve uncertain/partial outcomes |
+| Stale saved-preference display after apply | Reproduced and addressed in unmerged [PR #173](https://github.com/loyalagents/context-router/pull/173); installed-app retest remains pending. [UI brief](../ui-usability/README.md) owns the fix | Isolated UI slice; preserve uncertain/partial outcomes |
 | Rejected PDF and possible wrong-person email proposal | Reproduce with consent or a minimal synthetic equivalent, distinguish format rejection from extraction/attribution; do not generalize accepted omission E | Model/parser/domain shared hotspots; no private document committed or uploaded externally |
 | Recovery from interrupted startup/owner loss/reboot | Review fail-closed lifecycle and a supported recovery or explicitly consented pilot reset; never clear journals as a shortcut | Sensitive native/storage ownership work, serialize with packaging/reset changes |
 | Version replacement and disk budget | Measure real A-to-B change, retained weights, partial downloads, archives, backups and logs; safe bounded cleanup | Pilot release task, not independent changes to downloader/store ownership |
