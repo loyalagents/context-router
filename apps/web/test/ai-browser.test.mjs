@@ -545,11 +545,26 @@ test('earlier confirmed batch refreshes even when a later committed batch respon
   };
   await analyzeSynthetic(f, [['profile.first_name', 'Confirmed first']], ['first.txt', 'second.txt', 'remaining.txt']);
   const sections = f.page.locator('section').filter({ has: f.page.getByRole('heading', { name: /^(first|second|remaining)\.txt$/ }) });
-  let batches = 0;
+  let batches = 0, reads = 0, firstReadComplete;
+  const initialRead = new Promise(resolve => { firstReadComplete = resolve; });
   await f.page.route('**/graphql', async route => {
+    if (route.request().postData()?.includes('query LocalSavedPreferences')) {
+      reads++;
+      if (reads !== 1) return route.fallback();
+      const response = await route.fetch();
+      const snapshot = (await response.json()).data.activePreferences;
+      assert.equal(snapshot.some(preference => preference.slug === 'profile.last_name'), false);
+      await route.fulfill({ response });
+      await savedPreferences(f.page).getByText('"Confirmed first"', { exact: true }).waitFor();
+      firstReadComplete();
+      return;
+    }
     if (!route.request().postData()?.includes('mutation ApplyReviewed')) return route.fallback();
     batches++;
     if (batches !== 2) return route.fallback();
+    // The earlier APPLIED read must finish before this batch can commit, so it
+    // cannot accidentally satisfy the post-failure refresh assertion below.
+    await initialRead;
     // Commit exactly once, then drop the response. A later read cannot confirm
     // this operation's outcome in the retained review.
     const response = await route.fetch();
@@ -563,9 +578,9 @@ test('earlier confirmed batch refreshes even when a later committed batch respon
   assert.equal(await f.page.getByText('Applied.', { exact: true }).count(), 1);
   assert.equal(await sections.filter({ has: f.page.getByText('remaining.txt', { exact: true }) }).getByRole('checkbox').isDisabled(), false);
   assert.equal(await sections.filter({ has: f.page.getByText('remaining.txt', { exact: true }) }).getByRole('checkbox').isChecked(), true);
-  await f.page.getByRole('button', { name: 'Reload saved preferences' }).click();
-  await f.page.getByText('Refreshing saved preferences…', { exact: true }).waitFor({ state: 'hidden' });
+  await savedPreferences(f.page).getByText('"Later proposal"', { exact: true }).waitFor({ timeout: 3000 });
   assert.equal(await f.page.getByText('Write outcome is uncertain.', { exact: false }).count(), 1);
+  assert.equal(reads, 2, 'later uncertainty starts a read after the earlier snapshot');
   assert.equal(mutations.length, 2);
   assert.equal((await f.graphql('{ activePreferences { slug value } }')).activePreferences.find(p => p.slug === 'profile.last_name').value, 'Later proposal');
   await savedPreferences(f.page).getByText('"Later proposal"', { exact: true }).waitFor();
@@ -594,6 +609,66 @@ test('refresh failure preserves applied outcomes and retry only reads authoritat
   assert.equal(mutations.length, 1);
   assert.equal(await f.page.getByText('Applied.', { exact: true }).count(), 1);
 });
+
+test('a valid uncertain result refreshes the saved list without confirming the write', { timeout: 60000 }, async t => {
+  const f = await browserFixture(t, { model: true });
+  await unlock(f);
+  await analyzeSynthetic(f, [['profile.first_name', 'Saved despite uncertainty']]);
+  let reads = 0;
+  await f.page.route('**/graphql', async route => {
+    if (route.request().postData()?.includes('query LocalSavedPreferences')) reads++;
+    if (!route.request().postData()?.includes('mutation ApplyReviewed')) return route.fallback();
+    const response = await route.fetch();
+    const body = await response.json();
+    assert.equal(body.data.applyPreferenceSuggestionsV2.results[0].status, 'APPLIED');
+    // Exercise the supported uncertain-result envelope after a real saved write.
+    body.data.applyPreferenceSuggestionsV2.results[0].status = 'UNCERTAIN';
+    await route.fulfill({ json: body });
+  });
+  const mutations = applyCounter(f.page);
+  await f.page.getByRole('button', { name: 'Apply 1 Preference', exact: true }).click();
+  await savedPreferences(f.page).getByText('"Saved despite uncertainty"', { exact: true }).waitFor();
+  assert.equal(await f.page.getByText('Write outcome is uncertain.', { exact: false }).count(), 1);
+  assert.equal(await f.page.getByText('Applied.', { exact: true }).count(), 0);
+  assert.equal(reads, 1);
+  assert.equal(mutations.length, 1);
+});
+
+for (const failRead of [false, true]) {
+  test(`a single lost response refreshes without inferring no commit; first read failure=${failRead}`, { timeout: 60000 }, async t => {
+    const f = await browserFixture(t, { model: true });
+    await unlock(f);
+    await analyzeSynthetic(f, [['profile.first_name', 'Unconfirmed proposal']]);
+    let reads = 0;
+    await f.page.route('**/graphql', async route => {
+      // Do not forward this write: the browser cannot distinguish this outcome
+      // from a request that committed or may still settle after the read.
+      if (route.request().postData()?.includes('mutation ApplyReviewed')) return route.abort('failed');
+      if (route.request().postData()?.includes('query LocalSavedPreferences')) {
+        reads++;
+        if (failRead && reads === 1) return route.fulfill({ status: 503, json: {} });
+      }
+      return route.fallback();
+    });
+    const mutations = applyCounter(f.page);
+    const firstRead = f.page.waitForResponse(response => response.request().postData()?.includes('query LocalSavedPreferences'));
+    await f.page.getByRole('button', { name: 'Apply 1 Preference', exact: true }).click();
+    assert.equal((await firstRead).status(), failRead ? 503 : 200);
+    await f.page.getByText('Write outcome is uncertain.', { exact: false }).waitFor();
+    await f.page.getByText('An unchanged list does not prove the write failed; it may still complete.', { exact: false }).waitFor();
+    if (failRead) await f.page.getByRole('alert').filter({ hasText: 'Saved preferences could not refresh' }).waitFor();
+    const retried = f.page.waitForResponse(response => response.request().postData()?.includes('query LocalSavedPreferences'));
+    await f.page.getByRole('button', { name: failRead ? 'Retry saved preferences refresh' : 'Reload saved preferences', exact: true }).click();
+    assert.equal((await retried).status(), 200);
+    await f.page.getByText('Refreshing saved preferences…', { exact: true }).waitFor({ state: 'hidden' });
+    assert.equal(await f.page.getByText('Write outcome is uncertain.', { exact: false }).count(), 1);
+    assert.equal(await f.page.getByText('Applied.', { exact: true }).count(), 0);
+    assert.equal(await savedPreferences(f.page).getByText('No preferences yet.', { exact: false }).isVisible(), true);
+    assert.deepEqual((await f.graphql('{ activePreferences { id } }')).activePreferences, []);
+    assert.equal(reads, 2);
+    assert.equal(mutations.length, 1);
+  });
+}
 
 for (const action of ['newer read', 'manual save', 'manual delete', 'manual create']) {
   test(`delayed saved snapshot cannot overwrite ${action}`, { timeout: 60000 }, async t => {
@@ -627,6 +702,8 @@ for (const action of ['newer read', 'manual save', 'manual delete', 'manual crea
     if (action !== 'manual delete') await list.getByText('"Newer saved value"', { exact: true }).waitFor();
     await held.finish();
     await f.page.getByText('Refreshing saved preferences…', { exact: true }).waitFor({ state: 'hidden' });
+    assert.equal(await list.getByText('"Confirmed document last"', { exact: true }).isVisible(), true);
+    if (action !== 'manual delete') assert.equal(await list.getByText('"Newer saved value"', { exact: true }).isVisible(), true);
     assert.equal(await list.getByText('"Initial manual value"', { exact: true }).count(), action === 'manual create' ? 1 : 0);
     assert.equal(mutations.length, 1);
     assert.equal(await f.page.getByText('Applied.', { exact: true }).count(), 1);

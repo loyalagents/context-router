@@ -1,10 +1,10 @@
 # Local UI Usability Follow-Up
 
-- Status: deferred product work; not an activated implementation plan
+- Status: deferred backlog except activated item 7; [PR #173](https://github.com/loyalagents/context-router/pull/173) is unmerged, with installed-app retest pending
 - Outcome owner: product owner and next assigned UI coordinator
 - Trigger: pilot triage; fixes for blocked tasks, false success or privacy outrank polish
 - Source: [Step 08 user-run acceptance](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/08-local-ui/implementation.md#2026-10-04-user-run-browser-and-native-client-acceptance)
-- Last reviewed: 2026-10-10
+- Last reviewed: 2026-10-11
 
 Keep this a focused cleanup of the existing dashboard and packaged menu:
 
@@ -69,6 +69,8 @@ model, grants, native lifecycle, dependencies and CI configuration are excluded.
 - Owned paths: `PreferencesClient.tsx`, `SuggestionsList.tsx`,
   `PreferenceItem.tsx`, focused `ai-browser.test.mjs` coverage, this brief and
   the additive query-consumer row in the current contract baseline registry.
+  Review follow-up also updates the current application's stale-display status
+  and the stabilization entry to distinguish this unmerged fix from installed acceptance.
   Generated GraphQL types may change only as required by the new read query.
   No changes to LocalPage, authenticated helpers, contracts or browser fixture
   are planned. Existing fixture isolation provides fresh state, ephemeral UI/MCP
@@ -85,6 +87,9 @@ implementation):
    with complete preference identity/display fields. Keep hosted clear-and-reload
    behavior. Refresh must not modify proposals, selections, edits or outcomes;
    earlier success still triggers a read if a later batch is uncertain.
+   Valid UNCERTAIN results and attempted batches whose response is lost also
+   trigger a fresh read. A read never confirms the uncertain operation, and a
+   missing value cannot prove it will not settle later.
 3. Keep read loading/failure separate from mutation outcomes. A failed read retains
    the displayed list and offers read-only retry. Superseding reads abort/invalidate
    older reads. Confirmed manual save/delete/create or inbox acceptance invalidates
@@ -158,3 +163,23 @@ corrected frozen candidate; the registry delta also receives independent review.
 The amended census passed the checker with a verified merge-base bundle
 (`baseComparison=performed`, 58 consumers), its 55 existing tests, Markdown links
 and whitespace checks. Full final qualification remains pending.
+
+Review correction after `c1a8525`: that candidate passed full local qualification
+and exact-head CI, but review found that the earlier read could finish before a
+later uncertain batch settled. The strengthened browser regression first delivers
+an authoritative snapshot excluding the later value, then commits the second
+batch and loses its response; it failed waiting for that saved value without a
+manual reload. The correction retains per-batch reads and starts one after valid
+UNCERTAIN results or a failed attempted batch, without replaying mutations or
+changing outcomes. Browser coverage also checks a single uncertain result,
+an unforwarded write with successful/failed read and read-only retry, and positive
+saved-value assertions after delayed snapshots settle. Backend/build dependencies
+are unchanged; the existing backend output is reused only for targeted iteration.
+The revised web build, affected checks and independent review precede a new freeze;
+the original finalization milestone and full final gates remain required.
+Targeted results: web build/typecheck passed; 24 affected browser/transport cases
+passed initially, and the two new single-response-loss cases passed after fixing
+only a punctuation mismatch in their warning assertion. Their read/mutation-count
+and outcome assertions remain intact. Contract/document checker tests passed
+75/75, the consumer census and 145 Markdown links passed, and whitespace is clean.
+Targeted checks passed; final validation pending for this review correction.
