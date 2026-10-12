@@ -1,6 +1,6 @@
 # Document attribution investigation
 
-- Status: synthetic preparation; actual model reproduction pending; no production fix or readiness claim
+- Status: unsupported owner selection reproduced; reviewed prompt correction implemented, model validation pending; no readiness claim
 - Base: remote `main` verified at `f31021234fe3eac347261466b9c708231f0f2841`
 - Branch: `codex/document-attribution-stability`, isolated worktree
 - Ownership: coordinator `/root` and reviewers are read-only; `/root/writer` owns all files, fixtures, documentation, staging and commits in this worktree. The pilot owner remains the main-checkout integrator.
@@ -100,7 +100,7 @@ facts. Historical manifests/receipts and recovery exception H remain unchanged.
    affected existing quality assessment, not just new fixtures. No automatic
    merge, publication or installed-app/Claude acceptance rerun.
 
-## Live proposal prerequisites — prepared, not approved to run
+## Initial experiment — completed on the frozen preparation
 
 - Five fixtures above, **two repetitions each, at most ten analyses**, one at a
   time. Maximum **45 minutes inclusive of startup and cleanup**; record native
@@ -122,7 +122,7 @@ facts. Historical manifests/receipts and recovery exception H remain unchanged.
   identity and metadata. Its exact canonical path belongs in the private approved
   run configuration, not repository source. A live run would reverify that input
   within its own approved window. Read-only reuse needs no 5.68 GB copy; no copy,
-  model modification, download or inference has occurred.
+  model modification or download occurred.
 - Preserve production configuration: 16,384 context, one slot, GPU layers all,
   flash attention on, fit off, batch/ubatch 512, mmap/offline, thinking disabled,
   no context shift or prompt/idle caches; production client temperature 0,
@@ -139,10 +139,64 @@ facts. Historical manifests/receipts and recovery exception H remain unchanged.
   The writer owns cancellation, stop/reap and cleanup. No application listener,
   provider credits, downloads, private document, personal-client change or
   pilot-process operation. Preserve failure records without credentials.
-- A live quiet window is **pending** after the pilot's current packaging/browser/
-  gate work. No live inference is authorized by the preparation review. Runtime
-  staging contains only the verified archive's binaries/libraries/license; no
-  binary has been executed. The runner stays outside production output.
+- The user approved the exact private configuration and the pilot explicitly
+  released a quiet window. The experiment completed and released that window.
+  This approval does not authorize further builds or inference.
+
+## Observed result and correction checkpoint
+
+The initial run used source `232ed75d0bfcad1da793c7180c9a9119fda6894c`
+and configuration SHA-256
+`4b1746956acf1c0c3add644733cf2e07c72b732daf84144870b8651abd543d81`.
+All ten analyses and fourteen native completions finished in 133.138 seconds,
+starting at `2026-10-12T07:32:36.239Z`. Eight final positive/control trials passed;
+those controls had no stage subject-attribution violations. Both neutral
+two-person directory repetitions failed the agreed ambiguity policy.
+
+In each failure, initial extraction proposed both people's names and emails at
+confidence 1. Per-slug duplicate consolidation selected Maya's name and email at
+confidence 0.5. Those two final suggestions retained real value-containing quotes
+and review descriptors; the four original candidates remained in the filtered
+duplicate audit. This establishes **unsupported owner selection when identity is
+unavailable**, not a final Jordan-email substitution when Maya is already known,
+and not a diagnosis of the unavailable original private incident.
+
+The complete original receipt is retained unchanged with SHA-256
+`c3668cd4ec81b580e8af0421dba6b15ee80f41ad55b143f61b98287dbce28755`.
+A [synthetic observed excerpt](../../../../apps/backend/src/modules/preferences/document-analysis/__fixtures__/attribution-observed-baseline.json)
+preserves both negative traces and their binding. The initial scorer's stage
+recall fields incorrectly treated an allowed saved-name no-op as required output;
+those fields are not evidence of a control failure and the receipt is not rewritten.
+All source/build/helper, runtime and model identity checks passed. The child was
+reaped, adapter and work owners settled, and private state/TLS roots were removed;
+the writer independently verified the roots were absent and no process remained
+at the owned runtime path. No application or personal state was changed.
+
+Independent diagnosis identified the earliest error in extraction: its prompt
+required value evidence without explicitly requiring evidence about the account
+owner. Mandatory duplicate consolidation then selected one person's value from
+the mixed candidates. The approved first correction adds four extraction prompt
+rules for owner-specific slugs, identity context, ambiguous-owner omission and
+same-person evidence. Schema-defined related-person facts and clear identified
+subjects without saved profile information remain eligible. Output schemas,
+duplicate behavior, validation and persistence are unchanged.
+
+The saved-profile and empty-profile prompt-contract tests failed before the four
+reviewed rules were inserted, then all four focused suites passed **71 tests**.
+These tests prove instruction delivery only. The old dist/build binding qualifies
+the baseline; it does not contain the prompt correction. No rebuild or post-fix
+model result exists at this checkpoint.
+
+The next separately reviewed run will combine the unchanged five attribution
+cases twice with all six affected historical extraction cases three times: at
+most **28 analyses, 120 native completions and 45 minutes**, with work stopped at
+44 minutes. New private manifest/configuration and candidate build are required.
+Historical corpus bytes, definitions, filenames, oracles and evidence remain
+unchanged. Report strict affected-slice quality separately from the narrowly
+permitted instruction-injection omission exception E; this is not full 48-trial
+quality qualification, and exception E does not apply to attribution failures.
+Cancellation/recovery exception H remains unchanged. Exhausted or incomplete
+attempts cannot count as successful qualification.
 
 ## Preparation evidence
 
@@ -178,6 +232,7 @@ facts. Historical manifests/receipts and recovery exception H remain unchanged.
 - Stable preparation checks passed: four focused Jest suites, **69 tests**;
   Markdown links (146 files); attribution test/harness exclusion from the existing
   production outbound inventory. The scanner and baseline remain unchanged.
-- Targeted checks passed; final validation pending. Actual reproduction and
-  final readiness remain pending. Independent complete-diff review is requested
-  for the preparation snapshot before any live-run approval request.
+- Targeted checks passed; final validation pending. Finalization requires reviewed
+  post-fix attribution and affected-quality evidence, then a frozen candidate,
+  applicable final gates and exact-head CI. No PR publication or merge is
+  authorized by this checkpoint.

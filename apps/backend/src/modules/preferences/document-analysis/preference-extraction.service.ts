@@ -171,6 +171,10 @@ Task:
 - Analyze the attached document for any information that indicates a new or updated preference.
 - For each item, output a suggestion object using a valid slug from the schema.
 - Only suggest changes with clear evidence in the document.
+- Determine whom each person-specific fact describes before assigning it to a preference. For slugs about the user's own identity, contact details, role, or other personal facts, the evidence must concern the user. A fact about another person is eligible only when the slug explicitly describes that relationship or contact.
+- Use identifying information in current preferences as context for identifying the user. When that context is absent, clear self-identification or a clearly identified subject in a single-person document can establish whom the document describes. Missing saved profile information alone is not a reason to omit those facts.
+- When multiple people appear and neither current preferences nor the document identifies which person is the user, omit only ambiguous facts about the user. Do not choose a person by order, prominence, or confidence. Continue extracting facts whose subject and relationship to the user are clear.
+- Keep each proposed value and its quoted evidence associated with the same person. Text that proves another person's value does not prove that value belongs to the user.
 - Distinguish value evidence from absence/status evidence. Null, blank, placeholder, or commented fields, including YAML/JSON comments, and text describing a missing value, collection state, workflow status, or task status, mean the fact is absent; they are not the value itself.
 - If a fact's only evidence is absence/status text, emit no suggestion for that slug. Do not store status text such as "pending", "not provided", or "to be completed" as newValue.
 - Only use status, task, or note prose as newValue when the slug description explicitly says it stores that exact operational status or note. Do not use workflow or task prose to fill unrelated durable memory notes.

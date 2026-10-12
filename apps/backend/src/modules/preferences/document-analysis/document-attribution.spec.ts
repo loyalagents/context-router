@@ -135,6 +135,27 @@ describe('synthetic attribution pipeline plumbing (no model inference)', () => {
     expect(selfIdentifying.expectedProposals.map((value) => value.slug)).toContain('profile.email');
   });
 
+  it.each(fixtures.cases.filter((fixture) => ['known-owner-email', 'ambiguous-two-person-directory'].includes(fixture.id)))(
+    'sends the reviewed subject-attribution contract with unchanged $identityBasis context', async (fixture) => {
+      const harness = pipeline(fixture);
+      await harness.analysis.analyzeDocument(ownerId, Buffer.from(fixture.documentText), 'text/plain', fixtures.filename);
+      const prompt = harness.calls[0].prompt;
+      // These assertions prove instruction delivery, not model compliance.
+      const attributionRules = [
+        "Determine whom each person-specific fact describes before assigning it to a preference. For slugs about the user's own identity, contact details, role, or other personal facts, the evidence must concern the user. A fact about another person is eligible only when the slug explicitly describes that relationship or contact.",
+        'Use identifying information in current preferences as context for identifying the user. When that context is absent, clear self-identification or a clearly identified subject in a single-person document can establish whom the document describes. Missing saved profile information alone is not a reason to omit those facts.',
+        'When multiple people appear and neither current preferences nor the document identifies which person is the user, omit only ambiguous facts about the user. Do not choose a person by order, prominence, or confidence. Continue extracting facts whose subject and relationship to the user are clear.',
+        "Keep each proposed value and its quoted evidence associated with the same person. Text that proves another person's value does not prove that value belongs to the user.",
+      ];
+      for (const rule of attributionRules) expect(prompt).toContain(`- ${rule}`);
+      expect(prompt).toContain(JSON.stringify(fixture.activePreferences, null, 2));
+      if (!fixture.activePreferences.length) expect(prompt).not.toContain(fixture.accountOwner);
+      expect(prompt).toContain('sourceSnippet must quote the text containing the actual value');
+      expect(harness.ai.generateStructuredWithFile).toHaveBeenCalledTimes(1);
+      expect(harness.write).not.toHaveBeenCalled();
+    },
+  );
+
   it.each(fixtures.cases)('carries scripted $id proposals and quoted evidence to review without writes', async (fixture) => {
     const harness = pipeline(fixture);
     const file = Buffer.from(fixture.documentText, 'utf8');
