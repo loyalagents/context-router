@@ -4,7 +4,7 @@ import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {mkdtemp,realpath,mkdir,copyFile,writeFile,readFile,rm} from 'node:fs/promises';
 import path from 'node:path';import os from 'node:os';
-import {createPackageManifest,inventoryPayload} from '../../src/package-manifest.mjs';
+import {writeSignedFixture} from './signed-package.mjs';
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 export async function ended(child){let timer;try{return await Promise.race([child.ended,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('exact guardian exit deadline')),6000);})]);}finally{clearTimeout(timer);}}
 export async function fixture(t,variant='normal') {
@@ -54,7 +54,7 @@ const [models,generation]=process.argv.slice(2);if(path.basename(models)!=='mode
 const lifetime=admitDownloadLifetime(models,generation);lifetime.assertHeld();
 execFileSync(path.resolve(import.meta.dirname,'../../../MacOS/context-router'),['verify-inherited'],{env:{},stdio:['ignore','pipe','ignore',3]});
 const control=await openManagedControl(generation,{onStop(){},onCommand(){}});await control.send('download-progress',{received:1,total:5680522464});await control.stopped;await control.send('download-cancelled');await control.close();`);
-  await writeFile(path.join(resources,'package-manifest.json'),JSON.stringify(createPackageManifest({source:'a'.repeat(64),files:await inventoryPayload(bundle)})));
+  await writeSignedFixture(bundle);
   const children=[],accepted=[];
   t.after(async()=>{
     let uncertain=false;

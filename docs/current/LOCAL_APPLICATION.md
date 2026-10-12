@@ -49,8 +49,10 @@ not a new command or a waiver of filesystem/process safety.
   scoped user-run evidence. Claude Desktop 2.31226.1 Pro ordinary chat passed
   discovery, permitted/denied operations, shared dashboard checks, restart,
   credential independence and over 35 minutes idle with explicit recovery using
-  the standalone stdio bridge. **Full Desktop qualification still awaits the
-  accepted live uncertain-mutation follow-up**; ChatGPT desktop remains unqualified.
+  the standalone stdio bridge. The controlled actual-Claude lost-reply follow-up
+  also passed: one committed mutation, no replay and one explicit recovery read.
+  This qualifies the recorded retained app/bridge/client pair on the measured Mac;
+  changed artifacts and ChatGPT desktop remain unqualified.
   See the [pilot evidence](../plans/active/colleague-pilot/plan.md).
 - Model download is explicit and verified, about 5.7 GB; compatible assets live
   outside the app bundle for reuse. Menu Restart enables/recovers AI and opens the
@@ -72,7 +74,7 @@ Do not turn merged code or automated checks into a broader support/release claim
 | Quality exception E | Known personal-email omission in the frozen adversarial extraction fixture; 18/21 recall (85.71%). The original quality scorer verdict remains FAILED. Not permission for wrong-person facts or other quality failures. |
 | Recovery exception H | A repeat production cancellation failed the five-second settlement requirement and latched AI unavailable. Later recovery observations do not erase that failure. Whole-generation owned-process shutdown and fresh inference credentials are required; retain data and compatible weights. |
 | Lifecycle | Normal restart/Quit and scoped sleep/wake observations exist. Candidate 14 fixes sleep consuming the shutdown budget; real sleep during shutdown, forced owner loss and cross-boot recovery remain unqualified. Fail closed on uncertain ownership. |
-| MCP | Credentials remain until revoked/rotated; sessions expire after 30 minutes idle and have bounded IDs/capacity. Claude Desktop showed the expiry failure and recovered on a separate explicit request after a direct 35-minute final-pair interval. Automatic client replay is not supported; never repeat an uncertain mutation before inspecting state/history. The live lost-reply follow-up remains open. |
+| MCP | Credentials remain until revoked/rotated; sessions expire after 30 minutes idle and have bounded IDs/capacity. Claude Desktop showed the expiry failure and recovered on a separate explicit request after a direct 35-minute final-pair interval. Automatic client replay is not supported; never repeat an uncertain mutation before inspecting state/history. The controlled actual-Claude lost-reply check passed: one mutation/audit event, honest uncertainty, no replay and one explicit recovery read. Downloaded-app Gatekeeper acceptance failed because the bundle was not sealed; repair remains required. |
 | Upload/UI findings | Rejected PDF, stale post-apply display and possible another-person email attribution were reported; cause/contents were not fully verified. Triage before real-data pilot, not blanket acceptance under E. |
 | Replacement/storage | Controlled Candidate 14-to-confidence-corrected app replacement passed with synthetic state, credential/target-policy continuity and sampled allocation. Prior personal-transition receipts separately support compatible real-model reuse. Colleague download/Gatekeeper, complete disk budgets and a newer #170-bearing installed artifact remain unqualified; see the [scoped pilot results](../plans/active/colleague-pilot/plan.md#isolated-rehearsal-result). |
 

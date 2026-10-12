@@ -1,4 +1,5 @@
 // Opt-in reviewed series only. Never invoked by CI, the aggregate gate or the app.
+import {assertLegacyLiveManifest} from './artifact-preflight.mjs';
 import assert from 'node:assert/strict';import {createHash,X509Certificate} from 'node:crypto';
 import {constants,createReadStream,writeFileSync} from 'node:fs';import {mkdtemp,realpath,readFile,writeFile,copyFile,chmod,stat} from 'node:fs/promises';
 import {spawn} from 'node:child_process';import {once} from 'node:events';import path from 'node:path';import os from 'node:os';
@@ -7,6 +8,7 @@ const proposal=JSON.parse(await readFile(process.argv[2],'utf8'));
 assert.deepEqual(Object.keys(proposal).sort(),['artifact','manifestSha256','maxCompletionTokens','maxGenerations','maxRequests','series','totalSeconds'].sort());
 assert.equal(proposal.series,'step09-installed-live-v1');assert.equal(proposal.maxGenerations,3);assert.equal(proposal.maxRequests,3);assert.equal(proposal.maxCompletionTokens,2048);assert.equal(proposal.totalSeconds,900);assert.match(proposal.manifestSha256,/^[a-f0-9]{64}$/);
 const bundle=await realpath(proposal.artifact),manifest=await readFile(path.join(bundle,'Contents/Resources/package-manifest.json'));assert.equal(createHash('sha256').update(manifest).digest('hex'),proposal.manifestSha256);
+assertLegacyLiveManifest(manifest); // Existing approval schema pins v1 bytes only, before any state or model work.
 const root=await realpath(await mkdtemp(path.join(os.tmpdir(),'context-router-installed-live-'))),envelope=path.join(root,'managed-v1'),exe=path.join(bundle,'Contents/MacOS/context-router'),node=path.join(bundle,'Contents/Resources/bin/node'),modelExe=path.join(bundle,'Contents/Resources/model/llama-server');
 const began=Date.now(),signal=AbortSignal.timeout(780000),receipt={version:1,series:proposal.series,proposal,status:'running',root,phases:[],generations:[],requests:[],cleanup:[],limitations:['Synthetic local-host evidence only. No real sleep/wake, reboot, signing/notarization or support beyond the declared M1 Max/macOS pilot.']};
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));let current;

@@ -1,8 +1,8 @@
 # Assisted Colleague Pilot
 
-- Status: activated milestone; isolated replacement/lost-reply rehearsal passed, actual Claude and distribution acceptance pending
+- Status: activated milestone; isolated replacement and actual-Claude lost-reply checks passed; unsigned download exposed a bundle-signing defect
 - Priority: current primary outcome; [plan and evidence](plan.md)
-- Owner: product owner; coordinator and sole writer/integrator `/root` in `codex/pilot-interruption-delivery`
+- Owner: product owner; read-only coordinator `/root`; seal-repair sole writer/integrator `/root/delivery_review` in `codex/pilot-interruption-delivery`
 - Audience: a few Git-capable colleagues, initially Apple Silicon Macs
 
 Current qualification is limited to the measured M1 Max / 64 GiB / macOS 15.1.1

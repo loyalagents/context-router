@@ -5,7 +5,9 @@ Final-head CI passed; see [scoped closeout](../current/LOCAL_MIGRATION_CLOSEOUT.
 for evidence and [pilot preparation](../plans/active/colleague-pilot/README.md)
 for the next acceptance work. Original human acceptance was partial; neither merge
 nor this runbook qualifies distribution or every recovery scenario.
-This is an unsigned private build, not a signed or notarized release. The declared
+This is a private build without Developer ID signing or notarization. The
+seal-repair candidate adds an ad-hoc whole-bundle integrity signature; it supplies
+no publisher authentication and remains pending renewed download acceptance. The declared
 pilot is MacBook Pro 18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Macs and
 native Windows/Linux are not qualified. The source/manual modes remain available.
 
@@ -13,12 +15,21 @@ native Windows/Linux are not qualified. The source/manual modes remain available
 
 Obtain the complete `Context Router.app` and its build receipt from the trusted
 local build. Compare the archive's SHA-256 with that receipt before extracting.
-The inventory detects missing or changed payloads; it does not authenticate a
-publisher or a modified manifest. Gatekeeper acceptance remains untested. Do not
+The v2 inventory hashes ordinary payload files; mandatory strict platform
+verification covers the fixed main executable, resource seal and signed manifest.
+Neither an ad-hoc seal nor a colocated receipt authenticates a publisher. New
+native candidates reject old v1 manifests; retained old apps keep their own
+verifier. Preserve an independently trusted archive checksum and full external
+byte receipt. A v2 manifest checksum alone does not pin the final executable or
+resource seal: ad-hoc re-signing can change them without changing the manifest.
+Artifact-bound execution must also match the complete external byte receipt using
+its independently trusted digest. Do not modify anything inside a sealed bundle. The 2026-10-11 Safari-quarantined B archive was
+refused as damaged: its executable-only ad-hoc signature does not seal the complete
+app bundle. That archive is not ready to share. Do not
 disable Gatekeeper or strip quarantine to treat this as a distributed release.
 
-The proposed unsigned download route still needs an accepted acquisition channel
-and actual quarantined download-to-launch rehearsal. Keep the source revision,
+The user selected the unsigned route. It needs a corrected sealed bundle, renewed
+quarantined download-to-launch acceptance and a trusted acquisition channel. Keep the source revision,
 app manifest, archive checksum and acquisition channel with each handoff. A local
 build or extracted temporary copy does not demonstrate downloaded-app Gatekeeper
 behavior. Scope remains the measured Mac above; another Mac is a compatibility trial.
@@ -249,7 +260,11 @@ pnpm --filter desktop package \
 ```
 
 The packager copies source and dependencies to an isolated build, makes fresh
-production builds, verifies the native inventory and records caller integrity.
+production builds, writes the v2 inventory and then ad-hoc seals the outer app
+without re-signing pinned nested binaries. It verifies the platform seal and
+native inventory, records final full-file hashes in external `sealed-payload.json`
+and records caller integrity. No bundle content changes after sealing; the final
+archive checksum is retained in the build receipt.
 Weights are not bundled. The [Step 09 evidence](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/09-installation-and-packaging/implementation.md)
 distinguishes deterministic fixtures, installed-artifact checks, live model tests
 and unperformed human/signing/platform acceptance. Do not infer one from another.

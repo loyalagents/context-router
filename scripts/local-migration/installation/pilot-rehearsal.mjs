@@ -9,7 +9,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { cp, mkdir, realpath, lstat, readFile, writeFile, rename, readdir, statfs } from 'node:fs/promises';
 import path from 'node:path';
 import http from 'node:http';
-import { verifyPackage } from '../../../apps/desktop/src/package-manifest.mjs';
+import { verifyPinnedArtifact } from './artifact-preflight.mjs';
 import { requestMcpSmoke } from '../local-mcp-smoke.mjs';
 import { createPilotLossProxy } from '../../../apps/backend/test/local-mcp/fixtures/pilot-loss-proxy.mjs';
 import { observePilotProcessExit } from './pilot-process-exit.mjs';
@@ -17,6 +17,8 @@ import { observePilotProcessExit } from './pilot-process-exit.mjs';
 const { values } = parseArgs({ strict: true, options: {
   from: { type: 'string' }, to: { type: 'string' }, out: { type: 'string' },
   'from-manifest': { type: 'string' }, 'to-manifest': { type: 'string' },
+  'from-sealed-payload': { type: 'string' }, 'from-sealed-payload-sha256': { type: 'string' },
+  'to-sealed-payload': { type: 'string' }, 'to-sealed-payload-sha256': { type: 'string' },
 } });
 assert.equal(process.version, 'v24.21.0');
 assert.ok(!['NODE_DEBUG', 'NODE_DEBUG_NATIVE', 'NODE_OPTIONS'].some(name => process.env[name]),
@@ -39,13 +41,15 @@ const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const manifest = async p => readFile(path.join(p, 'Contents/Resources/package-manifest.json'));
 const aBytes = await manifest(values.from), bBytes = await manifest(values.to);
 assert.equal(hash(aBytes), values['from-manifest']); assert.equal(hash(bBytes), values['to-manifest']);
-const aManifest = JSON.parse(aBytes), bManifest = JSON.parse(bBytes);
+const pinned = side => ({ manifestSha256: values[`${side}-manifest`], sealedPayload: values[`${side}-sealed-payload`], sealedPayloadSha256: values[`${side}-sealed-payload-sha256`] });
+const aManifest = await verifyPinnedArtifact(values.from, pinned('from')), bManifest = await verifyPinnedArtifact(values.to, pinned('to'));
 assert.notEqual(aManifest.source, bManifest.source);
 assert.notEqual(hash(JSON.stringify(aManifest.files)), hash(JSON.stringify(bManifest.files)));
 for (const key of ['securityEpoch', 'node', 'sqliteVersions', 'identityVersion', 'model'])
   assert.equal(JSON.stringify(aManifest[key]), JSON.stringify(bManifest[key]));
 await mkdir(root, { mode: 0o700 }); // Must be absent; retain all outputs on failure.
 const receipt = { version: 1, status: 'running', fromManifest: hash(aBytes), toManifest: hash(bBytes),
+  fromSealedPayloadSha256: values['from-sealed-payload-sha256'] ?? null, toSealedPayloadSha256: values['to-sealed-payload-sha256'] ?? null,
   phases: [], disk: [], limitations: [
     'Synthetic isolated state and ephemeral ports; no actual Claude UI or personal configuration.',
     'No download, Gatekeeper, signing, model assets/inference or new hardware acceptance.',
@@ -201,6 +205,8 @@ async function inspectLive(owner) {
 try {
   const proofPaths = ['scripts/local-migration/installation/pilot-rehearsal.mjs',
     'scripts/local-migration/installation/pilot-process-exit.mjs',
+    'scripts/local-migration/installation/artifact-preflight.mjs',
+    'apps/desktop/src/package-manifest.mjs', 'apps/desktop/src/legacy-package-manifest.mjs',
     'apps/backend/test/local-mcp/fixtures/pilot-loss-proxy.mjs',
     'apps/backend/test/local-mcp/fixtures/bridge-child.mjs',
     ...['bridge', 'cli', 'credential'].map(n => `apps/backend/scripts/mcp-bridge/${n}.mjs`)];
@@ -212,7 +218,7 @@ try {
   await measure('before-copy');
   await cp(values.from, app, { recursive: true, verbatimSymlinks: true });
   assert.equal(hash(await manifest(app)), values['from-manifest']);
-  await verifyPackage(app, aManifest); command(['verify-package']);
+  await verifyPinnedArtifact(app, pinned('from')); command(['verify-package']);
   const initial = await launch(); await stop(initial);
   const file = path.join(root, 'writer.token');
   const writer = command(['mcp', 'provision', '--label', 'Synthetic replacement writer', '--out', file])[0].result;
@@ -231,7 +237,7 @@ try {
   const before = await state(); await phase('A-seeded-closed-backed-up');
   await cp(values.to, path.join(root, 'next.app'), { recursive: true, verbatimSymlinks: true });
   assert.equal(hash(await manifest(path.join(root, 'next.app'))), values['to-manifest']);
-  await verifyPackage(path.join(root, 'next.app'), bManifest); await measure('B-staged-before-replacement');
+  await verifyPinnedArtifact(path.join(root, 'next.app'), pinned('to')); await measure('B-staged-before-replacement');
   await rename(app, path.join(root, 'previous.app')); await rename(path.join(root, 'next.app'), app);
   command(['verify-package']);
   assert.deepEqual((await state()).hashes, before.hashes); await phase('B-whole-app-replacement-before-state-open');

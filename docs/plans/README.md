@@ -42,7 +42,8 @@ Do not launch, reset or change the user's app/state/client configuration as a
 side effect of repository work.
 
 The next pilot milestone is activated from verified main `7d2df85` in
-`codex/pilot-interruption-delivery`, with `/root` as coordinator and sole writer.
+`codex/pilot-interruption-delivery`, with `/root` as read-only coordinator and
+`/root/delivery_review` as sole writer/integrator for the seal-repair checkpoint.
 The [pilot record](active/colleague-pilot/plan.md) reconciles the merged Claude
 bridge and its accepted interruption follow-up with delivery/replacement work.
 CI optimization and stale-display implementation remain separate tasks; their

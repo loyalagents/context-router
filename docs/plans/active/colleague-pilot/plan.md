@@ -1,9 +1,9 @@
 # Assisted colleague pilot: interruption and delivery
 
-- Status: activated 2026-10-11; isolated replacement/lost-reply rehearsal passed; actual Claude and distribution acceptance pending
+- Status: activated 2026-10-11; isolated replacement and actual-Claude lost-reply checks passed; unsigned download found a bundle-signing defect
 - Scope: close the accepted Claude interruption follow-up, then rehearse the smallest supported installation/replacement route
 - Base: verified local/remote main `7d2df8516115661d97287d34647f17e4a2e48701`; branch `codex/pilot-interruption-delivery`
-- Owner: coordinator and sole main-checkout writer/integrator `/root`; other agents are read-only
+- Owner: seal-repair checkpoint sole main-checkout writer/integrator `/root/delivery_review`; coordinator `/root` and other agents are read-only
 
 ## Current milestone and evidence reconciliation
 
@@ -16,17 +16,18 @@ if implementation is needed; no automatic merge, binary publication or invitatio
 
 | Role | Requested setting | Observable setting and ownership |
 | --- | --- | --- |
-| Coordinator/integrator `/root` | GPT-6 Astra, Ultra | User request; runtime model/effort not independently attested; sole writer including docs and Git |
+| Coordinator `/root` | GPT-6 Astra, Ultra | User request; runtime model/effort not independently attested; read-only repository coordination and live acceptance during seal repair |
 | `/root/evidence_inventory` | GPT-6 Astra, High | Explicit spawn accepted; runtime not independently attested; read-only facts/receipts |
 | `/root/interruption_review` | GPT-6 Astra, Extra High (`xhigh`) | Explicit spawn accepted; runtime not independently attested; read-only client/security/test review |
-| `/root/delivery_review` | GPT-6 Astra, Extra High (`xhigh`) | Explicit spawn accepted; runtime not independently attested; read-only packaging/persistence/recovery review |
+| `/root/delivery_review` | GPT-6 Astra, Extra High (`xhigh`) | Explicit spawn accepted; runtime not independently attested; sole repository writer/integrator for the seal-repair checkpoint |
 | `/root/candidate_review` | GPT-6 Astra, Extra High (`xhigh`) | Explicit spawn accepted; runtime not independently attested; fresh read-only complete-diff review and affected correction review |
 
 The starting main revision has the same tree as the combined source already
-qualified locally: `b6ef6aac44822ba22cb96ebb75f60877308d1f48`. This milestone adds
-documentation and opt-in test tooling; production runtime source, dependency pins
-and packaging logic remain unchanged. A new build would have a different copied-input
-identity; no app has been rebuilt for this milestone. The earlier gate supports unchanged inputs; the new
+qualified locally: `b6ef6aac44822ba22cb96ebb75f60877308d1f48`. The initial preparation added
+documentation and opt-in test tooling without production changes. The subsequent
+download failure activated the bounded native/packager seal repair below; its
+changed inputs require new targeted and artifact evidence. Dependency/model pins
+and store formats remain unchanged. No repaired app has yet been packaged. The earlier gate supports unchanged inputs; the new
 tooling and its readers require their own validation. The retained 12-phase receipt names
 clean source `ed8673af`; its tree equals main exactly. PR #172's validated
 `e9246e1` and squash `3920457` also have identical trees
@@ -39,11 +40,11 @@ reason to rebuild or repeat identical tests.
 | Completed, carry forward | Full combined-tree local gate: **12/12 passed** at `context-router-ci-assessment/integration-final/local-gate/local-migration-gate-summary.json` in retained private temporary evidence. [Standard main CI](https://github.com/loyalagents/context-router/actions/runs/38183133729) completed successfully. Earlier EPIPE and browser-exit failures remain recorded with the later passing diagnostics/runs; their causes are not retrospectively proven. |
 | Completed, carry forward | [Main Linux aggregate](https://github.com/loyalagents/context-router/actions/runs/38183133767) completed successfully on `7d2df8516115661d97287d34647f17e4a2e48701`, verified 2026-10-11 23:47 UTC. No duplicate run was started or existing run cancelled. |
 | Changed inputs, affected verification | #170 changes the web grant-rejection UI. Source/browser evidence belongs to that change and combined-tree validation; the older installed app cannot demonstrate the new UI. #171 changes gate timing evidence, not app behavior. Reconcile actual artifact inputs before carrying installed evidence to a new build. |
-| Genuinely outstanding | Live lost-reply/uncertain-mutation observation in Claude. The one approved write completed in **39 ms** before Stop; one audit event confirmed commit, so that attempt was inconclusive for interruption. The user explicitly accepted this follow-up before #172 merged. |
+| Completed, bounded carry forward | Actual Claude observed controlled post-commit reply loss, reported uncertainty, made no mutation replay and recovered on one explicit read. The earlier 39 ms Stop attempt remains inconclusive; the separately approved follow-up below closes the missing observation. |
 | Completed, bounded carry forward | The prior personal Candidate 14-to-corrected-app transition retained the same root and real compatible weights without reset/redownload. Composite receipts, unchanged model admission/runtime inputs and current process/file metadata support asset reuse, with the limits below. |
 | Completed, bounded carry forward | The controlled synthetic A-to-B rehearsal below passed: preserved state, credential/target-policy continuity, backup, one committed lost-reply mutation, explicit recovery read and durable restart. |
 | Genuinely outstanding | Trusted colleague acquisition and actual quarantined download-to-launch, complete colleague disk budget, supported recovery acceptance limits, and invitation-blocking PDF/attribution/stale-display disposition. Same-artifact replacement and a model marker are not real A-to-B/model evidence. |
-| Scope decision | User keeps qualification on the measured M1 Max / 64 GiB / macOS 15.1.1 Mac; the colleague's unspecified MacBook Pro is a later compatibility trial. Delivery trust route and actual download-to-launch remain open. No reset release is designated or needed for the state-preserving rehearsal. |
+| Scope decision | User keeps qualification on the measured M1 Max / 64 GiB / macOS 15.1.1 Mac; the colleague's unspecified MacBook Pro is a later compatibility trial. User selected the unsigned route; the actual quarantined launch failed with a bundle-signing defect, described below. No reset release is designated or needed for the state-preserving rehearsal. |
 
 Carry-forward is bounded by source/dependencies/configuration/platform/client/
 fixtures/artifact identity. Source tree equality supports the prior local gate;
@@ -61,7 +62,7 @@ module hashes remain those recorded in the connection history below. Node is
 24.21.0, SHA-256 `e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b`.
 Directories are private user-owned 0700, modules 0400, with trusted canonical
 ancestry. Current Claude bundle metadata remains 2.31226.1; Pro/ordinary chat is
-established by prior live receipts, not a new account-UI inspection.
+confirmed again in the actual-Claude acceptance below.
 
 Final #172 validation receipt SHA-256 is
 `19e8506ed416e24ae5a9adf71839096d96e22a1c9f56c901afc7e4fffee0d439`; combined local gate
@@ -150,7 +151,8 @@ sockets. Default sandbox denial of socket creation was an environment limitation
 the authorized isolated run passed after enabling those local sockets.
 
 The optional [rehearsal runner](../../../../scripts/local-migration/installation/pilot-rehearsal.mjs)
-uses explicit manifest-pinned A/B artifacts and a new private root beneath
+uses explicit manifest-pinned A/B artifacts and, for each v2 app, an externally
+retained `sealed-payload.json` with its independently supplied SHA-256, plus a new private root beneath
 `/private/tmp`. It verifies copied payloads before execution, never chooses the
 default personal root or port 8787, and denies inference execution. App-owned
 GraphQL inspection checks actual value and one audit event before the explicit
@@ -224,45 +226,230 @@ Only that coverage carries forward; the new refused-first-attempt behavior is
 established by the renewed focused tests and affected review, not by relabeling
 the earlier installed receipt.
 
-The prepared actual-Claude request uses the already qualified durable standalone
-bridge and separate Node 24.21.0, one temporary connector and fresh root
-`/private/tmp/context-router-pilot-claude-loss-20261011-01`. The only permitted write
-will set `pilot_claude_loss_20261011.allowed` from `synthetic-before-loss` to
-`synthetic-after-loss`, with confidence omitted. Wrong-shaped requests end the
-attempt as inconclusive; the guard is never rearmed. Normal Quit/reopen of the
-identified original app, Claude configuration/restarts, the synthetic cloud-backed
-write and later explicit recovery read require the fresh approval already requested.
-Approval is pending; no such live actions have occurred in this milestone.
+## Actual-Claude acceptance and cleanup
+
+The user explicitly approved the prepared test and selected the unsigned route.
+The approved host used the qualified durable standalone bridge and separate Node
+24.21.0, one temporary connector and fresh private root
+`/private/tmp/context-router-pilot-claude-loss-20261011-01`. Independent review
+approved host SHA-256
+`1978973dafc4b55615c6d261ef918db3341ada902119f0c9ce9be476af8045fd`
+and configuration controller
+`1120bb06e429f77db6b9c5298944d78aefc2b0e09c61ab40468721a5693ad1f4`.
+The controller uses a private exact backup, fixed error diagnostics and targeted
+restoration while Claude is quit. A review finding about raw assertion/JSON errors
+exposing configuration content was fixed before any configuration write.
+
+On 2026-10-12 UTC (October 11 Pacific), Claude Desktop 2.31226.1, Pro ordinary chat,
+Opus 5.5 High used **Allow once** for the exact synthetic SET, with confidence
+omitted. The proxy admitted one mutation of `pilot_claude_loss_20261011.allowed`
+from `synthetic-before-loss` to `synthetic-after-loss`, received the successful
+reply, then closed that reply socket. The tool card displayed: **Outcome unknown.
+The request may have completed. Inspect state before retrying a write; no request
+was replayed.** Claude reported uncertainty and stopped.
+
+GraphQL inspection at **01:46:07 UTC**, before the separate recovery read,
+observed the new value and exactly one added `PREFERENCE_SET` audit event. The
+ledger showed one mutation attempt, one forward, one reply loss and no injection
+failure. A separately requested **Allow once** read at **01:46:43 UTC** succeeded
+and returned the new value. Initialize/initialized counts increased from two to
+three; the mutation/audit counts stayed one. The two initial handshakes were
+Claude startup behavior, not mutation retries. The dedicated connector log also
+contained exactly those two tool calls. Local ToolSearch schema lookups were not
+connector calls. Claude's read-response speculation about a later update based on
+chat-minute timestamps is unsupported by the audit/ledger and excluded from the
+acceptance claim. No second mutation or extra explanatory cloud request was made.
+
+The final host receipt is retained at the named root's `receipt.json`; UI
+observations, configuration restoration and original-app restoration receipts are
+in `/private/tmp/context-router-pilot-live-preparation-20261011`. The temporary
+credential was revoked. All three guardians (92032, 93368, 93758) exited normally
+with code zero and quiescent/ok evidence; those PIDs and host 91599 were subsequently
+absent. Claude's original configuration was restored byte-for-byte, SHA-256
+`21ecf7813fde0f4acca07fa7fc0d010185413b706d31bddb76ead00834c7d52b`, and Claude reopened.
+The previously observed original app had already exited quiescent/ok during a
+long UI-tool delay, before any test action. It was restored on its original root:
+menu 31029, guardian 32030, existing model runtime 32327 and backend 32328 owning
+8787. This verifies restoration/process ownership, not a new inference-quality run.
+The loopback download server also stopped. No private documents, model download,
+reset, journal deletion, binary publication or colleague contact occurred.
+
+Canonical SHA-256 receipts for that completed acceptance are:
+
+- Host: `07c5c0183252b026567ef965baf3a95b33890d8a235be01d981a44467340d75a`.
+- UI observation: `cb08552fd52caed86aa4b4f28fe393b12e7f38c97c179de02aa6ec7867eab283`.
+- Configuration restoration: `fbb7ce00bccaf9e7e67b4048aa24a514e91a7a703cc9dd65c11748d9ba957dae`.
+- Original-app restoration: `28d690764862b43854f1cde0794c750453c3ae0ef2b126136724dd23df649fbe`.
+- Dedicated protocol log, `/Users/lucasnovak/Library/Logs/Claude/mcp-server-context-router-pilot-loss-20261011.log`:
+  `5a8ce26b957e8bcdb32131864a28bff914671cb453d407f1ad6b001f90d3b70c`.
+
+The log content and credentials are not committed. Independent review confirmed
+actual configuration restoration and the original app's roots, PIDs and port.
+
+Independent interruption review accepts the controlled actual-client result.
+This is instrumented post-commit reply-loss evidence, not cancellation rollback
+or a measurement of natural failure frequency. Existing app/bridge input identities
+remain explicit; it does not qualify a future changed artifact automatically.
+
+The preparation source at `0562455519e70fff99bd1046322581ca164f2ace` passed
+[standard CI](https://github.com/loyalagents/context-router/actions/runs/38187031857)
+and the [Linux aggregate gate](https://github.com/loyalagents/context-router/actions/runs/38187031862).
+Those results do not cover a later production packaging repair.
+**Targeted checks passed; final validation pending.**
 
 ## Delivery options and invitation dependencies
 
 The user wants simple sharing with GitHub-capable colleagues, favoring quick work
-or work reusable for later distribution. The recommended route to qualify is an
-identifiable unsigned app, a durable standalone bridge and (if validated) that
-app's pinned bundled Node. This removes a separate Node installation without
-adding an installer or extension. It is still a proposal until the trust route and
-actual download-to-launch test are accepted. A checksum is byte-integrity evidence,
+or work reusable for later distribution. The user selected an identifiable unsigned app with a durable standalone bridge.
+A separately installed pinned Node remains the qualified actual-Claude recipe;
+using the app's pinned bundled Node is an option requiring its own durable-path
+qualification. A bundled-Node recipe would remove a separate Node installation without adding
+an installer or extension. The route is selected, but launch acceptance failed
+on the existing artifact. A checksum is byte-integrity evidence,
 not publisher authentication.
 
 Apple's [launch-testing guidance](https://help.apple.com/xcode/mac/current/en.lproj/dev1cc22a95c.html)
 permits a local-server Safari download to obtain browser-created quarantine. This
 can test local Gatekeeper behavior without publishing a binary, but the development
 Mac may have a cached product decision. A missing prompt/block would be inconclusive
-for first-launch acceptance. The default app-support parent is currently absent;
-an Open Anyway retry that loses explicit arguments could create that empty parent
-before occupied-port refusal. Any such rehearsal needs its reviewed bounded scope
-and approval; it is not performed or inferred from native package verification.
+for first-launch acceptance. The approved Safari download from the pinned loopback-only server was automatically
+extracted by Safari/Archive Utility. Its app inventory matched the pinned B
+manifest before execution and retained browser-created quarantine. A verified
+owned listener protected port 8787 throughout the attempted launch. macOS refused
+it as **damaged and cannot be opened** before any downloaded native process or
+default app-support parent appeared. No quarantine or security setting was changed.
 
 | Option | Immediate cost and benefit | Reusable work / remaining qualification |
 | --- | --- | --- |
 | Pinned-source build | Existing packager; colleagues need exact Node/pnpm, clang, dependencies, cached acquisition inputs and build space/time | Useful contributor fallback; clean-machine setup/launch still unmeasured |
-| Trusted unsigned app | Smallest download/install path; needs trusted acquisition and per-app approval | Artifact receipts, whole-app replacement and state/disk checks carry forward to signing; actual quarantined launch and managed-Mac policy remain untested |
+| Trusted unsigned app | Smallest download/install path; needs trusted acquisition and per-app approval | Artifact receipts, whole-app replacement and state/disk checks carry forward to signing; actual quarantined B launch failed; repair/retest and managed-Mac policy remain outstanding |
 | Signed/notarized app | Developer ID and signing/notarization work, easier publisher verification/launch | Long-term foundation; current manifest inventories executable/signature files, so signing order/layout needs deliberate work rather than an added final command |
 
 Apple documents [per-app Open Anyway](https://support.apple.com/en-us/102445) for
 trusted unsigned/unnotarized software. Managed Macs may prohibit it. Do not disable
 Gatekeeper globally or strip quarantine; testing the actual downloaded artifact
 is still required. Extension packaging or an updater is optional later work.
+
+### Download failure and bounded repair checkpoints
+
+The retained B executable has a linker-created ad-hoc signature, with unbound
+`Info.plist` and no sealed resources. `codesign --verify --deep --strict` reports
+**code has no resources but signature indicates they must be present** on both
+retained and downloaded B. This is a packaging defect consistent with the observed
+Gatekeeper refusal, not evidence that Safari changed payload bytes. Preserve the
+rejected app and receipt; do not advise stripping quarantine or disabling Gatekeeper.
+
+Independent delivery and architecture reviews agree that appending a signing
+command is insufficient: the current manifest hashes the main executable and
+signature files, while a proper bundle seal also covers that manifest. Signing
+then rewriting the manifest invalidates the seal. Apple's
+[code-signing guidance](https://developer.apple.com/library/archive/technotes/tn2206/)
+requires the sealed bundle to remain unchanged.
+
+A disposable offline copy at
+`/private/tmp/context-router-pilot-signing-probe-20261011-01` accepted outer-bundle
+ad-hoc signing and passed strict/deep verification without nested code being
+re-signed or any downloaded executable being run. The old manifest then failed
+verification as expected. This is feasibility evidence only, not a runnable app.
+
+The bounded repair plan is:
+
+Before implementation, ownership transferred from `/root` to
+`/root/delivery_review` for this checkpoint. The coordinator stopped repository
+writes; existing documentation and test-tooling changes are preserved. The
+separate PR #175 retains ownership of `scripts/local-migration/packaging-smoke.mjs`
+and its test file. No commit, push, broad gate or new package build belongs to this
+checkpoint until the coordinator requests it. Independent plan review approved
+the v2 boundary; independent diff review and targeted evidence remain required.
+
+1. Add tests for a mandatory signing-aware manifest v2. Preserve complete exact
+   hashes for ordinary payloads. Only the fixed main-executable and
+   `Contents/_CodeSignature/CodeResources` entries receive platform-signature
+   coverage, with existing regular-file, single-link, mode, bounds, canonical-path
+   and stability checks. Extra signature files remain errors.
+2. Require native Security.framework strict resource/executable validation,
+   all architectures, nested-code checks and no network access before Node or
+   managed-state access. Bind the expected executable and bundle identifier.
+   No unsigned/v1 fallback in the new native app; retained old artifacts keep
+   their own verifier. Security epoch, model pins and state formats stay intact.
+3. Finalize existing nested payload bytes, inventory/write the manifest, seal the
+   outer app last, verify both contracts, record final byte hashes externally,
+   and archive without later bundle mutations. Do not use deep force-signing,
+   resource exclusions or a custom Mach-O signature normalization parser.
+4. Update shared native fixtures to valid sealed bundles. Check tampering of the
+   executable, seal, manifest and payload, omissions/extras and unsafe links/modes;
+   prove failures occur before managed-state access. Run affected native/installed
+   acceptance before another quarantined Safari trial on the new named artifact.
+
+This remains an unsigned-publisher route: an ad-hoc integrity seal supplies neither
+Developer ID authentication nor notarization. The user agreed to finalization
+after this repair, renewed download/launch and replacement acceptance, complete
+independent review and applicable gates in the same draft PR. Publishing and
+invitations remain separate. Production repair is implemented and awaiting independent diff review; no new
+artifact or Gatekeeper acceptance is claimed.
+
+The repair checkpoint passed 18 portable manifest tests and 24 real Mac native
+package tests after a targeted native compile. The affected native consumer run
+passed 76/76 serial tests, including package verification, supervisor/revision
+fixtures, recovery, shutdown, envelope, process and lock drivers. The tests distinguish
+post-seal mutations from malformed manifests/payloads re-sealed with a valid
+platform signature. Native v2 is mandatory; the JavaScript legacy verifier is
+restricted to the explicit retained-artifact rehearsal and rechecks the caller's
+independent raw-manifest SHA-256 before its complete v1 inventory. Pinned Node and
+all 20 runtime/license files (148,570,750 bytes) in the disposable signing probe
+matched retained B; no model weights were read or run. Targeted checks passed;
+final validation pending. The first expanded sandbox attempt could not read the
+boot session or bind test sockets (29/152 passed); its runner and temporary
+guardians exited, and no failed fixture root named in its diagnostics remained.
+The permitted focused rerun passed without changing assertions. Contract comparison
+against the pinned base, 75 contract/Markdown tests, 145-file strict Markdown link
+check, eight runtime-composition readers, JavaScript syntax and whitespace also
+passed. Independent complete-diff review, full frozen-candidate validation and a
+new packaged artifact remain required.
+
+### Independent seal review and artifact-pin correction
+
+Fresh complete-diff review of snapshot
+`642605f6b52fa92131217212a4f525d98fdae4f286197af3419c36fefe9f04a3`
+found one blocking P1: a v2 manifest digest no longer transitively pins the final
+native executable or `CodeResources`. A changed executable can be ad-hoc re-sealed
+while the manifest bytes stay unchanged. Platform integrity alone does not identify
+the artifact independently approved for execution. The fixed two-file signature
+boundary, native validation, seal-last packager and explicit legacy isolation had
+no other blocking findings.
+
+The correction requires `--from-sealed-payload` and
+`--from-sealed-payload-sha256` for a v2 A, with corresponding `--to-...` arguments
+for a v2 B. Supply the external receipt path and SHA-256 from the independently
+trusted build handoff. The runner checks the raw receipt digest, recomputes every
+final file hash including the manifest/executable/resource seal, and compares the
+full inventory before executing the source or copied app. V1 retains its explicit
+independent manifest pin. Do not infer an expected receipt digest from the same
+untrusted app being admitted.
+
+The local-build installed smoke captures its explicitly trusted source bundle's
+complete final-byte inventory once, records it outside the app, and compares each
+initial/replacement/reinstall copy before bundled Node or native execution. The
+existing `step09-installed-live-v1` approval schema refuses v2 before creating a
+root or reading model assets; this checkpoint does not introduce a new live-model
+approval schema or exercise model inference.
+
+The correction was written tests first (three missing-preflight failures) and
+passed all 45 portable/native package tests. The substitution test changes the
+main executable and produces a valid new ad-hoc seal with identical manifest
+bytes: ordinary v2 verification succeeds, while the old independently pinned
+receipt blocks the actual rehearsal CLI before its output root exists. Copy
+checks cover initial install, replacement and reinstall; the legacy live CLI
+refuses v2 before temporary-state creation. Strict links (145 files), pinned-base
+contract comparison, 75 contract/Markdown tests, eight runtime-composition readers,
+syntax and whitespace passed at the correction checkpoint. Explicit legacy
+preflight/captured-copy regression coverage also passed (18 portable tests). Native/runtime behavior is unchanged from the prior
+76-test passing consumer checkpoint. Independent affected re-review is pending.
+
+The historical real-GGUF A-to-B reuse claim remains specific to its recorded
+transition. The future seal-repair C needs exact model/runtime/configuration input
+comparison and renewed affected native/installed lifecycle checks; it is not
+claimed to have directly demonstrated model-enabled startup or AI quality.
 
 The isolated rehearsal's A is retained Candidate 14 (manifest
 `944c5be0eb2e44e5c215fdacac3f8ad12546dd190cdddd8afa45c78285d8ff38`); B is the
@@ -312,12 +499,16 @@ bounded destructive approval. ChatGPT Desktop remains nonblocking future work.
    delivery. Rehearse actual compatible A-to-B replacement in synthetic state,
    measure retained/peak disk and compatible assets, and record recovery limits.
    A durable bridge with separately pinned Node is the current recipe; using the
-   app's pinned bundled Node is a candidate to test, not yet a support claim.
-4. Agree one finalization boundary after the bounded exploratory round. Freeze
-   relevant inputs/artifacts, obtain fresh complete-diff review and all applicable
-   final gates/manual acceptance/exact-head CI. Carry unaffected evidence with
-   an explicit impact assessment. No finalization agreement or live approval is
-   inferred from this plan.
+   app's pinned bundled Node is optional future persistent-client work, not a
+   blocker for this milestone. The installed test harness already exercised its
+   bytes, but no new Claude configuration is required for this delivery recipe.
+4. Complete the agreed seal-repair, renewed quarantined launch and compatible
+   replacement milestone. Freeze named source/artifact inputs, obtain fresh
+   complete-diff review and all applicable final gates/manual acceptance/exact-head
+   CI. Carry unaffected evidence with an explicit impact assessment. The selected
+   unsigned delivery route permits its bounded rehearsal; private-state resets,
+   model downloads, client changes and provider requests still require their own
+   applicable named scope. Publication and invitation are not authorized.
 
 During preparation, use pinned tools and focused harness/integration checks,
 strict Markdown links/whitespace and actual documentation readers (including

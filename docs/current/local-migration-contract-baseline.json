@@ -2869,10 +2869,16 @@
             "runCommand(args,",
             "prepareDisposableWorkspace(root,signal"
           ]
+        },
+        {
+          "path": "apps/desktop/src/package-manifest.mjs",
+          "fingerprints": [
+            "spawnSync('/usr/bin/codesign'"
+          ]
         }
       ],
-      "destination": "Contributor/CI Node syntax checking and Apple compiler in the existing checkout.",
-      "payload": "Fixed local source and output paths; no runtime compiler requirement, user state or network request.",
+      "destination": "Contributor/CI Node syntax checking, Apple compiler and fixed /usr/bin/codesign verification of a named local bundle. Native runtime signature verification uses Security.framework in process with network access disabled.",
+      "payload": "Fixed local source, bundle and output paths; no publisher credentials, user state or application network request. Ad-hoc sealing preserves pinned nested binaries.",
       "defaultRuntime": false,
       "disposition": "RETAIN",
       "ownerSteps": [
@@ -5156,6 +5162,12 @@
     },
     {
       "path": "apps/desktop/src/build.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "apps/desktop/src/package-manifest.mjs",
       "sinks": {
         "spawn": 1
       }

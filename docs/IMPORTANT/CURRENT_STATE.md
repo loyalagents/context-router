@@ -23,7 +23,8 @@ Next: an [assisted colleague pilot](../plans/active/colleague-pilot/README.md),
 using colleagues' own documents. Claude Desktop is required first; ChatGPT desktop
 is wanted but nonblocking. Claude Desktop's standalone bridge passed discovery,
 reads/writes/denials, restart, credential independence and direct final-pair idle
-recovery; the accepted live uncertain-mutation follow-up remains open. Recovery
+recovery. The controlled actual-Claude uncertain-mutation follow-up passed with one
+commit, no replay and a separate explicit recovery read. Recovery
 used a separate explicit request, not automatic replay. Existing Claude Code/Codex
 CLI evidence is scoped. External assistants may send tool results off-device.
 
@@ -41,7 +42,9 @@ hardware is M1 Max/64 GiB/macOS 15.1.1. Other hardware, signed distribution,
 cross-boot/forced-loss recovery and complete colleague disk budgets need evidence.
 Controlled Candidate 14-to-corrected-app replacement now has scoped synthetic
 state/authority evidence; prior personal-transition receipts support real-asset
-reuse. Neither qualifies downloaded installation or a newer installed artifact.
+reuse. The actual Safari-quarantined archive was refused as damaged: its linker-created
+ad-hoc signature does not seal the app bundle. Repair and renewed launch acceptance
+are required; the archive is not ready to share.
 Model quality/cancellation exceptions E/H and reported PDF/attribution/
 stale-display findings remain visible in the current application doc.
 

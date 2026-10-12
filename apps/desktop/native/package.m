@@ -1,5 +1,6 @@
 #import "package.h"
 #import <CommonCrypto/CommonDigest.h>
+#import <Security/Security.h>
 #include <mach-o/dyld.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -93,16 +94,47 @@ static NSString *fileHash(NSString *file, struct stat before) {
   close(fd); if (!okay) CRFail();
   CC_SHA256_Final(digest, &context); return hex(digest, sizeof(digest));
 }
-static void visit(NSString *root, NSString *name, NSDictionary *expected, NSMutableSet *seen, unsigned long long *total) {
+static BOOL signingManaged(NSString *name) {
+  return [name isEqual:@"Contents/MacOS/context-router"] || [name isEqual:@"Contents/_CodeSignature/CodeResources"];
+}
+static void verifySeal(NSString *root) {
+  SecStaticCodeRef code = NULL; CFDictionaryRef information = NULL;
+  OSStatus status = SecStaticCodeCreateWithPath((__bridge CFURLRef)[NSURL fileURLWithPath:root isDirectory:YES], kSecCSDefaultFlags, &code);
+  if (status == errSecSuccess) status = SecStaticCodeCheckValidity(code,
+    kSecCSStrictValidate | kSecCSCheckAllArchitectures | kSecCSCheckNestedCode | kSecCSNoNetworkAccess, NULL);
+  if (status == errSecSuccess) status = SecCodeCopySigningInformation(code, kSecCSSigningInformation, &information);
+  BOOL okay = NO;
+  if (status == errSecSuccess && information) {
+    NSDictionary *info = (__bridge NSDictionary *)information;
+    NSDictionary *plist = info[(__bridge NSString *)kSecCodeInfoPList];
+    NSURL *executable = info[(__bridge NSString *)kSecCodeInfoMainExecutable];
+    NSString *expected = [root stringByAppendingPathComponent:@"Contents/MacOS/context-router"];
+    char canonicalExecutable[PATH_MAX];
+    okay = [info[(__bridge NSString *)kSecCodeInfoIdentifier] isEqual:@"local.context-router.pilot"] &&
+      [plist isKindOfClass:[NSDictionary class]] && [plist[@"CFBundleIdentifier"] isEqual:@"local.context-router.pilot"] &&
+      [plist[@"CFBundleExecutable"] isEqual:@"context-router"] && [plist[@"CFBundlePackageType"] isEqual:@"APPL"] &&
+      [executable isKindOfClass:[NSURL class]] && executable.isFileURL &&
+      realpath(executable.path.fileSystemRepresentation, canonicalExecutable) &&
+      [[NSString stringWithUTF8String:canonicalExecutable] isEqual:expected];
+  }
+  if (information) CFRelease(information);
+  if (code) CFRelease(code);
+  if (!okay) CRFail();
+}
+static void visit(NSString *root, NSString *name, NSDictionary *expected, NSMutableSet *seen, unsigned long long *total, NSMutableDictionary *snapshots) {
   NSString *file = name.length ? [root stringByAppendingPathComponent:name] : root;
   struct stat before, after;
   if (lstat(file.fileSystemRepresentation, &before)) CRFail();
   if ([name isEqual:@"Contents/Resources/package-manifest.json"]) return;
+  snapshots[file] = [NSData dataWithBytes:&before length:sizeof(before)];
+  if ([name hasPrefix:@"Contents/_CodeSignature/"] && ![name isEqual:@"Contents/_CodeSignature/CodeResources"]) CRFail();
+  if (signingManaged(name) && (!S_ISREG(before.st_mode) || before.st_size < 1 ||
+      ([name hasSuffix:@"/CodeResources"] && before.st_size > 32 * 1024 * 1024))) CRFail();
   if (S_ISDIR(before.st_mode)) {
     if (before.st_mode & 0022) CRFail();
     NSArray *entries = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:file error:nil];
     if (!entries || entries.count > 100000) CRFail();
-    for (NSString *child in entries) visit(root, name.length ? [name stringByAppendingPathComponent:child] : child, expected, seen, total);
+    for (NSString *child in entries) visit(root, name.length ? [name stringByAppendingPathComponent:child] : child, expected, seen, total, snapshots);
     if (lstat(file.fileSystemRepresentation, &after) || !stable(before, after)) CRFail();
     return;
   }
@@ -119,22 +151,35 @@ static void visit(NSString *root, NSString *name, NSDictionary *expected, NSMuta
         ![entry[@"target"] isEqual:link] || ![canonical hasPrefix:[root stringByAppendingString:@"/"]] ||
         lstat(file.fileSystemRepresentation, &after) || !stable(before, after)) CRFail();
   } else {
-    if (!S_ISREG(before.st_mode) || before.st_nlink != 1 || (before.st_mode & 0022) || before.st_size < 0 ||
-        !CRExact(entry, @[@"path", @"kind", @"size", @"sha256", @"executable"]) || ![entry[@"kind"] isEqual:@"file"] ||
+    if (!S_ISREG(before.st_mode) || before.st_nlink != 1 || (before.st_mode & 0022) || before.st_size < 0) CRFail();
+    *total += (unsigned long long)before.st_size;
+    if (*total > 2147483648ULL) CRFail();
+    if (signingManaged(name)) {
+      if (!CRExact(entry, @[@"path", @"kind", @"executable"]) || ![entry[@"kind"] isEqual:@"signature"] ||
+          CFGetTypeID((__bridge CFTypeRef)entry[@"executable"]) != CFBooleanGetTypeID() ||
+          [entry[@"executable"] boolValue] != [name isEqual:@"Contents/MacOS/context-router"] ||
+          [entry[@"executable"] boolValue] != !!(before.st_mode & 0111)) CRFail();
+      return;
+    }
+    if (!CRExact(entry, @[@"path", @"kind", @"size", @"sha256", @"executable"]) || ![entry[@"kind"] isEqual:@"file"] ||
         !CRInteger(entry[@"size"], 0, 2147483648LL) || [entry[@"size"] longLongValue] != before.st_size ||
         !CRPattern(entry[@"sha256"], @"[a-f0-9]{64}") || CFGetTypeID((__bridge CFTypeRef)entry[@"executable"]) != CFBooleanGetTypeID() ||
         [entry[@"executable"] boolValue] != !!(before.st_mode & 0111)) CRFail();
-    *total += (unsigned long long)before.st_size;
-    if (*total > 2147483648ULL || ![fileHash(file, before) isEqual:entry[@"sha256"]]) CRFail();
+    if (![fileHash(file, before) isEqual:entry[@"sha256"]]) CRFail();
   }
 }
 NSDictionary *CRVerifyPackage(NSString *root) {
 #if !defined(__arm64__)
   CRFail();
 #endif
-  NSDictionary *m = CRReadJSON([root stringByAppendingPathComponent:@"Contents/Resources/package-manifest.json"], 32 * 1024 * 1024, NO);
+  char canonicalRoot[PATH_MAX];
+  if (!realpath(root.fileSystemRepresentation, canonicalRoot) || ![root isEqual:[NSString stringWithUTF8String:canonicalRoot]]) CRFail();
+  NSString *manifestFile = [root stringByAppendingPathComponent:@"Contents/Resources/package-manifest.json"];
+  struct stat manifestBefore;
+  if (lstat(manifestFile.fileSystemRepresentation, &manifestBefore)) CRFail();
+  NSDictionary *m = CRReadJSON(manifestFile, 32 * 1024 * 1024, NO);
   if (!CRExact(m, @[@"version", @"distribution", @"platform", @"arch", @"securityEpoch", @"node", @"sqliteVersions", @"identityVersion", @"model", @"source", @"files"]) ||
-      !CRInteger(m[@"version"], 1, 1) || ![m[@"distribution"] isEqual:@"local-candidate"] || ![m[@"platform"] isEqual:@"darwin"] ||
+      !CRInteger(m[@"version"], 2, 2) || ![m[@"distribution"] isEqual:@"local-candidate"] || ![m[@"platform"] isEqual:@"darwin"] ||
       ![m[@"arch"] isEqual:@"arm64"] || !CRInteger(m[@"securityEpoch"], 1, 1) || ![m[@"node"] isEqual:@"24.21.0"] ||
       ![m[@"sqliteVersions"] isEqual:@[@1, @2]] || !CRInteger(m[@"identityVersion"], 1, 1) || !CRPattern(m[@"source"], @"[a-f0-9]{64}") ||
       ![m[@"files"] isKindOfClass:[NSArray class]] || ![m[@"files"] count] || [m[@"files"] count] > 100000) CRFail();
@@ -150,12 +195,22 @@ NSDictionary *CRVerifyPackage(NSString *root) {
     if (![entry isKindOfClass:[NSDictionary class]] || !relative(entry[@"path"]) || [previous compare:entry[@"path"] options:NSLiteralSearch] != NSOrderedAscending) CRFail();
     previous = entry[@"path"]; expected[previous] = entry;
   }
-  for (NSString *name in @[@"Contents/MacOS/context-router", @"Contents/Resources/bin/node", @"Contents/Resources/model/llama-server",
+  for (NSString *name in @[@"Contents/MacOS/context-router", @"Contents/_CodeSignature/CodeResources"])
+    if (!expected[name] || ![expected[name][@"kind"] isEqual:@"signature"]) CRFail();
+  for (NSString *name in @[@"Contents/Resources/bin/node", @"Contents/Resources/model/llama-server",
       @"Contents/Resources/app/local-ui.mjs", @"Contents/Resources/desktop/runtime/prepare.mjs", @"Contents/Resources/desktop/runtime/application.mjs",
       @"Contents/Resources/desktop/runtime/maintenance.mjs", @"Contents/Resources/desktop/runtime/prepare-store.mjs", @"Contents/Resources/desktop/runtime/download.mjs"])
     if (!expected[name] || ![expected[name][@"kind"] isEqual:@"file"]) CRFail();
   NSMutableSet *seen = [NSMutableSet set]; unsigned long long total = 0;
-  visit(root, @"", expected, seen, &total);
+  NSMutableDictionary *snapshots = [NSMutableDictionary dictionary];
+  snapshots[manifestFile] = [NSData dataWithBytes:&manifestBefore length:sizeof(manifestBefore)];
+  visit(root, @"", expected, seen, &total, snapshots);
   if (seen.count != expected.count) CRFail();
+  verifySeal(root);
+  // Static signature results only hold while the inspected package remains unchanged.
+  for (NSString *file in snapshots) {
+    struct stat before, after; [snapshots[file] getBytes:&before length:sizeof(before)];
+    if (lstat(file.fileSystemRepresentation, &after) || !stable(before, after)) CRFail();
+  }
   return m;
 }
