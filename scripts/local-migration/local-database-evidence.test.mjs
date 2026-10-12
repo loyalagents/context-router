@@ -5,6 +5,8 @@ import * as syncFs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import test from "node:test";
 import { runCommand, runPhaseSequence, combineFailures } from "./gate-runner.mjs";
 import {
@@ -23,6 +25,7 @@ const require = createRequire(new URL("../../apps/backend/package.json", import.
 const jest = require.resolve("jest/bin/jest");
 const source = { headSha: "a".repeat(40), dirty: true, copiedInputsSha256: "b".repeat(64) };
 const reporter = path.resolve("scripts/local-migration/local-database-reporter.cjs");
+const capture = promisify(execFile);
 
 async function fixture(t) {
   const root = await fs.realpath(await mkdtemp(path.join(os.tmpdir(), "cr-jest-evidence-")));
@@ -392,4 +395,66 @@ test("command cleanup failures remain visible without changing primary exit or e
   assert.equal(report.commandResult.exitCode, 23);
   assert.equal(report.commandResult.secondaryFailureCount, 1);
   assert.ok(!JSON.stringify(report).includes("secret"));
+});
+
+test("actual repository Jest configuration enables locations only in the reported local project", async () => {
+  for (const enabled of [false, true]) {
+    const env = { ...process.env };
+    delete env.CR_DATABASE_EVIDENCE;
+    if (enabled) env.CR_DATABASE_EVIDENCE = "1";
+    const { stdout } = await capture(process.execPath, [jest, "--showConfig"], { cwd: path.resolve("apps/backend"), env, maxBuffer: 512 * 1024 });
+    const normalized = JSON.parse(stdout);
+    for (const project of normalized.configs) {
+      assert.equal(project.testLocationInResults, enabled && project.displayName.name === "local-database", project.displayName.name);
+    }
+    assert.equal((normalized.globalConfig.reporters ?? []).some(([file]) => file === reporter), enabled);
+  }
+});
+
+test("actual multi-project configuration and ts-jest retain a failed TypeScript declaration", async (t) => {
+  const { root, testFile } = await fixture(t);
+  await writeFile(path.join(root, testFile), `declare const test: (name: string, fn: () => void) => void;
+declare const expect: (value: unknown) => { toBe(value: unknown): void };
+test('typescript-name-secret', () => expect('typescript-value-secret').toBe('expected-secret'));
+`);
+  await writeFile(path.join(root, "jest.config.cjs"), `
+const config = require(${JSON.stringify(path.resolve("apps/backend/jest.config.js"))});
+config.projects = config.projects.map(p => ({ ...p, rootDir: p.displayName === 'local-database' ? ${JSON.stringify(path.join(root, "apps/backend"))} : ${JSON.stringify(path.resolve("apps/backend"))}, transform: { '^.+\\\\.(t|j)s$': ${JSON.stringify(require.resolve("ts-jest"))} } }));
+module.exports = config;
+`);
+  let report;
+  let commandError;
+  await assert.rejects(runWithDatabaseEvidence({
+    workspace: root, files: [testFile], source,
+    onEvidence(value) { report = value; },
+    execute(env) { return runCommand([process.execPath, jest, "--config", "./jest.config.cjs", "--selectProjects", "local-database", "--runInBand"], { cwd: root, env: { ...process.env, ...env } }); },
+  }), (error) => { commandError = error; return error.exitCode === 1; });
+  assert.equal(report.availability, "complete", JSON.stringify(report) + commandError?.outputTail);
+  assert.equal(report.failures.length, 1);
+  assert.equal(report.failures[0].category, "toBe");
+  assert.equal(report.failures[0].line, 3);
+  assert.ok(report.failures[0].column > 0);
+  assert.ok(!JSON.stringify(report).includes("secret"));
+});
+
+test("only a clean successful command and evidence cleanup may skip local publication", async () => {
+  const clean = {
+    complete: true, truncated: false, failures: [], cleanup: "complete", reason: "collected",
+    commandResult: { exitCode: 0, signal: null, secondaryFailureCount: 0 },
+  };
+  for (const [report, expected] of [
+    [clean, false],
+    [{ ...clean, commandResult: { ...clean.commandResult, exitCode: 124 } }, true],
+    [{ ...clean, commandResult: { ...clean.commandResult, signal: "SIGTERM" } }, true],
+    [{ ...clean, commandResult: { ...clean.commandResult, secondaryFailureCount: 1 } }, true],
+    [{ ...clean, cleanup: "failed" }, true],
+    [{ ...clean, commandResult: null }, true],
+    [{ ...clean, truncated: true }, true],
+  ]) {
+    let called = false;
+    const summary = { databaseTests: structuredClone(report) };
+    await persistDatabaseEvidence(summary, {}, { async publish() { called = true; return { availability: "available" }; } });
+    assert.equal(called, expected, JSON.stringify(report));
+    assert.deepEqual(summary.databaseTests, report);
+  }
 });

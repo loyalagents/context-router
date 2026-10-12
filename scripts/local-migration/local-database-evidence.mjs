@@ -227,7 +227,10 @@ export async function runWithDatabaseEvidence({ workspace, files, source, enviro
 export async function persistDatabaseEvidence(summary, environment = {}, { publish = exportDatabaseEvidence, appendOutput = fs.appendFile } = {}) {
   if (summary.databaseTestsExport) return;
   const report = summary.databaseTests;
-  if (environment.MIGRATION_GATE_CI_DATABASE_REPORT !== "1" && (report.reason === "command-not-run" || report.complete && !report.failures.length)) {
+  const cleanSuccess = report.complete && !report.truncated && !report.failures.length &&
+    report.cleanup === "complete" && report.commandResult?.exitCode === 0 &&
+    report.commandResult.signal === null && report.commandResult.secondaryFailureCount === 0;
+  if (environment.MIGRATION_GATE_CI_DATABASE_REPORT !== "1" && (report.reason === "command-not-run" || cleanSuccess)) {
     summary.databaseTestsExport = { availability: "not-requested" };
     return;
   }
