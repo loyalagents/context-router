@@ -27,7 +27,8 @@ qualified locally: `b6ef6aac44822ba22cb96ebb75f60877308d1f48`. The initial prepa
 documentation and opt-in test tooling without production changes. The subsequent
 download failure activated the bounded native/packager seal repair below; its
 changed inputs require new targeted and artifact evidence. Dependency/model pins
-and store formats remain unchanged. No repaired app has yet been packaged. The earlier gate supports unchanged inputs; the new
+and store formats remain unchanged. The sealed C build below is bound to clean
+`56cba238`; later test/compiler and evidence corrections do not relabel its source. The earlier gate supports unchanged inputs; the new
 tooling and its readers require their own validation. The retained 12-phase receipt names
 clean source `ed8673af`; its tree equals main exactly. PR #172's validated
 `e9246e1` and squash `3920457` also have identical trees
@@ -385,8 +386,8 @@ This remains an unsigned-publisher route: an ad-hoc integrity seal supplies neit
 Developer ID authentication nor notarization. The user agreed to finalization
 after this repair, renewed download/launch and replacement acceptance, complete
 independent review and applicable gates in the same draft PR. Publishing and
-invitations remain separate. Production repair is implemented and awaiting independent diff review; no new
-artifact or Gatekeeper acceptance is claimed.
+invitations remain separate. Production repair passed independent complete-diff and affected review. Sealed
+artifact C is recorded below; renewed Gatekeeper acceptance remains pending.
 
 The repair checkpoint passed 18 portable manifest tests and 24 real Mac native
 package tests after a targeted native compile. The affected native consumer run
@@ -450,6 +451,44 @@ The historical real-GGUF A-to-B reuse claim remains specific to its recorded
 transition. The future seal-repair C needs exact model/runtime/configuration input
 comparison and renewed affected native/installed lifecycle checks; it is not
 claimed to have directly demonstrated model-enabled startup or AI quality.
+
+### Sealed C build and native driver linkage correction
+
+The isolated packager completed from clean
+`56cba23865900bd74817578c936200df9a504be9`, tree
+`39e9680df72fa54e78897b17d2ad4b0757f8cb37`, with copied-input digest
+`2288206694eb328f4e739abfe14bf7f685049476158e489f42907cc669fc6c4b`.
+Artifact C remains bound to that source even after test-only corrections. The
+build at `/private/tmp/context-router-pilot-sealed-C-20261011-01` passed JS/native
+strict verification and caller-integrity checks. Its SHA-256 receipts are:
+
+- Build receipt: `8edb0f5208eab0bc0ad266129ceea4f0c52217d197ad4a626b5def7be3a68a6c`.
+- Manifest: `4d7b8fd22c3912d5c3dbade2ccd8f896159f6068359b51590561e6e1485d03ab`.
+- External sealed-payload receipt: `7b93ea55c3b8e4f9df4595d05019bd2d0cfcde9d97e111734b08333f325445d5`.
+- ZIP, 284,638,215 bytes: `a89323668635cd96014648ae6ec328d163e50fdf5e5bb64d60abdc34d63f7cd2`.
+
+CI run `38196887962` and the retained isolated full native run each executed 198
+cases: 186 passed and 12 failed because six test compiler commands linked
+`package.m` without `Security.framework`. These are real failed validations, not
+passing full-suite evidence. The red CI log at the artifact root,
+`ci-native-56cba238.log`, has SHA-256
+`40e6d5bb58b017b175c1a5178faade337ffe706cee9996ba7c0d42e95ddd7323`.
+
+The complete compiler inventory found ten consumers of `package.m`: production
+build plus nine native test files. Production, envelope, process and lock-contender
+commands already linked Security. The correction adds only that framework to
+`diagnostics`, `menu-restart-dashboard`, `menu-unlock`, `menu`,
+`model-cleanup-race` and `sleep-clock` test compilers. Assertions, native/runtime
+source, build output, CI requirements and artifact C are unchanged. Independent
+review approved the exact six-line delta without findings.
+
+After the existing full run exited, all 12 corrected cases passed serially in
+29.4 seconds using isolated temporary fixtures. The focused log at
+`/private/tmp/context-router-seal-linkage-focused.log` has SHA-256
+`7cc1e8f0d9e13e27e93e98074971240cbc8f84cb390d1b751f899fd8868d40bc`. Full native qualification must be renewed using the corrected test
+commands; installed/replacement/Gatekeeper acceptance, final local gate and new
+head CI remain pending. No production/package rebuild is justified by this
+compiler-flag-only change. Targeted checks passed; final validation pending.
 
 The isolated rehearsal's A is retained Candidate 14 (manifest
 `944c5be0eb2e44e5c215fdacac3f8ad12546dd190cdddd8afa45c78285d8ff38`); B is the
