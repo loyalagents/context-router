@@ -12,6 +12,26 @@ const dedicatedPath = path.join(
   ".github/workflows/local-migration-baseline.yml",
 );
 
+test("only fresh, explicitly exported database evidence is uploaded with bounded retention", async () => {
+  const workflow = parse(await readFile(dedicatedPath, "utf8"));
+  const steps = workflow.jobs["local-migration-baseline"].steps;
+  const gate = steps.find((step) => step.id === "migration-gate");
+  assert.equal(gate.run, "pnpm migration:gate");
+  assert.equal(gate["continue-on-error"], undefined);
+  assert.equal(gate.env.MIGRATION_GATE_CI_DATABASE_REPORT, "1");
+  const uploads = steps.filter((step) => step.uses?.startsWith("actions/upload-artifact@"));
+  assert.equal(uploads.length, 1);
+  assert.deepEqual(uploads[0].with, {
+    name: "local-database-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}",
+    path: "${{ runner.temp }}/local-migration-database-failures.json",
+    "if-no-files-found": "warn", "retention-days": 7,
+  });
+  assert.equal(uploads[0].if, "always() && steps.migration-gate.outputs.database_report_ready == 'true'");
+  assert.equal(uploads[0]["continue-on-error"], true);
+  assert.equal(uploads[0]["timeout-minutes"], 2);
+  assert.equal(steps.filter((step) => step["continue-on-error"]).length, 1);
+});
+
 function selectedFilters(filters, relativePath) {
   return Object.entries(filters)
     .filter(([, globs]) =>

@@ -5,6 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import { Writable } from "node:stream";
 import test from "node:test";
+// Keep reporting acceptance in the existing required gate test command.
+import "./local-database-evidence.test.mjs";
 import { pathToFileURL } from "node:url";
 
 import {

@@ -243,6 +243,44 @@ Backend tests live under `apps/backend` and are split into:
 
 The default `pnpm test:backend` (also reached by workspace `pnpm test`) generates the Prisma client and builds the backend once before running all four Jest projects. The dedicated local command has the same prerequisite; unit-only and hosted integration commands remain independently selectable. Default all-project runs still require the configured PostgreSQL test database.
 
+The migration gate retains a bounded structured report for its `test:local-database`
+command. In the GitHub Actions run, open **Artifacts →
+local-database-failure-evidence-&lt;run ID&gt;-&lt;attempt&gt;** and download
+`local-migration-database-failures.json` (seven-day retention). The job summary's
+`databaseTests` and `databaseTestsExport` fields show collection and publication
+availability. Artifact transport is optional; its own step shows upload failures.
+The required gate keeps its original exit, cancellation and cleanup behavior.
+For a local failed/incomplete database command, the gate prints a separate private
+temporary report path that survives disposable workspace/diagnostics cleanup.
+Delete that report directory after investigating; no automatic local expiry is set.
+
+Report schema version 1 binds the fixed phase/command, caller HEAD, copied-input
+SHA-256, dirty status, random attempt ID and available CI run/attempt numbers.
+Each failure identifies a validated copied-source file, content SHA-256, declaration
+line/column, per-file test ordinal and a fixed matcher/error category. Use the
+source revision and declaration location to find nested or parameterized tests;
+the ordinal distinguishes cases sharing a declaration. Runtime titles, assertions,
+expected/actual values, stacks, environment dumps and raw logs are omitted. Reviewed
+repository-relative source filenames are publishable metadata; filenames changed
+by secret/canary redaction are omitted, retaining the file ID and content hash.
+Unknown runtime paths are never published. This is diagnostic context, not a full
+assertion transcript or a determination that a test is flaky.
+For this command, public gate failure messages refer to the structured report;
+the arbitrary error text and output tail stay out of the summary even when the
+report is unavailable. Private command logs retain their existing behavior.
+
+The producer and consumer cap reports at 64 KiB, records at 512 bytes, failures at
+64, and the source catalog at 128 files with paths of at most 240 characters.
+Source hashing is streamed with a 1 MiB per-file/8 MiB total bound. Collection
+reports `complete`, `partial`, or `unavailable`, separately from `truncated` and
+the original `commandResult`. A valid interrupted prefix can retain earlier
+failures; malformed records, wrong bindings and unsafe/replaced files are rejected.
+Reporting errors do not turn passing tests into failures or replace an existing
+failure. The CI upload accepts only the freshly published exact JSON file, never
+the diagnostics directory. Uncatchable termination can prevent final export;
+the workflow then records missing evidence. Direct Jest/database commands outside
+the migration gate do not enable this reporter.
+
 Test database details:
 
 - `apps/backend/docker-compose.test.yml` starts PostgreSQL on `localhost:5433`
