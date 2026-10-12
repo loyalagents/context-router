@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { EventEmitter } from "node:events";
 import { createServer, request as httpRequest } from "node:http";
-import {
+import fsPromises, {
   chmod,
   link,
   lstat,
@@ -16,6 +17,7 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
+import { syncBuiltinESMExports } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -1149,6 +1151,265 @@ test("stage sealing rejects dangling and chained escaping symlinks", async () =>
       sealAndDescribeStage(stageRoot, { schemaVersion: 1 }),
       /dangling stage symlink/,
     );
+  });
+});
+
+test("sealed traversal produces the exact inventory, manifest bytes and final tree digest", async () => {
+  await temporaryDirectory("packaging-exact-inventory-", async (root) => {
+    const stage = path.join(root, "stage");
+    await mkdir(path.join(stage, "backend", "a"), { recursive: true });
+    await mkdir(path.join(stage, "web"));
+    const contents = {
+      "backend/B": Buffer.from("text\n"),
+      "backend/a.txt": Buffer.alloc(0),
+      "backend/a/z": Buffer.from([0, 255, 1, 128]),
+    };
+    for (const [name, bytes] of Object.entries(contents)) await writeFile(path.join(stage, name), bytes);
+    await symlink("a/z", path.join(stage, "backend", "link"));
+    const linkMode = (await lstat(path.join(stage, "backend", "link"))).mode & 0o777;
+    const digest = (value) => createHash("sha256").update(value).digest("hex");
+    const fileRow = (name) => ({ path: name, type: "file", mode: 0o444,
+      size: contents[name].length, sha256: digest(contents[name]) });
+    const inventory = [
+      { path: "backend", type: "directory", mode: 0o555 },
+      fileRow("backend/B"),
+      { path: "backend/a", type: "directory", mode: 0o555 },
+      fileRow("backend/a.txt"), fileRow("backend/a/z"),
+      { path: "backend/link", type: "symlink", mode: linkMode, target: "a/z" },
+      { path: "web", type: "directory", mode: 0o555 },
+    ];
+    const manifest = { schemaVersion: 1, inventoryExcludes: ["manifest.json"], inventory };
+    const manifestBytes = Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`);
+    const rows = [
+      { path: ".", type: "directory", mode: 0o555 }, ...inventory.slice(0, -1),
+      { path: "manifest.json", type: "file", mode: 0o444,
+        size: manifestBytes.length, sha256: digest(manifestBytes) }, inventory.at(-1),
+    ];
+    const expected = { manifest, manifestSha256: digest(manifestBytes),
+      stageTreeSha256: digest(JSON.stringify(rows)) };
+    assert.deepEqual(await sealAndDescribeStage(stage, { schemaVersion: 1 }), expected);
+    assert.deepEqual(await readFile(path.join(stage, "manifest.json")), manifestBytes);
+    assert.equal(await verifySealedStage(stage, expected), expected);
+
+    const file = path.join(stage, "backend", "a", "z");
+    await chmod(file, 0o644);
+    await writeFile(file, Buffer.from([0, 255, 2, 128]));
+    await chmod(file, 0o444);
+    await assert.rejects(verifySealedStage(stage, expected), /stage integrity changed/);
+    await chmod(file, 0o644);
+    await writeFile(file, contents["backend/a/z"]);
+    await chmod(file, 0o444);
+    assert.equal(await verifySealedStage(stage, expected), expected);
+    await chmod(file, 0o400);
+    await assert.rejects(verifySealedStage(stage, expected), /stage integrity changed/);
+  });
+});
+
+test("initial stage validation rejects symlink cycles without sealing any payload", async () => {
+  await temporaryDirectory("packaging-cycle-", async (root) => {
+    const stage = path.join(root, "stage");
+    await mkdir(path.join(stage, "backend"), { recursive: true, mode: 0o700 });
+    await mkdir(path.join(stage, "web"), { mode: 0o700 });
+    await writeFile(path.join(stage, "backend", "a"), "unchanged", { mode: 0o600 });
+    await symlink("cycle-b", path.join(stage, "backend", "cycle-a"));
+    await symlink("cycle-a", path.join(stage, "backend", "cycle-b"));
+    await assert.rejects(sealAndDescribeStage(stage, {}), /ambiguous stage symlink cycle/);
+    assert.equal((await lstat(path.join(stage, "backend"))).mode & 0o777, 0o700);
+    assert.equal((await lstat(path.join(stage, "backend", "a"))).mode & 0o777, 0o600);
+    await assert.rejects(lstat(path.join(stage, "manifest.json")), { code: "ENOENT" });
+  });
+});
+
+// Builtin mocks are process-local; these tests stay serial and restore named ESM
+// bindings before temporaryDirectory tears down the fixture.
+async function withTraversalProbe(t, operation) {
+  await temporaryDirectory("packaging-traversal-probe-", async (root) => {
+    const stage = path.join(await realpath(root), "stage");
+    await mkdir(path.join(stage, "backend", "a"), { recursive: true, mode: 0o700 });
+    await mkdir(path.join(stage, "web"), { mode: 0o700 });
+    const first = path.join(stage, "backend", "a", "z");
+    const next = path.join(stage, "backend", "a.txt");
+    const last = path.join(stage, "backend", "b.txt");
+    for (const file of [first, next, last]) await writeFile(file, "payload", { mode: 0o600 });
+    const original = { ...fsPromises };
+    const gates = [];
+    let pending;
+    const probe = {
+      stage, first, next, last, original,
+      defer() { const gate = Promise.withResolvers(); gates.push(gate); return gate; },
+      patch(name, implementation) {
+        t.mock.method(fsPromises, name, implementation);
+        syncBuiltinESMExports();
+      },
+      start() {
+        pending = sealAndDescribeStage(stage, {}).then(
+          (value) => ({ value }), (error) => ({ error }),
+        );
+        return pending;
+      },
+      async assertUnsealed() {
+        for (const directory of ["backend", "backend/a", "web"]) {
+          assert.equal((await original.lstat(path.join(stage, directory))).mode & 0o777, 0o700);
+        }
+        for (const file of [first, next, last]) {
+          const info = await original.lstat(file).catch((error) => {
+            if (error.code === "ENOENT") return null;
+            throw error;
+          });
+          if (info?.isFile()) assert.equal(info.mode & 0o777, 0o600);
+        }
+        await assert.rejects(original.lstat(path.join(stage, "manifest.json")), { code: "ENOENT" });
+      },
+    };
+    try { await operation(probe); }
+    finally {
+      for (const gate of gates) gate.resolve();
+      await pending;
+      t.mock.restoreAll();
+      syncBuiltinESMExports();
+    }
+  });
+}
+
+const probeEvent = (promise) => waitWithTimeout(promise, 2000, "traversal probe event");
+
+test("traversal overlaps only one next metadata entry with one serial content read", { concurrency: false }, async (t) => {
+  await withTraversalProbe(t, async (probe) => {
+    const reading = probe.defer();
+    const releaseRead = probe.defer();
+    const prefetched = probe.defer();
+    let activeReads = 0;
+    let maxReads = 0;
+    let activeMetadata = 0;
+    let maxMetadata = 0;
+    let laterEntrySeen = false;
+    probe.patch("lstat", async (file, ...args) => {
+      activeMetadata++; maxMetadata = Math.max(maxMetadata, activeMetadata);
+      try {
+        if (file === probe.last) laterEntrySeen = true;
+        const info = await probe.original.lstat(file, ...args);
+        if (file === probe.next) prefetched.resolve();
+        return info;
+      } finally { activeMetadata--; }
+    });
+    probe.patch("readFile", async (file, ...args) => {
+      activeReads++; maxReads = Math.max(maxReads, activeReads);
+      try {
+        if (file === probe.first) { reading.resolve(); await releaseRead.promise; }
+        return await probe.original.readFile(file, ...args);
+      } finally { activeReads--; }
+    });
+    const result = probe.start();
+    await probeEvent(reading.promise);
+    await probeEvent(prefetched.promise);
+    assert.equal(activeReads, 1);
+    assert.equal(laterEntrySeen, false);
+    releaseRead.resolve();
+    assert.equal((await result).error, undefined);
+    assert.equal(maxReads, 1);
+    assert.equal(maxMetadata, 1);
+    assert.equal(activeReads + activeMetadata, 0);
+  });
+});
+
+for (const metadataOperation of ["lstat", "readlink", "realpath"]) {
+  test(`traversal drains pending ${metadataOperation} before returning an earlier read error`, { concurrency: false }, async (t) => {
+    await withTraversalProbe(t, async (probe) => {
+      if (metadataOperation !== "lstat") {
+        await rm(probe.next);
+        await symlink("a/z", probe.next);
+      }
+      const reading = probe.defer();
+      const releaseRead = probe.defer();
+      const metadataStarted = probe.defer();
+      const releaseMetadata = probe.defer();
+      const primary = new Error("earlier DFS content failure");
+      let metadataActive = false;
+      let laterEntrySeen = false;
+      let completed = false;
+      probe.patch("lstat", async (file, ...args) => {
+        if (file === probe.last) laterEntrySeen = true;
+        if (metadataOperation === "lstat" && file === probe.next) {
+          metadataActive = true; metadataStarted.resolve();
+          await releaseMetadata.promise; metadataActive = false;
+        }
+        return probe.original.lstat(file, ...args);
+      });
+      if (metadataOperation !== "lstat") probe.patch(metadataOperation, async (file, ...args) => {
+        if (file === probe.next) {
+          metadataActive = true; metadataStarted.resolve();
+          await releaseMetadata.promise; metadataActive = false;
+        }
+        return probe.original[metadataOperation](file, ...args);
+      });
+      probe.patch("readFile", async (file, ...args) => {
+        if (file === probe.first) { reading.resolve(); await releaseRead.promise; throw primary; }
+        return probe.original.readFile(file, ...args);
+      });
+      const result = probe.start();
+      result.then(() => { completed = true; });
+      await probeEvent(reading.promise);
+      await probeEvent(metadataStarted.promise);
+      releaseRead.resolve();
+      await new Promise((resolve) => setImmediate(resolve));
+      assert.equal(completed, false);
+      assert.equal(metadataActive, true);
+      releaseMetadata.resolve();
+      assert.equal((await result).error, primary);
+      assert.equal(metadataActive, false);
+      assert.equal(laterEntrySeen, false);
+      await probe.assertUnsealed();
+    });
+  });
+}
+
+for (const earlierReadFails of [false, true]) {
+  test(`traversal preserves DFS error order when prefetched metadata fails first (read fails: ${earlierReadFails})`, { concurrency: false }, async (t) => {
+    await withTraversalProbe(t, async (probe) => {
+      const metadataFailed = probe.defer();
+      const primary = new Error("earlier DFS read failure");
+      let metadataError;
+      probe.patch("lstat", async (file, ...args) => {
+        if (file === probe.next) {
+          await probe.original.rm(file);
+          try { return await probe.original.lstat(file, ...args); }
+          catch (error) { metadataError = error; metadataFailed.resolve(); throw error; }
+        }
+        return probe.original.lstat(file, ...args);
+      });
+      probe.patch("readFile", async (file, ...args) => {
+        if (file === probe.first) {
+          await probeEvent(metadataFailed.promise);
+          if (earlierReadFails) throw primary;
+        }
+        return probe.original.readFile(file, ...args);
+      });
+      const { error } = await probe.start();
+      assert.equal(metadataError?.code, "ENOENT");
+      assert.equal(error, earlierReadFails ? primary : metadataError);
+      await probe.assertUnsealed();
+    });
+  });
+}
+
+test("traversal cleanup errors cannot replace an earlier content failure", { concurrency: false }, async (t) => {
+  await withTraversalProbe(t, async (probe) => {
+    const primary = new Error("content failure remains primary");
+    const generatorPrototype = Object.getPrototypeOf(Object.getPrototypeOf((async function* () {})()));
+    const originalReturn = generatorPrototype.return;
+    let closes = 0;
+    t.mock.method(generatorPrototype, "return", async function (...args) {
+      await originalReturn.apply(this, args);
+      closes++;
+      throw new Error("injected iterator close failure");
+    });
+    probe.patch("readFile", async (file, ...args) => {
+      if (file === probe.first) throw primary;
+      return probe.original.readFile(file, ...args);
+    });
+    assert.equal((await probe.start()).error, primary);
+    assert.ok(closes > 0);
+    await probe.assertUnsealed();
   });
 });
 
