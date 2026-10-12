@@ -6,8 +6,9 @@ for evidence and [pilot preparation](../plans/active/colleague-pilot/README.md)
 for the next acceptance work. Original human acceptance was partial; neither merge
 nor this runbook qualifies distribution or every recovery scenario.
 This is a private build without Developer ID signing or notarization. The
-seal-repair candidate adds an ad-hoc whole-bundle integrity signature; it supplies
-no publisher authentication and remains pending renewed download acceptance. The declared
+sealed C candidate passed strict ad-hoc whole-bundle verification; it supplies
+no publisher authentication. Integrated D and renewed downloaded launch remain
+pending at the [candidate-freeze checkpoint](../plans/active/colleague-pilot/plan.md#integrated-candidate-freeze-2026-10-12). The declared
 pilot is MacBook Pro 18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Macs and
 native Windows/Linux are not qualified. The source/manual modes remain available.
 
@@ -28,8 +29,10 @@ refused as damaged: its executable-only ad-hoc signature does not seal the compl
 app bundle. That archive is not ready to share. Do not
 disable Gatekeeper or strip quarantine to treat this as a distributed release.
 
-The user selected the unsigned route. It needs a corrected sealed bundle, renewed
-quarantined download-to-launch acceptance and a trusted acquisition channel. Keep the source revision,
+The user selected the unsigned-publisher route. C repairs the integrity seal;
+D must include the integrated #173 UI and receive its own artifact/installed
+qualification. Quarantined download-to-launch acceptance and a trusted acquisition
+channel remain required. Keep the source revision,
 app manifest, archive checksum and acquisition channel with each handoff. A local
 build or extracted temporary copy does not demonstrate downloaded-app Gatekeeper
 behavior. Scope remains the measured Mac above; another Mac is a compatibility trial.

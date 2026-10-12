@@ -41,10 +41,13 @@ to read-only parallel investigation/review until independent boundaries exist.
 Do not launch, reset or change the user's app/state/client configuration as a
 side effect of repository work.
 
-The next pilot milestone is activated from verified main `7d2df85` in
+The pilot milestone started from verified main `7d2df85` and integrates reviewed
+main `208e049` (#173/#175) in
 `codex/pilot-interruption-delivery`, with `/root` as read-only coordinator and
 `/root/delivery_review` as sole writer/integrator for the seal-repair checkpoint.
 The [pilot record](active/colleague-pilot/plan.md) reconciles the merged Claude
 bridge and its accepted interruption follow-up with delivery/replacement work.
-CI optimization and stale-display implementation remain separate tasks; their
-backlog status does not authorize this milestone to absorb them.
+Sealed C's evidence remains scoped to its original inputs; integrated artifact D
+and final gates are pending at the documented freeze checkpoint. The “Fix
+wrong-person attribution” chat owns a separate active synthetic investigation;
+that invitation dependency is neither fixed nor included in this milestone.

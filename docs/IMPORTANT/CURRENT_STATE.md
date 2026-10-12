@@ -37,16 +37,19 @@ weights, security floor and ownership checks. Do not delete metadata to bypass
 uncertain state. Personal data, downloads, client configuration and live model
 runs need their own bounded authorization.
 
-Do not claim a general release: the app is unsigned/unnotarized; measured installed
+Do not claim a general release: the app has no Developer ID or notarization; measured installed
 hardware is M1 Max/64 GiB/macOS 15.1.1. Other hardware, signed distribution,
 cross-boot/forced-loss recovery and complete colleague disk budgets need evidence.
 Controlled Candidate 14-to-corrected-app replacement now has scoped synthetic
 state/authority evidence; prior personal-transition receipts support real-asset
-reuse. The actual Safari-quarantined archive was refused as damaged: its linker-created
-ad-hoc signature does not seal the app bundle. Repair and renewed launch acceptance
-are required; the archive is not ready to share.
-Model quality/cancellation exceptions E/H and reported PDF/attribution/
-stale-display findings remain visible in the current application doc.
+reuse. The Safari-quarantined B archive was refused as damaged. Sealed C repaired
+whole-bundle integrity and passed native/installed/replacement checks; renewed
+downloaded launch remains pending. The integrated source includes merged #173's
+saved-preference refresh and #175's bounded packaging traversal. Artifact D and
+final qualification are pending at the [candidate-freeze checkpoint](../plans/active/colleague-pilot/plan.md#integrated-candidate-freeze-2026-10-12).
+Model quality/cancellation exceptions E/H, rejected PDF and the separately active
+wrong-person-attribution investigation remain invitation dependencies; #173 still
+needs its installed D UI retest. No attribution implementation is included here.
 
 Follow [AGENTS.md](../../AGENTS.md) and [the workflow](../useful/AGENT_WORKFLOW.md).
 One writer owns the main playground checkout; independent worktree tasks need

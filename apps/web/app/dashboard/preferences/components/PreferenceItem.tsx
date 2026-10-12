@@ -259,7 +259,10 @@ export default function PreferenceItem({
         {!isEditing && (
           <div className="flex gap-1 ml-2">
             <button
-              onClick={() => setIsEditing(true)}
+              onClick={() => {
+                setEditValue(JSON.stringify(preference.value, null, 2));
+                setIsEditing(true);
+              }}
               className="p-1 text-gray-400 hover:text-blue-600"
               title="Edit"
             >

@@ -1,6 +1,6 @@
 # Assisted Colleague Pilot
 
-- Status: activated milestone; isolated replacement and actual-Claude lost-reply checks passed; unsigned download exposed a bundle-signing defect
+- Status: integrated candidate freeze; seal repair and C native/installed/replacement checks passed; D build, installed UI, downloaded launch and final qualification pending
 - Priority: current primary outcome; [plan and evidence](plan.md)
 - Owner: product owner; read-only coordinator `/root`; seal-repair sole writer/integrator `/root/delivery_review` in `codex/pilot-interruption-delivery`
 - Audience: a few Git-capable colleagues, initially Apple Silicon Macs
@@ -76,8 +76,9 @@ keeps a supported runtime. Do not create separate planning or closeout PRs.
    third-party configuration edits without a separately reviewed trust boundary
    and explicit consent. CLI support remains additive and tested.
 3. **Make install/replacement/reset tolerable.** Identify source/artifact/checksum
-   and publisher trust; qualify the actual download/quarantine/launch route on a
-   clean colleague-like Mac. Decide signing/notarization or another supported
+   and publisher trust; qualify the actual download/quarantine/launch route on the
+   measured Mac and record prior security decisions that limit first-launch evidence.
+   Decide signing/notarization or another supported
    assisted path before inviting users. A pinned-source build with the existing
    packager is an assisted fallback candidate, not a qualified route; assess its
    exact toolchain prerequisites, trust/launch behavior and colleague effort.
@@ -153,7 +154,12 @@ the full applicable local gate, installed-artifact qualification, independent
 complete-diff review and exact-head CI. Do not weaken or skip existing CI gates.
 No automatic merging, releases, resets or broad recovery operations.
 
-Outstanding activation decisions are the exact cohort/versions, minimal supported
-Claude connection mechanism, distribution/trust route and necessary recovery/reset
-implementation. Investigate them first; ask the user only for choices evidence
-cannot settle. This brief approves direction, not a specific implementation.
+The user selected the assisted unsigned-publisher route, the standalone bridge
+with separately pinned Node, and qualification on the measured Mac. The agreed
+milestone includes seal repair, compatible replacement, downloaded launch and
+required final validation. The [dated freeze checkpoint](plan.md#integrated-candidate-freeze-2026-10-12)
+records which checks remain pending; subsequent immutable receipts belong in
+[PR #174](https://github.com/loyalagents/context-router/pull/174). Cohort invitation,
+trusted acquisition, complete disk accounting and supported recovery limits remain
+separate dependencies. Wrong-person attribution has a separately activated owner;
+neither that implementation nor a reset is part of this milestone.

@@ -4,17 +4,20 @@ A local-first preference/context application: import documents, review suggested
 preferences, manage scoped access, and share context with MCP clients. The managed
 Apple Silicon Mac candidate runs its database, dashboard and selected model locally.
 
-The migration foundation is delivered. **An assisted colleague pilot is next—not
-a qualified general release.** Claude Code/Codex CLI have scoped local evidence.
+The migration foundation is delivered. **Assisted pilot qualification is active.**
+Claude Code/Codex CLI have scoped local evidence.
 Claude Desktop's standalone bridge has passed the main client checks; its live
-controlled uncertain-mutation follow-up passed; downloaded-app packaging needs repair. ChatGPT desktop follows.
+controlled uncertain-mutation follow-up passed. Whole-app sealing is repaired;
+the integrated D artifact and renewed downloaded launch remain pending at the
+[candidate-freeze checkpoint](docs/plans/active/colleague-pilot/plan.md#integrated-candidate-freeze-2026-10-12).
+ChatGPT desktop follows; this is not a qualified general release.
 See [current support and limitations](docs/current/LOCAL_APPLICATION.md).
 
 ## Use Or Work On The App
 
 - [Installed Mac runbook](docs/useful/INSTALLED_MAC_APP.md): menu, model download,
   unlock, installed CLI, restart, backup/restore and removal. The current candidate
-  is unsigned; broader hardware and distribution still need qualification.
+  has no Developer ID or notarization; broader hardware and distribution still need qualification.
 - [Local dashboard](docs/useful/LOCAL_UI.md) and [MCP setup](docs/useful/MCP_LOCAL_SETUP.md):
   explicit manual/developer paths. Local MCP uses `http://127.0.0.1:8787/mcp`;
   the installed dashboard opens at its current loopback address.
