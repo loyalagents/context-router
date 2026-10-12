@@ -1220,8 +1220,9 @@ test("initial stage validation rejects symlink cycles without sealing any payloa
   });
 });
 
-// Builtin mocks are process-local; these tests stay serial and restore named ESM
-// bindings before temporaryDirectory tears down the fixture.
+// Builtin mocks are process-local. These top-level tests rely on node:test's
+// default serial scheduling; concurrency: false only controls their subtests.
+// Restore the mocks and named ESM bindings before fixture teardown.
 async function withTraversalProbe(t, operation) {
   await temporaryDirectory("packaging-traversal-probe-", async (root) => {
     const stage = path.join(await realpath(root), "stage");
@@ -1309,6 +1310,43 @@ test("traversal overlaps only one next metadata entry with one serial content re
     assert.equal(maxReads, 1);
     assert.equal(maxMetadata, 1);
     assert.equal(activeReads + activeMetadata, 0);
+  });
+});
+
+test("traversal closes an already-yielded nested prefetch after an earlier read error", { concurrency: false }, async (t) => {
+  await withTraversalProbe(t, async (probe) => {
+    const nestedNext = path.join(probe.stage, "backend", "a", "zz");
+    await writeFile(nestedNext, "prefetched payload", { mode: 0o600 });
+    const prefetched = probe.defer();
+    const primary = new Error("earlier read failure after nested prefetch yielded");
+    const reads = [];
+    let laterEntrySeen = false;
+    let prefetchSettledBeforeFailure = false;
+    probe.patch("lstat", async (file, ...args) => {
+      if (file === probe.next || file === probe.last) laterEntrySeen = true;
+      const info = await probe.original.lstat(file, ...args);
+      if (file === nestedNext) prefetched.resolve();
+      return info;
+    });
+    probe.patch("readFile", async (file, ...args) => {
+      reads.push(file);
+      if (file === probe.first) {
+        await probeEvent(prefetched.promise);
+        // The real regular-file lstat has resolved. Only promise microtasks
+        // remain to propagate its yield through nested yield* and settle next().
+        // A new event-loop turn drains those before the current read rejects.
+        await new Promise((resolve) => setImmediate(resolve));
+        prefetchSettledBeforeFailure = true;
+        throw primary;
+      }
+      return probe.original.readFile(file, ...args);
+    });
+    assert.equal((await probe.start()).error, primary);
+    assert.equal(prefetchSettledBeforeFailure, true);
+    assert.equal(laterEntrySeen, false);
+    assert.deepEqual(reads, [probe.first]);
+    await probe.assertUnsealed();
+    assert.equal((await probe.original.lstat(nestedNext)).mode & 0o777, 0o600);
   });
 });
 
