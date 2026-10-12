@@ -254,31 +254,59 @@ For a local failed/incomplete database command, the gate prints a separate priva
 temporary report path that survives disposable workspace/diagnostics cleanup.
 Delete that report directory after investigating; no automatic local expiry is set.
 
-Report schema version 1 binds the fixed phase/command, caller HEAD, copied-input
-SHA-256, dirty status, random attempt ID and available CI run/attempt numbers.
+Report schema version 2 binds the fixed phase/command, caller HEAD (40- or
+64-digit Git object ID), copied-input SHA-256, dirty status, random attempt ID and
+available CI run/attempt numbers. For pull requests, caller HEAD normally names
+GitHub's tested merge commit; use the run's PR head/base to resolve that identity.
 Each failure identifies a validated copied-source file, content SHA-256, declaration
-line/column, per-file test ordinal and a fixed matcher/error category. Use the
-source revision and declaration location to find nested or parameterized tests;
-the ordinal distinguishes cases sharing a declaration. Runtime titles, assertions,
-expected/actual values, stacks, environment dumps and raw logs are omitted. Reviewed
-repository-relative source filenames are publishable metadata; filenames changed
-by secret/canary redaction are omitted, retaining the file ID and content hash.
-Unknown runtime paths are never published. This is diagnostic context, not a full
-assertion transcript or a determination that a test is flaky.
-For this command, public gate failure messages refer to the structured report;
-the arbitrary error text and output tail stay out of the summary even when the
-report is unavailable. Private command logs retain their existing behavior.
+line/column, ordinal and fixed matcher/error category. Completed files use the
+one-based index in Jest's final result array (including skipped/todo entries), so
+retries and duplicate titles do not inflate failures. Interrupted files retain
+provisional callback-attempt ordinals; these count delivered callbacks, including
+todo but not skipped tests in the pinned Jest version, and can include retries.
+They are leads, not final failed-test counts. `suite-error` covers runner-level
+file errors, including loading and teardown, without guessing the stage.
 
-The producer and consumer cap reports at 64 KiB, records at 512 bytes, failures at
-64, and the source catalog at 128 files with paths of at most 240 characters.
-Source hashing is streamed with a 1 MiB per-file/8 MiB total bound. Collection
-reports `complete`, `partial`, or `unavailable`, separately from `truncated` and
-the original `commandResult`. A valid interrupted prefix can retain earlier
-failures; malformed records, wrong bindings and unsafe/replaced files are rejected.
-Reporting errors do not turn passing tests into failures or replace an existing
-failure. The CI upload accepts only the freshly published exact JSON file, never
-the diagnostics directory. Uncatchable termination can prevent final export;
-the workflow then records missing evidence. Direct Jest/database commands outside
+`progress` distinguishes a reporter that was not observed, started, or completed,
+and lists started files that have not completed. A passing file followed by a hung
+file therefore retains the unfinished file's source identity even without an
+assertion failure. No validated reporter header means `not-observed`; this cannot
+identify which build/configuration/startup step failed before reporting began.
+Use the source revision and declaration location to find nested or parameterized
+tests. Runtime titles, assertions, expected/actual values, stacks, environment dumps
+and raw logs are omitted. Reviewed repository-relative source filenames are
+publishable metadata; filenames changed by secret/canary redaction are omitted,
+retaining the file ID and content hash. Unknown runtime paths are never published.
+This is diagnostic context, not a full assertion transcript or a determination
+that a test is flaky. For this command, public gate failure messages refer to the
+structured report; arbitrary error text and output tails stay out of the summary
+even when the report is unavailable. Private command logs retain their existing
+behavior.
+
+The producer and consumer cap wire reports and exported JSON at 64 KiB, wire
+records at 512 bytes, published failures at 64, and file tracking/source catalogs
+at 128 files. Source paths may contain dots and other valid filename characters,
+with a 240-byte bound and no control characters, backslashes or traversal segments.
+Source hashing is streamed with a 1 MiB per-file/8 MiB total bound. The producer
+records up to 64 provisional and 64 final failures and scans at most 100,000 final
+test results. File completion commits its final records; until then, only attempt
+leads are published. Capture limits set `truncated`; `counts.exact` distinguishes
+fully reconciled final counts from lower bounds, and `suiteErrors` counts Jest
+runtime-error suites. An attempt-only limit does not truncate completed final
+results. If source-path expansion reaches the JSON budget, excess unfinished-file
+entries (then failures) are omitted with explicit truncation and
+`progress.omittedInFlightFiles`.
+
+Collection reports `complete`, `partial`, or `unavailable`, separately from
+`truncated` and the original `commandResult`. A valid interrupted prefix retains
+validated progress and earlier failures; malformed records, wrong bindings and
+unsafe/replaced files are rejected. Reporting errors do not turn passing tests
+into failures or replace an existing failure. Failed local publication removes
+only files/directories with matching owned identities; if cleanup cannot safely
+finish, the gate prints the retained private directory and reports that status.
+The CI upload accepts only the freshly published exact JSON file, never the
+diagnostics directory. Uncatchable termination can prevent final export; the
+workflow then records missing evidence. Direct Jest/database commands outside
 the migration gate do not enable this reporter.
 
 Test database details:

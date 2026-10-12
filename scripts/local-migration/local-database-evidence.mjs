@@ -6,8 +6,7 @@ import path from "node:path";
 import Reporter from "./local-database-reporter.cjs";
 import { redactSecrets } from "./gate-runner.mjs";
 
-const { LIMITS, CATEGORIES } = Reporter;
-const FILE_PATTERN = /^apps\/backend\/test\/local-database\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.spec\.ts$/;
+const { LIMITS, CATEGORIES, sourceName } = Reporter;
 const integer = (n) => Number.isSafeInteger(n) && n >= 0 && n <= LIMITS.events;
 const identity = (s) => ({ dev: s.dev, ino: s.ino, uid: s.uid });
 const same = (a, b) => a.dev === b.dev && a.ino === b.ino && a.uid === b.uid;
@@ -27,14 +26,15 @@ export function projectDatabaseCommandFailure({ phase, command }) {
 
 export function unavailableDatabaseEvidence(reason = "command-not-run", { source = {}, environment = {}, attemptId = randomBytes(16).toString("hex") } = {}) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     phase: "backend-database",
     command: "pnpm --filter backend test:local-database",
     attemptId,
-    source: { headSha: hashValue(source.headSha, 40), dirty: typeof source.dirty === "boolean" ? source.dirty : null, copiedInputsSha256: hashValue(source.copiedInputsSha256, 64) },
+    source: { headSha: hashValue(source.headSha, 40) ?? hashValue(source.headSha, 64), dirty: typeof source.dirty === "boolean" ? source.dirty : null, copiedInputsSha256: hashValue(source.copiedInputsSha256, 64) },
     run: { id: runValue(environment.GITHUB_RUN_ID), attempt: runValue(environment.GITHUB_RUN_ATTEMPT) },
     availability: "unavailable", reason, complete: false, truncated: false,
     privacy: "runtime-text-omitted", failures: [], counts: null,
+    progress: { runner: "not-observed", startedFiles: 0, completedFiles: 0, inFlightFiles: [], omittedInFlightFiles: 0 },
   };
 }
 
@@ -71,7 +71,7 @@ async function sourceFile(root, relative, canaries) {
 
 export async function createDatabaseEvidenceSession({ workspace, files, source, environment = {}, canaries = [] }) {
   const root = await fs.realpath(workspace);
-  const selected = files.filter((file) => typeof file === "string" && file.length <= 240 && FILE_PATTERN.test(file));
+  const selected = files.filter(sourceName);
   if (selected.length > LIMITS.files || new Set(selected).size !== selected.length) throw code("source-limit");
   const catalog = [];
   let sourceBytes = 0;
@@ -123,20 +123,20 @@ export function parseDatabaseEvidence(content, session) {
   if (Buffer.byteLength(content) > LIMITS.bytes) throw code("oversized");
   const lines = content.split("\n");
   const partialWrite = lines.pop() !== "";
-  if (lines.length > LIMITS.failures + 3) throw code("oversized");
+  if (lines.length > 2 * LIMITS.files + 2 * LIMITS.failures + 7) throw code("oversized");
   let header = false;
   let completion;
   let ioError = false;
-  let tests = 0;
-  let suites = 0;
-  const previous = new Map();
+  const files = [];
+  const limits = new Set();
+  const recorded = { "attempt-failure": 0, "final-failure": 0 };
   for (const line of lines) {
     if (Buffer.byteLength(line) > LIMITS.recordBytes) throw code("oversized");
     let record;
     try { record = JSON.parse(line); } catch { throw code("malformed"); }
     if (!header) {
       keys(record, ["type", "schemaVersion", "nonce"]);
-      if (record.type !== "header" || record.schemaVersion !== 1 || record.nonce !== session.nonce) throw code("binding-mismatch");
+      if (record.type !== "header" || record.schemaVersion !== 2 || record.nonce !== session.nonce) throw code("binding-mismatch");
       header = true;
       continue;
     }
@@ -144,32 +144,75 @@ export function parseDatabaseEvidence(content, session) {
     if (record.type === "io-error") {
       keys(record, ["type"]);
       ioError = true;
-    } else if (record.type === "failure" && !completion) {
-      keys(record, ["type", "file", "ordinal", "line", "column", "category"]);
-      if (report.failures.length >= LIMITS.failures || !(record.file === null || integer(record.file) && record.file < session.catalog.length) || !CATEGORIES.includes(record.category)) throw code("malformed");
+      continue;
+    }
+    if (completion) throw code("malformed");
+    if (record.type === "limit") {
+      keys(record, ["type", "kind"]);
+      if (!["attempts", "final", "files", "counts"].includes(record.kind) || limits.has(record.kind)) throw code("malformed");
+      limits.add(record.kind);
+    } else if (record.type === "file-start") {
+      keys(record, ["type", "run", "file"]);
+      if (record.run !== files.length || files.length >= LIMITS.files || !(record.file === null || integer(record.file) && record.file < session.catalog.length)) throw code("malformed");
+      files.push({ run: record.run, file: record.file, attempts: [], final: [], complete: false });
+    } else if (record.type === "attempt-failure" || record.type === "final-failure") {
+      keys(record, ["type", "run", "ordinal", "line", "column", "category"]);
+      const file = files[record.run];
+      if (!integer(record.run) || !file || file.complete || recorded[record.type] >= LIMITS.failures || !CATEGORIES.includes(record.category)) throw code("malformed");
+      const failures = record.type === "attempt-failure" ? file.attempts : file.final;
+      if (record.type === "attempt-failure" && file.final.length) throw code("malformed");
       for (const field of ["ordinal", "line", "column"]) if (!(record[field] === null || integer(record[field]))) throw code("malformed");
-      if (record.category === "suite-load") {
-        if (record.ordinal !== null || record.line !== null || record.column !== null) throw code("malformed");
-        suites += 1;
-      } else {
-        if (!record.ordinal || record.ordinal <= (previous.get(record.file) ?? 0) || record.line === 0) throw code("malformed");
-        previous.set(record.file, record.ordinal);
-        tests += 1;
-      }
-      const file = session.catalog[record.file];
-      report.failures.push({ fileId: record.file, file: file?.file ?? null, fileSha256: file?.fileSha256 ?? null, ordinal: record.ordinal, line: record.line, column: record.column, category: record.category });
-    } else if (record.type === "complete" && !completion) {
-      keys(record, ["type", "failedTests", "failedSuites", "recorded", "truncated", "runnerFailedTests"]);
-      if (![record.failedTests, record.failedSuites, record.recorded, record.runnerFailedTests].every(integer) || typeof record.truncated !== "boolean" || record.recorded !== report.failures.length || record.failedTests !== record.runnerFailedTests || record.failedTests < tests || record.failedSuites < suites || (!record.truncated && record.failedTests + record.failedSuites !== record.recorded)) throw code("malformed");
+      if (record.category === "suite-error") {
+        if (record.type !== "final-failure" || record.ordinal !== null || record.line !== null || record.column !== null || failures.some(f => f.ordinal === null)) throw code("malformed");
+      } else if (!record.ordinal || record.ordinal <= (failures.at(-1)?.ordinal ?? 0) || failures.some(f => f.ordinal === null) || record.line === 0) throw code("malformed");
+      failures.push(record);
+      recorded[record.type] += 1;
+    } else if (record.type === "file-complete") {
+      keys(record, ["type", "run", "failedTests", "suiteErrors"]);
+      const file = files[record.run];
+      if (!integer(record.run) || !file || file.complete || !integer(record.failedTests) || ![0, 1].includes(record.suiteErrors)) throw code("malformed");
+      const tests = file.final.filter(f => f.ordinal !== null).length;
+      const suites = file.final.length - tests;
+      if (record.failedTests < tests || record.suiteErrors < suites || (!limits.has("final") && (record.failedTests !== tests || record.suiteErrors !== suites))) throw code("malformed");
+      Object.assign(file, { complete: true, failedTests: record.failedTests, suiteErrors: record.suiteErrors });
+    } else if (record.type === "complete") {
+      keys(record, ["type", "runnerFailedTests", "runnerSuiteErrors"]);
+      if (![record.runnerFailedTests, record.runnerSuiteErrors].every(n => n === null || integer(n))) throw code("malformed");
       completion = record;
     } else throw code("malformed");
   }
   if (!header) { report.reason = "partial-write"; report.truncated = partialWrite; return report; }
-  report.complete = Boolean(completion) && !partialWrite && !ioError;
-  report.truncated = partialWrite || Boolean(completion?.truncated);
+  const reference = (file) => ({ fileRun: file.run, fileId: file.file, file: session.catalog[file.file]?.file ?? null, fileSha256: session.catalog[file.file]?.fileSha256 ?? null });
+  const unfinished = files.filter(file => !file.complete);
+  const completed = files.filter(file => file.complete);
+  const failedTests = completed.reduce((sum, file) => sum + file.failedTests, 0);
+  const suiteErrors = completed.reduce((sum, file) => sum + file.suiteErrors, 0);
+  if (failedTests > LIMITS.events) throw code("malformed");
+  const exact = !limits.has("files") && !limits.has("counts") && !unfinished.length;
+  if (completion) {
+    for (const [observed, runner] of [[failedTests, completion.runnerFailedTests], [suiteErrors, completion.runnerSuiteErrors]]) {
+      if (runner !== null && (observed > runner || exact && observed !== runner)) throw code("malformed");
+    }
+  }
+  for (const file of files) {
+    for (const failure of file.complete ? file.final : file.attempts) {
+      report.failures.push({ ...reference(file), ordinal: failure.ordinal, ordinalKind: failure.ordinal === null ? null : file.complete ? "final-result" : "attempt", provisional: !file.complete, line: failure.line, column: failure.column, category: failure.category });
+    }
+  }
+  report.truncated = partialWrite || limits.has("final") || limits.has("files") || limits.has("counts") || (limits.has("attempts") && unfinished.length > 0) || report.failures.length > LIMITS.failures;
+  report.failures = report.failures.slice(0, LIMITS.failures);
+  report.complete = Boolean(completion) && !partialWrite && !ioError && !unfinished.length;
+  report.progress = { runner: completion ? "completed" : "started", startedFiles: files.length, completedFiles: completed.length, inFlightFiles: unfinished.map(reference), omittedInFlightFiles: 0 };
+  report.counts = completion ? { failedTests, suiteErrors, recorded: report.failures.length, exact: exact && completion.runnerFailedTests !== null && completion.runnerSuiteErrors !== null } : null;
+  // Expanded catalog paths can outweigh wire records. Reserve space for outcome/cleanup.
+  while (Buffer.byteLength(JSON.stringify(report, null, 2)) > LIMITS.bytes - 2048) {
+    report.truncated = true;
+    if (report.progress.inFlightFiles.length) { report.progress.inFlightFiles.pop(); report.progress.omittedInFlightFiles += 1; }
+    else report.failures.pop();
+  }
+  if (report.counts) report.counts.recorded = report.failures.length;
   report.availability = report.complete ? "complete" : "partial";
-  report.reason = ioError ? "reporter-io-failed" : partialWrite ? "partial-write" : !completion ? "runner-incomplete" : report.truncated ? "record-limit" : "collected";
-  report.counts = completion ? { failedTests: completion.failedTests, failedSuites: completion.failedSuites, recorded: completion.recorded } : null;
+  report.reason = ioError ? "reporter-io-failed" : partialWrite ? "partial-write" : !report.complete ? "runner-incomplete" : report.truncated ? "record-limit" : "collected";
   return report;
 }
 
@@ -239,7 +282,8 @@ export async function persistDatabaseEvidence(summary, environment = {}, { publi
     // Keep machine-local export paths out of the public summary.
     summary.databaseTestsExport = exported.availability === "available"
       ? { availability: "available", filename: "local-migration-database-failures.json" }
-      : { availability: "unavailable", reason: "export-failed" };
+      : { availability: "unavailable", reason: "export-failed", ...(exported.cleanup ? { cleanup: exported.cleanup } : {}) };
+    if (exported.local && exported.cleanup === "retained") console.log(`migration-gate: database report export cleanup incomplete; inspect private directory: ${exported.retainedPath}`);
     if (exported.availability !== "available") return;
     if (exported.local) console.log(`migration-gate: database test evidence: ${exported.path}`);
     if (environment.MIGRATION_GATE_CI_DATABASE_REPORT === "1" && environment.GITHUB_OUTPUT) {
@@ -255,43 +299,71 @@ export async function persistDatabaseEvidence(summary, environment = {}, { publi
 // Fresh no-clobber publication prevents stale reports from masquerading as this attempt.
 export async function exportDatabaseEvidence(report, environment = {}, { io = fs } = {}) {
   let directory;
+  let parent;
   let temporary;
+  let target;
+  let written;
   let handle;
   let local = false;
+  let published = false;
+  let success = false;
+  const outcome = { availability: "unavailable", reason: "export-failed" };
   try {
     const content = JSON.stringify(report, null, 2) + "\n";
     if (Buffer.byteLength(content) > LIMITS.bytes) throw code("oversized");
     if (environment.MIGRATION_GATE_CI_DATABASE_REPORT === "1") {
       if (!path.isAbsolute(environment.RUNNER_TEMP ?? "")) throw code("unsafe-export");
       directory = await io.realpath(environment.RUNNER_TEMP);
+      parent = await io.lstat(directory);
     } else {
-      directory = await io.realpath(await io.mkdtemp(path.join(os.tmpdir(), "cr-database-report-")));
+      directory = await io.mkdtemp(path.join(os.tmpdir(), "cr-database-report-"));
       local = true;
+      parent = await io.lstat(directory);
+      directory = await io.realpath(directory);
     }
-    const parent = await io.lstat(directory);
-    if (!parent.isDirectory() || parent.uid !== process.getuid?.()) throw code("unsafe-export");
-    const target = path.join(directory, "local-migration-database-failures.json");
+    if (!parent.isDirectory() || parent.uid !== process.getuid?.() || (local && (parent.mode & 0o777) !== 0o700)) throw code("unsafe-export");
+    target = path.join(directory, "local-migration-database-failures.json");
     temporary = path.join(directory, `.database-report-${randomBytes(16).toString("hex")}`);
     handle = await io.open(temporary, "wx", 0o600);
+    written = await handle.stat();
     await handle.writeFile(content);
     await handle.sync();
-    const written = await handle.stat();
     await handle.close();
     handle = null;
     if (!same(parent, await io.lstat(directory)) || await io.realpath(directory) !== directory) throw code("unsafe-export");
     await io.link(temporary, target);
-    const published = await io.lstat(target);
-    if (!published.isFile() || !same(written, published) || published.size !== Buffer.byteLength(content) || (published.mode & 0o777) !== 0o600) throw code("unsafe-export");
+    published = true;
+    const linked = await io.lstat(target);
+    if (!linked.isFile() || !same(written, linked) || linked.size !== Buffer.byteLength(content) || (linked.mode & 0o777) !== 0o600) throw code("unsafe-export");
+    const pending = await io.lstat(temporary);
+    if (!pending.isFile() || !same(written, pending) || !same(parent, await io.lstat(directory))) throw code("unsafe-export");
     await io.unlink(temporary);
     temporary = null;
     const final = await io.lstat(target);
     if (!same(final, written) || final.nlink !== 1 || !same(parent, await io.lstat(directory))) throw code("unsafe-export");
+    success = true;
     return { availability: "available", path: target, local };
   } catch {
-    return { availability: "unavailable", reason: "export-failed" };
+    return outcome;
   } finally {
     await handle?.close().catch(() => {});
-    if (temporary) await io.unlink(temporary).catch(() => {});
-    if (local && temporary) await io.rmdir(directory).catch(() => {});
+    if (!success && directory) {
+      try {
+        // Remove only objects whose pinned identities still match; never recurse.
+        const current = await io.lstat(directory);
+        if (!parent || !current.isDirectory() || !same(parent, current) || current.uid !== process.getuid?.()) throw code("unsafe-export");
+        for (const file of [temporary, published ? target : null].filter(Boolean)) {
+          let info;
+          try { info = await io.lstat(file); } catch (error) { if (error.code === "ENOENT") continue; throw error; }
+          if (!written || !info.isFile() || !same(written, info) || !same(parent, await io.lstat(directory))) throw code("unsafe-export");
+          await io.unlink(file);
+        }
+        if (local) await io.rmdir(directory);
+        outcome.cleanup = "complete";
+      } catch {
+        outcome.cleanup = "retained";
+        if (local) { outcome.local = true; outcome.retainedPath = directory; }
+      }
+    }
   }
 }

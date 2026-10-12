@@ -235,9 +235,9 @@ browser tests after its build. `local-orchestrator`, evaluation and Harbor phase
 remain hosted-only. All twelve phase IDs/order remain. Step 08 P3 increases only
 the expanded packaging phase from fifteen to twenty-five minutes; other phase
 allowances remain unchanged, and active phase budgets now total 104 minutes.
-The dedicated workflow adds a bounded ten-minute pinned Chromium prerequisite;
-step budgets total 173 minutes within a 185-minute job, preserving twelve minutes
-of workflow overhead. Absolute gate deadlines are preflight T+3, phase cancellation
+The dedicated workflow adds a bounded ten-minute pinned Chromium prerequisite
+and a two-minute sanitized database-evidence upload; step budgets total 175 minutes
+within a 185-minute job, preserving ten minutes of workflow overhead. Absolute gate deadlines are preflight T+3, phase cancellation
 T+107, child settlement T+110 and final cleanup T+113 minutes. The 118-minute
 gate-step fail-safe preserves five additional minutes. Every supported mode must retain active contract, build, state,
 restart, and integrity evidence. Each mode records active/retired status and at

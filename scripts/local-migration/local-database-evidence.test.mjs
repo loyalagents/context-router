@@ -5,6 +5,7 @@ import * as syncFs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import test from "node:test";
@@ -24,7 +25,8 @@ import { executeGatePhaseCommand } from "./migration-gate.mjs";
 const require = createRequire(new URL("../../apps/backend/package.json", import.meta.url));
 const jest = require.resolve("jest/bin/jest");
 const source = { headSha: "a".repeat(40), dirty: true, copiedInputsSha256: "b".repeat(64) };
-const reporter = path.resolve("scripts/local-migration/local-database-reporter.cjs");
+const repoRoot = fileURLToPath(new URL("../../", import.meta.url));
+const reporter = fileURLToPath(new URL("./local-database-reporter.cjs", import.meta.url));
 const capture = promisify(execFile);
 
 async function fixture(t) {
@@ -155,7 +157,9 @@ test("projection omits all runtime text, including known and unknown secret path
   const r = new Reporter({}, JSON.parse(s.environment.CR_DATABASE_EVIDENCE));
   r.onTestCaseResult({ path: path.join(f.root, secretFile) }, failed);
   r.onTestCaseResult({ path: "/private/path-secret/unknown.spec.ts" }, failed);
-  r.onRunComplete(null, { numFailedTests: 2 });
+  r.onTestResult({ path: path.join(f.root, secretFile) }, { testResults: [failed] });
+  r.onTestResult({ path: "/private/path-secret/unknown.spec.ts" }, { testResults: [failed] });
+  r.onRunComplete(null, { numFailedTests: 2, numRuntimeErrorTestSuites: 0 });
   const report = await collectDatabaseEvidence(s);
   assert.equal(report.availability, "complete");
   assert.equal(report.failures[0].file, null);
@@ -176,7 +180,8 @@ test("partial prefixes, record limits, malformed ordering and binding are explic
   assert.equal(partial.reason, "partial-write");
   assert.equal(partial.failures.length, 64);
   assert.equal(partial.truncated, true);
-  r.onRunComplete(null, { numFailedTests: 70 });
+  r.onTestResult({ path: path.join(root, testFile) }, { testResults: Array(70).fill(failed) });
+  r.onRunComplete(null, { numFailedTests: 70, numRuntimeErrorTestSuites: 0 });
   const full = await readFile(s.reportPath, "utf8");
   const report = await collectDatabaseEvidence(s);
   assert.equal(report.complete, true);
@@ -184,7 +189,7 @@ test("partial prefixes, record limits, malformed ordering and binding are explic
   assert.equal(report.reason, "record-limit");
   assert.equal(report.counts.failedTests, 70);
   assert.ok(Buffer.byteLength(full) < Reporter.LIMITS.bytes);
-  for (const bad of [full.replace(s.nonce, "0".repeat(32)), full + '{}\n', full.replace('"recorded":64', '"recorded":63'), full.replace('"ordinal":2', '"ordinal":1'), full.replace('"runnerFailedTests":70', '"runnerFailedTests":69'), full.replace('"type":"failure"', '"type":"unknown"')]) {
+  for (const bad of [full.replace(s.nonce, "0".repeat(32)), full + '{}\n', full.replace('"failedTests":70', '"failedTests":63'), full.replace('"ordinal":2', '"ordinal":1'), full.replace('"runnerFailedTests":70', '"runnerFailedTests":69'), full.replace('"type":"attempt-failure"', '"type":"unknown"')]) {
     assert.throws(() => parseDatabaseEvidence(bad, s));
   }
   await writeFile(s.reportPath, "x".repeat(65537));
@@ -215,12 +220,12 @@ test("consumer refuses symlinks, replaced inodes, hardlinks, modes and replaced 
   await fs.rename(s.reportPath, saved);
   await fs.symlink(decoy, s.reportPath);
   let r = new Reporter({}, optionsValue);
-  r.onRunComplete(null, { numFailedTests: 0 });
+  r.onRunComplete(null, { numFailedTests: 0, numRuntimeErrorTestSuites: 0 });
   assert.notEqual((await collectDatabaseEvidence(s)).availability, "complete");
   await fs.unlink(s.reportPath);
   await fs.copyFile(decoy, s.reportPath);
   r = new Reporter({}, optionsValue);
-  r.onRunComplete(null, { numFailedTests: 0 });
+  r.onRunComplete(null, { numFailedTests: 0, numRuntimeErrorTestSuites: 0 });
   assert.equal(await readFile(s.reportPath, "utf8"), "untouched-secret");
   assert.equal((await collectDatabaseEvidence(s)).reason, "unsafe-file");
   await fs.unlink(s.reportPath);
@@ -241,7 +246,7 @@ test("consumer refuses symlinks, replaced inodes, hardlinks, modes and replaced 
 
 test("reader and export failures are explicit, leave existing targets untouched", async (t) => {
   const { s, optionsValue, root } = await sessionFixture(t);
-  new Reporter({}, optionsValue).onRunComplete(null, { numFailedTests: 0 });
+  new Reporter({}, optionsValue).onRunComplete(null, { numFailedTests: 0, numRuntimeErrorTestSuites: 0 });
   for (const method of ["read", "close"]) {
     const io = { ...fs, async open(...args) {
       const h = await fs.open(...args);
@@ -285,7 +290,7 @@ test("real Jest cancellation retains prior failures and the original signal/exit
   const rejection = assert.rejects(pending, (e) => e.exitCode === 130 && e.signal === "SIGINT");
   const deadline = Date.now() + 4000;
   while (Date.now() < deadline) {
-    if (session && (await readFile(session.reportPath, "utf8")).includes('"type":"failure"')) break;
+    if (session && (await readFile(session.reportPath, "utf8")).includes('"type":"attempt-failure"')) break;
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   controller.abort(Object.assign(new Error("SIGINT"), { exitCode: 130, signal: "SIGINT" }));
@@ -301,7 +306,7 @@ test("report cleanup and publication failures remain diagnostic, fresh exports a
   const result = await runWithDatabaseEvidence({
     workspace: root, files: [testFile], source,
     async prepare() { return { ...s, async dispose() { throw Error("cleanup-secret"); } }; },
-    execute() { new Reporter({}, optionsValue).onRunComplete(null, { numFailedTests: 0 }); return { exitCode: 0, marker: "original" }; },
+    execute() { new Reporter({}, optionsValue).onRunComplete(null, { numFailedTests: 0, numRuntimeErrorTestSuites: 0 }); return { exitCode: 0, marker: "original" }; },
     onEvidence(value) { report = value; },
   });
   assert.equal(result.marker, "original");
@@ -321,15 +326,15 @@ test("report cleanup and publication failures remain diagnostic, fresh exports a
   assert.deepEqual(failed.databaseTestsExport, { availability: "unavailable", reason: "export-failed" });
 });
 
-test("suite-load failures and sources with symlink boundaries are handled safely", async (t) => {
+test("suite errors and sources with symlink boundaries are handled safely", async (t) => {
   const { s, optionsValue, root, testFile } = await sessionFixture(t);
   const r = new Reporter({}, optionsValue);
-  r.onTestResult({ path: path.join(root, testFile) }, { testExecError: { message: "load-secret", stack: "stack-secret" } });
-  r.onRunComplete(null, { numFailedTests: 0 });
+  r.onTestResult({ path: path.join(root, testFile) }, { testResults: [], testExecError: { message: "load-secret", stack: "stack-secret" } });
+  r.onRunComplete(null, { numFailedTests: 0, numRuntimeErrorTestSuites: 1 });
   const report = await collectDatabaseEvidence(s);
   assert.equal(report.availability, "complete");
-  assert.equal(report.failures[0].category, "suite-load");
-  assert.equal(report.counts.failedSuites, 1);
+  assert.equal(report.failures[0].category, "suite-error");
+  assert.equal(report.counts.suiteErrors, 1);
   assert.ok(!JSON.stringify(report).includes("secret"));
   const unsafe = path.join(root, "apps/backend/test/local-database/unsafe.spec.ts");
   await fs.symlink(path.join(root, testFile), unsafe);
@@ -338,7 +343,7 @@ test("suite-load failures and sources with symlink boundaries are handled safely
 
 test("consumer detects replacement during reads and export refuses a replaced temporary file", async (t) => {
   const { s, optionsValue, root } = await sessionFixture(t);
-  new Reporter({}, optionsValue).onRunComplete(null, { numFailedTests: 0 });
+  new Reporter({}, optionsValue).onRunComplete(null, { numFailedTests: 0, numRuntimeErrorTestSuites: 0 });
   const original = s.reportPath + ".saved";
   let switched = false;
   const io = { ...fs, async open(...args) {
@@ -402,7 +407,7 @@ test("actual repository Jest configuration enables locations only in the reporte
     const env = { ...process.env };
     delete env.CR_DATABASE_EVIDENCE;
     if (enabled) env.CR_DATABASE_EVIDENCE = "1";
-    const { stdout } = await capture(process.execPath, [jest, "--showConfig"], { cwd: path.resolve("apps/backend"), env, maxBuffer: 512 * 1024 });
+    const { stdout } = await capture(process.execPath, [jest, "--showConfig"], { cwd: path.join(repoRoot, "apps/backend"), env, maxBuffer: 512 * 1024 });
     const normalized = JSON.parse(stdout);
     for (const project of normalized.configs) {
       assert.equal(project.testLocationInResults, enabled && project.displayName.name === "local-database", project.displayName.name);
@@ -418,8 +423,8 @@ declare const expect: (value: unknown) => { toBe(value: unknown): void };
 test('typescript-name-secret', () => expect('typescript-value-secret').toBe('expected-secret'));
 `);
   await writeFile(path.join(root, "jest.config.cjs"), `
-const config = require(${JSON.stringify(path.resolve("apps/backend/jest.config.js"))});
-config.projects = config.projects.map(p => ({ ...p, rootDir: p.displayName === 'local-database' ? ${JSON.stringify(path.join(root, "apps/backend"))} : ${JSON.stringify(path.resolve("apps/backend"))}, transform: { '^.+\\\\.(t|j)s$': ${JSON.stringify(require.resolve("ts-jest"))} } }));
+const config = require(${JSON.stringify(path.join(repoRoot, "apps/backend/jest.config.js"))});
+config.projects = config.projects.map(p => ({ ...p, rootDir: p.displayName === 'local-database' ? ${JSON.stringify(path.join(root, "apps/backend"))} : ${JSON.stringify(path.join(repoRoot, "apps/backend"))}, transform: { '^.+\\\\.(t|j)s$': ${JSON.stringify(require.resolve("ts-jest"))} } }));
 module.exports = config;
 `);
   let report;
@@ -457,4 +462,249 @@ test("only a clean successful command and evidence cleanup may skip local public
     assert.equal(called, expected, JSON.stringify(report));
     assert.deepEqual(summary.databaseTests, report);
   }
+});
+
+test("a timeout before any failure retains only the unfinished file as a lead", async (t) => {
+  const { root, testFile } = await fixture(t);
+  const passing = "apps/backend/test/local-database/alpha.spec.ts";
+  await writeFile(path.join(root, passing), "test('passing-secret', () => expect(1).toBe(1));\n");
+  await writeFile(path.join(root, testFile), "test('hanging-secret', () => new Promise(() => {}), 60000);\n");
+  await writeFile(path.join(root, "sequencer.cjs"), `module.exports = class { sort(tests) { return tests.sort((a,b) => a.path.localeCompare(b.path)); } cacheResults() {} };\n`);
+  let report;
+  await assert.rejects(runWithDatabaseEvidence({
+    workspace: root, files: [passing, testFile], source,
+    onEvidence(value) { report = value; },
+    execute(env) { return runCommand([process.execPath, jest, "--config", "./jest.config.cjs", "--runInBand", "--testSequencer", "./sequencer.cjs", "--reporters", reporter], { cwd: root, env: { ...process.env, ...env }, timeoutMs: 4000 }); },
+  }), (error) => error.exitCode === 124 && error.signal === "SIGTERM");
+  assert.equal(report.availability, "partial");
+  assert.equal(report.progress.runner, "started");
+  assert.equal(report.progress.startedFiles, 2);
+  assert.equal(report.progress.completedFiles, 1);
+  assert.deepEqual(report.progress.inFlightFiles.map(f => f.file), [testFile]);
+  assert.equal(report.failures.length, 0);
+  assert.ok(!JSON.stringify(report).includes("secret"));
+});
+
+test("retries use final file results, including duplicate titles and skipped or todo cases", async (t) => {
+  const { root, testFile } = await fixture(t);
+  await writeFile(path.join(root, testFile), `
+jest.retryTimes(1);
+let attempts = 0;
+test.each([0, 1])('duplicate-secret', () => expect(++attempts).toBeGreaterThan(1));
+test('final-secret', () => expect('actual-secret').toBe('expected-secret'));
+test.skip('skipped-secret', () => {});
+test.todo('todo-secret');
+`);
+  let report;
+  await assert.rejects(runWithDatabaseEvidence({
+    workspace: root, files: [testFile], source,
+    onEvidence(value) { report = value; },
+    execute(env) { return runCommand([process.execPath, jest, "--config", "./jest.config.cjs", "--runInBand", "--reporters", reporter], { cwd: root, env: { ...process.env, ...env } }); },
+  }), (error) => error.exitCode === 1);
+  assert.equal(report.availability, "complete");
+  assert.equal(report.counts.failedTests, 1);
+  assert.equal(report.failures.length, 1);
+  assert.equal(report.failures[0].ordinal, 3);
+  assert.equal(report.failures[0].ordinalKind, "final-result");
+  assert.equal(report.failures[0].provisional, false);
+  assert.equal(report.progress.inFlightFiles.length, 0);
+  assert.ok(!JSON.stringify(report).includes("secret"));
+});
+
+test("real afterAll errors are suite errors rather than suite load errors", async (t) => {
+  const { root, testFile } = await fixture(t);
+  await writeFile(path.join(root, testFile), "test('passed-secret', () => {}); afterAll(() => { throw Error('teardown-secret'); });\n");
+  let report;
+  await assert.rejects(runWithDatabaseEvidence({
+    workspace: root, files: [testFile], source,
+    onEvidence(value) { report = value; },
+    execute(env) { return runCommand([process.execPath, jest, "--config", "./jest.config.cjs", "--runInBand", "--reporters", reporter], { cwd: root, env: { ...process.env, ...env } }); },
+  }), (error) => error.exitCode === 1);
+  assert.equal(report.availability, "complete");
+  assert.equal(report.failures[0].category, "suite-error");
+  assert.equal(report.counts.failedTests, 0);
+  assert.equal(report.counts.suiteErrors, 1);
+  assert.ok(!JSON.stringify(report).includes("secret"));
+});
+
+test("dotted source names and SHA-256 heads retain source binding", async (t) => {
+  const { root } = await fixture(t);
+  const testFile = "apps/backend/test/local-database/extra.cases.spec.ts";
+  await writeFile(path.join(root, testFile), "test('name-secret', () => expect(1).toBe(2));\n");
+  let report;
+  await assert.rejects(runWithDatabaseEvidence({
+    workspace: root, files: [testFile], source: { ...source, headSha: "c".repeat(64) },
+    onEvidence(value) { report = value; },
+    execute(env) { return runCommand([process.execPath, jest, "--config", "./jest.config.cjs", "--runInBand", "--runTestsByPath", testFile, "--reporters", reporter], { cwd: root, env: { ...process.env, ...env } }); },
+  }), (error) => error.exitCode === 1);
+  assert.equal(report.source.headSha, "c".repeat(64));
+  assert.equal(report.failures[0].file, testFile);
+  assert.equal(report.failures[0].fileId, 0);
+});
+
+test("failure before the Jest reporter starts is explicit and never restores arbitrary output", async (t) => {
+  const { root, testFile } = await fixture(t);
+  let report;
+  const phase = { id: "backend-database", commands: [{ argv: ["pnpm", "--filter", "backend", "test:local-database"] }] };
+  await assert.rejects(runPhaseSequence([phase], {
+    projectFailureMessage: projectDatabaseCommandFailure,
+    execute() { return runWithDatabaseEvidence({
+      workspace: root, files: [testFile], source,
+      onEvidence(value) { report = value; },
+      execute() { return runCommand([process.execPath, "-e", "console.error('build-secret'); process.exitCode = 2"], { cwd: root }); },
+    }); },
+  }), (error) => error.exitCode === 2 && !error.message.includes("build-secret"));
+  assert.equal(report.progress.runner, "not-observed");
+  assert.equal(report.progress.startedFiles, 0);
+  assert.equal(report.commandResult.exitCode, 2);
+});
+
+
+test("file completion commits final results; an interrupted batch keeps attempt ordinals", async (t) => {
+  const { s, optionsValue, root, testFile } = await sessionFixture(t);
+  const r = new Reporter({}, optionsValue);
+  const file = { path: path.join(root, testFile) };
+  r.onTestCaseResult(file, { status: "passed" });
+  r.onTestCaseResult(file, failed);
+  r.onTestResult(file, { testResults: [failed] });
+  r.onRunComplete(null, { numFailedTests: 1, numRuntimeErrorTestSuites: 0 });
+  const wire = await readFile(s.reportPath, "utf8");
+  const prefix = wire.slice(0, wire.indexOf('{"type":"file-complete"'));
+  const partial = parseDatabaseEvidence(prefix, s);
+  assert.equal(partial.failures.length, 1);
+  assert.equal(partial.failures[0].ordinal, 2);
+  assert.equal(partial.failures[0].ordinalKind, "attempt");
+  assert.equal(partial.failures[0].provisional, true);
+  assert.equal(partial.progress.inFlightFiles.length, 1);
+  const complete = parseDatabaseEvidence(wire, s);
+  assert.equal(complete.failures[0].ordinal, 1);
+  assert.equal(complete.failures[0].ordinalKind, "final-result");
+  assert.equal(complete.failures[0].provisional, false);
+});
+
+test("retry attempts can hit their cap without truncating complete final evidence", async (t) => {
+  const { s, optionsValue, root, testFile } = await sessionFixture(t);
+  const r = new Reporter({}, optionsValue);
+  const file = { path: path.join(root, testFile) };
+  for (let i = 0; i < 70; i++) r.onTestCaseResult(file, failed);
+  r.onTestResult(file, { testResults: [{ status: "passed" }] });
+  r.onRunComplete(null, { numFailedTests: 0, numRuntimeErrorTestSuites: 0 });
+  const report = await collectDatabaseEvidence(s);
+  assert.equal(report.complete, true);
+  assert.equal(report.truncated, false);
+  assert.equal(report.failures.length, 0);
+  assert.equal(report.counts.exact, true);
+});
+
+test("unknown files stay distinct and caps produce lower-bound counts", async (t) => {
+  const { s, optionsValue } = await sessionFixture(t);
+  const r = new Reporter({}, optionsValue);
+  for (let i = 0; i < 130; i++) {
+    const file = { path: `/private/unknown-secret/${i}.spec.ts` };
+    r.onTestCaseResult(file, failed);
+    r.onTestResult(file, { testResults: [failed] });
+  }
+  r.onTestStart({ path: "x".repeat(5000) });
+  r.onTestStart({ path: null });
+  r.onRunComplete(null, { numFailedTests: 130, numRuntimeErrorTestSuites: 0 });
+  const report = await collectDatabaseEvidence(s);
+  assert.equal(report.complete, true);
+  assert.equal(report.truncated, true);
+  assert.equal(report.counts.exact, false);
+  assert.equal(report.counts.failedTests, 128);
+  assert.equal(report.progress.startedFiles, 128);
+  assert.equal(new Set(report.failures.map(f => f.fileRun)).size, 64);
+  assert.ok(report.failures.every(f => f.fileId === null));
+  assert.ok(!JSON.stringify(report).includes("secret"));
+});
+
+test("bounded result scanning keeps captured evidence instead of rejecting runner totals", async (t) => {
+  const { s, optionsValue, root, testFile } = await sessionFixture(t);
+  const r = new Reporter({}, optionsValue);
+  r.onTestResult({ path: path.join(root, testFile) }, { testResults: [...Array(100000).fill({ status: "passed" }), failed] });
+  r.onRunComplete(null, { numFailedTests: 1, numRuntimeErrorTestSuites: 0 });
+  const report = await collectDatabaseEvidence(s);
+  assert.equal(report.complete, true);
+  assert.equal(report.truncated, true);
+  assert.equal(report.counts.exact, false);
+});
+
+test("maximum producer shapes retain the last file and expanded reports remain exportable", async (t) => {
+  const { s, optionsValue, root } = await sessionFixture(t);
+  const r = new Reporter({}, optionsValue);
+  const worst = { ...failed, location: { line: 100000, column: 100000 }, failureDetails: [{ matcherResult: { name: "toBeGreaterThan" } }] };
+  for (let i = 0; i < 128; i++) {
+    const file = { path: `/unknown/${i}` };
+    r.onTestStart(file);
+    if (i === 0) {
+      for (let j = 0; j < 99936; j++) r.onTestCaseResult(file, { status: "passed" });
+      for (let j = 0; j < 64; j++) r.onTestCaseResult(file, worst);
+      r.onTestResult(file, { testResults: [...Array(99936).fill({ status: "passed" }), ...Array(64).fill(worst)] });
+    } else if (i < 127) r.onTestResult(file, { testResults: [] });
+  }
+  const prefix = await readFile(s.reportPath, "utf8");
+  assert.ok(Buffer.byteLength(prefix) < Reporter.LIMITS.bytes);
+  assert.equal(parseDatabaseEvidence(prefix, s).progress.inFlightFiles[0].fileRun, 127);
+  r.onTestResult({ path: "/unknown/127" }, { testResults: [] });
+  r.onRunComplete(null, { numFailedTests: 64, numRuntimeErrorTestSuites: 0 });
+  assert.equal((await collectDatabaseEvidence(s)).complete, true);
+
+  // A more expensive public shape: all 128 files unfinished with maximum source names.
+  const records = [{ type: "header", schemaVersion: 2, nonce: s.nonce }];
+  const catalog = [];
+  for (let i = 0; i < 128; i++) {
+    catalog.push({ file: 'x'.repeat(240), fileSha256: 'a'.repeat(64) });
+    records.push({ type: "file-start", run: i, file: i });
+    if (i < 64) records.push({ type: "attempt-failure", run: i, ordinal: 100000, line: 100000, column: 100000, category: "toBeGreaterThan" });
+  }
+  const report = parseDatabaseEvidence(records.map(r => JSON.stringify(r) + "\n").join(""), { ...s, catalog });
+  assert.equal(report.progress.startedFiles, 128);
+  assert.equal(report.truncated, true);
+  assert.ok(report.progress.omittedInFlightFiles > 0);
+  assert.ok(report.progress.inFlightFiles.length > 0);
+  assert.equal(report.failures.length, 64);
+  const exported = await exportDatabaseEvidence(report, { RUNNER_TEMP: root, MIGRATION_GATE_CI_DATABASE_REPORT: "1" });
+  assert.equal(exported.availability, "available");
+  assert.ok((await fs.stat(exported.path)).size <= 65536);
+});
+
+test("local export failures clean owned paths or explicitly retain replaced paths", async (t) => {
+  for (const stage of ["realpath", "open", "published-stat", "replacement", "temporary-replacement"]) {
+    await t.test(stage, async (t) => {
+      const { root } = await fixture(t);
+      let directory;
+      let linked = false;
+      let injected = false;
+      const io = { ...fs,
+        async mkdtemp() { directory = await fs.mkdtemp(path.join(root, "report-")); return directory; },
+        async realpath(p) { if (stage === "realpath" && !injected) { injected = true; throw Error("secret"); } return fs.realpath(p); },
+        async open(...args) { if (stage === "open") throw Error("secret"); return fs.open(...args); },
+        async link(from, to) {
+          await fs.link(from, to); linked = true;
+          if (stage === "replacement") { await fs.unlink(to); await writeFile(to, "foreign-secret"); }
+          if (stage === "temporary-replacement") { await fs.unlink(from); await writeFile(from, "foreign-secret"); }
+        },
+        async lstat(p) { if (stage === "published-stat" && linked && !injected && p.endsWith(".json")) { injected = true; throw Error("secret"); } return fs.lstat(p); },
+      };
+      const exported = await exportDatabaseEvidence({ safe: true }, {}, { io });
+      assert.equal(exported.availability, "unavailable");
+      if (stage.endsWith("replacement")) {
+        assert.equal(exported.cleanup, "retained");
+        assert.equal(exported.retainedPath, directory);
+        const name = stage === "replacement" ? "local-migration-database-failures.json" : (await fs.readdir(directory)).find(f => f.startsWith(".database-report-"));
+        assert.equal(await readFile(path.join(directory, name), "utf8"), "foreign-secret");
+      } else {
+        assert.equal(exported.cleanup, "complete");
+        await assert.rejects(fs.lstat(directory), { code: "ENOENT" });
+      }
+    });
+  }
+});
+
+test("reporter integration test resolves repository paths independently of caller cwd", async (t) => {
+  const { root } = await fixture(t);
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const { stdout } = await capture(process.execPath, ["--test", "--test-reporter=tap", "--test-name-pattern=actual repository Jest configuration", fileURLToPath(import.meta.url)], { cwd: root, env });
+  assert.match(stdout, /pass 1/);
 });
