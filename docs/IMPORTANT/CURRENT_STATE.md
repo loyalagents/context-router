@@ -42,14 +42,17 @@ hardware is M1 Max/64 GiB/macOS 15.1.1. Other hardware, signed distribution,
 cross-boot/forced-loss recovery and complete colleague disk budgets need evidence.
 Controlled Candidate 14-to-corrected-app replacement now has scoped synthetic
 state/authority evidence; prior personal-transition receipts support real-asset
-reuse. The Safari-quarantined B archive was refused as damaged. Sealed C repaired
-whole-bundle integrity and passed native/installed/replacement checks; renewed
-downloaded launch remains pending. The integrated source includes merged #173's
-saved-preference refresh and #175's bounded packaging traversal. Artifact D and
-final qualification are pending at the [candidate-freeze checkpoint](../plans/active/colleague-pilot/plan.md#integrated-candidate-freeze-2026-10-12).
+reuse. The Safari-quarantined B archive was refused as damaged; whole-bundle
+sealing is repaired. Integrated D includes #173's saved-preference refresh and
+#175's bounded packaging traversal. D passed installed/replacement and #170/#173
+packaged UI checks; its source passed the full local gate and exact-head CI. The
+user reported completing per-app Open Anyway, and the matching downloaded menu
+was observed. Normal test-menu Quit still needs confirmation and cleanup evidence;
+downloaded AppKit Ready/dashboard and model-enabled startup remain unproved.
+See [current scoped results](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12).
 Model quality/cancellation exceptions E/H, rejected PDF and the separately active
-wrong-person-attribution investigation remain invitation dependencies; #173 still
-needs its installed D UI retest. No attribution implementation is included here.
+wrong-person-attribution investigation remain invitation dependencies. No
+attribution implementation is included here.
 
 Follow [AGENTS.md](../../AGENTS.md) and [the workflow](../useful/AGENT_WORKFLOW.md).
 One writer owns the main playground checkout; independent worktree tasks need

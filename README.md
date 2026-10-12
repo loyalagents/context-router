@@ -8,8 +8,10 @@ The migration foundation is delivered. **Assisted pilot qualification is active.
 Claude Code/Codex CLI have scoped local evidence.
 Claude Desktop's standalone bridge has passed the main client checks; its live
 controlled uncertain-mutation follow-up passed. Whole-app sealing is repaired;
-the integrated D artifact and renewed downloaded launch remain pending at the
-[candidate-freeze checkpoint](docs/plans/active/colleague-pilot/plan.md#integrated-candidate-freeze-2026-10-12).
+artifact D passed installed, replacement and packaged UI checks, with scoped
+Safari launch evidence and full validation on its source. Downloaded-menu cleanup
+and Ready/dashboard acceptance remain open; see the
+[current pilot results](docs/plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12).
 ChatGPT desktop follows; this is not a qualified general release.
 See [current support and limitations](docs/current/LOCAL_APPLICATION.md).
 

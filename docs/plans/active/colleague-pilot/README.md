@@ -1,6 +1,6 @@
 # Assisted Colleague Pilot
 
-- Status: integrated candidate freeze; seal repair and C native/installed/replacement checks passed; D build, installed UI, downloaded launch and final qualification pending
+- Status: D installed/replacement/UI and source validation passed; downloaded-menu cleanup remains pending and downloaded Ready/dashboard remains unproved; scoped review follow-up active
 - Priority: current primary outcome; [plan and evidence](plan.md)
 - Owner: product owner; read-only coordinator `/root`; seal-repair sole writer/integrator `/root/delivery_review` in `codex/pilot-interruption-delivery`
 - Audience: a few Git-capable colleagues, initially Apple Silicon Macs
@@ -157,8 +157,10 @@ No automatic merging, releases, resets or broad recovery operations.
 The user selected the assisted unsigned-publisher route, the standalone bridge
 with separately pinned Node, and qualification on the measured Mac. The agreed
 milestone includes seal repair, compatible replacement, downloaded launch and
-required final validation. The [dated freeze checkpoint](plan.md#integrated-candidate-freeze-2026-10-12)
-records which checks remain pending; subsequent immutable receipts belong in
+required final validation. The [current results](plan.md#d-results-and-review-follow-up-2026-10-12)
+record D's scoped acceptance and remaining manual limits; the
+[dated freeze checkpoint](plan.md#integrated-candidate-freeze-2026-10-12) preserves
+the earlier pending state. Subsequent immutable receipts remain in
 [PR #174](https://github.com/loyalagents/context-router/pull/174). Cohort invitation,
 trusted acquisition, complete disk accounting and supported recovery limits remain
 separate dependencies. Wrong-person attribution has a separately activated owner;

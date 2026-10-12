@@ -1,6 +1,6 @@
 # Assisted colleague pilot: interruption and delivery
 
-- Status: integrated candidate freeze on 2026-10-12; seal repair and C native/installed/replacement checks passed; D and final qualification pending
+- Status: D installed/replacement/UI and source validation passed; downloaded-menu cleanup remains pending and downloaded Ready/dashboard remains unproved; bounded test/docs review follow-up active
 - Scope: close the accepted Claude interruption follow-up, then rehearse the smallest supported installation/replacement route
 - Base: started at `7d2df8516115661d97287d34647f17e4a2e48701`; integrates verified main `208e0494fec1817c1855b83367c392b67f76a034` (#173/#175); branch `codex/pilot-interruption-delivery`
 - Owner: seal-repair checkpoint sole main-checkout writer/integrator `/root/delivery_review`; coordinator `/root` and other agents are read-only
@@ -40,12 +40,85 @@ reason to rebuild or repeat identical tests.
 | Completed, carry forward | #172 final source validation, independent complete-diff review and exact-head CI passed. Later receipts in chat `01a129d8-b20c-75e2-8295-8022b0958c93` record final dashboard verification, actual **35 min 5 sec** inactivity on the final pair, visible expiry followed by a separate explicit successful read, two-credential independence/rotation/revocation, and all 11 installed smoke phases. |
 | Completed, carry forward | Full combined-tree local gate: **12/12 passed** at `context-router-ci-assessment/integration-final/local-gate/local-migration-gate-summary.json` in retained private temporary evidence. [Standard main CI](https://github.com/loyalagents/context-router/actions/runs/38183133729) completed successfully. Earlier EPIPE and browser-exit failures remain recorded with the later passing diagnostics/runs; their causes are not retrospectively proven. |
 | Completed, carry forward | [Main Linux aggregate](https://github.com/loyalagents/context-router/actions/runs/38183133767) completed successfully on `7d2df8516115661d97287d34647f17e4a2e48701`, verified 2026-10-11 23:47 UTC. No duplicate run was started or existing run cancelled. |
-| Changed inputs, affected verification | #170 changes grant-rejection UI and #173 refreshes saved preferences after document apply. C includes #170 but its three temporary product-UI attempts failed; C excludes #173. Integrated D needs its own installed product journeys. #171/#175 change gate timing/traversal evidence, not application runtime behavior. |
+| Changed inputs, affected verification | #170 changes grant-rejection UI and #173 refreshes saved preferences after document apply. C includes #170 but its three temporary product-UI attempts failed; C excludes #173. D passed #170 and two response-injected #173 packaged UI journeys; the final gate separately renewed source-browser real-backend/fake-model coverage. #171/#175 change gate timing/traversal evidence, not application runtime behavior. |
 | Completed, bounded carry forward | Actual Claude observed controlled post-commit reply loss, reported uncertainty, made no mutation replay and recovered on one explicit read. The earlier 39 ms Stop attempt remains inconclusive; the separately approved follow-up below closes the missing observation. |
 | Completed, bounded carry forward | The prior personal Candidate 14-to-corrected-app transition retained the same root and real compatible weights without reset/redownload. Composite receipts, unchanged model admission/runtime inputs and current process/file metadata support asset reuse, with the limits below. |
-| Completed, bounded carry forward | Both Candidate 14-to-B and B-to-sealed-C synthetic rehearsals passed: preserved state, authority continuity, backup, one committed lost-reply mutation, explicit recovery read and durable restart. C passed 198 native cases and all eleven installed smoke phases; D does not inherit C's artifact identity. |
-| Genuinely outstanding | Trusted colleague acquisition and actual quarantined download-to-launch, complete colleague disk budget, supported recovery acceptance limits, and invitation-blocking PDF/attribution/stale-display disposition. Same-artifact replacement and a model marker are not real A-to-B/model evidence. |
-| Scope decision | User keeps qualification on the measured M1 Max / 64 GiB / macOS 15.1.1 Mac; another Mac is a later compatibility trial. User selected the unsigned-publisher route. B's quarantined launch failed; C repairs the seal but renewed launch remains pending. No reset release is designated or needed. |
+| Completed, bounded carry forward | Candidate 14-to-B, B-to-C and B-to-D synthetic rehearsals passed: preserved state, authority continuity, backup, one committed lost-reply mutation, explicit recovery read and durable restart. D passed its own eleven installed phases and four replacement phases; its artifact identity remains distinct from C. |
+| Genuinely outstanding | Trusted colleague acquisition, downloaded AppKit Ready/dashboard and model-enabled startup, normal test-menu Quit/cleanup, complete colleague disk budget, supported recovery acceptance limits, and invitation-blocking PDF/attribution disposition. Same-artifact replacement and a model marker are not real A-to-B/model evidence. |
+| Scope decision | User keeps qualification on the measured M1 Max / 64 GiB / macOS 15.1.1 Mac; another Mac is a later compatibility trial. User selected the unsigned-publisher route. B's quarantined launch failed; D passed strict sealing and exact-byte Safari acquisition. The user reported per-app Open Anyway, and the matching downloaded menu was observed, with the remaining limits below. No reset release is designated or needed. |
+
+### D results and review follow-up: 2026-10-12
+
+Artifact D remains bound to clean source
+`7a5b8400f18a79bda98c3a464bed1fcbd6a2a930`, tree
+`d80f623d2e01de3e6d5da4b55413ade63d91cbec`, based on main `208e0494`.
+Its copied-input digest is
+`e509ba0023d9b8e38e7a67ae64635297209376cac375efa5931de9ce467d4ec9`.
+The dated freeze below records what was pending then; this additive checkpoint
+records the later results without relabeling D as a build of a newer source head.
+
+- D passed strict package/native seal verification, **11/11 installed smoke
+  phases** and **4/4 B-to-D replacement phases**, including authority/state
+  continuity and explicit recovery after one committed lost-reply mutation.
+- #170's installed rejected-grant journey passed, including persisted grant
+  inspection and credential cleanup. #173 passed its two response-injected
+  packaged UI journeys: confirmed CREATE/UPDATE refresh with draft preservation,
+  then failed refresh and read-only retry. Those checks demonstrate packaged UI
+  wiring, not actual import/persistence or model quality. The full gate separately
+  renewed the real-backend/fake-model source-browser matrix.
+- Safari acquired the independently pinned D bytes with browser-created
+  quarantine. **The user reported completing per-app Open Anyway**; the matching
+  downloaded menu was observed. The damaged-app refusal changed to the expected
+  unsigned-app warning. The preserved original B app owned port 8787, so
+  **downloaded AppKit Ready/dashboard remains unproved**. The exact downloaded
+  guardian separately passed isolated runtime, dashboard HTTP 200 and normal
+  shutdown; that CLI observation does not establish AppKit Ready.
+- The full local gate passed **12/12** in 1,523,446 ms on clean `7a5b8400`, with
+  base comparison performed, caller integrity true and no cleanup errors. The
+  gate and its independent observer exited zero; all tracked test resources were
+  absent. Exact-head [standard CI, 8/8 jobs](https://github.com/loyalagents/context-router/actions/runs/38212415516)
+  and [aggregate CI](https://github.com/loyalagents/context-router/actions/runs/38212415581)
+  passed on that source.
+- The actual-Claude controlled lost-reply result stays bound to retained B and
+  standalone bridge `e9246e1`: one commit, honest uncertainty, no automatic replay,
+  separate explicit recovery read, and completed credential/configuration cleanup.
+  Unchanged bridge/MCP boundaries support carry-forward to D; no new D live-client
+  test is claimed. Historical real-GGUF reuse remains specific to its earlier
+  transition. D has no new model-enabled startup or inference-quality evidence.
+
+| D identity / receipt | SHA-256 |
+| --- | --- |
+| Manifest | `af2738aae3795ad1f776c65f7834afb5ff471a5ab5a726ce3fdd084ae906700e` |
+| External final-byte receipt | `ddba3c113e07a9d00590d969af6a2436b5fdb3f9292b884a625d7992e904bb0b` |
+| ZIP, 284,638,941 bytes | `3a4ebedfe84991b4ea4f1c6d7dea727b5b4d1fea3bd8f55d54a3258c5f6d3350` |
+| Installed smoke | `e6b87303c1f405494ef24a4638faaa157feac2444fec0040022bce43ad604d25` |
+| B-to-D replacement | `03e2eea182d2467176b4709c0b470c6da227ad9e6c0a3ff80cc1be4eb45791a8` |
+| #170 installed UI | `0783cfa80332ed0a737d9077de7b64009b3ec6a5a25de470d42f2011381a501e` |
+| #173 packaged UI | `fde002ec1b512e90d87f52a2b1fce30ad29e6f0682762d4ce7b0c499d50bb173` |
+| Final local gate | `6276034361043f1ad3ce123c44539c65a19b76ab11b65dc38a2a04fcf9835174` |
+| Gate cleanup observer | `fff4d740c0241967a555c7672020cd9b29e08e3a1831af3e810a3c1b0e38adec` |
+
+**Finalization remains open:** normal Quit of the downloaded test-menu copy still
+needs user confirmation and matching cleanup evidence. The AppKit/model limits
+above, trusted acquisition, complete disk accounting, PDF triage, attribution
+investigation and supported recovery/platform limits remain explicit. Ad-hoc
+sealing does not authenticate a publisher or provide notarization; local Safari
+acquisition does not qualify another Mac. C's negative runs remain failed.
+
+The user authorized a bounded review follow-up: add a valid-JSON/source-digest
+post-seal regression with a same-mutation reseal positive control; document the
+unbundled legacy verifier's removal condition; reconcile current status here and
+in entry-point docs. This changes one native test and documentation only. Runtime,
+packager, backend/web, dependency pins and gate implementation stay unchanged; D
+remains the qualified `7a5b8400` artifact and does not need a rebuild. The earlier
+full gate supports unchanged production coverage; affected test/docs readers are
+renewed for this correction. The previous native
+198/198 run is historical coverage; the added test requires its own focused run.
+Affected docs readers, independent delta review, focused native package checks
+and exact new-head CI are required for this follow-up. Results and unchanged-input
+carry-forward evidence are tracked in [PR #174](https://github.com/loyalagents/context-router/pull/174)
+without a new source commit merely to restate test outcomes. No merge, binary
+publication, invitation or personal-state change is authorized.
 
 ### Integrated candidate freeze: 2026-10-12
 

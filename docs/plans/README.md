@@ -47,7 +47,8 @@ main `208e049` (#173/#175) in
 `/root/delivery_review` as sole writer/integrator for the seal-repair checkpoint.
 The [pilot record](active/colleague-pilot/plan.md) reconciles the merged Claude
 bridge and its accepted interruption follow-up with delivery/replacement work.
-Sealed C's evidence remains scoped to its original inputs; integrated artifact D
-and final gates are pending at the documented freeze checkpoint. The “Fix
+Sealed C's evidence remains scoped to its original inputs. D's installed,
+replacement, packaged UI and source validation passed; [current scoped results](active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12)
+retain the open downloaded-menu cleanup and Ready/dashboard limits. The “Fix
 wrong-person attribution” chat owns a separate active synthetic investigation;
 that invitation dependency is neither fixed nor included in this milestone.

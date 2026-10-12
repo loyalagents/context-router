@@ -6,9 +6,12 @@ for evidence and [pilot preparation](../plans/active/colleague-pilot/README.md)
 for the next acceptance work. Original human acceptance was partial; neither merge
 nor this runbook qualifies distribution or every recovery scenario.
 This is a private build without Developer ID signing or notarization. The
-sealed C candidate passed strict ad-hoc whole-bundle verification; it supplies
-no publisher authentication. Integrated D and renewed downloaded launch remain
-pending at the [candidate-freeze checkpoint](../plans/active/colleague-pilot/plan.md#integrated-candidate-freeze-2026-10-12). The declared
+sealed D candidate passed strict ad-hoc whole-bundle verification, installed and
+replacement checks; it supplies no publisher authentication. Safari acquired the
+exact pinned bytes with quarantine. The user reported completing per-app Open
+Anyway, and the matching downloaded menu was observed. Normal test-menu Quit and
+cleanup remain pending; downloaded AppKit Ready/dashboard and model-enabled startup
+remain unproved. See [current results](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12). The declared
 pilot is MacBook Pro 18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Macs and
 native Windows/Linux are not qualified. The source/manual modes remain available.
 
@@ -29,13 +32,19 @@ refused as damaged: its executable-only ad-hoc signature does not seal the compl
 app bundle. That archive is not ready to share. Do not
 disable Gatekeeper or strip quarantine to treat this as a distributed release.
 
-The user selected the unsigned-publisher route. C repairs the integrity seal;
-D must include the integrated #173 UI and receive its own artifact/installed
-qualification. Quarantined download-to-launch acceptance and a trusted acquisition
-channel remain required. Keep the source revision,
+The user selected the unsigned-publisher route. D repairs the integrity seal and
+includes the qualified #173 packaged UI wiring. Its local Safari/menu observation
+has the limits above; a trusted colleague acquisition channel and the remaining
+downloaded-app acceptance still need evidence. Keep the source revision,
 app manifest, archive checksum and acquisition channel with each handoff. A local
 build or extracted temporary copy does not demonstrate downloaded-app Gatekeeper
 behavior. Scope remains the measured Mac above; another Mac is a compatibility trial.
+
+The unbundled `legacy-package-manifest.mjs` verifier exists only for explicitly
+approved retained-v1 rehearsals with an independently trusted manifest digest.
+Remove it when the last approved v1 artifact rehearsal and its callers/tests are
+retired together. It is not a production fallback or permission to accept v1 in a
+new native candidate.
 
 Place the whole application in a private user-owned location, then open it in
 Finder. The installed application bundles Node, the backend, dashboard and selected

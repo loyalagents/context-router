@@ -5,7 +5,7 @@ import { mkdtemp, mkdir, writeFile, copyFile, rm, chmod, symlink, link, readFile
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
-import { inventoryPayload, verifyPackage, sealedByteReceipt } from '../../src/package-manifest.mjs';
+import { inventoryPayload, verifyPackage, sealedByteReceipt, validatePackageManifest } from '../../src/package-manifest.mjs';
 import { writeSignedFixture, sealFixture, fixtureInfo } from '../fixtures/signed-package.mjs';
 assert.equal(process.platform, 'darwin'); assert.equal(process.arch, 'arm64');
 const required = ['Contents/Resources/bin/node', 'Contents/Resources/model/llama-server', 'Contents/Resources/app/local-ui.mjs',
@@ -76,7 +76,7 @@ for (const variant of ['altered', 'missing', 'extra', 'mode', 'hardlink', 'exter
   });
 }
 for (const variant of ['executable', 'seal', 'manifest', 'payload']) {
-  test(`platform seal rejects post-signing ${variant} changes`, async t => {
+  test(`package verification rejects post-signing ${variant} changes`, async t => {
     const f = await fixture(t);
     const file = variant === 'executable' ? f.executable : variant === 'seal' ? path.join(f.root, 'Contents/_CodeSignature/CodeResources') : variant === 'manifest' ? f.manifestFile : path.join(f.root, required[0]);
     const bytes = await readFile(file); bytes[variant === 'executable' ? 4096 : bytes.length - 1] ^= 1; await writeFile(file, bytes);
@@ -88,6 +88,32 @@ for (const variant of ['executable', 'seal', 'manifest', 'payload']) {
     }
   });
 }
+
+test('platform seal rejects a valid post-signing manifest source change', async t => {
+  const f = await fixture(t);
+  f.manifest.source = 'b'.repeat(64);
+  await writeFile(f.manifestFile, JSON.stringify(f.manifest));
+  assert.deepEqual(JSON.parse(await readFile(f.manifestFile, 'utf8')), f.manifest);
+  assert.equal(validatePackageManifest(f.manifest), f.manifest);
+  assert.deepEqual(await inventoryPayload(f.root), f.manifest.files);
+  await assert.rejects(verifyPackage(f.root, f.manifest));
+  for (const result of [f.run(), f.guard()]) {
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, 'Managed command unavailable\n');
+  }
+  await assert.rejects(lstat(path.join(f.root, 'managed-v1')), { code: 'ENOENT' });
+
+  // The identical valid metadata is accepted once its platform seal is refreshed.
+  const changedManifest = await readFile(f.manifestFile);
+  sealFixture(f.root);
+  assert.deepEqual(await readFile(f.manifestFile), changedManifest);
+  await verifyPackage(f.root, f.manifest);
+  const result = f.run(); // Verify only; never launch the inert fixture runtime.
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).source, f.manifest.source);
+  await assert.rejects(lstat(path.join(f.root, 'managed-v1')), { code: 'ENOENT' });
+});
 
 for (const variant of ['executable', 'writable', 'hardlink']) {
   test(`native verifier rejects a sealed resource envelope with unsafe ${variant}`, async t => {
