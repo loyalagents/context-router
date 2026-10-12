@@ -106,6 +106,13 @@ export function createCompletionBudget({ controller, cancellationError, maximum 
 
 export const plannedTrials = (cases) => cases.flatMap((entry) => [0, 1].map((repetition) => ({ caseId: entry.id, repetition, status: 'not_run' })));
 
+function containsForeignValue(value, forbiddenValues) {
+  if (typeof value === 'string') return forbiddenValues.some((forbidden) => value.includes(forbidden));
+  if (Array.isArray(value)) return value.some((item) => containsForeignValue(item, forbiddenValues));
+  if (value && typeof value === 'object') return Object.values(value).some((item) => containsForeignValue(item, forbiddenValues));
+  return false;
+}
+
 /** Facts, evidence and execution are distinct; summaries are not preference facts. */
 export function scoreObservation(entry, result) {
   const expected = entry.expectedProposals.map((item) => JSON.stringify([item.slug, item.value]));
@@ -119,7 +126,7 @@ export function scoreObservation(entry, result) {
   }));
   const runtimeCompleted = ['success', 'no_matches'].includes(result?.status);
   const subjectViolations = (result?.suggestions ?? []).filter((item) =>
-    entry.identityBasis === 'unavailable-to-extraction' || entry.forbiddenValues.some((value) => (JSON.stringify(item.newValue) ?? 'null').includes(JSON.stringify(value))));
+    entry.identityBasis === 'unavailable-to-extraction' || containsForeignValue(item.newValue, entry.forbiddenValues));
   const attributionCorrect = subjectViolations.length === 0;
   const expectedFactsPresent = missingFacts.length === 0;
   const evidenceCorrect = evidence.every((item) => item.quoted && item.containsValue);
@@ -180,6 +187,13 @@ export async function buildBinding(options = {}) {
   return { schemaVersion: 1, node: process.version, sourceSha256: digest(source), buildSha256: digest(built), source, built };
 }
 
+export async function readApprovedBuildBinding(file, expectedSha256, options = {}) {
+  assert.match(expectedSha256, /^[a-f0-9]{64}$/u);
+  const bytes = await readFile(file, { signal: options.signal });
+  assert.equal(sha256(bytes), expectedSha256, 'Build binding bytes differ from the approved private configuration');
+  return JSON.parse(bytes);
+}
+
 async function hashAsset(file, signal) {
   const hash = createHash('sha256');
   const before = await lstat(file, { bigint: true });
@@ -206,6 +220,7 @@ async function runLive(configPath, approvedConfigSha256) {
   assert.equal(config.modelBytes, modelPin.bytes);
   assert.equal(config.maximumAnalyses, 10); assert.equal(config.maximumCompletions, 60); assert.equal(config.maximumMinutes, 45);
   assert.match(config.runtimeSha256, /^[a-f0-9]{64}$/u);
+  assert.match(config.buildBindingSha256, /^[a-f0-9]{64}$/u);
   assert.equal(config.runtimeArchiveSha256, archivePin);
   assert.equal(process.version, 'v24.21.0');
   const currentHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8', timeout: 5000 }).trim();
@@ -239,7 +254,7 @@ async function runLive(configPath, approvedConfigSha256) {
   receipt.lifecycle = await runOwnedSession({ controller,
     async startRuntime(signal) {
       receipt.build = await buildBinding({ signal, deadline: overallDeadline });
-      assert.deepEqual(receipt.build, JSON.parse(await readFile(config.buildBindingPath, 'utf8')));
+      assert.deepEqual(receipt.build, await readApprovedBuildBinding(config.buildBindingPath, config.buildBindingSha256, { signal }));
       assert.equal(await realpath(config.modelPath), config.modelPath);
       const modelBefore = await lstat(config.modelPath, { bigint: true });
       assert.ok(modelBefore.isFile() && modelBefore.size === BigInt(modelPin.bytes) && modelBefore.nlink === 1n);

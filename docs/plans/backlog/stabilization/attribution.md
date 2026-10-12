@@ -129,7 +129,8 @@ facts. Historical manifests/receipts and recovery exception H remain unchanged.
   seed 42 and output maximum 2,048. Keep existing workflow/adapter/correction
   caps. Bind source, fixture, catalog, prompt/schema, runtime/model/config and
   actual returned evidence to the receipt.
-  The reviewed private configuration's SHA-256 is required on the run command.
+  The reviewed private configuration's SHA-256 is required on the run command;
+  that configuration also pins the exact build-binding file's SHA-256.
   Recheck source/build/helper/runtime closure and model metadata after use; drift
   prevents success while retaining all observations. Initial/consolidation
   subject violations remain separate from final actionable utility and evidence.
@@ -169,7 +170,12 @@ facts. Historical manifests/receipts and recovery exception H remain unchanged.
   `41df13c126456f8e5fab2057c86a790067a85ea1dfd8fbc0071cc45fbba56262`;
   complete runtime closure:
   `5b26ae921d953cad3b58e6e73a5bea33437e7398cda52211a84a5844abd4d6c0`.
-- Stable preparation checks passed: four focused Jest suites, **67 tests**;
+- Final preparation review found two harness issues: embedded foreign values
+  could evade stage attribution scoring, and the private configuration did not
+  pin the build-binding file's contents. Both regressions failed first and now
+  pass; foreign string/structured values are detected, and replacement binding
+  bytes are rejected even if they describe a new current build.
+- Stable preparation checks passed: four focused Jest suites, **69 tests**;
   Markdown links (146 files); attribution test/harness exclusion from the existing
   production outbound inventory. The scanner and baseline remain unchanged.
 - Targeted checks passed; final validation pending. Actual reproduction and

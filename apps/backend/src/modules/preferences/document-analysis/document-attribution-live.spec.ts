@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 function exercise(code: string) {
   const moduleUrl = pathToFileURL(join(__dirname, '../../../../test/document-attribution/attribution-live.mjs')).href;
   const output = execFileSync(process.execPath, ['--input-type=module'], {
-    input: `import { runOwnedSession, createCompletionBudget, scoreObservation, scoreStages, plannedTrials, finishReceipt } from ${JSON.stringify(moduleUrl)};\n${code}`,
+    input: `import { runOwnedSession, createCompletionBudget, scoreObservation, scoreStages, plannedTrials, finishReceipt } from ${JSON.stringify(moduleUrl)};\nconst harnessUrl = ${JSON.stringify(moduleUrl)};\n${code}`,
     encoding: 'utf8',
     timeout: 3000,
     maxBuffer: 32 * 1024,
@@ -171,5 +171,52 @@ describe('attribution live harness controls (fake resources only)', () => {
     expect(result.trials[0].calls[0].parsed.suggestions).toEqual(['retained']);
     expect(result.trials.map((trial) => trial.status)).toEqual(['completed', 'incomplete', 'not_run']);
     expect(result.integrity.sourceBuildAndHelpersUnchanged).toBe(false);
+  });
+
+  it('rejects an embedded foreign initial value even after correct consolidation and final output', () => {
+    const result = exercise(`
+      const entry = { documentText: 'Maya: maya@example.test. Jordan: jordan@example.test.', activePreferences: [],
+        expectedProposals: [{ slug: 'profile.email', value: 'maya@example.test' }], forbiddenValues: ['jordan@example.test'] };
+      const own = { slug: 'profile.email', newValue: 'maya@example.test', sourceSnippet: 'maya@example.test' };
+      const combined = { ...own, newValue: 'maya@example.test, jordan@example.test' };
+      const stageScores = scoreStages(entry, [
+        { stage: 'extraction', status: 'completed', parsed: { suggestions: [combined] } },
+        { stage: 'consolidation', status: 'completed', parsed: { suggestion: own } },
+      ]);
+      const score = scoreObservation(entry, { status: 'success', suggestions: [own] });
+      const receipt = { lifecycle: { completed: true, cleanupComplete: true }, trials: [{ status: 'completed', score, stageScores }] };
+      finishReceipt(receipt, { sourceBuildAndHelpersUnchanged: true, modelUnchanged: true, runtimeUnchanged: true });
+      const structured = scoreObservation(entry, { status: 'success', suggestions: [{ ...own, newValue: { emails: ['maya@example.test', { alternate: 'jordan@example.test' }] } }] });
+      console.log(JSON.stringify({ receipt, structured }));
+    `);
+    expect(result.receipt.trials[0].score.passed).toBe(true);
+    expect(result.receipt.trials[0].stageScores[0].attributionCorrect).toBe(false);
+    expect(result.receipt.trials[0].stageScores[1].attributionCorrect).toBe(true);
+    expect(result.receipt.passed).toBe(false);
+    expect(result.structured.attributionCorrect).toBe(false);
+  });
+
+  it('rejects replacement build-binding bytes even when they match a new current build', () => {
+    const result = exercise(`
+      const { readApprovedBuildBinding } = await import(harnessUrl);
+      const { mkdtemp, writeFile, rm } = await import('node:fs/promises');
+      const { createHash } = await import('node:crypto');
+      const root = await mkdtemp('/private/tmp/cr-attribution-binding-test-');
+      try {
+        const file = root + '/binding.json';
+        const original = JSON.stringify({ buildSha256: 'approved-original-build' });
+        const approvedSha256 = createHash('sha256').update(original).digest('hex');
+        await writeFile(file, original, { mode: 0o600 });
+        const accepted = await readApprovedBuildBinding(file, approvedSha256);
+        const currentBuild = { buildSha256: 'replacement-current-build' };
+        await writeFile(file, JSON.stringify(currentBuild));
+        let rejected = false;
+        try { await readApprovedBuildBinding(file, approvedSha256); } catch { rejected = true; }
+        console.log(JSON.stringify({ accepted, rejected, currentBuild }));
+      } finally { await rm(root, { recursive: true, force: true }); }
+    `);
+    expect(result.accepted).toEqual({ buildSha256: 'approved-original-build' });
+    expect(result.currentBuild).toEqual({ buildSha256: 'replacement-current-build' });
+    expect(result.rejected).toBe(true);
   });
 });
