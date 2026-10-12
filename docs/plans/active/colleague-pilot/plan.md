@@ -490,6 +490,24 @@ commands; installed/replacement/Gatekeeper acceptance, final local gate and new
 head CI remain pending. No production/package rebuild is justified by this
 compiler-flag-only change. Targeted checks passed; final validation pending.
 
+The first installed smoke on C passed ten phases, including complete compatible
+replacement at 217,373 ms, but failed its 240,000 ms aggregate allowance. Final
+reinstall copying and full-byte verification reached 261,813 ms before the next
+CLI command refused the expired signal. The failed receipt at
+`/private/var/folders/pn/rnjt7b1d5xb4pckyss2s55qc0000gn/T/context-router-installed-y55MAu/receipt.json`
+is retained with SHA-256
+`63a30099007921ea1cfc60dd3b0104aa40c443d2add918b0621c23133d3cddf4`.
+Cleanup reported no errors; all four guardians exited zero with quiescent, valid
+journals, and the owned browser process/group were absent on independent review.
+
+The reviewed harness-only correction raises the aggregate allowance to 360,000 ms
+for the added copy verification work. All eleven phases, assertions and individual
+operation/startup/cleanup deadlines remain unchanged. The separate A-to-B pilot
+rehearsal keeps its 240,000 ms allowance: its historical receipt does not establish
+an elapsed-time need for a change. Artifact C and production/runtime source remain
+unchanged; no package rebuild is needed. A complete fresh installed smoke is still
+required, so the partial run does not qualify installed/replacement acceptance.
+
 The isolated rehearsal's A is retained Candidate 14 (manifest
 `944c5be0eb2e44e5c215fdacac3f8ad12546dd190cdddd8afa45c78285d8ff38`); B is the
 confidence-corrected artifact above. This is a real backend change: the two search
