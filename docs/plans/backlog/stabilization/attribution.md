@@ -198,6 +198,24 @@ quality qualification, and exception E does not apply to attribution failures.
 Cancellation/recovery exception H remains unchanged. Exhausted or incomplete
 attempts cannot count as successful qualification.
 
+The test-only runner now plans all 28 slots before startup and preserves the same
+owned lifecycle. Receipt/scorer version 2 separates required new facts from
+allowed saved-value no-ops. The affected extraction helper verifies each legacy
+fixture against the immutable original manifest and includes external corpus
+files in the source binding. A fresh private extraction manifest will bind the
+changed prompt/schema/file calls only after the candidate build; its exact bytes
+must be pinned by the approved run configuration.
+
+Affected-slice reports separate the original family thresholds (recall at least
+0.9, precision at least 0.95, no execution or critical failures, all negative
+cases correct), exact-oracle success, and amendment E acceptance. The historical
+18/21 outcome remains a strict threshold failure even when E permits that one
+email omission. Tests reject missing/extra/duplicate/unknown trial membership,
+other omissions, wrong or extra facts, failed negative trials, changed historical
+inputs and absent native evidence. The new regressions failed before correction;
+five focused suites now pass **90 tests**. No fresh manifest, build or post-fix
+inference has been generated at this preparation checkpoint.
+
 ## Preparation evidence
 
 - Required repository startup reading and structure command completed.

@@ -104,19 +104,20 @@ describe('attribution live harness controls (fake resources only)', () => {
     ]);
   });
 
-  it('counts every completion and blocks dispatch 61 with a typed cancellation', () => {
+  it.each([60, 120])('counts every completion and blocks dispatch beyond %i with a typed cancellation', (maximum) => {
     const result = exercise(`
+      const maximum = ${maximum};
       const controller = new AbortController();
       class SyntheticAiError extends Error { kind = 'cancelled'; }
-      const budget = createCompletionBudget({ controller, cancellationError: () => new SyntheticAiError(), maximum: 60 });
+      const budget = createCompletionBudget({ controller, cancellationError: () => new SyntheticAiError(), maximum });
       let dispatched = 0;
       const complete = budget.wrap(async () => { dispatched++; return { text: '{}' }; });
-      for (let i = 0; i < 60; i++) await complete();
+      for (let i = 0; i < maximum; i++) await complete();
       let errorKind;
       try { await complete(); } catch (error) { errorKind = error.kind; }
       console.log(JSON.stringify({ dispatched, count: budget.count, aborted: controller.signal.aborted, errorKind }));
     `);
-    expect(result).toEqual({ dispatched: 60, count: 60, aborted: true, errorKind: 'cancelled' });
+    expect(result).toEqual({ dispatched: maximum, count: maximum, aborted: true, errorKind: 'cancelled' });
   });
 
   it('separates attribution, useful recall, evidence and runtime completion', () => {
@@ -155,6 +156,20 @@ describe('attribution live harness controls (fake resources only)', () => {
     expect(result.stages[0]).toMatchObject({ attributionCorrect: false });
     expect(result.stages[1]).toMatchObject({ attributionCorrect: true, expectedFactsPresent: true });
     expect(result.harmless[0]).toMatchObject({ attributionCorrect: true });
+  });
+
+  it('allows a saved-name no-op without requiring the model to repeat it', () => {
+    const result = exercise(`
+      const entry = { documentText: 'Maya. maya@example.test.', activePreferences: [{ slug: 'profile.full_name', value: 'Maya' }],
+        expectedProposals: [{ slug: 'profile.email', value: 'maya@example.test' }], forbiddenValues: [] };
+      const own = { slug: 'profile.email', newValue: 'maya@example.test', sourceSnippet: 'maya@example.test' };
+      const name = { slug: 'profile.full_name', newValue: 'Maya', sourceSnippet: 'Maya' };
+      const score = (suggestions) => scoreStages(entry, [{ stage: 'extraction', status: 'completed', parsed: { suggestions } }])[0];
+      console.log(JSON.stringify({ withoutNoop: score([own]), withNoop: score([own, name]), missingWanted: score([name]) }));
+    `);
+    expect(result.withoutNoop).toMatchObject({ passed: true, missingFacts: [], unexpectedFacts: [] });
+    expect(result.withNoop).toMatchObject({ passed: true, missingFacts: [], unexpectedFacts: [] });
+    expect(result.missingWanted).toMatchObject({ passed: false, expectedFactsPresent: false });
   });
 
   it('preserves completed and incomplete evidence while changed bindings prevent success', () => {

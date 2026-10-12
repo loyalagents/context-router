@@ -8,6 +8,8 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { createExtractionManifest, extractionCaseIds, historicalInputs, loadLegacyExtractionEntries,
+  plannedExtractionTrials, scoreExtractionSlice } from './extraction-slice.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '../../../..');
@@ -104,7 +106,7 @@ export function createCompletionBudget({ controller, cancellationError, maximum 
   };
 }
 
-export const plannedTrials = (cases) => cases.flatMap((entry) => [0, 1].map((repetition) => ({ caseId: entry.id, repetition, status: 'not_run' })));
+export const plannedTrials = (cases) => cases.flatMap((entry) => [0, 1].map((repetition) => ({ suite: 'attribution', caseId: entry.id, repetition, status: 'not_run' })));
 
 function containsForeignValue(value, forbiddenValues) {
   if (typeof value === 'string') return forbiddenValues.some((forbidden) => value.includes(forbidden));
@@ -114,10 +116,12 @@ function containsForeignValue(value, forbiddenValues) {
 }
 
 /** Facts, evidence and execution are distinct; summaries are not preference facts. */
-export function scoreObservation(entry, result) {
+export const attributionScorerVersion = 2;
+export function scoreObservation(entry, result, allowedProposals = entry.expectedProposals) {
   const expected = entry.expectedProposals.map((item) => JSON.stringify([item.slug, item.value]));
+  const allowed = allowedProposals.map((item) => JSON.stringify([item.slug, item.value]));
   const actual = (result?.suggestions ?? []).map((item) => JSON.stringify([item.slug, item.newValue]));
-  const unexpectedFacts = actual.filter((item) => !expected.includes(item));
+  const unexpectedFacts = actual.filter((item) => !allowed.includes(item));
   const missingFacts = expected.filter((item) => !actual.includes(item));
   const evidence = (result?.suggestions ?? []).map((item) => ({
     slug: item.slug,
@@ -139,16 +143,31 @@ export function scoreStages(entry, calls) {
   const allowed = [...entry.expectedProposals, ...entry.activePreferences.map((value) => ({ slug: value.slug, value: value.value }))];
   return calls.map((call) => {
     const suggestions = call.parsed?.suggestions ?? (call.parsed?.suggestion ? [call.parsed.suggestion] : []);
-    const expectedProposals = call.stage === 'consolidation' ? allowed.filter((item) => suggestions.some((value) => value.slug === item.slug)) : allowed;
-    return { stage: call.stage, ...scoreObservation({ ...entry, expectedProposals }, { suggestions, status: call.status === 'completed' ? 'success' : 'ai_error' }) };
+    const expectedProposals = call.stage === 'consolidation' ? entry.expectedProposals.filter((item) => suggestions.some((value) => value.slug === item.slug)) : entry.expectedProposals;
+    return { stage: call.stage, ...scoreObservation({ ...entry, expectedProposals }, { suggestions, status: call.status === 'completed' ? 'success' : 'ai_error' }, allowed) };
   });
 }
 
 export function finishReceipt(receipt, integrity) {
   for (const trial of receipt.trials) if (trial.status === 'started') trial.status = 'incomplete';
   receipt.integrity = integrity;
+  const attribution = receipt.trials.filter((trial) => trial.suite !== 'affected-extraction');
+  const affected = receipt.trials.filter((trial) => trial.suite === 'affected-extraction');
+  receipt.attributionPassed = attribution.every((trial) => trial.status === 'completed' && trial.score.passed && trial.stageScores.every((stage) => stage.attributionCorrect));
+  if (affected.length) {
+    try {
+      receipt.affectedExtraction = scoreExtractionSlice(receipt.extractionManifest, affected);
+      const completionsFor = (trial) => (receipt.nativeCompletions ?? []).filter((completion) => trial.calls?.some((call) => call.index === completion.callIndex));
+      const native = affected.flatMap(completionsFor);
+      const oneCallTimes = affected.filter((trial) => completionsFor(trial).length === 1).map((trial) => trial.elapsedMs).sort((a, b) => a - b);
+      const p95 = oneCallTimes[Math.ceil(oneCallTimes.length * 0.95) - 1];
+      receipt.affectedExtraction.warmOneCallP95Ms = p95 ?? null;
+      receipt.affectedExtraction.executionLimitsPassed = affected.every((trial) => trial.status === 'completed' && trial.elapsedMs <= 180000 && trial.modelState === 'ready' && completionsFor(trial).length >= 1) &&
+        native.every((call) => call.status === 'completed' && call.elapsedMs <= 120000) && Number.isFinite(p95) && p95 <= 60000;
+    } catch { receipt.affectedExtraction = { membershipComplete: false, amendmentEAccepted: false, executionLimitsPassed: false }; }
+  }
   receipt.passed = Object.values(integrity).every((value) => value === true) && receipt.lifecycle.completed && receipt.lifecycle.cleanupComplete &&
-    receipt.trials.every((trial) => trial.status === 'completed' && trial.score.passed && trial.stageScores.every((stage) => stage.attributionCorrect));
+    receipt.attributionPassed && (!affected.length || (receipt.affectedExtraction.amendmentEAccepted && receipt.affectedExtraction.executionLimitsPassed));
 }
 
 function checkTime(signal, deadline = Infinity) {
@@ -178,7 +197,7 @@ export async function buildBinding(options = {}) {
   const args = ['ls-files', '-z', '--cached', '--others', '--exclude-standard', '--',
     'apps/backend/src', 'apps/backend/scripts', 'apps/backend/test/document-attribution', 'apps/backend/package.json', 'apps/backend/tsconfig.json',
     'apps/backend/nest-cli.json', 'apps/backend/prisma/schema.prisma', 'apps/backend/prisma.config.ts',
-    'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'scripts/local-migration/fixtures/local-model-feasibility'];
+    'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'scripts/local-migration/fixtures/local-model-feasibility', ...historicalInputs];
   const timeout = Math.max(1, Math.min(5000, Math.floor((options.deadline ?? Infinity) - performance.now())));
   const paths = execFileSync('git', args, { cwd: repoRoot, encoding: 'utf8', timeout }).split('\0').filter(Boolean).sort();
   const source = await Promise.all(paths.map(async (file) => [file, sha256(await readFile(join(repoRoot, file), { signal: options.signal }))]));
@@ -218,9 +237,10 @@ async function runLive(configPath, approvedConfigSha256) {
   const config = JSON.parse(configBytes);
   assert.equal(config.modelSha256, modelPin.sha256);
   assert.equal(config.modelBytes, modelPin.bytes);
-  assert.equal(config.maximumAnalyses, 10); assert.equal(config.maximumCompletions, 60); assert.equal(config.maximumMinutes, 45);
+  assert.equal(config.maximumAnalyses, 28); assert.equal(config.maximumCompletions, 120); assert.equal(config.maximumMinutes, 45);
   assert.match(config.runtimeSha256, /^[a-f0-9]{64}$/u);
   assert.match(config.buildBindingSha256, /^[a-f0-9]{64}$/u);
+  assert.match(config.extractionManifestSha256, /^[a-f0-9]{64}$/u);
   assert.equal(config.runtimeArchiveSha256, archivePin);
   assert.equal(process.version, 'v24.21.0');
   const currentHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8', timeout: 5000 }).trim();
@@ -235,9 +255,9 @@ async function runLive(configPath, approvedConfigSha256) {
   const fixtures = JSON.parse(fixtureBytes);
   assert.equal(fixtures.cases.length, 5);
   assert.equal(fixtures.filename, 'synthetic-note.txt');
-  const receipt = { schemaVersion: 1, sourceCommit: currentHead, configSha256: sha256(configBytes), fixtureSha256: sha256(fixtureBytes),
-    limitations: ['Synthetic reproduction cannot identify the original private incident.', 'Synthetic storage/review preparation; no browser or persistence qualification.', 'Three-slug catalog subset; no full-catalog quality qualification.'],
-    startedAt: new Date().toISOString(), trials: plannedTrials(fixtures.cases), nativeCompletions: [], passed: false };
+  const receipt = { schemaVersion: 2, attributionScorerVersion, sourceCommit: currentHead, configSha256: sha256(configBytes), fixtureSha256: sha256(fixtureBytes),
+    limitations: ['Synthetic reproduction cannot identify the original private incident.', 'Synthetic storage/review preparation; no browser or persistence qualification.', 'Three-slug attribution subset and six-case affected extraction slice; not full 48-trial quality qualification.'],
+    startedAt: new Date().toISOString(), trials: [...plannedTrials(fixtures.cases), ...plannedExtractionTrials(extractionCaseIds.map((id) => ({ id })))], nativeCompletions: [], passed: false };
   const controller = new AbortController();
   let credentials; let root; let model; let budget; let child; let currentCall; let finalizing = false;
   const started = performance.now();
@@ -250,11 +270,14 @@ async function runLive(configPath, approvedConfigSha256) {
   const { spawnOwned } = await import(pathToFileURL(join(shared, 'process.mjs')));
   const { probeJson } = await import(pathToFileURL(join(shared, 'client.mjs')));
   const nativeLog = join(outputRoot, 'native.log');
-  let configuration;
+  let configuration; let legacyEntries;
   receipt.lifecycle = await runOwnedSession({ controller,
     async startRuntime(signal) {
       receipt.build = await buildBinding({ signal, deadline: overallDeadline });
       assert.deepEqual(receipt.build, await readApprovedBuildBinding(config.buildBindingPath, config.buildBindingSha256, { signal }));
+      receipt.extractionManifest = await readApprovedBuildBinding(config.extractionManifestPath, config.extractionManifestSha256, { signal });
+      assert.deepEqual(receipt.extractionManifest, await createExtractionManifest(receipt.build, { signal, deadline: overallDeadline }));
+      legacyEntries = (await loadLegacyExtractionEntries({ signal })).entries;
       assert.equal(await realpath(config.modelPath), config.modelPath);
       const modelBefore = await lstat(config.modelPath, { bigint: true });
       assert.ok(modelBefore.isFile() && modelBefore.size === BigInt(modelPin.bytes) && modelBefore.nlink === 1n);
@@ -318,9 +341,11 @@ async function runLive(configPath, approvedConfigSha256) {
       const { DocumentAnalysisService } = load('modules/preferences/document-analysis/document-analysis.service');
       const { ReviewedSuggestionService } = load('modules/preferences/document-analysis/reviewed-suggestion.service');
       const { PreferenceSchemaSnapshotService } = load('modules/preferences/preference-definition/preference-schema-snapshot.service');
+      const { runConsumer, semanticUnits } = await import(pathToFileURL(join(shared, 'consumers.mjs')));
+      const { userMessage } = await import(pathToFileURL(join(shared, 'freeze.mjs')));
       model = new LocalModelService({ root: await realpath(credentials.root), port: configuration.port, identityRoot: join(root, 'identity'), databaseRoot: join(root, 'data') });
       assert.equal((await model.getStatus({ signal })).state, 'available'); await model.settled();
-      budget = createCompletionBudget({ controller, maximum: 60, cancellationError: () => new AiError('cancelled') });
+      budget = createCompletionBudget({ controller, maximum: 120, cancellationError: () => new AiError('cancelled') });
       const nativeComplete = model.client.complete;
       model.client.complete = budget.wrap(async function(prompt, options) {
         const observation = { index: receipt.nativeCompletions.length, callIndex: currentCall?.index,
@@ -336,23 +361,30 @@ async function runLive(configPath, approvedConfigSha256) {
       });
       for (const trial of receipt.trials) {
         if (signal.aborted) break;
-        const entry = fixtures.cases.find((item) => item.id === trial.caseId);
-        Object.assign(trial, { status: 'started', calls: [], documentText: entry.documentText, activePreferences: entry.activePreferences });
+        const legacy = trial.suite === 'affected-extraction';
+        const entry = (legacy ? legacyEntries : fixtures.cases).find((item) => item.id === trial.caseId);
+        Object.assign(trial, { status: 'started', calls: [], documentText: entry.documentText, activePreferences: entry.activePreferences ?? [] });
+        let initialSchema;
         const definitions = fixtures.schemaSlugs.map((slug) => ({ id: `definition:${slug}`, slug, namespace: 'GLOBAL', ownerUserId: null,
           ...PREFERENCE_CATALOG[slug], valueType: 'STRING', scope: 'GLOBAL', options: null, archivedAt: null }));
         const definitionRepo = { getAll: async () => definitions, getDefinitionBySlug: async (slug) => definitions.find((item) => item.slug === slug) ?? null };
         const noWrite = async () => { throw new Error('Synthetic attribution run cannot write preferences'); };
-        const savedRows = entry.activePreferences.map((preference) => ({ ...preference, id: `saved:${preference.slug}`, userId: 'synthetic-attribution-owner',
+        const savedRows = (entry.activePreferences ?? []).map((preference) => ({ ...preference, id: `saved:${preference.slug}`, userId: 'synthetic-attribution-owner',
           definitionId: `definition:${preference.slug}`, locationId: null, contextKey: 'GLOBAL', status: 'ACTIVE', sourceType: 'USER',
           confidence: null, evidence: null, lastActorType: null, lastActorClientKey: null, lastOrigin: null, createdAt: new Date(0), updatedAt: new Date(0) }));
         const unit = { serializable: async (operation) => operation({ definitions: definitionRepo,
           preferences: { findActiveExact: async (key) => savedRows.find((row) => row.userId === key.userId && row.definitionId === key.definitionId && key.locationId === null) ?? null,
             compareAndSetActive: noWrite, upsertActive: noWrite }, audit: { record: noWrite } }) };
         const invoke = async (prompt, schema, file, options) => {
-          assert.ok(!prompt.includes(entry.id));
+          if (!legacy) assert.ok(!prompt.includes(entry.id));
+          if (!initialSchema) initialSchema = schema;
           const call = { index: receipt.trials.flatMap((item) => item.calls ?? []).length, stage: file ? 'extraction' : 'consolidation',
-            prompt, promptSha256: sha256(prompt), schemaSha256: digest(localJsonSchema(schema)), status: 'started',
+            prompt, promptSha256: sha256(prompt), messageSha256: sha256(userMessage(prompt, file)), schemaSha256: digest(localJsonSchema(schema)), status: 'started',
             ...(file ? { fileSha256: sha256(file.buffer), mimeType: file.mimeType } : {}) };
+          if (legacy && trial.calls.length === 0) {
+            const frozen = receipt.extractionManifest.cases.find((item) => item.id === entry.id).calls[0];
+            for (const key of ['promptSha256', 'messageSha256', 'schemaSha256', 'fileSha256', 'mimeType']) assert.equal(call[key], frozen[key]);
+          }
           trial.calls.push(call); currentCall = call;
           try {
             const value = await (file ? model.generateStructuredWithFile(prompt, file, schema, options) : model.generateStructured(prompt, schema, options));
@@ -366,13 +398,28 @@ async function runLive(configPath, approvedConfigSha256) {
           new PreferenceSchemaSnapshotService(definitionRepo, null), configService);
         const analysis = new DocumentAnalysisService(extraction, new ReviewedSuggestionService(unit, configService));
         const start = performance.now();
-        trial.result = await analysis.analyzeDocument('synthetic-attribution-owner', Buffer.from(entry.documentText), 'text/plain', fixtures.filename,
-          { signal, deadline: Math.min(start + 180000, started + 44 * 60000) });
+        const options = { signal, deadline: Math.min(start + 180000, started + 44 * 60000) };
+        if (legacy) {
+          trial.structureValid = false; trial.proposalUnits = []; trial.validatedUnits = [];
+          try {
+            trial.result = await runConsumer(entry, ai, options);
+            trial.validatedUnits = semanticUnits(entry, trial.result, 'validated');
+            trial.structureValid = true;
+          } catch (error) { trial.failureKind = error instanceof AiError ? error.kind : 'unexpected'; }
+          const raw = receipt.nativeCompletions.find((call) => call.callIndex === trial.calls[0]?.index)?.raw;
+          try {
+            trial.proposalUnits = semanticUnits(entry, initialSchema.parse(JSON.parse(raw)), 'proposal');
+            trial.initialProposalValid = true;
+          } catch { trial.initialProposalValid = false; }
+        } else trial.result = await analysis.analyzeDocument('synthetic-attribution-owner', Buffer.from(entry.documentText), 'text/plain', fixtures.filename, options);
         await model.settled();
         trial.elapsedMs = performance.now() - start;
-        trial.status = ['success', 'no_matches'].includes(trial.result.status) ? 'completed' : 'failed';
-        trial.score = scoreObservation(entry, trial.result);
-        trial.stageScores = scoreStages(entry, trial.calls);
+        trial.modelState = model.client.state;
+        trial.status = (legacy ? trial.structureValid : ['success', 'no_matches'].includes(trial.result.status)) ? 'completed' : 'failed';
+        if (!legacy) {
+          trial.score = scoreObservation(entry, trial.result);
+          trial.stageScores = scoreStages(entry, trial.calls);
+        }
         await partial();
         if (model.client.state !== 'ready') { controller.abort('model-session-unavailable'); break; }
       }
@@ -411,7 +458,9 @@ async function runLive(configPath, approvedConfigSha256) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   if (process.argv[2] === '--bind-build' && process.argv.length === 4) {
     await writeFile(process.argv[3], `${JSON.stringify(await buildBinding(), null, 2)}\n`, { flag: 'wx', mode: 0o600 });
+  } else if (process.argv[2] === '--freeze-extraction' && process.argv.length === 4) {
+    await writeFile(process.argv[3], `${JSON.stringify(await createExtractionManifest(await buildBinding()), null, 2)}\n`, { flag: 'wx', mode: 0o600 });
   } else if (process.argv[2] === '--run' && process.argv.length === 5) {
     await runLive(process.argv[3], process.argv[4]);
-  } else throw new Error('Use --bind-build PATH after the approved isolated build, or --run CONFIG APPROVED_CONFIG_SHA256 only after explicit live-run approval.');
+  } else throw new Error('Use --bind-build PATH or --freeze-extraction PATH after the approved isolated build, or --run CONFIG APPROVED_CONFIG_SHA256 only after explicit live-run approval.');
 }
