@@ -71,7 +71,7 @@ Do not turn merged code or automated checks into a broader support/release claim
 | Recovery exception H | A repeat production cancellation failed the five-second settlement requirement and latched AI unavailable. Later recovery observations do not erase that failure. Whole-generation owned-process shutdown and fresh inference credentials are required; retain data and compatible weights. |
 | Lifecycle | Normal restart/Quit and scoped sleep/wake observations exist. Candidate 14 fixes sleep consuming the shutdown budget; real sleep during shutdown, forced owner loss and cross-boot recovery remain unqualified. Fail closed on uncertain ownership. |
 | MCP | Credentials remain until revoked/rotated; sessions expire after 30 minutes idle and have bounded IDs/capacity. Actual client automatic reconnect beyond expiry is unqualified; never replay an uncertain mutation. |
-| Upload/UI findings | Rejected PDF, stale post-apply display and possible another-person email attribution were reported; cause/contents were not fully verified. Triage before real-data pilot, not blanket acceptance under E. |
+| Upload/UI findings | Stale post-apply display was reproduced and addressed in unmerged [PR #173](https://github.com/loyalagents/context-router/pull/173); installed-app retest remains pending. Rejected PDF and possible another-person email attribution remain unverified and require triage before the real-data pilot, not blanket acceptance under E. |
 | Replacement/storage | Installed fixture replacement/cleanup checks passed. Real version A-to-B replacement, colleague download friction and peak/retained disk use require pilot evidence. |
 
 Exact receipts and negative evidence remain in the
