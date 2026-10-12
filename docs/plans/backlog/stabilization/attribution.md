@@ -1,6 +1,6 @@
 # Document attribution investigation
 
-- Status: unsupported owner selection reproduced; reviewed prompt correction implemented, model validation pending; no readiness claim
+- Status: bounded post-fix attribution evidence independently reviewed; affected extraction retains only accepted omission E; final gate and exact-head CI pending
 - Base: remote `main` verified at `f31021234fe3eac347261466b9c708231f0f2841`
 - Branch: `codex/document-attribution-stability`, isolated worktree
 - Ownership: coordinator `/root` and reviewers are read-only; `/root/writer` owns all files, fixtures, documentation, staging and commits in this worktree. The pilot owner remains the main-checkout integrator.
@@ -182,29 +182,16 @@ subjects without saved profile information remain eligible. Output schemas,
 duplicate behavior, validation and persistence are unchanged.
 
 The saved-profile and empty-profile prompt-contract tests failed before the four
-reviewed rules were inserted, then all four focused suites passed **71 tests**.
-These tests prove instruction delivery only. The old dist/build binding qualifies
-the baseline; it does not contain the prompt correction. No rebuild or post-fix
-model result exists at this checkpoint.
-
-The next separately reviewed run will combine the unchanged five attribution
-cases twice with all six affected historical extraction cases three times: at
-most **28 analyses, 120 native completions and 45 minutes**, with work stopped at
-44 minutes. New private manifest/configuration and candidate build are required.
-Historical corpus bytes, definitions, filenames, oracles and evidence remain
-unchanged. Report strict affected-slice quality separately from the narrowly
-permitted instruction-injection omission exception E; this is not full 48-trial
-quality qualification, and exception E does not apply to attribution failures.
-Cancellation/recovery exception H remains unchanged. Exhausted or incomplete
-attempts cannot count as successful qualification.
+reviewed rules were inserted. These tests prove instruction delivery only; the
+actual model comparison below supplies the separate behavioral evidence.
 
 The test-only runner now plans all 28 slots before startup and preserves the same
 owned lifecycle. Receipt/scorer version 2 separates required new facts from
 allowed saved-value no-ops. The affected extraction helper verifies each legacy
 fixture against the immutable original manifest and includes external corpus
-files in the source binding. A fresh private extraction manifest will bind the
-changed prompt/schema/file calls only after the candidate build; its exact bytes
-must be pinned by the approved run configuration.
+files in the source binding. The fresh private extraction manifest binds the
+changed prompt/schema/file calls from the candidate build; its exact bytes are
+pinned by the approved run configuration.
 
 Affected-slice reports separate the original family thresholds (recall at least
 0.9, precision at least 0.95, no execution or critical failures, all negative
@@ -213,8 +200,63 @@ cases correct), exact-oracle success, and amendment E acceptance. The historical
 email omission. Tests reject missing/extra/duplicate/unknown trial membership,
 other omissions, wrong or extra facts, failed negative trials, changed historical
 inputs and absent native evidence. The new regressions failed before correction;
-five focused suites now pass **90 tests**. No fresh manifest, build or post-fix
-inference has been generated at this preparation checkpoint.
+five focused suites passed **90 tests** on the post-fix source.
+
+## Post-fix result and handoff
+
+Source `66b029e6414167f2c7721498984261957f01582a` completed one separately
+reviewed build and the exact user-approved run in an exclusive pilot window.
+The bound was 28 analyses, 120 native completions and 45 minutes inclusive of
+cleanup, with a 44-minute work stop. All **28 analyses and 28 native completions**
+finished in **180.675 seconds**, starting `2026-10-12T17:03:48.964Z`; no correction
+or consolidation call was needed. No resampling or additional run occurred.
+
+| Result | Observation |
+| --- | --- |
+| Attribution | **10/10 passed**, including all eight positive controls; both ambiguous-directory repetitions now returned empty initial and final facts, versus two failures before correction. |
+| Affected historical extraction | All six frozen cases ran three times. **Strict threshold and exact-oracle quality FAILED: 18/21 facts**, recall 0.857143, precision 1; three omissions were the existing instruction-injection email, one per repetition. |
+| Narrow amendment E | Accepted only those three known omissions; no new wrong/extra facts, other omissions, execution failures or critical violations. All six negative trials remained empty. This is affected-slice evidence, not a new full 48-trial qualification. |
+| Evidence and review | Correct positive facts retained value-containing source quotes and prepared review descriptors. Persistence was not invoked; production validation, review-before-apply and persistence behavior are unchanged. |
+
+The receipt's combined `passed` result includes the explicit E acceptance; it
+does not mean strict quality passed. E never excuses attribution failures, and
+recovery exception H is unchanged. Independent review checked all 28 native
+responses against parsed/final results and their prompt/file/schema associations,
+with zero mismatches. This supports the bounded unsupported-owner-selection
+correction, not diagnosis of the unavailable original private incident or a
+general guarantee across unseen documents.
+
+The exact private evidence bindings are retained; values below are SHA-256:
+
+| Artifact | Digest |
+| --- | --- |
+| Approved configuration | `448a81ddc7dcd170a6b25d112b5fec9aafaf39e2fc726b51730816fd531a4c45` |
+| Build binding bytes | `088674d8f38fe1152523a380921af8e562ccf904a6c591b31b114af79de9998d` |
+| Source/helper/corpus inputs (412 files) | `0d851b2ea8a111570b49f1e6e6ae0a758ea61126034293ee2feb9ec16b4c33fc` |
+| Production dist (867 files) | `fdec462c128b73ca2cff2c77a80d3414f542bfa75a2d1673e034daa5a0a23740` |
+| Fresh six-case extraction manifest | `8be920ee2cfff41fa315ffacb8ca18ba7ba1c8ed1c1cb1b19fdc4763b71a5663` |
+| Post-fix receipt | `d1eaba9ef64be66d1e4efe4fbedc8cc421b98ae102e2f66874e65c0cd6f11e57` |
+
+Only the compiled extraction service, its source map and TypeScript build metadata
+differ from the baseline dist. Post-run source/build/helper, runtime-closure and
+model identity checks passed. Runtime reaping, adapter closure, work settlement
+and private state/TLS root removal all completed; independent process/path checks
+confirmed cleanup before releasing the window. Evidence and approved assets are
+retained. No personal application/state or historical fixture/evidence changed.
+
+This documentation-only handoff retains the exact 412 input and 867 dist hashes
+above, so the 66b029e model evidence, focused tests and unchanged code review carry
+forward by relevant-input equality. Documentation link/reader discovery and
+whitespace checks cover the changed record. Finalization now requires the frozen
+candidate's full isolated `pnpm migration:gate`, scheduled with the pilot owner,
+followed by applicable exact-head CI. The [canonical gate](../../../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#local-migration-baseline-gate)
+uses Node 24.21.0, pnpm 10.25.0, Python 3.12, pinned Chromium and owned synthetic
+database/browser/process resources; its 12 phase budgets total 104 minutes, with
+absolute phase cancellation/settlement/cleanup at 107/110/113 minutes. The writer
+owns execution, evidence and cleanup. No further actual-model, installed-app or
+Claude acceptance run follows merely from this prompt change. **Targeted checks
+passed; final validation pending.** Publication, PR creation and merge remain
+outside the current authorization.
 
 ## Preparation evidence
 
@@ -233,11 +275,11 @@ inference has been generated at this preparation checkpoint.
   were written first and failed before implementation; their next run passed
   alongside the attribution suite (two suites, 16 tests), including normal and
   interrupted cleanup, never-settling owners, completion limits and stage scoring.
-- One separately coordinated backend build passed. Production dist hash:
+- The initial separately coordinated backend build passed. Baseline dist hash:
   `42f52a94832bed8c7e45807d585772deade5941735144c626bc6539a97749444`
   (867 files); no attribution fixture/runner is included. Production source is
-  unchanged from the base. Later test-only harness edits do not invalidate that
-  production output; the final run binding includes the final tests and helpers.
+  unchanged from the base for that initial experiment. The post-fix build and
+  current binding are recorded above.
 - Verified staged `llama-server` SHA-256:
   `41df13c126456f8e5fab2057c86a790067a85ea1dfd8fbc0071cc45fbba56262`;
   complete runtime closure:
@@ -250,7 +292,3 @@ inference has been generated at this preparation checkpoint.
 - Stable preparation checks passed: four focused Jest suites, **69 tests**;
   Markdown links (146 files); attribution test/harness exclusion from the existing
   production outbound inventory. The scanner and baseline remain unchanged.
-- Targeted checks passed; final validation pending. Finalization requires reviewed
-  post-fix attribution and affected-quality evidence, then a frozen candidate,
-  applicable final gates and exact-head CI. No PR publication or merge is
-  authorized by this checkpoint.
