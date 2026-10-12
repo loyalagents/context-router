@@ -1,6 +1,6 @@
 # Local Application
 
-- Status: implemented foundation; assisted pilot preparation is next
+- Status: implemented foundation; assisted pilot preparation is active
 - Sources: `apps/desktop/`, backend local composition and storage modules,
   `apps/web/`; [migration closeout](LOCAL_MIGRATION_CLOSEOUT.md)
 
@@ -46,10 +46,12 @@ not a new command or a waiver of filesystem/process safety.
 - The UI lists MCP clients, narrows grants and revokes authority. Provisioning,
   rotation and maximum-policy administration remain installed/manual CLI work.
   See [MCP setup](../useful/MCP_LOCAL_SETUP.md). Claude Code and Codex CLI have
-  scoped user-run evidence; **Claude Desktop and ChatGPT desktop are not qualified
-  local integrations yet**. A source-only stdio bridge now supports an assisted
-  Claude Desktop trial; automated SDK/SQLite evidence does not complete actual
-  Desktop acceptance. See the [connection plan](../plans/active/colleague-pilot/plan.md).
+  scoped user-run evidence. Claude Desktop 2.31226.1 Pro ordinary chat passed
+  discovery, permitted/denied operations, shared dashboard checks, restart,
+  credential independence and over 35 minutes idle with explicit recovery using
+  the standalone stdio bridge. **Full Desktop qualification still awaits the
+  accepted live uncertain-mutation follow-up**; ChatGPT desktop remains unqualified.
+  See the [pilot evidence](../plans/active/colleague-pilot/plan.md).
 - Model download is explicit and verified, about 5.7 GB; compatible assets live
   outside the app bundle for reuse. Menu Restart enables/recovers AI and opens the
   current dashboard with a fresh unlock. Browser close leaves the app running;
@@ -70,9 +72,9 @@ Do not turn merged code or automated checks into a broader support/release claim
 | Quality exception E | Known personal-email omission in the frozen adversarial extraction fixture; 18/21 recall (85.71%). The original quality scorer verdict remains FAILED. Not permission for wrong-person facts or other quality failures. |
 | Recovery exception H | A repeat production cancellation failed the five-second settlement requirement and latched AI unavailable. Later recovery observations do not erase that failure. Whole-generation owned-process shutdown and fresh inference credentials are required; retain data and compatible weights. |
 | Lifecycle | Normal restart/Quit and scoped sleep/wake observations exist. Candidate 14 fixes sleep consuming the shutdown budget; real sleep during shutdown, forced owner loss and cross-boot recovery remain unqualified. Fail closed on uncertain ownership. |
-| MCP | Credentials remain until revoked/rotated; sessions expire after 30 minutes idle and have bounded IDs/capacity. Actual client automatic reconnect beyond expiry is unqualified; never replay an uncertain mutation. |
+| MCP | Credentials remain until revoked/rotated; sessions expire after 30 minutes idle and have bounded IDs/capacity. Claude Desktop showed the expiry failure and recovered on a separate explicit request after a direct 35-minute final-pair interval. Automatic client replay is not supported; never repeat an uncertain mutation before inspecting state/history. The live lost-reply follow-up remains open. |
 | Upload/UI findings | Rejected PDF, stale post-apply display and possible another-person email attribution were reported; cause/contents were not fully verified. Triage before real-data pilot, not blanket acceptance under E. |
-| Replacement/storage | Installed fixture replacement/cleanup checks passed. Real version A-to-B replacement, colleague download friction and peak/retained disk use require pilot evidence. |
+| Replacement/storage | Controlled Candidate 14-to-confidence-corrected app replacement passed with synthetic state, credential/target-policy continuity and sampled allocation. Prior personal-transition receipts separately support compatible real-model reuse. Colleague download/Gatekeeper, complete disk budgets and a newer #170-bearing installed artifact remain unqualified; see the [scoped pilot results](../plans/active/colleague-pilot/plan.md#isolated-rehearsal-result). |
 
 Exact receipts and negative evidence remain in the
 [evidence index](../evidence/local-migration/README.md). Candidate 13 live-model

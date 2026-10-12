@@ -41,7 +41,9 @@ to read-only parallel investigation/review until independent boundaries exist.
 Do not launch, reset or change the user's app/state/client configuration as a
 side effect of repository work.
 
-After this documentation reset merges, a fresh coordinator should activate the
-pilot from the exact merged base, read these canonical docs and propose the
-smallest independently reviewed implementation plan. Do not inherit stale step
-activation, branch or acceptance assumptions from the previous conversation.
+The next pilot milestone is activated from verified main `7d2df85` in
+`codex/pilot-interruption-delivery`, with `/root` as coordinator and sole writer.
+The [pilot record](active/colleague-pilot/plan.md) reconciles the merged Claude
+bridge and its accepted interruption follow-up with delivery/replacement work.
+CI optimization and stale-display implementation remain separate tasks; their
+backlog status does not authorize this milestone to absorb them.

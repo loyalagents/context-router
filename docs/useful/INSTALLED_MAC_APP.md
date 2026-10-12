@@ -17,6 +17,12 @@ The inventory detects missing or changed payloads; it does not authenticate a
 publisher or a modified manifest. Gatekeeper acceptance remains untested. Do not
 disable Gatekeeper or strip quarantine to treat this as a distributed release.
 
+The proposed unsigned download route still needs an accepted acquisition channel
+and actual quarantined download-to-launch rehearsal. Keep the source revision,
+app manifest, archive checksum and acquisition channel with each handoff. A local
+build or extracted temporary copy does not demonstrate downloaded-app Gatekeeper
+behavior. Scope remains the measured Mac above; another Mac is a compatibility trial.
+
 Place the whole application in a private user-owned location, then open it in
 Finder. The installed application bundles Node, the backend, dashboard and selected
 native inference runtime. It needs no checkout, pnpm, shell model server or OpenSSL.
@@ -46,6 +52,19 @@ free space. The downloader checks the exact size and digest, restricts HTTPS
 redirects and publishes only complete verified bytes. Cancellation preserves
 existing assets. No automatic retry, resume, hosted fallback or model substitution
 occurs. An explicit new attempt needs another menu action and consent.
+
+Weights live in the managed envelope outside the app. Compatible replacement and
+normal Restart preserve them; startup verifies the pinned size and digest before
+use. Replacing the app does not require another download of matching weights.
+Do not copy manual model sessions or credentials into the managed envelope. A
+retained file or synthetic marker alone does not qualify real model reuse.
+
+The 6.8 GB guidance covers the model download, not the entire installation or
+replacement. Account separately for downloaded archives, extracted and retained
+apps, weights, incomplete downloads, state, logs, backups and credential exports.
+Measure retained usage and usage while staging and replacing. Samples establish
+an observed maximum, not an exact peak; APFS sharing and links can make logical,
+allocated and exclusively used space differ.
 
 If download fails immediately while the dashboard stays ready, the candidate
 may predate a change to Hugging Face's CDN redirects. The current pinned URL
@@ -132,6 +151,11 @@ lost completion stays uncertain. None clears an abandoned active
 or uncertain owner journal. Preserve that state for explicit diagnosis. Cross-boot
 abandoned-owner recovery is not qualified; no automatic repair is provided.
 
+If ownership is uncertain, stop and preserve the app, envelope and diagnostics.
+Reinstalling does not clear it. Do not remove journals, claims, exports or compatible
+model assets to make launch succeed. There is no general reset command or designated
+reset release in this pilot.
+
 SIGINT (Ctrl-C), SIGTERM and terminal SIGHUP request orderly cancellation of a
 running administration or setup child. A matching completion after native-owner
 drain and actual normal exit records a failed but quiescent operation, so its
@@ -188,6 +212,12 @@ candidate until verification succeeds. The native inventory refuses interrupted
 or altered payloads before Node or database access. There is still a race if code
 is modified after verification; a writable local candidate is a trusted local
 build, not a tamper-resistant distribution.
+
+Record both source and manifest identities. Back up through the installed command
+after successful Quit; retain the managed envelope during whole-app replacement.
+Launch the exact verified new app and check preserved data, grants and history.
+Retaining the previous bundle preserves evidence; it does not authorize launching
+it against newer state. Never substitute copying a live database for backup.
 
 When testing separately named candidates, launch the exact newly verified app.
 For example, staging a candidate in `$next_app` does not update an earlier `$app`

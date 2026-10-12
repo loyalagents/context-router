@@ -3031,6 +3031,26 @@
       ]
     },
     {
+      "id": "pilot-opt-in-replacement-and-reply-loss-rehearsal",
+      "sources": [
+        {
+          "path": "scripts/local-migration/installation/pilot-rehearsal.mjs",
+          "fingerprints": [
+            "spawn('/usr/bin/sandbox-exec'",
+            "spawnSync('/usr/bin/sandbox-exec'",
+            "http.request({ hostname: '127.0.0.1'"
+          ]
+        }
+      ],
+      "destination": "Explicit opt-in retained-artifact A-to-B rehearsal in a fresh private synthetic root; owned guardian UI/MCP and fault proxy use ephemeral literal loopback ports. Installed child network is loopback-only and model execution is denied.",
+      "payload": "Synthetic preferences, temporary client/browser authority in memory and private files, one exact mutation reply dropped by a test-only proxy, sanitized counts and input/disk evidence. No personal endpoints/configuration, external providers, model execution or download.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
       "id": "installation-reviewed-live-qualification",
       "sources": [
         {
@@ -5449,6 +5469,14 @@
       "path": "scripts/local-migration/installation/process-fixture.mjs",
       "sinks": {
         "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/pilot-rehearsal.mjs",
+      "sinks": {
+        "http-client": 1,
+        "node-http-import": 1,
+        "spawn": 3
       }
     },
     {

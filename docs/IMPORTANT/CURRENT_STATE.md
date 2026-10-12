@@ -21,9 +21,11 @@ Hosted PostgreSQL/Auth0/Vertex and developer/reference compositions remain;
 
 Next: an [assisted colleague pilot](../plans/active/colleague-pilot/README.md),
 using colleagues' own documents. Claude Desktop is required first; ChatGPT desktop
-is wanted but nonblocking. Neither is yet qualified for the local app. Existing
-Claude Code/Codex CLI evidence is scoped; auto-reconnect after idle expiry remains
-unqualified. External assistants may send tool results off-device.
+is wanted but nonblocking. Claude Desktop's standalone bridge passed discovery,
+reads/writes/denials, restart, credential independence and direct final-pair idle
+recovery; the accepted live uncertain-mutation follow-up remains open. Recovery
+used a separate explicit request, not automatic replay. Existing Claude Code/Codex
+CLI evidence is scoped. External assistants may send tool results off-device.
 
 Early pilot builds explicitly designated by the product owner may reset CR-managed
 user data rather than maintain backwards migration. Other releases preserve state
@@ -36,8 +38,11 @@ runs need their own bounded authorization.
 
 Do not claim a general release: the app is unsigned/unnotarized; measured installed
 hardware is M1 Max/64 GiB/macOS 15.1.1. Other hardware, signed distribution,
-cross-boot/forced-loss recovery and real version replacement/disk budgets need
-evidence. Model quality/cancellation exceptions E/H and reported PDF/attribution/
+cross-boot/forced-loss recovery and complete colleague disk budgets need evidence.
+Controlled Candidate 14-to-corrected-app replacement now has scoped synthetic
+state/authority evidence; prior personal-transition receipts support real-asset
+reuse. Neither qualifies downloaded installation or a newer installed artifact.
+Model quality/cancellation exceptions E/H and reported PDF/attribution/
 stale-display findings remain visible in the current application doc.
 
 Follow [AGENTS.md](../../AGENTS.md) and [the workflow](../useful/AGENT_WORKFLOW.md).

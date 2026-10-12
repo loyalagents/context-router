@@ -5,8 +5,9 @@ preferences, manage scoped access, and share context with MCP clients. The manag
 Apple Silicon Mac candidate runs its database, dashboard and selected model locally.
 
 The migration foundation is delivered. **An assisted colleague pilot is next—not
-a qualified general release.** Claude Code/Codex CLI have scoped local evidence;
-Claude Desktop is the next required integration, and ChatGPT desktop follows.
+a qualified general release.** Claude Code/Codex CLI have scoped local evidence.
+Claude Desktop's standalone bridge has passed the main client checks; its live
+uncertain-mutation follow-up remains open. ChatGPT desktop follows.
 See [current support and limitations](docs/current/LOCAL_APPLICATION.md).
 
 ## Use Or Work On The App

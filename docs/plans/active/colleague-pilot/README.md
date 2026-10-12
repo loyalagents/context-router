@@ -1,9 +1,12 @@
 # Assisted Colleague Pilot
 
-- Status: agreed product brief; technical implementation plan not yet approved
-- Priority: next primary outcome after the documentation reset merges
-- Owner: product owner; fresh coordinator and sole writer to be assigned
+- Status: activated milestone; isolated replacement/lost-reply rehearsal passed, actual Claude and distribution acceptance pending
+- Priority: current primary outcome; [plan and evidence](plan.md)
+- Owner: product owner; coordinator and sole writer/integrator `/root` in `codex/pilot-interruption-delivery`
 - Audience: a few Git-capable colleagues, initially Apple Silicon Macs
+
+Current qualification is limited to the measured M1 Max / 64 GiB / macOS 15.1.1
+Mac, per the user's decision. Other Macs remain later compatibility trials.
 
 ## Outcome And Agreed Choices
 
