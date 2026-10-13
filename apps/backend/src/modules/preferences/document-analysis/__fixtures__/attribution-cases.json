@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "description": "Synthetic attribution oracles. Scripted replies establish pipeline plumbing, never model correctness.",
+  "filename": "synthetic-note.txt",
+  "schemaSlugs": ["profile.full_name", "profile.email", "profile.title"],
+  "ambiguousIdentityPolicy": "Omit only ambiguous person-specific facts when multiple people appear and neither saved profile nor document identifies the account owner. Clear single-person or self-identifying documents remain eligible.",
+  "cases": [
+    {
+      "id": "known-owner-email",
+      "accountOwner": "Maya Lin Chen",
+      "identityBasis": "saved-profile",
+      "activePreferences": [{ "slug": "profile.full_name", "value": "Maya Lin Chen" }],
+      "documentText": "Employee: Maya Lin Chen.\nPreferred contact email for Maya Lin Chen: maya.chen@example.test.\n",
+      "expectedProposals": [
+        { "slug": "profile.email", "value": "maya.chen@example.test", "sourceSnippet": "Preferred contact email for Maya Lin Chen: maya.chen@example.test." }
+      ],
+      "forbiddenValues": []
+    },
+    {
+      "id": "colleague-email-with-owner-facts",
+      "accountOwner": "Maya Lin Chen",
+      "identityBasis": "saved-profile",
+      "activePreferences": [{ "slug": "profile.full_name", "value": "Maya Lin Chen" }],
+      "documentText": "Employee: Maya Lin Chen.\nCurrent role for Maya Lin Chen: Research Coordinator.\nPayroll coordinator: Jordan Avery.\nPreferred contact email for Jordan Avery: jordan.avery@example.test.\n",
+      "expectedProposals": [
+        { "slug": "profile.title", "value": "Research Coordinator", "sourceSnippet": "Current role for Maya Lin Chen: Research Coordinator." }
+      ],
+      "forbiddenValues": ["jordan.avery@example.test"]
+    },
+    {
+      "id": "mixed-owner-and-colleague-emails",
+      "accountOwner": "Maya Lin Chen",
+      "identityBasis": "saved-profile",
+      "activePreferences": [{ "slug": "profile.full_name", "value": "Maya Lin Chen" }],
+      "documentText": "Employee: Maya Lin Chen.\nCurrent role for Maya Lin Chen: Research Coordinator.\nPreferred contact email for Maya Lin Chen: maya.chen@example.test.\nPayroll coordinator: Jordan Avery.\nPreferred contact email for Jordan Avery: jordan.avery@example.test.\n",
+      "expectedProposals": [
+        { "slug": "profile.email", "value": "maya.chen@example.test", "sourceSnippet": "Preferred contact email for Maya Lin Chen: maya.chen@example.test." },
+        { "slug": "profile.title", "value": "Research Coordinator", "sourceSnippet": "Current role for Maya Lin Chen: Research Coordinator." }
+      ],
+      "forbiddenValues": ["jordan.avery@example.test"]
+    },
+    {
+      "id": "ambiguous-two-person-directory",
+      "accountOwner": "Maya Lin Chen",
+      "identityBasis": "unavailable-to-extraction",
+      "activePreferences": [],
+      "documentText": "Team contact directory.\nMaya Lin Chen — preferred contact email: maya.chen@example.test.\nJordan Avery — preferred contact email: jordan.avery@example.test.\n",
+      "expectedProposals": [],
+      "forbiddenValues": ["Maya Lin Chen", "Jordan Avery", "maya.chen@example.test", "jordan.avery@example.test"]
+    },
+    {
+      "id": "self-identifying-no-saved-profile",
+      "accountOwner": "Maya Lin Chen",
+      "identityBasis": "self-identifying-document",
+      "activePreferences": [],
+      "documentText": "My name is Maya Lin Chen.\nMy preferred contact email is maya.chen@example.test.\n",
+      "expectedProposals": [
+        { "slug": "profile.full_name", "value": "Maya Lin Chen", "sourceSnippet": "My name is Maya Lin Chen." },
+        { "slug": "profile.email", "value": "maya.chen@example.test", "sourceSnippet": "My preferred contact email is maya.chen@example.test." }
+      ],
+      "forbiddenValues": []
+    }
+  ]
+}

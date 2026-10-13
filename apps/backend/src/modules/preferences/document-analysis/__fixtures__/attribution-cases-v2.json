@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "description": "Two additional preparation-only attribution scenarios. Deterministic replies establish plumbing, not actual-model compliance. The live runner still uses the unchanged five-case v1 fixture.",
+  "filename": "synthetic-note.txt",
+  "schemaSlugs": ["profile.full_name", "profile.email", "profile.title"],
+  "cases": [
+    {
+      "id": "clear-self-title-with-ambiguous-directory",
+      "accountOwner": "Maya Lin Chen",
+      "identityBasis": "unavailable-to-extraction",
+      "activePreferences": [],
+      "documentText": "My current role: Research Coordinator.\nTeam contact directory.\nMaya Lin Chen — preferred contact email: maya.chen@example.test.\nJordan Avery — preferred contact email: jordan.avery@example.test.\n",
+      "expectedProposals": [
+        { "slug": "profile.title", "value": "Research Coordinator", "sourceSnippet": "My current role: Research Coordinator." }
+      ],
+      "forbiddenValues": ["Maya Lin Chen", "Jordan Avery", "maya.chen@example.test", "jordan.avery@example.test"]
+    },
+    {
+      "id": "self-identified-owner-with-other-person-no-saved-profile",
+      "accountOwner": "Maya Lin Chen",
+      "identityBasis": "self-identifying-document",
+      "activePreferences": [],
+      "documentText": "My name is Maya Lin Chen.\nMy current role: Research Coordinator.\nMy preferred contact email is maya.chen@example.test.\nMy HR contact is Jordan Avery.\nJordan Avery's role: Payroll coordinator.\nJordan Avery's contact email: jordan.avery@example.test.\n",
+      "expectedProposals": [
+        { "slug": "profile.full_name", "value": "Maya Lin Chen", "sourceSnippet": "My name is Maya Lin Chen." },
+        { "slug": "profile.email", "value": "maya.chen@example.test", "sourceSnippet": "My preferred contact email is maya.chen@example.test." },
+        { "slug": "profile.title", "value": "Research Coordinator", "sourceSnippet": "My current role: Research Coordinator." }
+      ],
+      "forbiddenValues": ["Jordan Avery", "Payroll coordinator", "jordan.avery@example.test"]
+    }
+  ]
+}
