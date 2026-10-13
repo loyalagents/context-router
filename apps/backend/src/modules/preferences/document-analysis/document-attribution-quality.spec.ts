@@ -91,7 +91,7 @@ describe('attribution affected extraction slice (fake outputs only)', () => {
       const result = exercise(`
         const { finishReceipt, plannedTrials } = await import(${JSON.stringify(pathToFileURL(join(__dirname, '../../../../test/document-attribution/attribution-live.mjs')).href)});
         const fixtures = JSON.parse(await readFile(root + '/apps/backend/src/modules/preferences/document-analysis/__fixtures__/attribution-cases.json'));
-        const attribution = plannedTrials(fixtures.cases).map(trial => ({ ...trial, status: 'completed', score: { passed: true }, stageScores: [{ attributionCorrect: true }] }));
+        const attribution = plannedTrials(fixtures.cases).map(trial => ({ ...trial, status: 'completed', score: { passed: true }, stageScores: [{ attributionCorrect: true, unexpectedFacts: [] }] }));
         trials.forEach((trial, index) => Object.assign(trial, { elapsedMs: 1000, modelState: 'ready', calls: [{ index }] }));
         const nativeCompletions = trials.map((trial, index) => ({ callIndex: index, elapsedMs: 900, status: 'completed' }));
         const variant = ${JSON.stringify(variant)};

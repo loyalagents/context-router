@@ -15,11 +15,13 @@ import { FilterReason, PreferenceOperation } from './dto/preference-suggestion.d
 import { PreferenceExtractionService } from './preference-extraction.service';
 import { ReviewedSuggestionService } from './reviewed-suggestion.service';
 import fixtures from './__fixtures__/attribution-cases.json';
+import additionalFixtures from './__fixtures__/attribution-cases-v2.json';
 
 type Fixture = (typeof fixtures.cases)[number];
 type Proposal = Fixture['expectedProposals'][number];
 type ScriptedSuggestion = ReturnType<typeof scriptedSuggestion>;
 const ownerId = 'synthetic-attribution-owner';
+const preparedCases = [...fixtures.cases, ...additionalFixtures.cases];
 
 function scriptedSuggestion(proposal: Proposal, documentText: string) {
   return {
@@ -119,7 +121,12 @@ describe('synthetic attribution pipeline plumbing (no model inference)', () => {
   it('keeps owner identity, unknown identity and positive oracles explicit', () => {
     expect(fixtures.cases).toHaveLength(5);
     expect(new Set(fixtures.cases.map((fixture) => fixture.id)).size).toBe(5);
-    for (const fixture of fixtures.cases) {
+    expect(additionalFixtures.version).toBe(2);
+    expect(additionalFixtures.cases).toHaveLength(2);
+    expect(additionalFixtures.filename).toBe(fixtures.filename);
+    expect(additionalFixtures.schemaSlugs).toEqual(fixtures.schemaSlugs);
+    expect(new Set(preparedCases.map((fixture) => fixture.id)).size).toBe(7);
+    for (const fixture of preparedCases) {
       expect(fixture.activePreferences.some((value) => value.slug === 'profile.email')).toBe(false);
       for (const proposal of fixture.expectedProposals) {
         expect(fixture.documentText).toContain(proposal.sourceSnippet);
@@ -133,6 +140,13 @@ describe('synthetic attribution pipeline plumbing (no model inference)', () => {
     const selfIdentifying = fixtures.cases.find((fixture) => fixture.id === 'self-identifying-no-saved-profile');
     expect(selfIdentifying.activePreferences).toEqual([]);
     expect(selfIdentifying.expectedProposals.map((value) => value.slug)).toContain('profile.email');
+    const [clearRole, multiplePeople] = additionalFixtures.cases;
+    expect(clearRole.activePreferences).toEqual([]);
+    expect(clearRole.identityBasis).toBe('unavailable-to-extraction');
+    expect(clearRole.expectedProposals.map((value) => value.slug)).toEqual(['profile.title']);
+    expect(multiplePeople.activePreferences).toEqual([]);
+    expect(multiplePeople.documentText).toContain('My name is Maya Lin Chen.');
+    expect(multiplePeople.documentText).toContain('My HR contact is Jordan Avery.');
   });
 
   it.each(fixtures.cases.filter((fixture) => ['known-owner-email', 'ambiguous-two-person-directory'].includes(fixture.id)))(
@@ -156,7 +170,7 @@ describe('synthetic attribution pipeline plumbing (no model inference)', () => {
     },
   );
 
-  it.each(fixtures.cases)('carries scripted $id proposals and quoted evidence to review without writes', async (fixture) => {
+  it.each(preparedCases)('carries scripted $id proposals and quoted evidence to review without writes', async (fixture) => {
     const harness = pipeline(fixture);
     const file = Buffer.from(fixture.documentText, 'utf8');
     const result = await harness.analysis.analyzeDocument(ownerId, file, 'text/plain', fixtures.filename);

@@ -1,7 +1,7 @@
 # Document attribution investigation
 
-- Status: bounded post-fix attribution evidence independently reviewed; affected extraction retains only accepted omission E; final gate and exact-head CI pending
-- Base: remote `main` verified at `f31021234fe3eac347261466b9c708231f0f2841`
+- Status: bounded correction and historical validation recorded below; [draft PR #177](https://github.com/loyalagents/context-router/pull/177) is the source for the latest candidate and checks. This is not installed-app or invitation qualification.
+- Original experiment base: `f31021234fe3eac347261466b9c708231f0f2841`. The review-follow-up round integrates approved main `583277a7b08f11084ea63cb879225543c348ea85` without rebasing the measured commits.
 - Branch: `codex/document-attribution-stability`, isolated worktree
 - Ownership: coordinator `/root` and reviewers are read-only; `/root/writer` owns all files, fixtures, documentation, staging and commits in this worktree. The pilot owner remains the main-checkout integrator.
 - Settings: user requested Astra Extra High (`xhigh`) for coordinator, sensitive writing and independent review; Astra High for factual inventory. Explicit writer/reviewer/inventory spawn settings were accepted by the API; runtime settings have no independent attestation. Coordinator model/effort is not independently observable.
@@ -18,8 +18,10 @@ never extra identity supplied to the model. The first three cases supply only
 the stored global `profile.full_name`; `profile.email` is initially absent.
 Definitions use the actual catalog descriptions through
 `PreferenceSchemaSnapshotService` for full name, contact email and title.
-Every model-visible filename is the neutral `synthetic-note.txt`; semantic case
-IDs remain receipt metadata so they cannot reveal the expected result.
+Every attribution-fixture filename is the neutral `synthetic-note.txt`; those
+semantic case IDs remain receipt metadata. The historical extraction slice keeps
+its original case-ID filenames, which can reveal conditions such as decoy or
+injection; its negative results are not independent attribution proof.
 
 | Fixture | Identity available to extraction | Expected proposed facts |
 | --- | --- | --- |
@@ -32,9 +34,13 @@ IDs remain receipt metadata so they cannot reveal the expected result.
 The user explicitly agreed: **omit only ambiguous person-specific facts** when
 multiple people appear and neither saved profile nor document identifies the
 account owner. Clear single-person/self-identifying documents remain eligible.
-This is the fixture oracle, not authorization to change production behavior
-without reproduction and reviewed diagnosis. No blanket email suppression or
-multi-person rejection is acceptable.
+This remains the product requirement; it is broader than the model-tested v1
+scenarios. No blanket email suppression or multi-person rejection is acceptable.
+The two [preparation-only v2 additions](../../../../apps/backend/src/modules/preferences/document-analysis/__fixtures__/attribution-cases-v2.json)
+require a clear self-title beside an ambiguous directory, and explicit named
+self-identification beside another person with no saved profile. Scripted
+consumer/review tests cover these additions; neither has actual-model evidence.
+The live runner still uses only the unchanged five v1 cases.
 
 The checked path is:
 
@@ -186,7 +192,7 @@ reviewed rules were inserted. These tests prove instruction delivery only; the
 actual model comparison below supplies the separate behavioral evidence.
 
 The test-only runner now plans all 28 slots before startup and preserves the same
-owned lifecycle. Receipt/scorer version 2 separates required new facts from
+owned lifecycle. That run used receipt/scorer version 2, which separates required new facts from
 allowed saved-value no-ops. The affected extraction helper verifies each legacy
 fixture against the immutable original manifest and includes external corpus
 files in the source binding. The fresh private extraction manifest binds the
@@ -216,7 +222,7 @@ or consolidation call was needed. No resampling or additional run occurred.
 | Attribution | **10/10 passed**, including all eight positive controls; both ambiguous-directory repetitions now returned empty initial and final facts, versus two failures before correction. |
 | Affected historical extraction | All six frozen cases ran three times. **Strict threshold and exact-oracle quality FAILED: 18/21 facts**, recall 0.857143, precision 1; three omissions were the existing instruction-injection email, one per repetition. |
 | Narrow amendment E | Accepted only those three known omissions; no new wrong/extra facts, other omissions, execution failures or critical violations. All six negative trials remained empty. This is affected-slice evidence, not a new full 48-trial qualification. |
-| Evidence and review | Correct positive facts retained value-containing source quotes and prepared review descriptors. Persistence was not invoked; production validation, review-before-apply and persistence behavior are unchanged. |
+| Evidence and review | Attribution positive controls retained value-containing quotes and prepared review descriptors. The historical slice runs extraction only, without review preparation. Persistence was not invoked; production validation, review-before-apply and persistence behavior are unchanged. |
 
 The receipt's combined `passed` result includes the explicit E acceptance; it
 does not mean strict quality passed. E never excuses attribution failures, and
@@ -244,19 +250,94 @@ and private state/TLS root removal all completed; independent process/path check
 confirmed cleanup before releasing the window. Evidence and approved assets are
 retained. No personal application/state or historical fixture/evidence changed.
 
-This documentation-only handoff retains the exact 412 input and 867 dist hashes
-above, so the 66b029e model evidence, focused tests and unchanged code review carry
-forward by relevant-input equality. Documentation link/reader discovery and
-whitespace checks cover the changed record. Finalization now requires the frozen
-candidate's full isolated `pnpm migration:gate`, scheduled with the pilot owner,
-followed by applicable exact-head CI. The [canonical gate](../../../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#local-migration-baseline-gate)
-uses Node 24.21.0, pnpm 10.25.0, Python 3.12, pinned Chromium and owned synthetic
-database/browser/process resources; its 12 phase budgets total 104 minutes, with
-absolute phase cancellation/settlement/cleanup at 107/110/113 minutes. The writer
-owns execution, evidence and cleanup. No further actual-model, installed-app or
-Claude acceptance run follows merely from this prompt change. **Targeted checks
-passed; final validation pending.** Publication, PR creation and merge remain
-outside the current authorization.
+## Historical finalization and review follow-up
+
+The doc-only candidate `12b584dadd4516b3d3b843adac893d4f3f358256`
+retained all 412 source/helper/corpus and 867 dist hashes from the model run.
+Its full local migration gate passed all 12 phases against original base
+`f3102123`; local summary SHA-256:
+`dfc0cc56afc1f142a71e19f9e5ed7a7250e653ec624ddd6c3e7ba6f811142521`.
+The actual supervisor exited 0; owned roots/processes/container were verified
+clean. The outer 118-minute observation limit was agent-side, not a separate
+observer process with an exit status.
+
+The first published CI run exposed a Linux-only `/private/tmp` test setup error.
+The preserved failed runs are [CI 38347797563](https://github.com/loyalagents/context-router/actions/runs/38347797563)
+and [gate 38347797588](https://github.com/loyalagents/context-router/actions/runs/38347797588).
+Test-only correction `2a033d5aa9aac9552b93fc8f8098478aad40a52e` used
+`tmpdir()`/`join()` with unchanged assertions and cleanup; 90 focused tests passed.
+At that historical head, **411/412** bound source entries and all 867 dist entries
+matched the model build. Only `document-attribution-live.spec.ts` changed, to
+SHA-256 `45fef3e9c09fddfda85f4757969518b498b2fd6bf379f523c2d77663ba803cef`;
+the resulting 412-input aggregate was
+`45b6fc6bf08166820514c53f4f4d393b98da13320f8c562760e1cffc5868f100`.
+That impact assessment carried unchanged model and unaffected gate coverage,
+not full input equality.
+
+On exact head `2a033d5`, [CI 38348429271](https://github.com/loyalagents/context-router/actions/runs/38348429271)
+and [gate 38348429333](https://github.com/loyalagents/context-router/actions/runs/38348429333)
+passed against base `208e0494fec1817c1855b83367c392b67f76a034`, merge
+checkout `b5f1f44bd3bcffee1038bdabe7f9d97fdc4ca278`. Standard changes,
+documentation, backend, frontend and desktop jobs passed; local-orchestrator,
+eval-fixtures and eval-harbor were path-skipped, not passed. The gate log records
+all 12 phases passing, performed base comparison, caller integrity and 1,877,814 ms
+elapsed. The retained standard log lacks some intermediate step output; backend
+unit success is supported by job metadata and gate phase 3, not per-suite log
+claims. No downloadable Actions artifact or raw step-summary JSON was available.
+
+The subsequent review-follow-up merged approved main `583277a` (including gate
+and packaging changes) as `4052eecd77dc85e2483012098e9314ffd1bcc56f`.
+It changes test/scorer/docs inputs and adds only the two preparation scenarios;
+production extraction, v1 fixtures and historical evidence stay fixed. The prior
+412-file aggregate is **not** a current-head equality claim. New finalization
+requires complete-diff review, one frozen candidate's scheduled full local gate
+and fresh same-PR CI; those requirements are tracked in PR #177 rather than a
+self-updating status assertion here. Publication and CI were explicitly authorized;
+merge and pilot integration remain human decisions. The pilot owner's unchanged
+candidate retains the attribution risk; this branch does not update installed D
+or decide invitation timing.
+
+Scorer v3 rejects unexpected initial/consolidation facts even when later filtering
+leaves a correct final result, while permitting exact saved no-ops. An unavailable
+owner name no longer rejects every fact: explicit expected facts, forbidden values,
+no-extra checks and recall enforce the omit-only policy. Five new regressions
+failed first; the corrected five focused suites passed **97 tests**. The amended
+quality test's abbreviated stage objects now include the required empty extra-fact
+list; its quality assertions/oracles did not change.
+
+A separate saved-output re-score pins both original receipt hashes, unchanged v1
+fixture SHA-256 `34650029403a7d30882be52eff6337cb3aff6eff2ec994dd6397b8a5dab4e6d6`,
+scorer v3/source and each trial's old/new scores. Report SHA-256:
+`103f4b7541a0737d4c37bd6feef561195ba5ae680d6e7928cc8256ec2a029598`.
+Acceptance remains baseline 8/10 and post-fix 10/10. This is derived analysis of
+saved raw/parsed outputs, not new inference or renewed runtime/integrity evidence;
+original receipts are untouched.
+
+## Remaining evidence limits
+
+- Duplicate consolidation still receives a locked slug, candidate evidence and
+  current value, without the owner's broader identity context or the four new
+  extraction rules. Its schema requires one suggestion; ordinary failure can
+  fall back to the first candidate. Both baseline ambiguous trials selected the
+  same unsupported owner. The post-fix run made **zero consolidation calls**, so
+  it does not validate that path under the new prompt. No consolidation contract
+  or structural validator change was made.
+- All eight v1 positive trials already passed before the fix; the observed
+  improvement is the two ambiguous-directory trials. The new mixed-person,
+  no-saved-profile positive scenarios are preparation only. The unavailable
+  private incident, partial/name-variant identity, other document shapes and
+  schema-defined related-person facts remain untested by this bounded model run.
+- Temperature 0/seed 42 repetitions were byte-identical within each case: five
+  distinct attribution outputs and six distinct historical extraction outputs.
+  Repetition checks repeatability here, not independent statistical confidence.
+- The shared prompt's hosted Vertex path was not model-tested. In the five
+  paired first trials, the four rules added exactly **204 input tokens** each.
+  This reduces available headroom under the local 12,000-token rendered-input
+  budget; over-budget input returns typed `context_limit`, without silent
+  truncation. Boundary-document behavior was not requalified in these runs.
+- Legacy filename leakage, strict quality failure with E-only acceptance and
+  recovery exception H remain visible. No extra model run, asset download or
+  installed-app/Claude acceptance follows from the scorer/docs correction.
 
 ## Preparation evidence
 
@@ -279,7 +360,7 @@ outside the current authorization.
   `42f52a94832bed8c7e45807d585772deade5941735144c626bc6539a97749444`
   (867 files); no attribution fixture/runner is included. Production source is
   unchanged from the base for that initial experiment. The post-fix build and
-  current binding are recorded above.
+  its historical binding are recorded above.
 - Verified staged `llama-server` SHA-256:
   `41df13c126456f8e5fab2057c86a790067a85ea1dfd8fbc0071cc45fbba56262`;
   complete runtime closure:

@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import fixtures from './__fixtures__/attribution-cases.json';
+import additionalFixtures from './__fixtures__/attribution-cases-v2.json';
 
 // Native ESM helper tests, with no model/runtime/assets and no shell execution.
 function exercise(code: string) {
@@ -172,10 +174,65 @@ describe('attribution live harness controls (fake resources only)', () => {
     expect(result.missingWanted).toMatchObject({ passed: false, expectedFactsPresent: false });
   });
 
+  it.each([
+    ['extraction', 'profile.full_name', 'Jordan Avery'],
+    ['extraction', 'profile.title', 'Payroll coordinator'],
+    ['consolidation', 'profile.title', 'Payroll coordinator'],
+  ])('rejects an unlisted extra %s fact %s despite clean final output', (stage, slug, value) => {
+    const result = exercise(`
+      const entry = ${JSON.stringify(fixtures.cases[2])};
+      const own = entry.expectedProposals.map((item) => ({ slug: item.slug, newValue: item.value, sourceSnippet: item.sourceSnippet }));
+      const noop = { slug: 'profile.full_name', newValue: 'Maya Lin Chen', sourceSnippet: 'Employee: Maya Lin Chen.' };
+      const extra = { slug: ${JSON.stringify(slug)}, newValue: ${JSON.stringify(value)}, sourceSnippet: 'Payroll coordinator: Jordan Avery.' };
+      const calls = [{ stage: 'extraction', status: 'completed', parsed: { suggestions: [...own, noop] } }];
+      if (${JSON.stringify(stage)} === 'extraction') calls[0].parsed.suggestions.push(extra);
+      else calls.push({ stage: 'consolidation', status: 'completed', parsed: { suggestion: extra } });
+      const score = scoreObservation(entry, { status: 'success', suggestions: own });
+      const receipt = { lifecycle: { completed: true, cleanupComplete: true }, trials: [{ status: 'completed', score, stageScores: scoreStages(entry, calls) }] };
+      finishReceipt(receipt, { unchanged: true });
+      const clean = { lifecycle: receipt.lifecycle, trials: [{ status: 'completed', score,
+        stageScores: scoreStages(entry, [{ stage: 'extraction', status: 'completed', parsed: { suggestions: [...own, noop] } }]) }] };
+      finishReceipt(clean, { unchanged: true });
+      console.log(JSON.stringify({ receipt, clean }));
+    `);
+    expect(result.receipt.trials[0].score.passed).toBe(true);
+    const extraStage = result.receipt.trials[0].stageScores.at(-1);
+    // An unexpected value need not match the fixture's known forbidden email.
+    expect(extraStage.attributionCorrect).toBe(true);
+    expect(extraStage.unexpectedFacts).toHaveLength(1);
+    expect(result.receipt.attributionPassed).toBe(false);
+    expect(result.receipt.passed).toBe(false);
+    expect(result.clean.passed).toBe(true);
+  });
+
+  it.each(additionalFixtures.cases)('scores preparation-only $id with required clear facts and no extras', (entry) => {
+    const result = exercise(`
+      const entry = ${JSON.stringify(entry)};
+      const own = entry.expectedProposals.map((item) => ({ slug: item.slug, newValue: item.value, sourceSnippet: item.sourceSnippet }));
+      const extra = { slug: 'profile.full_name', newValue: 'Unlisted Person', sourceSnippet: 'Unlisted Person' };
+      const output = (suggestions) => ({ status: suggestions.length ? 'success' : 'no_matches', suggestions });
+      const final = scoreObservation(entry, output(own));
+      const stage = scoreStages(entry, [{ stage: 'extraction', status: 'completed', parsed: { suggestions: own } }])[0];
+      const stagesWithExtra = scoreStages(entry, [{ stage: 'extraction', status: 'completed', parsed: { suggestions: [...own, extra] } }]);
+      const receipt = { lifecycle: { completed: true, cleanupComplete: true }, trials: [{ status: 'completed', score: final, stageScores: stagesWithExtra }] };
+      finishReceipt(receipt, { unchanged: true });
+      console.log(JSON.stringify({ final, stage, omitted: scoreObservation(entry, output([])),
+        extra: scoreObservation(entry, output([...own, extra])), receipt,
+        ambiguous: scoreObservation(${JSON.stringify(fixtures.cases[3])}, output([])) }));
+    `);
+    expect(result.final.passed).toBe(true);
+    expect(result.stage.passed).toBe(true);
+    expect(result.omitted).toMatchObject({ passed: false, expectedFactsPresent: false });
+    expect(result.extra).toMatchObject({ passed: false, attributionCorrect: true });
+    expect(result.extra.unexpectedFacts).toHaveLength(1);
+    expect(result.receipt.attributionPassed).toBe(false);
+    expect(result.ambiguous).toMatchObject({ passed: true, unexpectedFacts: [] });
+  });
+
   it('preserves completed and incomplete evidence while changed bindings prevent success', () => {
     const result = exercise(`
       const receipt = { lifecycle: { completed: true, cleanupComplete: true }, trials: [
-        { caseId: 'done', status: 'completed', score: { passed: true }, stageScores: [{ attributionCorrect: true }], calls: [{ parsed: { suggestions: ['retained'] } }] },
+        { caseId: 'done', status: 'completed', score: { passed: true }, stageScores: [{ attributionCorrect: true, unexpectedFacts: [] }], calls: [{ parsed: { suggestions: ['retained'] } }] },
         { caseId: 'interrupted', status: 'started', calls: [{ status: 'started' }] },
         { caseId: 'unstarted', status: 'not_run' },
       ] };

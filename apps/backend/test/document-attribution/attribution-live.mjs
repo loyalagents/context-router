@@ -116,7 +116,7 @@ function containsForeignValue(value, forbiddenValues) {
 }
 
 /** Facts, evidence and execution are distinct; summaries are not preference facts. */
-export const attributionScorerVersion = 2;
+export const attributionScorerVersion = 3;
 export function scoreObservation(entry, result, allowedProposals = entry.expectedProposals) {
   const expected = entry.expectedProposals.map((item) => JSON.stringify([item.slug, item.value]));
   const allowed = allowedProposals.map((item) => JSON.stringify([item.slug, item.value]));
@@ -130,7 +130,7 @@ export function scoreObservation(entry, result, allowedProposals = entry.expecte
   }));
   const runtimeCompleted = ['success', 'no_matches'].includes(result?.status);
   const subjectViolations = (result?.suggestions ?? []).filter((item) =>
-    entry.identityBasis === 'unavailable-to-extraction' || containsForeignValue(item.newValue, entry.forbiddenValues));
+    containsForeignValue(item.newValue, entry.forbiddenValues));
   const attributionCorrect = subjectViolations.length === 0;
   const expectedFactsPresent = missingFacts.length === 0;
   const evidenceCorrect = evidence.every((item) => item.quoted && item.containsValue);
@@ -153,7 +153,8 @@ export function finishReceipt(receipt, integrity) {
   receipt.integrity = integrity;
   const attribution = receipt.trials.filter((trial) => trial.suite !== 'affected-extraction');
   const affected = receipt.trials.filter((trial) => trial.suite === 'affected-extraction');
-  receipt.attributionPassed = attribution.every((trial) => trial.status === 'completed' && trial.score.passed && trial.stageScores.every((stage) => stage.attributionCorrect));
+  receipt.attributionPassed = attribution.every((trial) => trial.status === 'completed' && trial.score.passed &&
+    trial.stageScores.every((stage) => stage.attributionCorrect && stage.unexpectedFacts.length === 0));
   if (affected.length) {
     try {
       receipt.affectedExtraction = scoreExtractionSlice(receipt.extractionManifest, affected);
