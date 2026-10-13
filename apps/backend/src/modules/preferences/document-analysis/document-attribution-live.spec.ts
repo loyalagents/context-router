@@ -216,7 +216,9 @@ describe('attribution live harness controls (fake resources only)', () => {
       const { readApprovedBuildBinding } = await import(harnessUrl);
       const { mkdtemp, writeFile, rm } = await import('node:fs/promises');
       const { createHash } = await import('node:crypto');
-      const root = await mkdtemp('/private/tmp/cr-attribution-binding-test-');
+      const { tmpdir } = await import('node:os');
+      const { join } = await import('node:path');
+      const root = await mkdtemp(join(tmpdir(), 'cr-attribution-binding-test-'));
       try {
         const file = root + '/binding.json';
         const original = JSON.stringify({ buildSha256: 'approved-original-build' });
