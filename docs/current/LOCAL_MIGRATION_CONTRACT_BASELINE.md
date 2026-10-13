@@ -238,8 +238,11 @@ allowances remain unchanged, and active phase budgets now total 104 minutes.
 Each dedicated CI execution lane retains the bounded ten-minute pinned Chromium
 prerequisite and two-minute optional sanitized database-evidence upload, and adds
 a two-minute required qualification receipt upload. A one-minute runner step
-initializes private caches before package setup. Step budgets total 178 minutes
-within each 188-minute job, preserving ten minutes of workflow overhead. Absolute
+initializes private caches before package setup. The packaging lane additionally
+prepares its pinned Prisma native engine with `pnpm --filter backend exec prisma
+--version` before the gate copies and snapshots dependencies; no generated source
+or build is reused. Step/job budgets are 178/188 minutes for source and 180/190
+minutes for packaging, preserving ten minutes of workflow overhead. Absolute
 gate deadlines are preflight T+3, phase cancellation
 T+107, child settlement T+110 and final cleanup T+113 minutes. The 118-minute
 gate-step fail-safe preserves five additional minutes. Every supported mode must retain active contract, build, state,

@@ -133,7 +133,7 @@ jobs:
 
   packaging-qualification:
     runs-on: ubuntu-latest
-    timeout-minutes: 188
+    timeout-minutes: 190
 
     services:
       postgres:
@@ -192,6 +192,10 @@ jobs:
       - name: Install dependencies
         timeout-minutes: 15
         run: pnpm install --frozen-lockfile
+
+      - name: Prepare pinned Prisma engine prerequisite
+        timeout-minutes: 2
+        run: pnpm --filter backend exec prisma --version
 
       - name: Install pinned Chromium prerequisite
         timeout-minutes: 10

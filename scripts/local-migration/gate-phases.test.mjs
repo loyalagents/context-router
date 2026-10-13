@@ -1194,7 +1194,7 @@ test("dedicated CI seeds the exact offline pnpm Corepack cache before invoking t
   assert.ok(gate > seed, "workflow must seed Corepack before running the gate");
 });
 
-test("dedicated CI lanes preserve gate deadlines with reviewed 178/188-minute workflow budgets", async () => {
+test("dedicated CI lanes preserve gate deadlines with reviewed source 178/188 and packaging 180/190 budgets", async () => {
   const workflow = parseYaml(
     await readFile(
       new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
@@ -1203,7 +1203,8 @@ test("dedicated CI lanes preserve gate deadlines with reviewed 178/188-minute wo
   );
   for (const jobId of ["source-qualification", "packaging-qualification"]) {
   const job = workflow.jobs[jobId];
-  assert.equal(job["timeout-minutes"], 188);
+  const packagingPrerequisite = jobId === "packaging-qualification" ? 2 : 0;
+  assert.equal(job["timeout-minutes"], 188 + packagingPrerequisite);
   const expected = [
     ["actions/checkout@v4", 5],
     ["Initialize private runner caches", 1],
@@ -1212,6 +1213,7 @@ test("dedicated CI lanes preserve gate deadlines with reviewed 178/188-minute wo
     ["actions/setup-python@v5", 5],
     ["Verify toolchain and seed offline Corepack runtime", 5],
     ["Install dependencies", 15],
+    ...(packagingPrerequisite ? [["Prepare pinned Prisma engine prerequisite", 2]] : []),
     ["Install pinned Chromium prerequisite", 10],
     ["Run the Local Migration Baseline Gate", 118],
     ["Persist sanitized gate evidence", 5],
@@ -1224,9 +1226,9 @@ test("dedicated CI lanes preserve gate deadlines with reviewed 178/188-minute wo
   );
   assert.equal(
     job.steps.reduce((sum, step) => sum + step["timeout-minutes"], 0),
-    178,
+    178 + packagingPrerequisite,
   );
-  assert.equal(job["timeout-minutes"] - 178, 10);
+  assert.equal(job["timeout-minutes"] - (178 + packagingPrerequisite), 10);
   const evidence = job.steps.find((step) => step.name === "Persist sanitized gate evidence");
   assert.equal(evidence.if, "always()");
   assert.equal(

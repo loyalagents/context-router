@@ -311,6 +311,43 @@ removed, and cleanup errors were empty. This is failed evidence, not a pass or
 performance sample. Final qualification and corrected workflow measurement are
 still pending; these correctness retries count in the task's attempt history.
 
+The second frozen candidate `e2d1ad1319327d5aa54d1dcd17579050f78553a4`
+started both lanes in [run 38474603981](https://github.com/loyalagents/context-router/actions/runs/38474603981).
+Its packaging job failed final integrity after all runtime modes: a cold frozen
+install skips Prisma postinstall, so the first generator invocation hydrated the
+native engine after dependency snapshots and created an executable cache file
+inside the strict private tool home. The prior sequential source phases had
+implicitly prepared that prerequisite. Strict private-tree and caller-integrity
+checks correctly rejected the mutation; neither assertion is relaxed.
+
+The bounded repair adds only a two-minute packaging-lane prerequisite,
+`pnpm --filter backend exec prisma --version`, after frozen install and before
+the gate captures dependencies. The lockfile resolves Prisma 7.4.2. The command
+prepares the native engine without generating source or reusing any build;
+packaging still executes its original generator, backend/web builds, all six
+modes, outer lifecycle verification and final integrity. The source lane's
+178/188-minute step/job budget stays unchanged; packaging becomes 180/190.
+A new test first failed the missing prerequisite, then checks its ordering,
+lock-resolved version, unconditional execution and fail-closed two-minute bound.
+Independent review approved this narrow prerequisite repair and selective
+coverage renewal. The affected batch passed 165/165 tests (20.157 s), base
+comparison was performed successfully, and all 147 Markdown links plus whitespace
+checks passed. An isolated native CLI probe started without its engine, reproduced
+0711 hydration under umask 077, then verified the approved engine digest and
+unchanged dependency trees from a fresh private tool home. That prepared probe
+created only empty 0700 cache directories, no executable private cache file.
+Actual cold-run CI and final implementation review remain pending.
+
+Only workflow, its direct test consumers and these affected docs change in this
+repair. Gate/packaging/runtime code, manifests/schemas, product source and locked
+dependencies remain byte-identical to `e2d1ad1`. The ongoing full local gate stays
+bound to its actual `e2d1ad1` source and copied-input digest, never to a later
+commit. Renew affected phase/workflow/toolchain/contract/docs checks and all real
+CI on the next frozen head; carry forward only the explicitly unchanged local
+phase/runtime coverage and unaffected independent review. Preserve the failed
+remote attempt and its runner cost. No additional performance sample is launched
+to improve a measured result; this is a correctness retry.
+
 ## Completed PR #178: Historical Packaging Measurement
 
 The following record is preserved from the previous task. Its ownership, model

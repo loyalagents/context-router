@@ -262,3 +262,23 @@ test("CI private caches initialize in a runner step before package setup", async
     ].join("\n"));
   }
 });
+
+// A cold install skips Prisma's postinstall; packaging must not hydrate its
+// snapshotted dependencies or create executable files in the private tool home.
+test("packaging seeds its pinned Prisma engine before the gate captures dependencies", async () => {
+  const workflow = parse(await readFile(dedicatedPath, "utf8"));
+  const job = workflow.jobs["packaging-qualification"];
+  const seed = job.steps.findIndex(step => step.name === "Prepare pinned Prisma engine prerequisite");
+  const install = job.steps.findIndex(step => step.run === "pnpm install --frozen-lockfile");
+  const gate = job.steps.findIndex(step => step.id === "migration-gate");
+  assert.ok(seed > install && seed < gate, "cold packaging dependencies must be prepared before gate snapshot");
+  assert.equal(job.steps[seed].run, "pnpm --filter backend exec prisma --version");
+  assert.equal(job.steps[seed]["timeout-minutes"], 2);
+  assert.equal(job.steps[seed].if, undefined);
+  assert.equal(job.steps[seed]["continue-on-error"], undefined);
+  const manifest = JSON.parse(await readFile(path.join(repositoryRoot, "apps/backend/package.json"), "utf8"));
+  const lock = parse(await readFile(path.join(repositoryRoot, "pnpm-lock.yaml"), "utf8"));
+  assert.equal(lock.importers["apps/backend"].devDependencies.prisma.specifier, manifest.devDependencies.prisma);
+  assert.equal(lock.importers["apps/backend"].devDependencies.prisma.version.split("(")[0], "7.4.2");
+  assert.equal(workflow.jobs["source-qualification"].steps.some(step => step.name === job.steps[seed].name), false);
+});
