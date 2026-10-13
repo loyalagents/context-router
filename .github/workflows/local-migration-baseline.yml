@@ -12,14 +12,7 @@ permissions:
 jobs:
   source-qualification:
     runs-on: ubuntu-latest
-    timeout-minutes: 187
-
-    env:
-      COREPACK_HOME: ${{ runner.temp }}/corepack
-      npm_config_store_dir: ${{ runner.temp }}/pnpm-store
-      npm_config_cache: ${{ runner.temp }}/npm-cache
-      XDG_CACHE_HOME: ${{ runner.temp }}/xdg-cache
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+    timeout-minutes: 188
 
     services:
       postgres:
@@ -41,6 +34,17 @@ jobs:
         timeout-minutes: 5
         with:
           fetch-depth: 0
+
+      - name: Initialize private runner caches
+        timeout-minutes: 1
+        run: |
+          {
+            echo "COREPACK_HOME=$RUNNER_TEMP/corepack"
+            echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store"
+            echo "npm_config_cache=$RUNNER_TEMP/npm-cache"
+            echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache"
+            echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright"
+          } >> "$GITHUB_ENV"
 
       - uses: pnpm/action-setup@v6.0.8
         timeout-minutes: 5
@@ -129,14 +133,7 @@ jobs:
 
   packaging-qualification:
     runs-on: ubuntu-latest
-    timeout-minutes: 187
-
-    env:
-      COREPACK_HOME: ${{ runner.temp }}/corepack
-      npm_config_store_dir: ${{ runner.temp }}/pnpm-store
-      npm_config_cache: ${{ runner.temp }}/npm-cache
-      XDG_CACHE_HOME: ${{ runner.temp }}/xdg-cache
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+    timeout-minutes: 188
 
     services:
       postgres:
@@ -158,6 +155,17 @@ jobs:
         timeout-minutes: 5
         with:
           fetch-depth: 0
+
+      - name: Initialize private runner caches
+        timeout-minutes: 1
+        run: |
+          {
+            echo "COREPACK_HOME=$RUNNER_TEMP/corepack"
+            echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store"
+            echo "npm_config_cache=$RUNNER_TEMP/npm-cache"
+            echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache"
+            echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright"
+          } >> "$GITHUB_ENV"
 
       - uses: pnpm/action-setup@v6.0.8
         timeout-minutes: 5

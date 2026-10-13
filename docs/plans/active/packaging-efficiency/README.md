@@ -285,6 +285,32 @@ are consequently 26m48.8s readiness and 45m10.8s dedicated runner usage. No new
 baseline run was launched. Candidate performance and final qualification remain
 pending.
 
+The first frozen candidate `2ced5136f775fdf8c9923035a8cfc63bfaf705a3`
+was pushed at 2026-10-13 21:53:00.807–21:53:02.591 UTC and opened as
+[draft PR #179](https://github.com/loyalagents/context-router/pull/179).
+Dedicated workflow attempt `38473872779` failed before scheduling any job:
+GitHub does not provide `runner` context in job-level `env`. A new regression
+first reproduced that invalid context. Private cache initialization now runs in
+a bounded one-minute step before package setup; every existing step budget
+remains unchanged, with 178 total step minutes in a 188-minute lane job.
+Independent complete-diff review found this single blocker and no additional
+coverage, receipt, lifecycle or scope findings; correction review is pending.
+The corrected workflow/phase/toolchain/contract/Markdown batch passed 164/164
+checks (15.799 s); all 147 Markdown links and whitespace checks passed.
+
+The first full local attempt on that candidate failed phase 1 (393/396 tests)
+because the task launcher used umask 077: three existing copied-mode/ownership
+tests require ordinary 0644 file creation. Narrow reproduction failed all three
+under 077 and passed all three under 022. No test or production behavior changed;
+the renewed full gate uses umask 022 inside the existing private task root.
+Failed evidence remains retained. Its source digest is
+`c04b9e440946d15b0d90278299c5a744b1dad9ca9d0fa928044a313532717015`,
+base `2497cc209e4d8c1233a7dcd6852b9fd8f4b1b42c`, and caller integrity passed.
+The owned database/container cleanup completed, the disposable workspace was
+removed, and cleanup errors were empty. This is failed evidence, not a pass or
+performance sample. Final qualification and corrected workflow measurement are
+still pending; these correctness retries count in the task's attempt history.
+
 ## Completed PR #178: Historical Packaging Measurement
 
 The following record is preserved from the previous task. Its ownership, model

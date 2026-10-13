@@ -224,8 +224,6 @@ test("CI lanes start independently with complete prerequisites and a fail-closed
     assert.equal(required.with["if-no-files-found"], "error");
     assert.equal(required.with.name, profile + "-${{ github.run_id }}-${{ github.run_attempt }}");
     assert.equal(required.with.path, "${{ runner.temp }}/" + profile + ".json");
-    assert.ok(job.env.COREPACK_HOME.startsWith("${{ runner.temp }}/"));
-    assert.ok(job.env.npm_config_store_dir.startsWith("${{ runner.temp }}/"));
   }
   const combined = workflow.jobs["local-migration-baseline"];
   assert.deepEqual(combined.needs, ["source-qualification", "packaging-qualification"]);
@@ -237,4 +235,30 @@ test("CI lanes start independently with complete prerequisites and a fail-closed
   assert.equal(combined.steps[0].env.PACKAGING_RESULT, "${{ needs.packaging-qualification.result }}");
   assert.equal(combined.steps.filter(s => s.uses?.startsWith("actions/download-artifact@")).length, 2);
   for (const step of combined.steps) assert.equal(step["continue-on-error"], undefined);
+});
+
+// GitHub evaluates job env before a runner exists; runner context is step-only.
+test("CI private caches initialize in a runner step before package setup", async () => {
+  const workflow = parse(await readFile(dedicatedPath, "utf8"));
+  for (const jobId of ["source-qualification", "packaging-qualification"]) {
+    const job = workflow.jobs[jobId];
+    assert.doesNotMatch(JSON.stringify(job.env ?? {}), /\$\{\{\s*runner\./);
+    const initialize = job.steps.findIndex(step => step.name === "Initialize private runner caches");
+    const packageSetup = job.steps.findIndex(step => step.uses?.startsWith("pnpm/action-setup@"));
+    assert.ok(initialize >= 0 && initialize < packageSetup);
+    const step = job.steps[initialize];
+    assert.equal(step["timeout-minutes"], 1);
+    assert.equal(step.if, undefined);
+    assert.equal(step["continue-on-error"], undefined);
+    assert.equal(step.run, [
+      '{',
+      '  echo "COREPACK_HOME=$RUNNER_TEMP/corepack"',
+      '  echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store"',
+      '  echo "npm_config_cache=$RUNNER_TEMP/npm-cache"',
+      '  echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache"',
+      '  echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright"',
+      '} >> "$GITHUB_ENV"',
+      '',
+    ].join("\n"));
+  }
 });

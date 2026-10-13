@@ -1194,7 +1194,7 @@ test("dedicated CI seeds the exact offline pnpm Corepack cache before invoking t
   assert.ok(gate > seed, "workflow must seed Corepack before running the gate");
 });
 
-test("dedicated CI lanes preserve gate deadlines with reviewed 177/187-minute workflow budgets", async () => {
+test("dedicated CI lanes preserve gate deadlines with reviewed 178/188-minute workflow budgets", async () => {
   const workflow = parseYaml(
     await readFile(
       new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
@@ -1203,9 +1203,10 @@ test("dedicated CI lanes preserve gate deadlines with reviewed 177/187-minute wo
   );
   for (const jobId of ["source-qualification", "packaging-qualification"]) {
   const job = workflow.jobs[jobId];
-  assert.equal(job["timeout-minutes"], 187);
+  assert.equal(job["timeout-minutes"], 188);
   const expected = [
     ["actions/checkout@v4", 5],
+    ["Initialize private runner caches", 1],
     ["pnpm/action-setup@v6.0.8", 5],
     ["actions/setup-node@v4", 5],
     ["actions/setup-python@v5", 5],
@@ -1223,9 +1224,9 @@ test("dedicated CI lanes preserve gate deadlines with reviewed 177/187-minute wo
   );
   assert.equal(
     job.steps.reduce((sum, step) => sum + step["timeout-minutes"], 0),
-    177,
+    178,
   );
-  assert.equal(job["timeout-minutes"] - 177, 10);
+  assert.equal(job["timeout-minutes"] - 178, 10);
   const evidence = job.steps.find((step) => step.name === "Persist sanitized gate evidence");
   assert.equal(evidence.if, "always()");
   assert.equal(

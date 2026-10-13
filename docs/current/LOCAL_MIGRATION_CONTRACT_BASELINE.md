@@ -237,8 +237,9 @@ the expanded packaging phase from fifteen to twenty-five minutes; other phase
 allowances remain unchanged, and active phase budgets now total 104 minutes.
 Each dedicated CI execution lane retains the bounded ten-minute pinned Chromium
 prerequisite and two-minute optional sanitized database-evidence upload, and adds
-a two-minute required qualification receipt upload. Step budgets total 177 minutes
-within each 187-minute job, preserving ten minutes of workflow overhead. Absolute
+a two-minute required qualification receipt upload. A one-minute runner step
+initializes private caches before package setup. Step budgets total 178 minutes
+within each 188-minute job, preserving ten minutes of workflow overhead. Absolute
 gate deadlines are preflight T+3, phase cancellation
 T+107, child settlement T+110 and final cleanup T+113 minutes. The 118-minute
 gate-step fail-safe preserves five additional minutes. Every supported mode must retain active contract, build, state,
