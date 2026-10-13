@@ -267,6 +267,39 @@ test("packaging operation timer counts settled attempts and preserves values and
   assert.equal(lines.join("").includes("private-canary"), false);
 });
 
+test("packaging operation timer finishes pending work as bounded immutable partial evidence", async () => {
+  const lines = [];
+  const pending = Promise.withResolvers();
+  const value = {};
+  let clock = 0;
+  let calls = 0;
+  const timer = packagingProgress.createPackagingOperationTimer({ now: () => clock, write: (line) => lines.push(line) });
+  const measured = timer.measure("stage-verify", () => { calls++; return pending.promise; });
+  try {
+    timer.finish();
+    const emitted = [...lines];
+    assert.equal(calls, 1);
+    assert.equal(lines.length, packagingProgress.PACKAGING_OPERATIONS.length + 1);
+    assert.ok(Buffer.byteLength(lines.join("")) < packagingProgress.PACKAGING_TIMING_MAX_BYTES);
+    assert.deepEqual(packagingProgress.parsePackagingTimings(Buffer.from(lines.join(""))).operationTimings, {
+      schemaVersion: 1, availability: "partial", reason: "collection-failed",
+      operations: packagingProgress.PACKAGING_OPERATIONS.map((operation) => ({ operation, count: 0, elapsedMs: 0 })),
+    });
+    timer.finish();
+    assert.deepEqual(lines, emitted);
+    clock = 7;
+    pending.resolve(value);
+    assert.equal(await measured, value);
+    assert.equal(calls, 1);
+    assert.deepEqual(lines, emitted);
+    timer.finish();
+    assert.deepEqual(lines, emitted);
+  } finally {
+    pending.resolve(value);
+    await measured;
+  }
+});
+
 test("packaging operation timer permanently latches clock, overflow, label and writer failures", async () => {
   for (const clockValues of [
     [new Error("private-canary"), 0, 1, 2, 3], [0, 1, new Error("private-canary"), 2, 3],

@@ -1,7 +1,9 @@
 # Packaging Critical Path
 
-- Status: measurement-only candidate; the tested optimization missed the
-  predeclared benefit criterion and was reverted. Final qualification pending.
+- Status: measurement-only implementation qualified at
+  `ee7ab64766ee66805cd50b07ccfec8f6f9c73004`; the tested optimization missed the
+  predeclared benefit criterion and was reverted. Follow-up evidence is bound
+  separately in [PR #178](https://github.com/loyalagents/context-router/pull/178).
 - Outcome: measure the remaining packaging critical path, then implement one
   justified optimization without changing the properties validation proves.
 - Priority: bounded efficiency work, subordinate to the assisted pilot's live
@@ -10,7 +12,7 @@
 ## Ownership And Starting Inputs
 
 The isolated worktree is
-`/Users/lucasnovak/.codex/worktrees/aad6/context-router`, branch
+`<task worktree>`, branch
 `codex/packaging-critical-path`. Fresh `git fetch origin main` confirmed both
 the initial clean HEAD and `origin/main` at
 `583277a7b08f11084ea63cb879225543c348ea85`. The coordinator independently
@@ -171,7 +173,7 @@ scopes do not nest each other; all sit within the existing milestone intervals.
 Milestone durations include other work and must not be summed with their detail.
 
 The isolated frozen install used the task-owned pnpm store/Corepack/cache under
-`/private/tmp/context-router-packaging-efficiency-YO3Gap`; no shared cache was
+`<owned evidence root>`; no shared cache was
 written. Before browser preparation, observed allocation was 1,047,664 KiB for
 worktree dependencies and 1,018,968 KiB for that resource root. The install's
 default blocked dependency scripts were preserved. The existing validated Prisma
@@ -369,7 +371,7 @@ assert APIs and restore process-local filesystem hooks before removing fixtures.
 Extending the nested-prefetch case to also reject later metadata while aborting
 kept the original falsy read rejection; the final focused integrity run passed
 19/19 (130.569 ms). This added case does not change implementation inputs.
-Targeted checks passed; final validation pending.
+At that checkpoint, targeted checks had passed and final validation was pending.
 
 The measured candidate was committed as
 `e717c6f95b959fdf8d2675b5dff0f576aac938e3`. Baseline module SHA-256 is
@@ -468,7 +470,7 @@ those inputs before the complete-diff review and the single full
 `node scripts/local-migration/migration-gate.mjs`). Use the owned Corepack,
 Playwright, npm and XDG cache roots; the short owned `TMPDIR`; explicit
 `MIGRATION_GATE_BASE_SHA=93d4ad7a227675b963a0c336306a32b7fe9d9ad0`; and
-`MIGRATION_GATE_PYTHON_BIN=/Users/lucasnovak/.pyenv/versions/3.12.8/bin/python3.12`
+`MIGRATION_GATE_PYTHON_BIN=<Python 3.12.8 executable>`
 (verified Python 3.12.8). Reverify pinned Prisma, browser and cached PostgreSQL
 prerequisites immediately before the run. Preserve the existing gate deadlines,
 all 12 phases, owned database allocation and cleanup. Record a sanitized terminal
@@ -482,8 +484,8 @@ on Node 24.21.0 (39.546 s), markdown checker tests passed 20/20, and the link
 checker passed all 147 Markdown files. `git diff --check` passed; both rejected
 helper files have zero diff against integrated main. Remote main was reverified
 at `93d4ad7a227675b963a0c336306a32b7fe9d9ad0` before the final commit. These
-targeted results allow the freeze; final local gate, complete-diff review and
-exact-head CI remain pending until their separate receipts are available.
+targeted results allowed that freeze; final local gate, complete-diff review and
+exact-head CI were still pending at that point.
 
 The first frozen candidate was `ef909b8ccfe7246d2404f54b7ef7d5a3d337eff6`.
 Its independent complete-diff review found one P2 record-classification issue:
@@ -512,7 +514,66 @@ cleanup errors. The retry uses fresh summary/log paths.
 
 With that owned prerequisite fixed and the parser correction applied, all four
 affected suites passed 211/211 (39.930 s), including the previously failing real
-runtime-resources build/schema fixture. Full qualification remains pending.
+runtime-resources build/schema fixture. Full qualification was still pending
+at that point; its completed scope follows.
+
+### Completed Qualification At The Reviewed Implementation
+
+The implementation at `ee7ab64766ee66805cd50b07ccfec8f6f9c73004`, against base
+`93d4ad7a227675b963a0c336306a32b7fe9d9ad0`, completed independent full-diff review
+and the corrected-delta recheck with no remaining findings. Its full local gate
+passed all 12 phases, with merge-base comparison performed, caller integrity
+verified and no cleanup errors. The copied-source digest was
+`56ddeaf704dfe32d62c068400e039381dde2a7417672e241b5219aa41dbc708b`.
+All six packaged modes passed and both milestone and operation projections
+were complete. All 71 packaged resources reached terminal cleanup states;
+the owned disposable roots, exact containers and gate/packaging processes were
+independently verified absent.
+
+That exact head also passed [standard CI](https://github.com/loyalagents/context-router/actions/runs/38366358937)
+and the [full migration gate in CI](https://github.com/loyalagents/context-router/actions/runs/38366358857).
+The sanitized gate JSON is included in the Actions job summary. The original
+local terminal summary remains at
+`<owned evidence root>/final-gate-retry-ci/local-migration-gate-summary.json`;
+independent cleanup evidence remains at
+`<owned evidence root>/final-cleanup-and-qualification.json`. These receipts,
+the failed prerequisite-attempt receipt and raw measurement evidence remain
+unchanged. The final resource sampler missed one cleanup-time sample, so its
+resource peaks remain sampled estimates, independent of complete gate/timing
+evidence. These results attest the named implementation head, not a later head.
+
+### Test And Documentation Review Follow-Up
+
+The user authorized two non-blocking review improvements: add a regression for
+calling the operation timer's `finish()` while measured work remains pending,
+and replace machine-specific locations in shared prose with portable labels.
+The new test checks a bounded complete row census with partial/collection-failed
+status, original return identity and one invocation, immutable emitted output
+after settlement, and idempotent repeated finishing. The existing production
+guard already implements that behavior. No production code, dependencies,
+configuration, fixtures, CI policy or runtime boundary changes are included.
+
+The independent reviewer approved the validation impact assessment for this
+test/documentation-only follow-up: renew the affected packaging/reporting tests,
+Markdown checker tests and link scan, contract-baseline checks that read
+`docs/plans`, and whitespace checks, then review the exact delta. Both standard
+and full migration CI must pass at the new exact head. The unchanged local
+runtime/build/gate evidence is selectively carried forward from the explicitly
+named `ee7ab647` implementation above; no new-head local full-gate pass is claimed.
+No new benchmark, installed build, live-model run or local broad gate is needed
+for this bounded delta. Any production/input change requires reassessment.
+
+Renewed checks on Node 24.21.0 passed: operation-timer cases 4/4, complete
+packaging-smoke and gate-phase suites 129/129, and the Markdown/contract checker
+test suites 75/75. The contract checker passed against an immutable export of
+base `93d4ad7a227675b963a0c336306a32b7fe9d9ad0`, with base comparison performed
+(41 capabilities, 58 GraphQL types, 58 consumers and 19 catalog entries).
+A mutation check copied the new regression and reporter into the owned scratch
+directory and removed only the active-operation guard from that copy: the test
+failed because the mutant emitted complete evidence instead of partial evidence.
+The repository reporter was never modified. The link scan and whitespace check
+also passed. Delta review and new-head CI results are recorded separately in
+[PR #178](https://github.com/loyalagents/context-router/pull/178).
 
 For each expensive run, state purpose, changed inputs and why it is needed then;
 preflight toolchain/resources. Corrections renew affected tests/reviews and
