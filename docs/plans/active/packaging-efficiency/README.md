@@ -1,6 +1,7 @@
 # Packaging Critical Path
 
-- Status: checkpoint 1; independently approved instrumentation in targeted validation
+- Status: checkpoint 2; approved bounded candidate passes focused validation,
+  awaiting the coordinated operation experiment
 - Outcome: measure the remaining packaging critical path, then implement one
   justified optimization without changing the properties validation proves.
 - Priority: bounded efficiency work, subordinate to the assisted pilot's live
@@ -13,7 +14,7 @@ The isolated worktree is
 `codex/packaging-critical-path`. Fresh `git fetch origin main` confirmed both
 the initial clean HEAD and `origin/main` at
 `583277a7b08f11084ea63cb879225543c348ea85`. The coordinator independently
-verified the remote ref. The initial candidate has no implementation changes.
+verified the remote ref. The starting checkout had no implementation changes.
 
 | Role | Requested model / effort | Observed configuration / ownership |
 | --- | --- | --- |
@@ -201,6 +202,177 @@ No required check reuse or omission, parallel lifecycle execution, cross-run
 cache, web-build reuse, shared database fixture, coverage retirement, CI routing
 or nightly relocation is in scope. If no useful safe change is supported,
 report that result and propose an honest measurement-only outcome.
+
+### Attribution Result And Selected Candidate
+
+The single direct packaging attribution run passed on clean instrumentation
+head `85f4a1375268497ed775a55545edcc23157e74ef`. Its finalization milestone was
+676.515 s; the outer supervisor, including its final resource sample, took
+677.392 s. Both legacy milestones and optional operation collection were complete.
+All six runtime modes passed, all journal resources reached terminal cleanup,
+the private packaging root was absent, both exact owned container IDs were
+independently absent, and the final observed process tree was empty. Synthetic
+diagnostics and task-owned prerequisites remain; only compiler caches remain
+under the separately owned short temporary root.
+
+| Measured operation family | Settled calls | Total seconds |
+| --- | ---: | ---: |
+| Sealed-stage verification | 38 | 396.793 |
+| Caller/source snapshots and re-verification | 5 | 88.423 |
+| Stage sealing | 1 | 35.294 |
+| Prisma/backend/web builds | 3 | 35.268 |
+| Dependency cloning | 1 | 24.231 |
+| Payload copying | 4 | 14.879 |
+| Backend/local-UI deployment | 2 | 11.845 |
+
+This was macOS 15.1.1, arm64, MacBookPro18,2/M1 Max/64 GiB, Node 24.21.0 and
+pnpm 10.25.0, with a fresh private dependency install, copied pinned browser/
+Corepack prerequisites and ordinary background activity. Prior load was
+8.39/8.69/8.51; it was not a quiet-machine benchmark. Process-tree RSS was
+sampled every five seconds and recursive allocated disk every thirty seconds:
+observed peaks were 1,938,192 KiB RSS and 6,401,200 KiB disk. These are sampled
+maxima, not exact peaks or exclusive APFS allocation. One cleanup-time sample
+failed collection; that resource observation is incomplete independently of
+complete operation timing and successful cleanup. Disk sampling itself can add
+I/O overhead. The raw bounded receipts live under the task-owned resource root;
+`attribution-timings.json`, `attribution-result.json` and the cleanup receipts
+retain the individual data and limitations. The manifest was
+`30983b68dcaefad4a2707eb2ef64dd4f2a562647648ec1de57b36147708a66be`
+and staged-tree digest
+`c5d7db05bc46f0dd8f314177a9bbd7d93ffb4fa305543d92313f361452bf43db`;
+the stage was removed normally.
+
+Stage verification is the largest measured family (58.7%). Its walker already
+uses #175's single metadata prefetch. Skipping checks or reusing a prior result
+would violate this scope; additional file-content concurrency would change its
+reviewed memory/work bounds. No further small, justified stage optimization is
+established here. Select the largest remaining measured serial integrity family
+with an analogous bounded opportunity: caller/source hashing, 88.423 s (13.1%).
+This selection is a testable hypothesis, not a promised speedup.
+
+After that run and verified cleanup, merged attribution PR #177 advanced main
+to `93d4ad7a227675b963a0c336306a32b7fe9d9ad0`. It was integrated into this branch
+without conflicts. Its backend extraction/tests and stabilization docs do not
+change packaging, gate-runner or dependency inputs. The attribution observation
+remains bound to its original head; it does not qualify the new backend bytes.
+Unchanged helper/dependency inputs may support the operation comparison below.
+Final full-gate and exact-head CI evidence must qualify the combined source.
+
+### Concrete Checkpoint-2 Plan: One Metadata Prefetch For Caller Hashing
+
+Independent review is required before implementing this plan. Expand writer
+ownership only to `scripts/local-migration/gate-runner.mjs` and its existing
+test file, plus this record. Keep all public capture/assert APIs and every caller
+placement unchanged.
+
+The independent plan reviewer approved these concrete bounds at plan SHA-256
+`abdb993fa7ff86193f56aab5a67b618a13b215a0cee37a15f97bf4f22c718fcc`.
+This is approval to implement and measure, not performance acceptance or final
+correctness review.
+
+Change only directory traversal inside `hashPath`: an async iterator supplies
+entries in the exact existing sorted depth-first order. The consumer may request
+one next entry's metadata while it reads/hashes the current regular file.
+Append both file and symlink digest rows in the consumer's original order;
+the producer must not append a later symlink ahead of the current file. Preserve
+root missing/file/symlink/special results, child special-file behavior, literal
+symlink targets, path separators, ignored empty directories and exact JSON/digest
+format. No cached metadata, digest, open handle or previous verification is reused
+across calls. Mutable paths remain subject to the existing non-atomic snapshot
+limitation; no stronger atomicity claim is introduced.
+
+There is at most one pending iterator advance and one regular-file content read.
+Keep whole-file reads/hashes serial and the existing row storage; do not add a
+pool or materialize file contents ahead. Capture a future metadata rejection
+without letting it overtake an earlier current-file error. Preserve the original
+thrown object, including non-Error values. On error or cancellation, stop further
+traversal and await the pending advance plus iterator settlement before returning
+or throwing, so cleanup cannot race outstanding filesystem work. Retain original
+abort checks/signals and add checks around new prefetch boundaries as needed.
+
+Tests first: exact digest equivalence on mixed nested file/link/empty-directory
+trees, including a symlink ordered after a file; root absent/file/link/special
+semantics; same-size content mutation detection; at most one content read and
+one metadata advance in flight; current-file error versus later metadata error
+precedence; synchronous/non-Error failure identity; cancellation during pending
+metadata/content work; no further traversal after failure and full settlement
+before caller cleanup. Explicitly test abort when a later metadata result/error
+is already buffered, preserving the original loop/hash-file cancellation
+precedence; iterator-return failure with and without a primary error; falsy
+thrown/rejected values; and absence of unhandled rejections. Use bounded synthetic
+fixtures and restore any filesystem
+test hooks in `finally`. Do not weaken existing integrity assertions.
+
+Affected consumers are aggregate gate preparation/final integrity, generated
+output checks, packaging smoke, desktop package caller hygiene, installation
+bundle feasibility, and runtime-resource fixtures. Run gate-runner, gate-phases,
+packaging-smoke and runtime-resources suites. Explicit shared-helper tests cover
+both APIs, multiple consumer-shaped roots and success/failure paths; the final
+real aggregate gate exercises generated-output integrity around regeneration.
+Desktop package manifest/native and installation feasibility tests exercise
+separate verifier/lifecycle behavior and are indirect compatibility evidence
+only: a pass cannot claim direct desktop-packager integration of this helper.
+This helper runs in build/test tooling, is not bundled in the installed runtime,
+and leaves its verifier unchanged; independent review agrees a fresh installed
+runtime qualification is unnecessary for this change. The full final local gate
+remains required.
+
+### Matched Operation Experiment And Acceptance Criterion
+
+Keep the existing experiment budget. Use the identical task-owned root dependency
+tree and private pnpm store as a fixed representative corpus; neither is changed
+during the comparison. These are real pinned packaging prerequisites and cover
+the dependency/store scans implicated by the attribution. Hash input identities
+through each returned snapshot and require identical complete results for every
+sample. Bind baseline module bytes to instrumentation head `85f4a137` and candidate
+module bytes to their recorded SHA-256/revision. Do not retain or recreate the
+completed stage, and do not run another full packaging smoke for sampling.
+
+Run one baseline warmup followed by three sequential pairs in fixed order
+AB, BA, AB, where A is baseline and B candidate. Each sample uses a fresh Node
+process with the same exact toolchain, corpus and timing wrapper. Record operation
+wall time, process maximum RSS, individual output digests, OS/cache conditions and
+background load. Sample allocated disk before/after the series; only tiny result
+files are written during it. Avoid recursive disk sampling during timed scans.
+No concurrent experiment or build uses these inputs.
+
+Before seeing results, accept only if all three paired candidate times improve,
+candidate median is at least 10% below baseline median, results/digests and all
+negative tests agree, and candidate maximum RSS is no more than 64 MiB above
+baseline maximum RSS. Report all individual timings, medians and ranges; material
+background-load changes or unexplained variability invalidate the comparison.
+Do not expand the sample count after seeing an unfavorable result. If the
+criterion fails, revert the optimization and report the measurement-only result.
+Any savings projected onto the 88.423 s observed family are estimates, not a
+demonstrated end-to-end improvement. The final gate is qualification, not a
+matched baseline/candidate measurement.
+
+### Checkpoint-2 Targeted Validation
+
+The tests-first baseline run had one passing digest/consumer-semantics fixture
+and 15 expected failures: serial traversal cannot advance metadata while the
+current content read waits, and has no iterator-close behavior. After the bounded
+directory change, the focused caller-integrity cases passed; an additional
+nested-prefetch/read-rejection-versus-abort case also passed in the affected
+suite run. `node --test --test-concurrency=1` for `gate-runner.test.mjs`,
+`gate-phases.test.mjs`, `packaging-smoke.test.mjs` and `runtime-resources.test.mjs`
+passed 226/226 on Node 24.21.0 (40.853 s). The tests exercise the public capture and
+assert APIs and restore process-local filesystem hooks before removing fixtures.
+Extending the nested-prefetch case to also reject later metadata while aborting
+kept the original falsy read rejection; the final focused integrity run passed
+19/19 (130.569 ms). This added case does not change implementation inputs.
+Targeted checks passed; final validation pending.
+
+The comparison harness is prepared in the task-owned root; no timed sample has
+started. Baseline module SHA-256 is
+`f24b6ac467db9d3041eae0995a7c4f7bd2f3edff661daada05e3bbe4ea345b90`;
+candidate module SHA-256 is
+`9afdb548cafc5d134979d747663055c3ed07b345558bb9fa528cba0f960dd3fa`.
+Each fresh process records a complete snapshot, operation duration, maximum RSS
+and load before/after. The supervisor persists every individual result and
+stops on digest mismatch, timeout or the original experiment deadline. No
+sampling expansion is permitted. The pilot's imminent package build takes
+priority; the coordinator must release the comparison window first.
 
 ## Checkpoint 3: Final Qualification
 

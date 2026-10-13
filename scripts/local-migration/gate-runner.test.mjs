@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
-import { lstat, mkdtemp, mkdir, readFile, readdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import fsPromises, { lstat, mkdtemp, mkdir, readFile, readdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { syncBuiltinESMExports } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { Writable } from "node:stream";
@@ -1661,3 +1663,278 @@ test("workspace copying and caller-integrity hashing honor cancellation", async 
     await rm(root, { recursive: true, force: true });
   }
 });
+
+const integrityDigest = (value) => createHash("sha256").update(value).digest("hex");
+const nextIntegrityTurn = () => new Promise((resolve) => setImmediate(resolve));
+async function integrityEvent(promise) {
+  let timer;
+  try {
+    return await Promise.race([promise, new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error("integrity probe timed out")), 2000);
+    })]);
+  } finally { clearTimeout(timer); }
+}
+
+// Process-local builtin hooks let the real public capture/assert APIs exercise
+// ordering and settlement without exposing an implementation-only test API.
+async function withIntegrityProbe(t, operation) {
+  const root = await mkdtemp(path.join(os.tmpdir(), "caller-integrity-probe-"));
+  const directory = path.join(root, "node_modules");
+  await mkdir(path.join(directory, "a"), { recursive: true });
+  const first = path.join(directory, "a", "z");
+  const next = path.join(directory, "a.txt");
+  const last = path.join(directory, "b.txt");
+  for (const file of [first, next, last]) await writeFile(file, "payload");
+  const original = { ...fsPromises };
+  const gates = [];
+  let pending;
+  const probe = {
+    root, directory, first, next, last, original,
+    defer() { const gate = Promise.withResolvers(); gates.push(gate); return gate; },
+    patch(name, implementation) {
+      t.mock.method(fsPromises, name, implementation);
+      syncBuiltinESMExports();
+    },
+    start(options) {
+      pending = captureCallerIntegrity([directory], options).then(
+        (value) => ({ value, failed: false }), (error) => ({ error, failed: true }),
+      );
+      return pending;
+    },
+  };
+  try { await operation(probe); }
+  finally {
+    for (const gate of gates) gate.resolve();
+    await pending;
+    t.mock.restoreAll();
+    syncBuiltinESMExports();
+    await rm(root, { recursive: true, force: true });
+  }
+}
+
+test("caller integrity preserves DFS digests and multi-root capture/assert semantics", { concurrency: false }, async (t) => {
+  await withIntegrityProbe(t, async (probe) => {
+    const store = path.join(probe.root, "store");
+    const absent = path.join(probe.root, "generated");
+    const link = path.join(probe.root, "root-link");
+    const special = path.join(probe.root, "root-special");
+    await mkdir(store);
+    await mkdir(path.join(probe.directory, "empty"));
+    await symlink("missing-target", path.join(probe.directory, "a", "zz"));
+    await symlink("/outside/literal", path.join(probe.directory, "z-link"));
+    await symlink("node_modules", link);
+    const ignored = path.join(probe.directory, "ignored-special");
+    const specialInfo = { isDirectory: () => false, isFile: () => false, isSymbolicLink: () => false, mode: 0o10600 };
+    probe.patch("lstat", (file, ...args) => file === special || file === ignored
+      ? Promise.resolve(specialInfo) : probe.original.lstat(file, ...args));
+    probe.patch("readdir", async (file, ...args) => {
+      const names = await probe.original.readdir(file, ...args);
+      return file === probe.directory ? [...names, "ignored-special"] : names;
+    });
+    const snapshot = await captureCallerIntegrity([probe.directory, store, probe.first, absent, link, special]);
+    assert.deepEqual(snapshot.get(probe.directory), {
+      exists: true, kind: "directory", sha256: integrityDigest(JSON.stringify([
+        [path.join("a", "z"), integrityDigest("payload")],
+        [path.join("a", "zz"), "link:missing-target"],
+        ["a.txt", integrityDigest("payload")], ["b.txt", integrityDigest("payload")],
+        ["z-link", "link:/outside/literal"],
+      ])),
+    });
+    assert.deepEqual(snapshot.get(store), { exists: true, kind: "directory", sha256: integrityDigest("[]") });
+    assert.deepEqual(snapshot.get(probe.first), { exists: true, kind: "file", sha256: integrityDigest("payload") });
+    assert.deepEqual(snapshot.get(absent), { exists: false });
+    assert.deepEqual(snapshot.get(link), { exists: true, kind: "symlink", target: "node_modules" });
+    assert.deepEqual(snapshot.get(special), { exists: true, kind: "other", mode: 0o10600 });
+    await assertCallerIntegrity(snapshot);
+    // Same size, different bytes: metadata cannot substitute for content reads.
+    await writeFile(probe.first, "changed");
+    await assert.rejects(assertCallerIntegrity(snapshot), /caller path changed/);
+    await writeFile(probe.first, "payload");
+    await writeFile(absent, "new generated output");
+    await assert.rejects(assertCallerIntegrity(snapshot), /generated/);
+  });
+});
+
+test("caller integrity overlaps one metadata advance with one serial read", { concurrency: false }, async (t) => {
+  await withIntegrityProbe(t, async (probe) => {
+    const reading = probe.defer(), release = probe.defer(), prefetched = probe.defer();
+    let reads = 0, maxReads = 0, metadata = 0, maxMetadata = 0, later = false;
+    probe.patch("lstat", async (file, ...args) => {
+      metadata++; maxMetadata = Math.max(maxMetadata, metadata);
+      try {
+        if (file === probe.last) later = true;
+        const result = await probe.original.lstat(file, ...args);
+        if (file === probe.next) prefetched.resolve();
+        return result;
+      } finally { metadata--; }
+    });
+    probe.patch("readFile", async (file, ...args) => {
+      reads++; maxReads = Math.max(maxReads, reads);
+      try {
+        if (file === probe.first) { reading.resolve(); await release.promise; }
+        return await probe.original.readFile(file, ...args);
+      } finally { reads--; }
+    });
+    const result = probe.start();
+    await integrityEvent(reading.promise);
+    await integrityEvent(prefetched.promise);
+    assert.equal(reads, 1); assert.equal(later, false);
+    release.resolve();
+    assert.equal((await result).failed, false);
+    assert.equal(maxReads, 1); assert.equal(maxMetadata, 1);
+    assert.equal(reads + metadata, 0);
+  });
+});
+
+for (const primary of [undefined, new Error("current read failed"), null, false, 0, "non-Error failure"]) {
+  test(`caller integrity preserves current failure over buffered metadata (primary: ${String(primary)})`, { concurrency: false }, async (t) => {
+    await withIntegrityProbe(t, async (probe) => {
+      const buffered = probe.defer();
+      const future = new Error("later metadata failed");
+      let later = false;
+      probe.patch("lstat", (file, ...args) => {
+        if (file === probe.last) later = true;
+        if (file === probe.next) { buffered.resolve(); return Promise.reject(future); }
+        return probe.original.lstat(file, ...args);
+      });
+      probe.patch("readFile", async (file, ...args) => {
+        if (file === probe.first) {
+          await integrityEvent(buffered.promise); await nextIntegrityTurn();
+          if (primary !== undefined) throw primary;
+        }
+        return probe.original.readFile(file, ...args);
+      });
+      const result = await probe.start();
+      assert.equal(result.failed, true);
+      assert.equal(result.error, primary === undefined ? future : primary);
+      assert.equal(later, false);
+    });
+  });
+}
+
+for (const operation of ["lstat", "readlink"]) {
+  for (const cancel of [false, true]) {
+    test(`caller integrity settles pending ${operation} before ${cancel ? "cancellation" : "failure"}`, { concurrency: false }, async (t) => {
+      await withIntegrityProbe(t, async (probe) => {
+        if (operation === "readlink") { await rm(probe.next); await symlink("a/z", probe.next); }
+        const active = probe.defer(), releaseMetadata = probe.defer(), releaseRead = probe.defer();
+        const primary = new Error("primary outcome");
+        const controller = new AbortController();
+        let metadataActive = false, completed = false, later = false;
+        probe.patch("lstat", async (file, ...args) => {
+          if (file === probe.last) later = true;
+          if (file === probe.next && operation === "lstat") {
+            metadataActive = true; active.resolve(); await releaseMetadata.promise; metadataActive = false;
+          }
+          return probe.original.lstat(file, ...args);
+        });
+        if (operation === "readlink") probe.patch("readlink", async (file, ...args) => {
+          if (file === probe.next) {
+            metadataActive = true; active.resolve(); await releaseMetadata.promise; metadataActive = false;
+          }
+          return probe.original.readlink(file, ...args);
+        });
+        probe.patch("readFile", async (file, ...args) => {
+          if (file === probe.first) {
+            assert.equal(args[0]?.signal, controller.signal);
+            await releaseRead.promise;
+            if (!cancel) throw primary;
+            return Buffer.from("payload"); // Exercise hashFile's post-read abort check.
+          }
+          return probe.original.readFile(file, ...args);
+        });
+        const result = probe.start({ signal: controller.signal });
+        result.then(() => { completed = true; });
+        await integrityEvent(active.promise);
+        if (cancel) controller.abort(primary);
+        releaseRead.resolve(); await nextIntegrityTurn();
+        assert.equal(completed, false); assert.equal(metadataActive, true);
+        releaseMetadata.resolve();
+        assert.equal((await result).error, primary);
+        assert.equal(metadataActive, false); assert.equal(later, false);
+      });
+    });
+  }
+}
+
+for (const metadataFails of [false, true]) {
+  test(`caller integrity keeps cancellation primary with buffered metadata (fails: ${metadataFails})`, { concurrency: false }, async (t) => {
+    await withIntegrityProbe(t, async (probe) => {
+      const buffered = probe.defer(), controller = new AbortController();
+      const cancellation = new Error("caller cancelled"), future = new Error("later metadata failed");
+      let later = false;
+      probe.patch("lstat", async (file, ...args) => {
+        if (file === probe.last) later = true;
+        if (file === probe.next) {
+          buffered.resolve();
+          if (metadataFails) throw future;
+        }
+        return probe.original.lstat(file, ...args);
+      });
+      probe.patch("readFile", async (file, ...args) => {
+        if (file === probe.first) {
+          await integrityEvent(buffered.promise); await nextIntegrityTurn();
+          controller.abort(cancellation);
+          return Buffer.from("payload");
+        }
+        return probe.original.readFile(file, ...args);
+      });
+      assert.equal((await probe.start({ signal: controller.signal })).error, cancellation);
+      assert.equal(later, false);
+    });
+  });
+}
+
+for (const hasPrimary of [false, true]) {
+  test(`caller integrity preserves synchronous falsy failures and iterator close precedence (primary: ${hasPrimary})`, { concurrency: false }, async (t) => {
+    await withIntegrityProbe(t, async (probe) => {
+      const prototype = Object.getPrototypeOf(Object.getPrototypeOf((async function* () {})()));
+      const originalReturn = prototype.return;
+      const cleanup = new Error("iterator close failed");
+      let closes = 0;
+      t.mock.method(prototype, "return", async function (...args) {
+        await originalReturn.apply(this, args); closes++; throw cleanup;
+      });
+      if (hasPrimary) probe.patch("readFile", (file, ...args) => {
+        if (file === probe.first) throw undefined;
+        return probe.original.readFile(file, ...args);
+      });
+      const result = await probe.start();
+      assert.equal(result.failed, true);
+      assert.equal(result.error, hasPrimary ? undefined : cleanup);
+      assert.ok(closes > 0);
+      await nextIntegrityTurn(); // node:test also fails unexpected unhandled rejections.
+    });
+  });
+}
+
+for (const metadataFails of [false, true]) {
+  test(`caller integrity drains nested prefetch and keeps read rejection ahead of abort (metadata fails: ${metadataFails})`, { concurrency: false }, async (t) => {
+    await withIntegrityProbe(t, async (probe) => {
+      const nestedNext = path.join(probe.directory, "a", "zz");
+      await writeFile(nestedNext, "next");
+      const buffered = probe.defer(), controller = new AbortController();
+      let later = false;
+      probe.patch("lstat", async (file, ...args) => {
+        if (file === probe.next || file === probe.last) later = true;
+        const info = await probe.original.lstat(file, ...args);
+        if (file === nestedNext) {
+          buffered.resolve();
+          if (metadataFails) throw new Error("later nested metadata failure");
+        }
+        return info;
+      });
+      probe.patch("readFile", async (file, ...args) => {
+        if (file === probe.first) {
+          await integrityEvent(buffered.promise); await nextIntegrityTurn();
+          controller.abort(new Error("later cancellation"));
+          throw false;
+        }
+        return probe.original.readFile(file, ...args);
+      });
+      const result = await probe.start({ signal: controller.signal });
+      assert.equal(result.failed, true); assert.equal(result.error, false);
+      assert.equal(later, false);
+    });
+  });
+}
