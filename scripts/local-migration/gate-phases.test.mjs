@@ -21,7 +21,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import * as timingGate from "./migration-gate.mjs";
-import { PACKAGING_MILESTONES } from "./packaging-progress.mjs";
+import { PACKAGING_MILESTONES, PACKAGING_OPERATIONS } from "./packaging-progress.mjs";
 
 import {
   validateApprovedPhaseCommands,
@@ -100,6 +100,31 @@ test("packaging timing collection reads only a bounded regular log in owned diag
     assert.equal((await read()).reason, "unsafe-log");
     assert.equal((await timingGate.readPackagingTimings(ownership, ownership.markerPath)).reason, "unsafe-log");
     assert.equal((await timingGate.readPackagingTimings({ ...ownership, nonce: "wrong" }, logPath)).reason, "ownership-invalid");
+  });
+});
+
+test("packaging timing owned-log reader keeps optional operation failures separate from milestones", async () => {
+  await withTimingLog(async ({ ownership, logPath, log }) => {
+    const rows = PACKAGING_OPERATIONS.map((name) =>
+      `packaging-smoke: operation=${name} count=0 elapsedMs=0\n`).join("");
+    const detail = rows + "packaging-smoke: operations=complete\n";
+    await writeFile(logPath, log + detail);
+    const valid = await timingGate.readPackagingTimings(ownership, logPath);
+    assert.equal(valid.availability, "complete");
+    assert.equal(valid.operationTimings.availability, "complete");
+    assert.equal(valid.operationTimings.operations.length, PACKAGING_OPERATIONS.length);
+    for (const malformed of [
+      detail.replace(rows.split("\n")[0] + "\n", ""),
+      "packaging-smoke: operation=milestone-private-canary count=0 elapsedMs=0\n" + detail,
+      detail.replace("operations=complete", "operations=partial"),
+    ]) {
+      await writeFile(logPath, log + malformed);
+      const result = await timingGate.readPackagingTimings(ownership, logPath);
+      assert.equal(result.availability, "complete");
+      assert.deepEqual(result.milestones, valid.milestones);
+      assert.equal(result.operationTimings.availability, "partial");
+      assert.equal(JSON.stringify(result).includes("private-canary"), false);
+    }
   });
 });
 

@@ -161,6 +161,208 @@ test("packaging timing projection bounds bytes and excludes unrelated output and
   assert.equal(parse(Buffer.from(completeTimingLog()), { truncated: true }).availability, "partial");
 });
 
+const operationLine = (name, count = 0, elapsedMs = 0) =>
+  `packaging-smoke: operation=${name} count=${count} elapsedMs=${elapsedMs}\n`;
+const operationLog = () => packagingProgress.PACKAGING_OPERATIONS
+  .map((name) => operationLine(name)).join("") + "packaging-smoke: operations=complete\n";
+
+test("packaging operation timings preserve legacy milestones and require every fixed row", () => {
+  const parse = (log, options) => packagingProgress.parsePackagingTimings(Buffer.from(log), options);
+  const legacy = parse(completeTimingLog());
+  assert.equal(Object.hasOwn(legacy, "operationTimings"), false);
+  const log = operationLog();
+  const expected = {
+    schemaVersion: 1, availability: "complete",
+    operations: packagingProgress.PACKAGING_OPERATIONS.map((operation) => ({ operation, count: 0, elapsedMs: 0 })),
+  };
+  for (const chunks of [[log], [...log], [log.slice(0, 17), log.slice(17)]]) {
+    const result = parse(completeTimingLog() + chunks.map((chunk) => `[stdout] ${chunk}`).join(""));
+    const { operationTimings, ...milestones } = result;
+    assert.deepEqual(milestones, legacy);
+    assert.deepEqual(operationTimings, expected);
+  }
+  const first = operationLine(packagingProgress.PACKAGING_OPERATIONS[0]);
+  for (const changed of [log.replace(first, ""), log.replace("operations=complete\n", ""), log.slice(0, -1)]) {
+    assert.equal(parse(completeTimingLog() + changed).operationTimings.availability, "partial");
+  }
+  assert.equal(parse(completeTimingLog() + log, { truncated: true }).operationTimings.reason, "truncated");
+  assert.equal(parse(log.replace("operations=complete", "operations=partial")).operationTimings.reason, "collection-failed");
+});
+
+test("packaging operation timings reject malformed detail without tainting legacy milestone evidence", () => {
+  const names = packagingProgress.PACKAGING_OPERATIONS;
+  const log = operationLog();
+  const first = operationLine(names[0]);
+  const invalidRows = [
+    operationLine("private-canary"), operationLine("milestone"), operationLine(names[0], -1), operationLine(names[0], "NaN"),
+    operationLine(names[0], 1.5), operationLine(names[0], Number.MAX_SAFE_INTEGER + 1),
+    operationLine(names[0], 1, -1), operationLine(names[0], 1, "Infinity"),
+    operationLine(names[0], 1, 1.5), operationLine(names[0], 1, Number.MAX_SAFE_INTEGER + 1),
+    operationLine(names[0], 0, 1), `private-canary ${first}`, first.trimEnd() + " private-canary\n",
+  ];
+  for (const detail of [
+    ...invalidRows.map((row) => log.replace(first, row)),
+    first + log, log.replace(first, "") + first,
+    "packaging-smoke: operations=complete\n" + log,
+    log + "packaging-smoke: operations=complete\n",
+    log.replace("operations=complete", "operations=private-canary"),
+  ]) {
+    const result = packagingProgress.parsePackagingTimings(Buffer.from(completeTimingLog() + detail));
+    assert.equal(result.availability, "complete");
+    assert.equal(result.operationTimings.availability, "partial");
+    assert.equal(result.operationTimings.reason, "invalid-sequence");
+    assert.equal(JSON.stringify(result).includes("private-canary"), false);
+    assert.ok(result.operationTimings.operations.length <= 20);
+  }
+  const truncated = packagingProgress.parsePackagingTimings(Buffer.from(log + "x".repeat(16_384)));
+  assert.equal(truncated.operationTimings.reason, "truncated");
+  assert.ok(Buffer.byteLength(JSON.stringify(truncated)) < 4096);
+  const unfinished = packagingProgress.parsePackagingTimings(Buffer.from(completeTimingLog() + "packaging-smoke: operation=milestone"));
+  assert.equal(unfinished.availability, "complete");
+  assert.equal(unfinished.operationTimings.reason, "truncated");
+});
+
+for (const terminated of [true, false]) {
+  test(`malformed milestone prefixes retain legacy failure despite operation text (terminated: ${terminated})`, () => {
+    const malformed = "packaging-smoke: milestone=failed elapsedMs=15 packaging-smoke: operation=bad";
+    const result = packagingProgress.parsePackagingTimings(Buffer.from(
+      completeTimingLog() + malformed + (terminated ? "\n" : ""),
+    ));
+    assert.equal(result.availability, "partial");
+    assert.equal(result.reason, terminated ? "invalid-sequence" : "truncated");
+    assert.deepEqual(result.milestones,
+      packagingProgress.parsePackagingTimings(Buffer.from(completeTimingLog())).milestones);
+    assert.equal(result.operationTimings.availability, "partial");
+  });
+}
+
+test("packaging operation timer counts settled attempts and preserves values and exact thrown objects", async () => {
+  const lines = [];
+  let clock = 0;
+  const timer = packagingProgress.createPackagingOperationTimer({ now: () => clock, write: (line) => lines.push(line) });
+  const value = {};
+  let called = 0;
+  assert.equal(await timer.measure("stage-verify", () => { called++; clock += 4; return value; }), value);
+  for (const failure of [new Error("private-canary"), { private: "private-canary" }, undefined]) {
+    for (const asynchronous of [false, true]) {
+      let rejected = false;
+      try {
+        await timer.measure("stage-verify", () => {
+          called++; clock += 3;
+          if (asynchronous) return Promise.reject(failure);
+          throw failure;
+        });
+      } catch (error) { rejected = true; assert.equal(error, failure); }
+      assert.equal(rejected, true);
+    }
+  }
+  timer.finish();
+  timer.finish();
+  assert.equal(called, 7);
+  assert.equal(lines.length, packagingProgress.PACKAGING_OPERATIONS.length + 1);
+  const parsed = packagingProgress.parsePackagingTimings(Buffer.from(lines.join(""))).operationTimings;
+  assert.equal(parsed.availability, "complete");
+  assert.deepEqual(parsed.operations.find((item) => item.operation === "stage-verify"),
+    { operation: "stage-verify", count: 7, elapsedMs: 22 });
+  assert.equal(lines.join("").includes("private-canary"), false);
+});
+
+test("packaging operation timer finishes pending work as bounded immutable partial evidence", async () => {
+  const lines = [];
+  const pending = Promise.withResolvers();
+  const value = {};
+  let clock = 0;
+  let calls = 0;
+  const timer = packagingProgress.createPackagingOperationTimer({ now: () => clock, write: (line) => lines.push(line) });
+  const measured = timer.measure("stage-verify", () => { calls++; return pending.promise; });
+  try {
+    timer.finish();
+    const emitted = [...lines];
+    assert.equal(calls, 1);
+    assert.equal(lines.length, packagingProgress.PACKAGING_OPERATIONS.length + 1);
+    assert.ok(Buffer.byteLength(lines.join("")) < packagingProgress.PACKAGING_TIMING_MAX_BYTES);
+    assert.deepEqual(packagingProgress.parsePackagingTimings(Buffer.from(lines.join(""))).operationTimings, {
+      schemaVersion: 1, availability: "partial", reason: "collection-failed",
+      operations: packagingProgress.PACKAGING_OPERATIONS.map((operation) => ({ operation, count: 0, elapsedMs: 0 })),
+    });
+    timer.finish();
+    assert.deepEqual(lines, emitted);
+    clock = 7;
+    pending.resolve(value);
+    assert.equal(await measured, value);
+    assert.equal(calls, 1);
+    assert.deepEqual(lines, emitted);
+    timer.finish();
+    assert.deepEqual(lines, emitted);
+  } finally {
+    pending.resolve(value);
+    await measured;
+  }
+});
+
+test("packaging operation timer permanently latches clock, overflow, label and writer failures", async () => {
+  for (const clockValues of [
+    [new Error("private-canary"), 0, 1, 2, 3], [0, 1, new Error("private-canary"), 2, 3],
+    [0, 1, NaN, 2, 3], [0, 1, Infinity, 2, 3], [0, 2, 1, 3, 4],
+    [0, 1, Number.MAX_SAFE_INTEGER + 1, 2, 3],
+  ]) {
+    const lines = [];
+    const timer = packagingProgress.createPackagingOperationTimer({
+      now: () => {
+        const value = clockValues.shift() ?? 10;
+        if (value instanceof Error) throw value;
+        return value;
+      },
+      write: (line) => lines.push(line),
+    });
+    assert.equal(await timer.measure("stage-verify", () => "ok"), "ok");
+    assert.equal(await timer.measure("stage-verify", () => "still-ok"), "still-ok");
+    timer.finish();
+    const result = packagingProgress.parsePackagingTimings(Buffer.from(lines.join(""))).operationTimings;
+    assert.equal(result.availability, "partial");
+    assert.equal(lines.join("").includes("private-canary"), false);
+  }
+  for (const failure of ["label", "writer"]) {
+    const lines = [];
+    let writes = 0;
+    const timer = packagingProgress.createPackagingOperationTimer({
+      now: () => 0,
+      write: (line) => { if (failure === "writer" && writes++ === 1) throw new Error("private-canary"); lines.push(line); },
+    });
+    assert.equal(await timer.measure(failure === "label" ? "private-canary" : "stage-verify", () => 7), 7);
+    timer.finish();
+    const result = packagingProgress.parsePackagingTimings(Buffer.from(lines.join(""))).operationTimings;
+    assert.equal(result.availability, "partial");
+    assert.equal(lines.join("").includes("private-canary"), false);
+  }
+  const lines = [];
+  let clock = 0;
+  const overflowing = packagingProgress.createPackagingOperationTimer({ now: () => clock, write: (line) => lines.push(line) });
+  // Nested spans can overflow a cumulative duration even when each clock value fits.
+  await overflowing.measure("stage-verify", () => overflowing.measure("stage-verify", () => { clock = Number.MAX_SAFE_INTEGER; }));
+  overflowing.finish();
+  assert.equal(packagingProgress.parsePackagingTimings(Buffer.from(lines.join(""))).operationTimings.reason, "collection-failed");
+});
+
+test("packaging operation timer does not race cancellation or cleanup ahead of settlement", async () => {
+  const controller = new AbortController();
+  const reason = new Error("cancelled");
+  const events = [];
+  let settle;
+  const timer = packagingProgress.createPackagingOperationTimer({ now: () => 0, write: () => {} });
+  const measured = timer.measure("stage-verify", () => new Promise((resolve, reject) => {
+    settle = () => { events.push("settled"); reject(controller.signal.reason); };
+  }));
+  const cleanup = measured.catch((error) => { assert.equal(error, reason); events.push("cleanup"); });
+  controller.abort(reason);
+  await Promise.resolve();
+  assert.deepEqual(events, []);
+  settle();
+  await cleanup;
+  assert.deepEqual(events, ["settled", "cleanup"]);
+  timer.finish();
+});
+
 async function temporaryDirectory(prefix, operation) {
   const directory = await mkdtemp(path.join(os.tmpdir(), prefix));
   try {

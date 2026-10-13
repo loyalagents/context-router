@@ -2,7 +2,7 @@
 import { assertLocalUiParentCleanupSafe } from './local-ui-lifecycle.mjs';
 import { runLocalUiSmoke } from './local-ui-smoke.mjs';
 import { runLocalMcpSmoke } from './local-mcp-smoke.mjs';
-import { createPackagingProgressReporter } from './packaging-progress.mjs';
+import { createPackagingOperationTimer, createPackagingProgressReporter } from './packaging-progress.mjs';
 
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
@@ -1402,6 +1402,7 @@ async function prepareExecutionContext({
   signal,
   onPrivateRoot = () => {},
   protectedRoots = [],
+  measure,
 }) {
   const gate = await verifyGateWorkspaceOwnership(repositoryRoot, environment);
   const storeRoot = await readObservedPnpmStore(repositoryRoot);
@@ -1418,14 +1419,14 @@ async function prepareExecutionContext({
       corepackHome: gate.corepackHome,
       storeRoot,
       callerStatusBefore: null,
-      callerIntegrity: await captureCallerIntegrity([
+      callerIntegrity: await measure('caller-snapshot', () => captureCallerIntegrity([
         path.join(gate.workspace, "node_modules"),
         path.join(gate.workspace, "apps/backend/node_modules"),
         path.join(gate.workspace, "apps/web/node_modules"),
         path.join(gate.workspace, "apps/local-orchestrator/node_modules"),
         gate.corepackHome,
         storeRoot,
-      ]),
+      ])),
     };
   }
 
@@ -1453,7 +1454,7 @@ async function prepareExecutionContext({
       "node",
       "corepack",
     );
-  const callerIntegrity = await captureCallerIntegrity(
+  const callerIntegrity = await measure('caller-snapshot', () => captureCallerIntegrity(
     directCallerIntegrityPaths({
       repositoryRoot,
       presentFiles,
@@ -1461,7 +1462,7 @@ async function prepareExecutionContext({
       sourceCorepack,
     }),
     { signal },
-  );
+  ));
   const sourceRoot = path.join(privateRoot, "source");
   await runCommand(
     assertApprovedPackagingChildCommand(
@@ -1490,23 +1491,23 @@ async function prepareExecutionContext({
     logPath: path.join(diagnostics, "source-read-tree.log"),
     signal,
   });
-  await copyWorkspaceFiles(
+  await measure('source-copy', () => copyWorkspaceFiles(
     repositoryRoot,
     sourceRoot,
     presentFiles,
     { signal },
-  );
-  await cloneDependencyTrees(
+  ));
+  await measure('dependency-clone', () => cloneDependencyTrees(
     repositoryRoot,
     sourceRoot,
     ["", "apps/backend", "apps/web", "apps/local-orchestrator"],
     { signal },
-  );
+  ));
   const corepackHome = path.join(privateRoot, "corepack");
-  await cloneCorepackCache(sourceCorepack, corepackHome, {
+  await measure('corepack-clone', () => cloneCorepackCache(sourceCorepack, corepackHome, {
     signal,
     requiredPnpmVersion: EXPECTED_PNPM_VERSION,
-  });
+  }));
   return {
     mode: "direct",
     sourceRoot,
@@ -1795,12 +1796,13 @@ async function assembleAndSealStage({
   proxyOrigin,
   storeRoot,
   signal,
+  measure,
 }) {
   const stageRoot = path.join(privateRoot, "stage");
   const stageBackend = path.join(stageRoot, "backend");
   await mkdir(stageRoot, { recursive: true, mode: 0o700 });
   await chmod(stageRoot, 0o700);
-  await runCommand(assertApprovedPackagingChildCommand(
+  await measure('backend-deploy', () => runCommand(assertApprovedPackagingChildCommand(
     "backend-deploy",
     buildBackendDeployArgv(stageBackend),
     { stageBackend },
@@ -1810,7 +1812,7 @@ async function assembleAndSealStage({
     timeoutMs: 180_000,
     logPath: path.join(diagnostics, "backend-deploy.log"),
     signal,
-  });
+  }));
   assert.deepEqual((await readdir(stageBackend)).sort(), [
     "dist",
     "node_modules",
@@ -1822,17 +1824,17 @@ async function assembleAndSealStage({
   // production web workspace closure, then copy only the immutable build output.
   const stageLocalUi = path.join(stageRoot, 'local-ui');
   const deploymentRoot = path.join(privateRoot, 'local-ui-deploy');
-  await runCommand(assertApprovedPackagingChildCommand(
+  await measure('local-ui-deploy', () => runCommand(assertApprovedPackagingChildCommand(
     "local-ui-deploy", buildLocalUiDeployArgv(deploymentRoot), { stageLocalUi: deploymentRoot },
   ), { cwd: sourceRoot, env: toolEnvironment, timeoutMs: 180_000,
-    logPath: path.join(diagnostics, 'local-ui-deploy.log'), signal });
-  await copyLocalUiDeployment(deploymentRoot, stageLocalUi);
+    logPath: path.join(diagnostics, 'local-ui-deploy.log'), signal }));
+  await measure('payload-copy', () => copyLocalUiDeployment(deploymentRoot, stageLocalUi));
   assert.deepEqual((await readdir(stageLocalUi)).sort(),
     ['local-ui.mjs', 'next.config.mjs', 'node_modules', 'package.json', 'pnpm-lock.yaml']);
-  await cp(path.join(sourceRoot, 'apps/web/.next'), path.join(stageLocalUi, '.next'), {
+  await measure('payload-copy', () => cp(path.join(sourceRoot, 'apps/web/.next'), path.join(stageLocalUi, '.next'), {
     recursive: true, dereference: false, verbatimSymlinks: true,
     filter: (candidate) => !['cache', 'standalone'].includes(path.relative(path.join(sourceRoot, 'apps/web/.next'), candidate).split(path.sep)[0]),
-  });
+  }));
   const uiRequire = createRequire(path.join(stageLocalUi, 'local-ui.mjs'));
   for (const name of ['next', 'backend/dist/bootstrap/local-ui.js']) {
     const resolved = await realpath(uiRequire.resolve(name));
@@ -1845,19 +1847,19 @@ async function assembleAndSealStage({
     webRoot: path.join(sourceRoot, "apps/web"),
     stageRoot,
   });
-  await cp(layout.standaloneRoot, layout.stagedWebRoot, {
+  await measure('payload-copy', () => cp(layout.standaloneRoot, layout.stagedWebRoot, {
     recursive: true,
     dereference: false,
     verbatimSymlinks: true,
-  });
+  }));
   const sourceStatic = path.join(sourceRoot, "apps/web/.next/static");
   const stagedStatic = path.join(layout.stagedAppRoot, ".next/static");
   await mkdir(path.dirname(stagedStatic), { recursive: true });
-  await cp(sourceStatic, stagedStatic, {
+  await measure('payload-copy', () => cp(sourceStatic, stagedStatic, {
     recursive: true,
     dereference: false,
     verbatimSymlinks: true,
-  });
+  }));
   const sourcePublic = path.join(sourceRoot, "apps/web/public");
   const publicInfo = await lstat(sourcePublic).catch((error) => {
     if (error.code === "ENOENT") return null;
@@ -1867,14 +1869,14 @@ async function assembleAndSealStage({
     if (!publicInfo.isDirectory() || publicInfo.isSymbolicLink()) {
       throw new Error("apps/web/public must be a real directory when present");
     }
-    await cp(sourcePublic, path.join(stageLocalUi, "public"), {
+    await measure('payload-copy', () => cp(sourcePublic, path.join(stageLocalUi, "public"), {
       recursive: true, dereference: false, verbatimSymlinks: true,
-    });
-    await cp(sourcePublic, path.join(layout.stagedAppRoot, "public"), {
+    }));
+    await measure('payload-copy', () => cp(sourcePublic, path.join(layout.stagedAppRoot, "public"), {
       recursive: true,
       dereference: false,
       verbatimSymlinks: true,
-    });
+    }));
   }
   await assertRegularFile(
     path.join(stageBackend, backendEntrypointRelative),
@@ -1898,44 +1900,47 @@ async function assembleAndSealStage({
     path.join(stageBackend, "dist/config/preferences.catalog.json"),
     "staged preference catalog",
   );
-  await assertNoSharedRegularFiles(stageRoot, [sourceRoot, storeRoot], { signal });
+  await measure('shared-file-exclusion', () => assertNoSharedRegularFiles(stageRoot, [sourceRoot, storeRoot], { signal }));
   await assertBuiltPublicUrls(stagedStatic, proxyOrigin);
-  const stagedWebPackages = [];
-  for (const manifestPath of await findFiles(
-    layout.stagedWebRoot,
-    (candidate) => path.basename(candidate) === "package.json",
-  )) {
-    let manifest;
-    try {
-      manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-    } catch {
-      continue;
+  const stagedWebPackages = await measure('native-inventory', async () => {
+    const packages = [];
+    for (const manifestPath of await findFiles(
+      layout.stagedWebRoot,
+      (candidate) => path.basename(candidate) === "package.json",
+    )) {
+      let manifest;
+      try {
+        manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+      } catch {
+        continue;
+      }
+      if (
+        manifest &&
+        (manifest.name === "next" ||
+          manifest.name === "@auth0/nextjs-auth0" ||
+          manifest.name === "sharp" ||
+          manifest.name?.startsWith("@next/swc-") ||
+          manifest.name?.startsWith("@img/"))
+      ) {
+        packages.push({
+          name: manifest.name,
+          version: manifest.version ?? null,
+          path: normalizedRelative(layout.stagedWebRoot, manifestPath),
+        });
+      }
     }
-    if (
-      manifest &&
-      (manifest.name === "next" ||
-        manifest.name === "@auth0/nextjs-auth0" ||
-        manifest.name === "sharp" ||
-        manifest.name?.startsWith("@next/swc-") ||
-        manifest.name?.startsWith("@img/"))
-    ) {
-      stagedWebPackages.push({
-        name: manifest.name,
-        version: manifest.version ?? null,
-        path: normalizedRelative(layout.stagedWebRoot, manifestPath),
-      });
-    }
-  }
+    return packages;
+  });
   await writeSanitizedJson(
     path.join(diagnostics, "staged-native-package-inventory.json"),
     stagedWebPackages,
   );
-  const native = await collectNativeEvidence(
+  const native = await measure('native-inventory', () => collectNativeEvidence(
     sourceRoot,
     stageBackend,
     layout.serverEntrypoint,
     layout.stagedWebRoot,
-  );
+  ));
   const sourceSchemaPath = path.join(sourceRoot, "apps/backend/src/schema.gql");
   const sourceCatalogPath = path.join(
     sourceRoot,
@@ -1951,7 +1956,7 @@ async function assembleAndSealStage({
     process.platform === "linux"
       ? process.report?.getReport?.().header?.glibcVersionRuntime ?? "unknown"
       : null;
-  const sealed = await sealAndDescribeStage(stageRoot, {
+  const sealed = await measure('stage-seal', async () => sealAndDescribeStage(stageRoot, {
     schemaVersion: 1,
     proof: "hosted-artifact-feasibility",
     platform: process.platform,
@@ -1976,7 +1981,7 @@ async function assembleAndSealStage({
     schemaSha256: await sha256File(sourceSchemaPath),
     catalogSha256: sourceCatalogHash,
     native,
-  });
+  }));
   await writeSanitizedJson(
     path.join(diagnostics, "stage-integrity.json"),
     {
@@ -3793,6 +3798,8 @@ async function runPackagingSmokeWithPrivateUmask({
 } = {}) {
   const startedAt = Date.now();
   const progress = createPackagingProgressReporter();
+  const operationTimer = createPackagingOperationTimer();
+  const { measure } = operationTimer;
   const requestedDiagnostics =
     diagnosticsDirectory ?? environment.MIGRATION_PACKAGING_SMOKE_DIAGNOSTICS_DIR;
   const protectedStoreRoot = await readObservedPnpmStore(repositoryRoot);
@@ -3865,6 +3872,7 @@ async function runPackagingSmokeWithPrivateUmask({
       diagnostics,
       signal,
       protectedRoots,
+      measure,
       async onPrivateRoot(ownership) {
         ownedPrivateRootOwnership = ownership;
         await journal.acquired("private-root", {
@@ -3928,7 +3936,7 @@ async function runPackagingSmokeWithPrivateUmask({
       proxyOrigin: proxy.origin,
     });
     const commandCanaries = expandedCanaries(canaries);
-    await runCommand(assertApprovedPackagingChildCommand(
+    await measure('prisma-generate', () => runCommand(assertApprovedPackagingChildCommand(
       "prisma-generate",
       ["pnpm", "--filter", "backend", "prisma:generate"],
     ), {
@@ -3938,8 +3946,8 @@ async function runPackagingSmokeWithPrivateUmask({
       logPath: path.join(diagnostics, "prisma-generate.log"),
       canaries: commandCanaries,
       signal,
-    });
-    await runCommand(assertApprovedPackagingChildCommand(
+    }));
+    await measure('backend-build', () => runCommand(assertApprovedPackagingChildCommand(
       "backend-build",
       ["pnpm", "--filter", "backend", "build"],
     ), {
@@ -3949,9 +3957,9 @@ async function runPackagingSmokeWithPrivateUmask({
       logPath: path.join(diagnostics, "backend-build.log"),
       canaries: commandCanaries,
       signal,
-    });
+    }));
     const { DATABASE_URL: _databaseUrl, ...webBuildEnvironment } = toolEnvironment;
-    await runCommand(assertApprovedPackagingChildCommand(
+    await measure('web-build', () => runCommand(assertApprovedPackagingChildCommand(
       "web-build",
       ["pnpm", "--filter", "web", "build"],
     ), {
@@ -3961,12 +3969,12 @@ async function runPackagingSmokeWithPrivateUmask({
       logPath: path.join(diagnostics, "web-build.log"),
       canaries: commandCanaries,
       signal,
-    });
+    }));
 
-    sourceSnapshot = await captureCallerIntegrity(
+    sourceSnapshot = await measure('source-snapshot', () => captureCallerIntegrity(
       [context.sourceRoot, context.corepackHome],
       { signal },
-    );
+    ));
     progress('build-complete');
 
     await journal.acquiring({
@@ -3985,6 +3993,7 @@ async function runPackagingSmokeWithPrivateUmask({
       proxyOrigin: proxy.origin,
       storeRoot: context.storeRoot,
       signal,
+      measure,
     });
     await journal.acquired("sealed-stage", {
       identity: {
@@ -3992,7 +4001,7 @@ async function runPackagingSmokeWithPrivateUmask({
         stageTreeSha256: stage.sealed.stageTreeSha256,
       },
     });
-    await verifySealedStage(stage.stageRoot, stage.sealed);
+    await measure('stage-verify', () => verifySealedStage(stage.stageRoot, stage.sealed));
     progress('stage-sealed');
 
     administration = await prepareTestAdministration({
@@ -4238,7 +4247,7 @@ async function runPackagingSmokeWithPrivateUmask({
           localDatabaseUrl,
           "local-identity-database-migrate.log",
         ),
-      verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
+      verifyArtifact: () => measure('stage-verify', () => verifySealedStage(stage.stageRoot, stage.sealed)),
     });
     progress('local-identity-complete');
     const localDatabase = await runLocalDatabaseSmoke({
@@ -4250,21 +4259,21 @@ async function runPackagingSmokeWithPrivateUmask({
       journal,
       environment,
       signal,
-      verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
+      verifyArtifact: () => measure('stage-verify', () => verifySealedStage(stage.stageRoot, stage.sealed)),
     });
     progress('local-database-complete');
     const localModel = await runLocalModelSmoke({
       entrypoint: stage.localDatabaseEntrypoint, cwd: hostileCwd,
       home: path.join(runtimeRoot, 'local-model-home'), temporaryDirectory: path.join(runtimeRoot, 'local-model-tmp'),
       stateParent: secretDirectory, journal, environment, signal,
-      verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
+      verifyArtifact: () => measure('stage-verify', () => verifySealedStage(stage.stageRoot, stage.sealed)),
     });
     progress('local-model-complete');
     const localMcp = await runLocalMcpSmoke({
       entrypoint: stage.localMcpEntrypoint, cwd: hostileCwd,
       home: path.join(runtimeRoot, 'local-mcp-home'), temporaryDirectory: path.join(runtimeRoot, 'local-mcp-tmp'),
       stateParent: secretDirectory, journal, environment, signal,
-      verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
+      verifyArtifact: () => measure('stage-verify', () => verifySealedStage(stage.stageRoot, stage.sealed)),
     });
     progress('local-mcp-complete');
     const localUi = await runLocalUiSmoke({
@@ -4273,7 +4282,7 @@ async function runPackagingSmokeWithPrivateUmask({
       // enough for Linux's 108-byte sockaddr_un, inside the same owned tree.
       home: path.join(runtimeRoot, 'local-ui-home'), temporaryDirectory: path.join(runtimeRoot, 'ui'),
       stateParent: secretDirectory, journal, environment, signal,
-      verifyArtifact: () => verifySealedStage(stage.stageRoot, stage.sealed),
+      verifyArtifact: () => measure('stage-verify', () => verifySealedStage(stage.stageRoot, stage.sealed)),
     });
     progress('local-ui-complete');
     assert.equal(localDatabase.sqlite, stage.native.sqlite.version);
@@ -4282,8 +4291,8 @@ async function runPackagingSmokeWithPrivateUmask({
       localDatabase.compileOptionsDigest,
       stage.native.sqlite.compileOptionsDigest,
     );
-    await verifySealedStage(stage.stageRoot, stage.sealed);
-    await assertCallerIntegrity(sourceSnapshot, { signal });
+    await measure('stage-verify', () => verifySealedStage(stage.stageRoot, stage.sealed));
+    await measure('source-verify', () => assertCallerIntegrity(sourceSnapshot, { signal }));
     assert.equal(
       await readFile(path.join(hostileCwd, "src/schema.gql"), "utf8"),
       `type ${filenameSecret} { poisoned: String }\n`,
@@ -4421,7 +4430,7 @@ async function runPackagingSmokeWithPrivateUmask({
     }
     if (sourceSnapshot) {
       try {
-        await assertCallerIntegrity(sourceSnapshot, { signal: cleanupSignal });
+        await measure('source-verify', () => assertCallerIntegrity(sourceSnapshot, { signal: cleanupSignal }));
       } catch (error) {
         cleanupErrors.push(error);
       }
@@ -4484,11 +4493,11 @@ async function runPackagingSmokeWithPrivateUmask({
       if (context) {
         try {
           if (sourceSnapshot && context.mode === "aggregate-gate") {
-            await assertCallerIntegrity(sourceSnapshot, { signal: cleanupSignal });
+            await measure('source-verify', () => assertCallerIntegrity(sourceSnapshot, { signal: cleanupSignal }));
           }
-          await assertCallerIntegrity(context.callerIntegrity, {
+          await measure('caller-verify', () => assertCallerIntegrity(context.callerIntegrity, {
             signal: cleanupSignal,
-          });
+          }));
           if (
             context.callerStatusBefore &&
             !(
@@ -4519,6 +4528,7 @@ async function runPackagingSmokeWithPrivateUmask({
       canaries,
     });
     progress('finalization-complete');
+    operationTimer.finish();
   }
 
   if (
