@@ -4,6 +4,12 @@ import { localUiBrowserPrerequisite } from './local-ui-browser.mjs';
 import { assertLocalMcpSmokeSuccessResources } from './local-mcp-lifecycle.mjs';
 import { assertLocalModelSmokeSuccessResources } from './local-model-lifecycle.mjs';
 
+import {
+  createLaneReceipt, parseQualificationProfile, publishLaneReceipt,
+  qualificationContract, qualificationProvenance, qualificationRunner,
+  selectQualificationPhases,
+} from "./ci-qualification.mjs";
+
 import { execFile } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
 import { constants } from "node:fs";
@@ -585,7 +591,7 @@ export async function finalizeGateAttemptEvidence({
     rm(directory, { recursive: true, force: true }),
 }) {
   summary.source = structuredClone(source);
-  if (mode === "full") {
+  if (mode !== "smoke-only") {
     summary.databaseTests ??= unavailableDatabaseEvidence("command-not-run", { source, environment: externalEnvironment });
     await persistDatabaseEvidence(summary, externalEnvironment);
   }
@@ -1189,7 +1195,7 @@ async function writeBaseArtifact(baseDirectory, relativePath, content) {
   };
 }
 
-async function exportBaseContracts(
+export async function exportBaseContracts(
   baseSha,
   diagnosticsDirectory,
   { signal } = {},
@@ -1782,7 +1788,12 @@ async function sha256(filePath) {
   return createHash("sha256").update(await readFile(filePath)).digest("hex");
 }
 
+export function runQualificationPhaseSequence(manifest, profile, options) {
+  return runPhaseSequence(selectQualificationPhases(manifest, profile), options);
+}
+
 async function executeFullGate({
+  profile = "full",
   workspace,
   files,
   source,
@@ -1809,6 +1820,8 @@ async function executeFullGate({
     packagingTimings: unavailablePackagingTimings("phase-not-run"),
     source,
     baseSha,
+    baseManifestSha256,
+    smokeLifecycle: {},
     versions: {
       node: "pending",
       pnpm: "pending",
@@ -1867,7 +1880,14 @@ async function executeFullGate({
     if (semanticErrors.length) throw new Error(`gate phase manifest invalid: ${semanticErrors.join("; ")}`);
     const commandPolicyErrors = validateApprovedPhaseCommands(manifest);
     if (commandPolicyErrors.length) throw new Error(`gate command policy invalid: ${commandPolicyErrors.join("; ")}`);
-    const phases = manifest.phases.filter((phase) => phase.status === "active");
+    const phases = selectQualificationPhases(manifest, profile);
+    if (profile !== "full") {
+      summary.qualification = qualificationContract(
+        await readFile(path.join(workspace, "scripts/local-migration/gate-phases.json"), "utf8"),
+        await readFile(path.join(workspace, "scripts/local-migration/gate-phases.schema.json"), "utf8"),
+      );
+    }
+    if (profile === "ci-packaging") summary.baseComparison = "not-in-profile";
     const phaseTotal = phases.length;
 
     const temporaryHome = path.join(workspace, ".lmbg-home");
@@ -1934,11 +1954,11 @@ async function executeFullGate({
       }),
     );
     completePreflight();
-    summary.phases = await runPhaseSequence(phases, {
+    summary.phases = await runQualificationPhaseSequence(manifest, profile, {
       projectFailureMessage: projectDatabaseCommandFailure,
       onPhaseStart: async (phase) => {
         phaseStart.set(phase.id, timeline.now());
-        console.log(`migration-gate: phase ${phase.order}/${phaseTotal} ${phase.id} started`);
+        console.log(`migration-gate: phase ${phases.indexOf(phase) + 1}/${phaseTotal} ${phase.id} started`);
       },
       execute: async (command, phase) => {
         const commandIndex = phase.commands.indexOf(command) + 1;
@@ -1989,16 +2009,20 @@ async function executeFullGate({
           executeCommand,
           packagingDiagnostics: { ownership: diagnosticsOwnership, logPath, summary },
           databaseDiagnostics: { commandArgv: command.argv, workspace, files, source, environment: sourceEnvironment, canaries: sensitiveCanaries, summary },
-          validateRestartLifecycle: ({ commandSucceeded }) =>
-            assertRestartSmokeLifecycleEvidence(
+          validateRestartLifecycle: async ({ commandSucceeded }) => {
+            await assertRestartSmokeLifecycleEvidence(
               phaseEnvironment.MIGRATION_RESTART_SMOKE_DIAGNOSTICS_DIR,
               { commandSucceeded },
-            ),
-          validatePackagedLifecycle: ({ commandSucceeded }) =>
-            assertPackagedSmokeLifecycleEvidence(
+            );
+            if (commandSucceeded) summary.smokeLifecycle[phase.id] = true;
+          },
+          validatePackagedLifecycle: async ({ commandSucceeded }) => {
+            await assertPackagedSmokeLifecycleEvidence(
               phaseEnvironment.MIGRATION_PACKAGING_SMOKE_DIAGNOSTICS_DIR,
               { commandSucceeded },
-            ),
+            );
+            if (commandSucceeded) summary.smokeLifecycle[phase.id] = true;
+          },
         });
         const comparisonEvidence = readContractBaselineComparisonEvidence(
           command.argv,
@@ -2010,7 +2034,7 @@ async function executeFullGate({
         if (phase.id === "contract-baseline") {
           assertContractBaselineComparisonPerformed(summary.baseComparison);
         }
-        console.log(`migration-gate: phase ${phase.order}/${phaseTotal} ${phase.id} passed (${result.elapsedMs}ms)`);
+        console.log(`migration-gate: phase ${phases.indexOf(phase) + 1}/${phaseTotal} ${phase.id} passed (${result.elapsedMs}ms)`);
       },
       onSummary: async (phasesSummary) => {
         summary.phases = phasesSummary;
@@ -2206,9 +2230,38 @@ async function executeSmokeOnly({
   });
 }
 
+export async function publishCompletedCiQualification({
+  profile, summary, outcome, provenance, runner,
+  workspaceRemoved, diagnosticsDirectory, gateLifecycle,
+  runnerTemp, signal, timeline, publish = publishLaneReceipt,
+}) {
+  if (!outcome || outcome.primaryError || outcome.secondaryErrors?.length ||
+      !Array.isArray(outcome.secondaryErrors)) {
+    throw new Error("CI qualification bounded-stage finalization did not succeed");
+  }
+  if (signal?.aborted) throw signal.reason;
+  timeline.assertBefore("finalCleanup");
+  const receipt = createLaneReceipt({
+    profile, summary, contract: summary.qualification, provenance, runner,
+    completion: {
+      boundedStages: true,
+      preflight: outcome.preflightComplete === true,
+      childSettlement: outcome.childSettlementAttempted === true,
+      workspaceRemoved,
+      diagnosticsRemoved: diagnosticsDirectory === null,
+      gateLifecycle: gateLifecycle?.state?.status === "passed",
+    },
+  });
+  await publish(path.join(await realpath(runnerTemp), profile + ".json"), receipt, {
+    signal, assertDeadline: () => timeline.assertBefore("finalCleanup"),
+  });
+}
+
 async function executeGate({ timeline: suppliedTimeline } = {}) {
+  const profile = parseQualificationProfile(process.argv.slice(2));
+  const provenance = profile.startsWith("ci-") ? qualificationProvenance(process.env) : null;
   const cancellation = createSignalAbortController();
-  const smokeOnly = process.argv.includes("--smoke-only");
+  const smokeOnly = profile === "smoke-only";
   const wallStartedAt = Date.now();
   const timeline = suppliedTimeline ?? createGateTimeline();
   let diagnosticsDirectory;
@@ -2220,6 +2273,8 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
   let primaryError;
   let cleanupErrors = [];
   let finalSummary;
+  let boundedOutcome;
+  let workspaceRemoved = false;
   let source = emptyGateSource();
   let gateLifecycle;
   const summaryCanaries = buildAdministrationCanaries(
@@ -2285,6 +2340,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       },
     );
     return executeFullGate({
+      profile,
       source,
       workspace: disposable.workspace,
       files: disposable.files,
@@ -2329,6 +2385,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
     if (disposable?.workspace) {
       try {
         await removeDisposableWorkspace(disposable, signal);
+        workspaceRemoved = true;
       } catch (error) {
         localErrors.push(error);
       }
@@ -2352,6 +2409,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       };
     const finalized = await finalizeGateAttemptEvidence({
       timeline,
+      mode: profile,
       diagnosticsDirectory,
       diagnosticsOwnership,
       lifecycle: gateLifecycle,
@@ -2444,6 +2502,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       cleanup: cleanupAttempt,
       finalize: finalizeAttempt,
     });
+    boundedOutcome = outcome;
     result = outcome.result;
     primaryError = outcome.primaryError;
     cleanupErrors = outcome.secondaryErrors;
@@ -2468,6 +2527,20 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       diagnosticsDirectory = finalized.diagnosticsDirectory;
       finalSummary = finalized.summary;
       cleanupErrors.push(...finalized.evidenceErrors);
+    }
+    if (provenance && !primaryError && !cleanupErrors.length) {
+      try {
+        timeline.assertBefore("finalCleanup");
+        if (cancellation.signal.aborted) throw cancellation.signal.reason;
+        await publishCompletedCiQualification({
+          profile, summary: finalSummary, outcome: boundedOutcome,
+          provenance, runner: qualificationRunner(process.env),
+          workspaceRemoved, diagnosticsDirectory, gateLifecycle,
+          runnerTemp: process.env.RUNNER_TEMP, signal: cancellation.signal, timeline,
+        });
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
     }
   } finally {
     cancellation.dispose();

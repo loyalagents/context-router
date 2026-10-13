@@ -203,6 +203,15 @@ required manual acceptance and exact-head CI. Valid trial evidence can contribut
 only after explicit input/impact assessment; do not rebuild solely to rename an
 unchanged trial artifact "final."
 
+Once the agreed candidate is stable and required documentation is ready, commit
+and push/open its draft PR promptly. Run exact-candidate remote CI, required full
+local qualification and independent complete-diff review concurrently when their
+inputs and resources are isolated. Do not add a serial CI waiting period by
+finishing every local check and review before pushing. Record the actual local
+source separately from PR head and test-merge checkout identities. Put final run
+links/results in the PR description or receipts where possible; avoid commits
+solely to announce a pass.
+
 If corrections follow, return to targeted iteration and renew affected review;
 then renew required final validation on the corrected frozen candidate. For
 migration runtime changes this includes the full final local gate and applicable

@@ -1,4 +1,297 @@
-# Packaging Critical Path
+# CI Qualification Turnaround
+
+- Status: implementation targeted checks passed, 2026-10-13; frozen-candidate
+  final qualification pending. This is a new bounded task after merged PR #178.
+- Outcome: run complete source and packaging qualification concurrently in
+  separate CI workspaces, with one stable final check. Preserve all coverage,
+  triggers, safety contracts and the default full local gate.
+- Priority: subordinate to the pilot's live acceptance and local resource needs.
+  One cohesive draft PR; no automatic merge or installed-app acceptance claim.
+
+## Current Ownership And Scope
+
+Verified starting base is `2497cc209e4d8c1233a7dcd6852b9fd8f4b1b42c`,
+freshly fetched by the coordinator. The clean managed task worktree is
+`<ci-qualification-lanes worktree>`, branch `codex/ci-qualification-lanes`.
+The sole writer is `/root/writer`, including this plan, all implementation/tests,
+dependency preparation, staging and commits. Coordinator `/root`, factual
+inventory and independent reviewers are repository-read-only. Requested settings
+are GPT-6 Astra / Extra High (`xhigh`) for coordinator, critical writer and
+reviewers, Astra / High for inventory. Explicit writer spawn settings were
+accepted; this writer has no independent runtime attestation. The historical
+configuration observations below apply only to the completed #178 task.
+
+Writer paths: `.github/workflows/local-migration-baseline.yml`;
+`scripts/local-migration/migration-gate.mjs`; a small
+`scripts/local-migration/ci-qualification.mjs` profile/receipt validator and
+`scripts/local-migration/combine-ci-qualification.mjs` entrypoint;
+affected existing `gate-phases`, `gate-runner`, `ci-path-filters` and
+`toolchain-contract` tests; this brief; the gate section of
+`docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md`; and a concise finalization
+addition to `docs/useful/AGENT_WORKFLOW.md`. Only add another existing reader
+path when a concrete affected contract requires it and record that delta.
+Shared hotspots are gate scheduling, provenance/finalization and workflow shape;
+serialize all writes. Keep phase manifest/schema, approved commands, lockfiles,
+standard CI and product source unchanged unless review identifies an essential
+narrow scheduling-contract update. No caller-hashing optimization is revived.
+
+The main checkout belongs to the pilot (`codex/pilot-downloaded-acceptance`,
+observed `ecb99aea`); preserve its files, demo data, app, model and personal
+state. The coordinator observed a resident pilot guardian/model and an unrelated
+orphan test Node process; neither is owned here. Startup chat inspection found
+pilot retry documentation complete without a live run and consolidation waiting
+for its separate model approval/resource window. Recheck ownership before local
+heavy work; never cancel/adopt another task's run. No cross-chat message, model
+run, asset download, client change or personal-state action is authorized here.
+
+Integration order: independently approve this concrete plan, write failing tests,
+implement the bounded profiles/receipts/workflow, resolve affected review and
+focused checks, then freeze and push one candidate. Reinspect main before freeze;
+evaluate changed inputs rather than silently rebasing or using another task's
+outputs. Preserve the default `pnpm migration:gate` and `--smoke-only` behavior.
+
+## Checkpoint 1: Command, Coverage And Dependency Map
+
+The canonical manifest still defines twelve sequential phases for the full
+local gate. Validate its complete schema, mode/retirement/predecessor rules and
+exact approved command matrix before selecting either CI profile. A separate
+fixed allowlist defines only `ci-source` and `ci-packaging`; there is no arbitrary
+phase list, skip flag, scheduler, build reuse or changed retirement policy.
+Manifest predecessor assertions continue to protect full-gate order. Profile
+assertions separately prove exact membership/order and a complete union, with
+repository-integrity required in both workspaces.
+
+| Existing phase / commands | CI owner and dependencies |
+| --- | --- |
+| 1 contract-baseline: existing gate/smoke/contract Node tests, then base-bound contract checker | Source; full manifest/command validation and exported verified base precede it |
+| 2 documentation: Markdown checker tests and link scan | Source after 1 |
+| 3 backend-unit-build: Prisma generation, seed typecheck, backend build, unit/local-model/local-MCP/local-UI tests, desktop tests | Source after 2; fresh generated/build output |
+| 4 backend-database: migrations, integration, e2e, local-database tests | Source after 3; owned PostgreSQL database and SQLite fixtures |
+| 5 local-orchestrator: tests, lint, build | Source after 4 |
+| 6 eval-fixtures: deterministic verify | Source after 5 |
+| 7 eval-deterministic-scenarios: both existing template smoke scenarios | Source after 6; source builds and owned database |
+| 8 web-production-build: web build and authenticated browser suite | Source after 7; owned Chromium/profiles and loopback ports |
+| 9 harbor-static: existing static script | Source after 8; Python 3.12 |
+| 10 restart-smoke: existing outer-verified runtime smoke | Source after 9; retain every supported-mode/lifecycle proof |
+| 11 packaged-composition-smoke: existing packaging command plus independent outer lifecycle validation | Packaging; no source-lane result dependency; independently generates Prisma and builds backend/web |
+| 12 repository-integrity: generated-client repeat generation, SDL and Git whitespace checks | Both lanes, last after their own mutations; caller integrity and outer finalization additionally remain mandatory |
+
+Packaging retains all six modes: hosted-baseline, local-identity-preview,
+local-database-preview, local-model-preview, local-mcp and local-ui. Preserve
+every sealing, source/caller check, runtime probe, owned-resource assertion and
+outer `executeGatePhaseCommand` lifecycle verifier. A raw command exit code or
+timing milestone never qualifies packaging. Source's base comparison must report
+`performed`; packaging independently validates the same selected ancestor and
+exports/hashes its base bundle, while accurately recording that the contract
+checker itself belongs to source.
+
+Both CI jobs start independently without `needs` between them on separate
+`ubuntu-latest` runners. Each keeps full-history checkout, exact Node 24.21.0 /
+pnpm 10.25.0, Python 3.12, frozen install, pinned Chromium, its PostgreSQL 15
+service, a private pnpm store/Corepack/cache, and its own outer gate disposable
+workspace, synthetic state, allocated ports, diagnostics and journals. No shared
+generated output or writable resources; downloaded cache archives may be inputs
+but are restored into job-owned directories. The first version keeps ordinary
+preflight/database preparation in both lanes rather than introducing a second
+resource lifecycle. Retain existing per-phase timeouts and gate T+3/107/110/113
+deadlines plus the 118-minute process fail-safe. Budget each lane's workflow
+steps explicitly with cleanup/evidence-upload headroom; the aggregator is bounded
+and has no database/browser/build prerequisite. No sibling fail-fast or automatic
+workflow cancellation is added.
+
+## Checkpoint 2: Tests First And Required Receipts
+
+Add failing tests in the existing phase/workflow suites before implementation,
+then use focused suites per correction batch. The new helper has two small
+responsibilities: select an exhaustive approved CI profile from an already
+validated full manifest, and construct/validate strict versioned receipts.
+The stable job/check remains `local-migration-baseline`. It uses
+`needs: [source-qualification, packaging-qualification]` and `if: always()`,
+checks each dependency result explicitly for `success`, then downloads exactly
+the two required attempt-specific receipts. Missing, failed, cancelled, skipped
+or unknown dependency results fail even if a downstream job would otherwise skip.
+Required uploads have `if-no-files-found: error` and no `continue-on-error`.
+Optional timing/database diagnostic export remains separate and optional.
+
+Bind receipts to the workflow repository, event, workflow path/ref, run ID and
+attempt, expected checkout SHA (`github.sha`, including PR test-merge SHA),
+PR head separately when applicable, actual clean caller HEAD and copied-input
+digest, validated base SHA and base-bundle digest, exact phase-manifest bytes
+and fixed partition version/digest, lane identity, full expected ordered
+phase/command/mode/evidence census, actual phase outcomes and observed toolchain
+versions. Both receipts must match each other and independently supplied current
+workflow expectations, not merely agree with one another. The aggregator checks
+its clean checkout and expected manifest/partition, exact union coverage and the
+two separate integrity outcomes. Exact Node/pnpm and supported Python/PostgreSQL/
+browser prerequisites are required; record runner OS/architecture/image for
+comparison. Never equate a local HEAD with a PR test-merge SHA.
+
+A receipt is created only after `runBoundedGateStages` and
+`finalizeGateAttemptEvidence` fully return successfully, including their final
+signal/deadline checks, verified caller integrity, terminal outer and smoke
+lifecycle checks, exact workspace/database/container removal and diagnostics
+finalization. Capture only fixed sanitized verification outcomes and required
+identities; no credentials, raw journal paths, test payloads or private log tails.
+Receipt publication itself is bounded and fails the lane if unsuccessful.
+A temporarily persisted `summary.status=passed` inside finalization cannot be
+promoted into a receipt. Maintain signal handlers through receipt publication
+and reject late cancellation; the workflow dependency result remains an
+independent required condition after command settlement.
+
+Read downloaded receipts as bounded regular non-symlink JSON with strict fields
+and exact filenames; reject extra/missing files, duplicate lanes/coverage,
+malformed hashes/versions, unexpected commands or phases, stale/mismatched source,
+base, manifest, toolchain or provenance, partial outcomes, integrity drift,
+nonterminal lifecycle/finalization and cleanup errors. Receipts from both lanes
+must belong to the same workflow attempt. A partial failed-job rerun may need
+“Re-run all jobs”; it must never silently reuse a prior attempt's sibling receipt.
+
+Required tests cover exact census and full-mode invariance; clean-start packaging
+with no source outputs; lane resource separation; unchanged six-mode smoke and
+outer-verifier dispatch; command failure/settlement; failed/skipped/cancelled
+dependency results; absent/duplicate/stale/malformed/tampered receipts and
+cross-attempt reruns; checkout/head/base/toolchain/manifest mismatch; generated
+drift; missing lifecycle records; cleanup failure; cancellation and deadline
+expiry during finalization, summary publication and required receipt publication;
+and optional diagnostic failure remaining separate from required verdicts.
+Exercise actual helper/entrypoint seams with bounded fixtures, not only source
+text assertions. Preserve existing gate-runner, packaging, restart,
+database-evidence, toolchain and workflow-contract tests.
+
+Focused validation uses the exact pinned runtime and existing Node test files:
+gate-phases, gate-runner, packaging-smoke, restart-smoke, local-database-evidence,
+ci-path-filters and toolchain-contract, plus affected runtime-resource tests.
+Run Markdown tests/links, base-bound contract validation and whitespace checks
+for the edited docs; discover readers by paths, basenames and asserted content.
+Record targeted results and pending final validation at each checkpoint.
+
+## Checkpoint 3: Fixed Measurement Budget
+
+Use the naturally occurring main baseline run
+[38467923278](https://github.com/loyalagents/context-router/actions/runs/38467923278)
+at `2497cc209e4d8c1233a7dcd6852b9fd8f4b1b42c` and its standard CI
+[38467923426](https://github.com/loyalagents/context-router/actions/runs/38467923426).
+It was already running at task startup: do not launch a duplicate or cancel it.
+The earlier [38462982373](https://github.com/loyalagents/context-router/actions/runs/38462982373)
+is historical opportunity evidence (about 32m48s aggregate, 15m38s packaging),
+not a matched performance promise. The coordinator verified its source tree
+equals the current main tree; commits and triggering events differ.
+
+Budget one baseline observation and the first stable candidate's actual two-lane
+workflow observation, with no repeated broad run solely for sampling. Necessary
+failure corrections renew qualification, retain every attempt, and are reported
+separately; they do not expand the performance sample until favorable. Allow
+one required full local gate per frozen implementation candidate, not as a timing
+sample. At most the two CI execution lanes plus small aggregation, and one local
+heavy qualification, are task-owned concurrently; standard CI remains unchanged.
+Local prerequisites/temporary outputs have a 15 GiB task budget and require
+30 GiB free before a heavy run. Retain journal-driven cleanup and original
+deadlines; resource pressure prevents starting another run, not unsafe termination.
+
+Before samples are assessed, the meaningful-benefit criterion is at least 20%
+less elapsed candidate push-to-all-required-checks-ready time than the comparable
+baseline event-to-all-required-checks-ready interval, with total dedicated-workflow
+runner minutes no more than 35% above baseline and all correctness gates passing.
+Report every lane's queue/setup/execution/upload/finalization, aggregation,
+standard/native check completion, total runner minutes and runner-class billing
+limitations. Use bounded push-time observation if exact server push time is
+unavailable. Compare unchanged product/dependency inputs, runner class, versions,
+image and cache conditions; list harness/doc changes and differing conditions.
+One hosted-runner pair cannot establish variance or a controlled causal speedup.
+If event timestamps/cache/runner conditions cannot support the comparison,
+report the criterion unproven. Do not promise a 17-minute result, enlarge samples,
+or claim complexity is worthwhile after a miss without a new reviewed decision.
+
+## Checkpoint 4: Concurrent Frozen-Candidate Finalization
+
+The agreed milestone is the reviewed design implemented, focused checks green,
+known corrections resolved, docs prepared and a clean committed candidate frozen.
+Push/open the single draft PR promptly at that milestone. Start exact-candidate
+remote CI, the required unchanged full local `pnpm migration:gate`, and fresh
+independent complete-diff review concurrently against stable inputs and isolated
+resources. The coordinator releases the local heavy window after fresh
+toolchain/process/chat/disk checks. Do not wait for local qualification and review
+before starting CI. Add this concise protocol to the canonical agent workflow.
+
+Final evidence requires the full local gate with actual local source/clean-state/
+copied-input binding, the real two-lane GitHub workflow on the PR test-merge
+checkout, unchanged standard/native CI, affected negative tests, and complete
+base-to-candidate independent review of coverage, concurrency, failure visibility,
+provenance, cleanup and scope. Preserve source/merge/head distinctions.
+Post-freeze results/run links belong in the PR body or external receipts, avoiding
+commits solely to announce passes. Corrections unfreeze, receive affected tests/
+review, then renew affected exact-candidate CI and required local qualification;
+carry forward only explicitly unaffected evidence.
+
+Handoff records exact base/head, integration instructions, before/after coverage,
+review dispositions, all attempts/timings and limitations, runner-cost tradeoff,
+passed/failed/pending evidence, partial-rerun behavior and task-owned cleanup.
+Rollback is a reviewed revert of this scheduling/receipt change, restoring the
+single sequential dedicated job; the full local gate never changes. Pilot
+resources and all other worktrees stay untouched. No coverage/trigger exemptions,
+standard-CI deduplication, build reuse, integrity cache, database parallelism,
+model runs, policy relaxation, paid runner change or unrelated cleanup is included.
+
+## Current Review And Targeted Evidence
+
+Independent plan reviewer `/root/plan_review` approved checkpoint 1 at SHA-256
+`a83156fc5df360f344f4a5e751c23f0c68ce648012f9757379ca9987a35f5568`, with no
+blocking findings, covering coverage equivalence, concurrency, failure
+propagation, provenance, cleanup and scope. The coordinator released tests-first
+implementation. Approval covers the new task section only, not a renewal of the
+historical experiment or an implementation approval. Eight initial receipt/profile
+tests failed on the absent planned API; the concrete workflow test separately
+failed because the baseline had only the sequential job.
+
+The first phase/workflow batch passed 77/77 tests. A subsequent real combined-job
+subprocess regression, with no installed dependencies, exposed an ESM top-level
+await cycle (exit 13) that import-only tests could not see. Separating the small
+CLI into `combine-ci-qualification.mjs` corrected it; the subprocess now passes
+and rejects skipped/cancelled dependencies, changed attempt/head/base and dirty
+source. This narrow additional path is the recorded ownership expansion.
+Publication tests preserve preexisting/replaced files and symlinks. Packaging
+dispatch tests use the real phase-sequence and outer-verifier seams from clean
+fixture state, including command/lifecycle failure.
+
+The complete focused gate/packaging/restart/database-evidence/workflow/toolchain
+batch passed 307/307 on Node 24.21.0 (33.509 s). The affected runtime-resource
+suite passed its real backend build/schema/dependency-closure check (25.514 s).
+Markdown and contract-checker tests passed 75/75, all 147 Markdown files passed
+the link scan, and the contract checker passed with `baseComparison=performed`
+against exported base `2497cc209e4d8c1233a7dcd6852b9fd8f4b1b42c` (41 capabilities,
+58 GraphQL types, 58 consumers, 19 catalog entries). Whitespace checks passed.
+A subsequent progress-label change uses selected execution indices without
+changing manifest phase orders or log filenames; the affected phase/workflow
+tests are renewed before freeze.
+
+Prerequisites use only task-owned dependency/store/Corepack/browser/cache roots.
+Both project and projectless offline pnpm probes select 10.25.0. The acquired
+Prisma 7.4.2 schema engine matches SHA-256
+`76747c2e94dca0f0f2717dd2718951d7e7ca438b00896fab2fac42bd71243f77`;
+Chromium 153.0.8010.12 / Playwright 1.63.0 and Python 3.12.8 are verified.
+The cached PostgreSQL 15 image is available without pulling. No other task's
+writable outputs, app, model or personal state was modified. The full local gate,
+actual two-lane CI, complete-diff review and performance result remain pending.
+
+The naturally occurring baseline completed successfully: event-created to all
+required checks ready was 33m31s; the dedicated job took 33m28s and its gate
+32m23.011s. Standard CI's eight jobs passed. Total actual runner usage was
+57m27s (51m26s Ubuntu, 6m01s macOS), including 33m28s for the dedicated workflow.
+Observed baseline inputs: main `2497cc2`, validated base `93d4ad7a`, Ubuntu 24
+image `20261004.327.1`, Node 24.21.0, pnpm 10.25.0, Python 3.12.15,
+PostgreSQL 15.19 and primary pnpm cache hit. The copied-input digest was not
+available in downloaded logs; do not invent it. The predeclared candidate limits
+are consequently 26m48.8s readiness and 45m10.8s dedicated runner usage. No new
+baseline run was launched. Candidate performance and final qualification remain
+pending.
+
+## Completed PR #178: Historical Packaging Measurement
+
+The following record is preserved from the previous task. Its ownership, model
+observations, experiments and qualification apply to the named historical
+revisions only; they are not evidence for this new CI partition.
+
+### Packaging Critical Path
 
 - Status: measurement-only implementation qualified at
   `ee7ab64766ee66805cd50b07ccfec8f6f9c73004`; the tested optimization missed the

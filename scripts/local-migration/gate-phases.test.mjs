@@ -1194,15 +1194,16 @@ test("dedicated CI seeds the exact offline pnpm Corepack cache before invoking t
   assert.ok(gate > seed, "workflow must seed Corepack before running the gate");
 });
 
-test("dedicated CI enforces the reviewed 175/185-minute workflow budget", async () => {
+test("dedicated CI lanes preserve gate deadlines with reviewed 177/187-minute workflow budgets", async () => {
   const workflow = parseYaml(
     await readFile(
       new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
       "utf8",
     ),
   );
-  const job = workflow.jobs["local-migration-baseline"];
-  assert.equal(job["timeout-minutes"], 185);
+  for (const jobId of ["source-qualification", "packaging-qualification"]) {
+  const job = workflow.jobs[jobId];
+  assert.equal(job["timeout-minutes"], 187);
   const expected = [
     ["actions/checkout@v4", 5],
     ["pnpm/action-setup@v6.0.8", 5],
@@ -1214,6 +1215,7 @@ test("dedicated CI enforces the reviewed 175/185-minute workflow budget", async 
     ["Run the Local Migration Baseline Gate", 118],
     ["Persist sanitized gate evidence", 5],
     ["actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", 2],
+    ["actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", 2],
   ];
   assert.deepEqual(
     job.steps.map((step) => [step.uses ?? step.name, step["timeout-minutes"]]),
@@ -1221,9 +1223,9 @@ test("dedicated CI enforces the reviewed 175/185-minute workflow budget", async 
   );
   assert.equal(
     job.steps.reduce((sum, step) => sum + step["timeout-minutes"], 0),
-    175,
+    177,
   );
-  assert.equal(job["timeout-minutes"] - 175, 10);
+  assert.equal(job["timeout-minutes"] - 177, 10);
   const evidence = job.steps.find((step) => step.name === "Persist sanitized gate evidence");
   assert.equal(evidence.if, "always()");
   assert.equal(
@@ -1235,6 +1237,7 @@ test("dedicated CI enforces the reviewed 175/185-minute workflow budget", async 
     /\$RUNNER_TEMP\/local-migration-gate-summary\.json/,
   );
   assert.match(evidence.run, /\$GITHUB_STEP_SUMMARY/);
+  }
 });
 
 test("external CI evidence is restricted to the exact runner-temp path and sanitized", async () => {
@@ -1808,10 +1811,12 @@ test("non-cooperative work is not abandoned and remains bounded only by the work
       "utf8",
     ),
   );
-  const gateStep = workflow.jobs["local-migration-baseline"].steps.find(
-    ({ name }) => name === "Run the Local Migration Baseline Gate",
-  );
-  assert.equal(gateStep["timeout-minutes"], 118);
+  for (const job of ["source-qualification", "packaging-qualification"]) {
+    const gateStep = workflow.jobs[job].steps.find(
+      ({ name }) => name === "Run the Local Migration Baseline Gate",
+    );
+    assert.equal(gateStep["timeout-minutes"], 118);
+  }
 });
 
 test("production gate orchestration bounds cleanup and preserves settlement errors", async () => {
@@ -2521,4 +2526,344 @@ test("each dirty category independently changes the copied snapshot and observed
     linked.source.copiedInputsSha256,
     regular.source.copiedInputsSha256,
   );
+});
+
+
+async function qualificationFixture() {
+  const api = await import("./ci-qualification.mjs");
+  const contract = api.qualificationContract(
+    await readFile(new URL("./gate-phases.json", import.meta.url), "utf8"),
+    await readFile(new URL("./gate-phases.schema.json", import.meta.url), "utf8"),
+  );
+  const provenance = {
+    repository: "loyalagents/context-router", event: "pull_request",
+    workflowRef: "loyalagents/context-router/.github/workflows/local-migration-baseline.yml@refs/pull/42/merge",
+    runId: "1234", runAttempt: "1", checkoutSha: "a".repeat(40),
+    pullRequestHeadSha: "b".repeat(40),
+  };
+  const source = { headSha: provenance.checkoutSha, dirty: false, copiedInputsSha256: "c".repeat(64) };
+  const base = { sha: "d".repeat(40), manifestSha256: "e".repeat(64) };
+  const versions = { node: "v24.21.0", pnpm: "10.25.0", python: "3.12.8", postgres: "15.15", chromium: "140.0.7339.16", playwright: "1.63.0" };
+  const runner = { os: "Linux", arch: "X64", image: "ubuntu24", imageVersion: "20261012.1" };
+  const completion = {
+    boundedStages: true, preflight: true, childSettlement: true,
+    workspaceRemoved: true, diagnosticsRemoved: true, gateLifecycle: true,
+  };
+  const summaryFor = (profile) => ({
+    status: "passed", mode: profile, source, baseSha: base.sha,
+    baseManifestSha256: base.manifestSha256,
+    versions, baseComparison: profile === "ci-source" ? "performed" : "not-in-profile",
+    callerIntegrity: true, cleanupErrors: [], failure: null,
+    cleanup: [{ resource: "database", status: "removed" }, { resource: "administration", status: "clean" }],
+    phases: api.selectQualificationPhases(manifest, profile).map(({ id }) => ({ id, status: "passed", elapsedMs: 1 })),
+    smokeLifecycle: profile === "ci-source" ? { "restart-smoke": true } : { "packaged-composition-smoke": true },
+  });
+  const make = (profile, changes = {}) => api.createLaneReceipt({
+    profile, summary: summaryFor(profile), completion, contract, provenance, runner, ...changes,
+  });
+  return { api, contract, provenance, source, base, versions, runner, completion, summaryFor, make,
+    expected: { contract, provenance, source, base, dependencyResults: { source: "success", packaging: "success" } } };
+}
+
+test("CI qualification profiles are exhaustive fixed projections of the validated full gate", async () => {
+  const { api } = await qualificationFixture();
+  const ids = (profile) => api.selectQualificationPhases(manifest, profile).map(({ id }) => id);
+  assert.deepEqual(ids("full"), manifest.phases.map(({ id }) => id));
+  assert.deepEqual(ids("ci-source"), [...manifest.phases.slice(0, 10), manifest.phases[11]].map(({ id }) => id));
+  assert.deepEqual(ids("ci-packaging"), manifest.phases.slice(10).map(({ id }) => id));
+  assert.deepEqual([...new Set([...ids("ci-source"), ...ids("ci-packaging")])], ids("full").filter(id => id !== "packaged-composition-smoke").concat("packaged-composition-smoke"));
+  for (const profile of ["", "source", "skip-packaging", ["contract-baseline"]]) {
+    assert.throws(() => api.selectQualificationPhases(manifest, profile), /profile/);
+  }
+  for (const mutate of [
+    m => m.phases.pop(),
+    m => m.phases[10].commands[0].argv.push("--skip-integrity"),
+    m => m.phases[10].modes.pop(),
+    m => m.phases[10].predecessors = [],
+  ]) {
+    const altered = structuredClone(manifest); mutate(altered);
+    assert.throws(() => api.selectQualificationPhases(altered, "ci-packaging"), /manifest|policy/);
+  }
+});
+
+test("CI qualification CLI preserves full and smoke modes and rejects ambiguous or arbitrary selection", async () => {
+  const { api } = await qualificationFixture();
+  for (const [argv, expected] of [[[], "full"], [["--smoke-only"], "smoke-only"], [["--ci-source"], "ci-source"], [["--ci-packaging"], "ci-packaging"]]) {
+    assert.equal(api.parseQualificationProfile(argv), expected);
+  }
+  for (const argv of [["--skip", "1"], ["--ci-source", "--ci-packaging"], ["--ci-source", "--smoke-only"], ["--ci-source", "--ci-source"]]) {
+    assert.throws(() => api.parseQualificationProfile(argv), /argument|profile/);
+  }
+});
+
+test("CI qualification accepts only complete matching post-finalization receipts", async () => {
+  const f = await qualificationFixture();
+  const receipts = [f.make("ci-source"), f.make("ci-packaging")];
+  assert.equal(f.api.validateLaneReceipts(receipts, f.expected).status, "passed");
+  assert.equal(f.api.validateLaneReceipts(receipts.toReversed(), f.expected).status, "passed");
+  assert.deepEqual(receipts[1].coverage[0].commands, manifest.phases[10].commands.map(c => c.argv));
+  assert.deepEqual(receipts[1].coverage[0].modes, manifest.supportedModes.map(m => m.id));
+  assert.equal(JSON.stringify(receipts).includes("databaseName"), false);
+});
+
+test("CI qualification rejects failed skipped cancelled or unknown upstream job results", async () => {
+  const f = await qualificationFixture();
+  for (const lane of ["source", "packaging"]) for (const status of ["failure", "skipped", "cancelled", "", null, undefined]) {
+    assert.throws(() => f.api.validateLaneReceipts([f.make("ci-source"), f.make("ci-packaging")], {
+      ...f.expected, dependencyResults: { ...f.expected.dependencyResults, [lane]: status },
+    }), /dependency/);
+  }
+});
+
+test("CI qualification rejects missing duplicate stale mismatched incomplete and tampered receipts", async () => {
+  const f = await qualificationFixture();
+  const good = [f.make("ci-source"), f.make("ci-packaging")];
+  for (const receipts of [[], good.slice(0, 1), [...good, good[0]], [good[0], good[0]]]) {
+    assert.throws(() => f.api.validateLaneReceipts(receipts, f.expected), /receipt|lane/);
+  }
+  const mutations = [
+    r => r.provenance.runAttempt = "2", r => r.provenance.runId = "555",
+    r => r.provenance.checkoutSha = "f".repeat(40), r => r.provenance.pullRequestHeadSha = "f".repeat(40),
+    r => r.provenance.repository = "other/repo", r => r.provenance.workflowRef += "-other",
+    r => r.source.headSha = r.provenance.pullRequestHeadSha,
+    r => r.source.dirty = true, r => r.source.copiedInputsSha256 = "f".repeat(64),
+    r => r.base.sha = "f".repeat(40), r => r.base.manifestSha256 = "f".repeat(64),
+    r => r.contract.manifestSha256 = "f".repeat(64), r => r.contract.partitionSha256 = "f".repeat(64),
+    r => r.versions.node = "v24.20.0", r => r.versions.pnpm = "10.24.0",
+    r => r.versions.python = "3.11.9", r => r.versions.postgres = "14.9",
+    r => r.versions.playwright = "1.62.0", r => r.versions.chromium = "0",
+    r => r.coverage.pop(), r => r.coverage.push(r.coverage[0]),
+    r => r.coverage[0].commands = [], r => r.coverage[0].modes.pop(),
+    r => r.coverage[0].evidenceClasses = [], r => r.coverage[0].status = "skipped",
+    r => r.coverage[0].elapsedMs = -1, r => r.coverage[0].unexpected = true,
+    r => r.verification.callerIntegrity = false, r => r.verification.generatedIntegrity = false,
+    r => r.verification.smokeLifecycle = {}, r => r.verification.cleanup = false,
+    r => r.completion.childSettlement = false, r => r.completion.workspaceRemoved = false,
+    r => r.completion.diagnosticsRemoved = false, r => r.completion.boundedStages = false,
+    r => r.status = "running", r => r.failure = "hidden failure",
+    r => r.contract.unexpected = true, r => r.source.copiedInputsSha256 = "",
+  ];
+  for (const mutate of mutations) {
+    const receipts = structuredClone(good); mutate(receipts[1]);
+    assert.throws(() => f.api.validateLaneReceipts(receipts, f.expected), /qualification|receipt|coverage|toolchain|provenance|source|base|contract|integrity|completion|cleanup/);
+  }
+  const bothStale = structuredClone(good);
+  for (const receipt of bothStale) receipt.provenance.runAttempt = "0";
+  assert.throws(() => f.api.validateLaneReceipts(bothStale, f.expected), /provenance/);
+});
+
+test("CI qualification cannot construct a receipt from premature pass cleanup errors or missing smoke proof", async () => {
+  const f = await qualificationFixture();
+  for (const mutate of [
+    s => s.status = "running", s => s.callerIntegrity = false,
+    s => s.cleanupErrors.push("failure"), s => s.cleanup[0].status = "failed",
+    s => s.cleanup.pop(), s => s.smokeLifecycle = {},
+    s => s.phases[0].status = "failed", s => s.phases[0].status = "cancelled",
+    s => s.baseComparison = "skipped", s => s.failure = { message: "failure" },
+    s => s.cleanupPending = "automatic-diagnostics-removal",
+  ]) {
+    const summary = f.summaryFor("ci-source"); mutate(summary);
+    assert.throws(() => f.make("ci-source", { summary }), /qualification|receipt|integrity|cleanup|comparison|lifecycle/);
+  }
+  for (const field of Object.keys(f.completion)) {
+    assert.throws(() => f.make("ci-source", { completion: { ...f.completion, [field]: false } }), /completion/);
+  }
+});
+
+test("CI qualification receipt publication preserves cancellation failure and deadline outcomes", async (t) => {
+  const f = await qualificationFixture();
+  const root = await mkdtemp(path.join(os.tmpdir(), "ci-receipt-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const file = path.join(root, "ci-source.json");
+  for (const failure of ["write", "cancel", "deadline"]) {
+    const controller = new AbortController();
+    let late = false;
+    await assert.rejects(f.api.publishLaneReceipt(file, f.make("ci-source"), {
+      signal: controller.signal,
+      assertDeadline() { if (late && failure === "deadline") throw new Error("deadline"); },
+      async write(target, value) {
+        if (failure === "write") throw new Error("write failure");
+        await writeFile(target, value);
+        late = true;
+        if (failure === "cancel") controller.abort(new Error("late cancellation"));
+      },
+    }), /write failure|late cancellation|deadline/);
+    await assert.rejects(lstat(file), { code: "ENOENT" });
+  }
+  await f.api.publishLaneReceipt(file, f.make("ci-source"));
+  assert.equal(JSON.parse(await readFile(file, "utf8")).status, "passed");
+});
+
+test("CI qualification reads exactly two bounded regular receipt files", async (t) => {
+  const f = await qualificationFixture();
+  const root = await mkdtemp(path.join(os.tmpdir(), "ci-receipt-read-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  for (const profile of ["ci-source", "ci-packaging"]) {
+    await writeFile(path.join(root, profile + ".json"), JSON.stringify(f.make(profile)));
+  }
+  assert.equal((await f.api.readLaneReceipts(root)).length, 2);
+  await writeFile(path.join(root, "unexpected.json"), "{}");
+  await assert.rejects(f.api.readLaneReceipts(root), /receipt/);
+  await rm(path.join(root, "unexpected.json"));
+  const target = path.join(root, "ci-source.json");
+  await rm(target); await symlink(path.join(root, "ci-packaging.json"), target);
+  await assert.rejects(f.api.readLaneReceipts(root), /regular|symlink|receipt/);
+  await rm(target); await writeFile(target, "x".repeat(262145));
+  await assert.rejects(f.api.readLaneReceipts(root), /bound|size|receipt/);
+});
+
+
+test("CI qualification publication cannot overwrite or remove preexisting or replaced targets", async (t) => {
+  const f = await qualificationFixture();
+  const root = await mkdtemp(path.join(os.tmpdir(), "ci-receipt-owner-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const target = path.join(root, "ci-source.json");
+  await writeFile(target, "preexisting");
+  await assert.rejects(f.api.publishLaneReceipt(target, f.make("ci-source")));
+  assert.equal(await readFile(target, "utf8"), "preexisting");
+  await rm(target);
+  for (const kind of ["file", "symlink"]) {
+    const replacement = path.join(root, "replacement-" + kind);
+    await writeFile(replacement, "replacement");
+    const controller = new AbortController();
+    await assert.rejects(f.api.publishLaneReceipt(target, f.make("ci-source"), {
+      signal: controller.signal,
+      async write() {
+        await rm(target);
+        if (kind === "file") {
+          const { rename } = await import("node:fs/promises");
+          await rename(replacement, target);
+        } else await symlink(replacement, target);
+        controller.abort(new Error("cancel after replacement"));
+      },
+    }), /cancel after replacement/);
+    assert.equal(await readFile(target, "utf8"), "replacement");
+    await rm(target);
+  }
+});
+
+test("CI qualification packaging starts clean and dispatches outer smoke verification before final integrity", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "ci-profile-dispatch-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const events = [];
+  const artifact = path.join(root, "built-by-packaging");
+  const results = await timingGate.runQualificationPhaseSequence(manifest, "ci-packaging", {
+    execute: (command, phase) => timingGate.executeGatePhaseCommand({
+      phase,
+      executeCommand: async () => {
+        events.push(phase.id);
+        if (phase.kind === "packaged-smoke") {
+          await assert.rejects(lstat(artifact), { code: "ENOENT" });
+          await writeFile(artifact, "independent build");
+        } else assert.equal(await readFile(artifact, "utf8"), "independent build");
+        return { outputTail: "" };
+      },
+      validatePackagedLifecycle: async ({ commandSucceeded }) => {
+        assert.equal(commandSucceeded, true);
+        events.push("outer-lifecycle");
+      },
+    }),
+  });
+  assert.deepEqual(events, ["packaged-composition-smoke", "outer-lifecycle", "repository-integrity"]);
+  assert.deepEqual(results.map(r => r.status), ["passed", "passed"]);
+  for (const failure of ["command", "lifecycle"]) {
+    const failures = [];
+    await assert.rejects(timingGate.runQualificationPhaseSequence(manifest, "ci-packaging", {
+      execute: (command, phase) => timingGate.executeGatePhaseCommand({
+        phase, executeCommand: async () => {
+          failures.push("command");
+          if (failure === "command") throw new Error("fixture command failure");
+          return { outputTail: "" };
+        },
+        validatePackagedLifecycle: async ({ commandSucceeded }) => {
+          failures.push("lifecycle");
+          assert.equal(commandSucceeded, failure !== "command");
+          if (failure === "lifecycle") throw new Error("fixture lifecycle failure");
+        },
+      }),
+    }), /fixture .* failure/);
+    assert.deepEqual(failures, ["command", "lifecycle"]);
+  }
+});
+
+
+test("CI qualification combined entrypoint succeeds without installed dependencies and independently binds source/base", async (t) => {
+  const { execFileSync, spawnSync } = await import("node:child_process");
+  const { pathToFileURL } = await import("node:url");
+  const root = await mkdtemp(path.join(os.tmpdir(), "ci-combine-cli-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const checkout = path.join(root, "checkout"), runner = path.join(root, "runner");
+  await mkdir(checkout); await mkdir(runner);
+  const repo = path.resolve(import.meta.dirname, "../..");
+  const archive = execFileSync("git", ["archive", "HEAD"], { cwd: repo, maxBuffer: 64 * 1024 * 1024 });
+  execFileSync("tar", ["-xf", "-", "-C", checkout], { input: archive });
+  for (const name of ["migration-gate.mjs", "ci-qualification.mjs", "combine-ci-qualification.mjs"]) {
+    await writeFile(path.join(checkout, "scripts/local-migration", name), await readFile(path.join(repo, "scripts/local-migration", name)));
+  }
+  const environment = { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" };
+  const git = args => execFileSync("git", ["-c", "core.hooksPath=/dev/null", ...args], { cwd: checkout, env: environment, encoding: "utf8" }).trim();
+  git(["init", "--quiet"]); git(["config", "user.name", "Fixture"]); git(["config", "user.email", "fixture@invalid.local"]);
+  git(["add", "--all"]); git(["commit", "--quiet", "--no-gpg-sign", "-m", "qualification fixture"]);
+  const head = git(["rev-parse", "HEAD"]);
+  const gate = await import(pathToFileURL(path.join(checkout, "scripts/local-migration/migration-gate.mjs")));
+  const f = await qualificationFixture();
+  const source = (await gate.copyGateSourceInputs(checkout, path.join(root, "source-copy"))).source;
+  const baseRoot = path.join(root, "base"); await mkdir(baseRoot);
+  const base = await gate.exportBaseContracts(head, baseRoot);
+  const provenance = { ...f.provenance, checkoutSha: head };
+  const receiptsRoot = path.join(runner, "qualification-receipts"); await mkdir(receiptsRoot);
+  for (const profile of ["ci-source", "ci-packaging"]) {
+    const summary = { ...f.summaryFor(profile), source, baseSha: head, baseManifestSha256: base.manifestSha256 };
+    await writeFile(path.join(receiptsRoot, profile + ".json"), JSON.stringify(f.make(profile, { summary, provenance })));
+  }
+  const env = {
+    ...environment, RUNNER_TEMP: runner, GITHUB_REPOSITORY: provenance.repository,
+    GITHUB_EVENT_NAME: provenance.event, GITHUB_WORKFLOW_REF: provenance.workflowRef,
+    GITHUB_RUN_ID: provenance.runId, GITHUB_RUN_ATTEMPT: provenance.runAttempt,
+    GITHUB_SHA: head, MIGRATION_GATE_PR_HEAD_SHA: provenance.pullRequestHeadSha,
+    MIGRATION_GATE_BASE_SHA: head, SOURCE_RESULT: "success", PACKAGING_RESULT: "success",
+  };
+  const execute = extra => spawnSync(process.execPath, ["scripts/local-migration/combine-ci-qualification.mjs", "--combine"], {
+    cwd: checkout, env: { ...env, ...extra }, encoding: "utf8", timeout: 30000,
+  });
+  await assert.rejects(lstat(path.join(checkout, "node_modules")), { code: "ENOENT" });
+  const passed = execute({});
+  assert.equal(passed.status, 0, passed.stderr);
+  assert.match(passed.stdout, /both finalized lanes/);
+  for (const change of [{ SOURCE_RESULT: "skipped" }, { PACKAGING_RESULT: "cancelled" }, { GITHUB_RUN_ATTEMPT: "2" }, { GITHUB_SHA: "f".repeat(40) }, { MIGRATION_GATE_BASE_SHA: "f".repeat(40) }]) {
+    assert.notEqual(execute(change).status, 0);
+  }
+  await writeFile(path.join(checkout, "README.md"), "tampered");
+  assert.notEqual(execute({}).status, 0);
+});
+
+
+test("CI qualification publication observes bounded-stage post-finalization cancellation and deadlines", async (t) => {
+  const f = await qualificationFixture();
+  const root = await mkdtemp(path.join(os.tmpdir(), "ci-final-boundary-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  for (const mode of ["success", "late-cancel", "late-deadline", "cleanup-failed", "finalizer-failed"]) {
+    const cancellation = new AbortController();
+    let clock = 0, publications = 0;
+    const timeline = timingGate.createGateTimeline({ startedAt: 0, now: () => clock });
+    const outcome = await timingGate.runBoundedGateStages({
+      timeline, cancellationSignal: cancellation.signal,
+      execute: async ({ completePreflight }) => { completePreflight(); return {}; },
+      cleanup: async () => { if (mode === "cleanup-failed") throw new Error("cleanup fixture"); },
+      finalize: async () => {
+        if (mode === "finalizer-failed") throw new Error("finalizer fixture");
+        if (mode === "late-cancel") cancellation.abort(new Error("late cancellation"));
+        if (mode === "late-deadline") clock = timingGate.GATE_TIMELINE_MS.finalCleanup + 1;
+      },
+    });
+    const publish = () => timingGate.publishCompletedCiQualification({
+      profile: "ci-source", summary: { ...f.summaryFor("ci-source"), qualification: f.contract },
+      outcome, provenance: f.provenance, runner: f.runner,
+      workspaceRemoved: true, diagnosticsDirectory: null, gateLifecycle: { state: { status: "passed" } },
+      runnerTemp: root, signal: cancellation.signal, timeline,
+      publish: async () => { publications++; },
+    });
+    if (mode === "success") { await publish(); assert.equal(publications, 1); }
+    else { await assert.rejects(publish()); assert.equal(publications, 0); }
+  }
 });

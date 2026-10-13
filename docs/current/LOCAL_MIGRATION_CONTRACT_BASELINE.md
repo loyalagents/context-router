@@ -235,9 +235,11 @@ browser tests after its build. `local-orchestrator`, evaluation and Harbor phase
 remain hosted-only. All twelve phase IDs/order remain. Step 08 P3 increases only
 the expanded packaging phase from fifteen to twenty-five minutes; other phase
 allowances remain unchanged, and active phase budgets now total 104 minutes.
-The dedicated workflow adds a bounded ten-minute pinned Chromium prerequisite
-and a two-minute sanitized database-evidence upload; step budgets total 175 minutes
-within a 185-minute job, preserving ten minutes of workflow overhead. Absolute gate deadlines are preflight T+3, phase cancellation
+Each dedicated CI execution lane retains the bounded ten-minute pinned Chromium
+prerequisite and two-minute optional sanitized database-evidence upload, and adds
+a two-minute required qualification receipt upload. Step budgets total 177 minutes
+within each 187-minute job, preserving ten minutes of workflow overhead. Absolute
+gate deadlines are preflight T+3, phase cancellation
 T+107, child settlement T+110 and final cleanup T+113 minutes. The 118-minute
 gate-step fail-safe preserves five additional minutes. Every supported mode must retain active contract, build, state,
 restart, and integrity evidence. Each mode records active/retired status and at
@@ -249,6 +251,39 @@ contract-baseline phase command and fails if the bound artifact directory is
 missing. Direct checker runs remain useful for current-tree validation and
 report `baseComparison=skipped`; aggregate runs report
 `baseComparison=performed` so the comparison cannot disappear silently.
+
+### CI Qualification Profiles
+
+The dedicated workflow starts two independent jobs with their own full-history
+checkout, dependencies, writable stores/caches, PostgreSQL service, browser
+prerequisites and disposable gate workspace. The fixed `--ci-source` profile runs
+phases 1–10 in their existing order followed by repository-integrity; the fixed
+`--ci-packaging` profile runs packaged-composition-smoke followed by its own
+repository-integrity. Full manifest/schema, exact commands, all six modes and
+retirement rules remain validated before either selection. There is no arbitrary
+phase-skipping option. The default local `pnpm migration:gate` still runs all
+twelve phases sequentially; restart smoke-only behavior is retained.
+
+Both profiles preserve the outer smoke lifecycle validators, bounded settlement,
+caller/generated integrity, owned-resource cleanup and successful finalization.
+Required versioned receipts are published only after the finalizer and bounded
+stage runner return successfully. The stable `local-migration-baseline` combined
+job always evaluates both dependency results, requires explicit success and
+exactly two current-run/current-attempt receipts, and independently reconstructs
+the clean copied source and verified base bindings. It checks the actual checkout
+SHA (the test-merge SHA on PR runs), separate PR head, source digest, base bundle,
+manifest/partition, commands/modes/evidence coverage, observed toolchain and all
+required integrity/lifecycle/finalization/cleanup outcomes. Missing, stale,
+mismatched, incomplete, failed, cancelled or skipped evidence fails closed.
+Required artifact transport failure is a gate failure; optional sanitized
+diagnostics and timings do not confer or revoke qualification.
+
+A partial failed-job rerun can leave only one receipt for the new attempt;
+use GitHub's **Re-run all jobs** when both lanes must produce matching evidence.
+No incompatible attempt is silently combined. Neither sibling failure nor a new
+push automatically cancels the other lane's cleanup. The combined job has a
+20-minute bound (18 minutes of step budgets). Local qualification records its
+own actual source and does not claim to have tested the PR merge checkout.
 
 The Step 03 restart and sealed-package evidence starts the compiled local
 preview twice around a credential rotation, preserves one principal and its

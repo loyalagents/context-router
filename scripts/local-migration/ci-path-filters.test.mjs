@@ -14,15 +14,16 @@ const dedicatedPath = path.join(
 
 test("only fresh, explicitly exported database evidence is uploaded with bounded retention", async () => {
   const workflow = parse(await readFile(dedicatedPath, "utf8"));
-  const steps = workflow.jobs["local-migration-baseline"].steps;
+  for (const [jobId, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"]]) {
+  const steps = workflow.jobs[jobId].steps;
   const gate = steps.find((step) => step.id === "migration-gate");
-  assert.equal(gate.run, "pnpm migration:gate");
+  assert.equal(gate.run, "pnpm migration:gate --" + profile);
   assert.equal(gate["continue-on-error"], undefined);
   assert.equal(gate.env.MIGRATION_GATE_CI_DATABASE_REPORT, "1");
-  const uploads = steps.filter((step) => step.uses?.startsWith("actions/upload-artifact@"));
+  const uploads = steps.filter((step) => step.name === "Upload sanitized database failure evidence");
   assert.equal(uploads.length, 1);
   assert.deepEqual(uploads[0].with, {
-    name: "local-database-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}",
+    name: (profile === "ci-source" ? "" : profile + "-") + "local-database-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}",
     path: "${{ runner.temp }}/local-migration-database-failures.json",
     "if-no-files-found": "warn", "retention-days": 7,
   });
@@ -30,6 +31,7 @@ test("only fresh, explicitly exported database evidence is uploaded with bounded
   assert.equal(uploads[0]["continue-on-error"], true);
   assert.equal(uploads[0]["timeout-minutes"], 2);
   assert.equal(steps.filter((step) => step["continue-on-error"]).length, 1);
+  }
 });
 
 function selectedFilters(filters, relativePath) {
@@ -96,7 +98,8 @@ test("the dedicated migration gate runs on every pull request to main", async ()
 test("CI provisions the PostgreSQL image required by offline TLS fixtures", async () => {
   for (const [workflowPath, job] of [
     [ciPath, "backend-tests"],
-    [dedicatedPath, "local-migration-baseline"],
+    [dedicatedPath, "source-qualification"],
+    [dedicatedPath, "packaging-qualification"],
   ]) {
     const workflow = parse(await readFile(workflowPath, "utf8"));
     assert.equal(
@@ -159,7 +162,7 @@ test('local UI consumers select both build owners and pinned Chromium coverage',
   const commands = steps.map((s) => s.run);
   assert.ok(commands.indexOf('pnpm --filter backend build') < commands.indexOf('pnpm build'));
   assert.ok(commands.includes('pnpm test:local-ui'));
-  for (const [file, job] of [[ciPath, 'frontend-build'], [dedicatedPath, 'local-migration-baseline']]) {
+  for (const [file, job] of [[ciPath, 'frontend-build'], [dedicatedPath, 'source-qualification'], [dedicatedPath, 'packaging-qualification']]) {
     const browserSteps = parse(await readFile(file, 'utf8')).jobs[job].steps;
     const install = browserSteps.find((s) => s.run === 'pnpm --filter web exec playwright install --with-deps chromium');
     assert.ok(install); assert.equal(install['timeout-minutes'], 10);
@@ -195,4 +198,43 @@ test('desktop changes select native CI plus both shared product owners with exac
   assert.match(native, /assert.equal\(process.platform, 'darwin'/);
   assert.match(native, /assert.equal\(process.arch, 'arm64'/);
   assert.doesNotMatch(native, /skip:/);
+});
+
+
+test("CI lanes start independently with complete prerequisites and a fail-closed stable combined check", async () => {
+  const workflow = parse(await readFile(dedicatedPath, "utf8"));
+  assert.deepEqual(Object.keys(workflow.jobs).sort(), ["local-migration-baseline", "packaging-qualification", "source-qualification"]);
+  assert.equal(workflow.concurrency, undefined);
+  for (const [jobId, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"]]) {
+    const job = workflow.jobs[jobId];
+    assert.equal(job.needs, undefined);
+    assert.equal(job.if, undefined);
+    assert.equal(job.strategy, undefined);
+    assert.equal(job["runs-on"], "ubuntu-latest");
+    assert.equal(job.services.postgres.image, "postgres:15-alpine");
+    assert.equal(job.steps[0].with["fetch-depth"], 0);
+    const gate = job.steps.find(s => s.id === "migration-gate");
+    assert.equal(gate.run, "pnpm migration:gate --" + profile);
+    assert.equal(gate["continue-on-error"], undefined);
+    assert.equal(gate["timeout-minutes"], 118);
+    const required = job.steps.find(s => s.name === "Upload required qualification receipt");
+    assert.ok(required);
+    assert.equal(required.if, "success()");
+    assert.equal(required["continue-on-error"], undefined);
+    assert.equal(required.with["if-no-files-found"], "error");
+    assert.equal(required.with.name, profile + "-${{ github.run_id }}-${{ github.run_attempt }}");
+    assert.equal(required.with.path, "${{ runner.temp }}/" + profile + ".json");
+    assert.ok(job.env.COREPACK_HOME.startsWith("${{ runner.temp }}/"));
+    assert.ok(job.env.npm_config_store_dir.startsWith("${{ runner.temp }}/"));
+  }
+  const combined = workflow.jobs["local-migration-baseline"];
+  assert.deepEqual(combined.needs, ["source-qualification", "packaging-qualification"]);
+  assert.equal(combined.if, "always()");
+  assert.equal(combined.steps[0].name, "Require successful execution lanes");
+  assert.match(combined.steps[0].run, /SOURCE_RESULT.*success/);
+  assert.match(combined.steps[0].run, /PACKAGING_RESULT.*success/);
+  assert.equal(combined.steps[0].env.SOURCE_RESULT, "${{ needs.source-qualification.result }}");
+  assert.equal(combined.steps[0].env.PACKAGING_RESULT, "${{ needs.packaging-qualification.result }}");
+  assert.equal(combined.steps.filter(s => s.uses?.startsWith("actions/download-artifact@")).length, 2);
+  for (const step of combined.steps) assert.equal(step["continue-on-error"], undefined);
 });
