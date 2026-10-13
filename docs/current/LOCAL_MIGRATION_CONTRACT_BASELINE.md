@@ -241,7 +241,13 @@ a two-minute required qualification receipt upload. A one-minute runner step
 initializes private caches before package setup. The packaging lane additionally
 prepares its pinned Prisma native engine with `pnpm --filter backend exec prisma
 --version` before the gate copies and snapshots dependencies; no generated source
-or build is reused. Step/job budgets are 178/188 minutes for source and 180/190
+or build is reused. Inside the owned copied workspace, only `ci-packaging`
+repeats that fixed version command during preflight to prepare Prisma's
+absolute-path-keyed config cache before dependency integrity is captured. It
+uses the isolated gate environment, owned log, 120-second subprocess bound and
+existing shared T+3 preflight deadline; failure or cancellation prevents phases.
+The full, source and smoke-only paths do not perform this extra preparation.
+Step/job budgets are 178/188 minutes for source and 180/190
 minutes for packaging, preserving ten minutes of workflow overhead. Absolute
 gate deadlines are preflight T+3, phase cancellation
 T+107, child settlement T+110 and final cleanup T+113 minutes. The 118-minute

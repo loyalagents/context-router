@@ -1788,6 +1788,28 @@ async function sha256(filePath) {
   return createHash("sha256").update(await readFile(filePath)).digest("hex");
 }
 
+// Native binaries are acquired by the CI prerequisite. Prisma's config loader
+// also caches by absolute source path, so prime it in the owned copied workspace
+// before packaging snapshots its dependencies. This is not a qualification phase.
+export async function prepareQualificationPrerequisites(
+  profile,
+  { workspace, diagnosticsDirectory, environment, signal, execute = runCommand },
+) {
+  if (!["full", "smoke-only", "ci-source", "ci-packaging"].includes(profile)) {
+    throw new Error("unknown qualification prerequisite profile");
+  }
+  if (profile !== "ci-packaging") return;
+  if (signal?.aborted) throw signal.reason;
+  await execute(["pnpm", "--filter", "backend", "exec", "prisma", "--version"], {
+    cwd: workspace,
+    env: environment,
+    signal,
+    timeoutMs: 120_000,
+    logPath: path.join(diagnosticsDirectory, "preflight-packaging-prisma.log"),
+  });
+  if (signal?.aborted) throw signal.reason;
+}
+
 export function runQualificationPhaseSequence(manifest, profile, options) {
   return runPhaseSequence(selectQualificationPhases(manifest, profile), options);
 }
@@ -1912,6 +1934,12 @@ async function executeFullGate({
       signal: preflightSignal,
     });
     summary.versions = { ...versions, postgres: "pending", chromium: browserPrerequisite.version, playwright: browserPrerequisite.playwright };
+    await prepareQualificationPrerequisites(profile, {
+      workspace,
+      diagnosticsDirectory,
+      environment: gateEnvironment,
+      signal: preflightSignal,
+    });
     const trackedSdlSha256 = await sha256(
       path.join(workspace, "apps/backend/src/schema.gql"),
     );

@@ -6,11 +6,13 @@ import assert from "node:assert/strict";
 import { constants } from "node:fs";
 import {
   chmod,
+  cp,
   lstat,
   mkdir,
   mkdtemp,
   open,
   readFile,
+  readdir,
   realpath,
   rm,
   symlink,
@@ -2869,4 +2871,87 @@ test("CI qualification publication observes bounded-stage post-finalization canc
     if (mode === "success") { await publish(); assert.equal(publications, 1); }
     else { await assert.rejects(publish()); assert.equal(publications, 0); }
   }
+});
+
+
+test("CI packaging prerequisites use only the fixed bounded owned-workspace command", async () => {
+  assert.equal(typeof timingGate.prepareQualificationPrerequisites, "function");
+  const controller = new AbortController();
+  const environment = { PATH: "/pinned/bin", HOME: "/owned/home", COREPACK_ENABLE_NETWORK: "0" };
+  const calls = [];
+  const options = { workspace: "/owned/workspace", diagnosticsDirectory: "/owned/diagnostics", environment, signal: controller.signal,
+    execute: async (argv, commandOptions) => calls.push({ argv, commandOptions }) };
+  for (const profile of ["full", "ci-source", "smoke-only"]) await timingGate.prepareQualificationPrerequisites(profile, options);
+  assert.deepEqual(calls, []);
+  await assert.rejects(timingGate.prepareQualificationPrerequisites("arbitrary", options), /profile/);
+  await timingGate.prepareQualificationPrerequisites("ci-packaging", options);
+  assert.deepEqual(calls, [{ argv: ["pnpm", "--filter", "backend", "exec", "prisma", "--version"], commandOptions: {
+    cwd: options.workspace, env: environment, signal: controller.signal, timeoutMs: 120_000,
+    logPath: "/owned/diagnostics/preflight-packaging-prisma.log",
+  } }]);
+  const failed = new Error("preparation failed");
+  await assert.rejects(timingGate.prepareQualificationPrerequisites("ci-packaging", { ...options, execute: async () => { throw failed; } }), error => error === failed);
+  const cancelled = new Error("preparation cancelled");
+  controller.abort(cancelled);
+  await assert.rejects(timingGate.prepareQualificationPrerequisites("ci-packaging", options), error => error === cancelled);
+  assert.equal(calls.length, 1);
+  const deadline = new AbortController();
+  const expired = new Error("shared preflight deadline");
+  await assert.rejects(timingGate.prepareQualificationPrerequisites("ci-packaging", {
+    ...options, signal: deadline.signal, execute: async () => deadline.abort(expired),
+  }), error => error === expired);
+});
+
+test("CI packaging prerequisites prepare path-local Prisma config before dependency integrity capture", async () => {
+  const { captureCallerIntegrity, assertCallerIntegrity } = await import("./gate-runner.mjs");
+  const backendRequire = createRequire(new URL("../../apps/backend/package.json", import.meta.url));
+  const loader = createRequire(backendRequire.resolve("prisma/package.json"))("@prisma/config").loadConfigFromFile;
+  const root = await mkdtemp(path.join(os.tmpdir(), "gate-prisma-config-test-"));
+  try {
+    const caller = path.join(root, "caller/apps/backend");
+    const workspace = path.join(root, "copied");
+    const copied = path.join(workspace, "apps/backend");
+    await mkdir(path.join(caller, "node_modules"), { recursive: true });
+    await cp(new URL("../../apps/backend/prisma.config.ts", import.meta.url), path.join(caller, "prisma.config.ts"));
+    for (const pkg of ["prisma", "dotenv"]) await symlink(path.dirname(backendRequire.resolve(pkg + "/package.json")), path.join(caller, "node_modules", pkg));
+    const load = async (configRoot) => assert.equal((await loader({ configRoot })).error, undefined);
+    await load(caller);
+    await cp(caller, copied, { recursive: true, verbatimSymlinks: true });
+    const cache = path.join(copied, "node_modules/.cache/jiti");
+    const beforeFiles = await readdir(cache);
+    const before = await captureCallerIntegrity([path.join(copied, "node_modules")]);
+    await load(copied);
+    const additions = (await readdir(cache)).filter(name => !beforeFiles.includes(name));
+    assert.equal(additions.length, 1);
+    assert.match(additions[0], /^backend-prisma\.config\.[a-f0-9]+\.mjs$/);
+    await assert.rejects(assertCallerIntegrity(before), /caller path changed/);
+    await rm(path.join(cache, additions[0]));
+    const signal = new AbortController().signal;
+    await timingGate.prepareQualificationPrerequisites("ci-packaging", {
+      workspace, diagnosticsDirectory: root, environment: {}, signal,
+      execute: async (argv, options) => {
+        assert.deepEqual(argv, ["pnpm", "--filter", "backend", "exec", "prisma", "--version"]);
+        assert.equal(options.cwd, workspace);
+        assert.equal(options.signal, signal);
+        await load(path.join(options.cwd, "apps/backend"));
+      },
+    });
+    assert.deepEqual((await readdir(cache)).filter(name => !beforeFiles.includes(name)), additions);
+    const preparedBytes = await readFile(path.join(cache, additions[0]));
+    const prepared = await captureCallerIntegrity([path.join(copied, "node_modules")]);
+    await load(copied);
+    await assertCallerIntegrity(prepared);
+    assert.deepEqual(await readFile(path.join(cache, additions[0])), preparedBytes);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test("CI packaging prerequisites run inside preflight before database and phase dispatch", async () => {
+  const source = await readFile(new URL("./migration-gate.mjs", import.meta.url), "utf8");
+  const preflight = source.indexOf("const versions = await runPreflight({");
+  const prepare = source.indexOf("await prepareQualificationPrerequisites(profile, {", preflight);
+  const database = source.indexOf("administration = await prepareTestAdministration({", preflight);
+  const complete = source.indexOf("completePreflight();", preflight);
+  const phases = source.indexOf("summary.phases = await runQualificationPhaseSequence", preflight);
+  assert.ok(preflight >= 0 && prepare > preflight && database > prepare && complete > database && phases > complete);
+  assert.match(source.slice(prepare, database), /signal: preflightSignal/);
 });

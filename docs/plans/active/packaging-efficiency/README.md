@@ -348,6 +348,39 @@ phase/runtime coverage and unaffected independent review. Preserve the failed
 remote attempt and its runner cost. No additional performance sample is launched
 to improve a measured result; this is a correctness retry.
 
+The third candidate `478adb5264251507783aee9800f5fcd48b0cb96f` corrected the
+native-engine prerequisite but [run 38477166948](https://github.com/loyalagents/context-router/actions/runs/38477166948)
+still failed packaging's final caller integrity for `apps/backend/node_modules`.
+Source passed and the aggregate correctly failed. Engine/private-tree and root
+dependency errors were gone; all six runtime modes completed. A controlled
+copied-workspace probe isolated the remaining write to one Jiti-generated
+`backend-prisma.config.<path-hash>.mjs`: Prisma's configuration cache is keyed by
+absolute source path, so warming the checkout does not warm its disposable copy.
+Preparing the copied path before capture preserves subsequent generator integrity.
+
+Independent plan amendment review approved one fixed `ci-packaging` preflight
+command in the actual owned workspace: `pnpm --filter backend exec prisma
+--version`, using its isolated environment, owned diagnostic log, 120-second
+subprocess bound and existing shared preflight signal/deadline, after toolchain
+preflight and before database acquisition, preflight completion and phase dispatch.
+Unknown profiles reject; full/source/smoke-only do not run this extra preparation.
+The existing workflow prerequisite stays to acquire the native engine before the
+bounded gate. No cache exclusions, permission changes, manifest changes, build
+reuse or integrity relaxation are introduced. Tests first reproduced missing
+preparation and wiring, plus the real Prisma config-loader cache drift in a small
+owned fixture. Failure, cancellation and deadline propagation remain fail-closed.
+The affected seven-file batch passed 321/321 checks (18.032 s), with all 147
+Markdown links, whitespace and required base comparison passing. A separate
+actual-command probe used the real gate preflight helper/environment followed by
+the strict packaging tool environment, different private homes and umask 077;
+Prisma generation preserved the copied backend dependency tree after preparation.
+
+This repair changes gate code, so the next frozen head requires a renewed full
+local gate, actual CI and independent complete-diff review concurrently; prior
+local pass `e2d1ad1` remains historical evidence rather than final-head validation.
+All failed attempts and their runner costs remain recorded in PR #179. No new
+baseline or favorable-result sampling is authorized.
+
 ## Completed PR #178: Historical Packaging Measurement
 
 The following record is preserved from the previous task. Its ownership, model
