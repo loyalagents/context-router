@@ -1,7 +1,7 @@
 # Packaging Critical Path
 
-- Status: checkpoint 2; approved bounded candidate passes focused validation,
-  awaiting the coordinated operation experiment
+- Status: measurement-only candidate; the tested optimization missed the
+  predeclared benefit criterion and was reverted. Final qualification pending.
 - Outcome: measure the remaining packaging critical path, then implement one
   justified optimization without changing the properties validation proves.
 - Priority: bounded efficiency work, subordinate to the assisted pilot's live
@@ -22,10 +22,15 @@ verified the remote ref. The starting checkout had no implementation changes.
 | Inventory | GPT-6 Astra / High | Session configuration observed: `gpt-6-astra`, `high`; read-only |
 | Sole writer `/root/writer` | GPT-6 Astra / Extra High (`xhigh`) | Session configuration observed: `gpt-6-astra`, `xhigh`; all edits, staging and commits in this worktree |
 | Plan reviewer `/root/plan_review` | GPT-6 Astra / Extra High (`xhigh`) | Session configuration observed: `gpt-6-astra`, `xhigh`; read-only |
+| Complete-diff reviewer `/root/plan_review` | GPT-6 Astra / Extra High (`xhigh`) | Same verified independent read-only reviewer; separate fresh implementation review after freeze |
 
 The coordinator verified model/effort from each matching session's configuration
 metadata. This is an observed client configuration, not deeper provider attestation.
-Record the fresh final reviewer separately when assigned.
+Attempts to allocate a separate final reviewer hit the runtime agent-thread limit.
+The plan reviewer confirmed it had not inspected the changed implementation or
+tests before assignment of the fresh complete-diff review. That review must cover
+all final changes against integrated main; plan approval is not carried forward
+as code approval. Do not describe this as a newly spawned reviewer.
 
 The writer reserves `scripts/local-migration/packaging-progress.mjs`,
 `packaging-smoke.mjs`, `packaging-smoke.test.mjs`, narrowly affected gate-reader
@@ -33,6 +38,9 @@ tests, and this record. Gate-runner integrity helpers and their consumers are
 shared hotspots: implementation there requires a separately reviewed concrete
 checkpoint-2 plan after measurement. No ownership is claimed over pilot or
 attribution files, workflows, phase definitions, package manifests or lockfiles.
+Checkpoint 2 temporarily owned both gate-runner files; the rejected implementation
+and its tests were then restored byte-for-byte to integrated main. Final changes
+are confined to the original instrumentation, affected reader tests and this record.
 
 The pilot owns the main checkout, its installed app and acceptance state.
 [Attribution PR #177](https://github.com/loyalagents/context-router/pull/177)
@@ -153,7 +161,7 @@ and gate-runner suites passed 208/208 serial tests in 14.3 s. Markdown checker
 tests passed 20/20 and the link checker passed 146 files. The current-tree
 contract checker passed (41 capabilities, 58 consumers; merge-base comparison
 was intentionally skipped by this standalone invocation). Integration measurement
-and final qualification remain pending; these are targeted results.
+and final qualification were still pending at that checkpoint.
 
 Instrumentation currently uses seventeen fixed labels. `native-inventory`
 combines sequential package-manifest discovery and native-resolution evidence;
@@ -363,26 +371,119 @@ kept the original falsy read rejection; the final focused integrity run passed
 19/19 (130.569 ms). This added case does not change implementation inputs.
 Targeted checks passed; final validation pending.
 
-The comparison harness is prepared in the task-owned root; no timed sample has
-started. Baseline module SHA-256 is
+The measured candidate was committed as
+`e717c6f95b959fdf8d2675b5dff0f576aac938e3`. Baseline module SHA-256 is
 `f24b6ac467db9d3041eae0995a7c4f7bd2f3edff661daada05e3bbe4ea345b90`;
 candidate module SHA-256 is
 `9afdb548cafc5d134979d747663055c3ed07b345558bb9fa528cba0f960dd3fa`.
-Each fresh process records a complete snapshot, operation duration, maximum RSS
-and load before/after. The supervisor persists every individual result and
-stops on digest mismatch, timeout or the original experiment deadline. No
-sampling expansion is permitted. The pilot's imminent package build takes
-priority; the coordinator must release the comparison window first.
+All candidate-only tests and the helper were subsequently reverted, as required
+by the result below. These results document the experiment; they do not describe
+an optimization present in the final diff.
+
+### Operation Results And Rejection
+
+After the pilot's build and all 11 installed synthetic smoke phases completed
+and its guardian/browser processes settled, the coordinator released the window.
+The fixed series ran from 2026-10-13 07:42:15 UTC using Node 24.21.0, on the same
+Mac and task-owned prerequisites as the attribution. It finished normally before
+the original 08:27:01 UTC experiment deadline. No further sample or optimization
+was attempted. There was no competing gate/build/live-model run; ordinary app,
+WindowServer and UTM activity remained. This is a warm-cache operation comparison,
+not a quiet-machine or end-to-end benchmark.
+
+| Sample / fixed order | Variant | Elapsed seconds | Maximum RSS KiB |
+| --- | --- | ---: | ---: |
+| Warmup (excluded) | A baseline | 25.677385 | 592384 |
+| Pair 1 first | A baseline | 24.295245 | 587776 |
+| Pair 1 second | B candidate | 22.725818 | 612720 |
+| Pair 2 first | B candidate | 22.560613 | 582896 |
+| Pair 2 second | A baseline | 24.984205 | 557904 |
+| Pair 3 first | A baseline | 24.646826 | 593216 |
+| Pair 3 second | B candidate | 22.603134 | 586064 |
+
+Baseline median was 24.646826 s (range 24.295245–24.984205); candidate median was
+22.603134 s (22.560613–22.725818). All three pairs improved, by 6.460%, 9.700%
+and 8.292%, but the 8.292% median reduction missed the predeclared 10% criterion.
+Maximum RSS increased 19504 KiB (593216 to 612720), within the 64 MiB bound.
+No integrity mismatch occurred. The optimization is rejected, with no retained
+performance claim. Both gate-runner files were restored to exact
+`93d4ad7a227675b963a0c336306a32b7fe9d9ad0` bytes.
+
+The fixed corpus comprised 68052 regular files / 898569668 logical bytes in
+`node_modules`, with 4354 literal symlinks and 12859 directories, plus 55180
+regular files / 862922308 logical bytes in the private pnpm store (516 directories).
+Every sample returned exactly the same full snapshot. Directory digests were
+`fe62d1a6f77d771d9abeb0dc235bacb8e43ba3d2dc67aee778fba06c0353ca53`
+for dependencies and
+`5ddeddb9976ca1613597bf3dafc9efe557b503c22fb3324cbb7aabb6796d3c99`
+for the store. The serialized complete snapshot, including absolute input paths,
+hashed to `26adbb3a4f7c91235e4518dbf066dc21442e28b6fcf36dcdf9b81aeae1549d4c`.
+
+Sample-boundary load averages ranged 5.947–7.307 / 7.024–7.562 / 7.571–7.840
+(1/5/15 minutes). Disk was sampled only before/after: owned allocated disk
+2662500/2662528 KiB and free disk 69290868/69439840 KiB. Per-process maximum RSS
+comes from `process.resourceUsage().maxRSS`; there were no recursive disk scans
+inside timed operations. No stage was retained or recreated.
+
+To reproduce the method on an equivalent frozen corpus, export the two module
+versions using `git show 85f4a137:scripts/local-migration/gate-runner.mjs` and
+`git show e717c6f:scripts/local-migration/gate-runner.mjs` to separate `.mjs` files
+outside the source tree. In a fresh Node 24.21.0 process for each sample, import
+that module, record `performance.now()`, await
+`captureCallerIntegrity([absoluteNodeModules, absolutePrivateStore])`, then record
+elapsed time, `process.resourceUsage().maxRSS`, and the entire returned map.
+Record `os.loadavg()` before/after. Use the fixed warmup-A, AB, BA, AB sequence,
+no overlapping processes, identical inputs, and compare the complete serialized
+maps. Module import and output serialization are outside the timer. Do not use
+the full migration gate as a sample. Exact corpus reconstruction may differ on
+another machine; report its own identity instead of claiming matched inputs.
+
+Raw sample records, input inventory, module copies and the bounded supervisor
+remain under the owned temporary root described above, alongside attribution
+receipts. They are local investigation evidence, not required runtime assets.
+Only task-owned retained files may be removed after handoff; preserve raw results
+until the user no longer needs them. Rollback of the final change is removal of
+the diagnostic reporter/reader integration; no installed app or personal state
+was changed.
 
 ## Checkpoint 3: Final Qualification
 
-The user-defined finalization milestone is after useful measured optimization,
-focused/negative tests, and resolved plan reviews. Freeze the candidate once
-that point is reached. Complete affected packaging/gate/reporting/docs consumers,
+The user permits an honest measurement-only outcome when no worthwhile safe
+optimization qualifies. Here the finalization milestone is resolved experiment
+disposition, exact helper/test reversion, focused/negative tests and resolved
+plan reviews. No required validation is relaxed by that outcome. Freeze this
+measurement-only candidate once that point is reached. Complete affected
+packaging/gate/reporting/docs consumers,
 applicable integration/negative checks, a fresh independent complete-diff review,
 the required full local migration gate, and exact-head CI. The final local gate
 is qualification, not a benchmark sample. Installed-artifact qualification is
 required only if changed behavior affects it, respecting pilot ownership.
+
+Final commands use Node 24.21.0 and pnpm 10.25.0. Re-run the affected four
+packaging/gate/runtime-resource test files listed above after reversion, plus
+`node --test scripts/check-markdown-links.test.mjs`,
+`node scripts/check-markdown-links.mjs`, and `git diff --check`. Freeze and commit
+those inputs before the complete-diff review and the single full
+`pnpm migration:gate` (equivalently its exact entrypoint
+`node scripts/local-migration/migration-gate.mjs`). Use the owned Corepack,
+Playwright, npm and XDG cache roots; the short owned `TMPDIR`; explicit
+`MIGRATION_GATE_BASE_SHA=93d4ad7a227675b963a0c336306a32b7fe9d9ad0`; and
+`MIGRATION_GATE_PYTHON_BIN=/Users/lucasnovak/.pyenv/versions/3.12.8/bin/python3.12`
+(verified Python 3.12.8). Reverify pinned Prisma, browser and cached PostgreSQL
+prerequisites immediately before the run. Preserve the existing gate deadlines,
+all 12 phases, owned database allocation and cleanup. Record a sanitized terminal
+summary outside the source via an owned `RUNNER_TEMP` and its exact
+`local-migration-gate-summary.json` path. Do not edit tracked numerical evidence
+after freezing; post-freeze review/local-gate/exact-head-CI results belong in the
+single PR body and final handoff. The PR remains unmerged.
+
+After helper/test reversion, the final affected four-file test run passed 209/209
+on Node 24.21.0 (39.546 s), markdown checker tests passed 20/20, and the link
+checker passed all 147 Markdown files. `git diff --check` passed; both rejected
+helper files have zero diff against integrated main. Remote main was reverified
+at `93d4ad7a227675b963a0c336306a32b7fe9d9ad0` before the final commit. These
+targeted results allow the freeze; final local gate, complete-diff review and
+exact-head CI remain pending until their separate receipts are available.
 
 For each expensive run, state purpose, changed inputs and why it is needed then;
 preflight toolchain/resources. Corrections renew affected tests/reviews and

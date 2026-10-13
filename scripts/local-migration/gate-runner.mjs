@@ -1882,61 +1882,21 @@ async function hashPath(targetPath, signal) {
   }
   if (info.isDirectory()) {
     const entries = [];
-    let stopped = false;
-    async function* visit(directory, relative = "") {
-      if (stopped) return;
+    async function visit(directory, relative = "") {
       throwIfAborted(signal, "caller integrity hashing aborted");
       for (const name of (await readdir(directory)).sort()) {
-        if (stopped) return;
         throwIfAborted(signal, "caller integrity hashing aborted");
         const absolute = path.join(directory, name);
         const childRelative = path.join(relative, name);
         const child = await lstat(absolute);
-        if (stopped) return;
-        if (child.isDirectory()) yield* visit(absolute, childRelative);
-        else if (child.isFile()) yield { absolute, childRelative };
-        else if (child.isSymbolicLink()) {
-          const target = await readlink(absolute);
-          if (stopped) return;
-          yield { childRelative, target };
+        if (child.isDirectory()) await visit(absolute, childRelative);
+        else if (child.isFile()) {
+          entries.push([childRelative, await hashFile(absolute, signal)]);
         }
+        else if (child.isSymbolicLink()) entries.push([childRelative, `link:${await readlink(absolute)}`]);
       }
     }
-    const iterator = visit(targetPath);
-    // Only metadata advances ahead. Consume every row in DFS order: appending
-    // symlinks in the producer would change the existing directory digest.
-    const next = () => iterator.next().then(
-      (result) => ({ result }), (error) => ({ failed: true, error }),
-    );
-    let pending;
-    let failed = false;
-    let failure;
-    try {
-      pending = next();
-      while (true) {
-        throwIfAborted(signal, "caller integrity hashing aborted");
-        const entry = await pending;
-        pending = null;
-        if (entry.failed) throw entry.error;
-        if (entry.result.done) break;
-        const { absolute, childRelative, target } = entry.result.value;
-        pending = next();
-        entries.push([childRelative, absolute
-          ? await hashFile(absolute, signal) : `link:${target}`]);
-      }
-    } catch (error) {
-      failed = true;
-      failure = error;
-    } finally {
-      // Settle the sole outstanding advance before caller cleanup. A later
-      // metadata/close failure must never replace the primary (even falsy) error.
-      stopped = true;
-      try { await pending; }
-      catch (error) { if (!failed) { failed = true; failure = error; } }
-      try { await iterator.return(); }
-      catch (error) { if (!failed) { failed = true; failure = error; } }
-    }
-    if (failed) throw failure;
+    await visit(targetPath);
     return {
       exists: true,
       kind: "directory",
