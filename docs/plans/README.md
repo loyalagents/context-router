@@ -41,7 +41,14 @@ to read-only parallel investigation/review until independent boundaries exist.
 Do not launch, reset or change the user's app/state/client configuration as a
 side effect of repository work.
 
-After this documentation reset merges, a fresh coordinator should activate the
-pilot from the exact merged base, read these canonical docs and propose the
-smallest independently reviewed implementation plan. Do not inherit stale step
-activation, branch or acceptance assumptions from the previous conversation.
+The pilot milestone started from verified main `7d2df85` and integrates reviewed
+main `208e049` (#173/#175) in
+`codex/pilot-interruption-delivery`, with `/root` as read-only coordinator and
+`/root/delivery_review` as sole writer/integrator for the seal-repair checkpoint.
+The [pilot record](active/colleague-pilot/plan.md) reconciles the merged Claude
+bridge and its accepted interruption follow-up with delivery/replacement work.
+Sealed C's evidence remains scoped to its original inputs. D's installed,
+replacement, packaged UI and source validation passed; [current scoped results](active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12)
+retain the open downloaded-menu cleanup and Ready/dashboard limits. The “Fix
+wrong-person attribution” chat owns a separate active synthetic investigation;
+that invitation dependency is neither fixed nor included in this milestone.

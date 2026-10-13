@@ -1420,15 +1420,21 @@ export async function runPhaseSequence(
     onPhaseFinish = () => {},
     onSummary = () => {},
     onCleanup = () => {},
+    projectFailureMessage,
   },
 ) {
   const results = phases.map(({ id }) => ({ id, status: "pending", elapsedMs: 0 }));
   let primaryError;
   for (const [index, phase] of phases.entries()) {
     const startedAt = Date.now();
+    let activeCommand = null;
     try {
       await onPhaseStart(phase);
-      for (const command of phase.commands) await execute(command, phase);
+      for (const command of phase.commands) {
+        activeCommand = command;
+        await execute(command, phase);
+        activeCommand = null;
+      }
       const result = { id: phase.id, status: "passed", elapsedMs: Date.now() - startedAt };
       results[index] = result;
       await onPhaseFinish(phase, result);
@@ -1443,11 +1449,15 @@ export async function runPhaseSequence(
       for (let skipped = index + 1; skipped < results.length; skipped += 1) {
         results[skipped].status = "skipped";
       }
-      const outputTail = typeof error?.outputTail === "string"
+      let projected;
+      try { projected = projectFailureMessage?.({ phase, command: activeCommand, error }); }
+      catch { projected = "command failed; diagnostic projection unavailable"; }
+      const hasProjection = typeof projected === "string";
+      const outputTail = !hasProjection && typeof error?.outputTail === "string"
         ? redactSecrets(error.outputTail).slice(-16_384)
         : "";
       const wrapped = new Error(
-        `phase ${phase.id} failed: ${redactSecrets(error?.message ?? error)}` +
+        `phase ${phase.id} failed: ${hasProjection ? projected : redactSecrets(error?.message ?? error)}` +
           (outputTail ? `\nSanitized command output (tail):\n${outputTail}` : ""),
         { cause: error },
       );

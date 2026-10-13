@@ -1,14 +1,14 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fixture} from './supervisor-fixture.mjs';
-import {createPackageManifest,inventoryPayload} from '../../src/package-manifest.mjs';
+import {writeSignedFixture} from './signed-package.mjs';
 
 export async function editedFixture(t,variant,edit){
   const f=await fixture(t,variant);
   const bundle=path.dirname(path.dirname(path.dirname(f.executable))),resources=path.join(bundle,'Contents/Resources');
   const runtime=path.join(resources,'desktop/runtime');
   await edit(runtime,f);
-  await writeFile(path.join(resources,'package-manifest.json'),JSON.stringify(createPackageManifest({source:'a'.repeat(64),files:await inventoryPayload(bundle)})));
+  await writeSignedFixture(bundle);
   return {...f,runtime};
 }
 export async function replace(file,before,after){

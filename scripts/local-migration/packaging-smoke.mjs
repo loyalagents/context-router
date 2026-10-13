@@ -256,31 +256,29 @@ export function deriveStandaloneLayout({ repositoryRoot, webRoot, stageRoot }) {
 async function walkTree(root, { includeRoot = false } = {}) {
   const rootReal = await realpath(root);
   const rows = [];
-  async function visit(absolute, relative) {
+  let stopped = false;
+  async function* visit(absolute, relative) {
+    if (stopped) return;
     const info = await lstat(absolute);
+    if (stopped) return;
     const rowPath = relative || ".";
     if (info.isDirectory()) {
       if (relative || includeRoot) {
         rows.push({ path: rowPath, type: "directory", mode: normalizedMode(info) });
       }
       for (const name of (await readdir(absolute)).sort()) {
-        await visit(path.join(absolute, name), relative ? `${relative}/${name}` : name);
+        if (stopped) return;
+        yield* visit(path.join(absolute, name), relative ? `${relative}/${name}` : name);
       }
       return;
     }
     if (info.isFile()) {
-      const content = await readFile(absolute);
-      rows.push({
-        path: rowPath,
-        type: "file",
-        mode: normalizedMode(info),
-        size: info.size,
-        sha256: sha256(content),
-      });
+      yield { absolute, rowPath, info };
       return;
     }
     if (info.isSymbolicLink()) {
       const target = await readlink(absolute);
+      if (stopped) return;
       if (path.isAbsolute(target)) {
         throw new Error(`stage symlink escapes the stage: ${rowPath}`);
       }
@@ -297,6 +295,7 @@ async function walkTree(root, { includeRoot = false } = {}) {
         }
         throw error;
       });
+      if (stopped) return;
       if (!pathIsWithin(rootReal, resolved)) {
         throw new Error(`stage symlink escapes the stage: ${rowPath}`);
       }
@@ -310,7 +309,47 @@ async function walkTree(root, { includeRoot = false } = {}) {
     }
     throw new Error(`unsupported staged entry type: ${rowPath}`);
   }
-  await visit(rootReal, "");
+  const iterator = visit(rootReal, "");
+  // Prefetch only the next file's metadata. Content reads and hashes stay serial,
+  // and a later metadata error cannot overtake an earlier DFS content error.
+  const next = () => iterator.next().then(
+    (result) => ({ result }),
+    (error) => ({ failed: true, error }),
+  );
+  let pending;
+  let failed = false;
+  let failure;
+  try {
+    pending = next();
+    while (true) {
+      const entry = await pending;
+      pending = null;
+      if (entry.failed) throw entry.error;
+      if (entry.result.done) break;
+      const { absolute, rowPath, info } = entry.result.value;
+      pending = next();
+      const content = await readFile(absolute);
+      rows.push({
+        path: rowPath,
+        type: "file",
+        mode: normalizedMode(info),
+        size: info.size,
+        sha256: sha256(content),
+      });
+    }
+  } catch (error) {
+    failed = true;
+    failure = error;
+  } finally {
+    // Finish in-flight metadata before callers remove or reseal the tree.
+    // Unexpected iterator cleanup failures must not mask the primary error.
+    stopped = true;
+    try { await pending; }
+    catch (error) { if (!failed) { failed = true; failure = error; } }
+    try { await iterator.return(); }
+    catch (error) { if (!failed) { failed = true; failure = error; } }
+  }
+  if (failed) throw failure;
   return rows.sort((left, right) =>
     left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
   );

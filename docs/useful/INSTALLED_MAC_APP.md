@@ -5,7 +5,13 @@ Final-head CI passed; see [scoped closeout](../current/LOCAL_MIGRATION_CLOSEOUT.
 for evidence and [pilot preparation](../plans/active/colleague-pilot/README.md)
 for the next acceptance work. Original human acceptance was partial; neither merge
 nor this runbook qualifies distribution or every recovery scenario.
-This is an unsigned private build, not a signed or notarized release. The declared
+This is a private build without Developer ID signing or notarization. The
+sealed D candidate passed strict ad-hoc whole-bundle verification, installed and
+replacement checks; it supplies no publisher authentication. Safari acquired the
+exact pinned bytes with quarantine. The user reported completing per-app Open
+Anyway, and the matching downloaded menu was observed. Normal test-menu Quit and
+cleanup remain pending; downloaded AppKit Ready/dashboard and model-enabled startup
+remain unproved. See [current results](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12). The declared
 pilot is MacBook Pro 18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Macs and
 native Windows/Linux are not qualified. The source/manual modes remain available.
 
@@ -13,9 +19,32 @@ native Windows/Linux are not qualified. The source/manual modes remain available
 
 Obtain the complete `Context Router.app` and its build receipt from the trusted
 local build. Compare the archive's SHA-256 with that receipt before extracting.
-The inventory detects missing or changed payloads; it does not authenticate a
-publisher or a modified manifest. Gatekeeper acceptance remains untested. Do not
+The v2 inventory hashes ordinary payload files; mandatory strict platform
+verification covers the fixed main executable, resource seal and signed manifest.
+Neither an ad-hoc seal nor a colocated receipt authenticates a publisher. New
+native candidates reject old v1 manifests; retained old apps keep their own
+verifier. Preserve an independently trusted archive checksum and full external
+byte receipt. A v2 manifest checksum alone does not pin the final executable or
+resource seal: ad-hoc re-signing can change them without changing the manifest.
+Artifact-bound execution must also match the complete external byte receipt using
+its independently trusted digest. Do not modify anything inside a sealed bundle. The 2026-10-11 Safari-quarantined B archive was
+refused as damaged: its executable-only ad-hoc signature does not seal the complete
+app bundle. That archive is not ready to share. Do not
 disable Gatekeeper or strip quarantine to treat this as a distributed release.
+
+The user selected the unsigned-publisher route. D repairs the integrity seal and
+includes the qualified #173 packaged UI wiring. Its local Safari/menu observation
+has the limits above; a trusted colleague acquisition channel and the remaining
+downloaded-app acceptance still need evidence. Keep the source revision,
+app manifest, archive checksum and acquisition channel with each handoff. A local
+build or extracted temporary copy does not demonstrate downloaded-app Gatekeeper
+behavior. Scope remains the measured Mac above; another Mac is a compatibility trial.
+
+The unbundled `legacy-package-manifest.mjs` verifier exists only for explicitly
+approved retained-v1 rehearsals with an independently trusted manifest digest.
+Remove it when the last approved v1 artifact rehearsal and its callers/tests are
+retired together. It is not a production fallback or permission to accept v1 in a
+new native candidate.
 
 Place the whole application in a private user-owned location, then open it in
 Finder. The installed application bundles Node, the backend, dashboard and selected
@@ -46,6 +75,19 @@ free space. The downloader checks the exact size and digest, restricts HTTPS
 redirects and publishes only complete verified bytes. Cancellation preserves
 existing assets. No automatic retry, resume, hosted fallback or model substitution
 occurs. An explicit new attempt needs another menu action and consent.
+
+Weights live in the managed envelope outside the app. Compatible replacement and
+normal Restart preserve them; startup verifies the pinned size and digest before
+use. Replacing the app does not require another download of matching weights.
+Do not copy manual model sessions or credentials into the managed envelope. A
+retained file or synthetic marker alone does not qualify real model reuse.
+
+The 6.8 GB guidance covers the model download, not the entire installation or
+replacement. Account separately for downloaded archives, extracted and retained
+apps, weights, incomplete downloads, state, logs, backups and credential exports.
+Measure retained usage and usage while staging and replacing. Samples establish
+an observed maximum, not an exact peak; APFS sharing and links can make logical,
+allocated and exclusively used space differ.
 
 If download fails immediately while the dashboard stays ready, the candidate
 may predate a change to Hugging Face's CDN redirects. The current pinned URL
@@ -132,6 +174,11 @@ lost completion stays uncertain. None clears an abandoned active
 or uncertain owner journal. Preserve that state for explicit diagnosis. Cross-boot
 abandoned-owner recovery is not qualified; no automatic repair is provided.
 
+If ownership is uncertain, stop and preserve the app, envelope and diagnostics.
+Reinstalling does not clear it. Do not remove journals, claims, exports or compatible
+model assets to make launch succeed. There is no general reset command or designated
+reset release in this pilot.
+
 SIGINT (Ctrl-C), SIGTERM and terminal SIGHUP request orderly cancellation of a
 running administration or setup child. A matching completion after native-owner
 drain and actual normal exit records a failed but quiescent operation, so its
@@ -189,6 +236,12 @@ or altered payloads before Node or database access. There is still a race if cod
 is modified after verification; a writable local candidate is a trusted local
 build, not a tamper-resistant distribution.
 
+Record both source and manifest identities. Back up through the installed command
+after successful Quit; retain the managed envelope during whole-app replacement.
+Launch the exact verified new app and check preserved data, grants and history.
+Retaining the previous bundle preserves evidence; it does not authorize launching
+it against newer state. Never substitute copying a live database for backup.
+
 When testing separately named candidates, launch the exact newly verified app.
 For example, staging a candidate in `$next_app` does not update an earlier `$app`
 variable. Quit the previous CR menu successfully, close its dashboard tabs, and
@@ -219,7 +272,11 @@ pnpm --filter desktop package \
 ```
 
 The packager copies source and dependencies to an isolated build, makes fresh
-production builds, verifies the native inventory and records caller integrity.
+production builds, writes the v2 inventory and then ad-hoc seals the outer app
+without re-signing pinned nested binaries. It verifies the platform seal and
+native inventory, records final full-file hashes in external `sealed-payload.json`
+and records caller integrity. No bundle content changes after sealing; the final
+archive checksum is retained in the build receipt.
 Weights are not bundled. The [Step 09 evidence](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/09-installation-and-packaging/implementation.md)
 distinguishes deterministic fixtures, installed-artifact checks, live model tests
 and unperformed human/signing/platform acceptance. Do not infer one from another.

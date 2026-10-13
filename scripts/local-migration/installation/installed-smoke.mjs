@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {captureTrustedArtifact,verifyCapturedArtifact} from './artifact-preflight.mjs';
 import {mkdtemp,realpath,readFile,writeFile,mkdir,cp,rename,rm,lstat} from 'node:fs/promises';
 import {spawn,spawnSync} from 'node:child_process';import {once} from 'node:events';import {createHash} from 'node:crypto';
 import path from 'node:path';import os from 'node:os';
@@ -10,9 +11,13 @@ import {createGatedNodeChild,activateJournaledNodeChild,terminateAndReapJournale
 import {greekPdfFixture,standardFontPdfFixture} from '../../../apps/backend/test/local-model/fixtures/pdf-fixtures.mjs';
 const repository=path.resolve(import.meta.dirname,'../../..'),sourceBundle=await realpath(process.argv[2]);
 assert.equal(process.argv.length,3);assert.equal(process.platform,'darwin');assert.equal(process.arch,'arm64');
+// Explicit caller-selected local build is the trust anchor; capture it once before copying/execution.
+const sourceIdentity=await captureTrustedArtifact(sourceBundle),sourceIdentityBytes=JSON.stringify(sourceIdentity)+'\n';
 const root=await realpath(await mkdtemp(path.join(os.tmpdir(),'context-router-installed-'))),bundle=path.join(root,'Context Router.app'),envelope=path.join(root,'managed-v1'),exe=path.join(bundle,'Contents/MacOS/context-router'),node=path.join(bundle,'Contents/Resources/bin/node'),profile=path.join(root,'offline.sb');
-await cp(sourceBundle,bundle,{recursive:true,verbatimSymlinks:true});
-const signal=AbortSignal.timeout(240000),started=Date.now(),receipt={version:1,status:'running',bundle,root,manifestSha256:createHash('sha256').update(await readFile(path.join(bundle,'Contents/Resources/package-manifest.json'))).digest('hex'),phases:[],cleanup:[],limitations:['No live model, download, AppKit interaction, signing or human/platform acceptance in this smoke.']};
+await cp(sourceBundle,bundle,{recursive:true,verbatimSymlinks:true});await verifyCapturedArtifact(bundle,sourceIdentity);
+await writeFile(path.join(root,'source-payload.json'),sourceIdentityBytes,{mode:0o600});
+// Allow complete replacement/reinstall byte verification; per-operation deadlines remain separate.
+const signal=AbortSignal.timeout(360000),started=Date.now(),receipt={version:1,status:'running',bundle,root,manifestSha256:createHash('sha256').update(await readFile(path.join(bundle,'Contents/Resources/package-manifest.json'))).digest('hex'),sourcePayloadSha256:createHash('sha256').update(sourceIdentityBytes).digest('hex'),sourcePayloadPath:path.join(root,'source-payload.json'),phases:[],cleanup:[],limitations:['No live model, download, AppKit interaction, signing or human/platform acceptance in this smoke.']};
 console.log(`Installed smoke evidence: ${root}`);
 const phase=name=>{receipt.phases.push({name,elapsedMs:Date.now()-started});console.log(`Installed smoke: ${name}`);};
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -104,8 +109,8 @@ try{
   const durable=async()=>Promise.all(durableNames.map(async name=>createHash('sha256').update(await readFile(path.join(envelope,name))).digest('hex')));
   const originalDurable=await durable(),runtimeEntry=path.join(bundle,'Contents/Resources/desktop/runtime/prepare-store.mjs'),held=path.join(root,'held-runtime.mjs');
   await rename(runtimeEntry,held);command(['mcp','list'],1);assert.deepEqual(await durable(),originalDurable);await rename(held,runtimeEntry);phase('interrupted-replacement-refuses-before-durable-state');
-  const old=path.join(root,'previous.app');await rename(bundle,old);await cp(sourceBundle,bundle,{recursive:true,verbatimSymlinks:true});command(['mcp','list']);assert.deepEqual(await durable(),originalDurable);phase('complete-compatible-replacement-preserves-pair-and-assets');
-  await rm(bundle,{recursive:true});assert.deepEqual(await durable(),originalDurable);await cp(sourceBundle,bundle,{recursive:true,verbatimSymlinks:true});command(['mcp','list']);assert.deepEqual(await durable(),originalDurable);
+  const old=path.join(root,'previous.app');await rename(bundle,old);await cp(sourceBundle,bundle,{recursive:true,verbatimSymlinks:true});await verifyCapturedArtifact(bundle,sourceIdentity);command(['mcp','list']);assert.deepEqual(await durable(),originalDurable);phase('complete-compatible-replacement-preserves-pair-and-assets');
+  await rm(bundle,{recursive:true});assert.deepEqual(await durable(),originalDurable);await cp(sourceBundle,bundle,{recursive:true,verbatimSymlinks:true});await verifyCapturedArtifact(bundle,sourceIdentity);command(['mcp','list']);assert.deepEqual(await durable(),originalDurable);
   const reinstalled=launch(),reinstalledReady=await reinstalled.event('ready');assert.equal(reinstalledReady.mcpOrigin,ready.mcpOrigin);await stop(reinstalled);phase('app-only-uninstall-reinstall-preserves-durable-state');
   for(const owner of owners)for(const secret of secrets){assert.equal(owner.diagnostic.includes(secret),false);assert.equal(JSON.stringify(owner.events).includes(secret),false);}
   receipt.status='passed';

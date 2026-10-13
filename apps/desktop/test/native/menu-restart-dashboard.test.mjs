@@ -15,7 +15,7 @@ test('Restart opens the current dashboard once at readiness and suppresses faile
     for (const digit of ['a', 'b', 'c'])
       mkdirSync(path.join(root, 'exports', digit.repeat(32)), { recursive: true, mode: 0o700 });
     const built = spawnSync('/usr/bin/clang', [
-      '-Wall', '-Wextra', '-Werror', '-fobjc-arc', '-framework', 'Foundation', '-framework', 'AppKit',
+      '-Wall', '-Wextra', '-Werror', '-fobjc-arc', '-framework', 'Foundation', '-framework', 'Security', '-framework', 'AppKit',
       '-I', native, path.resolve(import.meta.dirname, '../fixtures/menu-restart-dashboard.m'),
       ...['process', 'package', 'envelope', 'maintenance', 'model-cleanup'].map(name => path.join(native, `${name}.m`)),
       '-o', driver,

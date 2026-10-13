@@ -1,10 +1,10 @@
 # Local UI Usability Follow-Up
 
-- Status: deferred backlog except activated item 7; [PR #173](https://github.com/loyalagents/context-router/pull/173) is unmerged, with installed-app retest pending
+- Status: other items remain backlog; item 7 is implemented in merged [PR #173](https://github.com/loyalagents/context-router/pull/173), with two scoped packaged D UI journeys passed in the pilot
 - Outcome owner: product owner and next assigned UI coordinator
 - Trigger: pilot triage; fixes for blocked tasks, false success or privacy outrank polish
 - Source: [Step 08 user-run acceptance](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/08-local-ui/implementation.md#2026-10-04-user-run-browser-and-native-client-acceptance)
-- Last reviewed: 2026-10-11
+- Last reviewed: 2026-10-12
 
 Keep this a focused cleanup of the existing dashboard and packaged menu:
 
@@ -52,6 +52,14 @@ the separate [model provider selection follow-up](../model-provider-selection/RE
 Coordinate presentation there; this cleanup does not activate provider support.
 
 ## Activated Slice: Refresh After Document Apply
+
+Current disposition: source fix merged as `f310212`; D passed two response-injected
+packaged UI journeys, while the final gate separately renewed real-backend/fake-model
+source-browser coverage. See the [scoped pilot results](../../active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12);
+those installed journeys do not themselves demonstrate actual import or persistence.
+The following implementation checkpoints retain their historical scope. Their
+old unmerged/pending wording does not override this current status, and merging
+source does not establish installed acceptance.
 
 The 2026-10-11 request activates only item 7: confirmed document CREATE/UPDATE
 results must appear without navigation or loss of reviewed proposals. Backend,

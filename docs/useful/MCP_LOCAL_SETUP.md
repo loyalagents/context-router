@@ -100,8 +100,11 @@ cached descriptors; their deployed behavior has not been observed.
 ## Claude Desktop: Assisted Source Bridge Trial
 
 The source bridge is implemented for the [first pilot connection slice](../plans/active/colleague-pilot/plan.md).
-Automated SDK/SQLite tests are separate from real Claude Desktop acceptance;
-**Desktop remains unqualified until the canonical client checklist is completed**.
+The retained confidence-corrected app and durable bridge completed the scoped
+Claude Desktop 2.31226.1 Pro ordinary-chat checklist on the measured Mac, including
+controlled lost-reply uncertainty, no mutation replay and an explicit recovery
+read. See the [actual-client evidence](../plans/active/colleague-pilot/plan.md#actual-claude-acceptance-and-cleanup).
+This acceptance does not qualify a changed app, client, configuration or platform.
 This bridge is not bundled in the installed app. Persistent client configuration
 requires a commit-bound copy of all three modules (`bridge.mjs`, `cli.mjs` and
 `credential.mjs`) and its receipt, plus a trusted absolute Node **24.21.0**
@@ -177,8 +180,9 @@ are tool results with `isError: true` and one fixed text block, without
 that error result; callers must inspect `isError` rather than treating every
 resolved Promise as success. Lifecycle, malformed/duplicate/task-related requests,
 non-tool methods and sanitized backend protocol errors retain protocol errors.
-This gives Claude a tool-result text to consume; actual display/model behavior
-requires a real-client retest and does not guarantee how it chooses later calls.
+The recorded actual-Claude follow-up displayed the fixed uncertainty text and
+made no mutation replay. That bounded observation does not guarantee how the
+model chooses later calls; changed client/artifact inputs need affected acceptance.
 
 After thirty minutes idle, the first call can report **Session expired; this
 request was not dispatched**. Make an explicit new request to establish a fresh
