@@ -1,6 +1,6 @@
 # Local Application
 
-- Status: implemented foundation; assisted pilot preparation is next
+- Status: implemented foundation; assisted pilot preparation is active
 - Sources: `apps/desktop/`, backend local composition and storage modules,
   `apps/web/`; [migration closeout](LOCAL_MIGRATION_CLOSEOUT.md)
 
@@ -46,10 +46,15 @@ not a new command or a waiver of filesystem/process safety.
 - The UI lists MCP clients, narrows grants and revokes authority. Provisioning,
   rotation and maximum-policy administration remain installed/manual CLI work.
   See [MCP setup](../useful/MCP_LOCAL_SETUP.md). Claude Code and Codex CLI have
-  scoped user-run evidence; **Claude Desktop and ChatGPT desktop are not qualified
-  local integrations yet**. A source-only stdio bridge now supports an assisted
-  Claude Desktop trial; automated SDK/SQLite evidence does not complete actual
-  Desktop acceptance. See the [connection plan](../plans/active/colleague-pilot/plan.md).
+  scoped user-run evidence. Claude Desktop 2.31226.1 Pro ordinary chat passed
+  discovery, permitted/denied operations, shared dashboard checks, restart,
+  credential independence and over 35 minutes idle with explicit recovery using
+  the standalone stdio bridge. The controlled actual-Claude lost-reply follow-up
+  also passed: one committed mutation, no replay and one explicit recovery read.
+  This qualifies the recorded retained app/bridge/client pair on the measured Mac;
+  D carries unchanged-boundary compatibility evidence, not a new live-client run;
+  ChatGPT desktop remains unqualified.
+  See the [pilot evidence](../plans/active/colleague-pilot/plan.md).
 - Model download is explicit and verified, about 5.7 GB; compatible assets live
   outside the app bundle for reuse. Menu Restart enables/recovers AI and opens the
   current dashboard with a fresh unlock. Browser close leaves the app running;
@@ -65,14 +70,14 @@ Do not turn merged code or automated checks into a broader support/release claim
 | Area | Current evidence or limitation |
 | --- | --- |
 | Installed platform | Measured MacBookPro18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Apple Silicon configurations need compatibility evidence; Windows/Linux installers are not qualified. |
-| Distribution | Unsigned/unnotarized candidate. No qualified signed/private distribution or Gatekeeper download-to-launch route; a checksum alone is not publisher authentication. |
+| Distribution | D passed strict whole-app ad-hoc verification and exact-byte Safari acquisition with quarantine. The user reported completing Open Anyway; the matching downloaded menu was observed. Normal test-menu Quit/cleanup remains pending; downloaded AppKit Ready/dashboard and model-enabled startup remain unproved. No Developer ID, notarization or publisher authentication; trusted colleague acquisition remains open. See [scoped D results](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12). |
 | Model | Pinned llama.cpp b11146 and Qwen3.5-9B Q4_K_M. One active operation, no queue. Text and qualified PDF text subset; no image/OCR support. See the exact configuration in the model runbook. |
 | Quality exception E | Known personal-email omission in the frozen adversarial extraction fixture; 18/21 recall (85.71%). The original quality scorer verdict remains FAILED. Not permission for wrong-person facts or other quality failures. |
 | Recovery exception H | A repeat production cancellation failed the five-second settlement requirement and latched AI unavailable. Later recovery observations do not erase that failure. Whole-generation owned-process shutdown and fresh inference credentials are required; retain data and compatible weights. |
 | Lifecycle | Normal restart/Quit and scoped sleep/wake observations exist. Candidate 14 fixes sleep consuming the shutdown budget; real sleep during shutdown, forced owner loss and cross-boot recovery remain unqualified. Fail closed on uncertain ownership. |
-| MCP | Credentials remain until revoked/rotated; sessions expire after 30 minutes idle and have bounded IDs/capacity. Actual client automatic reconnect beyond expiry is unqualified; never replay an uncertain mutation. |
-| Upload/UI findings | Stale post-apply display was reproduced and addressed in unmerged [PR #173](https://github.com/loyalagents/context-router/pull/173); installed-app retest remains pending. Rejected PDF and possible another-person email attribution remain unverified and require triage before the real-data pilot, not blanket acceptance under E. |
-| Replacement/storage | Installed fixture replacement/cleanup checks passed. Real version A-to-B replacement, colleague download friction and peak/retained disk use require pilot evidence. |
+| MCP | Credentials remain until revoked/rotated; sessions expire after 30 minutes idle and have bounded IDs/capacity. Claude Desktop showed the expiry failure and recovered on a separate explicit request after a direct 35-minute final-pair interval. Automatic client replay is not supported; never repeat an uncertain mutation before inspecting state/history. The controlled actual-Claude lost-reply check passed on retained B and its standalone bridge: one mutation/audit event, honest uncertainty, no replay and one explicit recovery read. C/D are not new actual-client observations. |
+| Upload/UI findings | Stale post-apply display was addressed in merged [PR #173](https://github.com/loyalagents/context-router/pull/173). D passed #170 rejection feedback and two response-injected #173 packaged UI journeys. Those #173 checks qualify UI wiring; the final gate separately renewed the real-backend/fake-model source-browser matrix. C's three temporary #170 UI attempts remain failed. Rejected PDF remains for triage. Possible wrong-person attribution is an active separate investigation owned by the “Fix wrong-person attribution” chat; it remains an invitation dependency, not accepted omission E or an included fix. |
+| Replacement/storage | Candidate 14-to-B, B-to-C and B-to-D rehearsals passed with synthetic state, authority continuity and sampled allocation. D passed all eleven installed smoke phases and four replacement phases. Prior personal-transition receipts separately support compatible real-model reuse; no new D model-startup or quality claim follows. Complete disk budgets remain open; see [current results](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12). |
 
 Exact receipts and negative evidence remain in the
 [evidence index](../evidence/local-migration/README.md). Candidate 13 live-model

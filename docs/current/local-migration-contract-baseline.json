@@ -2869,10 +2869,16 @@
             "runCommand(args,",
             "prepareDisposableWorkspace(root,signal"
           ]
+        },
+        {
+          "path": "apps/desktop/src/package-manifest.mjs",
+          "fingerprints": [
+            "spawnSync('/usr/bin/codesign'"
+          ]
         }
       ],
-      "destination": "Contributor/CI Node syntax checking and Apple compiler in the existing checkout.",
-      "payload": "Fixed local source and output paths; no runtime compiler requirement, user state or network request.",
+      "destination": "Contributor/CI Node syntax checking, Apple compiler and fixed /usr/bin/codesign verification of a named local bundle. Native runtime signature verification uses Security.framework in process with network access disabled.",
+      "payload": "Fixed local source, bundle and output paths; no publisher credentials, user state or application network request. Ad-hoc sealing preserves pinned nested binaries.",
       "defaultRuntime": false,
       "disposition": "RETAIN",
       "ownerSteps": [
@@ -3024,6 +3030,26 @@
       ],
       "destination": "Opt-in actual installed bundle qualification with private synthetic state, bundled-only execution and source/toolchain read denial; application outbound restricted by OS policy to loopback. Separately owned Chromium uses fixed test browser routing.",
       "payload": "Synthetic browser, SQLite, PDF and MCP inputs; private temporary credentials, exact-child cleanup and hash/status evidence. No live model, remote download or personal client configuration in this smoke.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "pilot-opt-in-replacement-and-reply-loss-rehearsal",
+      "sources": [
+        {
+          "path": "scripts/local-migration/installation/pilot-rehearsal.mjs",
+          "fingerprints": [
+            "spawn('/usr/bin/sandbox-exec'",
+            "spawnSync('/usr/bin/sandbox-exec'",
+            "http.request({ hostname: '127.0.0.1'"
+          ]
+        }
+      ],
+      "destination": "Explicit opt-in retained-artifact A-to-B rehearsal in a fresh private synthetic root; owned guardian UI/MCP and fault proxy use ephemeral literal loopback ports. Installed child network is loopback-only and model execution is denied.",
+      "payload": "Synthetic preferences, temporary client/browser authority in memory and private files, one exact mutation reply dropped by a test-only proxy, sanitized counts and input/disk evidence. No personal endpoints/configuration, external providers, model execution or download.",
       "defaultRuntime": false,
       "disposition": "RETAIN",
       "ownerSteps": [
@@ -5149,6 +5175,12 @@
       }
     },
     {
+      "path": "apps/desktop/src/package-manifest.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
       "path": "apps/desktop/src/package.mjs",
       "sinks": {
         "subprocess-wrapper": 1
@@ -5457,6 +5489,14 @@
       "path": "scripts/local-migration/installation/process-fixture.mjs",
       "sinks": {
         "spawn": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/pilot-rehearsal.mjs",
+      "sinks": {
+        "http-client": 1,
+        "node-http-import": 1,
+        "spawn": 3
       }
     },
     {

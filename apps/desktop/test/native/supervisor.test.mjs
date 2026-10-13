@@ -4,7 +4,6 @@ import {spawn,spawnSync} from 'node:child_process';
 import {once} from 'node:events';
 import {mkdtemp,realpath,mkdir,copyFile,writeFile,readFile,rm,lstat} from 'node:fs/promises';
 import path from 'node:path';import os from 'node:os';
-import {createPackageManifest,inventoryPayload} from '../../src/package-manifest.mjs';
 import {createServer,createConnection} from 'node:net';
 import {fixture,ended} from '../fixtures/supervisor-fixture.mjs';
 test('occupied requested loopback port refuses before creating an envelope and leaves its owner listening',async t=>{

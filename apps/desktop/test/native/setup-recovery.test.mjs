@@ -3,7 +3,7 @@ import test from 'node:test';
 import {spawnSync} from 'node:child_process';
 import {readFile,writeFile,copyFile,rename,rm,lstat} from 'node:fs/promises';
 import path from 'node:path';
-import {createPackageManifest,inventoryPayload} from '../../src/package-manifest.mjs';
+import {writeSignedFixture} from '../fixtures/signed-package.mjs';
 import {fixture,ended} from '../fixtures/supervisor-fixture.mjs';
 
 // Real native CLI, admission, SQLite/identity, preparation and drain. Only the
@@ -31,7 +31,7 @@ return {cap,control,configuration:{kind:'sqlite',databaseRoot:path.join(pair,'da
 `);
   for(const name of ['prepare-store','maintenance'])await copyFile(path.resolve(import.meta.dirname,`../../runtime/${name}.mjs`),path.join(runtime,`${name}.mjs`));
   await writeFile(path.join(runtime,'prepare.mjs'),`import {admit,backend,authority,nativeOwners} from './managed.mjs';const {control}=await admit('prepare');try{const result=await backend('backend/dist/infrastructure/managed/managed-prepare.js').prepareManagedStore();await control.send('prepared',{...result,modelEnabled:false,modelPort:Number(process.argv[2])});}finally{authority.revokeManagedAdmission();await nativeOwners.waitForNativeOwners();await control.close();}`);
-  await writeFile(path.join(bundle,'Contents/Resources/package-manifest.json'),JSON.stringify(createPackageManifest({source:'a'.repeat(64),files:await inventoryPayload(bundle)})));
+  await writeSignedFixture(bundle);
   function command(args){const r=spawnSync(f.executable,['--root',f.envelope,...args],{env:{},encoding:'utf8',timeout:15000});assert.equal(r.error,undefined);return r;}
   async function journal(){const j=JSON.parse(await readFile(path.join(f.envelope,'owner.json')));f.acceptQuiescent(j);return j;}
   return {...f,pair,target,fault,command,journal,metadata};

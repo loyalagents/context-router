@@ -10,7 +10,7 @@ async function fixture(t) {
   const root = await realpath(await mkdtemp(path.join(os.tmpdir(), 'desktop-envelope-')));
   const driver = path.join(root, 'driver'), envelope = path.join(root, 'managed-v1');
   const native = path.resolve(import.meta.dirname, '../../native');
-  const built = spawnSync('/usr/bin/clang', ['-Wall','-Wextra','-Werror','-fobjc-arc','-framework','Foundation','-I',native,
+  const built = spawnSync('/usr/bin/clang', ['-Wall','-Wextra','-Werror','-fobjc-arc','-framework','Foundation', '-framework', 'Security','-I',native,
     path.join(import.meta.dirname, '../fixtures/envelope-driver.m'), path.join(native,'envelope.m'), path.join(native,'package.m'),'-o',driver], { encoding:'utf8', timeout:20_000 });
   assert.equal(built.status,0,built.stderr);
   const children = [];
