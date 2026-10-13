@@ -27,6 +27,11 @@ const baseConfig = {
 };
 
 module.exports = {
+  // Enabled only for the gate-owned local-database command; the reporter is
+  // best-effort and never contributes a Jest getLastError result.
+  ...(process.env.CR_DATABASE_EVIDENCE ? {
+    reporters: ['default', require.resolve('../../scripts/local-migration/local-database-reporter.cjs')],
+  } : {}),
   projects: [
     // Unit tests - fast, parallel, no DB
     {
@@ -45,6 +50,7 @@ module.exports = {
     {
       ...baseConfig,
       displayName: 'local-database',
+      ...(process.env.CR_DATABASE_EVIDENCE ? { testLocationInResults: true } : {}),
       rootDir: '.',
       testMatch: ['<rootDir>/test/local-database/**/*.spec.ts'],
       maxWorkers: 1,

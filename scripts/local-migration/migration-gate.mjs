@@ -60,6 +60,7 @@ import {
 } from "./test-database.mjs";
 import { RESTART_SMOKE_BOUNDED_CLEANUP_BUDGET_MS } from "./restart-smoke.mjs";
 import { PACKAGING_TIMING_MAX_BYTES, parsePackagingTimings } from "./packaging-progress.mjs";
+import { isLocalDatabaseCommand, projectDatabaseCommandFailure, runWithDatabaseEvidence, unavailableDatabaseEvidence, persistDatabaseEvidence } from "./local-database-evidence.mjs";
 import {
   checkCurrentToolchain,
   EXPECTED_PNPM_VERSION,
@@ -584,6 +585,10 @@ export async function finalizeGateAttemptEvidence({
     rm(directory, { recursive: true, force: true }),
 }) {
   summary.source = structuredClone(source);
+  if (mode === "full") {
+    summary.databaseTests ??= unavailableDatabaseEvidence("command-not-run", { source, environment: externalEnvironment });
+    await persistDatabaseEvidence(summary, externalEnvironment);
+  }
   summary.packagingTimings ??= unavailablePackagingTimings(
     mode === "smoke-only" ? "mode-not-applicable" : "phase-not-run",
   );
@@ -1737,7 +1742,15 @@ export async function executeGatePhaseCommand({
   validateRestartLifecycle,
   validatePackagedLifecycle,
   packagingDiagnostics,
+  databaseDiagnostics,
 }) {
+  if (isLocalDatabaseCommand(phase, databaseDiagnostics?.commandArgv)) {
+    return runWithDatabaseEvidence({
+      ...databaseDiagnostics,
+      execute: executeCommand,
+      onEvidence(report) { databaseDiagnostics.summary.databaseTests = report; },
+    });
+  }
   if (phase.kind === "restart-smoke") {
     if (typeof validateRestartLifecycle !== "function") {
       throw new Error("restart smoke phase requires lifecycle validation");
@@ -1771,6 +1784,7 @@ async function sha256(filePath) {
 
 async function executeFullGate({
   workspace,
+  files,
   source,
   diagnosticsDirectory,
   diagnosticsOwnership,
@@ -1791,6 +1805,7 @@ async function executeFullGate({
 }) {
   const summary = {
     status: "running",
+    databaseTests: unavailableDatabaseEvidence("command-not-run", { source, environment: sourceEnvironment }),
     packagingTimings: unavailablePackagingTimings("phase-not-run"),
     source,
     baseSha,
@@ -1920,6 +1935,7 @@ async function executeFullGate({
     );
     completePreflight();
     summary.phases = await runPhaseSequence(phases, {
+      projectFailureMessage: projectDatabaseCommandFailure,
       onPhaseStart: async (phase) => {
         phaseStart.set(phase.id, timeline.now());
         console.log(`migration-gate: phase ${phase.order}/${phaseTotal} ${phase.id} started`);
@@ -1958,10 +1974,10 @@ async function executeFullGate({
           diagnosticsDirectory,
           `phase-${String(phase.order).padStart(2, "0")}-${phase.id}-${commandIndex}.log`,
         );
-        const executeCommand = () =>
+        const executeCommand = (evidenceEnvironment = {}) =>
           runCommand(command.argv, {
             cwd: workspace,
-            env: phaseEnvironment,
+            env: { ...phaseEnvironment, ...evidenceEnvironment },
             timeoutMs: remaining,
             logPath,
             signal: workSignal,
@@ -1972,6 +1988,7 @@ async function executeFullGate({
           phase,
           executeCommand,
           packagingDiagnostics: { ownership: diagnosticsOwnership, logPath, summary },
+          databaseDiagnostics: { commandArgv: command.argv, workspace, files, source, environment: sourceEnvironment, canaries: sensitiveCanaries, summary },
           validateRestartLifecycle: ({ commandSucceeded }) =>
             assertRestartSmokeLifecycleEvidence(
               phaseEnvironment.MIGRATION_RESTART_SMOKE_DIAGNOSTICS_DIR,
@@ -2270,6 +2287,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
     return executeFullGate({
       source,
       workspace: disposable.workspace,
+      files: disposable.files,
       diagnosticsDirectory,
       diagnosticsOwnership,
       baseSha,

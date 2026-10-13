@@ -1169,7 +1169,7 @@ test("dedicated CI seeds the exact offline pnpm Corepack cache before invoking t
   assert.ok(gate > seed, "workflow must seed Corepack before running the gate");
 });
 
-test("dedicated CI enforces the reviewed 173/185-minute workflow budget", async () => {
+test("dedicated CI enforces the reviewed 175/185-minute workflow budget", async () => {
   const workflow = parseYaml(
     await readFile(
       new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
@@ -1188,6 +1188,7 @@ test("dedicated CI enforces the reviewed 173/185-minute workflow budget", async 
     ["Install pinned Chromium prerequisite", 10],
     ["Run the Local Migration Baseline Gate", 118],
     ["Persist sanitized gate evidence", 5],
+    ["actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", 2],
   ];
   assert.deepEqual(
     job.steps.map((step) => [step.uses ?? step.name, step["timeout-minutes"]]),
@@ -1195,13 +1196,13 @@ test("dedicated CI enforces the reviewed 173/185-minute workflow budget", async 
   );
   assert.equal(
     job.steps.reduce((sum, step) => sum + step["timeout-minutes"], 0),
-    173,
+    175,
   );
-  assert.equal(job["timeout-minutes"] - 173, 12);
-  const evidence = job.steps.at(-1);
+  assert.equal(job["timeout-minutes"] - 175, 10);
+  const evidence = job.steps.find((step) => step.name === "Persist sanitized gate evidence");
   assert.equal(evidence.if, "always()");
   assert.equal(
-    job.steps.at(-2).env.MIGRATION_GATE_CI_SUMMARY_PATH,
+    job.steps.find((step) => step.id === "migration-gate").env.MIGRATION_GATE_CI_SUMMARY_PATH,
     "${{ runner.temp }}/local-migration-gate-summary.json",
   );
   assert.match(

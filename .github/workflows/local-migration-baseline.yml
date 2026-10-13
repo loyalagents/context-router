@@ -68,6 +68,7 @@ jobs:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
 
       - name: Run the Local Migration Baseline Gate
+        id: migration-gate
         timeout-minutes: 118
         run: pnpm migration:gate
         env:
@@ -76,6 +77,7 @@ jobs:
           MIGRATION_TEST_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
           MIGRATION_GATE_PYTHON_BIN: python3
           MIGRATION_GATE_CI_SUMMARY_PATH: ${{ runner.temp }}/local-migration-gate-summary.json
+          MIGRATION_GATE_CI_DATABASE_REPORT: '1'
 
       - name: Persist sanitized gate evidence
         if: always()
@@ -92,3 +94,17 @@ jobs:
           else
             echo "Local Migration Baseline Gate did not produce a sanitized summary." >> "$GITHUB_STEP_SUMMARY"
           fi
+          echo 'Database test reports omit runtime names, assertion values and stacks. Retrieve the local-database-failure-evidence artifact below when available; report availability is recorded in the summary.' >> "$GITHUB_STEP_SUMMARY"
+
+      # Optional diagnostics only: transport failure must not change the gate verdict.
+      # Every required test/check above retains its original failure behavior.
+      - name: Upload sanitized database failure evidence
+        if: always() && steps.migration-gate.outputs.database_report_ready == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        timeout-minutes: 2
+        continue-on-error: true
+        with:
+          name: local-database-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/local-migration-database-failures.json
+          if-no-files-found: warn
+          retention-days: 7
