@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "kind": "immutable-observed-negative-baseline-excerpt",
+  "description": "Projection of both actual-model ambiguous-directory failures. Full raw completions and unchanged scorer fields remain in the SHA-bound original receipt. This is observed evidence, not a scripted fixed answer or proof about the unavailable private incident.",
+  "sourceCommit": "232ed75d0bfcad1da793c7180c9a9119fda6894c",
+  "configSha256": "4b1746956acf1c0c3add644733cf2e07c72b732daf84144870b8651abd543d81",
+  "receiptSha256": "c3668cd4ec81b580e8af0421dba6b15ee80f41ad55b143f61b98287dbce28755",
+  "fixtureSha256": "34650029403a7d30882be52eff6337cb3aff6eff2ec994dd6397b8a5dab4e6d6",
+  "modelSha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+  "runtimeClosureSha256": "5b26ae921d953cad3b58e6e73a5bea33437e7398cda52211a84a5844abd4d6c0",
+  "startedAt": "2026-10-12T07:32:36.239Z",
+  "completedAnalyses": 10,
+  "nativeCompletions": 14,
+  "elapsedMs": 133138.45658300002,
+  "caseId": "ambiguous-two-person-directory",
+  "documentText": "Team contact directory.\nMaya Lin Chen — preferred contact email: maya.chen@example.test.\nJordan Avery — preferred contact email: jordan.avery@example.test.\n",
+  "activePreferences": [],
+  "expectedProposals": [],
+  "trials": [
+    {
+      "repetition": 0,
+      "initial": [
+        {
+          "slug": "profile.full_name",
+          "newValue": "Maya Lin Chen",
+          "confidence": 1,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test."
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "maya.chen@example.test",
+          "confidence": 1,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test."
+        },
+        {
+          "slug": "profile.full_name",
+          "newValue": "Jordan Avery",
+          "confidence": 1,
+          "sourceSnippet": "Jordan Avery — preferred contact email: jordan.avery@example.test."
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "jordan.avery@example.test",
+          "confidence": 1,
+          "sourceSnippet": "Jordan Avery — preferred contact email: jordan.avery@example.test."
+        }
+      ],
+      "consolidated": [
+        {
+          "slug": "profile.full_name",
+          "newValue": "Maya Lin Chen",
+          "confidence": 0.5,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test."
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "maya.chen@example.test",
+          "confidence": 0.5,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test."
+        }
+      ],
+      "final": [
+        {
+          "slug": "profile.full_name",
+          "newValue": "Maya Lin Chen",
+          "confidence": 0.5,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test.",
+          "review": {
+            "definitionId": "definition:profile.full_name",
+            "locationId": null,
+            "expectedPreferenceId": null,
+            "expectedRevision": null
+          }
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "maya.chen@example.test",
+          "confidence": 0.5,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test.",
+          "review": {
+            "definitionId": "definition:profile.email",
+            "locationId": null,
+            "expectedPreferenceId": null,
+            "expectedRevision": null
+          }
+        }
+      ],
+      "filtered": [
+        {
+          "slug": "profile.full_name",
+          "newValue": "Maya Lin Chen",
+          "confidence": 1,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test.",
+          "filterReason": "DUPLICATE_KEY"
+        },
+        {
+          "slug": "profile.full_name",
+          "newValue": "Jordan Avery",
+          "confidence": 1,
+          "sourceSnippet": "Jordan Avery — preferred contact email: jordan.avery@example.test.",
+          "filterReason": "DUPLICATE_KEY"
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "maya.chen@example.test",
+          "confidence": 1,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test.",
+          "filterReason": "DUPLICATE_KEY"
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "jordan.avery@example.test",
+          "confidence": 1,
+          "sourceSnippet": "Jordan Avery — preferred contact email: jordan.avery@example.test.",
+          "filterReason": "DUPLICATE_KEY"
+        }
+      ],
+      "finalPassed": false
+    },
+    {
+      "repetition": 1,
+      "initial": [
+        {
+          "slug": "profile.full_name",
+          "newValue": "Maya Lin Chen",
+          "confidence": 1,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test."
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "maya.chen@example.test",
+          "confidence": 1,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test."
+        },
+        {
+          "slug": "profile.full_name",
+          "newValue": "Jordan Avery",
+          "confidence": 1,
+          "sourceSnippet": "Jordan Avery — preferred contact email: jordan.avery@example.test."
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "jordan.avery@example.test",
+          "confidence": 1,
+          "sourceSnippet": "Jordan Avery — preferred contact email: jordan.avery@example.test."
+        }
+      ],
+      "consolidated": [
+        {
+          "slug": "profile.full_name",
+          "newValue": "Maya Lin Chen",
+          "confidence": 0.5,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test."
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "maya.chen@example.test",
+          "confidence": 0.5,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test."
+        }
+      ],
+      "final": [
+        {
+          "slug": "profile.full_name",
+          "newValue": "Maya Lin Chen",
+          "confidence": 0.5,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test.",
+          "review": {
+            "definitionId": "definition:profile.full_name",
+            "locationId": null,
+            "expectedPreferenceId": null,
+            "expectedRevision": null
+          }
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "maya.chen@example.test",
+          "confidence": 0.5,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test.",
+          "review": {
+            "definitionId": "definition:profile.email",
+            "locationId": null,
+            "expectedPreferenceId": null,
+            "expectedRevision": null
+          }
+        }
+      ],
+      "filtered": [
+        {
+          "slug": "profile.full_name",
+          "newValue": "Maya Lin Chen",
+          "confidence": 1,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test.",
+          "filterReason": "DUPLICATE_KEY"
+        },
+        {
+          "slug": "profile.full_name",
+          "newValue": "Jordan Avery",
+          "confidence": 1,
+          "sourceSnippet": "Jordan Avery — preferred contact email: jordan.avery@example.test.",
+          "filterReason": "DUPLICATE_KEY"
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "maya.chen@example.test",
+          "confidence": 1,
+          "sourceSnippet": "Maya Lin Chen — preferred contact email: maya.chen@example.test.",
+          "filterReason": "DUPLICATE_KEY"
+        },
+        {
+          "slug": "profile.email",
+          "newValue": "jordan.avery@example.test",
+          "confidence": 1,
+          "sourceSnippet": "Jordan Avery — preferred contact email: jordan.avery@example.test.",
+          "filterReason": "DUPLICATE_KEY"
+        }
+      ],
+      "finalPassed": false
+    }
+  ]
+}
