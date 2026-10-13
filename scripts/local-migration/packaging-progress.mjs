@@ -81,9 +81,11 @@ export function parsePackagingTimings(input, { truncated = false } = {}) {
   let earlyFailure = false;
   let lastIndex = -1;
   let lastElapsed = 0;
-  if (unfinished.includes('milestone') && !unfinished.includes('packaging-smoke: operation')) truncated = true;
+  // Only an operation-prefixed record is separate detail. A malformed milestone
+  // containing operation text must retain the legacy invalid/truncated result.
+  if (unfinished.includes('milestone') && !unfinished.startsWith('packaging-smoke: operation')) truncated = true;
   for (const line of lines) {
-    if (line.includes('packaging-smoke: operation')) continue;
+    if (line.startsWith('packaging-smoke: operation')) continue;
     if (!line.includes('milestone')) continue;
     const match = /^packaging-smoke: milestone=([a-z0-9-]+) elapsedMs=(0|[1-9][0-9]*)$/.exec(line);
     const index = match ? PACKAGING_MILESTONES.indexOf(match[1]) : -1;

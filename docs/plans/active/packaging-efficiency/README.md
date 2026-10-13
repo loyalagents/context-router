@@ -485,6 +485,35 @@ at `93d4ad7a227675b963a0c336306a32b7fe9d9ad0` before the final commit. These
 targeted results allow the freeze; final local gate, complete-diff review and
 exact-head CI remain pending until their separate receipts are available.
 
+The first frozen candidate was `ef909b8ccfe7246d2404f54b7ef7d5a3d337eff6`.
+Its independent complete-diff review found one P2 record-classification issue:
+an explicitly malformed milestone containing operation text was skipped by the
+new classifier, incorrectly leaving legacy evidence complete. Two regressions
+(newline-terminated and unfinished) first failed. Classification now excludes
+only operation-prefixed records, preserving the milestone's original invalid
+or truncated result while retaining `operation=milestone` independence. The
+focused reporter/reader tests passed 17/17. This correction requires a new
+freeze, reviewer delta check, full gate and exact-head CI; unaffected full-diff
+review coverage is explicitly carried forward by the independent reviewer.
+
+The first local gate stopped in phase 1 at an offline prerequisite, with 379/380
+contract-suite tests passing: a projectless nested pnpm invocation selected the
+Corepack binary's built-in 11.24.0 default because the owned cache had no
+`lastKnownGood.json`. It correctly refused network access. The pinned project
+preflight had reported 10.25.0. Offline
+`COREPACK_HOME=<owned-cache> COREPACK_ENABLE_NETWORK=0 corepack install --global pnpm@10.25.0`
+activated the already-cached version in the task-owned default metadata only.
+A projectless version probe then reported 10.25.0. No shared cache or source
+was changed by this prerequisite repair, and it does not change the completed
+node_modules/store comparison inputs. Failed receipts were retained; caller
+integrity passed, the owned workspace and exact container were independently
+absent, and the cleanup journal recorded database/container removal without
+cleanup errors. The retry uses fresh summary/log paths.
+
+With that owned prerequisite fixed and the parser correction applied, all four
+affected suites passed 211/211 (39.930 s), including the previously failing real
+runtime-resources build/schema fixture. Full qualification remains pending.
+
 For each expensive run, state purpose, changed inputs and why it is needed then;
 preflight toolchain/resources. Corrections renew affected tests/reviews and
 required final qualification; carry forward only explicitly unaffected evidence.

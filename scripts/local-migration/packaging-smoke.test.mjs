@@ -222,6 +222,20 @@ test("packaging operation timings reject malformed detail without tainting legac
   assert.equal(unfinished.operationTimings.reason, "truncated");
 });
 
+for (const terminated of [true, false]) {
+  test(`malformed milestone prefixes retain legacy failure despite operation text (terminated: ${terminated})`, () => {
+    const malformed = "packaging-smoke: milestone=failed elapsedMs=15 packaging-smoke: operation=bad";
+    const result = packagingProgress.parsePackagingTimings(Buffer.from(
+      completeTimingLog() + malformed + (terminated ? "\n" : ""),
+    ));
+    assert.equal(result.availability, "partial");
+    assert.equal(result.reason, terminated ? "invalid-sequence" : "truncated");
+    assert.deepEqual(result.milestones,
+      packagingProgress.parsePackagingTimings(Buffer.from(completeTimingLog())).milestones);
+    assert.equal(result.operationTimings.availability, "partial");
+  });
+}
+
 test("packaging operation timer counts settled attempts and preserves values and exact thrown objects", async () => {
   const lines = [];
   let clock = 0;
