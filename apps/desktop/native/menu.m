@@ -181,7 +181,11 @@ static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
   NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(0,0,620,300)];scroll.hasVerticalScroller=YES;
   NSTextView *text=[[NSTextView alloc] initWithFrame:scroll.bounds];text.string=commands;text.editable=NO;text.selectable=YES;text.font=[NSFont monospacedSystemFontOfSize:11 weight:NSFontWeightRegular];scroll.documentView=text;alert.accessoryView=scroll;
   [alert addButtonWithTitle:@"Copy selected command"];[alert addButtonWithTitle:@"Done"];
-  if([alert runModal]==NSAlertFirstButtonReturn){NSString *selected=CRSelectedDemoCommand(commands,text.selectedRange);if(selected){[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:selected forType:NSPasteboardTypeString];}}
+  while([alert runModal]==NSAlertFirstButtonReturn){
+    NSString *selected=CRSelectedDemoCommand(commands,text.selectedRange);
+    if(!selected){alert.informativeText=@"Nothing copied. Select text within one command line, then choose Copy selected command.";continue;}
+    [NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:selected forType:NSPasteboardTypeString];break;
+  }
 }
 - (void)sleepWake:(NSNotification *)notification {(void)notification;_sleepInvalidated=YES;if(_ready&&!_stopping){[self send:@"model-unavailable"];_label.title=@"Dashboard ready · restart required after sleep";}}
 - (void)quit:(id)sender {(void)sender;[NSApp terminate:nil];}

@@ -130,6 +130,14 @@ Concurrent raw launches, detached/daemon clients and manually changed executable
 are unsupported. A normal nonzero exit can release its exact guard; signal death,
 helper loss or replaced records cannot. The app does not stop external assistants
 when switching/resetting; old commands remain pinned and become unusable.
+The helper announces its preflight checks. SIGINT/SIGTERM/SIGHUP during preflight
+are latched; bounded synchronous probes finish before cancellation unwinds and
+releases the exact untouched guard. No profile or client session is then started.
+Exit a running assistant normally while its helper Terminal remains open. Closing
+the Terminal or killing a client can leave uncertain lifetime evidence: retain the
+guard and profile, do not delete/copy them or bypass refusal with a fresh profile.
+Demo reset does not reclaim these guards. Explicit recovery with positive lifetime
+proof is tracked with the next native assistant-coordination work.
 
 The narrow Darwin Codex Homebrew exception accepts only canonical
 `/opt/homebrew/Caskroom/codex/0.160.0/bin/codex` through current-user-owned admin
@@ -146,11 +154,22 @@ command including `--desktop-closed`. The helper compares exact original bytes,
 preserves unrelated settings, creates a backup and verifies atomic replacement.
 Changed config, unknown collisions, stale generations or uncertain application
 retain evidence and refuse replay. Start Desktop normally and use a fresh
-conversation. After every native runtime restart/reset, prepare a new proposal;
-old snapshots never follow a mutable current selector. The envelope and config
+conversation. The applied entry pins installation, store, endpoint, C client ID,
+credential hash and immutable snapshot. A newly started bridge may discover the
+current native runtime generation only for that same installation/store/endpoint,
+then verify its native readiness challenge. Ordinary Quit/relaunch or Restart at
+the same endpoint needs no new apply. Reset, endpoint or credential changes require
+explicit prepare/review/apply; there is no automatic redirection or mutation replay.
+Previously applied snapshots retain their old behavior and need one explicit new
+prepare/apply to obtain this reconnect behavior. Prepare/apply commands themselves
+remain bound to the runtime generation shown in Demo setup.
+The envelope and config
 must be durable private locations outside temporary directories. Packaged app
 bytes may be temporary because snapshot copies are durable. No actual user
 Desktop config has been changed by automated implementation checks.
+An existing config must be a canonical current-user-owned regular file with one
+link and mode **0600**, inside a trusted durable directory. A typical 0644 config
+is refused; the helper does not change its permissions automatically.
 
 For an isolated human trial, choose a **fresh durable** root such as a named
 private directory under `~/Library/Application Support/Context Router Trials/`,
@@ -158,10 +177,14 @@ ending in `managed-v1`, and invoke the exact qualified artifact:
 
 ```sh
 "$router_cli" menu --root /absolute/private/durable/trial/managed-v1 \
-  --ui-port 0 --mcp-port 0 --demo-mcp-port 0
+  --ui-port 0 --mcp-port 18787 --demo-mcp-port 18790
 ```
 
-All three zeros request independent available ports. Fixed nonzero choices must
+Choose free fixed alternate MCP ports for a C reconnect trial. Occupied ports are
+refused without stopping their owner. Port `0` remains supported, but a different
+effective demo endpoint on relaunch correctly requires a new C prepare/apply.
+
+Passing `0` for a port requests an available port. Fixed nonzero choices must
 be distinct and free; defaults remain UI ephemeral, personal MCP 8787, demo 8790.
 The receipt/panel records actual endpoints, so never reuse old copied commands.
 Do not point a trial at personal state or retained source-demo homes. New binaries

@@ -1,6 +1,8 @@
 import path from 'node:path';
 import net from 'node:net';
 import { isDeepStrictEqual } from 'node:util';
+import { createHash } from 'node:crypto';
+import { readCredential } from '../mcp-bridge/credential.mjs';
 import { privateJson, privatePath, safeError } from './files.mjs';
 const id = value => typeof value === 'string' && /^[a-f0-9]{32}$/.test(value);
 const exact = (value, keys) => value && Object.keys(value).sort().join() === [...keys].sort().join();
@@ -23,4 +25,22 @@ export async function activeDemo(spec) {
   });
   if(!isDeepStrictEqual(response,receipt)||!isDeepStrictEqual(metadata,await privateJson(path.join(root,'installation.json')))||!isDeepStrictEqual(journal,await privateJson(path.join(root,'owner.json'))))throw failure();
   return receipt;
+}
+
+// Only an already applied immutable Desktop entry may discover a new runtime
+// generation. All interactive commands and prepare/apply keep activeDemo's exact
+// generation contract. This does not select a store or adopt a new endpoint.
+export async function activeDesktop(spec){
+  const {root,installationId,store,endpoint,clientId,credentialFile,credentialSha256}=spec;
+  if(!id(installationId)||!id(store)||!/^[A-Za-z0-9_-]{22}$/.test(clientId)||!/^[a-f0-9]{64}$/.test(credentialSha256)||credentialFile!==path.join(root,'demo',store,'exports/agent-c.token'))throw failure();
+  const journal=await privateJson(path.join(root,'owner.json'));
+  if(journal.installationId!==installationId||journal.storeId!==store)throw failure();
+  const generationFile=path.join(root,'demo',store,'generation.json'),generation=await privateJson(generationFile);
+  if(generation.status!=='complete'||generation.installationId!==installationId||generation.storeId!==store||generation.clients?.agentC!==clientId)throw failure();
+  const active=await activeDemo({root,store,endpoint,generation:journal.generation});
+  if(active.installationId!==installationId||!isDeepStrictEqual(generation,await privateJson(generationFile)))throw failure();
+  // Read once, validate that exact value, and give that same value to the bridge.
+  const credential=readCredential(credentialFile);
+  if(credential.slice(7,29)!==clientId||createHash('sha256').update(credential).digest('hex')!==credentialSha256)throw failure();
+  return{...active,credential};
 }

@@ -134,7 +134,7 @@ static BOOL prepareDemo(CREnvelope *owner,NSString *resources,CRFrames *shell,CR
         if([name isEqual:@"quit"])quit=YES;
         else if([name isEqual:@"return-previous"]||[name isEqual:@"retry-demo"]){
           [owner retainFailedDemo];emit(output,generation,@"stopped",@{@"outcome":@"ok"});
-          if([name isEqual:@"return-previous"])return YES;retry=YES;
+          if([name isEqual:@"return-previous"])return YES;priorGeneration=generation;retry=YES;
         }
       }
       if(shell.ended||interrupted||output.discarded)quit=YES;

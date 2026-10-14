@@ -57,6 +57,24 @@ test('Quit queued with the prior displayed generation during transition settles 
  const state=JSON.parse(await readFile(path.join(f.envelope,'installation.json')));assert.equal(state.mode,'personal');assert.equal(state.demoStore,null);assert.equal(state.pendingDemo.status,'failed');
 });
 
+for(const initial of ['failed','cancelled'])for(const reopened of [false,true])test(`Quit using the displayed ${initial} generation safely cancels retry (${reopened?'reopened failure':'same guardian'})`,async t=>{
+ const f=await fixture(t,initial==='failed'?'demo-retry':'demo-slow');let r=f.launch(),ready=await r.event('ready'),after=r.events.length;
+ const original=JSON.parse(await readFile(path.join(f.envelope,'installation.json')));r.send('enter-demo',ready.generation);const first=await r.event('starting',after+1);if(initial==='cancelled')r.send('cancel-demo',first.generation);let failed=await r.event('demo-failed');
+ const oldCandidate=JSON.parse(await readFile(path.join(f.envelope,'installation.json'))).pendingDemo.storeId;
+ if(reopened){r.send('quit',failed.generation);assert.equal((await ended(r.child))[0],0);r=f.launch();failed=await r.event('demo-failed');}
+ after=r.events.length;r.send('retry-demo',failed.generation);const retry=await r.event('starting',after);assert.equal(retry.phase,'preparing-demo');assert.notEqual(retry.generation,failed.generation);
+ // Wait for the retry start, then model a menu that has not processed it yet.
+ r.send('quit',failed.generation);assert.equal((await ended(r.child))[0],0);
+ const state=JSON.parse(await readFile(path.join(f.envelope,'installation.json'))),journal=JSON.parse(await readFile(path.join(f.envelope,'owner.json')));
+ assert.equal(state.selectedStore,original.selectedStore);assert.equal(state.pendingDemo.status,'failed');assert.notEqual(state.pendingDemo.storeId,oldCandidate);assert.equal(journal.lifecycle,'quiescent');assert.notEqual(journal.outcome,'uncertain');
+ const next=f.launch(),failure=await next.event('demo-failed');next.send('quit',failure.generation);assert.equal((await ended(next.child))[0],0);
+});
+
+for(const earlier of ['unknown','original-ready'])test(`retry still refuses Quit from ${earlier} generation`,async t=>{
+ const f=await fixture(t,'demo-retry'),r=f.launch(),ready=await r.event('ready');r.send('enter-demo',ready.generation);const failed=await r.event('demo-failed'),after=r.events.length;r.send('retry-demo',failed.generation);await r.event('starting',after);r.send('quit',earlier==='unknown'?'f'.repeat(32):ready.generation);
+ assert.equal((await ended(r.child))[0],1);const journal=JSON.parse(await readFile(path.join(f.envelope,'owner.json'))),state=JSON.parse(await readFile(path.join(f.envelope,'installation.json')));assert.equal(journal.outcome,'uncertain');assert.equal(journal.lifecycle,'quiescent');assert.equal(state.mode,'personal');assert.equal(state.selectedStore,state.personalStore);assert.equal(state.pendingDemo.status,'reserved');f.retainQuiescent(journal);
+});
+
 test('quiescent selected demo with occupied port offers explicit personal return without touching occupant',async t=>{
  const f=await fixture(t),first=f.launch();let ready=await first.event('ready'),after=first.events.length;first.send('enter-demo',ready.generation);ready=await first.event('ready',after);first.send('quit',ready.generation);assert.equal((await ended(first.child))[0],0);
  const before=JSON.parse(await readFile(path.join(f.envelope,'installation.json'))),occupied=net.createServer();await new Promise(resolve=>occupied.listen(3213,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>occupied.close(resolve)));

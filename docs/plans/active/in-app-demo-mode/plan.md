@@ -1,7 +1,7 @@
 # In-app demo mode
 
 Status: **reduced scope and implementation approved by the user on 2026-10-14**.
-Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code and focused coverage are implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Two fresh complete-diff reviews of `b0c5a9f` completed; their correction batch passed focused checks. Affected review rechecks and renewed final qualification are tracked in the PR with exact revisions and receipts; human acceptance remains pending.
+Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code is implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Both complete-diff reviews and automated qualification passed through `5dfadcf`; exact receipts are in the PR. The user then requested assessment and useful fixes from an external static review before hands-on testing. This bounded correction round targets a source/artifact-bound isolated human trial after affected checks/reviews; renewed final qualification follows the human-feedback round. Human acceptance remains pending.
 One cohesive PR; the native assistant-control follow-up is tracked below for the
 next PR. General profiles remain future work. Focused evidence is recorded below; full final validation and human acceptance are pending.
 
@@ -401,6 +401,11 @@ is insufficient. If helper/child loss or supported foreground settlement is unce
 retain the record and require inspection; no automatic stale-guard removal,
 force stop, profile copying or fresh-profile workaround. Reuse existing bounded
 process/ownership primitives where needed, not a new global process framework.
+Install latched SIGINT/SIGTERM/SIGHUP handling before guard acquisition. Unwind
+the owned action before exact-record cleanup; never unlink from the signal handler
+or abandon a running probe/action. Explicitly yield after synchronous preflight
+before persistent profile mutation or foreground spawn. Proven pre-mutation
+cancellation can release its own guard; uncertain foreground outcomes cannot.
 
 This guard is not OS isolation and cannot prevent a user manually launching a
 raw third-party CLI against the same profile. Such concurrent use is unsupported.
@@ -446,8 +451,16 @@ fixture exception is unreachable through production CLI/environment. Retain
 referenced snapshots; disk duplication is an explicit tradeoff.
 
 An old C proposal stays pinned after reset and cannot silently select the new
-store. Display its exact generation at review/apply; a new generation requires a
-new explicit prepare/apply and Desktop restart/new conversation. Provider-backed
+store. Display its exact runtime generation at review/apply; those commands stay
+strict to that generation. The applied entry additionally pins installation ID,
+store, endpoint, C client ID and credential hash. Only a newly started C bridge may
+discover the current active owner generation for those exact pins, validate the
+native receipt/challenge and post-probe metadata, and use its once-read validated
+credential. Same-store/same-endpoint reopen therefore needs no config rewrite.
+Reset, endpoint, installation or credential changes require new explicit
+prepare/apply; no selector following or mutation replay is added. Existing
+immutable snapshots require one explicit prepare/apply for the new behavior.
+Provider-backed
 Desktop acceptance remains a human check using the designated demo entry; other
 enabled personal connectors are not silently disabled, and no Desktop-wide
 conversation isolation is claimed.
@@ -469,13 +482,14 @@ changes their presentation/launch surface, not authority, persistence or safety.
 | Existing source example commands and legacy v1/durable v2 instances | Keep compatible thin wrappers and complete example regression suite | No existing homes/logins/config migration; custom input/dataset source workflows stay available there |
 | No replay, importer revocation, retained interruption evidence | Same contracts inside managed preparation and packaged helpers | Actual cancellation/publication/cleanup tests |
 
-`demo status` may report receipt-only selection/endpoint without database access
-while running; label it descriptive and unverified for live readiness/baseline.
+`demo status` verifies native readiness and reports immutable selection/endpoint
+receipts without database access; it does not verify current content, grants or baseline.
 Actual data and authority are visible in the dashboard. `demo verify` is an
 explicit read-only-in-intent maintenance command requiring Quit and the selected
 completed demo slot; use existing strict baseline checks through managed admission.
-Expected differences after deliberate edits/grant changes are reported, never
-fixed by reseeding. It is not an arbitrary store opener or a helper-side SQLite
+Changed current values/evidence may be reported, but membership, authority, schema
+or missing-audit mismatches fail the original-baseline check. Nothing is fixed by
+reseeding. It is not an arbitrary store opener or a helper-side SQLite
 poll. Preserve existing personal maintenance defaults and pending-operation gates.
 
 **Tracked next PR: native assistant setup controls.** Owner: the next assigned
@@ -490,10 +504,19 @@ silently expand this PR or promise completion within a day.
 | Native Open Codex A / Sign in / Open Claude B buttons | Qualified packaged helper/receipt interface and exact CLI preflights from this PR | Buttons invoke the same pinned helper, preserve explicit provider consent and fresh-conversation behavior, handle absent/unsupported clients, and leave no credentials in argv/clipboard/logs. Real AppKit→Terminal argv/FD tests plus human usability check. |
 | Native executable picker and saved CLI choice | Explicit helper `--executable` contract and trusted executable validation | Select/remember canonical trusted paths, revalidate changed bytes/version, handle nvm installations, never run config/proposal-selected executables before trust validation. |
 | App-managed external launcher/coordination | This PR's bounded per-role guard/lifetime evidence; reviewed process-ownership design | No envelope lock/capability leaks, no double profile use or PID/timeout reclamation, exact child-loss/reconnect outcomes, clear close/retry UI, and independent safety review before launch ownership changes. |
+| Explicit retained-guard recovery | Positive supported-client lifetime proof, beyond PID disappearance, elapsed time or user guess | Preserve uncertain records/profiles until proof is available; no manual deletion, copying or fresh-profile workaround. Independently review the recovery operation before implementation. |
 | Native C proposal review/apply screens | Qualified packaged Desktop prepare/apply/backup format and immutable snapshots | Show nonsecret exact-generation/endpoint diff summary; require explicit closed-Desktop/editor confirmation; apply the same reviewed proposal, preserve unrelated entries and backup/conflict rules, surface uncertain results without replay. |
 
 Do not combine this follow-up with general profiles, universal MCP onboarding,
 a new chat client, provider-credential migration or a permissions redesign.
+
+The shared cross-language malformed-metadata acceptance/rejection corpus promised
+above remains final-validation/maintenance evidence to settle before final
+qualification, not an optional next-PR deletion of that requirement. Independent
+native/backend/lifetime admission cases already exist; read-only helper readiness
+checks grant no managed authority. This isolated trial does not require a schema
+framework or expanding admission code. Transient `accept()` error handling remains
+an unconfirmed follow-up investigation; no probe semantics change in this round.
 
 ## Checkpoints and focused evidence
 
@@ -900,3 +923,57 @@ verify the unchanged runtime/package tree against the final head. The corrected
 harness revision and new exact-head CI/affected reviewer approvals are recorded
 in PR #183. Full local gate, complete artifact cycles, offline real-weight
 retention and human acceptance are not claimed by this checkpoint.
+
+### Approved pre-human review correction round (2026-10-14)
+
+After `5dfadcf` passed both reviews, full local qualification and exact-head CI,
+the user requested assessment and useful fixes from an external static review
+before hands-on testing. The coordinator approved this bounded batch. Requested
+writer/reviewer settings remain Astra/xhigh; effective settings are unobservable.
+Affected security and native/architecture reviewers accepted the design and
+product delta; their frozen trial dispositions and receipts belong in PR #183.
+
+- Preflight signals: confirmed. Guard-wide signals now latch before acquisition,
+  synchronous probes settle, an explicit event-loop yield precedes profile work,
+  and cleanup removes only the owned exact record after action unwind. Progress
+  is visible. Abnormal post-start termination remains uncertain by design; the
+  suggested manual guard deletion/reclaim is rejected. Positive-proof recovery
+  stays tracked with assistant lifetime work, with no fresh-profile workaround.
+- Desktop C: confirmed for a **new bridge process** after runtime restart. An
+  already running bridge may reconnect. New applied snapshots use C-only pinned
+  installation/store/endpoint/client/credential admission; strict copied commands
+  and prepare/apply still reject old runtime generations. Snapshot modules keep
+  the source's sibling demo/MCP-bridge topology. No mutation replay or silent
+  credential adoption is introduced. Existing snapshots require explicit reapply.
+- Retry then Quit: confirmed in same-guardian and reopened-failure paths. Update
+  the immediately previous displayed generation only when accepting retry; only
+  Quit receives that narrow allowance. Unknown/older commands retain refusal.
+- Small presentation corrections: invalid Copy selection keeps the dialog open
+  with feedback; the runbook states existing config 0600 ownership/type requirements;
+  baseline verification wording reflects its real mismatch rules; unlock help
+  names the native CR action alongside source-launcher instructions. Port flags
+  already work, and status already probes native readiness; contrary static-review
+  claims do not require product changes. Additional hub links are optional.
+- Transient accept-error behavior is unconfirmed and deferred for investigation.
+  Shared cross-language malformed-metadata fixtures remain required final evidence
+  as stated above; they are not silently waived or made a schema-framework task.
+
+Failure-first signal tests observed SIGINT/SIGTERM/SIGHUP process death instead
+of orderly cancellation, and both synchronized retry tests observed exit 1 instead
+of 0. New C admission assertions failed against the absent bounded admission API.
+The corrected focused run passed 44/44 cases covering safe cancellation/reuse, ordinary/abnormal client
+completion, token/owner/receipt races, four failed/cancelled/reopened retry paths,
+strict old-generation refusal and immutable Desktop proposals. Expected uncertain
+negative-test fixtures remain retained; no product recovery policy is weakened.
+
+**Agreed milestone:** one stable source/artifact-bound isolated hands-on trial,
+after focused checks and affected reviews. Its packaged real-SDK test starts a
+fresh bridge from the unchanged applied entry after both Quit/relaunch and native
+Restart at the same fixed endpoint, then checks reset refusal and no replay.
+The prior artifact cannot qualify these changed product inputs. Report
+**“Targeted checks passed; final validation pending.”** The full local migration
+gate, applicable installed/replacement qualification, complete final review/input
+assessment and exact-head CI remain required after the human-feedback round and
+before merge. Existing CI runs normally during iteration; no triggers, budgets,
+checks or safety/live-run approvals are weakened. Human AppKit/provider acceptance
+is still pending, and all trial work uses owned synthetic state only.

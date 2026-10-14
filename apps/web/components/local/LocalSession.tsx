@@ -281,8 +281,9 @@ export default function LocalSession({ children }: { children: ReactNode }) {
         <form onSubmit={unlock} className="w-full max-w-lg space-y-5">
           <h1 className="text-3xl font-bold">Context Router</h1>
           <p>
-            Request an unlock code from the launcher that opened this dashboard,
-            then paste it here. It expires after five minutes and works once.
+            Request an unlock code from your launcher. In the Mac app, choose
+            {' '}CR → New unlock code… in the menu bar. Paste the code here; it
+            expires after five minutes and works once.
           </p>
           <label htmlFor="local-unlock" className="block font-medium">
             Unlock token

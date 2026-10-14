@@ -5,6 +5,13 @@ for(const [kind,code]of[['success',0],['error',7]])test(`supported native foregr
 test('signal termination retains the invocation record',async t=>{const f=await fixture(t);await assert.rejects(withClientGuard(f.root,'a',guard=>runForeground({executable:f.executable,args:['signal',path.join(f.root,'marker')],env:{},cwd:f.root},guard)));await assert.rejects(withClientGuard(f.root,'a',()=>{}));});
 test('replaced invocation record cannot be released by the old owner',async t=>{const f=await fixture(t);await assert.rejects(withClientGuard(f.root,'a',async guard=>{await fs.writeFile(path.join(f.root,'demo/client-guards/a.json'),'{}');guard.settled();}));assert.equal(await fs.readFile(path.join(f.root,'demo/client-guards/a.json'),'utf8'),'{}');});
 
+test('handled helper interrupt waits for normal owned-client exit before releasing the guard',async t=>{
+ const f=await fixture(t),module=path.resolve(import.meta.dirname,'../../../backend/scripts/demo/installed-clients.mjs'),marker=path.join(f.root,'marker');
+ const helper=spawn(process.execPath,['--input-type=module','-e',`import {withClientGuard,runForeground} from ${JSON.stringify('file://'+module)};try{await withClientGuard(${JSON.stringify(f.root)},'a',guard=>runForeground({executable:${JSON.stringify(f.executable)},args:['handled',${JSON.stringify(marker)}],env:{},cwd:${JSON.stringify(f.root)}},guard));}catch{process.exitCode=1;}`],{env:{},stdio:['ignore','pipe','pipe']}),closed=once(helper,'close');
+ const deadline=performance.now()+3000;while(!await fs.access(marker).then(()=>true,()=>false)){assert.ok(performance.now()<deadline);await new Promise(resolve=>setTimeout(resolve,10));}
+ helper.kill('SIGINT');assert.deepEqual(await closed,[1,null]);await assert.rejects(fs.access(path.join(f.root,'demo/client-guards/a.json')));await withClientGuard(f.root,'a',guard=>runForeground({executable:f.executable,args:['success',marker],env:{},cwd:f.root},guard));
+});
+
 test('abrupt helper loss retains its guard while the owned native client is still alive',async t=>{
  const f=await fixture(t),module=path.resolve(import.meta.dirname,'../../../backend/scripts/demo/installed-clients.mjs'),marker=path.join(f.root,'marker');
  const code=`import {withClientGuard,runForeground} from ${JSON.stringify('file://'+module)};await withClientGuard(${JSON.stringify(f.root)},'a',guard=>runForeground({executable:${JSON.stringify(f.executable)},args:['linger',${JSON.stringify(marker)}],env:{},cwd:${JSON.stringify(f.root)}},guard));`;

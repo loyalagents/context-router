@@ -60,7 +60,7 @@ const control=await openManagedControl(generation,{onStop(){},onCommand(){}});aw
   await writeFile(path.join(runtime,'demo-prepare.mjs'),common+`
 for(const name of ['data','identity'])fs.mkdirSync(path.join(pair,name),{mode:0o700});
 fs.writeFileSync(path.join(pair,'identity/identity.json'),JSON.stringify({databaseTargetId:'D'.repeat(43),principalId:'P'.repeat(43)}),{mode:0o600});
-if(['demo-failure','demo-slow'].includes(${JSON.stringify(variant)})){if(${JSON.stringify(variant)}==='demo-slow')await control.stopped;await control.send('demo-complete',{exitCode:1});await control.close();process.exitCode=1;}
+if(['demo-failure','demo-slow','demo-retry'].includes(${JSON.stringify(variant)})){if(${JSON.stringify(variant)}==='demo-slow')await control.stopped;if(${JSON.stringify(variant)}==='demo-retry'){const attempted=path.join(cap.envelope,'demo','fixture-attempted');if(fs.existsSync(attempted))await control.stopped;else fs.writeFileSync(attempted,'failed',{mode:0o600});}await control.send('demo-complete',{exitCode:1});await control.close();process.exitCode=1;}
 else {fs.writeFileSync(path.join(cap.envelope,'demo',cap.storeId,'generation.json'),JSON.stringify({version:1,status:'complete',installationId:cap.installationId,storeId:cap.storeId,principalId:'P'.repeat(43),targetId:'D'.repeat(43),seedVersion:'historical-2024-2025-v1',seedSha256:'a'.repeat(64),planSha256:'b'.repeat(64),importerId:'I'.repeat(22),clients:{agentA:'A'.repeat(22),agentB:'B'.repeat(22),agentC:'C'.repeat(22)}}),{mode:0o600});await control.send('demo-complete',{exitCode:0});if(${JSON.stringify(variant)}==='demo-late')await control.stopped;await control.close();}
 `);
   await writeFile(path.join(runtime,'demo.mjs'),`import fs from 'node:fs';import {spawnSync} from 'node:child_process';
@@ -68,7 +68,7 @@ const code=\`const fs=require('node:fs');const fds=[];for(let i=20;i<24;i++){try
 const child=spawnSync(process.execPath,['-e',code],{env:{PATH:'',CR_DEMO_TOKEN:'synthetic-demo-only'},stdio:['ignore','pipe','pipe'],encoding:'utf8'});
 const fds=[];for(let i=20;i<24;i++){try{fs.fstatSync(i);fds.push(i);}catch{}}console.log(JSON.stringify({wrapper:process.env,fds,child:JSON.parse(child.stdout)}));`);
   await writeSignedFixture(bundle);
-  const children=[],accepted=[];
+  const children=[],accepted=[];let retainEvidence=false;
   t.after(async()=>{
     let uncertain=false;
     for(const child of children){if(child.exitCode===null&&child.signalCode===null)child.stdin.end();const deadline=performance.now()+28000;
@@ -79,7 +79,8 @@ const fds=[];for(let i=20;i<24;i++){try{fs.fstatSync(i);fds.push(i);}catch{}}con
     if(uncertain)throw new Error(`Fixture ownership uncertain; preserve ${top}`);
     let journal;try{journal=JSON.parse(await readFile(path.join(envelope,'owner.json')));}catch(error){if(error.code!=='ENOENT')throw error;}
     if(journal&&(journal.lifecycle!=='quiescent'||(!accepted.some(j=>JSON.stringify(j)===JSON.stringify(journal))&&!children.some(child=>child.events.some(event=>event.type==='stopped'&&event.generation===journal.generation&&event.outcome===journal.outcome)))))throw new Error(`Cohort quiescence unproved; preserve ${top}`);
-    await rm(top,{recursive:true,force:true});
+    if(retainEvidence)t.diagnostic(`Expected uncertain control outcome retained: ${top}`);
+    else await rm(top,{recursive:true,force:true});
   });
   function launch(){
     const child=spawn(executable,['guardian','--root',envelope,'--ui-port','3210','--mcp-port','3211','--demo-mcp-port','3213'],{env:{},stdio:['pipe','pipe','pipe']});children.push(child);child.ended=once(child,'close');
@@ -88,5 +89,5 @@ const fds=[];for(let i=20;i<24;i++){try{fs.fstatSync(i);fds.push(i);}catch{}}con
     const send=(command,generation)=>child.stdin.write(JSON.stringify({version:1,generation,command})+'\n');
     return{child,event,events,send};
   }
-  return{launch,envelope,executable,top,acceptQuiescent:journal=>{assert.equal(journal.lifecycle,'quiescent');accepted.push(journal);}};
+  return{launch,envelope,executable,top,acceptQuiescent:journal=>{assert.equal(journal.lifecycle,'quiescent');accepted.push(journal);},retainQuiescent:journal=>{assert.equal(journal.lifecycle,'quiescent');assert.equal(journal.outcome,'uncertain');accepted.push(journal);retainEvidence=true;}};
 }

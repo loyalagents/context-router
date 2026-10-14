@@ -10,6 +10,7 @@ test('packaged Desktop preparation snapshots bundled Node and bridge; apply pres
  const f=await fixture(t),before=await fs.readFile(f.config);
  const p=await prepareInstalledDesktop({...f.spec,config:f.config},f.context);assert.deepEqual(await fs.readFile(f.config),before);
  const proposal=JSON.parse(await fs.readFile(p.proposal));assert.ok(proposal.entry.command.startsWith(f.root));assert.equal(proposal.entry.env.NODE_OPTIONS,'');
+ assert.equal(proposal.entry.args.includes('--generation'),false);assert.equal(proposal.entry.args[proposal.entry.args.indexOf('--installation-id')+1],uuid);assert.equal(proposal.entry.args[proposal.entry.args.indexOf('--client-id')+1],'C'.repeat(22));assert.match(proposal.entry.args[proposal.entry.args.indexOf('--credential-sha256')+1],/^[a-f0-9]{64}$/);
  const result=await applyInstalledDesktop({...f.spec,proposal:p.proposal,desktopClosed:true},f.context);assert.equal(result.status,'applied');
  const after=JSON.parse(await fs.readFile(f.config));assert.equal(after.theme,'dark');assert.deepEqual(after.mcpServers.unrelated,{command:'/known/tool'});assert.ok(after.mcpServers[p.entryName]);
  assert.deepEqual(await fs.readFile(result.backup),before);await assert.rejects(applyInstalledDesktop({...f.spec,proposal:p.proposal,desktopClosed:true},f.context));

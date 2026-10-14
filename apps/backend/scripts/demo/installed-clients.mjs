@@ -4,6 +4,7 @@ import os from 'node:os';
 import { randomBytes, createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
+import { setImmediate as yieldSignals } from 'node:timers/promises';
 import { privateJson, privatePath, safeError } from './files.mjs';
 import { trustedDirectory, trustedBytes, ensurePrivateDirectory, writeSyncedJson, syncDirectory, exists } from './trusted-files.mjs';
 import { activeDemo } from './active.mjs';
@@ -13,23 +14,33 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export async function withClientGuard(root,role,action){
   if(!['a','b','desktop'].includes(role))throw safeError('Unknown demo role.');
-  await trustedDirectory(root);await trustedDirectory(path.join(root,'demo'));
-  const directory=path.join(root,'demo','client-guards');await ensurePrivateDirectory(directory);
+  const signals=['SIGINT','SIGTERM','SIGHUP'];let cancelled=false;
+  const cancel=()=>{cancelled=true;},check=()=>{if(cancelled)throw safeError('Demo command cancelled. Any uncertain invocation evidence is retained.');};
+  // A signal only latches cancellation. The owned action must unwind before its
+  // exact record can be released; a synchronous probe is never abandoned.
+  signals.forEach(signal=>process.on(signal,cancel));
+  const checkpoint=async()=>{await yieldSignals();check();};
+  const directory=path.join(root,'demo','client-guards');
   const file=path.join(directory,role+'.json'),record={version:1,invocation:randomBytes(16).toString('hex'),role,pid:process.pid};
-  try{await writeSyncedJson(file,record);}catch(e){if(e.code==='EEXIST')throw safeError('This demo profile has an active or uncertain invocation. Retained guard requires inspection; no automatic reclaim.');throw e;}
-  let mutated=false,settled=false;
-  try{return await action({mutating(){mutated=true;settled=false;},settled(){settled=true;}});}
-  finally{if(!mutated||settled){if(!isDeepStrictEqual(await privateJson(file),record))throw safeError('Invocation guard changed; retained for inspection.');await fs.unlink(file);await syncDirectory(directory);}}
+  let owned=false,mutated=false,settled=false;
+  try{
+    await trustedDirectory(root);await trustedDirectory(path.join(root,'demo'));await checkpoint();await ensurePrivateDirectory(directory);await checkpoint();
+    try{await writeSyncedJson(file,record);owned=true;}catch(e){if(e.code==='EEXIST')throw safeError('This demo profile has an active or uncertain invocation. Retain its guard; do not delete it or reuse the profile.');throw e;}
+    await checkpoint();const result=await action({checkpoint,mutating(){check();mutated=true;settled=false;},settled(){settled=true;}});await checkpoint();return result;
+  }finally{
+    try{if(owned&&(!mutated||settled)){if(!isDeepStrictEqual(await privateJson(file),record))throw safeError('Invocation guard changed; retained for inspection.');await fs.unlink(file);await syncDirectory(directory);}}
+    finally{signals.forEach(signal=>process.off(signal,cancel));}
+  }
 }
 export async function profileFor(root,installationId,role,guard){
   if(!/^[a-f0-9]{32}$/.test(installationId)||!['a','b'].includes(role))throw safeError('Invalid profile identity.');
-  const profiles=path.join(root,'demo','profiles');await ensurePrivateDirectory(profiles);
+  await guard.checkpoint();const profiles=path.join(root,'demo','profiles');
   const directory=path.join(profiles,role),marker=path.join(directory,'profile.json'),expected={version:1,installationId,role};
   if(await exists(directory)){
-    await trustedDirectory(directory);
+    await trustedDirectory(profiles);await trustedDirectory(directory);
     if(!isDeepStrictEqual(await privateJson(marker),expected))throw safeError('Unrecognized demo profile; personal profiles are never adopted.');
   }else{
-    guard.mutating();await fs.mkdir(directory,{mode:0o700});await syncDirectory(profiles);
+    await guard.checkpoint();guard.mutating();await ensurePrivateDirectory(profiles);await fs.mkdir(directory,{mode:0o700});await syncDirectory(profiles);
     for(const prefix of ['codex-a','codex','claude-a','claude'])for(const suffix of ['home','config','workspace'])await fs.mkdir(path.join(directory,`${prefix}-${suffix}`),{mode:0o700});
     await writeSyncedJson(marker,expected);guard.settled();
   }
@@ -52,6 +63,7 @@ export async function qualifiedExecutable(command,searchPath=process.env.PATH??'
 export async function launchInstalledClient(spec,{role,command='codex',login=false,executable:explicit,auth=command==='claude'?'subscription':undefined}){
   if(!['a','b'].includes(role))throw safeError('Choose Agent A or B.');
   return withClientGuard(spec.root,role,async guard=>{
+    process.stdout.write('Checking the qualified client and isolated preflight settings…\n');
     const receipt=await activeDemo(spec),executable=await qualifiedExecutable(command,process.env.PATH,explicit);
     // Version/help/config probes use an empty disposable identity, never the
     // persisted demo login or MCP export, and cannot start a model session.
@@ -61,6 +73,9 @@ export async function launchInstalledClient(spec,{role,command='codex',login=fal
       for(const value of new Set([probeSpec.cwd,probeSpec.env.TMPDIR,probeSpec.env.CODEX_HOME,probeSpec.env.CLAUDE_CONFIG_DIR].filter(Boolean)))await fs.mkdir(value,{mode:0o700});
       preflightClient(probeSpec);
     }finally{await fs.rm(probe,{recursive:true,force:true});}
+    // spawnSync probes block signal callbacks. Yield explicitly before any
+    // persistent profile work, even if every probe happened to succeed.
+    await guard.checkpoint();
     if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed during preflight.');
     await activeDemo(spec);
     const profile=await profileFor(spec.root,receipt.installationId,role,guard);
@@ -83,6 +98,7 @@ export async function launchInstalledClient(spec,{role,command='codex',login=fal
 }
 
 export async function runForeground(launch,guard){
+  await guard.checkpoint();
   guard.mutating();
   return await new Promise((resolve,reject)=>{
       let child;
