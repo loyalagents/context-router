@@ -23,6 +23,8 @@ exports.runLocalIdentityEntrypoint = async ({ argv: [operation] }) => {
       '--metrics-recording-only',
       '--disable-features=MediaRouter,OptimizationHints',
       '--password-store=basic',
+      // Disposable test profiles must not prompt for the macOS Keychain.
+      '--use-mock-keychain',
       '--remote-debugging-address=127.0.0.1',
       '--remote-debugging-port=0',
       `--user-data-dir=${root}`,
