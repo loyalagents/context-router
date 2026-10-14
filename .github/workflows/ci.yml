@@ -344,6 +344,8 @@ jobs:
         timeout-minutes: 5
         run: node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs
         working-directory: .
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
 
   desktop-native:
     needs: changes
