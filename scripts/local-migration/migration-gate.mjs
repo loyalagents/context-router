@@ -4,9 +4,15 @@ import { localUiBrowserPrerequisite } from './local-ui-browser.mjs';
 import { assertLocalMcpSmokeSuccessResources } from './local-mcp-lifecycle.mjs';
 import { assertLocalModelSmokeSuccessResources } from './local-model-lifecycle.mjs';
 
+import {
+  createLaneReceipt, parseQualificationProfile, publishLaneReceipt,
+  qualificationContract, qualificationProvenance, qualificationRunner,
+  selectQualificationPhases,
+} from "./ci-qualification.mjs";
+
 import { execFile } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
-import { constants } from "node:fs";
+import { closeSync, constants, fstatSync, lstatSync, openSync, realpathSync, renameSync, unlinkSync } from "node:fs";
 import {
   lstat,
   mkdir,
@@ -246,11 +252,7 @@ export function buildAdministrationCanaries(
   return [...new Set(canaries)];
 }
 
-export async function persistExternalGateSummary(
-  environment,
-  summary,
-  canaries = [],
-) {
+async function externalGateSummaryTarget(environment) {
   const requested = environment.MIGRATION_GATE_CI_SUMMARY_PATH;
   if (!requested) return null;
   const runnerTemporaryDirectory = environment.RUNNER_TEMP;
@@ -276,9 +278,141 @@ export async function persistExternalGateSummary(
       "CI gate evidence must use the exact runner temporary summary path",
     );
   }
-  const target = path.join(runnerTemporaryReal, expectedName);
+  return path.join(runnerTemporaryReal, expectedName);
+}
+
+export async function persistExternalGateSummary(environment, summary, canaries = []) {
+  const target = await externalGateSummaryTarget(environment);
+  if (!target) return null;
   await writeSanitizedJson(target, summary, canaries);
   return target;
+}
+
+const sameCiIdentity = (actual, expected) => actual.dev === expected.dev && actual.ino === expected.ino;
+const privateCiFile = value => value.isFile() && !value.isSymbolicLink() &&
+  value.uid === process.getuid() && (value.mode & 0o777) === 0o600;
+const ciPinOperations = { open: openSync, stat: fstatSync, close: closeSync };
+function closeCiPins(pins) {
+  const errors = [];
+  for (const pin of pins) {
+    if (!pin.live) continue;
+    // Never retry a raw descriptor: even a failed close can have released its number.
+    pin.live = false;
+    try { pin.operations.close(pin.fd); } catch (error) { errors.push(error); }
+  }
+  if (errors.length) throw combineFailures(errors[0], errors.slice(1), "CI descriptor release");
+}
+function assertCiPin(pin) {
+  if (!pin.live) throw new Error("CI terminal summary ownership already released");
+  const descriptor = pin.operations.stat(pin.fd), current = lstatSync(pin.file);
+  const validType = pin.directory
+    ? current.isDirectory() && !current.isSymbolicLink() && current.uid === process.getuid() && realpathSync(pin.file) === pin.file
+    : privateCiFile(current);
+  if (!validType || !sameCiIdentity(descriptor, pin.identity) || !sameCiIdentity(current, descriptor)) {
+    throw new Error("CI terminal summary publication identity changed");
+  }
+}
+function openCiPin(file, directory, operations, expected = lstatSync(file)) {
+  const fd = operations.open(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK |
+    (directory ? constants.O_DIRECTORY : 0));
+  const pin = { fd, file, directory, operations, identity: expected, live: true };
+  try { assertCiPin(pin); return pin; }
+  catch (error) {
+    try { closeCiPins([pin]); } catch (cleanupError) { throw combineFailures(error, [cleanupError], "CI pin acquisition"); }
+    throw error;
+  }
+}
+function assertCiSummaryOwnership(ownership) {
+  if (ownership.released) throw new Error("CI terminal summary ownership already released");
+  assertCiPin(ownership.parentPin);
+  assertCiPin(ownership.targetPin);
+}
+function releaseCiSummaryOwnership(ownership) {
+  if (!ownership || ownership.released) return;
+  ownership.released = true;
+  closeCiPins(ownership.pins);
+}
+async function captureCiSummaryOwnership(environment, operations = ciPinOperations) {
+  const target = await externalGateSummaryTarget(environment);
+  if (!target) throw new Error("CI terminal summary requires an export path");
+  const parent = path.dirname(target), pins = [];
+  try {
+    // Synchronous no-follow acquisition pins each inode before any further await.
+    const parentPin = openCiPin(parent, true, operations); pins.push(parentPin);
+    const targetPin = openCiPin(target, false, operations); pins.push(targetPin);
+    const ownership = { target, parent, parentPin, targetPin, pins, operations, released: false };
+    assertCiSummaryOwnership(ownership);
+    return ownership;
+  } catch (error) {
+    try { closeCiPins(pins); } catch (cleanupError) { throw combineFailures(error, [cleanupError], "CI ownership acquisition"); }
+    throw error;
+  }
+}
+
+// CI alone has required evidence after bounded finalization. Pins prevent inode
+// reuse throughout awaited work. Final checked closes, guards and rename form one
+// synchronous suffix; this does not claim atomicity against external processes.
+export async function prepareCiTerminalSummary(environment, summary, {
+  signal, timeline, canaries = [], openFile = open, commitRename = renameSync,
+  ownership: suppliedOwnership, pinOperations = ciPinOperations,
+} = {}) {
+  const ownership = suppliedOwnership ?? await captureCiSummaryOwnership(environment, pinOperations);
+  const { target, parent } = ownership;
+  const staged = path.join(parent, ".local-migration-gate-summary.ci-" + randomBytes(16).toString("hex"));
+  let handle, stagePin;
+  const discard = async () => {
+    // A failed close/final guard/rename may leave a private stage. Once original
+    // ownership was released, no async path may mutate using its stale identity.
+    if (ownership.released) return;
+    const errors = [];
+    const writer = handle; handle = null;
+    try { await writer?.close(); } catch (error) { errors.push(error); }
+    if (stagePin?.live) {
+      let owned = false;
+      try { assertCiPin(ownership.parentPin); assertCiPin(stagePin); owned = true; } catch { /* Preserve foreign paths. */ }
+      if (owned) { try { unlinkSync(staged); } catch (error) { errors.push(error); } }
+      try { closeCiPins([stagePin]); } catch (error) { errors.push(error); }
+    }
+    if (!suppliedOwnership) {
+      try { releaseCiSummaryOwnership(ownership); } catch (error) { errors.push(error); }
+    }
+    if (errors.length) throw combineFailures(errors[0], errors.slice(1), "CI stage discard");
+  };
+  const check = () => {
+    if (signal?.aborted) throw signal.reason ?? new Error("CI terminal publication cancelled");
+    timeline.assertBefore("finalCleanup");
+  };
+  try {
+    if (await externalGateSummaryTarget(environment) !== target) throw new Error("CI summary target changed");
+    assertCiSummaryOwnership(ownership);
+    check();
+    handle = await openFile(staged, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+    const identity = await handle.stat();
+    // Acquire and verify the read pin while the writer still holds the original.
+    stagePin = openCiPin(staged, false, ownership.operations, identity);
+    ownership.pins.push(stagePin);
+    await handle.writeFile(redactSecrets(JSON.stringify(summary, null, 2), canaries) + "\n");
+    await handle.sync();
+    const writer = handle; handle = null;
+    await writer.close();
+    return {
+      discard,
+      commit() {
+        assertCiSummaryOwnership(ownership);
+        assertCiPin(stagePin);
+        check();
+        // Every release is checked before pass. No event-loop yield, downgrade,
+        // or unpinned stage deletion is permitted after this release starts.
+        releaseCiSummaryOwnership(ownership);
+        check();
+        commitRename(staged, target);
+        // Successful rename is the terminal commit. No fallible postcheck here.
+      },
+    };
+  } catch (error) {
+    try { await discard(); } catch (cleanupError) { throw combineFailures(error, [cleanupError], "CI preparation"); }
+    throw error;
+  }
 }
 
 export async function prepareGateDiagnosticsRoot(
@@ -585,7 +719,7 @@ export async function finalizeGateAttemptEvidence({
     rm(directory, { recursive: true, force: true }),
 }) {
   summary.source = structuredClone(source);
-  if (mode === "full") {
+  if (mode !== "smoke-only") {
     summary.databaseTests ??= unavailableDatabaseEvidence("command-not-run", { source, environment: externalEnvironment });
     await persistDatabaseEvidence(summary, externalEnvironment);
   }
@@ -782,6 +916,27 @@ export async function finalizeGateAttemptEvidence({
         recordError(externalError);
         refresh(failureStatus());
       }
+    }
+    return { summary, diagnosticsDirectory, evidenceErrors };
+  }
+
+  if (mode === "ci-source" || mode === "ci-packaging") {
+    // Required receipt publication and bounded-stage postchecks are still ahead.
+    // The returned candidate is internal; durable external evidence stays pending.
+    refresh("running");
+    summary.cleanupPending = "required-receipt-publication";
+    try { await persistExternal(externalEnvironment, summary, summaryCanaries); }
+    catch (error) { recordError(error); }
+    observeSignals();
+    try { timeline.assertBefore("finalCleanup"); } catch (error) { recordError(error); }
+    if (evidenceErrors.length) {
+      await persistFailure();
+      return { summary, diagnosticsDirectory, evidenceErrors };
+    }
+    refresh("passed");
+    if (lifecycle?.state) {
+      lifecycle.state.status = "passed";
+      lifecycle.state.finishedAt = new Date().toISOString();
     }
     return { summary, diagnosticsDirectory, evidenceErrors };
   }
@@ -1189,7 +1344,7 @@ async function writeBaseArtifact(baseDirectory, relativePath, content) {
   };
 }
 
-async function exportBaseContracts(
+export async function exportBaseContracts(
   baseSha,
   diagnosticsDirectory,
   { signal } = {},
@@ -1782,7 +1937,34 @@ async function sha256(filePath) {
   return createHash("sha256").update(await readFile(filePath)).digest("hex");
 }
 
+// Native binaries are acquired by the CI prerequisite. Prisma's config loader
+// also caches by absolute source path, so prime it in the owned copied workspace
+// before packaging snapshots its dependencies. This is not a qualification phase.
+export async function prepareQualificationPrerequisites(
+  profile,
+  { workspace, diagnosticsDirectory, environment, signal, execute = runCommand },
+) {
+  if (!["full", "smoke-only", "ci-source", "ci-packaging"].includes(profile)) {
+    throw new Error("unknown qualification prerequisite profile");
+  }
+  if (profile !== "ci-packaging") return;
+  if (signal?.aborted) throw signal.reason;
+  await execute(["pnpm", "--filter", "backend", "exec", "prisma", "--version"], {
+    cwd: workspace,
+    env: environment,
+    signal,
+    timeoutMs: 120_000,
+    logPath: path.join(diagnosticsDirectory, "preflight-packaging-prisma.log"),
+  });
+  if (signal?.aborted) throw signal.reason;
+}
+
+export function runQualificationPhaseSequence(manifest, profile, options) {
+  return runPhaseSequence(selectQualificationPhases(manifest, profile), options);
+}
+
 async function executeFullGate({
+  profile = "full",
   workspace,
   files,
   source,
@@ -1809,6 +1991,8 @@ async function executeFullGate({
     packagingTimings: unavailablePackagingTimings("phase-not-run"),
     source,
     baseSha,
+    baseManifestSha256,
+    smokeLifecycle: {},
     versions: {
       node: "pending",
       pnpm: "pending",
@@ -1867,7 +2051,14 @@ async function executeFullGate({
     if (semanticErrors.length) throw new Error(`gate phase manifest invalid: ${semanticErrors.join("; ")}`);
     const commandPolicyErrors = validateApprovedPhaseCommands(manifest);
     if (commandPolicyErrors.length) throw new Error(`gate command policy invalid: ${commandPolicyErrors.join("; ")}`);
-    const phases = manifest.phases.filter((phase) => phase.status === "active");
+    const phases = selectQualificationPhases(manifest, profile);
+    if (profile !== "full") {
+      summary.qualification = qualificationContract(
+        await readFile(path.join(workspace, "scripts/local-migration/gate-phases.json"), "utf8"),
+        await readFile(path.join(workspace, "scripts/local-migration/gate-phases.schema.json"), "utf8"),
+      );
+    }
+    if (profile === "ci-packaging") summary.baseComparison = "not-in-profile";
     const phaseTotal = phases.length;
 
     const temporaryHome = path.join(workspace, ".lmbg-home");
@@ -1892,6 +2083,12 @@ async function executeFullGate({
       signal: preflightSignal,
     });
     summary.versions = { ...versions, postgres: "pending", chromium: browserPrerequisite.version, playwright: browserPrerequisite.playwright };
+    await prepareQualificationPrerequisites(profile, {
+      workspace,
+      diagnosticsDirectory,
+      environment: gateEnvironment,
+      signal: preflightSignal,
+    });
     const trackedSdlSha256 = await sha256(
       path.join(workspace, "apps/backend/src/schema.gql"),
     );
@@ -1934,11 +2131,11 @@ async function executeFullGate({
       }),
     );
     completePreflight();
-    summary.phases = await runPhaseSequence(phases, {
+    summary.phases = await runQualificationPhaseSequence(manifest, profile, {
       projectFailureMessage: projectDatabaseCommandFailure,
       onPhaseStart: async (phase) => {
         phaseStart.set(phase.id, timeline.now());
-        console.log(`migration-gate: phase ${phase.order}/${phaseTotal} ${phase.id} started`);
+        console.log(`migration-gate: phase ${phases.indexOf(phase) + 1}/${phaseTotal} ${phase.id} started`);
       },
       execute: async (command, phase) => {
         const commandIndex = phase.commands.indexOf(command) + 1;
@@ -1989,16 +2186,20 @@ async function executeFullGate({
           executeCommand,
           packagingDiagnostics: { ownership: diagnosticsOwnership, logPath, summary },
           databaseDiagnostics: { commandArgv: command.argv, workspace, files, source, environment: sourceEnvironment, canaries: sensitiveCanaries, summary },
-          validateRestartLifecycle: ({ commandSucceeded }) =>
-            assertRestartSmokeLifecycleEvidence(
+          validateRestartLifecycle: async ({ commandSucceeded }) => {
+            await assertRestartSmokeLifecycleEvidence(
               phaseEnvironment.MIGRATION_RESTART_SMOKE_DIAGNOSTICS_DIR,
               { commandSucceeded },
-            ),
-          validatePackagedLifecycle: ({ commandSucceeded }) =>
-            assertPackagedSmokeLifecycleEvidence(
+            );
+            if (commandSucceeded) summary.smokeLifecycle[phase.id] = true;
+          },
+          validatePackagedLifecycle: async ({ commandSucceeded }) => {
+            await assertPackagedSmokeLifecycleEvidence(
               phaseEnvironment.MIGRATION_PACKAGING_SMOKE_DIAGNOSTICS_DIR,
               { commandSucceeded },
-            ),
+            );
+            if (commandSucceeded) summary.smokeLifecycle[phase.id] = true;
+          },
         });
         const comparisonEvidence = readContractBaselineComparisonEvidence(
           command.argv,
@@ -2010,7 +2211,7 @@ async function executeFullGate({
         if (phase.id === "contract-baseline") {
           assertContractBaselineComparisonPerformed(summary.baseComparison);
         }
-        console.log(`migration-gate: phase ${phase.order}/${phaseTotal} ${phase.id} passed (${result.elapsedMs}ms)`);
+        console.log(`migration-gate: phase ${phases.indexOf(phase) + 1}/${phaseTotal} ${phase.id} passed (${result.elapsedMs}ms)`);
       },
       onSummary: async (phasesSummary) => {
         summary.phases = phasesSummary;
@@ -2206,9 +2407,90 @@ async function executeSmokeOnly({
   });
 }
 
+export async function publishCompletedCiQualification({
+  profile, summary, outcome, provenance, runner,
+  workspaceRemoved, diagnosticsDirectory, gateLifecycle,
+  runnerTemp, signal, timeline, publish = publishLaneReceipt,
+}) {
+  if (!outcome || outcome.primaryError || outcome.secondaryErrors?.length ||
+      !Array.isArray(outcome.secondaryErrors)) {
+    throw new Error("CI qualification bounded-stage finalization did not succeed");
+  }
+  if (signal?.aborted) throw signal.reason;
+  timeline.assertBefore("finalCleanup");
+  const receipt = createLaneReceipt({
+    profile, summary, contract: summary.qualification, provenance, runner,
+    completion: {
+      boundedStages: true,
+      preflight: outcome.preflightComplete === true,
+      childSettlement: outcome.childSettlementAttempted === true,
+      workspaceRemoved,
+      diagnosticsRemoved: diagnosticsDirectory === null,
+      gateLifecycle: gateLifecycle?.state?.status === "passed",
+    },
+  });
+  await publish(path.join(await realpath(runnerTemp), profile + ".json"), receipt, {
+    signal, assertDeadline: () => timeline.assertBefore("finalCleanup"),
+  });
+}
+
+async function persistOwnedCiFailure(environment, summary, canaries, { ownership, timeline }) {
+  // A downgrade uses the same atomic ownership-checked path as terminal success.
+  // If ownership or the deadline was lost, leave pending/foreign evidence alone.
+  const prepared = await prepareCiTerminalSummary(environment, summary, { ownership, timeline, canaries });
+  try { prepared.commit(); }
+  catch (error) {
+    try { await prepared.discard(); } catch (cleanupError) { throw combineFailures(error, [cleanupError], "CI failure publication"); }
+    throw error;
+  }
+}
+
+// This is the production CI orchestration seam: finalizer and bounded-stage
+// postchecks, required receipt, private terminal summary preparation, then commit.
+export async function runCiQualificationAttempt({
+  stages, evidence, environment, summaryCanaries = [], dispose,
+  publish = publishCompletedCiQualification,
+  prepare = prepareCiTerminalSummary,
+  persistFailure = persistOwnedCiFailure, pinOperations = ciPinOperations,
+}) {
+  const outcome = await runBoundedGateStages(stages);
+  const details = evidence();
+  let prepared, ownership;
+  try {
+    ownership = await captureCiSummaryOwnership(environment, pinOperations);
+    await publish({ ...details, outcome });
+    prepared = await prepare(environment, details.summary, {
+      signal: details.signal, timeline: details.timeline, canaries: summaryCanaries, ownership,
+    });
+    // No await or verdict-affecting work is allowed after this commit. Listener
+    // disposal is synchronous and signals delivered afterwards are post-completion.
+    const committed = { ...outcome, ciCommitted: true };
+    prepared.commit();
+    try { dispose(); } catch { /* Disposal cannot reclassify a committed result. */ }
+    return committed;
+  } catch (error) {
+    outcome.secondaryErrors.push(error);
+    try { await prepared?.discard(); } catch (cleanupError) { outcome.secondaryErrors.push(cleanupError); }
+    const failed = structuredClone(details.summary ?? { mode: details.profile });
+    failed.status = details.signal?.aborted ? "cancelled" : "failed";
+    delete failed.cleanupPending;
+    failed.cleanupErrors = outcome.secondaryErrors.map(error => redactSecrets(error.message, summaryCanaries));
+    const primary = outcome.primaryError ?? outcome.secondaryErrors[0];
+    failed.failure = { message: redactSecrets(primary.message, summaryCanaries), exitCode: primary.exitCode ?? 1 };
+    if (ownership && !ownership.released) {
+      try { await persistFailure(environment, failed, summaryCanaries, { ownership, timeline: details.timeline }); }
+      catch (persistenceError) { outcome.secondaryErrors.push(persistenceError); }
+    }
+    try { releaseCiSummaryOwnership(ownership); } catch (releaseError) { outcome.secondaryErrors.push(releaseError); }
+    return outcome;
+  }
+}
+
 async function executeGate({ timeline: suppliedTimeline } = {}) {
+  const profile = parseQualificationProfile(process.argv.slice(2));
+  const provenance = profile.startsWith("ci-") ? qualificationProvenance(process.env) : null;
   const cancellation = createSignalAbortController();
-  const smokeOnly = process.argv.includes("--smoke-only");
+  const smokeOnly = profile === "smoke-only";
   const wallStartedAt = Date.now();
   const timeline = suppliedTimeline ?? createGateTimeline();
   let diagnosticsDirectory;
@@ -2220,6 +2502,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
   let primaryError;
   let cleanupErrors = [];
   let finalSummary;
+  let workspaceRemoved = false;
   let source = emptyGateSource();
   let gateLifecycle;
   const summaryCanaries = buildAdministrationCanaries(
@@ -2285,6 +2568,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       },
     );
     return executeFullGate({
+      profile,
       source,
       workspace: disposable.workspace,
       files: disposable.files,
@@ -2329,6 +2613,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
     if (disposable?.workspace) {
       try {
         await removeDisposableWorkspace(disposable, signal);
+        workspaceRemoved = true;
       } catch (error) {
         localErrors.push(error);
       }
@@ -2352,6 +2637,7 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       };
     const finalized = await finalizeGateAttemptEvidence({
       timeline,
+      mode: profile,
       diagnosticsDirectory,
       diagnosticsOwnership,
       lifecycle: gateLifecycle,
@@ -2437,13 +2723,25 @@ async function executeGate({ timeline: suppliedTimeline } = {}) {
       }
     }
   } else {
-    const outcome = await runBoundedGateStages({
+    const stages = {
       timeline,
       cancellationSignal: cancellation.signal,
       execute: executeAttempt,
       cleanup: cleanupAttempt,
       finalize: finalizeAttempt,
-    });
+    };
+    const outcome = provenance
+      ? await runCiQualificationAttempt({
+          stages, environment: process.env, summaryCanaries,
+          dispose: cancellation.dispose,
+          evidence: () => ({
+            profile, summary: finalSummary, provenance, runner: qualificationRunner(process.env),
+            workspaceRemoved, diagnosticsDirectory, gateLifecycle,
+            runnerTemp: process.env.RUNNER_TEMP, signal: cancellation.signal, timeline,
+          }),
+        })
+      : await runBoundedGateStages(stages);
+    if (outcome.ciCommitted) return;
     result = outcome.result;
     primaryError = outcome.primaryError;
     cleanupErrors = outcome.secondaryErrors;
