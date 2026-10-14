@@ -12,7 +12,10 @@ import {
 import { localJson } from "@/lib/authenticated-fetch";
 import { localClientId, usableClientName } from "@/lib/local-client-name";
 
-type Names = { names: Record<string, string>; request: (id: string) => void };
+type Names = {
+  names: Record<string, string>;
+  register: (id: string) => () => void;
+};
 const Context = createContext<Names | null>(null);
 
 /** A cache owned by this authenticated page; never shared across sessions. */
@@ -20,7 +23,7 @@ export function ClientNamesProvider({ children }: { children: ReactNode }) {
   const [names, setNames] = useState<Record<string, string>>({});
   const [failed, setFailed] = useState(false);
   const state = useRef({
-    wanted: new Set<string>(),
+    consumers: new Map<string, number>(),
     requested: new Set<string>(),
     epoch: 0,
     controllers: new Set<AbortController>(),
@@ -35,7 +38,7 @@ export function ClientNamesProvider({ children }: { children: ReactNode }) {
     queueMicrotask(() => {
       s.queued = false;
       if (!s.mounted) return;
-      const ids = [...s.wanted].filter((id) => !s.requested.has(id));
+      const ids = [...s.consumers.keys()].filter((id) => !s.requested.has(id));
       for (let offset = 0; offset < ids.length; offset += 100) {
         const batch = ids.slice(offset, offset + 100),
           epoch = s.epoch;
@@ -64,10 +67,17 @@ export function ClientNamesProvider({ children }: { children: ReactNode }) {
       }
     });
   }, []);
-  const request = useCallback(
+  const register = useCallback(
     (id: string) => {
-      state.current.wanted.add(id);
+      const consumers = state.current.consumers;
+      consumers.set(id, (consumers.get(id) ?? 0) + 1);
       flush();
+      // Multiple rows and filter chips may represent the same stable instance.
+      return () => {
+        const remaining = (consumers.get(id) ?? 0) - 1;
+        if (remaining > 0) consumers.set(id, remaining);
+        else consumers.delete(id);
+      };
     },
     [flush],
   );
@@ -94,7 +104,7 @@ export function ClientNamesProvider({ children }: { children: ReactNode }) {
       s.mounted = false;
       s.epoch++;
       s.controllers.forEach((controller) => controller.abort());
-      s.wanted.clear();
+      s.consumers.clear();
       s.requested.clear();
       channel.close();
       window.removeEventListener("focus", invalidate);
@@ -103,7 +113,7 @@ export function ClientNamesProvider({ children }: { children: ReactNode }) {
     };
   }, [flush, invalidate]);
   return (
-    <Context.Provider value={{ names, request }}>
+    <Context.Provider value={{ names, register }}>
       {failed && (
         <p role="status" className="px-10 pt-4">
           Client names unavailable; instance IDs remain visible.{" "}
@@ -129,10 +139,10 @@ export function ClientName({
 }) {
   const context = useContext(Context),
     id = localClientId(clientKey);
-  const request = context?.request;
+  const register = context?.register;
   useEffect(() => {
-    if (id && request && label === undefined) request(id);
-  }, [id, request, label]);
+    if (id && register && label === undefined) return register(id);
+  }, [id, register, label]);
   const name = label === undefined ? id && context?.names[id] : label;
   if (!id || !usableClientName(name))
     return <span className="[overflow-wrap:anywhere]">{clientKey}</span>;

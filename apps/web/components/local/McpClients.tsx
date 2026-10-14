@@ -60,11 +60,19 @@ export default function McpClients() {
   const [readError, setReadError] = useState('');
   const [renameDraft, setRenameDraft] = useState<{ client: Client; name: string; needsRead: boolean; currentName?: string } | null>(null);
   const [renameError, setRenameError] = useState('');
+  const renameButtons = useRef(new Map<string, HTMLButtonElement>());
+  const cancelledRename = useRef<string | null>(null);
   const [generation, setGeneration] = useState(0);
   const pending = useRef<AbortController | null>(null);
   const mutation = useRef<AbortController | null>(null);
   const revision = useRef(0);
   const channel = useRef<BroadcastChannel | null>(null);
+  useEffect(() => {
+    if (renameDraft || !cancelledRename.current) return;
+    // The form has unmounted and the captured instance's button is enabled again.
+    renameButtons.current.get(cancelledRename.current)?.focus();
+    cancelledRename.current = null;
+  }, [renameDraft]);
   useEffect(() => {
     const interaction = (event: Event) => {
       if (
@@ -357,7 +365,7 @@ export default function McpClients() {
         <div className="flex gap-3">
           <button className={button} disabled={busy || renameDraft.needsRead}>Save name</button>
           <button type="button" className={button} disabled={busy} onClick={()=>void readCurrentName()}>Read current name</button>
-          <button type="button" className={button} disabled={busy} onClick={()=>{setRenameDraft(null);setRenameError('');}}>Cancel rename</button>
+          <button type="button" className={button} disabled={busy} onClick={()=>{cancelledRename.current=renameDraft.client.id;setRenameDraft(null);setRenameError('');}}>Cancel rename</button>
         </div>
       </form>}
       <ul className="space-y-3">
@@ -368,7 +376,7 @@ export default function McpClients() {
             </div>
             <code className="break-all">{client.id}</code>
             <p>Generation {client.generation}</p>
-            <button className={button} disabled={busy || !!renameDraft} aria-label={`Rename ${client.id}`} onClick={()=>{setRenameDraft({client,name:client.label,needsRead:false});setRenameError('');}}>Rename</button>
+            <button ref={element=>{if(element)renameButtons.current.set(client.id,element);else renameButtons.current.delete(client.id);}} className={button} disabled={busy || !!renameDraft} aria-label={`Rename ${client.id}`} onClick={()=>{setRenameDraft({client,name:client.label,needsRead:false});setRenameError('');}}>Rename</button>
             {' '}<a className={button} href={`/dashboard/history#mcp-client=${client.id}`} aria-label={`View activity ${client.id}`}>View activity</a>{' '}
 
             <button

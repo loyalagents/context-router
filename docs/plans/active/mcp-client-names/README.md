@@ -273,10 +273,27 @@ final qualification item until executed on the reviewed source.
   attribution and expanded history details. Keyboard/mobile history inspection
   and cross-window rename invalidation have dedicated browser assertions.
 
-Complete-diff security and UI reviewers are assigned and awaiting the frozen
-candidate; their code approvals are not yet claimed. Final full migration,
-native/packaged qualification and exact-head CI are pending. No user app,
-personal state, client configuration, live model or provider was used.
+Both complete-diff reviewers approved candidate
+`5b4c1b5f051ca64c480f55c00bc1d0d631257a77`. The security reviewer reported no
+findings; the UI/compatibility reviewer reported no blockers and two P3 findings
+accepted by the coordinator: Cancel rename lost keyboard focus, and the provider
+retained IDs after their last visible row/filter consumer disappeared. Browser
+regressions reproduced both findings before the correction. Cancel now restores
+focus to the captured instance's Rename button after form unmount; reference
+counted registration removes inactive IDs from future invalidation reads while
+retaining page-local cached results and bounded batching. Forward history
+navigation has an explicit assertion alongside the existing back-navigation one.
+
+Only the two web components, their browser regressions and this record change in
+the correction batch. The original backend/authentication, persistence, native,
+CLI, schema, contract and other unaffected review/test evidence carries forward.
+The rebuilt UI passed all 49 existing/new browser, parser and transport checks,
+including both corrected regressions, loaded-page batching, focus/broadcast
+eviction, lock/expiry cleanup and backward/forward history navigation. Markdown
+links, direct contract census and whitespace checks also pass. Affected reviewer
+rechecks remain pending on the corrected candidate; final full migration,
+native/packaged qualification and exact-head CI remain pending.
+No user app, personal state, client configuration, live model or provider was used.
 
 ## Validation And Finalization
 

@@ -131,7 +131,14 @@ test(
     await f.page
       .getByLabel("Client name", { exact: true })
       .fill("discard this");
-    await f.page.getByRole("button", { name: "Cancel rename" }).click();
+    await f.page.getByRole("button", { name: "Cancel rename" }).focus();
+    await f.page.keyboard.press("Enter");
+    assert.equal(
+      await row
+        .getByRole("button", { name: `Rename ${a.id}`, exact: true })
+        .evaluate((button) => button === document.activeElement),
+      true,
+    );
     assert.equal(clients(f).find((c) => c.id === a.id).label, a.label);
     await row
       .getByRole("button", { name: `Rename ${a.id}`, exact: true })
@@ -423,7 +430,7 @@ test(
 );
 
 test(
-  "client names refresh on CLI changes and exact filters survive focus, manual edits and browser back",
+  "client names refresh on CLI changes and exact filters survive focus, manual edits and browser back and forward",
   { timeout: 60000 },
   async (t) => {
     const f = await browserFixture(t),
@@ -486,6 +493,16 @@ test(
       .getByRole("button")
       .filter({ hasText: "syntheticReadfirst" })
       .waitFor();
+    await f.page.goForward();
+    await f.page
+      .getByRole("button")
+      .filter({ hasText: "syntheticReadsecond" })
+      .waitFor();
+    assert.equal(new URL(f.page.url()).hash, `#mcp-client=${b.id}`);
+    assert.equal(
+      await f.page.getByLabel("Client key", { exact: true }).inputValue(),
+      `local:${b.id}`,
+    );
     await f.page
       .getByRole("tabpanel", { name: "MCP Access" })
       .getByRole("button", { name: "Reset", exact: true })
@@ -500,6 +517,77 @@ test(
       .filter({ hasText: "syntheticReadsecond" })
       .waitFor();
     assert.equal(new URL(f.page.url()).hash, "");
+  },
+);
+
+test(
+  "client names refresh only represented IDs after changing the selected instance",
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t),
+      a = clients(f)[0];
+    const b = JSON.parse(
+      f.cli(
+        "local-mcp.js",
+        "provision",
+        "--label",
+        "Second client",
+        "--out",
+        path.join(f.root, "second.token"),
+      ).stdout,
+    ).result;
+    seed(f, a);
+    seed(f, b, "second");
+    const batches = [];
+    f.page.on("request", (request) => {
+      if (request.url().endsWith("/api/local/mcp/labels"))
+        batches.push(request.postDataJSON().ids);
+    });
+    await unlock(f, `/dashboard/history#mcp-client=${a.id}`);
+    const history = f.page.getByRole("tabpanel", { name: "MCP Access" });
+    await history.getByText(a.label, { exact: true }).first().waitFor();
+    await history
+      .getByLabel("Client key", { exact: true })
+      .fill(`local:${b.id}`);
+    await history.getByRole("button", { name: "Apply", exact: true }).click();
+    await history
+      .getByRole("button")
+      .filter({ hasText: "syntheticReadsecond" })
+      .waitFor();
+    await history.getByText(b.label, { exact: true }).first().waitFor();
+    assert.equal(
+      await history
+        .getByRole("button")
+        .filter({ hasText: "syntheticReadfirst" })
+        .count(),
+      0,
+    );
+    for (const refresh of ["focus", "broadcast"]) {
+      const nextName = `Second client after ${refresh}`;
+      f.cli("local-mcp.js", "rename", "--id", b.id, "--label", nextName);
+      batches.length = 0;
+      await f.page.evaluate((refresh) => {
+        if (refresh === "focus") window.dispatchEvent(new Event("focus"));
+        else {
+          const channel = new BroadcastChannel(
+            "context-router.mcp-management.v1",
+          );
+          channel.postMessage("invalidate");
+          channel.close();
+        }
+      }, refresh);
+      await history.getByText(nextName, { exact: true }).first().waitFor();
+      assert.ok(batches.length > 0);
+      assert.ok(
+        batches.every(
+          (batch) =>
+            batch.length > 0 &&
+            batch.length <= 100 &&
+            batch.every((id) => id === b.id),
+        ),
+        `${refresh} fetched an instance no longer represented: ${JSON.stringify(batches)}`,
+      );
+    }
   },
 );
 
