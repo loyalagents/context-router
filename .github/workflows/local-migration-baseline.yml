@@ -62,6 +62,11 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Qualify private pinned Node for isolated client fixtures
+        timeout-minutes: 1
+        run: bash scripts/local-migration/ci-private-node.sh
+        working-directory: .
+
       - name: Verify toolchain and seed offline Corepack runtime
         timeout-minutes: 5
         run: |
@@ -182,6 +187,11 @@ jobs:
         timeout-minutes: 5
         with:
           python-version: '3.12'
+
+      - name: Qualify private pinned Node for isolated client fixtures
+        timeout-minutes: 1
+        run: bash scripts/local-migration/ci-private-node.sh
+        working-directory: .
 
       - name: Verify toolchain and seed offline Corepack runtime
         timeout-minutes: 5

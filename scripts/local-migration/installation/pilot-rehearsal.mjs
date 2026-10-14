@@ -60,7 +60,10 @@ const receipt = { version: 1, status: 'running', fromManifest: hash(aBytes), toM
   ] };
 const owners = [], clients = [];
 let proxy;
-const signal = AbortSignal.timeout(240000);
+// This outer qualification budget includes two complete sealed artifact copies,
+// repeated inventory verification and optional 5.7 GB offline weight hashes.
+// Startup, stop and command deadlines below retain their existing bounds.
+const started=Date.now(),signal = AbortSignal.timeout(600000);
 const exe = () => path.join(app, 'Contents/MacOS/context-router');
 const node = () => path.join(app, 'Contents/Resources/bin/node');
 const profile = path.join(root, 'offline.sb');
@@ -175,7 +178,7 @@ async function measure(name) {
   const volume = await statfs(root);
   receipt.disk.push({ phase: name, ...totals, volumeAvailableBytes: volume.bavail * volume.bsize });
 }
-async function phase(name) { receipt.phases.push(name); await measure(name); console.log(`Pilot rehearsal: ${name}`); }
+async function phase(name) { receipt.phases.push(name); await measure(name);(receipt.phaseTiming??=[]).push({name,elapsedMs:Date.now()-started});console.log(`Pilot rehearsal: ${name}`); }
 async function inspectLive(owner) {
   const origin = new URL(owner.ready.origin);
   assert.equal(origin.protocol, 'http:'); assert.equal(origin.hostname, '127.0.0.1');
@@ -312,8 +315,9 @@ try {
   if(values['model-file']){receipt.offlineModelRetention=await offlineModelRetention({root,previous:path.join(root,'previous.app'),current:app,source:values['model-file'],model:bManifest.model});await phase('verified-real-weight-clone-offline-epoch-retention');}
   else receipt.limitations.push('No trusted real-weight input supplied; real-weight retention remains unproved.');
   receipt.status = 'passed';
-} catch {
+} catch(error) {
   receipt.status = 'failed'; receipt.failure = 'Rehearsal assertion or owned-process failure; preserve output for diagnosis.';
+  receipt.failureDiagnostic={name:error?.name,code:typeof error?.code==='string'||typeof error?.code==='number'?error.code:null,deadlineExpired:signal.aborted,elapsedMs:Date.now()-started,lastCompletedPhase:receipt.phases.at(-1)??null};
   process.exitCode = 1;
 } finally {
   for (const client of clients) try { await bounded(client.close(), 5000); } catch { receipt.status = 'failed'; }
@@ -324,7 +328,9 @@ try {
   }
   if (receipt.status !== 'passed') process.exitCode = 1;
   receipt.owners = owners.map(o => ({ pid: o.child.pid, stopped: o.stopped === true,
-    notSpawned: o.notSpawned === true, exitCode: o.child.exitCode, signal: o.child.signalCode }));
+    notSpawned: o.notSpawned === true, exitCode: o.child.exitCode, signal: o.child.signalCode,
+    diagnosticBytes:o.diagnosticBytes,eventTypes:o.events.map(e=>e.type),lastOutcome:o.events.at(-1)?.outcome??null }));
+  receipt.elapsedMs=Date.now()-started;
   await writeFile(path.join(root, 'receipt.json'), JSON.stringify(receipt, null, 2) + '\n', { mode: 0o600 });
   console.log(`Pilot rehearsal: ${receipt.status}; ${path.join(root, 'receipt.json')}`);
 }

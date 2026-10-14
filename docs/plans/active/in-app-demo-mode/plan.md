@@ -870,3 +870,33 @@ whitespace checks passed. Python 3.12.8, the cached PostgreSQL image, pinned
 Node/pnpm, compiler/SDK and Chromium prerequisites are available for the final
 round. Record its outcomes in PR #183 and retained receipts, without an
 evidence-only source commit.
+
+Checkpoint 6 — qualification harness correction: both fresh reviewers approved
+`9f7e142` with no remaining blocker, carrying their complete-base reviews through
+the affected rechecks. That revision's portable 83/83 and native 223/223 suites
+passed and its clean, sealed package receipt binds copied inputs
+`a54ce993e40aa8cb9bdb5ff6c8fa3e1c8d3afa057c1d5a3fa9ddd8fba9a5ef48`.
+Remote Linux qualification exposed the same shared Node ancestry prerequisite in
+portable Desktop tests. One small CI-only script now supplies a byte/version-
+verified private Node through `GITHUB_PATH` to each affected job; both Desktop
+suites passed 10/10 under it and workflow contracts passed 14/14.
+
+Artifact execution exposed a test-client SDK lookup from the web package instead
+of its backend owner; only the harness lookup changed. Installed isolation's
+initial five-second probe failed under parallel copy load and passed unchanged
+on its retained copy; its deadline stays unchanged with bounded diagnostics
+added. The replacement fixture reached epoch-2 authority/state continuity and
+old-artifact refusal, then exceeded its outer 240-second budget: the next owned
+session began at 245.208 seconds. The coordinator approved a bounded 600-second
+outer budget for full sealed artifact copies/inventories and optional real-weight
+hashes. Existing startup, stop, command and product bounds stay unchanged;
+sanitized phase timing and failure diagnostics were added. Failed fixtures remain
+retained, and corrected harnesses rerun serially against the exact sealed artifact.
+
+This correction changes only CI qualification setup, harnesses, their checks and
+this record; runtime/package inputs remain identical to `9f7e142`. Carry-forward
+evidence must retain that original source/artifact provenance and explicitly
+verify the unchanged runtime/package tree against the final head. The corrected
+harness revision and new exact-head CI/affected reviewer approvals are recorded
+in PR #183. Full local gate, complete artifact cycles, offline real-weight
+retention and human acceptance are not claimed by this checkpoint.
