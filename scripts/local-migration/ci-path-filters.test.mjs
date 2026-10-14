@@ -319,8 +319,8 @@ test('historical corpus selects shared product lanes and frontend runs the bound
 
 test('all jobs with trusted client fixtures inherit one private pinned Node before qualification',async()=>{
  for(const [file,job] of [[ciPath,'frontend-build'],[ciPath,'desktop-native'],[dedicatedPath,'source-qualification'],[dedicatedPath,'packaging-qualification']]){
-  const steps=parse(await readFile(file,'utf8')).jobs[job].steps,setup=steps.findIndex(s=>s.uses==='actions/setup-node@v4'),privateNode=steps.findIndex(s=>s.run==='bash scripts/local-migration/ci-private-node.sh'),install=steps.findIndex(s=>s.run==='pnpm install --frozen-lockfile');
-  assert.ok(setup<privateNode&&privateNode<install,job);assert.equal(steps[privateNode]['working-directory'],'.');assert.equal(steps[privateNode]['timeout-minutes'],1);
+  const steps=parse(await readFile(file,'utf8')).jobs[job].steps,setup=steps.findIndex(s=>s.uses==='actions/setup-node@v4'),privateNode=steps.findIndex(s=>s.run?.split('\n').includes('bash scripts/local-migration/ci-private-node.sh')),install=steps.findIndex(s=>s.run==='pnpm install --frozen-lockfile');
+  assert.ok(setup<privateNode&&privateNode<install,job);if(file===ciPath){assert.equal(steps[privateNode]['working-directory'],'.');assert.equal(steps[privateNode]['timeout-minutes'],1);}else{assert.equal(steps[privateNode].name,'Verify toolchain and seed offline Corepack runtime');assert.equal(steps[privateNode]['timeout-minutes'],5);}
  }
  const script=await readFile(path.join(repositoryRoot,'scripts/local-migration/ci-private-node.sh'),'utf8');
  assert.ok(script.includes('mktemp -d "$HOME/.context-router-ci-node.XXXXXX"'));assert.ok(script.includes('install -m 700 "$ci_node_source" "$ci_node_root/node"'));assert.ok(script.includes('cmp "$ci_node_source" "$ci_node_root/node"'));assert.ok(script.includes('= v24.21.0'));assert.ok(script.includes('>> "$GITHUB_PATH"'));
