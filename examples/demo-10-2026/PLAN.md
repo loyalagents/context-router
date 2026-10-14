@@ -684,3 +684,45 @@ The observer waits for the importer token before opening SQLite so it cannot
 interfere with identity/schema initialization. Full candidate results and review
 verdicts will be recorded on the PR; previous product/build coverage is unaffected,
 while prior home/import/launcher evidence is superseded by this round.
+
+### Follow-up review of 5a177d7
+
+Claude confirmed the earlier fixes but reproduced a test-induced SQLite lock
+conflict. This supersedes the preceding claim that waiting for `importer.token`
+made concurrent observation safe: token creation precedes the credential insert,
+and later reads can still contend with zero-timeout rollback-journal writes.
+The previously reported 49-test pass was one successful run, not evidence that
+the polling test was reliable.
+
+The coordinator remains sole writer. The independent recovery reviewer approved
+this bounded plan before implementation (requested Astra/xhigh; effective runtime
+settings unverified). Checkpoints are tests-first progress/cancellation and pnpm
+diagnostics, actual child interruption tests, then frozen full-suite validation
+and affected independent reviews on this same PR. No product, CI, personal client
+or running demo changes are included.
+
+- Replace database polling with an optional counts-only import progress callback
+  after validated SET completion. A test wrapper pauses there using IPC. The
+  parent waits for the child's signal acknowledgment before releasing the pause,
+  and opens SQLite only after child exit. No live database copies or busy-timeout
+  changes are used to hide the observer effect.
+- First signal requests cleanup; a repeated signal removes only the preparation's
+  own handlers and re-sends the signal, restoring normal signal behavior. Forced
+  termination cannot claim revocation or a failure receipt. Tests cover repeated
+  SIGINT and SIGTERM while preparation is blocked.
+- A signal during manifest publication finishes the write and stops before home
+  selection, preserving the readable manifest without writing `failed.json`.
+  The late-signal fixture performs the real write, holds its promise pending,
+  then signals/acknowledges/resumes. Prior selection and the retained lock are
+  asserted. This supersedes the previous late-signal completion behavior.
+- Keep the exact pnpm requirement and first-PATH-installation semantics; provide
+  Corepack and PATH hints instead of silently falling back. README documents a
+  terminal-session PATH correction, without modifying installations or profiles.
+- Durable failure guidance says to inspect `writer.lock`; legacy output-directory
+  guidance is separate. Test imports are grouped at the top of their file.
+
+The seven focused regression cases passed after their failing pre-implementation
+run. The final suite and review results will be recorded on the PR. Product/build
+coverage is unchanged; the earlier recovery-test evidence is replaced. Signals
+outside runtime preparation and unrelated callers' installed signal handlers
+retain their existing behavior; this is not a general process supervisor.

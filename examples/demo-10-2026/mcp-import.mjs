@@ -31,7 +31,8 @@ export async function call(client, name, args) {
   return payload;
 }
 
-export async function importEntries(client, entries, { signal } = {}) {
+export async function importEntries(client, entries, { signal, onProgress } = {}) {
+  let completed = 0;
   try {
     for (const entry of entries) {
       signal?.throwIfAborted();
@@ -46,8 +47,11 @@ export async function importEntries(client, entries, { signal } = {}) {
       signal?.throwIfAborted();
       if (written.changed !== true || written.preference?.slug !== entry.definition.slug ||
           written.preference.value !== JSON.parse(entry.preference.value)) throw new Error();
+      // Counts only, after the SET has settled and its response is validated.
+      await onProgress?.({ completed: ++completed, total: entries.length });
+      signal?.throwIfAborted();
     }
   } catch {
-    throw safeError('Import stopped. Partial state was preserved; do not replay uncertain writes. Prepare a new directory for a fresh rehearsal.');
+    throw safeError('Import stopped. Partial state was preserved; do not replay uncertain writes.');
   }
 }

@@ -152,3 +152,15 @@ test('build preflight discovers pnpm on the user PATH but does not inherit shell
     delete process.env.DEMO_TEST_SECRET;
   }
 });
+
+test('an older pnpm on PATH is rejected with a toolchain and PATH correction hint', async t => {
+  const root = await temporary(t);
+  await fs.writeFile(path.join(root, 'pnpm'), '#!/bin/sh\necho 10.24.0\n', { mode: 0o700 });
+  const original = process.env.PATH; process.env.PATH = root;
+  try { await assert.rejects(buildEvidence(), error => {
+    assert.match(error.demoSafeMessage, /pnpm 10\.25\.0/);
+    assert.match(error.demoSafeMessage, /corepack prepare pnpm@10\.25\.0 --activate/);
+    assert.match(error.demoSafeMessage, /Node.*bin.*PATH/);
+    return true;
+  }); } finally { if (original === undefined) delete process.env.PATH; else process.env.PATH = original; }
+});

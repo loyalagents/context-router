@@ -71,9 +71,10 @@ export async function buildEvidence() {
   // Discover the user's installation, then execute only this check with the
   // same clean environment used for demo processes (no inherited secrets).
   const found = spawnSync('/usr/bin/which', ['pnpm'], { env: { PATH: process.env.PATH ?? cleanEnvironment().PATH }, encoding: 'utf8', timeout: 10000 });
-  if (found.status !== 0) throw safeError('Make pnpm 10.25.0 available on PATH.');
+  const pnpmHint = 'Use pnpm 10.25.0 on PATH. With Node 24.21.0 selected, run "corepack enable && corepack prepare pnpm@10.25.0 --activate", put the Node bin directory first on PATH, then run "pnpm check:toolchain".';
+  if (found.status !== 0) throw safeError(pnpmHint);
   const pnpm = spawnSync(path.resolve(found.stdout.trim()), ['--version'], { env: cleanEnvironment(), encoding: 'utf8', timeout: 10000 });
-  if (pnpm.status !== 0 || pnpm.stdout.trim() !== '10.25.0') throw safeError('Use pnpm 10.25.0 on PATH.');
+  if (pnpm.status !== 0 || pnpm.stdout.trim() !== '10.25.0') throw safeError(pnpmHint);
   try { await fs.access(path.join(backendRoot, 'dist/local-identity.js')); }
   catch { throw safeError('Backend build missing; run pnpm --filter backend build.'); }
   let webBuildId;
@@ -124,7 +125,7 @@ export async function verifyApplication(application, principalId, plan, { strict
   return { active: rows.length, importAuditsVerified: plan.entries.length, modified };
 }
 
-export async function prepareDemo({ out, input, dataset = 'demo001', durable = false }, { beforeCreate = async () => {} } = {}) {
+export async function prepareDemo({ out, input, dataset = 'demo001', durable = false }, { beforeCreate = async () => {}, onProgress, writeManifest = writeJson } = {}) {
   if (out === repoRoot || out?.startsWith(repoRoot + path.sep)) throw safeError('Prepare private state outside the repository.');
   const plan = await loadDemoPlan(input, dataset);
   if (!plan.entries.length) throw safeError('The source has no active memories.');
@@ -133,10 +134,22 @@ export async function prepareDemo({ out, input, dataset = 'demo001', durable = f
   try { b = backend(); } catch { throw safeError('Backend modules unavailable; install dependencies, generate Prisma and rebuild the backend.'); }
   const abort = new AbortController();
   let interruptedBy;
-  const onInterrupt = signal => { interruptedBy ??= signal; abort.abort(safeError(`Preparation interrupted by ${interruptedBy}; partial state is preserved and must not be replayed.`)); };
+  const onInterrupt = signal => {
+    if (interruptedBy) {
+      // Restore the behavior outside this preparation scope. Do not remove
+      // another caller's handlers or claim cleanup after forced termination.
+      removeSignalHandlers(); process.kill(process.pid, signal); return;
+    }
+    interruptedBy = signal;
+    abort.abort(safeError(`Preparation interrupted by ${signal}; partial state is preserved and must not be replayed.`));
+    process.stderr.write('Stopping preparation after the current operation. Press Ctrl-C again to force termination; cleanup may be incomplete.\n');
+  };
   const onInt = () => onInterrupt('SIGINT'), onTerm = () => onInterrupt('SIGTERM');
+  const removeSignalHandlers = () => { process.off('SIGINT', onInt); process.off('SIGTERM', onTerm); };
   process.on('SIGINT', onInt); process.on('SIGTERM', onTerm);
-  let runtime, importer, credentials, seed, revoked = false, stage = 'initialize', cleanupError, rootCreated = false;
+  let runtime, importer, credentials, seed, revoked = false, stage = 'initialize', cleanupError, rootCreated = false, manifestPublished = false;
+  const recovery = durable ? 'Stop and inspect writer.lock and retained artifacts before deciding recovery.'
+    : 'Inspect retained artifacts before preparing a new output directory; never replay.';
   const advance = next => { abort.signal.throwIfAborted(); stage = next; };
   try {
     await beforeCreate(); abort.signal.throwIfAborted();
@@ -161,7 +174,7 @@ export async function prepareDemo({ out, input, dataset = 'demo001', durable = f
     credentials.permissions(seed.id, policy(['preferences:write', 'preferences:define'], targets));
     advance('start'); runtime = await b.createLocalMcpApplication(config, { port: 0 });
     advance('connect'); importer = await connect(runtime.port, path.join(out, 'exports/importer.token'));
-    advance('import'); await importEntries(importer, plan.entries, { signal: abort.signal });
+    advance('import'); await importEntries(importer, plan.entries, { signal: abort.signal, onProgress });
     advance('verify'); await verifyApplication(runtime.application, identity.principalId, plan, { strict: true, importerId: seed.id });
     advance('revoke'); credentials.revoke(seed.id); revoked = true;
     advance('clients');
@@ -183,17 +196,19 @@ export async function prepareDemo({ out, input, dataset = 'demo001', durable = f
       clients: { agentA: { id: agentA.id, write: true, targets }, agentB: { id: agentB.id, write: false, targets: bTargets },
         ...(durable ? { agentC: { id: agentC.id, write: false, targets: bTargets } } : {}) },
       limits: ['Native MCP SET sourceType is INFERRED.', 'Ordinary SET without evidence clears live evidence; import audit retains it.', 'Live assistant rehearsal pending.'] };
-    // Manifest publication is the completion boundary. A later signal must not
-    // turn a completed preparation into both a prepared and failed receipt.
-    advance('manifest'); await writeJson(path.join(out, 'manifest.json'), manifest); return manifest;
+    // Finish a started manifest write, but honor cancellation before returning
+    // to home selection. A completed manifest must not also get failed.json.
+    advance('manifest'); await writeManifest(path.join(out, 'manifest.json'), manifest); manifestPublished = true;
+    if (abort.signal.aborted) throw safeError('Preparation interrupted after manifest publication; completed manifest preserved for inspection.');
+    return manifest;
   } catch (error) {
     if (seed && !revoked) { try { credentials.revoke(seed.id); revoked = true; } catch { cleanupError = true; } }
-    if (rootCreated) await writeJson(path.join(out, 'failed.json'), { status: 'failed', stage, ...(interruptedBy ? { interruptedBy } : {}), partialStatePreserved: true, importerRevoked: revoked, cleanupRequiresInspection: Boolean(cleanupError), retry: 'Use a new output directory; never replay.' }).catch(() => {});
-    throw error?.demoSafeMessage ? error : safeError(`Demo preparation failed during ${stage}; partial state preserved. Use a new directory.`);
+    if (rootCreated && !manifestPublished) await writeJson(path.join(out, 'failed.json'), { status: 'failed', stage, ...(interruptedBy ? { interruptedBy } : {}), partialStatePreserved: true, importerRevoked: revoked, cleanupRequiresInspection: Boolean(cleanupError), retry: recovery }).catch(() => {});
+    throw safeError(`${error?.demoSafeMessage ?? `Demo preparation failed during ${stage}; partial state preserved.`} ${recovery}`);
   } finally {
     // Attempt both closures even when one fails. Never erase partial or uncertain state.
     try { try { await importer?.close(); } finally { await runtime?.close(); } }
-    finally { process.off('SIGINT', onInt); process.off('SIGTERM', onTerm); }
+    finally { removeSignalHandlers(); }
   }
 }
 

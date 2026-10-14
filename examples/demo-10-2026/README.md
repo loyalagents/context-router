@@ -34,6 +34,20 @@ node examples/demo-10-2026/demo.mjs serve
 Commands run from the repository root. This local mode needs no hosted database,
 Docker, Auth0 or local model. Existing matching builds can be reused.
 
+Preparation checks the first pnpm on your shell's PATH, just like the repository
+toolchain check. If an older standalone pnpm shadows the pinned Corepack install,
+select Node and put its bin directory first for this terminal session:
+
+```sh
+nvm use 24.21.0
+export PATH="$(dirname "$(node -p 'process.execPath')"):$PATH"
+pnpm check:toolchain
+```
+
+If the pinned pnpm is not installed yet, follow the repository's
+[toolchain setup](../../README.md#contributor-start). The demo does not silently
+fall back to a different installation or change your shell configuration.
+
 The default home is `~/Library/Application Support/Context Router Demo`.
 Preparation creates a generation under `generations/<id>`, stable login folders
 under `profiles/`, and a private selection receipt. Initial ports are dashboard
@@ -255,8 +269,13 @@ the installed command on your shell's PATH, then runs it with a clean environmen
 
 During import, **Ctrl-C** or **SIGTERM** lets the current MCP request settle,
 then stops without replay, attempts importer revocation and records `failed.json`.
-Wait for the process to exit. This is graceful cleanup, not a guarantee after
-SIGKILL, power loss or cleanup failure. An interrupted import/publication
+Wait for the process to exit. If it stalls, a second Ctrl-C or SIGINT/SIGTERM
+restores normal signal termination. Forced termination may skip revocation and
+the failure receipt; retain the state and lock for inspection. Graceful cleanup
+is not a guarantee after SIGKILL, power loss or cleanup failure. A signal during
+the final manifest write allows that write to finish, preserves the manifest
+without a contradictory failure receipt, and stops before selecting the new
+generation. An interrupted import/publication
 or Desktop replacement retains partial state, lock and recovery artifacts.
 **Do not delete an unknown lock, rerun uncertain writes, or automatically restore
 a backup.** Stop for read-only inspection: identify the writer, inspect selected

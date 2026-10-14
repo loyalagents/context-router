@@ -133,6 +133,22 @@ test('cancellation waits for the in-flight definition, then stops before SET wit
   assert.deepEqual(calls, ['CREATE_DEFINITION']);
 });
 
+test('progress runs after a settled SET and cancellation stops before the next entry', async () => {
+  const entries = (await loadDemoPlan()).entries.slice(0, 2), abort = new AbortController(), calls = [], progress = [];
+  const client = { async callTool({ arguments: args }) {
+    calls.push(args.operation);
+    return { structuredContent: args.operation === 'CREATE_DEFINITION'
+      ? { success: true, changed: true, definition: { ...args.definition, visibility: 'USER' } }
+      : { success: true, changed: true, preference: { slug: args.preference.slug, value: JSON.parse(args.preference.value) } } };
+  } };
+  await assert.rejects(importEntries(client, entries, { signal: abort.signal, onProgress: async value => {
+    assert.deepEqual(calls, ['CREATE_DEFINITION', 'SET_PREFERENCE']);
+    progress.push(value); await new Promise(resolve => setImmediate(resolve)); abort.abort();
+  } }), /Import stopped/);
+  assert.deepEqual(progress, [{ completed: 1, total: 2 }]);
+  assert.deepEqual(calls, ['CREATE_DEFINITION', 'SET_PREFERENCE']);
+});
+
 test('serve refuses partial or mismatched preparation without opening it', async t => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-partial-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { clientLaunchSpec, preflightClient, loginSpec } from './clients.mjs';
+import { parseOptions } from './demo.mjs';
 
 test('CLI discovery includes the running Node installation used by npm global installs', async t => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-nvm-')));
@@ -27,8 +28,6 @@ test('client version preflight rejects suffixes and larger versions containing t
     else assert.throws(() => preflightClient(spec), /Unsupported client version/);
   }
 });
-import { parseOptions } from './demo.mjs';
-
 test('durable profiles stay stable while endpoint and selected-generation credential remain pinned', async t => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-profile-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
