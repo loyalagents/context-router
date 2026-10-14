@@ -125,6 +125,16 @@ test('launch specs confine config/workspace and omit ambient secrets, tools and 
   assert.equal(actual.env.TMPDIR, path.join(root, 'claude-home'));
   assert.equal(actual.cwd, path.join(root, 'claude-workspace'));
   for (const key of ['ANTHROPIC_API_KEY', 'ANTHROPIC_PROFILE', 'CLAUDE_CODE_OAUTH_TOKEN']) assert.equal(actual.env[key], undefined);
+  for (const suffix of ['home', 'config', 'workspace']) await fs.mkdir(path.join(root, `codex-a-${suffix}`), { mode: 0o700 });
+  const writer = clientLaunchSpec({ command: 'codex', agent: 'a', root, mcpPort: 8788, dataset: 'custom' }, { executable });
+  const writerResult = spawnSync(writer.executable, writer.args, { cwd: writer.cwd, env: writer.env, encoding: 'utf8' });
+  assert.equal(writerResult.status, 0);
+  const writerArgs = JSON.parse(writerResult.stdout).args;
+  assert.equal(writerArgs[writerArgs.indexOf('--ask-for-approval') + 1], 'on-request');
+  assert.ok(writerArgs.includes('approvals_reviewer="user"'));
+  assert.ok(writerArgs.includes('mcp_servers.context_router_demo.tools.mutatePreferences.approval_mode="prompt"'));
+  assert.equal(writerArgs[writerArgs.indexOf('--sandbox') + 1], 'read-only');
+  assert.ok(writerArgs.includes('features.shell_tool=false'));
 });
 
 test('unsupported installed controls fail closed during offline preflight', async t => {
@@ -146,6 +156,12 @@ test('unsupported installed controls fail closed during offline preflight', asyn
   assert.equal(a.credential, 'agent-a.token'); assert.equal(b.credential, 'agent-b.token');
   assert.ok(a.args.some(x => x.includes('mutatePreferences')));
   assert.equal(b.args.some(x => x.includes('mutatePreferences')), false);
+  assert.equal(a.args[a.args.indexOf('--ask-for-approval') + 1], 'on-request');
+  assert.equal(b.args[b.args.indexOf('--ask-for-approval') + 1], 'never');
+  assert.ok(a.args.includes('approvals_reviewer="user"'));
+  assert.ok(a.args.includes('mcp_servers.context_router_demo.tools.mutatePreferences.approval_mode="prompt"'));
+  assert.equal(b.args.some(x => x.startsWith('approvals_reviewer=')), false);
+  assert.deepEqual(a.args.filter(x => x.startsWith('features.')), b.args.filter(x => x.startsWith('features.')));
  });
 
 test('documented ignored unified-exec opt-out is accepted only with shell exposure disabled', async t => {
@@ -182,6 +198,7 @@ test('installed Codex accepts complete strict A/B launch argv before the nonterm
   for (const role of ['codex-a', 'codex']) for (const suffix of ['home', 'config', 'workspace']) await fs.mkdir(path.join(root, `${role}-${suffix}`), { mode: 0o700 });
   for (const agent of ['a', 'b']) {
     const spec = clientLaunchSpec({ command: 'codex', agent, root, mcpPort: 1, dataset: 'demo001' });
+    assert.equal(spec.args[spec.args.indexOf('--ask-for-approval') + 1], agent === 'a' ? 'on-request' : 'never');
     const run = args => spawnSync(spec.executable, args, { cwd: spec.cwd, env: spec.env, input: '', encoding: 'utf8', timeout: 5000, maxBuffer: 65536 });
     assert.equal(run(['--version']).stdout.trim(), 'codex-cli 0.160.0');
     const strict = run(spec.args);

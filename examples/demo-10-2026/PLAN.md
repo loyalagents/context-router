@@ -8,6 +8,8 @@ passed and affected implementation approval, including the subsequent
 installed-version requalification. User-run Pro login/discovery remains pending.
 The later macOS Keychain correction below has focused checks and both affected
 implementation reviews passed. The user's live Pro retry remains pending.
+The latest Codex A approval correction below has focused checks and both affected
+reviews passed. The user's write-confirmation retry remains pending.
 
 ## Outcome and scope
 
@@ -408,3 +410,34 @@ The coordinator independently passed all nine installed-client tests in
 This final factual evidence update preserves those approvals; documentation
 and whitespace checks were renewed before the local commit. The user's live
 Pro retry remains pending. No push, PR or live-state action was performed.
+
+
+## Codex A write-confirmation correction (2026-10-13)
+
+The user reported Codex A refusing a mutation under approval policy `never`.
+The coordinator's read-only persisted-history check found successful reads but
+no A mutation access/audit event. Do not replay the attempt. Both plan reviewers
+approved a four-file launcher correction: only A uses `--ask-for-approval
+on-request`, `approvals_reviewer="user"`, and the demo mutation tool's
+`approval_mode="prompt"`. B remains `never` with no mutation exposure. Preserve
+all native-tool disabling, the read-only sandbox, credentials and MCP authority;
+human approval permits an attempted update but cannot grant DEFINE. The
+[configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference)
+and [MCP reference](https://learn.chatgpt.com/docs/extend/mcp) document the controls.
+
+Two tests failed first on A's old `never` setting, including actual spawned
+argv. Focused validation with `CR_DEMO_TEST_CODEX=1` passed eight client tests,
+zero failed, with the unrelated installed-Claude opt-in deliberately skipped
+(2,422.795 ms). It covers role-specific policy, explicit human/per-tool approval,
+unchanged native controls, actual child argv, and installed Codex 0.160.0 full
+strict A/B parsing plus unknown-key negative controls. Claude, runtime, database,
+dashboard and Desktop behavior are unchanged; their prior evidence carries
+forward. No provider call, live write, auth change or app/state modification was
+performed. README instructs restarting only A and explicitly confirming one
+existing family/home value change; B's health/finance filtering remains intact.
+Both affected reviewers approved all four frozen hashes without findings. The
+coordinator independently repeated the focused suite: eight passed, zero failed,
+one intentional unrelated installed-Claude skip, in 2,401.864 ms. Documentation
+links (149 files) and whitespace checks passed and were renewed after this final
+factual evidence update. Code/test approval carries forward to the local commit.
+The live approval UI and write remain pending; no push, PR or live replay occurred.

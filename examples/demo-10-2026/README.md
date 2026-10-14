@@ -113,6 +113,15 @@ node examples/demo-10-2026/demo.mjs codex --root /private/tmp/context-router-dem
 node examples/demo-10-2026/demo.mjs codex --root /private/tmp/context-router-demo --agent b
 ```
 
+If an existing Codex A session refused a write because approval policy was
+`never`, exit and restart **only A** with the `--agent a` command above; leave B
+and the local server running. A is now configured with `on-request`, human
+review, and a prompt for each `mutatePreferences` call. Confirm only the intended
+existing-value change after reviewing its exact arguments. This client approval
+does not grant DEFINE permission. B retains `never` and no mutation-tool exposure.
+The installed CLI accepts these settings; the live confirmation flow still
+needs the user walkthrough. See the [MCP tool controls](https://learn.chatgpt.com/docs/extend/mcp).
+
 The legacy `claude --root /private/tmp/context-router-demo` defaults to A and
 `--auth api-key`; `--agent b` can select B. This mode's
 `--bare` isolation **does not use subscription OAuth/keychain login**. It requires
@@ -169,8 +178,10 @@ data reset, remains a separate later operation.
    historical context. Identify the saved family-dinner sentence and its slug.”
 2. Ask A: “Read that exact slug again. Preserve the complete sentence and append
    ` Rehearsal change: dinner starts at 6 PM.` with SET_PREFERENCE. Make this one
-   explicit change only.” If the response is uncertain, inspect history before
-   any separate retry.
+   explicit change only.” Review and explicitly confirm that single write in
+   Codex A. If the response is uncertain, inspect history before any separate
+   retry. Use family/home for this shared-update exercise: B deliberately cannot
+   read health or finance.
 3. Ask B: “Freshly read that exact slug through MCP and quote its saved value.”
    Refresh the dashboard Preferences page normally; inspect **Modified by**.
 4. Open **Audit History**, show sensitive values and expand the latest event.

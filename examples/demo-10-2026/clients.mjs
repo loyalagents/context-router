@@ -41,13 +41,14 @@ export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = comm
     version = '2.1.299';
   } else {
     env.CODEX_HOME = path.join(root, `${prefix}-config`);
-    args = ['--no-daemon', '--strict-config', '--sandbox', 'read-only', '--ask-for-approval', 'never',
+    args = ['--no-daemon', '--strict-config', '--sandbox', 'read-only', '--ask-for-approval', agent === 'a' ? 'on-request' : 'never',
       ...disabled.flatMap(name => ['-c', `features.${name}=false`]),
       '-c', 'web_search="disabled"', '-c', 'cli_auth_credentials_store="file"',
       '-c', 'project_doc_max_bytes=0', '-c', 'apps._default.enabled=false',
       '-c', `mcp_servers.context_router_demo.url=${JSON.stringify(url)}`,
       '-c', 'mcp_servers.context_router_demo.bearer_token_env_var="CR_DEMO_TOKEN"',
       '-c', `mcp_servers.context_router_demo.enabled_tools=${JSON.stringify(['listPreferenceSlugs','searchPreferences','listPermissionGrants', ...(agent === 'a' ? ['mutatePreferences'] : [])])}`,
+      ...(agent === 'a' ? ['-c', 'approvals_reviewer="user"', '-c', 'mcp_servers.context_router_demo.tools.mutatePreferences.approval_mode="prompt"'] : []),
       '-c', 'mcp_servers.context_router_demo.required=true', instruction];
     version = '0.160.0';
   }
