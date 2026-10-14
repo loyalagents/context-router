@@ -2,6 +2,8 @@
 
 Status: **reduced scope and implementation approved by the user on 2026-10-14**.
 Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code is implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Both complete-diff reviews and automated qualification passed through `5dfadcf`; exact receipts are in the PR. The user then requested assessment and useful fixes from an external static review before hands-on testing. This bounded correction round targets a source/artifact-bound isolated human trial after affected checks/reviews; renewed final qualification follows the human-feedback round. Human acceptance remains pending.
+The subsequent hands-on trial reported the menu disappearing after demo entry;
+the bounded compact-label correction and retest scope are recorded below.
 One cohesive PR; the native assistant-control follow-up is tracked below for the
 next PR. General profiles remain future work. Focused evidence is recorded below; full final validation and human acceptance are pending.
 
@@ -54,8 +56,10 @@ recorded below; they do not qualify provider or human acceptance.
 
 The native **CR** menu is the lifecycle control surface. Add **Enter demo mode…**
 in personal mode, **Return to personal mode…** and **Reset sample data…** in
-demo mode, and **Demo setup…**. Show **CR Demo** in the menu bar and
-**Demo mode · historical sample** in its status while demo is active. Existing
+demo mode, and **Demo setup…**. Keep the compact **CR** menu-bar title unchanged
+across modes. Its tooltip and accessibility label identify the admitted mode,
+with **Demo mode · historical sample** in the menu status while demo is active.
+Before a validated mode/store frame arrives, descriptions remain neutral. Existing
 Open dashboard/New unlock/Quit retain their meaning for the active runtime.
 Controls are disabled during a transition; Quit remains available and requests
 orderly cancellation. Do not expose browser mode/reset commands or a general
@@ -977,3 +981,38 @@ assessment and exact-head CI remain required after the human-feedback round and
 before merge. Existing CI runs normally during iteration; no triggers, budgets,
 checks or safety/live-run approvals are weakened. Human AppKit/provider acceptance
 is still pending, and all trial work uses owned synthetic state only.
+
+### Approved compact menu-label retest (2026-10-14)
+
+The user reported that the CR menu disappeared on entering demo in the sealed
+`a03d059` trial, including with Finder active. Read-only process/listener checks
+showed that its menu, guardian and demo runtime remained running. The user then
+confirmed that **CR Demo** reappeared after freeing menu-bar space, establishing
+capacity hiding rather than application exit. Source inspection confirmed the
+avoidable expansion from **CR** to **CR Demo** under AppKit's content-sized
+status-item policy. Keeping the title compact cannot guarantee visibility under
+arbitrary menu-bar crowding.
+
+The approved narrow correction keeps the title **CR** in both modes, with an
+explicit mode-aware tooltip/accessibility label and the existing menu status and
+dashboard banner. It uses the validated store/mode marker to keep startup
+descriptions neutral, rather than trusting the initial personal-mode default.
+No lifecycle, authority, guard or state behavior changes. Requested writer and
+affected reviewer settings remain Astra/xhigh; effective settings are unverified.
+
+The compiled existing menu fixture failed first on title/width-policy invariance.
+The corrected menu, unlock and restart fixtures passed 3/3. The presentation
+fixture observes real admitted mode updates using a fake status item: it proves
+compact title, unchanged width policy and semantic descriptions, not actual
+AppKit allocation or visibility under a notch. Human acceptance of the compact
+label remains pending. Normal Quit is accessible again in the running trial,
+which is not stopped or modified and can continue its hands-on checks.
+
+After the affected review, build one new isolated sealed trial from its exact
+frozen source because the native menu bytes changed. The earlier 44-check and
+nine-phase artifact evidence retain their original `a03d059` product/`5d84ee0`
+harness binding; only unaffected lifecycle/import/client coverage may carry
+forward after explicit input assessment. The earlier artifact cycle does not
+qualify this new menu presentation. No automatic repeat of the full migration
+gate or full artifact cycle is required for this focused retest. Final gates,
+CI and human acceptance remain required at the post-feedback milestone above.

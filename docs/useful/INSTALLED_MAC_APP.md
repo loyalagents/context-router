@@ -72,8 +72,10 @@ state that blocks launch. Freeing a port does not clear an uncertain generation.
 
 This candidate implements a separate persistent demo inside the same managed
 envelope. **CR → Enter demo mode…** prepares the frozen historical 2024–2025
-sample on first entry, then reopens that store on later entries. **CR Demo** and
-the authenticated dashboard banner identify demo mode. AI is disabled; personal
+sample on first entry, then reopens that store on later entries. The menu-bar
+title stays compact as **CR** in both modes. Its tooltip and accessibility label,
+the menu's status line and the authenticated dashboard banner identify demo mode;
+startup descriptions stay neutral until the mode is admitted. AI is disabled; personal
 model files remain retained. **Return to personal mode…** restores the personal
 slot. Quit/relaunch remembers the last successfully selected mode. Each switch
 closes existing browser/MCP sessions; use the newly opened dashboard and fresh

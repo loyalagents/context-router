@@ -34,7 +34,7 @@ static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
   NSMenuItem *item=[[NSMenuItem alloc] initWithTitle:title action:action keyEquivalent:@""];item.target=self;[menu addItem:item];_items[key]=item;
 }
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
-  (void)notification;_status=[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];_status.button.title=@"CR";_status.button.toolTip=@"Context Router private Mac pilot";
+  (void)notification;_status=[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];_status.button.title=@"CR";_status.button.toolTip=@"Context Router";_status.button.accessibilityLabel=@"Context Router";
   NSMenu *menu=[NSMenu new];menu.autoenablesItems=NO;_label=[[NSMenuItem alloc] initWithTitle:@"Starting local runtime…" action:nil keyEquivalent:@""];_label.enabled=NO;[menu addItem:_label];[menu addItem:[NSMenuItem separatorItem]];
   [self add:@"Open dashboard" action:@selector(openDashboard:) key:@"open" menu:menu];[self add:@"New unlock code…" action:@selector(newUnlock:) key:@"unlock" menu:menu];[self add:@"Copy unlock code" action:@selector(copyUnlock:) key:@"copy" menu:menu];[menu addItem:[NSMenuItem separatorItem]];
   [self add:@"Enter demo mode…" action:@selector(enterDemo:) key:@"enter-demo" menu:menu];
@@ -68,7 +68,10 @@ static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
   for(NSString *key in @[@"open",@"unlock",@"restart"])_items[key].enabled=active;
   _items[@"copy"].enabled=active&&_unlockFile&&CRExpiryNow()<_unlockUntil;
   BOOL demo=[_mode isEqual:@"demo"];
-  _status.button.title=demo?@"CR Demo":@"CR";
+  // Keep the status item's contents compact while macOS allocates menu-bar space.
+  _status.button.title=@"CR";
+  NSString *description=!_storeId?@"Context Router":demo?@"Context Router — Demo mode · historical sample":@"Context Router — Personal mode";
+  _status.button.toolTip=description;_status.button.accessibilityLabel=description;
   _items[@"enter-demo"].enabled=active&&!demo;_items[@"leave-demo"].enabled=demo&&(_ready||_demoUnavailable)&&!_stopping&&!_broken&&_guardian.running;
   _items[@"reset-demo"].enabled=active&&demo;_items[@"setup-demo"].enabled=active&&demo;
   _items[@"cancel-demo"].enabled=_preparingDemo&&!_demoFailed&&!_stopping&&!_broken;
