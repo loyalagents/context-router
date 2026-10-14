@@ -10,6 +10,8 @@ const routes = new Set([
   '/api/local/mcp/inspect',
   '/api/local/mcp/grant',
   '/api/local/mcp/revoke',
+  '/api/local/mcp/rename',
+  '/api/local/mcp/labels',
 ]);
 
 /** No ambient browser authority, redirects, external destinations or write retries. */

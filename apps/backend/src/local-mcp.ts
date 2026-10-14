@@ -6,6 +6,7 @@ const commands: Record<string, string[]> = {
   list: [],
   provision: ['label', 'out'],
   rotate: ['id', 'out'],
+  rename: ['id', 'label'],
   revoke: ['id'],
   permissions: ['id', 'capabilities', 'targets', 'allow-sensitive'],
   grant: ['id', 'target', 'action', 'effect'],
@@ -193,6 +194,9 @@ export async function runLocalMcp(
           break;
         case 'provision':
           result = store.provision(values.label, values.out);
+          break;
+        case 'rename':
+          result = store.rename(values.id, values.label);
           break;
         case 'rotate':
           result = store.rotate(values.id, values.out);

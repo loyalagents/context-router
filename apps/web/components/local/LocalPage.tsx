@@ -5,6 +5,7 @@ import { localGraphql } from '@/lib/authenticated-fetch';
 import { useLocalSession } from './LocalSession';
 import DashboardView from './DashboardView';
 import McpClients from './McpClients';
+import { ClientNamesProvider } from './ClientNames';
 import ProfileForm from '@/app/dashboard/profile/ProfileForm';
 import PreferencesClient from '@/app/dashboard/preferences/PreferencesClient';
 import SchemaClient from '@/app/dashboard/schema/SchemaClient';
@@ -136,7 +137,7 @@ interface PageData {
   preferenceCatalog: PreferenceDefinition[];
 }
 
-export default function LocalPage({ page }: { page: Page }) {
+function LocalPageContent({ page }: { page: Page }) {
   const session = useLocalSession();
   const sessionToken = session?.token;
   const [data, setData] = useState<PageData | null>(null);
@@ -243,4 +244,10 @@ export default function LocalPage({ page }: { page: Page }) {
       </div>
     </main>
   );
+}
+
+export default function LocalPage({ page }: { page: Page }) {
+  const session = useLocalSession();
+  if (!session) return null;
+  return <ClientNamesProvider key={`${page}-${session.token}`}><LocalPageContent page={page} /></ClientNamesProvider>;
 }

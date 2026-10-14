@@ -76,9 +76,16 @@ try {
   }
   if (mode.startsWith('publish-provision-'))
     store.provision('synthetic', path.join(root, exportName));
+  else if (mode.startsWith('publish-rename-'))
+    store.rename(id, 'renamed');
   else if (mode.startsWith('publish-rotate-'))
     store.rotate(id, path.join(root, exportName));
   else if (mode.startsWith('crash-')) store.upgrade();
+  else if (mode === 'rename') {
+    const previous = store.list().find(client => client.id === id);
+    store.rename(id, 'renamed', { label: previous.label, generation: previous.generation });
+  }
+  else if (mode === 'grant') store.grant(id, 'profile.first_name', 'READ', 'DENY');
   else if (mode === 'rotate') store.rotate(id, path.join(root, exportName));
   else if (mode === 'revoke') store.revoke(id);
   else if (mode === 'policy')

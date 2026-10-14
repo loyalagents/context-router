@@ -35,6 +35,11 @@ parallel eligibility, internal checkpoints, acceptance evidence and finalization
 milestone. Prefer one cohesive PR; split only for independently useful outcomes,
 not separate planning/review/closeout PRs. Human review and merging remain required.
 
+The [MCP client names slice](active/mcp-client-names/README.md) is activated from
+UI-usability item 2: shared current names, browser/CLI rename and exact-client
+activity navigation. It uses an isolated worktree with one delegated writer and
+two independent plan and implementation reviews; other usability items stay backlog.
+
 The main checkout is the user's playground: one writer/integrator owns it.
 Worktree tasks need separate resources and a reviewed integration order. Default
 to read-only parallel investigation/review until independent boundaries exist.

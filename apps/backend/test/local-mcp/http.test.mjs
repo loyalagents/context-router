@@ -202,3 +202,14 @@ test('negotiation excludes batch-era protocol and bounds exact typed request IDs
     400,
   );
 });
+
+ test('rename preserves an initialized real SDK session and existing token', async (t) => {
+  const f = await fixture(t), a = await f.connect();
+  const session = a.transport.sessionId;
+  const before = await a.client.callTool({ name: 'searchPreferences', arguments: {} });
+  f.store.rename(f.a.id, 'My laptop', { label: f.a.label, generation: f.a.generation });
+  const after = await a.client.callTool({ name: 'searchPreferences', arguments: {} });
+  assert.deepEqual(after.structuredContent, before.structuredContent);
+  assert.equal(a.transport.sessionId, session);
+  assert.equal(f.store.authenticate(f.tokens[0]).label, 'My laptop');
+});

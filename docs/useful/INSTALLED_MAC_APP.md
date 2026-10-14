@@ -132,6 +132,7 @@ router_cli="$HOME/Applications/Context Router.app/Contents/MacOS/context-router"
 "$router_cli" --help
 "$router_cli" verify-package
 "$router_cli" mcp list
+"$router_cli" mcp rename --id CLIENT_ID --label 'Personal laptop'
 "$router_cli" mcp provision --label 'My local client' --out /absolute/private/new-client.token
 ```
 
@@ -143,7 +144,14 @@ the current installed bundle does not include that bridge. Browser unlock, human
 are distinct. A client credential is not a browser unlock code. Provision/rotate
 exports are sensitive; routine menu diagnostics do not contain them. Permission
 and grant syntax is unchanged from the existing CLI. The installed wrapper also
-provides `mcp rotate`, `revoke`, `permissions`, `grant`, `upgrade`, and `inspect ID`.
+provides `mcp rename`, `rotate`, `revoke`, `permissions`, `grant`, `upgrade`, and `inspect ID`.
+
+Rename is display-only and creates no token export. It preserves credentials,
+policy, grants and stable history keys, including for revoked instances. Quit and
+exclusive-owner checks still apply to this offline CLI command; the browser can
+rename while the app runs. Inspect the current name after an unconfirmed result
+before making another explicit attempt. Pending-store administration supports
+`mcp rename` only with the same explicit `--pending-store STORE_ID` selection.
 
 Back up only after Quit, through the installed command:
 

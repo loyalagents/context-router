@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { localJson } from '@/lib/authenticated-fetch';
+import { localJson, LocalRequestError } from '@/lib/authenticated-fetch';
+import { ClientName } from './ClientNames';
+import { usableClientName } from '@/lib/local-client-name';
 
 type Client = {
   id: string;
@@ -17,7 +19,8 @@ type Client = {
 type Grant = { id: string; target: string; action: string; effect: string };
 type ChangeOutcome = {
   client: { id: string; label: string };
-  kind: 'grant' | 'revoke';
+  kind: 'grant' | 'revoke' | 'rename';
+  newName?: string;
   grant?: Omit<Grant, 'id'>;
   status: 'confirmed' | 'rejected' | 'uncertain';
   message: string;
@@ -55,6 +58,8 @@ export default function McpClients() {
   const handledOutcome = useRef<ChangeOutcome | null>(null);
   const pendingOutcomeFocus = useRef<{ interacted: boolean } | null>(null);
   const [readError, setReadError] = useState('');
+  const [renameDraft, setRenameDraft] = useState<{ client: Client; name: string; needsRead: boolean; currentName?: string } | null>(null);
+  const [renameError, setRenameError] = useState('');
   const [generation, setGeneration] = useState(0);
   const pending = useRef<AbortController | null>(null);
   const mutation = useRef<AbortController | null>(null);
@@ -252,6 +257,55 @@ export default function McpClients() {
       }
     }
   }
+  async function readCurrentName() {
+    if (!renameDraft || busy || mutation.current) return;
+    const captured = renameDraft;
+    pending.current?.abort();
+    const controller = new AbortController(); pending.current = controller;
+    const current = ++revision.current;
+    setBusy(true); setRenameError('');
+    try {
+      const data = await localJson<Snapshot>('/api/local/mcp/inspect', {id: captured.client.id}, controller.signal);
+      if (!controller.signal.aborted && current === revision.current)
+        setRenameDraft(latest => latest?.client.id === captured.client.id
+          ? {...latest,client:data.client,needsRead:false,currentName:data.client.label}
+          : latest);
+    } catch {
+      if (!controller.signal.aborted && current === revision.current) setRenameError('Unable to read the current name. Try the read again before saving.');
+    } finally {
+      if (!controller.signal.aborted && current === revision.current) setBusy(false);
+    }
+  }
+  async function rename() {
+    if (!renameDraft || busy || mutation.current || renameDraft.needsRead) return;
+    if (!usableClientName(renameDraft.name)) {setRenameError('Enter a name of 1–64 characters without control characters.');return;}
+    const captured = renameDraft;
+    const attempted = {client:{id:captured.client.id,label:captured.client.label},kind:'rename' as const,newName:captured.name.trim()};
+    pendingOutcomeFocus.current = {interacted:false};
+    revision.current++; pending.current?.abort();
+    const controller = new AbortController(); mutation.current = controller;
+    setBusy(true); setSnapshot(null); setOutcome(null); setRenameError('');
+    try {
+      await localJson('/api/local/mcp/rename', {id:captured.client.id,label:captured.name,expectedLabel:captured.client.label,generation:captured.client.generation},controller.signal);
+      if (mutation.current === controller && !controller.signal.aborted) {
+        setRenameDraft(null);
+        setOutcome({...attempted,status:'confirmed',message:'Client name saved. Existing tokens and permissions continue unchanged.'});
+        window.dispatchEvent(new Event('context-router.client-names'));
+      }
+    } catch (error) {
+      if (mutation.current === controller && !controller.signal.aborted) {
+        setRenameDraft({...captured,needsRead:true});
+        setOutcome({...attempted,status:error instanceof LocalRequestError && error.status === 409 ? 'rejected' : 'uncertain',
+          message:error instanceof LocalRequestError && error.status === 409
+            ? 'Name was not saved because the instance changed. Read its current name before deciding whether to save again.'
+            : 'Change was not confirmed. The name may have been saved. Read its current name before deciding whether to submit again.'});
+      }
+    } finally {
+      if (mutation.current === controller && !controller.signal.aborted) {
+        mutation.current = null; channel.current?.postMessage('invalidate'); invalidate();
+      }
+    }
+  }
   return (
     <div className="space-y-6">
       <p>
@@ -290,14 +344,33 @@ export default function McpClients() {
       </div>
       {busy && <p role="status">Loading current authority…</p>}
       {!busy && !items.length && <p>No client instances on this page.</p>}
+      {renameDraft && <form className="space-y-3 rounded border p-4" aria-label="Rename client" onSubmit={event=>{event.preventDefault();void rename();}}>
+        <p>Rename <ClientName clientKey={`local:${renameDraft.client.id}`} label={renameDraft.client.label} /></p>
+        <p className="text-xs break-all">Instance ID: <code>{renameDraft.client.id}</code></p>
+        <label className="block">Client name
+          <input autoFocus required maxLength={64} className="block rounded border p-2 w-full" value={renameDraft.name} disabled={!!mutation.current}
+            onChange={event=>setRenameDraft({...renameDraft,name:event.target.value})} />
+        </label>
+        {renameError && <p role="alert">{renameError}</p>}
+        {renameDraft.currentName !== undefined && <p role="status">Current name: {renameDraft.currentName}</p>}
+        {renameDraft.needsRead && <p>A new read is required before saving again. It shows the present name, not whether an earlier unconfirmed request committed.</p>}
+        <div className="flex gap-3">
+          <button className={button} disabled={busy || renameDraft.needsRead}>Save name</button>
+          <button type="button" className={button} disabled={busy} onClick={()=>void readCurrentName()}>Read current name</button>
+          <button type="button" className={button} disabled={busy} onClick={()=>{setRenameDraft(null);setRenameError('');}}>Cancel rename</button>
+        </div>
+      </form>}
       <ul className="space-y-3">
         {items.map((client) => (
           <li key={client.id} className="rounded border p-4">
             <div className="font-semibold">
-              {client.label} {client.revoked && '(revoked)'}
+              <ClientName clientKey={`local:${client.id}`} label={client.label} /> {client.revoked && '(revoked)'}
             </div>
             <code className="break-all">{client.id}</code>
             <p>Generation {client.generation}</p>
+            <button className={button} disabled={busy || !!renameDraft} aria-label={`Rename ${client.id}`} onClick={()=>{setRenameDraft({client,name:client.label,needsRead:false});setRenameError('');}}>Rename</button>
+            {' '}<a className={button} href={`/dashboard/history#mcp-client=${client.id}`} aria-label={`View activity ${client.id}`}>View activity</a>{' '}
+
             <button
               className={button}
               disabled={busy}
@@ -345,9 +418,10 @@ export default function McpClients() {
         >
           <h2 id="mcp-change-title" className="text-lg font-semibold">
             {outcome.status === 'rejected'
-              ? 'Grant not saved'
+              ? outcome.kind === 'rename' ? 'Name not saved' : 'Grant not saved'
               : outcome.status === 'uncertain'
                 ? 'Change not confirmed'
+                : outcome.kind === 'rename' ? 'Client name saved'
                 : outcome.kind === 'revoke'
                   ? 'Client instance revoked'
                   : outcome.grant?.effect === 'REMOVE'
@@ -355,13 +429,15 @@ export default function McpClients() {
                     : 'Grant saved'}
           </h2>
           <div id="mcp-change-context">
-            <p>Client: <strong>{outcome.client.label}</strong></p>
+            <p>Client: <strong><ClientName clientKey={`local:${outcome.client.id}`} label={outcome.client.label} /></strong></p>
             <p>Instance ID: <code>{outcome.client.id}</code></p>
             {outcome.grant ? (
               <p>
                 Attempted grant: <code>{outcome.grant.target}</code>
                 {' · '}{outcome.grant.action}{' · '}{outcome.grant.effect}
               </p>
+            ) : outcome.kind === 'rename' ? (
+              <p>Attempted name: <strong>{outcome.newName}</strong></p>
             ) : (
               <p>Attempted action: Revoke this instance</p>
             )}
@@ -374,7 +450,7 @@ export default function McpClients() {
           className="space-y-4 border-t pt-4"
           aria-label="Selected client authority"
         >
-          <h2 className="text-xl font-semibold">{snapshot.client.label}</h2>
+          <h2 className="text-xl font-semibold"><ClientName clientKey={`local:${snapshot.client.id}`} label={snapshot.client.label} /></h2>
           <code>{snapshot.client.id}</code>
           <h3 className="font-semibold">CLI maximum policy</h3>
           <p>

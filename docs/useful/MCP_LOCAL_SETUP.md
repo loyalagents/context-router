@@ -35,6 +35,7 @@ Provision one credential for **each configuration/instance**, even for two Codex
 pnpm --filter backend local-mcp provision --label claude-code --out /absolute/private-parent/claude.token
 pnpm --filter backend local-mcp provision --label codex-cli --out /absolute/private-parent/codex.token
 pnpm --filter backend local-mcp list
+pnpm --filter backend local-mcp rename --id CLIENT_ID --label 'Personal laptop'
 pnpm --filter backend local-mcp permissions --id CLIENT_ID --capabilities preferences:read --targets 'synthetic.*'
 pnpm --filter backend local-mcp grant --id CLIENT_ID --target synthetic.private --action READ --effect DENY
 pnpm --filter backend local-mcp rotate --id CLIENT_ID --out /absolute/private-parent/new.token
@@ -42,6 +43,17 @@ pnpm --filter backend local-mcp revoke --id CLIENT_ID
 ```
 
 Defaults are READ, **no allowed targets**, and no sensitive access. `permissions` replaces the entire static policy; `--allow-sensitive` explicitly enables sensitive access, omission disables it. Empty `--capabilities ''` or `--targets ''` denies that dimension. WRITE implies read/suggest; DEFINE is independent. Grant actions are READ/SUGGEST/WRITE/DEFINE and effects ALLOW/DENY/REMOVE. Database ALLOW cannot enlarge the static policy; existing grant fallback/deny layering remains. The production local guard rereads credential/policy for every request. Product labels, submitted principal/client fields and session IDs confer no authority. Sensitive stored values are checked against their actual definition IDs, including archived definitions; ambiguous sensitive/nonsensitive slug collisions are conservatively hidden.
+
+Rename changes only an instance's display name and update time. It preserves the
+full stable ID, token, generation, active sessions, maximum policy and grants.
+Names can repeat; choose by the full instance ID. A name is trimmed, nonempty,
+at most 64 UTF-16 code units before trimming, and contains no control characters.
+Revoked instances can be renamed for historical identification and remain revoked.
+The CLI compares the name and generation it read before committing; an overlapping
+rename/rotation/revocation can fail instead of silently overwriting it. No token
+export is created. If the result is unconfirmed, list current state before deciding
+whether to issue another explicit rename. Current names also label older history;
+stored actor/client keys and event payloads are never rewritten.
 
 Rotation retains the client ID, grants and policy but invalidates old tokens and sessions. Revocation is durable, terminal and independent; provision a new instance to replace one. Concurrent changes use expected generations and fail instead of retrying or reviving revoked authority. An interrupted or losing export can leave a private inert token file. Preserve exports until the result is understood; list durable state and use a new export path for the next rotation. A committed but unacknowledged token can be active. Never infer success from a file alone.
 
@@ -369,7 +381,7 @@ Then update the local backend configuration that advertises the MCP server URL b
 
 [Local dashboard](LOCAL_UI.md) starts the same MCP edge alongside its independent
 browser listener. Use that one process instead of a second `local-mcp serve`
-instance. The browser can inspect actual client IDs, narrow grants and revoke;
+instance. The browser can inspect and rename actual client IDs, narrow grants and revoke;
 provision, rotate and maximum-policy commands remain this CLI. Its browser bearer
 never authenticates MCP, and MCP retains native Origin denial. Hosted setup above
 is unchanged.

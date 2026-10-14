@@ -41,6 +41,8 @@ const apiRoutes = new Set([
   '/api/local/mcp/inspect',
   '/api/local/mcp/grant',
   '/api/local/mcp/revoke',
+  '/api/local/mcp/rename',
+  '/api/local/mcp/labels',
 ]);
 const securityHeaders = new Set([
   'host',

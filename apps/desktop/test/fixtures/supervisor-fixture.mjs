@@ -44,7 +44,7 @@ export function backend(name){if(name==='next')return ()=>({async prepare(){},ge
   await writeFile(path.join(runtime,'maintenance.mjs'),common+`
 if(cap.operation==='backup'){if(fs.existsSync(path.join(cap.envelope,'exports',cap.generation)))throw new Error('backup destination exists');}
 if(cap.operation==='restore'){fs.mkdirSync(pair,{mode:0o700});for(const name of ['data','identity'])fs.mkdirSync(path.join(pair,name),{mode:0o700});fs.writeFileSync(path.join(pair,'identity/identity.json'),JSON.stringify({databaseTargetId:'B'.repeat(43)}),{mode:0o600});}
-process.stdout.write(JSON.stringify({operation:cap.operation,store:cap.storeId})+'\\n');
+process.stdout.write(JSON.stringify({operation:cap.operation,store:cap.storeId,args:process.argv.slice(2)})+'\\n');
 ${variant==='maintenance-eof'?'fs.closeSync(6);await control.stopped;':''}
 await control.send('maintenance-complete',{exitCode:${variant==='maintenance-failure'?2:0}});await control.close();process.exitCode=${['maintenance-failure','maintenance-mismatch'].includes(variant)?2:0};`);
   await copyFile(path.resolve(import.meta.dirname,'../../runtime/lifetime.mjs'),path.join(runtime,'lifetime.mjs'));

@@ -20,3 +20,14 @@ test('native restore preserves selection until explicit verified activation; pen
   assert.equal(cli(f,['activate-restore',pending.pendingRestore.storeId,'--acknowledge-restored-authority']).status,0);
   const active=JSON.parse(await readFile(file));assert.equal(active.selectedStore,pending.pendingRestore.storeId);assert.equal(active.pendingRestore,null);f.acceptQuiescent(JSON.parse(await readFile(path.join(f.envelope,'owner.json'))));
 });
+test('native rename forwards exact arguments, advertises help and retains running-app exclusion',async t=>{
+  const f=await fixture(t),run=f.launch(),r=await run.event('ready');
+  const args=['mcp','rename','--id','--'+'A'.repeat(20),'--label','My laptop'];
+  assert.equal(cli(f,args).status,1);
+  run.send('quit',r.generation);assert.equal((await ended(run.child))[0],0);
+  const renamed=cli(f,args);assert.equal(renamed.status,0,renamed.stderr);
+  assert.deepEqual(JSON.parse(renamed.stdout).args,args);
+  assert.match(spawnSync(f.executable,['--help'],{env:{},encoding:'utf8'}).stdout,/rename/);
+  assert.equal(cli(f,['mcp','renam']).status,1);
+  f.acceptQuiescent(JSON.parse(await readFile(path.join(f.envelope,'owner.json'))));
+});

@@ -98,6 +98,9 @@ test('compiled admin accepts issued client IDs beginning with one or two hyphens
       '--targets',
       'synthetic.*',
     ]);
+    assert.equal(f.cli(['rename', '--id', id, '--label', ' renamed ']).result.label, 'renamed');
+    f.cli(['rename', '--id', id, '--label', '   '], 1);
+    f.cli(['rename', '--id', id], 2);
     f.cli([
       'grant',
       '--id',

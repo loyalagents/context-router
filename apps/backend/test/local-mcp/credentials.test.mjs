@@ -389,3 +389,90 @@ for (const failureAt of [1, 2])
       f.identity,
     );
   });
+
+test('rename is durable metadata only, trims new names and invalidates stale authority revisions', (t) => {
+  const f = fixture(t); f.store.upgrade();
+  const a = f.store.provision('same', path.join(f.root, 'a.token'));
+  const b = f.store.provision('same', path.join(f.root, 'b.token'));
+  f.store.grant(a.id, 'profile.first_name', 'READ', 'DENY');
+  const before = f.query('SELECT * FROM local_mcp_clients ORDER BY id');
+  const grants = f.query('SELECT * FROM permission_grants');
+  const authority = f.store.inspectForUi(a.id);
+  assert.deepEqual(f.store.rename(a.id, '  Personal laptop  ', { label: a.label, generation: a.generation }),
+    { id: a.id, label: 'Personal laptop', generation: 1 });
+  const after = f.query('SELECT * FROM local_mcp_clients ORDER BY id');
+  assert.deepEqual(after.map(({label, updated_at, ...row}) => row), before.map(({label, updated_at, ...row}) => row));
+  assert.equal(after.find(row => row.id === b.id).label, 'same');
+  assert.deepEqual(f.query('SELECT * FROM permission_grants'), grants);
+  assert.equal(f.store.authenticate(f.token('a.token')).generation, 1);
+  assert.equal(f.store.authenticate(f.token('b.token')).label, 'same');
+  assert.throws(() => f.store.grant(a.id, '*', 'READ', 'DENY', { generation: 1, revision: authority.revision }), /conflict/);
+  assert.deepEqual(fs.readFileSync(path.join(f.db.paths.identityRoot, 'identity.json')), f.identity);
+  const reopened = new SqliteMcpCredentials(SqliteDatabase.open(f.db.paths), f.principal);
+  assert.equal(reopened.authenticate(f.token('a.token')).label, 'Personal laptop');
+  const unchanged = f.query('SELECT * FROM local_mcp_clients ORDER BY id');
+  reopened.rename(a.id, 'Personal laptop', { label: 'Personal laptop', generation: 1 });
+  assert.deepEqual(f.query('SELECT * FROM local_mcp_clients ORDER BY id'), unchanged);
+});
+
+test('rename validates raw names and expected state, preserves revoked clients and rejects unknown/foreign IDs', (t) => {
+  const f = fixture(t); f.store.upgrade();
+  const a = f.store.provision('legacy spaces ', path.join(f.root, 'a.token'));
+  const before = f.query('SELECT * FROM local_mcp_clients');
+  for (const label of ['', '  ', 'x'.repeat(65), ' '.repeat(64) + 'x', 'line\nname', 'x\0y', '\x7f', 5, null])
+    assert.throws(() => f.store.rename(a.id, label));
+  for (const expected of [{ label: 'legacy spaces', generation: 1 }, { label: a.label, generation: 2 }])
+    assert.throws(() => f.store.rename(a.id, 'new', expected), /conflict/);
+  for (const expected of [{label: 'x'.repeat(65), generation: 1}, {label: a.label, generation: 0}, {label: null, generation: 1}])
+    assert.throws(() => f.store.rename(a.id, 'new', expected));
+  assert.throws(() => f.store.rename('Z'.repeat(22), 'new'));
+  assert.throws(() => new SqliteMcpCredentials(f.db, 'foreign').rename(a.id, 'new'));
+  assert.deepEqual(f.query('SELECT * FROM local_mcp_clients'), before);
+  f.store.rotate(a.id, path.join(f.root, 'rotated.token'));
+  assert.throws(() => f.store.rename(a.id, 'new', {label: a.label, generation: 1}), /conflict/);
+  f.store.revoke(a.id);
+  assert.deepEqual(f.store.rename(a.id, '<script>revoked</script>', {label: a.label, generation: 3}),
+    {id: a.id, label: '<script>revoked</script>', generation: 3});
+  assert.equal(f.store.authenticate(f.token('rotated.token')), null);
+  assert.equal(f.store.list()[0].revoked, true);
+});
+
+test('rename rollback and committed interruption retain the correct durable name', (t) => {
+  const f = fixture(t); f.store.upgrade();
+  const a = f.store.provision('original', path.join(f.root, 'original.token'));
+  for (const stage of ['before', 'after']) {
+    const child = spawnSync(process.execPath, [childFile, f.root, `publish-rename-${stage}`, a.id, 'unused'], {encoding:'utf8', timeout:10000});
+    assert.equal(child.status, 77, child.stderr);
+    const reopened = new SqliteMcpCredentials(SqliteDatabase.open(f.db.paths), f.principal);
+    assert.equal(reopened.authenticate(f.token('original.token')).label, stage === 'before' ? 'original' : 'renamed');
+    assert.equal(reopened.authenticate(f.token('original.token')).generation, 1);
+  }
+});
+
+for (const [modes, codes] of [
+  [['rename', 'rename'], [0, 1]],
+  [['rotate', 'rename'], [0, 1]],
+  [['revoke', 'rename'], [0, 1]],
+  [['rename', 'rotate'], [0, 0]],
+  [['rename', 'revoke'], [0, 0]],
+  [['rename', 'policy'], [0, 0]],
+  [['grant', 'rename'], [0, 0]],
+]) test(`independent-process ${modes.join('/')} preserves rename and authority transitions`, async (t) => {
+  const f = fixture(t); f.store.upgrade();
+  f.client = f.store.provision('codex', path.join(f.root, 'original.token'));
+  assert.deepEqual(await race(f, modes), codes.map(code => [code, null]));
+  const row = f.store.list()[0];
+  assert.equal(row.label, modes[0] === 'rename' || codes[1] === 0 && modes[1] === 'rename' ? 'renamed' : 'codex');
+  assert.equal(row.generation, modes.includes('rotate') || modes.includes('revoke') ? 2 : 1);
+  if (modes.includes('policy')) assert.deepEqual(row.policy.targets, ['*']);
+  if (modes.includes('grant')) assert.equal(f.query('SELECT * FROM permission_grants').length, 1);
+});
+
+test('rename exception before commit rolls back without changing any client column', (t) => {
+  const f=fixture(t);f.store.upgrade();const a=f.store.provision('old',path.join(f.root,'a.token'));
+  const before=f.query('SELECT * FROM local_mcp_clients'),connect=f.db.connect.bind(f.db);
+  f.db.connect=()=>{const c=connect(),exec=c.exec.bind(c);c.exec=sql=>{if(sql==='COMMIT')throw new Error('injected before commit');return exec(sql);};return c;};
+  assert.throws(()=>f.store.rename(a.id,'new',{label:a.label,generation:1}),/injected/);
+  f.db.connect=connect;
+  assert.deepEqual(f.query('SELECT * FROM local_mcp_clients'),before);
+});

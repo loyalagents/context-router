@@ -5059,6 +5059,42 @@
       "contract": "http",
       "kind": "route",
       "reference": "/graphql"
+    },
+    {
+      "path": "apps/web/components/local/ClientNames.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/labels"
+    },
+    {
+      "path": "apps/web/components/local/McpClients.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/rename"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/labels"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/rename"
+    },
+    {
+      "path": "docs/plans/active/mcp-client-names/README.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/labels"
+    },
+    {
+      "path": "docs/plans/active/mcp-client-names/README.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/rename"
     }
   ],
   "outboundSinkInventory": [
