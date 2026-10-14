@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { browserFixture } from './browser-fixture.mjs';
+import { observeSessionEvents, dispatchSessionEvent } from './session-events.mjs';
 import { greekPdfFixture } from '../../backend/test/local-model/fixtures/pdf-fixtures.mjs';
 const require = createRequire(
   new URL('../../backend/package.json', import.meta.url),
@@ -17,6 +18,7 @@ async function unlock(f, route = '/dashboard/preferences') {
 
 test('file-picker focus and successive uploads never start competing model status checks', { timeout: 60000 }, async (t) => {
   const f = await browserFixture(t, { model: true });
+  await observeSessionEvents(f.page);
   await unlock(f);
   f.peer.state.reply = JSON.stringify({ suggestions: [{ slug: 'profile.full_name', operation: 'CREATE', newValue: 'Αθήνα', confidence: 1, sourceSnippet: 'Αθήνα' }], documentSummary: 'Synthetic PDF only' });
   const pdf = { name: 'synthetic-focus.pdf', mimeType: 'application/pdf', buffer: Buffer.from((await greekPdfFixture()).bytes) };
@@ -32,7 +34,7 @@ test('file-picker focus and successive uploads never start competing model statu
   await f.page.getByLabel('I reviewed the files', { exact: false }).check();
   const recheckRequest = f.page.waitForRequest(request => /\/api\/local\/(session|capabilities)$/.test(request.url()));
   const recheckResponse = f.page.waitForResponse(response => /\/api\/local\/(session|capabilities)$/.test(response.url()));
-  await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  const recheckSettled = dispatchSessionEvent(f.page, 'focus');
   const route = new URL((await recheckRequest).url()).pathname;
   try {
     if (route.endsWith('/capabilities')) await reached;
@@ -42,7 +44,7 @@ test('file-picker focus and successive uploads never start competing model statu
     const result = await (await uploaded).json();
     console.log(JSON.stringify({ focusRoute: route, uploadStatus: result.status, completionCount: f.peer.state.completionBodies.length }));
     assert.equal(result.status, 'success', result.statusReason);
-  } finally { holdStatus = false; release(); await recheckResponse; }
+  } finally { holdStatus = false; release(); await recheckResponse; await recheckSettled; }
   assert.equal(route, '/api/local/session');
   await f.page.getByRole('button', { name: 'Try Another Upload' }).click();
   await f.page.getByLabel('I reviewed the files', { exact: false }).check();
@@ -55,7 +57,7 @@ test('file-picker focus and successive uploads never start competing model statu
   assert.deepEqual((await f.graphql('{ activePreferences { id } }')).activePreferences, []);
   for (const event of ['pageshow', 'visibilitychange']) {
     const response = f.page.waitForResponse(r => r.url().endsWith('/api/local/session'));
-    await f.page.evaluate(event => (event === 'visibilitychange' ? document : window).dispatchEvent(new Event(event)), event);
+    await dispatchSessionEvent(f.page, event);
     assert.equal((await response).status(), 200);
   }
   assert.equal(capabilityRequests.length, 0, 'no automatic readiness probes');
@@ -63,6 +65,56 @@ test('file-picker focus and successive uploads never start competing model statu
   await f.page.getByRole('button', { name: 'Check model status' }).last().click();
   assert.equal((await checked).status(), 200);
   assert.equal(capabilityRequests.length, 1, 'explicit check still qualifies the model');
+});
+
+test('passive session events coalesce until the response body and handler settle', { timeout: 30000 }, async (t) => {
+  const f = await browserFixture(t);
+  await observeSessionEvents(f.page);
+  await f.page.addInitScript(() => {
+    const fetch = window.fetch;
+    window.sessionBodyTest = { hold: false, entered: false, release: undefined };
+    window.fetch = async (...args) => {
+      const response = await fetch(...args);
+      if (new URL(response.url).pathname === '/api/local/session' && window.sessionBodyTest.hold) {
+        window.sessionBodyTest.hold = false;
+        const read = response.arrayBuffer.bind(response);
+        response.arrayBuffer = async () => {
+          window.sessionBodyTest.entered = true;
+          await new Promise(resolve => { window.sessionBodyTest.release = resolve; });
+          return read();
+        };
+      }
+      return response;
+    };
+  });
+  await unlock(f);
+  let sessions = 0, capabilities = 0, settled = false;
+  f.page.on('request', request => {
+    if (request.url().endsWith('/api/local/session')) sessions++;
+    if (request.url().endsWith('/api/local/capabilities')) capabilities++;
+  });
+  await f.page.evaluate(() => { window.sessionBodyTest.hold = true; });
+  const response = f.page.waitForResponse(r => r.url().endsWith('/api/local/session'));
+  const first = dispatchSessionEvent(f.page, 'pageshow').then(() => { settled = true; });
+  try {
+    assert.equal((await response).status(), 200);
+    await f.page.waitForFunction(() => window.sessionBodyTest.entered);
+    await dispatchSessionEvent(f.page, 'visibilitychange');
+    await dispatchSessionEvent(f.page, 'focus');
+    assert.equal(settled, false, 'response headers do not mean the handler has settled');
+    assert.equal(sessions, 1, 'overlapping events share the pending session check');
+  } finally {
+    await f.page.evaluate(() => window.sessionBodyTest.release?.());
+    await first;
+  }
+  assert.equal(settled, true);
+  for (const event of ['pageshow', 'visibilitychange', 'focus']) {
+    const next = f.page.waitForResponse(r => r.url().endsWith('/api/local/session'));
+    await dispatchSessionEvent(f.page, event);
+    assert.equal((await next).status(), 200);
+  }
+  assert.equal(sessions, 4, 'settled handlers allow a fresh check for each later event');
+  assert.equal(capabilities, 0, 'passive events never qualify the model');
 });
 
 for (const remainingMilliseconds of [0, 8 * 60 * 60 * 1000 + 1, 100])
