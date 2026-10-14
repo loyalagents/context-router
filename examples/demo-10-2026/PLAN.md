@@ -3,6 +3,9 @@
 Status: implementation and local automated validation complete; two fresh
 complete-diff reviews approved, including the affected grant-verification rechecks.
 Live authentication, assistant behavior and the user walkthrough remain pending.
+The later Claude Pro B/Desktop C adapter extension below has focused checks
+passed and affected implementation approval, including the subsequent
+installed-version requalification. User-run Pro login/discovery remains pending.
 
 ## Outcome and scope
 
@@ -163,7 +166,8 @@ owned processes before removing test-owned fixtures.
 
 Pinned Node 24.21.0/pnpm 10.25.0 pass. Available browser is Playwright 1.63.0,
 Chromium 153.0.8010.12/revision1243. Installed client help reports Claude Code
-2.1.296 and Codex CLI 0.160.0; this is not evidence of live connectivity.
+2.1.296 at initial qualification (later requalified below) and Codex CLI 0.160.0;
+this is not evidence of live connectivity.
 
 Build backend/web with pinned tools as needed. Run all example unit/integration/
 browser tests serially, markdown-link and affected documentation-consumer checks,
@@ -295,3 +299,72 @@ evidence-only update preserves those approvals. Unchanged import/MCP/SQLite/
 browser coverage carries forward. The retained demo root, its user login and
 running dashboard were not read or modified. The user's live retry remains
 pending; no installed-app transition is part of this correction.
+
+
+## Claude Pro B and later Desktop C (2026-10-13)
+
+The user selected Claude Code with a Pro subscription for agent B first, beside
+the existing Codex A session. Desktop becomes a later agent C with a separately
+provisioned credential. Preserve the retained demo, running servers, personal
+auth/configuration and original corpus. The installed-app move and approved
+reset are later operations, not part of this implementation.
+
+Add only explicit `claude --agent b --auth subscription` support; legacy defaults
+remain A/API-key/bare. Reuse the existing Claude demo directories for the one
+Claude Code session; no prepared-root migration. The supported restricted mode
+allows subscription login while retaining empty native tools, strict demo MCP,
+explicit settings and disabled hooks/skills/Chrome. Disable account connectors,
+IDE auto-connect, memory/CLAUDE.md loading, marketplace auto-installation,
+auto-updates and nonessential traffic. Supply no ambient auth or API key.
+The [authentication reference](https://code.claude.com/docs/en/authentication)
+documents separate claude.ai login/Keychain entries per configuration directory.
+Terminal `forceLoginMethod` only preselects the choice, so direct the user to
+Claude.ai Pro rather than Console. See the [CLI reference](https://code.claude.com/docs/en/cli-reference)
+and [environment reference](https://code.claude.com/docs/en/env-vars) for controls.
+
+Offline preflight uses complete launch argv followed by `auth status --json`
+in unique, disposable, unauthenticated directories. Require the exact fresh
+config directory, `loggedIn: false`, `authMethod: none`, first-party provider,
+disabled analytics, exit 1 and empty stderr. Reject unknown options/unexpected
+auth state; this is argument/auth-probe evidence, not a live model test. The
+real installed-CLI regression is opt-in (`CR_DEMO_TEST_CLAUDE=1`); portable
+tests do not require either installed assistant.
+
+The tiny Desktop adapter imports the unchanged production `createBridge` and
+secure credential reader, adding validated `--mcp-port` (default 8788), pinned
+Node/debug guards, sanitized startup errors and the existing shutdown pattern.
+Do not fork protocol/recovery/replay logic or alter the production 8787 CLI.
+Preserve relative paths in a later four-module private snapshot (adapter plus
+the three existing bridge files), with a source receipt. Live C provisioning,
+Desktop configuration and user restart are not performed by this change.
+
+Both affected plan reviewers approved this bounded approach; the safety review
+required explicit memory and marketplace controls, now implemented and tested.
+Tests preceded implementation: unsupported subscription options/role and absent
+adapter failed first; the added environment requirements also failed first.
+Focused results: nine client tests passed with both installed CLI regressions
+enabled (2,775.729 ms), ten CLI/mapping tests passed, and three Desktop adapter
+tests passed (3,095.666 ms). Desktop tests exercise real SDK stdio to an owned
+MCP port, fresh shared reads, health filtering, hidden/denied mutation, persisted
+denial/no mutation audit, argument/debug guards before credential/network access,
+and EOF/signals. Unchanged import/persistence/dashboard and production-bridge
+no-replay coverage carries forward; no broad rebuild or migration gate was run.
+Both affected implementation reviewers approved the seven-file candidate with
+no findings. The coordinator independently confirmed the three unchanged Desktop
+tests (2,840.908 ms), documentation links (149 files) and whitespace checks.
+Its client check discovered that the installed Claude executable had updated
+to 2.1.299; full-argv auth-status assertions passed, then the version pin correctly
+refused the unqualified version. The writer reproduced that failure before
+updating the pin and corresponding fixture/documentation references. All nine
+client tests then passed on 2.1.299 (2,864.656 ms), including restricted-mode
+guards, the exact fresh auth-status result, unknown-option rejection and Codex
+A/B controls. Both reviewers confirmed approval of the frozen 2.1.299 candidate
+with matching hashes and no findings. The coordinator independently repeated
+all nine installed-client tests: nine passed, zero failed, zero skipped, in
+2,866.717 ms. Together with its ten mapping/CLI tests and three Desktop tests,
+all 22 affected tests passed across the isolated focused runs. Prior unaffected
+coverage carries forward. This final evidence-only edit preserves those
+approvals; documentation links and whitespace checks were renewed before the
+local commit. User-run Pro login/discovery, actual assistant behavior and the
+later Desktop C setup remain pending. No login, inference, live-state/auth/config
+change, push or PR occurred during this qualification.

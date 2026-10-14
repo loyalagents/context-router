@@ -6,7 +6,7 @@ import { loadDemoPlan, defaultInput, summarize, validateDataset } from "./record
 
 export function parseOptions(args) {
   const { values, positionals } = parseArgs({ args, allowPositionals: true, strict: true, options: {
-    input: { type: 'string' }, dataset: { type: 'string' }, agent: { type: 'string' }, out: { type: 'string' }, root: { type: 'string' },
+    input: { type: 'string' }, dataset: { type: 'string' }, agent: { type: 'string' }, auth: { type: 'string' }, out: { type: 'string' }, root: { type: 'string' },
     port: { type: 'string' }, 'mcp-port': { type: 'string' }, help: { type: 'boolean' },
   } });
   const command = values.help ? 'help' : positionals[0] ?? 'inspect';
@@ -15,19 +15,20 @@ export function parseOptions(args) {
   }
   if (command === 'prepare' && !values.out) throw new Error('prepare requires --out with a new directory.');
   if (['serve', 'verify', 'claude', 'codex'].includes(command) && !values.root) throw new Error(`${command} requires --root.`);
-  if (values.agent && (!['a', 'b'].includes(values.agent) || command !== 'codex')) throw new Error('--agent a|b is only valid with codex.');
+  if (values.agent && (!['a', 'b'].includes(values.agent) || !['codex', 'claude'].includes(command))) throw new Error('--agent a|b is only valid with codex or claude.');
+  if (values.auth && (!['api-key', 'subscription'].includes(values.auth) || command !== 'claude')) throw new Error('--auth api-key|subscription is only valid with claude.');
   const port = values.port ?? '3003', mcpPort = values['mcp-port'] ?? '8788';
   for (const value of [port, mcpPort]) {
     if (!/^[1-9][0-9]{0,4}$/.test(value) || Number(value) > 65535) throw new Error('Invalid port.');
   }
   if (port === mcpPort) throw new Error('Dashboard and MCP ports must be distinct.');
-  return { command, agent: values.agent, dataset: validateDataset(values.dataset ?? 'demo001'), input: values.input ?? defaultInput, out: values.out, root: values.root, port: Number(port), mcpPort: Number(mcpPort) };
+  return { command, agent: values.agent, auth: values.auth, dataset: validateDataset(values.dataset ?? 'demo001'), input: values.input ?? defaultInput, out: values.out, root: values.root, port: Number(port), mcpPort: Number(mcpPort) };
 }
 
 export async function main(args = process.argv.slice(2)) {
   const options = parseOptions(args);
   if (options.command === 'help') {
-    console.log('Usage: node examples/demo-10-2026/demo.mjs [inspect | prepare --out /new/private/directory | verify --root /existing/demo | serve --root /existing/demo | claude --root /existing/demo | codex --root /existing/demo --agent a|b]\nOptional: --input /source/jsonl-directory, --dataset demo001, --port 3003, --mcp-port 8788.\ninspect is read-only. prepare never reuses or deletes state. Stop serve before verify. Client commands start cloud-backed assistants only when you explicitly run them; see README for demo-only auth.');
+    console.log('Usage: node examples/demo-10-2026/demo.mjs [inspect | prepare --out /new/private/directory | verify --root /existing/demo | serve --root /existing/demo | claude --root /existing/demo --agent a|b --auth api-key|subscription | codex --root /existing/demo --agent a|b]\nOptional: --input /source/jsonl-directory, --dataset demo001, --port 3003, --mcp-port 8788.\ninspect is read-only. prepare never reuses or deletes state. Stop serve before verify. Client commands start cloud-backed assistants only when you explicitly run them; see README for demo-only auth.');
     return;
   }
   if (options.command === 'inspect') {

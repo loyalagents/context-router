@@ -9,10 +9,17 @@ import { readCredential } from '../../apps/backend/scripts/mcp-bridge/credential
 
 // Version-pinned controls, verified offline before a provider-backed session can start.
 const disabled = ['shell_tool', 'unified_exec', 'shell_snapshot', 'view_image', 'apps', 'plugins', 'hooks', 'browser_use', 'browser_use_external', 'computer_use', 'in_app_browser', 'multi_agent', 'multi_agent_v2', 'workspace_dependencies', 'image_generation', 'skill_search', 'skill_mcp_dependency_install', 'tool_suggest', 'memories'];
-export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = command === 'claude' ? 'a' : 'b' }, { executable } = {}) {
+const claudeSubscriptionEnvironment = {
+  ENABLE_CLAUDEAI_MCP_SERVERS: 'false', CLAUDE_CODE_AUTO_CONNECT_IDE: 'false',
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', DISABLE_AUTOUPDATER: '1',
+  CLAUDE_CODE_DISABLE_AUTO_MEMORY: '1', CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL: '1',
+  CLAUDE_CODE_DISABLE_CLAUDE_MDS: '1',
+};
+export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = command === 'claude' ? 'a' : 'b', auth = command === 'claude' ? 'api-key' : undefined }, { executable } = {}) {
   validateDataset(dataset);
   if (!['claude', 'codex'].includes(command)) throw safeError('Unknown demo client.');
-  if (!['a', 'b'].includes(agent) || (command === 'claude' && agent !== 'a')) throw safeError('Unsupported client role.');
+  if (!['a', 'b'].includes(agent)) throw safeError('Unsupported client role.');
+  if (command === 'claude' ? !['api-key', 'subscription'].includes(auth) : auth !== undefined) throw safeError('Unsupported client authentication mode.');
   const prefix = command === 'codex' && agent === 'a' ? 'codex-a' : command;
   const env = { ...cleanEnvironment(), HOME: path.join(root, `${prefix}-home`), TMPDIR: path.join(root, `${prefix}-home`) };
   const cwd = path.join(root, `${prefix}-workspace`), url = `http://127.0.0.1:${mcpPort}/mcp`;
@@ -20,10 +27,12 @@ export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = comm
   let args, version;
   if (command === 'claude') {
     env.CLAUDE_CONFIG_DIR = path.join(root, 'claude-config');
-    args = ['--bare', '--setting-sources', '', '--settings', '{"disableAllHooks":true}', '--disable-slash-commands', '--no-chrome',
+    if (auth === 'subscription') Object.assign(env, claudeSubscriptionEnvironment);
+    args = [auth === 'subscription' ? '--restricted' : '--bare', '--setting-sources', '',
+      '--settings', JSON.stringify({ disableAllHooks: true, ...(auth === 'subscription' ? { forceLoginMethod: 'claudeai' } : {}) }), '--disable-slash-commands', '--no-chrome',
       '--strict-mcp-config', '--mcp-config', JSON.stringify({ mcpServers: { context_router_demo: { type: 'http', url, headers: { Authorization: 'Bearer ${CR_DEMO_TOKEN}' } } } }),
       '--tools', '', '--append-system-prompt', instruction];
-    version = '2.1.296';
+    version = '2.1.299';
   } else {
     env.CODEX_HOME = path.join(root, `${prefix}-config`);
     args = ['--no-daemon', '--strict-config', '--sandbox', 'read-only', '--ask-for-approval', 'never',
@@ -41,7 +50,7 @@ export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = comm
     if (found.status !== 0) throw safeError(`Install the qualified ${command} CLI before launching this demo.`);
     executable = found.stdout.trim();
   }
-  return { command, prefix, agent, executable, credential: agent === 'a' ? 'agent-a.token' : 'agent-b.token', version, cwd, args, env };
+  return { command, prefix, agent, auth, executable, credential: agent === 'a' ? 'agent-a.token' : 'agent-b.token', version, cwd, args, env };
 }
 
 // Validate the exact interactive argv before any session can start. This pinned
@@ -63,6 +72,28 @@ function checkStrictCodexStartup(spec) {
   } finally { rmSync(root, { recursive: true, force: true }); }
 }
 
+// This parses the full Claude argv offline. A unique config directory also has
+// a distinct macOS Keychain entry, so this probe never reads the user's login.
+function checkClaudeSubscriptionStartup(spec) {
+  const root = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'cr-demo-claude-')));
+  try {
+    for (const name of ['home', 'config', 'workspace']) mkdirSync(path.join(root, name), { mode: 0o700 });
+    const config = path.join(root, 'config');
+    const result = spawnSync(spec.executable, [...spec.args, 'auth', 'status', '--json'], {
+      cwd: path.join(root, 'workspace'),
+      env: { ...cleanEnvironment(), ...claudeSubscriptionEnvironment, HOME: path.join(root, 'home'), CLAUDE_CONFIG_DIR: config, TMPDIR: path.join(root, 'home') },
+      input: '', encoding: 'utf8', timeout: 10000, maxBuffer: 65536,
+    });
+    let status;
+    try { status = JSON.parse(result.stdout); } catch { /* Report only a sanitized failure below. */ }
+    if (result.error || result.signal !== null || result.status !== 1 || result.stderr !== '' ||
+        status?.loggedIn !== false || status.authMethod !== 'none' || status.apiProvider !== 'firstParty' ||
+        status.analyticsDisabled !== true || status.configDirectory !== config) {
+      throw safeError('Claude subscription auth-status preflight failed. No assistant session was started.');
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+}
+
 export function preflightClient(spec) {
   const run = args => {
     const result = spawnSync(spec.executable, args, { cwd: spec.cwd, env: spec.env, encoding: 'utf8', timeout: 10000, maxBuffer: 1024 * 1024 });
@@ -71,8 +102,9 @@ export function preflightClient(spec) {
   };
   if (!run(['--version']).includes(spec.version)) throw safeError('Unsupported client version; revalidate isolation controls before using it.');
   const help = run(['--help']);
-  const required = spec.command === 'claude' ? ['--bare', '--strict-mcp-config', '--tools', '--setting-sources', '--disable-slash-commands', '--no-chrome'] : ['--no-daemon', '--strict-config', '--sandbox'];
+  const required = spec.command === 'claude' ? [spec.auth === 'subscription' ? '--restricted' : '--bare', '--strict-mcp-config', '--tools', '--setting-sources', '--disable-slash-commands', '--no-chrome'] : ['--no-daemon', '--strict-config', '--sandbox'];
   if (required.some(flag => !help.includes(flag))) throw safeError('Unsupported client isolation controls.');
+  if (spec.command === 'claude' && spec.auth === 'subscription') checkClaudeSubscriptionStartup(spec);
   if (spec.command === 'codex') {
     checkStrictCodexStartup(spec);
     // This version restricts --strict-config to interactive/exec; features and mcp list are offline readers.
@@ -96,8 +128,10 @@ export async function launchClient(options) {
   if ((await fs.readdir(spec.cwd)).length) throw safeError('Demo client workspace must remain empty. Move unrelated files before launching.');
   preflightClient(spec);
   if (options.command === 'claude') {
-    if (!process.env.CR_DEMO_ANTHROPIC_API_KEY) throw safeError('Claude bare isolation requires an explicitly supplied CR_DEMO_ANTHROPIC_API_KEY for this launch; personal OAuth/keychain auth is not copied.');
-    spec.env.ANTHROPIC_API_KEY = process.env.CR_DEMO_ANTHROPIC_API_KEY;
+    if (spec.auth === 'api-key') {
+      if (!process.env.CR_DEMO_ANTHROPIC_API_KEY) throw safeError('Claude bare isolation requires an explicitly supplied CR_DEMO_ANTHROPIC_API_KEY for this launch; use --auth subscription for a separate demo-only Claude Pro login.');
+      spec.env.ANTHROPIC_API_KEY = process.env.CR_DEMO_ANTHROPIC_API_KEY;
+    }
   } else {
     // Only an explicitly user-created demo login is accepted; no personal auth fallback.
     try { await privatePath(path.join(spec.env.CODEX_HOME, 'auth.json')); }

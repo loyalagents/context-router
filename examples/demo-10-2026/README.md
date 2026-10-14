@@ -4,9 +4,10 @@ This example imports the supplied historical snapshot into a **new private local
 Context Router instance**, then demonstrates shared reads, an explicit update,
 independent permissions, and persisted history in the existing dashboard. It
 changes no product code or installed application state. Different assistant
-vendors are optional: use two isolated Codex sessions, or Claude A and Codex B.
+vendors are optional. The current walkthrough uses Codex A and Claude Code B
+with a Claude Pro subscription; two isolated Codex sessions also work.
 
-**Live assistant authentication and the human walkthrough are still pending.**
+**Live Claude login, assistant behavior and the human walkthrough remain pending.**
 Local automated tests use real MCP, SQLite and the dashboard without model calls.
 Cloud assistants may send retrieved context to their providers. All prepared
 state, original records, audit history and assistant transcripts are private;
@@ -45,11 +46,38 @@ Closing the browser alone does not stop the server.
 ## Assistant setup (user-run only)
 
 Supported offline checks currently pin **Codex CLI 0.160.0** and **Claude Code
-2.1.296**. Launchers fail on unsupported versions or missing controls. Personal
+2.1.299**. Launchers fail on unsupported versions or missing controls. Personal
 config, hooks, plugins, connectors and authentication are not copied. Workspaces
 start empty and must remain empty; state stays in separate demo HOME/config
 folders. No credentials are put in argv or MCP configuration; tokens are passed
 only in child environments.
+
+For Claude Code B with Claude Pro, run this from the repository root:
+
+```sh
+node examples/demo-10-2026/demo.mjs claude --root /private/tmp/context-router-demo --agent b --auth subscription
+```
+
+Complete the fresh demo login using **Claude.ai with your Pro subscription**.
+Do not select Console/API billing. `forceLoginMethod: claudeai` preselects the
+subscription login, but terminal onboarding still allows another choice.
+The separate `claude-config` directory has its own login and macOS Keychain
+entry; no existing login is copied. This one Claude Code session uses the
+prepared `claude-home`, `claude-config` and empty `claude-workspace` folders for
+either selected role, so do not run both Claude roles in them concurrently.
+See the [Claude authentication documentation](https://code.claude.com/docs/en/authentication).
+
+Subscription mode uses `--restricted`, empty built-in tools, strict demo-only
+MCP configuration, explicit settings and disabled hooks/skills/Chrome. It also
+disables account MCP connectors, IDE auto-connect, automatic memory, CLAUDE.md
+loading, official marketplace auto-installation, auto-updates and nonessential
+traffic through documented environment controls. It supplies no API key or
+ambient OAuth token. See the [CLI reference](https://code.claude.com/docs/en/cli-reference)
+and [environment reference](https://code.claude.com/docs/en/env-vars).
+Offline preflight parses the complete launch arguments using `auth status`
+inside disposable fresh directories and requires an unauthenticated first-party
+result naming that exact configuration directory. This proves argument parsing
+and the isolated auth probe, not interactive login or model readiness.
 
 For two Codex sessions, explicitly log in to each demo-only configuration root
 first. Run these from outside the repository; the login commands use file auth
@@ -71,7 +99,8 @@ node examples/demo-10-2026/demo.mjs codex --root /private/tmp/context-router-dem
 node examples/demo-10-2026/demo.mjs codex --root /private/tmp/context-router-demo --agent b
 ```
 
-Alternatively, A can use `claude --root /private/tmp/context-router-demo`. Its
+The legacy `claude --root /private/tmp/context-router-demo` defaults to A and
+`--auth api-key`; `--agent b` can select B. This mode's
 `--bare` isolation **does not use subscription OAuth/keychain login**. It requires
 an API key explicitly supplied as `CR_DEMO_ANTHROPIC_API_KEY` in the launcher's
 environment; it passes that only to Claude as `ANTHROPIC_API_KEY`. Do not type
@@ -90,6 +119,34 @@ defines `shell_tool` as command-execution exposure. It also documents that
 true while shell exposure is false. Preflight verifies the latter and other
 supported gates. Managed installation policies may still affect a client; a
 failed preflight needs investigation, not a fallback to personal configuration.
+
+## Later Claude Desktop agent C
+
+The example's [Desktop adapter](desktop-bridge.mjs) is prepared for a later
+separate Desktop instance. It reuses the existing production credential reader
+and stdio/HTTP bridge without changing their protocol, recovery or no-replay
+behavior. The production CLI remains fixed to the installed-app endpoint;
+this adapter accepts a validated loopback `--mcp-port`, defaulting to 8788:
+
+```sh
+node examples/demo-10-2026/desktop-bridge.mjs --credential-file /absolute/private/agent-c.token --mcp-port 8788
+```
+
+Desktop C must receive its **own separately provisioned credential**, not A's or
+B's. Its provisioning, Desktop configuration entry and normal user restart are
+later setup steps; this change does not activate Desktop or modify its existing
+configuration. Claude Desktop uses the user's subscription, not the CLI API-key
+mode. Node must be exactly 24.21.0, with Node options/debug variables absent.
+The adapter reads only the private credential file and uses sanitized diagnostics.
+
+For a durable snapshot, preserve repository-relative paths for this adapter and
+the three existing files under `apps/backend/scripts/mcp-bridge/`:
+`cli.mjs`, `bridge.mjs`, and `credential.mjs`. Record their source commit/hashes
+in a private receipt, and point Desktop at the snapshotted adapter using an
+absolute pinned Node path. Only the bridge and credential modules are imported
+by the adapter; the production CLI is retained unchanged with the snapshot.
+Moving this demo into the installed Context Router app, including its approved
+data reset, remains a separate later operation.
 
 ## Five-minute rehearsal
 
@@ -129,6 +186,7 @@ matches schema metadata, not full value text. No local inference tools run.
   receipts, verification and the existing UI launcher.
 - `clients.mjs`: separate role credentials, launch argv/environment and offline
   version/control preflight. `demo.mjs` is only CLI dispatch.
+- `desktop-bridge.mjs`: example-only port selection around the existing bridge.
 
 The 11 JSONL files contain 198 records: 189 active values and nine inactive
 records preserved in `import-plan.json` without becoming active preferences.
@@ -169,6 +227,8 @@ node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs
 node scripts/check-markdown-links.mjs
 # Optional installed-binary regression; requires Codex CLI 0.160.0:
 CR_DEMO_TEST_CODEX=1 node --test examples/demo-10-2026/clients.test.mjs
+# Both installed clients; also requires Claude Code 2.1.299, no login needed:
+CR_DEMO_TEST_CODEX=1 CR_DEMO_TEST_CLAUDE=1 node --test examples/demo-10-2026/clients.test.mjs
 ```
 
 The browser test requires the repository's pinned Playwright 1.63.0 / Chromium
@@ -193,6 +253,14 @@ must reach its exact nonterminal-stdin refusal; unknown options are rejected
 before any assistant session. The explicit installed-binary regression checks
 both roles and an injected unknown-key negative control. The prior 21-test run
 did not cover this strict startup boundary.
+
+The Claude Pro/role-B addition passed all nine client tests with both installed
+CLI regressions enabled, including requalification after Claude updated to
+2.1.299. The affected CLI/mapping tests passed (ten tests),
+and the Desktop adapter passed three focused tests using real SDK stdio,
+an owned MCP server, permission filtering/denial, startup guards and shutdown.
+The Desktop fixture uses B's existing read policy; it does not provision live C.
+The unchanged production bridge retains responsibility for no-replay behavior.
 
 Targeted checks passed; final validation pending. Remaining checks are live
 demo-only authentication, tool discovery, actual assistant behavior and the

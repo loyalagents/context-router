@@ -5,6 +5,63 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { clientLaunchSpec, preflightClient } from './clients.mjs';
+import { parseOptions } from './demo.mjs';
+
+test('Claude subscription B selects its read credential and isolated OAuth configuration', () => {
+  const options = parseOptions(['claude', '--root', '/private/tmp/example', '--agent', 'b', '--auth', 'subscription']);
+  const spec = clientLaunchSpec(options, { executable: '/bin/false' });
+  assert.equal(spec.agent, 'b'); assert.equal(spec.auth, 'subscription'); assert.equal(spec.credential, 'agent-b.token');
+  assert.equal(spec.env.HOME, '/private/tmp/example/claude-home');
+  assert.equal(spec.env.CLAUDE_CONFIG_DIR, '/private/tmp/example/claude-config');
+  assert.equal(spec.cwd, '/private/tmp/example/claude-workspace');
+  assert.ok(spec.args.includes('--restricted')); assert.equal(spec.args.includes('--bare'), false);
+  assert.equal(spec.args[spec.args.indexOf('--tools') + 1], '');
+  assert.equal(spec.args[spec.args.indexOf('--setting-sources') + 1], '');
+  assert.deepEqual(JSON.parse(spec.args[spec.args.indexOf('--settings') + 1]), { disableAllHooks: true, forceLoginMethod: 'claudeai' });
+  const mcp = JSON.parse(spec.args[spec.args.indexOf('--mcp-config') + 1]);
+  assert.deepEqual(Object.keys(mcp.mcpServers), ['context_router_demo']);
+  assert.equal(mcp.mcpServers.context_router_demo.headers.Authorization, 'Bearer ${CR_DEMO_TOKEN}');
+  assert.equal(spec.env.ENABLE_CLAUDEAI_MCP_SERVERS, 'false');
+  assert.equal(spec.env.CLAUDE_CODE_AUTO_CONNECT_IDE, 'false');
+  assert.equal(spec.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC, '1');
+  assert.equal(spec.env.DISABLE_AUTOUPDATER, '1');
+  assert.equal(spec.env.CLAUDE_CODE_DISABLE_AUTO_MEMORY, '1');
+  assert.equal(spec.env.CLAUDE_CODE_DISABLE_CLAUDE_MDS, '1');
+  assert.equal(spec.env.CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL, '1');
+  for (const key of ['ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN', 'CLAUDE_CODE_SIMPLE']) assert.equal(spec.env[key], undefined);
+  const legacy = clientLaunchSpec({ ...options, agent: undefined, auth: undefined }, { executable: '/bin/false' });
+  assert.equal(legacy.agent, 'a'); assert.equal(legacy.auth, 'api-key'); assert.ok(legacy.args.includes('--bare'));
+  for (const args of [ ['codex', '--auth', 'subscription'], ['claude', '--auth', 'unknown'], ['serve', '--agent', 'b'] ]) {
+    assert.throws(() => parseOptions([...args, '--root', '/private/tmp/example']));
+  }
+});
+
+test('Claude subscription preflight requires restricted mode and exact fresh auth-status result', async t => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-pro-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  for (const p of ['home', 'config', 'workspace']) await fs.mkdir(path.join(root, `claude-${p}`));
+  const executable = path.join(root, 'client');
+  const spec = clientLaunchSpec({ command: 'claude', auth: 'subscription', agent: 'b', root, dataset: 'demo001', mcpPort: 1 }, { executable });
+  for (const behavior of ['valid', 'missing-flag', 'logged-in', 'unexpected-error']) {
+    await fs.writeFile(executable, `#!${process.execPath}\nconst a=process.argv.slice(2);\nif(a.includes('--version'))console.log('2.1.299');\nelse if(a.includes('--help'))console.log('--strict-mcp-config --tools --setting-sources --disable-slash-commands --no-chrome ${behavior === 'missing-flag' ? '' : '--restricted'}');\nelse { console.log(${JSON.stringify(behavior)}==='unexpected-error'?'error':JSON.stringify({loggedIn:${behavior === 'logged-in'},authMethod:'none',apiProvider:'firstParty',analyticsDisabled:true,configDirectory:process.env.CLAUDE_CONFIG_DIR}));process.exitCode=1; }\n`, { mode: 0o700 });
+    if (behavior === 'valid') assert.equal(preflightClient(spec).offlineControls, 'passed');
+    else assert.throws(() => preflightClient(spec), /controls|auth-status/);
+  }
+});
+
+test('installed Claude accepts full subscription B argv in fresh unauthenticated configuration', { skip: process.env.CR_DEMO_TEST_CLAUDE !== '1' }, async t => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-real-pro-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  for (const suffix of ['home', 'config', 'workspace']) await fs.mkdir(path.join(root, `claude-${suffix}`), { mode: 0o700 });
+  const spec = clientLaunchSpec({ command: 'claude', auth: 'subscription', agent: 'b', root, dataset: 'demo001', mcpPort: 1 });
+  const result = spawnSync(spec.executable, [...spec.args, 'auth', 'status', '--json'], { cwd: spec.cwd, env: spec.env, input: '', encoding: 'utf8', timeout: 10000 });
+  assert.equal(result.error, undefined); assert.equal(result.signal, null); assert.equal(result.status, 1); assert.equal(result.stderr, '');
+  const status = JSON.parse(result.stdout);
+  assert.equal(status.loggedIn, false); assert.equal(status.authMethod, 'none'); assert.equal(status.apiProvider, 'firstParty');
+  assert.equal(status.analyticsDisabled, true); assert.equal(status.configDirectory, spec.env.CLAUDE_CONFIG_DIR);
+  assert.equal(preflightClient(spec).offlineControls, 'passed');
+  assert.throws(() => preflightClient({ ...spec, args: [...spec.args, '--demo-unknown-option'] }), /auth-status/);
+});
 
 test('launch specs confine config/workspace and omit ambient secrets, tools and source data', async t => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-clients-')));
