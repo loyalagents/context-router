@@ -1,6 +1,6 @@
 # MCP Client Names
 
-- Status: approved plan implemented; focused validation and complete-diff review checkpoint
+- Status: implementation reviewed; main integration and renewed final qualification
 - Priority: bounded UI usability slice supporting the assisted pilot
 - Base: `2497cc209e4d8c1233a7dcd6852b9fd8f4b1b42c`; branch `codex/mcp-client-names`
 - Workspace: isolated `1487/context-router`; one cohesive PR, no automatic merge
@@ -290,10 +290,31 @@ CLI, schema, contract and other unaffected review/test evidence carries forward.
 The rebuilt UI passed all 49 existing/new browser, parser and transport checks,
 including both corrected regressions, loaded-page batching, focus/broadcast
 eviction, lock/expiry cleanup and backward/forward history navigation. Markdown
-links, direct contract census and whitespace checks also pass. Affected reviewer
-rechecks remain pending on the corrected candidate; final full migration,
-native/packaged qualification and exact-head CI remain pending.
+links, direct contract census and whitespace checks also pass. Both affected
+reviewer rechecks subsequently approved `a29cd31650234d14b929b488f2d210541358c2d7`
+without findings, carrying forward their original complete-diff coverage.
 No user app, personal state, client configuration, live model or provider was used.
+
+### Main Integration
+
+The user requested integration of main at
+`b5bc3aeb453bc020f0d7ed11e989402b643aa488` (PRs #179 and #180). Local main was
+already fast-forwarded to that revision by another agent; the feature merge has
+no file conflicts. Incoming changes affect CI qualification orchestration,
+workflow/documentation and browser test harnesses, with no feature production,
+native, backend test, schema or dependency changes. The same writer owns this
+merge and narrow plan reconciliation; both existing reviewers assess integration
+and carry forward their unaffected feature review coverage.
+
+The prior full local gate, native suite and isolated package/installed receipts
+remain bound to `a29cd31`; receipt paths and preserved failure/retry outcomes live
+in the existing PR evidence. Carry forward the native 200-test and focused backend
+results by unchanged implementation/test/dependency input identity. Renew the full
+twelve-phase local gate on the frozen merged source. Packaging imports the changed
+gate workspace helper and binds all copied source inputs, so build/seal/verify a
+new isolated Mac artifact instead of relabelling the old artifact. Renew installed
+smoke with the updated mock-Keychain browser harness, sequentially after the full
+local gate to avoid the resource overlap observed during prior qualification.
 
 ## Validation And Finalization
 
@@ -327,7 +348,12 @@ before the implementation. The direct contract checker is useful but its default
 
 Finalization milestone: reviewed implementation and targeted corrections are
 resolved, then freeze one source candidate. No installed replacement or exploratory
-live-client round is part of this request. Final acceptance requires:
+live-client round is part of this request. Once related source/docs and focused
+checks are ready, push the stable candidate to the existing draft PR promptly;
+run remote CI, independent integration review and required local qualification
+concurrently with isolated resources under the updated agent workflow. Keep final
+receipts in the PR/evidence record without pass-only source commits. Final acceptance
+requires:
 
 - Two independent fresh reviews of the entire base-to-candidate diff, covering
   security/persistence/recovery and UI/compatibility/maintainability. Any changes
@@ -345,7 +371,13 @@ live-client round is part of this request. Final acceptance requires:
   change requires normal seal/manifest verification. General distribution, live
   model quality and new third-party-client qualification are not claimed.
 - Required standard and dedicated exact-head CI before merge readiness, following
-  the existing triggers. Human merge only. If publishing/PR work is not yet
+  the existing triggers. Dedicated CI runs independent `source-qualification` and
+  `packaging-qualification` lanes; the stable `local-migration-baseline` combined
+  check requires both successful lanes and their current-run/current-attempt
+  receipts. A required rerun must rerun all jobs to preserve that binding. Record
+  actual local source separately from PR head and CI test-merge checkout identities.
+  This CI partition does not replace the default full local gate. Human merge only.
+  If publishing/PR work is not yet
   authorized or a prerequisite is unavailable, report the exact pending gate.
 
 Before broad runs, explain changed inputs/purpose and check Node **24.21.0**, pnpm
