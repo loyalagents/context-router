@@ -51,7 +51,9 @@ export default function HistoryTabs({
   const changeClientFilter = (value: string) => {
     setClientFilter(value);
     const id = localClientId(value);
-    window.history.pushState(null, '', window.location.pathname + (id ? `#mcp-client=${id}` : ''));
+    const { pathname, search, hash } = window.location;
+    const destination = pathname + search + (id ? `#mcp-client=${id}` : '');
+    if (destination !== pathname + search + hash) window.history.pushState(null, '', destination);
   };
   useEffect(() => {
     mounted.current = true;

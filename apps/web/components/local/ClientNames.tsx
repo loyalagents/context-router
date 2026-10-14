@@ -145,13 +145,20 @@ export function ClientName({
   }, [id, register, label]);
   const name = label === undefined ? id && context?.names[id] : label;
   if (!id || !usableClientName(name))
-    return <span className="[overflow-wrap:anywhere]">{clientKey}</span>;
+    return (
+      <bdi dir="ltr" className="[overflow-wrap:anywhere]">
+        {clientKey}
+      </bdi>
+    );
   return (
     <span title={clientKey} className="[overflow-wrap:anywhere]">
-      <span>{name}</span> <code aria-hidden="true">· {id.slice(-8)}</code>
+      <bdi dir="auto">{name}</bdi>{" "}
+      <code aria-hidden="true">
+        <bdi dir="ltr">· {id.slice(-8)}</bdi>
+      </code>
       <span className={fullId ? "block text-xs font-normal" : "sr-only"}>
         {" "}
-        (instance {clientKey})
+        <bdi dir="ltr">(instance {clientKey})</bdi>
       </span>
     </span>
   );

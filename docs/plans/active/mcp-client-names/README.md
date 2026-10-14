@@ -1,6 +1,6 @@
 # MCP Client Names
 
-- Status: implementation reviewed; main integration and renewed final qualification
+- Status: bounded external-review corrections; renewed final qualification pending
 - Priority: bounded UI usability slice supporting the assisted pilot
 - Base: `2497cc209e4d8c1233a7dcd6852b9fd8f4b1b42c`; branch `codex/mcp-client-names`
 - Workspace: isolated `1487/context-router`; one cohesive PR, no automatic merge
@@ -11,8 +11,8 @@
 Reuse the existing `local_mcp_clients.label` as the current human-readable name
 throughout local client management, authority/permissions, preference attribution,
 audit history and MCP access history. Add browser Rename, installed/source CLI
-parity and View activity for the exact instance. Names may repeat; identity and
-authority remain tied to the full stable ID. Renaming changes the name displayed
+rename commands and View activity for the exact instance. Names may repeat;
+identity and authority remain tied to the full stable ID. Renaming changes the name displayed
 on old history without rewriting events, snapshots or actor keys.
 
 Exclude last-activity aggregation, live badges, reported clientInfo/version,
@@ -35,7 +35,8 @@ and accessibility review. Follow [agent workflow](../../../useful/AGENT_WORKFLOW
 | Sole plan writer | `/root/client_names_plan` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
 | Read-only plan security reviewer | `/root/plan_security` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
 | Read-only plan compatibility reviewer | `/root/plan_compatibility` | GPT-6 Astra High | delegation accepted; execution internals unverified |
-| Sole implementation writer/integrator | `/root/client_names_writer` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
+| Initial implementation writer/integrator (idle after transfer) | `/root/client_names_writer` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
+| Sole external-review correction writer/integrator | `/root/claude_review_fixes` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
 | Read-only complete-diff security reviewer | `/root/code_security_review` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
 | Read-only complete-diff UI/compatibility reviewer | `/root/code_ui_review` | GPT-6 Astra High | delegation accepted; execution internals unverified |
 
@@ -102,6 +103,9 @@ overlapping changes fail instead of retrying. Preserve generic failure output,
 summary-only stdout and IDs beginning with hyphens. Installed CLI adds `mcp rename`
 through both native and runtime allowlists/help. It retains Quit/exclusive-owner
 requirements and managed admission, including explicit pending-store selection.
+The installed wrapper retains its broader Unicode control/format argument
+restriction, including rejection of joiner emoji; browser/source rename only
+rejects C0/DEL. Command support does not imply identical Unicode acceptance.
 
 ### Resolve Only Visible Names
 
@@ -315,6 +319,50 @@ gate workspace helper and binds all copied source inputs, so build/seal/verify a
 new isolated Mac artifact instead of relabelling the old artifact. Renew installed
 smoke with the updated mock-Keychain browser harness, sequentially after the full
 local gate to avoid the resource overlap observed during prior qualification.
+
+### External Review Follow-up
+
+The user requested an Extra High follow-up to Claude's review of `b412ef9`.
+The coordinator transferred sole writing ownership to `/root/claude_review_fixes`;
+the original writer is idle and the coordinator/reviewers remain read-only.
+Both independent reviewers agreed the bounded correction scope before production
+edits. The existing finalization milestone and one draft PR remain in force.
+
+- Fix duplicate browser history entries on unchanged-client Apply/Reset in both
+  history tabs. Compare the complete intended pathname/search/hash before pushing;
+  preserve the permitted `_rsc` query and Next history handling. Clearing an actual
+  client fragment creates one entry; repeated Reset creates none. Malformed
+  fragments clear once, while manual non-local exact keys remain in view state.
+- Preserve the native argument guard. Document Unicode control/format restrictions
+  and the browser alternative, and characterize actual native rejection before
+  maintenance plus ordinary non-ASCII forwarding. No backend, provision or native
+  production input rules change.
+- Isolate shared display names and stable suffix/full/fallback IDs for bidi text.
+  Keep raw labels, stored IDs and accessible identity unchanged; add no controls
+  inside expandable row buttons.
+- Defer retaining stale names during cache refresh: clearing avoids stale-name
+  display and a different policy needs separate cache/race review. Defer the
+  conservative non-409 unconfirmed-write message: unclassified server exceptions
+  can map to 400, so that status alone does not prove precommit rejection.
+  The coordinator owns either future activation; neither is part of this slice.
+
+All six new browser regressions failed against the original production build for
+duplicate history, dropped search or reversed stable suffix order. The rebuilt UI
+passes all 55 affected browser/parser/transport cases, including existing actual
+client Back/Forward, masking, grant/revoke, cache and session cleanup journeys.
+All eight native maintenance cases pass, including the new unchanged-boundary
+characterization. Markdown/contract checker tests pass 75 cases, all 148 Markdown
+files pass links, and the direct contract census and whitespace checks pass.
+Targeted checks passed; final validation pending. External logs retain the earlier
+selector corrections and sandbox startup failures as well as the confirmed red/
+green results; no failure was counted as a production regression without evidence.
+
+Only web presentation/navigation, focused browser/native tests and these runbooks/
+plan change. Backend, schema, credentials, native production, runtime and dependency
+inputs remain unchanged; prior unaffected review coverage can carry forward after
+explicit reviewer assessment. Changed web/source inputs require renewed full gate,
+Mac artifact/installed smoke and exact-head CI after freeze. Run installed smoke
+sequentially after the full local gate, preserving the existing 360-second deadline.
 
 ## Validation And Finalization
 

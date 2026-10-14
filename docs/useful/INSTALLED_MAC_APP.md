@@ -153,6 +153,14 @@ rename while the app runs. Inspect the current name after an unconfirmed result
 before making another explicit attempt. Pending-store administration supports
 `mcp rename` only with the same explicit `--pending-store STORE_ID` selection.
 
+Names are trimmed, nonempty and limited to 64 UTF-16 code units before trimming.
+The installed CLI also rejects Unicode control and format characters in MCP
+command arguments. This includes the zero-width joiner used in emoji such as
+👩‍💻; ordinary non-ASCII names such as `Café 東京 💻` are accepted. To use a name
+containing a format character, rename in the browser instead; its name validation
+rejects C0 controls (U+0000–U+001F) and DEL (U+007F), a narrower rule. The installed
+restriction also applies to provision and is unchanged by rename support.
+
 Back up only after Quit, through the installed command:
 
 ```sh

@@ -47,7 +47,11 @@ Defaults are READ, **no allowed targets**, and no sensitive access. `permissions
 Rename changes only an instance's display name and update time. It preserves the
 full stable ID, token, generation, active sessions, maximum policy and grants.
 Names can repeat; choose by the full instance ID. A name is trimmed, nonempty,
-at most 64 UTF-16 code units before trimming, and contains no control characters.
+at most 64 UTF-16 code units before trimming, and contains no C0 controls
+(U+0000–U+001F) or DEL (U+007F). That rule applies to browser and source CLI rename.
+The [installed CLI](INSTALLED_MAC_APP.md) additionally rejects Unicode control
+and format characters in arguments, including the zero-width joiner in some emoji;
+use browser rename for names containing format characters.
 Revoked instances can be renamed for historical identification and remain revoked.
 The CLI compares the name and generation it read before committing; an overlapping
 rename/rotation/revocation can fail instead of silently overwriting it. No token

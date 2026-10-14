@@ -51,6 +51,188 @@ function seed(f, client, suffix = "first") {
   }
 }
 
+for (const tab of ["Audit", "MCP Access"])
+  for (const selected of [false, true])
+    test(
+      `client history ${tab} unchanged filters do not grow navigation history (selected=${selected})`,
+      { timeout: 60000 },
+      async (t) => {
+        const f = await browserFixture(t),
+          client = clients(f)[0];
+        seed(f, client);
+        await unlock(f);
+        await f.page
+          .getByRole("button", { name: `Rename ${client.id}`, exact: true })
+          .waitFor();
+        const previous = f.page.url();
+        if (selected)
+          await f.page
+            .getByRole("link", {
+              name: `View activity ${client.id}`,
+              exact: true,
+            })
+            .click();
+        else await f.page.goto(f.ready.origin + "/dashboard/history");
+        await f.page.getByRole("tab", { name: tab, exact: true }).click();
+        const panel = f.page.getByRole("tabpanel", { name: tab, exact: true });
+        const field = panel.getByLabel(tab === "Audit" ? /^Slug/ : "Operation");
+        const value =
+          tab === "Audit" ? "synthetic.first" : "syntheticReadfirst";
+        const length = await f.page.evaluate(() => history.length),
+          destination = f.page.url();
+        for (const filter of ["", value]) {
+          await field.fill(filter);
+          await panel
+            .getByRole("button", { name: "Apply", exact: true })
+            .click();
+          assert.equal(await f.page.evaluate(() => history.length), length);
+          assert.equal(f.page.url(), destination);
+          assert.equal(await field.inputValue(), filter);
+        }
+        await f.page.goBack();
+        await f.page
+          .getByRole("button", { name: `Rename ${client.id}`, exact: true })
+          .waitFor();
+        assert.equal(f.page.url(), previous);
+        await f.page.goForward();
+        await f.page.getByRole("tab", { name: tab, exact: true }).click();
+        await panel.getByRole("button", { name: "Reset", exact: true }).click();
+        const resetLength = await f.page.evaluate(() => history.length);
+        assert.equal(resetLength, length + (selected ? 1 : 0));
+        assert.equal(new URL(f.page.url()).hash, "");
+        await panel.getByRole("button", { name: "Reset", exact: true }).click();
+        assert.equal(await f.page.evaluate(() => history.length), resetLength);
+        await f.page.goBack();
+        if (selected) {
+          await f.page
+            .getByRole("tab", { name: "MCP Access", selected: true })
+            .waitFor();
+          assert.equal(new URL(f.page.url()).hash, `#mcp-client=${client.id}`);
+          await f.page.goBack();
+        }
+        await f.page
+          .getByRole("button", { name: `Rename ${client.id}`, exact: true })
+          .waitFor();
+        assert.equal(f.page.url(), previous);
+      },
+    );
+
+test(
+  "client history clears malformed fragments once, preserves allowed search and retains manual non-local keys",
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t);
+    await unlock(f, "/dashboard/history");
+    await f.page.getByRole("tab", { name: "MCP Access", exact: true }).click();
+    const panel = f.page.getByRole("tabpanel", { name: "MCP Access" });
+    await f.page.evaluate(() =>
+      history.replaceState(null, "", "?_rsc=synthetic#unexpected"),
+    );
+    const length = await f.page.evaluate(() => history.length);
+    await panel.getByLabel("Client key", { exact: true }).fill("codex");
+    await panel.getByRole("button", { name: "Apply", exact: true }).click();
+    assert.equal(new URL(f.page.url()).search, "?_rsc=synthetic");
+    assert.equal(new URL(f.page.url()).hash, "");
+    assert.equal(await f.page.evaluate(() => history.length), length + 1);
+    await panel.getByRole("button", { name: "Apply", exact: true }).click();
+    assert.equal(await f.page.evaluate(() => history.length), length + 1);
+    await f.page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await panel.getByLabel("Client key", { exact: true }).waitFor();
+    assert.equal(
+      await panel.getByLabel("Client key", { exact: true }).inputValue(),
+      "codex",
+    );
+  },
+);
+
+test(
+  "client names isolate RTL and bidi override labels from stable IDs without changing accessible identity",
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t),
+      client = clients(f)[0];
+    seed(f, client);
+    await unlock(f, `/dashboard/history#mcp-client=${client.id}`);
+    const panel = f.page.getByRole("tabpanel", { name: "MCP Access" });
+    for (const name of ["\u202Elaptop", "حاسوب شخصي"]) {
+      f.cli("local-mcp.js", "rename", "--id", client.id, "--label", name);
+      await f.page.evaluate(() => window.dispatchEvent(new Event("focus")));
+      await panel.getByText(name, { exact: true }).first().waitFor();
+      const row = panel
+        .getByRole("button")
+        .filter({ hasText: "syntheticReadfirst" });
+      assert.equal(await row.locator("button, a, input").count(), 0);
+      const accessible = await row.ariaSnapshot();
+      assert.ok(accessible.includes(name));
+      assert.ok(accessible.includes(`(instance local:${client.id})`));
+      const presentation = panel.locator(`[title="local:${client.id}"]`);
+      const layouts = await presentation.evaluateAll((items) =>
+        items.map((item) => {
+          const label = item.firstElementChild,
+            suffix = item.querySelector("code");
+          const text =
+            [...suffix.childNodes].find(
+              (node) => node.nodeType === Node.TEXT_NODE,
+            ) ?? suffix.firstElementChild.firstChild;
+          const xs = Array.from({ length: text.length }, (_, i) => {
+            const range = document.createRange();
+            range.setStart(text, i);
+            range.setEnd(text, i + 1);
+            return range.getBoundingClientRect().x;
+          });
+          const fullKey =
+            item.lastElementChild.firstElementChild ?? item.lastElementChild;
+          return {
+            labelIsolation: getComputedStyle(label).unicodeBidi,
+            fullKeyDirection: getComputedStyle(fullKey).direction,
+            fullKeyIsolation: getComputedStyle(fullKey).unicodeBidi,
+            suffixAfterLabel:
+              suffix.getBoundingClientRect().left >=
+              label.getBoundingClientRect().right,
+            xs,
+          };
+        }),
+      );
+      assert.ok(
+        layouts.length >= 2,
+        "filter chip and expandable row both render the name",
+      );
+      for (const layout of layouts) {
+        assert.ok(
+          layout.xs.every((x, i, xs) => i === 0 || x >= xs[i - 1]),
+          "stable ID suffix reads left to right",
+        );
+        assert.equal(layout.suffixAfterLabel, true);
+        assert.equal(layout.labelIsolation, "isolate");
+        assert.equal(layout.fullKeyDirection, "ltr");
+        assert.equal(layout.fullKeyIsolation, "isolate");
+      }
+      assert.equal(
+        clients(f).find((item) => item.id === client.id).label,
+        name,
+      );
+      await row.focus();
+      await f.page.keyboard.press("Enter");
+      await panel
+        .getByText(`Client key: local:${client.id}`, { exact: true })
+        .waitFor();
+    }
+    await f.page.route("**/api/local/mcp/labels", (route) =>
+      route.fulfill({ json: { items: [] } }),
+    );
+    await f.page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    const fallback = panel.getByText(`local:${client.id}`, { exact: true });
+    await fallback.first().waitFor();
+    for (const style of await fallback.evaluateAll((items) =>
+      items.map((item) => ({
+        direction: getComputedStyle(item).direction,
+        isolation: getComputedStyle(item).unicodeBidi,
+      })),
+    ))
+      assert.deepEqual(style, { direction: "ltr", isolation: "isolate" });
+  },
+);
+
 test(
   "client names update another window through rename broadcast without changing its history filter",
   { timeout: 60000 },

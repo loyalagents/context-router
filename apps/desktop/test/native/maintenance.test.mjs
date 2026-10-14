@@ -31,3 +31,17 @@ test('native rename forwards exact arguments, advertises help and retains runnin
   assert.equal(cli(f,['mcp','renam']).status,1);
   f.acceptQuiescent(JSON.parse(await readFile(path.join(f.envelope,'owner.json'))));
 });
+test('native rename rejects Unicode format characters before maintenance and forwards ordinary Unicode names',async t=>{
+  const f=await ready(t),owner=path.join(f.envelope,'owner.json'),installation=path.join(f.envelope,'installation.json');
+  const beforeOwner=await readFile(owner,'utf8'),beforeInstallation=await readFile(installation,'utf8');
+  for(const label of ['👩\u200d💻 laptop','\u202Elaptop']){
+    const result=cli(f,['mcp','rename','--id','A'.repeat(22),'--label',label]);
+    assert.equal(result.status,1);assert.equal(result.stdout,'');
+    assert.equal(await readFile(owner,'utf8'),beforeOwner,'rejected label must not start a maintenance generation');
+    assert.equal(await readFile(installation,'utf8'),beforeInstallation);
+  }
+  const args=['mcp','rename','--id','A'.repeat(22),'--label','Café 東京 💻'];
+  const accepted=cli(f,args);assert.equal(accepted.status,0,accepted.stderr);
+  assert.deepEqual(JSON.parse(accepted.stdout).args,args);
+  f.acceptQuiescent(JSON.parse(await readFile(owner)));
+});
