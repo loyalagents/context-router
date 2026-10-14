@@ -106,6 +106,39 @@ write. Staging fault tests use real rename except the dedicated rename-failure c
 and assert the intended rejection, so one injected failure cannot mask another.
 A real existing nonancestor Git base is also rejected. The already-started `ee11ea5`
 CI attempt is retained; no local full gate ran on that superseded candidate.
+
+The next candidate `9c2b2ed` exposed a real Linux inode-lifetime gap in those retained
+unlink/recreate tests: source CI failed four assertions while packaging and standard
+CI passed. Device/inode numbers alone could identify a replacement after the original
+inode was freed. A fixed cached Ubuntu24 probe reproduced reuse in 128/128 unpinned
+cases and 0/128 with a read-only descriptor held open; no network/install was needed,
+and its disposable container was removed. No local full gate launched on `9c2b2ed`.
+Independent approval of the lifetime amendment binds SHA-256
+`0069e966bb2be9fc0a8905c538571f19b8c366380f9e26408ea59a578779aefd`.
+
+Read-only no-follow/nonblocking parent, target and stage descriptors now remain live
+across all awaited publication work. The stage pin is verified while its writer is
+open. One synchronous suffix verifies descriptor/path identities, attempts every
+checked close once, checks final cancellation/deadline and renames. No descriptor
+close is deferred past a successful commit. After original ownership release, failed
+close/guard/rename paths leave nonterminal evidence and may retain a private stage;
+they cannot asynchronously downgrade or unlink using stale identities. Before that
+release, stage cleanup and failure publication require their still-live original
+pins. Primary errors survive cleanup failures. The existing external-process
+path-check/rename race remains; hostile-process atomicity is not claimed.
+
+The new tests first failed because no descriptors remained live through publication.
+The original unlink/recreate assertions remain unchanged; focused production and
+staging coverage then passed 40/40, including all-close/first-error handling,
+acquisition and downgrade cleanup, stage replacement after writer close, and late
+cancellation/deadline/rename failures with no stale-identity mutation. Both correction
+CI attempts are preserved: `ee11ea5` used 3060 runner-seconds and `9c2b2ed` used 2158;
+six candidate attempts cumulatively used 16457 seconds (274m17s). These are correction
+costs, not performance samples. The renewed gate/runner/workflow/Markdown consumer
+batch passed 230/230; Markdown links passed across 147 files and the base-bound
+contract check passed (41 capabilities, 58 GraphQL types, 58 consumers, 19 catalog
+entries). Final source-bound qualification remains pending.
+
 Final focused counts and source-bound results belong in the PR evidence record.
 
 After the related corrections and documentation are ready, coordinate a clean

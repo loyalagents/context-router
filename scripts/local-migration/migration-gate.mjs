@@ -12,7 +12,7 @@ import {
 
 import { execFile } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
-import { constants, lstatSync, realpathSync, renameSync } from "node:fs";
+import { closeSync, constants, fstatSync, lstatSync, openSync, realpathSync, renameSync, unlinkSync } from "node:fs";
 import {
   lstat,
   mkdir,
@@ -291,77 +291,126 @@ export async function persistExternalGateSummary(environment, summary, canaries 
 const sameCiIdentity = (actual, expected) => actual.dev === expected.dev && actual.ino === expected.ino;
 const privateCiFile = value => value.isFile() && !value.isSymbolicLink() &&
   value.uid === process.getuid() && (value.mode & 0o777) === 0o600;
-function assertCiSummaryOwnership({ target, parent, parentIdentity, targetIdentity }) {
-  const currentParent = lstatSync(parent), currentTarget = lstatSync(target);
-  if (!currentParent.isDirectory() || currentParent.isSymbolicLink() ||
-      currentParent.uid !== process.getuid() || !sameCiIdentity(currentParent, parentIdentity) ||
-      realpathSync(parent) !== parent || !privateCiFile(currentTarget) ||
-      !sameCiIdentity(currentTarget, targetIdentity)) {
+const ciPinOperations = { open: openSync, stat: fstatSync, close: closeSync };
+function closeCiPins(pins) {
+  const errors = [];
+  for (const pin of pins) {
+    if (!pin.live) continue;
+    // Never retry a raw descriptor: even a failed close can have released its number.
+    pin.live = false;
+    try { pin.operations.close(pin.fd); } catch (error) { errors.push(error); }
+  }
+  if (errors.length) throw combineFailures(errors[0], errors.slice(1), "CI descriptor release");
+}
+function assertCiPin(pin) {
+  if (!pin.live) throw new Error("CI terminal summary ownership already released");
+  const descriptor = pin.operations.stat(pin.fd), current = lstatSync(pin.file);
+  const validType = pin.directory
+    ? current.isDirectory() && !current.isSymbolicLink() && current.uid === process.getuid() && realpathSync(pin.file) === pin.file
+    : privateCiFile(current);
+  if (!validType || !sameCiIdentity(descriptor, pin.identity) || !sameCiIdentity(current, descriptor)) {
     throw new Error("CI terminal summary publication identity changed");
   }
 }
-async function captureCiSummaryOwnership(environment) {
+function openCiPin(file, directory, operations, expected = lstatSync(file)) {
+  const fd = operations.open(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK |
+    (directory ? constants.O_DIRECTORY : 0));
+  const pin = { fd, file, directory, operations, identity: expected, live: true };
+  try { assertCiPin(pin); return pin; }
+  catch (error) {
+    try { closeCiPins([pin]); } catch (cleanupError) { throw combineFailures(error, [cleanupError], "CI pin acquisition"); }
+    throw error;
+  }
+}
+function assertCiSummaryOwnership(ownership) {
+  if (ownership.released) throw new Error("CI terminal summary ownership already released");
+  assertCiPin(ownership.parentPin);
+  assertCiPin(ownership.targetPin);
+}
+function releaseCiSummaryOwnership(ownership) {
+  if (!ownership || ownership.released) return;
+  ownership.released = true;
+  closeCiPins(ownership.pins);
+}
+async function captureCiSummaryOwnership(environment, operations = ciPinOperations) {
   const target = await externalGateSummaryTarget(environment);
   if (!target) throw new Error("CI terminal summary requires an export path");
-  const parent = path.dirname(target);
-  const ownership = { target, parent, parentIdentity: await lstat(parent), targetIdentity: await lstat(target) };
-  assertCiSummaryOwnership(ownership);
-  return ownership;
+  const parent = path.dirname(target), pins = [];
+  try {
+    // Synchronous no-follow acquisition pins each inode before any further await.
+    const parentPin = openCiPin(parent, true, operations); pins.push(parentPin);
+    const targetPin = openCiPin(target, false, operations); pins.push(targetPin);
+    const ownership = { target, parent, parentPin, targetPin, pins, operations, released: false };
+    assertCiSummaryOwnership(ownership);
+    return ownership;
+  } catch (error) {
+    try { closeCiPins(pins); } catch (cleanupError) { throw combineFailures(error, [cleanupError], "CI ownership acquisition"); }
+    throw error;
+  }
 }
 
-// CI alone has required evidence after bounded finalization. Prepare privately,
-// then commit synchronously after all async work and final guards. The fixed
-// external path stays nonterminal if any preparation/publication operation fails.
+// CI alone has required evidence after bounded finalization. Pins prevent inode
+// reuse throughout awaited work. Final checked closes, guards and rename form one
+// synchronous suffix; this does not claim atomicity against external processes.
 export async function prepareCiTerminalSummary(environment, summary, {
   signal, timeline, canaries = [], openFile = open, commitRename = renameSync,
-  ownership: suppliedOwnership,
+  ownership: suppliedOwnership, pinOperations = ciPinOperations,
 } = {}) {
-  const ownership = suppliedOwnership ?? await captureCiSummaryOwnership(environment);
-  const { target, parent, parentIdentity } = ownership;
-  if (await externalGateSummaryTarget(environment) !== target) throw new Error("CI summary target changed");
-  assertCiSummaryOwnership(ownership);
+  const ownership = suppliedOwnership ?? await captureCiSummaryOwnership(environment, pinOperations);
+  const { target, parent } = ownership;
   const staged = path.join(parent, ".local-migration-gate-summary.ci-" + randomBytes(16).toString("hex"));
-  let handle, identity;
+  let handle, stagePin;
   const discard = async () => {
-    await handle?.close().catch(() => {}); handle = null;
-    if (identity) {
-      const currentParent = await lstat(parent).catch(() => null);
-      if (!currentParent?.isDirectory() || currentParent.isSymbolicLink() ||
-          !sameCiIdentity(currentParent, parentIdentity) || await realpath(parent) !== parent) return;
-      const current = await lstat(staged).catch(() => null);
-      if (current?.isFile() && !current.isSymbolicLink() && sameCiIdentity(current, identity)) {
-        await rm(staged);
-      }
+    // A failed close/final guard/rename may leave a private stage. Once original
+    // ownership was released, no async path may mutate using its stale identity.
+    if (ownership.released) return;
+    const errors = [];
+    const writer = handle; handle = null;
+    try { await writer?.close(); } catch (error) { errors.push(error); }
+    if (stagePin?.live) {
+      let owned = false;
+      try { assertCiPin(ownership.parentPin); assertCiPin(stagePin); owned = true; } catch { /* Preserve foreign paths. */ }
+      if (owned) { try { unlinkSync(staged); } catch (error) { errors.push(error); } }
+      try { closeCiPins([stagePin]); } catch (error) { errors.push(error); }
     }
+    if (!suppliedOwnership) {
+      try { releaseCiSummaryOwnership(ownership); } catch (error) { errors.push(error); }
+    }
+    if (errors.length) throw combineFailures(errors[0], errors.slice(1), "CI stage discard");
   };
   const check = () => {
     if (signal?.aborted) throw signal.reason ?? new Error("CI terminal publication cancelled");
     timeline.assertBefore("finalCleanup");
   };
   try {
+    if (await externalGateSummaryTarget(environment) !== target) throw new Error("CI summary target changed");
+    assertCiSummaryOwnership(ownership);
     check();
     handle = await openFile(staged, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
-    identity = await handle.stat();
+    const identity = await handle.stat();
+    // Acquire and verify the read pin while the writer still holds the original.
+    stagePin = openCiPin(staged, false, ownership.operations, identity);
+    ownership.pins.push(stagePin);
     await handle.writeFile(redactSecrets(JSON.stringify(summary, null, 2), canaries) + "\n");
     await handle.sync();
-    await handle.close(); handle = null;
-    // Check everything again synchronously inside commit so no I/O callback or
-    // cancellation handler can run between the final guard and atomic rename.
+    const writer = handle; handle = null;
+    await writer.close();
     return {
       discard,
       commit() {
         assertCiSummaryOwnership(ownership);
-        const currentStage = lstatSync(staged);
-        if (!privateCiFile(currentStage) || !sameCiIdentity(currentStage, identity)) {
-          throw new Error("CI terminal summary publication identity changed");
-        }
+        assertCiPin(stagePin);
+        check();
+        // Every release is checked before pass. No event-loop yield, downgrade,
+        // or unpinned stage deletion is permitted after this release starts.
+        releaseCiSummaryOwnership(ownership);
         check();
         commitRename(staged, target);
         // Successful rename is the terminal commit. No fallible postcheck here.
       },
     };
   } catch (error) {
-    await discard().catch(() => {});
+    try { await discard(); } catch (cleanupError) { throw combineFailures(error, [cleanupError], "CI preparation"); }
     throw error;
   }
 }
@@ -2390,7 +2439,10 @@ async function persistOwnedCiFailure(environment, summary, canaries, { ownership
   // If ownership or the deadline was lost, leave pending/foreign evidence alone.
   const prepared = await prepareCiTerminalSummary(environment, summary, { ownership, timeline, canaries });
   try { prepared.commit(); }
-  finally { await prepared.discard(); }
+  catch (error) {
+    try { await prepared.discard(); } catch (cleanupError) { throw combineFailures(error, [cleanupError], "CI failure publication"); }
+    throw error;
+  }
 }
 
 // This is the production CI orchestration seam: finalizer and bounded-stage
@@ -2399,13 +2451,13 @@ export async function runCiQualificationAttempt({
   stages, evidence, environment, summaryCanaries = [], dispose,
   publish = publishCompletedCiQualification,
   prepare = prepareCiTerminalSummary,
-  persistFailure = persistOwnedCiFailure,
+  persistFailure = persistOwnedCiFailure, pinOperations = ciPinOperations,
 }) {
   const outcome = await runBoundedGateStages(stages);
   const details = evidence();
   let prepared, ownership;
   try {
-    ownership = await captureCiSummaryOwnership(environment);
+    ownership = await captureCiSummaryOwnership(environment, pinOperations);
     await publish({ ...details, outcome });
     prepared = await prepare(environment, details.summary, {
       signal: details.signal, timeline: details.timeline, canaries: summaryCanaries, ownership,
@@ -2425,10 +2477,11 @@ export async function runCiQualificationAttempt({
     failed.cleanupErrors = outcome.secondaryErrors.map(error => redactSecrets(error.message, summaryCanaries));
     const primary = outcome.primaryError ?? outcome.secondaryErrors[0];
     failed.failure = { message: redactSecrets(primary.message, summaryCanaries), exitCode: primary.exitCode ?? 1 };
-    if (ownership) {
+    if (ownership && !ownership.released) {
       try { await persistFailure(environment, failed, summaryCanaries, { ownership, timeline: details.timeline }); }
       catch (persistenceError) { outcome.secondaryErrors.push(persistenceError); }
     }
+    try { releaseCiSummaryOwnership(ownership); } catch (releaseError) { outcome.secondaryErrors.push(releaseError); }
     return outcome;
   }
 }

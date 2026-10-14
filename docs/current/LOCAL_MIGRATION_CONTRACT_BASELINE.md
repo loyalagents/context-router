@@ -287,7 +287,16 @@ failure leaves a failed/cancelled or nonterminal summary even if failure-summary
 persistence also fails. Both success and failure publication retain the captured
 parent/target ownership and use the same guarded atomic path. A replaced target or
 parent is left untouched; a downgrade is skipped when ownership or the cleanup
-deadline is lost. Default full/smoke finalization is unchanged.
+deadline is lost. Read-only no-follow descriptors pin the original parent, target
+and stage inodes throughout awaited work, preventing unlink/recreate inode reuse.
+The stage pin is acquired while its writer remains open. The synchronous commit
+checks all live descriptor/path identities, attempts every checked descriptor close,
+then checks cancellation/deadline and renames without yielding. Once publication
+ownership is released, failure paths cannot downgrade the target or unlink a stage
+using stale identities; pending evidence and a private diagnostic stage may remain.
+Close failures fail qualification, preserving the first error while attempting all
+releases once. This retains the existing external-process path-check/rename race;
+it does not claim hostile-process atomicity. Default full/smoke finalization is unchanged.
 
 The stable `local-migration-baseline` combined job always evaluates both dependency
 results, requires explicit success and

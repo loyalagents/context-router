@@ -3,7 +3,7 @@ import { localMcpLifecycleResources } from './fixtures/local-mcp-lifecycle.mjs';
 import { localModelLifecycleResources } from './fixtures/local-model-lifecycle.mjs';
 import { localDatabaseLifecycleResources } from "./fixtures/local-database-lifecycle.mjs";
 import assert from "node:assert/strict";
-import { constants, renameSync } from "node:fs";
+import { closeSync, constants, fstatSync, openSync, renameSync, writeFileSync, unlinkSync } from "node:fs";
 import {
   chmod,
   cp,
@@ -3180,6 +3180,7 @@ test("CI terminal summary staging faults leave pending evidence and preserve for
       assert.equal(await readFile(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "utf8"), ["target", "target-symlink", "parent"].includes(fault) ? "foreign" : pending);
       if (fault === "identity") assert.equal(await readFile(stagePath, "utf8"), "foreign");
       else if (fault === "parent") assert.equal((await lstat(stagePath)).isFile(), true, "foreign parent owns the replacement hardlink");
+      else if (fault === "rename") assert.equal((await lstat(stagePath)).isFile(), true, "released stage remains diagnostic evidence");
       else await assert.rejects(lstat(stagePath), { code: "ENOENT" });
     });
   }
@@ -3208,5 +3209,163 @@ test("CI production failure persistence cannot overwrite a replaced summary targ
     assert.notEqual(outcome.ciCommitted, true);
     assert.ok(outcome.secondaryErrors.length);
     assert.equal(await readFile(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "utf8"), "foreign summary");
+  });
+});
+
+
+test("CI summary pins keep every original inode live through awaited publication", async t => {
+  for (const fault of ["none", "parent-close", "target-close", "stage-close", "all-close", "cancel-after-close", "deadline-after-close", "rename-after-close", "foreign-after-close"]) {
+    await t.test(fault, async t => {
+      const f = await ciFinalizationFixture(t);
+      const live = new Map(), closed = [];
+      const canonicalRoot = await realpath(f.root);
+      let stagePath, failureWrites = 0;
+      const pinOperations = {
+        open(file, flags) {
+          assert.ok(flags & constants.O_NOFOLLOW);
+          assert.ok(flags & constants.O_NONBLOCK);
+          const fd = openSync(file, flags);
+          live.set(fd, file); return fd;
+        },
+        stat: fstatSync,
+        close(fd) {
+          assert.ok(live.has(fd), "each raw descriptor is released only once");
+          const file = live.get(fd); closeSync(fd); live.delete(fd); closed.push(file);
+          const kind = file === canonicalRoot ? "parent" : path.basename(file) === "local-migration-gate-summary.json" ? "target" : "stage";
+          if (fault === kind + "-close" || fault === "all-close") throw new Error(kind + " pin close failure");
+          if (!live.size) {
+            if (fault === "cancel-after-close") f.controller.abort(new Error("cancel after pins closed"));
+            if (fault === "deadline-after-close") f.clock.value = GATE_TIMELINE_MS.finalCleanup + 1;
+            if (fault === "foreign-after-close") {
+              unlinkSync(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH);
+              writeFileSync(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "foreign after close", { mode: 0o600 });
+              throw new Error("ownership released before foreign replacement");
+            }
+          }
+        },
+      };
+      const outcome = await timingGate.runCiQualificationAttempt({
+        environment: f.environment, evidence: f.evidence, dispose: () => {}, pinOperations,
+        stages: { timeline: f.timeline, cancellationSignal: f.controller.signal,
+          execute: async ({ completePreflight }) => { completePreflight(); return {}; },
+          cleanup: async () => {}, finalize: f.finalize },
+        publish: async options => {
+          assert.equal(live.size, 2, "parent and original target pinned before receipt await");
+          await timingGate.publishCompletedCiQualification(options);
+          assert.equal(live.size, 2);
+        },
+        prepare: async (...args) => {
+          const prepared = await timingGate.prepareCiTerminalSummary(args[0], args[1], {
+            ...args[2],
+            openFile: async (file, flags, mode) => {
+              stagePath = file;
+              const handle = await open(file, flags, mode);
+              return { stat: () => handle.stat(), sync: () => handle.sync(),
+                writeFile: async bytes => {
+                  assert.equal(live.size, 3, "stage pin acquired before awaited write");
+                  await handle.writeFile(bytes);
+                }, close: () => handle.close() };
+            },
+            commitRename: (from, to) => {
+              assert.equal(live.size, 0, "all checked closes precede rename");
+              if (fault === "rename-after-close") throw new Error("rename after close failure");
+              renameSync(from, to);
+            },
+          });
+          assert.equal(live.size, 3, "stage stays pinned after writable close");
+          return prepared;
+        },
+        persistFailure: async () => { failureWrites++; },
+      });
+      assert.equal(live.size, 0);
+      assert.equal(closed.length, 3, "every acquired descriptor had one release attempt");
+      assert.equal(failureWrites, 0, "no asynchronous downgrade after ownership release");
+      if (fault === "none") {
+        assert.equal(outcome.ciCommitted, true);
+        assert.equal((await f.readSummary()).status, "passed");
+        await assert.rejects(lstat(stagePath), { code: "ENOENT" });
+      } else {
+        assert.notEqual(outcome.ciCommitted, true);
+        const expected = {
+          "all-close": /parent pin close failure.*target pin close failure.*stage pin close failure/,
+          "parent-close": /parent pin close failure/, "target-close": /target pin close failure/,
+          "stage-close": /stage pin close failure/, "cancel-after-close": /cancel after pins closed/,
+          "deadline-after-close": /final cleanup deadline exceeded/, "rename-after-close": /rename after close failure/,
+          "foreign-after-close": /ownership released before foreign replacement/,
+        }[fault];
+        assert.match(outcome.secondaryErrors[0].message, expected);
+        assert.equal((await lstat(stagePath)).isFile(), true, "released stage is retained without stale-identity unlink");
+        if (fault === "foreign-after-close") assert.equal(await readFile(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "utf8"), "foreign after close");
+        else assert.equal((await f.readSummary()).status, "running");
+      }
+    });
+  }
+});
+
+test("CI stage pin survives writer close and preserves a later unlink/recreate replacement", async t => {
+  const f = await ciFinalizationFixture(t);
+  await f.finalize();
+  let staged;
+  const prepared = await timingGate.prepareCiTerminalSummary(f.environment, f.evidence().summary, {
+    timeline: f.timeline,
+    openFile: async (...args) => { staged = args[0]; return open(...args); },
+  });
+  await rm(staged);
+  await writeFile(staged, "foreign stage", { mode: 0o600 });
+  assert.throws(() => prepared.commit(), /identity changed/);
+  await prepared.discard();
+  assert.equal(await readFile(staged, "utf8"), "foreign stage");
+  assert.equal((await f.readSummary()).status, "running");
+});
+
+
+test("CI descriptor acquisition and failed downgrade preserve primary errors and release all pins", async t => {
+  for (const fault of ["target-open", "prepare-write", "failure-commit-discard"]) await t.test(fault, async t => {
+    const f = await ciFinalizationFixture(t);
+    const live = new Map(), closed = [];
+    let stageStats = 0;
+    const pinOperations = {
+      open(file, flags) {
+        if (fault === "target-open" && path.basename(file) === "local-migration-gate-summary.json") throw new Error("target pin open failed");
+        const fd = openSync(file, flags); live.set(fd, file); return fd;
+      },
+      stat(fd) {
+        if (path.basename(live.get(fd)).startsWith(".local-migration-gate-summary.ci-") && ++stageStats === 2 && fault === "failure-commit-discard") throw new Error("failure commit guard");
+        return fstatSync(fd);
+      },
+      close(fd) {
+        assert.ok(live.has(fd));
+        const file = live.get(fd); closeSync(fd); live.delete(fd); closed.push(file);
+        if (path.basename(file).startsWith(".local-migration-gate-summary.ci-") && fault !== "target-open") throw new Error("stage release failed too");
+      },
+    };
+    if (fault === "prepare-write") {
+      await f.finalize();
+      await assert.rejects(timingGate.prepareCiTerminalSummary(f.environment, f.evidence().summary, {
+        timeline: f.timeline, pinOperations,
+        openFile: async (...args) => {
+          const handle = await open(...args);
+          return { stat: () => handle.stat(), close: () => handle.close(), sync: () => handle.sync(),
+            writeFile: async () => { throw new Error("original staged write failure"); } };
+        },
+      }), /original staged write failure.*stage release failed too/);
+    } else {
+      const outcome = await timingGate.runCiQualificationAttempt({
+        environment: f.environment, evidence: f.evidence, dispose: () => {}, pinOperations,
+        stages: { timeline: f.timeline, cancellationSignal: f.controller.signal,
+          execute: async ({ completePreflight }) => { completePreflight(); return {}; },
+          cleanup: async () => {}, finalize: f.finalize },
+        publish: async () => { throw new Error("receipt failed first"); },
+      });
+      assert.notEqual(outcome.ciCommitted, true);
+      if (fault === "target-open") assert.match(outcome.secondaryErrors[0].message, /target pin open failed/);
+      else {
+        assert.match(outcome.secondaryErrors[0].message, /receipt failed first/);
+        assert.match(outcome.secondaryErrors[1].message, /failure commit guard.*stage release failed too/);
+      }
+    }
+    assert.equal(live.size, 0);
+    assert.equal(closed.length, fault === "target-open" ? 1 : 3);
+    assert.equal((await f.readSummary()).status, "running");
   });
 });
