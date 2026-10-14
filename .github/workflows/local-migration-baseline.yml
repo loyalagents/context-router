@@ -231,7 +231,7 @@ jobs:
           else
             echo "Local Migration Baseline Gate did not produce a sanitized summary." >> "$GITHUB_STEP_SUMMARY"
           fi
-          echo 'Database test reports omit runtime names, assertion values and stacks. Retrieve the local-database-failure-evidence artifact below when available; report availability is recorded in the summary.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Database test reports omit runtime names, assertion values and stacks. Retrieve the ci-packaging-local-database-failure-evidence artifact below when available; report availability is recorded in the summary.' >> "$GITHUB_STEP_SUMMARY"
 
       # Optional diagnostics only: transport failure must not change the gate verdict.
       # Every required test/check above retains its original failure behavior.
@@ -284,14 +284,14 @@ jobs:
           node-version: '24.21.0'
 
       - name: Download source qualification receipt
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         timeout-minutes: 2
         with:
           name: ci-source-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/qualification-receipts
 
       - name: Download packaging qualification receipt
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         timeout-minutes: 2
         with:
           name: ci-packaging-${{ github.run_id }}-${{ github.run_attempt }}

@@ -282,3 +282,29 @@ test("packaging seeds its pinned Prisma engine before the gate captures dependen
   assert.equal(lock.importers["apps/backend"].devDependencies.prisma.version.split("(")[0], "7.4.2");
   assert.equal(workflow.jobs["source-qualification"].steps.some(step => step.name === job.steps[seed].name), false);
 });
+
+
+test("CI receipt transports and independent provenance use exact matching attempt bindings", async () => {
+  const workflow = parse(await readFile(dedicatedPath, "utf8"));
+  const combined = workflow.jobs["local-migration-baseline"];
+  const verify = combined.steps.find(s => s.name === "Verify complete qualification");
+  const base = "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}";
+  const head = "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}";
+  for (const [job, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"]]) {
+    const steps = workflow.jobs[job].steps;
+    const gate = steps.find(s => s.id === "migration-gate");
+    const upload = steps.find(s => s.name === "Upload required qualification receipt");
+    const downloads = combined.steps.filter(s => s.uses?.startsWith("actions/download-artifact@") && s.with.name === upload.with.name);
+    assert.equal(downloads.length, 1);
+    assert.equal(downloads[0].uses, "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093");
+    assert.deepEqual(downloads[0].with, { name: profile + "-${{ github.run_id }}-${{ github.run_attempt }}", path: "${{ runner.temp }}/qualification-receipts" });
+    assert.equal(upload.with.path, "${{ runner.temp }}/" + profile + ".json");
+    for (const step of [gate, verify]) {
+      assert.equal(step.env.MIGRATION_GATE_BASE_SHA, base);
+      assert.equal(step.env.MIGRATION_GATE_PR_HEAD_SHA, head);
+    }
+    const artifact = steps.find(s => s.name === "Upload sanitized database failure evidence");
+    const summary = steps.find(s => s.name === "Persist sanitized gate evidence");
+    assert.ok(summary.run.includes(artifact.with.name.split("-${{")[0] + " artifact"));
+  }
+});

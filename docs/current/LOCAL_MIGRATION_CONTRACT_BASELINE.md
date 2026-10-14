@@ -277,14 +277,40 @@ twelve phases sequentially; restart smoke-only behavior is retained.
 Both profiles preserve the outer smoke lifecycle validators, bounded settlement,
 caller/generated integrity, owned-resource cleanup and successful finalization.
 Required versioned receipts are published only after the finalizer and bounded
-stage runner return successfully. The stable `local-migration-baseline` combined
-job always evaluates both dependency results, requires explicit success and
+stage runner return successfully. For CI profiles, the external summary remains
+`running` with `cleanupPending=required-receipt-publication` until the required
+receipt has been published. The passed summary is then staged privately; all
+writes, sync/close, ownership and final cancellation/deadline checks precede one
+synchronous atomic rename. That rename is the terminal commit, followed immediately
+by signal-handler disposal and return without further verdict work. Earlier
+failure leaves a failed/cancelled or nonterminal summary even if failure-summary
+persistence also fails. Default full/smoke finalization is unchanged.
+
+The stable `local-migration-baseline` combined job always evaluates both dependency
+results, requires explicit success and
 exactly two current-run/current-attempt receipts, and independently reconstructs
 the clean copied source and verified base bindings. It checks the actual checkout
 SHA (the test-merge SHA on PR runs), separate PR head, source digest, base bundle,
 manifest/partition, commands/modes/evidence coverage, observed toolchain and all
-required integrity/lifecycle/finalization/cleanup outcomes. Missing, stale,
-mismatched, incomplete, failed, cancelled or skipped evidence fails closed.
+required integrity/lifecycle/finalization/cleanup outcomes. For a PR, actual HEAD
+must equal the workflow checkout SHA and have exactly two parents, with the second
+equal to the event PR-head SHA. The validated base retains its ancestor requirement;
+it need not equal the first parent of a regenerated test merge. Push checkouts have
+no merge-shape requirement.
+
+Each lane must report Linux/X64 and a bounded Ubuntu image-family/release identity.
+Image family and exact Node 24.21.0, pnpm 10.25.0, Playwright 1.63.0 and Chromium
+identity must match across lanes. Image build releases, Python 3.12 patch versions
+and PostgreSQL 15 patch/distribution versions may differ; all observed values remain
+in the receipts. Each gate still verifies Chromium against the locked Playwright
+metadata. This explicit compatibility policy permits supported runner updates
+without accepting a different platform, image family or browser.
+
+Missing, stale, mismatched, incomplete, failed, cancelled or skipped evidence fails
+closed. Public combiner failures expose only typed, allowlisted categories; unknown,
+parse and filesystem failures use a generic category without echoing receipt values.
+Required upload/download names bind the same run and attempt, and both download
+actions are pinned to the reviewed v4.3.0 commit.
 Required artifact transport failure is a gate failure; optional sanitized
 diagnostics and timings do not confer or revoke qualification.
 

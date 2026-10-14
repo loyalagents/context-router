@@ -2747,7 +2747,7 @@ test("CI qualification publication cannot overwrite or remove preexisting or rep
   }
 });
 
-test("CI qualification packaging starts clean and dispatches outer smoke verification before final integrity", async (t) => {
+test("CI packaging dispatch seam invokes outer smoke verification before final integrity", async (t) => {
   const root = await mkdtemp(path.join(os.tmpdir(), "ci-profile-dispatch-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   const events = [];
@@ -2809,37 +2809,67 @@ test("CI qualification combined entrypoint succeeds without installed dependenci
   const git = args => execFileSync("git", ["-c", "core.hooksPath=/dev/null", ...args], { cwd: checkout, env: environment, encoding: "utf8" }).trim();
   git(["init", "--quiet"]); git(["config", "user.name", "Fixture"]); git(["config", "user.email", "fixture@invalid.local"]);
   git(["add", "--all"]); git(["commit", "--quiet", "--no-gpg-sign", "-m", "qualification fixture"]);
-  const head = git(["rev-parse", "HEAD"]);
+  const baseHead = git(["rev-parse", "HEAD"]);
+  const tree = git(["rev-parse", "HEAD^{tree}"]);
+  const commit = parents => git(["commit-tree", tree, ...parents.flatMap(p => ["-p", p]), "-m", "ancestry fixture"]);
+  const first = commit([baseHead]);
+  const prHead = commit([first]);
+  const merge = commit([first, prHead]);
   const gate = await import(pathToFileURL(path.join(checkout, "scripts/local-migration/migration-gate.mjs")));
   const f = await qualificationFixture();
-  const source = (await gate.copyGateSourceInputs(checkout, path.join(root, "source-copy"))).source;
   const baseRoot = path.join(root, "base"); await mkdir(baseRoot);
-  const base = await gate.exportBaseContracts(head, baseRoot);
-  const provenance = { ...f.provenance, checkoutSha: head };
+  const base = await gate.exportBaseContracts(baseHead, baseRoot);
   const receiptsRoot = path.join(runner, "qualification-receipts"); await mkdir(receiptsRoot);
-  for (const profile of ["ci-source", "ci-packaging"]) {
-    const summary = { ...f.summaryFor(profile), source, baseSha: head, baseManifestSha256: base.manifestSha256 };
-    await writeFile(path.join(receiptsRoot, profile + ".json"), JSON.stringify(f.make(profile, { summary, provenance })));
-  }
-  const env = {
-    ...environment, RUNNER_TEMP: runner, GITHUB_REPOSITORY: provenance.repository,
-    GITHUB_EVENT_NAME: provenance.event, GITHUB_WORKFLOW_REF: provenance.workflowRef,
-    GITHUB_RUN_ID: provenance.runId, GITHUB_RUN_ATTEMPT: provenance.runAttempt,
-    GITHUB_SHA: head, MIGRATION_GATE_PR_HEAD_SHA: provenance.pullRequestHeadSha,
-    MIGRATION_GATE_BASE_SHA: head, SOURCE_RESULT: "success", PACKAGING_RESULT: "success",
+  let census = 0;
+  const prepare = async (head, event = "pull_request", eventHead = prHead) => {
+    git(["reset", "--quiet", "--hard", head]);
+    const source = (await gate.copyGateSourceInputs(checkout, path.join(root, "source-copy-" + census++))).source;
+    const provenance = { ...f.provenance, checkoutSha: head, event,
+      pullRequestHeadSha: event === "pull_request" ? eventHead : null };
+    for (const profile of ["ci-source", "ci-packaging"]) {
+      const summary = { ...f.summaryFor(profile), source, baseSha: baseHead, baseManifestSha256: base.manifestSha256 };
+      await writeFile(path.join(receiptsRoot, profile + ".json"), JSON.stringify(f.make(profile, { summary, provenance })));
+    }
+    return {
+      ...environment, RUNNER_TEMP: runner, GITHUB_REPOSITORY: provenance.repository,
+      GITHUB_EVENT_NAME: provenance.event, GITHUB_WORKFLOW_REF: provenance.workflowRef,
+      GITHUB_RUN_ID: provenance.runId, GITHUB_RUN_ATTEMPT: provenance.runAttempt,
+      GITHUB_SHA: head, MIGRATION_GATE_PR_HEAD_SHA: provenance.pullRequestHeadSha ?? "",
+      MIGRATION_GATE_BASE_SHA: baseHead, SOURCE_RESULT: "success", PACKAGING_RESULT: "success",
+    };
   };
+  let env = await prepare(merge);
   const execute = extra => spawnSync(process.execPath, ["scripts/local-migration/combine-ci-qualification.mjs", "--combine"], {
     cwd: checkout, env: { ...env, ...extra }, encoding: "utf8", timeout: 30000,
   });
   await assert.rejects(lstat(path.join(checkout, "node_modules")), { code: "ENOENT" });
+  assert.notEqual(baseHead, first, "a validated ancestor base need not equal the merge first parent");
   const passed = execute({});
   assert.equal(passed.status, 0, passed.stderr);
   assert.match(passed.stdout, /both finalized lanes/);
   for (const change of [{ SOURCE_RESULT: "skipped" }, { PACKAGING_RESULT: "cancelled" }, { GITHUB_RUN_ATTEMPT: "2" }, { GITHUB_SHA: "f".repeat(40) }, { MIGRATION_GATE_BASE_SHA: "f".repeat(40) }]) {
     assert.notEqual(execute(change).status, 0);
   }
+  for (const head of [baseHead, first, commit([baseHead, first, prHead])]) {
+    env = await prepare(head);
+    assert.notEqual(execute({}).status, 0, "PR checkout must have exactly two parents");
+  }
+  env = await prepare(merge, "pull_request", first);
+  assert.notEqual(execute({}).status, 0, "consistent receipt/event relabelling cannot replace actual second parent");
+  env = await prepare(first, "push");
+  assert.equal(execute({}).status, 0, "ordinary push commits need no merge shape");
+  env = await prepare(merge);
+  await writeFile(path.join(receiptsRoot, "ci-source.json"), '{"private-secret":');
+  const malformed = execute({});
+  assert.notEqual(malformed.status, 0);
+  assert.equal(malformed.stderr.trim(), "ci-qualification: failed; validation-incomplete");
+  env = await prepare(merge);
+  const unavailable = execute({ RUNNER_TEMP: path.join(root, "missing-private-path") });
+  assert.equal(unavailable.stderr.trim(), "ci-qualification: failed; validation-incomplete");
+  assert.equal(execute({ SOURCE_RESULT: "failure" }).stderr.trim(), "ci-qualification: failed; dependency-results");
+  assert.equal(execute({ GITHUB_SHA: "f".repeat(40) }).stderr.trim(), "ci-qualification: failed; provenance");
   await writeFile(path.join(checkout, "README.md"), "tampered");
-  assert.notEqual(execute({}).status, 0);
+  assert.equal(execute({}).stderr.trim(), "ci-qualification: failed; source");
 });
 
 
@@ -2954,4 +2984,198 @@ test("CI packaging prerequisites run inside preflight before database and phase 
   const phases = source.indexOf("summary.phases = await runQualificationPhaseSequence", preflight);
   assert.ok(preflight >= 0 && prepare > preflight && database > prepare && complete > database && phases > complete);
   assert.match(source.slice(prepare, database), /signal: preflightSignal/);
+});
+
+
+test("CI runner policy allows only supported patch and image-release variation", async () => {
+  const f = await qualificationFixture();
+  for (const mutate of [
+    r => r.runner.imageVersion = "20261014.99.1",
+    r => r.versions.python = "3.12.15",
+    r => r.versions.postgres = "15.19 (Debian distribution)",
+  ]) {
+    const receipts = [f.make("ci-source"), f.make("ci-packaging")];
+    mutate(receipts[1]);
+    assert.equal(f.api.validateLaneReceipts(receipts, f.expected).status, "passed");
+  }
+  for (const mutate of [
+    r => r.runner.os = "macOS", r => r.runner.arch = "ARM64",
+    r => r.runner.image = "ubuntu22", r => r.runner.image = "windows2025",
+    r => r.runner.image = "ubuntu", r => r.runner.image = "ubuntu2404",
+    r => r.runner.imageVersion = "", r => r.runner.imageVersion = "private\nvalue",
+    r => r.runner.imageVersion = "a".repeat(513), r => r.runner.extra = true,
+    r => delete r.runner.arch, r => r.versions.python = "3.13.1",
+    r => r.versions.postgres = "16.1", r => r.versions.chromium = "153.0.8010.99",
+  ]) {
+    const receipts = [f.make("ci-source"), f.make("ci-packaging")]; mutate(receipts[1]);
+    assert.throws(() => f.api.validateLaneReceipts(receipts, f.expected));
+  }
+});
+
+test("CI public failures are typed fixed categories and never arbitrary error text", async () => {
+  const f = await qualificationFixture();
+  const privateText = "postgresql://private:secret@host/db /private/path receipt-secret";
+  assert.equal(typeof f.api.formatQualificationFailure, "function");
+  for (const value of [new Error(privateText), new SyntaxError(privateText), { code: "provenance", message: privateText }, new f.api.QualificationError("unknown", privateText)]) {
+    assert.equal(f.api.formatQualificationFailure(value), "ci-qualification: failed; validation-incomplete");
+  }
+  for (const code of ["dependency-results", "receipt-invalid", "receipt-files", "provenance", "source", "base", "contract", "runner-toolchain", "invocation"]) {
+    assert.equal(f.api.formatQualificationFailure(new f.api.QualificationError(code, privateText)), "ci-qualification: failed; " + code);
+  }
+  try { f.api.validateLaneReceipts([], { ...f.expected, dependencyResults: { source: "failure", packaging: "success" } }); assert.fail("must fail"); }
+  catch (error) { assert.equal(f.api.formatQualificationFailure(error), "ci-qualification: failed; dependency-results"); }
+});
+
+async function ciFinalizationFixture(t, profile = "ci-source") {
+  const f = await qualificationFixture();
+  const root = await mkdtemp(path.join(os.tmpdir(), "ci-terminal-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const environment = { RUNNER_TEMP: root, MIGRATION_GATE_CI_SUMMARY_PATH: path.join(root, "local-migration-gate-summary.json") };
+  const ownership = await prepareGateDiagnosticsRoot(path.join(root, "diagnostics-"));
+  const lifecycle = await createResourceLifecycleJournal(ownership.directory, { filename: "gate-resource-lifecycle.json" });
+  const controller = new AbortController();
+  const clock = { value: 1 };
+  const timeline = createGateTimeline({ startedAt: 0, now: () => clock.value });
+  let finalized;
+  const finalize = async ({ primaryError, secondaryErrors = [] } = {}) => {
+    finalized = await finalizeGateAttemptEvidence({
+      timeline, mode: profile, diagnosticsDirectory: ownership.directory, diagnosticsOwnership: ownership,
+      lifecycle, summary: { ...f.summaryFor(profile), qualification: f.contract },
+      attemptError: primaryError, cleanupErrors: secondaryErrors,
+      source: f.source, wallStartedAt: Date.now(), callerIntegrityVerified: true,
+      signals: [controller.signal], externalEnvironment: environment,
+    });
+    if (finalized.evidenceErrors.length) throw finalized.evidenceErrors[0];
+  };
+  const evidence = () => ({ profile, summary: finalized?.summary, provenance: f.provenance, runner: f.runner,
+    workspaceRemoved: true, diagnosticsDirectory: finalized?.diagnosticsDirectory, gateLifecycle: lifecycle,
+    runnerTemp: root, signal: controller.signal, timeline });
+  const readSummary = async () => JSON.parse(await readFile(environment.MIGRATION_GATE_CI_SUMMARY_PATH, "utf8"));
+  return { f, root, environment, ownership, lifecycle, controller, clock, timeline, finalize, evidence, readSummary };
+}
+
+test("CI finalizer retains durable pending evidence until required publication completes", async t => {
+  for (const profile of ["ci-source", "ci-packaging"]) {
+    const f = await ciFinalizationFixture(t, profile);
+    await f.finalize();
+    assert.equal(f.evidence().summary.status, "passed", "internal candidate is finalized");
+    assert.equal((await f.readSummary()).status, "running");
+    assert.equal((await f.readSummary()).cleanupPending, "required-receipt-publication");
+  }
+});
+
+test("CI production orchestration cannot expose pass before its terminal commit", async t => {
+  for (const fault of ["none", "execution-failed", "cleanup-failed", "finalizer-postcheck-cancel", "finalizer-postcheck-deadline", "receipt-write", "receipt-cancel", "receipt-deadline", "summary-prepare", "failure-persist"]) {
+    await t.test(fault, async t => {
+      const f = await ciFinalizationFixture(t);
+      const events = [];
+      assert.equal(typeof timingGate.runCiQualificationAttempt, "function");
+      const outcome = await timingGate.runCiQualificationAttempt({
+        environment: f.environment, evidence: f.evidence,
+        stages: { timeline: f.timeline, cancellationSignal: f.controller.signal,
+          execute: async ({ completePreflight }) => { completePreflight(); if (fault === "execution-failed") throw new Error("work failed"); return {}; },
+          cleanup: async () => { if (fault === "cleanup-failed") throw new Error("cleanup failed"); },
+          finalize: async context => {
+            await f.finalize(context);
+            assert.notEqual((await f.readSummary()).status, "passed");
+            if (fault === "finalizer-postcheck-cancel") f.controller.abort(new Error("postcheck cancel"));
+            if (fault === "finalizer-postcheck-deadline") f.clock.value = GATE_TIMELINE_MS.finalCleanup + 1;
+          },
+        },
+        publish: async options => {
+          events.push("receipt");
+          assert.notEqual((await f.readSummary()).status, "passed");
+          await timingGate.publishCompletedCiQualification({ ...options,
+            publish: (target, receipt, publicationOptions) => f.f.api.publishLaneReceipt(target, receipt, {
+              ...publicationOptions, write: async (file, bytes) => {
+                if (["receipt-write", "failure-persist"].includes(fault)) throw new Error("receipt write failure");
+                await writeFile(file, bytes);
+                if (fault === "receipt-cancel") f.controller.abort(new Error("receipt cancel"));
+                if (fault === "receipt-deadline") f.clock.value = GATE_TIMELINE_MS.finalCleanup + 1;
+              },
+            }),
+          });
+        },
+        prepare: async (...args) => {
+          events.push("prepare");
+          assert.equal((await f.readSummary()).status, "running");
+          if (fault === "summary-prepare") throw new Error("summary preparation failure");
+          const prepared = await timingGate.prepareCiTerminalSummary(...args);
+          return { ...prepared, commit() { events.push("commit"); prepared.commit(); } };
+        },
+        persistFailure: async (...args) => {
+          if (fault === "failure-persist") throw new Error("failure persistence failed too");
+          return persistExternalGateSummary(...args);
+        },
+        dispose: () => events.push("dispose"),
+      });
+      if (fault === "none") {
+        assert.equal(outcome.ciCommitted, true);
+        assert.equal((await f.readSummary()).status, "passed");
+        assert.deepEqual(events, ["receipt", "prepare", "commit", "dispose"]);
+      } else {
+        assert.notEqual(outcome.ciCommitted, true);
+        assert.ok(outcome.primaryError || outcome.secondaryErrors.length);
+        assert.notEqual((await f.readSummary()).status, "passed");
+        assert.equal(events.includes("commit"), false);
+      }
+    });
+  }
+});
+
+test("CI terminal summary staging faults leave pending evidence and preserve foreign replacements", async t => {
+  for (const fault of ["write", "sync", "close", "identity", "target", "target-symlink", "parent", "rename", "cancel", "deadline"]) {
+    await t.test(fault, async t => {
+      const f = await ciFinalizationFixture(t);
+      await f.finalize();
+      const pending = await readFile(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "utf8");
+      let prepared, stagePath;
+      await assert.rejects(async () => {
+        prepared = await timingGate.prepareCiTerminalSummary(f.environment, f.evidence().summary, {
+          signal: f.controller.signal, timeline: f.timeline,
+          openFile: async (file, flags, mode) => {
+            stagePath = file;
+            const handle = await open(file, flags, mode);
+            let closed = false;
+            return {
+              stat: () => handle.stat(),
+              writeFile: async bytes => {
+                if (fault === "write") throw new Error("staged write failure");
+                await handle.writeFile(bytes);
+                if (fault === "identity") { await rm(file); await writeFile(file, "foreign"); }
+                if (["target", "target-symlink"].includes(fault)) {
+                  await rm(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH);
+                  if (fault === "target") await writeFile(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "foreign", { mode: 0o600 });
+                  else { const other = path.join(f.root, "foreign"); await writeFile(other, "foreign"); await symlink(other, f.environment.MIGRATION_GATE_CI_SUMMARY_PATH); }
+                }
+                if (fault === "parent") {
+                  const { rename, link } = await import("node:fs/promises");
+                  const moved = f.root + "-moved";
+                  await rename(f.root, moved);
+                  t.after(() => rm(moved, { recursive: true, force: true }));
+                  await mkdir(f.root, { mode: 0o700 });
+                  await writeFile(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "foreign", { mode: 0o600 });
+                  await link(path.join(moved, path.basename(file)), file);
+                }
+              },
+              sync: async () => { if (fault === "sync") throw new Error("staged sync failure"); await handle.sync(); },
+              close: async () => {
+                if (!closed) { await handle.close(); closed = true; }
+                if (fault === "close") throw new Error("staged close failure");
+                if (fault === "cancel") f.controller.abort(new Error("staged cancellation"));
+                if (fault === "deadline") f.clock.value = GATE_TIMELINE_MS.finalCleanup + 1;
+              },
+            };
+          },
+          commitRename: () => { throw new Error("rename failure"); },
+        });
+        prepared.commit();
+      });
+      await prepared?.discard();
+      assert.equal(await readFile(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "utf8"), ["target", "target-symlink", "parent"].includes(fault) ? "foreign" : pending);
+      if (fault === "identity") assert.equal(await readFile(stagePath, "utf8"), "foreign");
+      else if (fault === "parent") assert.equal((await lstat(stagePath)).isFile(), true, "foreign parent owns the replacement hardlink");
+      else await assert.rejects(lstat(stagePath), { code: "ENOENT" });
+    });
+  }
 });

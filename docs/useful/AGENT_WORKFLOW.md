@@ -228,6 +228,14 @@ limitations. Reuse only unaffected evidence with an explicit impact assessment;
 never present an older pass for changed inputs. Do not repeat valid identical
 checks solely for each reviewer. Broaden checks/review when impact is uncertain.
 
+For the two migration CI profiles, a durable passed summary is committed only
+after bounded finalization and required receipt publication. A pending or failed
+summary cannot confer qualification; both workflow jobs and same-attempt receipts
+must succeed. Compare runner identities using the explicit
+[CI compatibility policy](../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles):
+retain actual release/patch values, allow only supported patch drift, and require
+matching image family, pinned runtimes and browser identity.
+
 Before an expensive run, state its command/purpose, what relevant inputs changed
 since the previous pass, and why it is needed now, including any approved-plan
 requirement. Preflight the pinned toolchain and required resources before starting.

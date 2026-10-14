@@ -14,7 +14,29 @@ const PROFILES = Object.freeze({
 const COMPLETION = Object.freeze({ boundedStages: true, preflight: true, childSettlement: true, workspaceRemoved: true, diagnosticsRemoved: true, gateLifecycle: true });
 const MAX_RECEIPT_BYTES = 262144;
 const hash = value => createHash("sha256").update(value).digest("hex");
-const fail = message => { throw new Error("CI qualification " + message); };
+const PUBLIC_FAILURES = new Set([
+  "dependency-results", "receipt-invalid", "receipt-files", "provenance", "source",
+  "base", "contract", "runner-toolchain", "invocation",
+]);
+export class QualificationError extends Error {
+  constructor(code, message = "validation failed") {
+    super("CI qualification " + message);
+    this.code = code;
+  }
+}
+export function formatQualificationFailure(error) {
+  const category = error instanceof QualificationError && PUBLIC_FAILURES.has(error.code)
+    ? error.code : "validation-incomplete";
+  return "ci-qualification: failed; " + category;
+}
+function inCategory(code, operation) {
+  try { return operation(); }
+  catch (error) {
+    if (error instanceof QualificationError) throw new QualificationError(code, error.message);
+    throw error;
+  }
+}
+const fail = message => { throw new QualificationError("receipt-invalid", message); };
 function requireValue(condition, message) { if (!condition) fail(message); }
 function equal(actual, expected, label) {
   try { assert.deepEqual(actual, expected); } catch { fail(label + " mismatch"); }
@@ -36,17 +58,17 @@ function validateManifest(manifest) {
 export function parseQualificationProfile(argv) {
   if (!argv.length) return "full";
   if (argv.length === 1 && ["--smoke-only", "--ci-source", "--ci-packaging"].includes(argv[0])) return argv[0].slice(2);
-  fail("argument profile must be full, --smoke-only, --ci-source or --ci-packaging");
+  throw new QualificationError("invocation", "argument profile must be full, --smoke-only, --ci-source or --ci-packaging");
 }
 export function selectQualificationPhases(manifest, profile) {
-  validateManifest(manifest);
+  inCategory("contract", () => validateManifest(manifest));
   if (profile === "full") return manifest.phases.filter(p => p.status === "active");
   requireValue(Object.hasOwn(PROFILES, profile), "unknown profile");
   return PROFILES[profile].map(id => manifest.phases.find(p => p.id === id));
 }
 export function qualificationContract(manifestText, schemaText) {
   const manifest = JSON.parse(manifestText);
-  validateManifest(manifest);
+  inCategory("contract", () => validateManifest(manifest));
   JSON.parse(schemaText);
   const coverage = Object.fromEntries(Object.keys(PROFILES).map(profile => [profile,
     selectQualificationPhases(manifest, profile).map(p => ({
@@ -80,8 +102,23 @@ export function qualificationProvenance(environment) {
     runAttempt: environment.GITHUB_RUN_ATTEMPT, checkoutSha: environment.GITHUB_SHA,
     pullRequestHeadSha: environment.MIGRATION_GATE_PR_HEAD_SHA || null,
   };
-  validateProvenance(result);
+  inCategory("provenance", () => validateProvenance(result));
   return result;
+}
+// GitHub PR checkouts are test merges; agreement between receipt metadata alone
+// does not prove that the claimed PR head participates in the checked-out commit.
+export async function verifyQualificationCheckout(provenance, git) {
+  const result = await git(["rev-list", "--parents", "-n", "1", "HEAD"]);
+  inCategory("provenance", () => {
+    requireValue(result.exitCode === 0 && typeof result.stdout === "string", "checkout ancestry unavailable");
+    const commits = result.stdout.trim().split(/\s+/);
+    commits.forEach(sha => hex(sha, 40, "checkout ancestry"));
+    equal(commits[0], provenance.checkoutSha, "actual checkout HEAD");
+    if (provenance.event === "pull_request") {
+      equal(commits.length, 3, "PR merge parent count");
+      equal(commits[2], provenance.pullRequestHeadSha, "PR merge second parent");
+    }
+  });
 }
 export function qualificationRunner(environment) {
   return { os: environment.RUNNER_OS, arch: environment.RUNNER_ARCH, image: environment.ImageOS, imageVersion: environment.ImageVersion };
@@ -109,15 +146,21 @@ function validateReceipt(receipt, contract) {
   equal(receipt.schemaVersion, 1, "receipt schema");
   requireValue(Object.hasOwn(PROFILES, receipt.profile), "receipt lane invalid");
   equal(receipt.status, "passed", "receipt status");
-  validateProvenance(receipt.provenance); validateSource(receipt.source, receipt.provenance);
-  keys(receipt.base, ["sha", "manifestSha256"], "base");
-  hex(receipt.base.sha, 40, "base"); hex(receipt.base.manifestSha256, 64, "base manifest");
-  equal(receipt.contract, contractIdentity(contract), "contract");
-  validateVersions(receipt.versions);
-  keys(receipt.runner, ["os", "arch", "image", "imageVersion"], "runner");
-  equal(receipt.runner.os, "Linux", "receipt runner OS");
-  equal(receipt.runner.arch, "X64", "receipt runner architecture");
-  for (const field of ["image", "imageVersion"]) token(receipt.runner[field], /^[A-Za-z0-9_.-]+$/, "receipt runner image");
+  inCategory("provenance", () => validateProvenance(receipt.provenance));
+  inCategory("source", () => validateSource(receipt.source, receipt.provenance));
+  inCategory("base", () => {
+    keys(receipt.base, ["sha", "manifestSha256"], "base");
+    hex(receipt.base.sha, 40, "base"); hex(receipt.base.manifestSha256, 64, "base manifest");
+  });
+  inCategory("contract", () => equal(receipt.contract, contractIdentity(contract), "contract"));
+  inCategory("runner-toolchain", () => {
+    validateVersions(receipt.versions);
+    keys(receipt.runner, ["os", "arch", "image", "imageVersion"], "runner");
+    equal(receipt.runner.os, "Linux", "receipt runner OS");
+    equal(receipt.runner.arch, "X64", "receipt runner architecture");
+    token(receipt.runner.image, /^ubuntu[0-9]{2}$/, "receipt runner image family");
+    token(receipt.runner.imageVersion, /^[A-Za-z0-9_.-]+$/, "receipt runner image release");
+  });
   equal(receipt.completion, COMPLETION, "completion");
   equal(receipt.verification, {
     callerIntegrity: true, generatedIntegrity: true, cleanup: true,
@@ -160,17 +203,25 @@ export function createLaneReceipt({ profile, summary, completion, contract, prov
   return structuredClone(validateReceipt(receipt, contract));
 }
 export function validateLaneReceipts(receipts, expected) {
-  equal(expected.dependencyResults, { source: "success", packaging: "success" }, "dependency results");
+  inCategory("dependency-results", () => equal(expected.dependencyResults, { source: "success", packaging: "success" }, "dependency results"));
   requireValue(Array.isArray(receipts) && receipts.length === 2, "receipt pair missing or duplicated");
   equal(receipts.map(r => r?.profile).sort(), Object.keys(PROFILES).sort(), "receipt lanes");
   for (const receipt of receipts) {
     validateReceipt(receipt, expected.contract);
-    equal(receipt.provenance, expected.provenance, "provenance");
-    equal(receipt.source, expected.source, "source");
-    equal(receipt.base, expected.base, "base");
+    inCategory("provenance", () => equal(receipt.provenance, expected.provenance, "provenance"));
+    inCategory("source", () => equal(receipt.source, expected.source, "source"));
+    inCategory("base", () => equal(receipt.base, expected.base, "base"));
   }
-  equal(receipts[0].versions, receipts[1].versions, "toolchain across lanes");
-  equal(receipts[0].runner, receipts[1].runner, "receipt runner across lanes");
+  // Supported Python/Postgres patches and image releases can roll out between
+  // runners. Platform/image family and pinned runtimes/browser must still match.
+  inCategory("runner-toolchain", () => {
+    for (const field of ["node", "pnpm", "playwright", "chromium"]) {
+      equal(receipts[0].versions[field], receipts[1].versions[field], "toolchain across lanes " + field);
+    }
+    for (const field of ["os", "arch", "image"]) {
+      equal(receipts[0].runner[field], receipts[1].runner[field], "receipt runner across lanes " + field);
+    }
+  });
   return { status: "passed", source: expected.source, base: expected.base, provenance: expected.provenance };
 }
 // The target is acquired exclusively; cleanup never removes a preexisting or
@@ -201,11 +252,15 @@ export async function publishLaneReceipt(target, receipt, { signal, assertDeadli
   }
 }
 export async function readLaneReceipts(directory) {
-  equal((await readdir(directory)).sort(), ["ci-packaging.json", "ci-source.json"], "receipt files");
+  const files = await readdir(directory);
+  inCategory("receipt-files", () => equal(files.sort(), ["ci-packaging.json", "ci-source.json"], "receipt files"));
   const result = [];
   for (const profile of Object.keys(PROFILES)) {
     const file = path.join(directory, profile + ".json");
-    const handle = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK).catch(() => fail("receipt must be a regular non-symlink file"));
+    const handle = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK).catch(error => {
+      if (error.code === "ELOOP") throw new QualificationError("receipt-files", "receipt must be a regular non-symlink file");
+      throw error;
+    });
     try {
       const before = await handle.stat();
       requireValue(before.isFile() && before.size > 0 && before.size <= MAX_RECEIPT_BYTES, "receipt file size/type bound invalid");

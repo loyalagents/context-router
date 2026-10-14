@@ -1,7 +1,9 @@
 # CI Qualification Turnaround
 
-- Status: implementation targeted checks passed, 2026-10-13; frozen-candidate
-  final qualification pending. This is a new bounded task after merged PR #178.
+- Status: authorized PR #179 review corrections in targeted validation,
+  2026-10-14; a new frozen candidate requires final qualification. The prior
+  `5f686411` candidate passed remote CI, the complete full local gate and
+  independent review; those results remain historical for changed inputs.
 - Outcome: run complete source and packaging qualification concurrently in
   separate CI workspaces, with one stable final check. Preserve all coverage,
   triggers, safety contracts and the default full local gate.
@@ -49,6 +51,76 @@ implement the bounded profiles/receipts/workflow, resolve affected review and
 focused checks, then freeze and push one candidate. Reinspect main before freeze;
 evaluate changed inputs rather than silently rebasing or using another task's
 outputs. Preserve the default `pnpm migration:gate` and `--smoke-only` behavior.
+
+## Authorized Review Correction Round
+
+The user authorized helpful findings from the external Claude review in the same
+[draft PR #179](https://github.com/loyalagents/context-router/pull/179).
+Independent plan approval binds SHA-256
+`a8b360f7026b07349971d4d0b4fdb5ad01b865042267ac6339691d6c61262efa`
+at `5f686411cbc97b928af764532f344b5403465c06` and the unchanged starting base
+above. Sole-writer/model-role ownership persists; accepted settings remain distinct
+from independently unverified runtime attestation. No browser flag or native
+shutdown repair is included in this round.
+
+The approved policy delta permits differing Ubuntu image build releases, Python
+3.12 patches and PostgreSQL 15 patches/distributions, while independently validating
+each lane's Linux/X64 and Ubuntu identity. Image family and exact pinned Node/pnpm/
+Playwright plus Chromium identity still match. Actual observed versions remain in
+receipts; the gate still verifies Chromium against locked Playwright metadata.
+The combined job independently verifies actual PR checkout HEAD, exactly two merge
+parents and second-parent equality with the event PR head. The existing base-as-
+ancestor policy remains; an event base need not equal a regenerated merge's first
+parent. Ordinary push checkouts have no required merge shape.
+
+CI external summaries stay nonterminal through finalizer return, bounded-stage
+postchecks and required receipt publication. A privately staged passed summary
+finishes every awaited write/sync/close and ownership check before final guards and
+one synchronous atomic rename commit. Signal-handler disposal and return follow
+without further verdict work. Failure before that commit cannot leave a durable
+passed summary, even if failed-summary persistence also fails. Required receipt
+publication remains after both finalizer and bounded-stage success. Default full
+and smoke paths retain their behavior and deadlines.
+
+Known combiner failures use a typed finite public category allowlist; unknown,
+parse and filesystem errors remain generic without private values. Required
+artifact download actions are pinned to official v4.3.0 commit
+`d3f86a106a0bac45b974a628896c90dbdf5c8093`. Packaging's summary names its own optional
+database diagnostic artifact. Its accurate command-not-run diagnostic is retained;
+removing it would add scope. The mock dispatch test is renamed to describe dispatch
+and outer verification, with real cold-start independence evidenced separately by CI.
+
+Tests-first red evidence reproduced acceptance of a root/one-parent PR checkout,
+rejection of compatible image-release drift, and durable CI passed status before
+required publication. New category/download assertions failed, and new orchestration
+seams initially failed as absent APIs; those are distinguished from behavioral
+reproductions. Focused identity/workflow/category tests then passed 4/4; initial
+finalizer/staging tests passed 18/18, followed by expanded tests for both CI profiles,
+pre-receipt bounded failures, parent/target/stage replacement and safe CLI output.
+Final focused counts and source-bound results belong in the PR evidence record.
+
+After the related corrections and documentation are ready, coordinate a clean
+freeze with the coordinator, then push the same branch promptly. Require new
+exact-head CI, one fresh default full local gate and independent complete base-to-
+head review concurrently. Reuse the reviewed immutable launcher design with fresh
+once marker, short private temp root, exact new head and actual same-environment
+nonqualification export write/read/identity-check/removal before heavy work. Keep
+absolute canonical RUNNER_TEMP, exact summary basename, existing report setting,
+pinned prerequisites, umask022, 30 GiB minimum free and 15 GiB task budget. Refresh
+ownership/resources immediately before launch; preserve all other tasks and live apps.
+No broad run occurs per small correction and no additional performance sample is
+being requested. A correction failure requires diagnosis and affected review.
+
+Preserve prior evidence in the PR record: invalid first workflow; cold Prisma
+engine and relocated-config cache CI failures; initial local umask failure; the
+historical native browser shutdown failure and bounded diagnostics with unknown
+cause; the all-twelve-phases-pass attempt that failed final export because its
+launcher omitted RUNNER_TEMP; and the corrected launcher's true finalized full pass.
+No failed attempt is relabelled or erased. Prior cumulative hosted usage was
+187m19s across four candidate attempts; new qualification adds correctness-renewal
+cost, not performance sampling. Formal performance acceptance remains unproven.
+No merge or pass-announcement source commit is authorized; publish exact final
+bindings, all checks, cleanup and integration guidance in the existing draft PR.
 
 ## Checkpoint 1: Command, Coverage And Dependency Map
 
@@ -133,10 +205,11 @@ lifecycle checks, exact workspace/database/container removal and diagnostics
 finalization. Capture only fixed sanitized verification outcomes and required
 identities; no credentials, raw journal paths, test payloads or private log tails.
 Receipt publication itself is bounded and fails the lane if unsuccessful.
-A temporarily persisted `summary.status=passed` inside finalization cannot be
-promoted into a receipt. Maintain signal handlers through receipt publication
-and reject late cancellation; the workflow dependency result remains an
-independent required condition after command settlement.
+An internal finalized `summary.status=passed` cannot be promoted into a receipt
+before bounded-stage postchecks. Durable CI summaries remain pending through
+receipt publication and use the terminal commit described above. Maintain signal
+handlers through that commit and reject earlier cancellation; the workflow
+dependency result remains independently required after command settlement.
 
 Read downloaded receipts as bounded regular non-symlink JSON with strict fields
 and exact filenames; reject extra/missing files, duplicate lanes/coverage,
