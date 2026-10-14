@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { mkdtempSync, mkdirSync, realpathSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
@@ -27,7 +28,7 @@ export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = comm
     env.CODEX_HOME = path.join(root, `${prefix}-config`);
     args = ['--no-daemon', '--strict-config', '--sandbox', 'read-only', '--ask-for-approval', 'never',
       ...disabled.flatMap(name => ['-c', `features.${name}=false`]),
-      '-c', 'tools.view_image=false', '-c', 'web_search="disabled"', '-c', 'cli_auth_credentials_store="file"',
+      '-c', 'web_search="disabled"', '-c', 'cli_auth_credentials_store="file"',
       '-c', 'project_doc_max_bytes=0', '-c', 'apps._default.enabled=false',
       '-c', `mcp_servers.context_router_demo.url=${JSON.stringify(url)}`,
       '-c', 'mcp_servers.context_router_demo.bearer_token_env_var="CR_DEMO_TOKEN"',
@@ -43,6 +44,25 @@ export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = comm
   return { command, prefix, agent, executable, credential: agent === 'a' ? 'agent-a.token' : 'agent-b.token', version, cwd, args, env };
 }
 
+// Validate the exact interactive argv before any session can start. This pinned
+// version parses strict configuration before refusing piped/nonterminal stdin.
+// Disposable roots contain no authentication; never use the signed-in demo HOME.
+function checkStrictCodexStartup(spec) {
+  const root = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'cr-demo-strict-')));
+  try {
+    for (const name of ['home', 'config', 'workspace']) mkdirSync(path.join(root, name), { mode: 0o700 });
+    const result = spawnSync(spec.executable, spec.args, {
+      cwd: path.join(root, 'workspace'),
+      env: { ...cleanEnvironment(), HOME: path.join(root, 'home'), CODEX_HOME: path.join(root, 'config'), TMPDIR: path.join(root, 'home') },
+      input: '', encoding: 'utf8', timeout: 5000, maxBuffer: 65536,
+    });
+    if (result.error || result.signal !== null || result.status !== 1 || result.stdout !== '' ||
+        result.stderr !== 'Error: stdin is not a terminal\n') {
+      throw safeError('Codex strict startup preflight failed. No assistant session was started.');
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+}
+
 export function preflightClient(spec) {
   const run = args => {
     const result = spawnSync(spec.executable, args, { cwd: spec.cwd, env: spec.env, encoding: 'utf8', timeout: 10000, maxBuffer: 1024 * 1024 });
@@ -54,6 +74,7 @@ export function preflightClient(spec) {
   const required = spec.command === 'claude' ? ['--bare', '--strict-mcp-config', '--tools', '--setting-sources', '--disable-slash-commands', '--no-chrome'] : ['--no-daemon', '--strict-config', '--sandbox'];
   if (required.some(flag => !help.includes(flag))) throw safeError('Unsupported client isolation controls.');
   if (spec.command === 'codex') {
+    checkStrictCodexStartup(spec);
     // This version restricts --strict-config to interactive/exec; features and mcp list are offline readers.
     const offline = spec.args.slice(0, -1).filter(arg => arg !== '--strict-config');
     const servers = JSON.parse(run([...offline, 'mcp', 'list', '--json']));

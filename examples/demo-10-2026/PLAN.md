@@ -267,3 +267,31 @@ pending. The coordinator will prepare retained state outside the repository
 and check manual CLI/start/stop behavior after the local commit. Later CI,
 PR/merge and any applicable release qualification remain separate requirements;
 existing gates were not changed or retired.
+
+
+## Live launcher correction (2026-10-13)
+
+The user reported successful demo-only Codex A login, followed by strict startup
+rejection of `tools.view_image`. The previous feature/MCP offline readers omitted
+`--strict-config`, so the passing 21-test suite did not cover this boundary.
+The installed 0.160.0 parser is authoritative: remove only that unsupported alias,
+retain and verify `features.view_image=false` and every other native-tool gate.
+
+A tests-first regression reproduced the real strict rejection, and a second
+regression proved the old preflight ignored an injected unknown configuration
+key. Preflight now invokes the exact interactive argv with strict parsing,
+piped empty stdin and fresh disposable HOME/CODEX_HOME/workspace. It accepts
+only exit 1, empty stdout and the exact `Error: stdin is not a terminal` refusal.
+This version validates configuration before that boundary; no signed-in auth,
+MCP credentials, assistant session or model call is used. An opt-in installed
+binary regression covers both A/B and an unknown-key negative control, keeping
+the portable unit suite independent of a Codex installation.
+
+Affected validation: all six client tests passed with `CR_DEMO_TEST_CODEX=1`,
+including the actual pinned binary. The coordinator independently repeated the
+client suite: six passed, zero failed, zero skipped, in 1,959 ms. Architecture
+and safety reviewers approved the affected code/tests with no findings; this
+evidence-only update preserves those approvals. Unchanged import/MCP/SQLite/
+browser coverage carries forward. The retained demo root, its user login and
+running dashboard were not read or modified. The user's live retry remains
+pending; no installed-app transition is part of this correction.

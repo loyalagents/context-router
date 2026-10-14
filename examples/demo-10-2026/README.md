@@ -167,6 +167,8 @@ A's denied DEFINE returns `MCP_PERMISSION_DENIED`.
 ```sh
 node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs
 node scripts/check-markdown-links.mjs
+# Optional installed-binary regression; requires Codex CLI 0.160.0:
+CR_DEMO_TEST_CODEX=1 node --test examples/demo-10-2026/clients.test.mjs
 ```
 
 The browser test requires the repository's pinned Playwright 1.63.0 / Chromium
@@ -182,6 +184,15 @@ zero skipped**. The original 11 JSONL files and existing personal Codex/Claude
 configuration snapshots remained byte-identical. Documentation links and
 whitespace checks passed. See the [reviewed plan](PLAN.md) for exact scope and
 evidence.
+
+The live walkthrough subsequently exposed an unsupported strict-config alias,
+`tools.view_image`, which the old non-strict readers had ignored. The launcher
+now uses the supported `features.view_image=false` gate and checks the complete
+strict launch argv in disposable authentication-free directories. Codex 0.160.0
+must reach its exact nonterminal-stdin refusal; unknown options are rejected
+before any assistant session. The explicit installed-binary regression checks
+both roles and an injected unknown-key negative control. The prior 21-test run
+did not cover this strict startup boundary.
 
 Targeted checks passed; final validation pending. Remaining checks are live
 demo-only authentication, tool discovery, actual assistant behavior and the

@@ -30,7 +30,8 @@ test('launch specs confine config/workspace and omit ambient secrets, tools and 
       assert.equal(spec.args[spec.args.indexOf('--tools') + 1], '');
     } else {
       assert.ok(spec.args.includes('features.shell_tool=false'));
-      assert.ok(spec.args.includes('tools.view_image=false'));
+      assert.ok(spec.args.includes('features.view_image=false'));
+      assert.equal(spec.args.includes('tools.view_image=false'), false);
       assert.ok(spec.args.includes('features.apps=false'));
       assert.equal(spec.env.CODEX_HOME, path.join(root, 'codex-config'));
     }
@@ -67,8 +68,41 @@ test('documented ignored unified-exec opt-out is accepted only with shell exposu
   const names = spec.args.filter(arg => /^features\..*=false$/.test(arg)).map(arg => arg.slice(9, -6));
   for (const shell of ['false', 'true', 'missing']) {
     const features = names.filter(name => shell !== 'missing' || name !== 'shell_tool').map(name => `${name} stable ${name === 'unified_exec' ? 'true' : name === 'shell_tool' ? shell : 'false'}`).join('\n');
-    await fs.writeFile(executable, `#!${process.execPath}\nconst a=process.argv.slice(2);\nif(a.includes('--version'))console.log('codex-cli 0.160.0');\nelse if(a.includes('--help'))console.log('--no-daemon --strict-config --sandbox');\nelse if(a.includes('mcp'))console.log(JSON.stringify([{name:'context_router_demo',transport:{bearer_token_env_var:'CR_DEMO_TOKEN'}}]));\nelse console.log(${JSON.stringify(features)});\n`, { mode: 0o700 });
+    await fs.writeFile(executable, `#!${process.execPath}\nconst a=process.argv.slice(2);\nif(a.includes('--version'))console.log('codex-cli 0.160.0');\nelse if(a.includes('--help'))console.log('--no-daemon --strict-config --sandbox');\nelse if(a.includes('--strict-config')){console.error('Error: stdin is not a terminal');process.exitCode=1;}\nelse if(a.includes('mcp'))console.log(JSON.stringify([{name:'context_router_demo',transport:{bearer_token_env_var:'CR_DEMO_TOKEN'}}]));\nelse console.log(${JSON.stringify(features)});\n`, { mode: 0o700 });
     if (shell === 'false') assert.equal(preflightClient(spec).offlineControls, 'passed');
     else assert.throws(() => preflightClient(spec), /native-tool controls/);
+  }
+});
+
+test('strict preflight rejects an unknown override that non-strict readers ignore', async t => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-strict-gate-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  for (const p of ['home', 'config', 'workspace']) await fs.mkdir(path.join(root, `codex-${p}`));
+  const executable = path.join(root, 'client');
+  const spec = clientLaunchSpec({ command: 'codex', root, dataset: 'demo001', mcpPort: 8788 }, { executable });
+  const features = spec.args.filter(arg => /^features\..*=false$/.test(arg)).map(arg => `${arg.slice(9, -6)} stable false`).join('\n');
+  await fs.writeFile(executable, `#!${process.execPath}\nconst a=process.argv.slice(2);\nif(a.includes('--version'))console.log('codex-cli 0.160.0');\nelse if(a.includes('--help'))console.log('--no-daemon --strict-config --sandbox');\nelse if(a.includes('--strict-config')){console.error(a.includes('demo_unknown_override=true')?'Error loading config.toml: unknown configuration field demo_unknown_override':'Error: stdin is not a terminal');process.exitCode=1;}\nelse if(a.includes('mcp'))console.log(JSON.stringify([{name:'context_router_demo',transport:{bearer_token_env_var:'CR_DEMO_TOKEN'}}]));\nelse console.log(${JSON.stringify(features)});\n`, { mode: 0o700 });
+  assert.equal(preflightClient(spec).offlineControls, 'passed');
+  const unknown = { ...spec, args: [...spec.args.slice(0, -1), '-c', 'demo_unknown_override=true', spec.args.at(-1)] };
+  assert.throws(() => preflightClient(unknown), /strict startup/);
+});
+
+test('installed Codex accepts complete strict A/B launch argv before the nonterminal boundary', { skip: process.env.CR_DEMO_TEST_CODEX !== '1' }, async t => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-real-strict-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  for (const role of ['codex-a', 'codex']) for (const suffix of ['home', 'config', 'workspace']) await fs.mkdir(path.join(root, `${role}-${suffix}`), { mode: 0o700 });
+  for (const agent of ['a', 'b']) {
+    const spec = clientLaunchSpec({ command: 'codex', agent, root, mcpPort: 1, dataset: 'demo001' });
+    const run = args => spawnSync(spec.executable, args, { cwd: spec.cwd, env: spec.env, input: '', encoding: 'utf8', timeout: 5000, maxBuffer: 65536 });
+    assert.equal(run(['--version']).stdout.trim(), 'codex-cli 0.160.0');
+    const strict = run(spec.args);
+    assert.equal(strict.error, undefined); assert.equal(strict.signal, null); assert.equal(strict.status, 1);
+    assert.equal(strict.stdout, ''); assert.equal(strict.stderr, 'Error: stdin is not a terminal\n');
+    const invalidArgs = [...spec.args.slice(0, -1), '-c', 'demo_unknown_override=true', spec.args.at(-1)];
+    const invalid = run(invalidArgs);
+    assert.equal(invalid.status, 1); assert.match(invalid.stderr, /unknown configuration field `demo_unknown_override`/);
+    assert.equal(preflightClient(spec).offlineControls, 'passed');
+    assert.throws(() => preflightClient({ ...spec, args: invalidArgs }), /strict startup/);
+    await assert.rejects(fs.access(path.join(spec.env.CODEX_HOME, 'auth.json')));
   }
 });
