@@ -138,11 +138,16 @@ An existing config must already be private (`0600`); inspect before deliberately
 correcting permissions. `desktop-prepare --config /absolute/config.json` supports
 an explicit alternative config whose parent already exists.
 
-Apply saves an exact private backup, fsyncs a sibling file, rechecks original
+Apply rewrites JSON with two-space indentation, preserving unrelated entries'
+parsed values rather than their original formatting. Duplicate keys and numeric
+formatting may be normalized; the private backup preserves the exact old bytes.
+Apply saves that backup, fsyncs a sibling file, rechecks original
 bytes, atomically replaces the config and verifies readback. This is guarded
 replacement, not compare-and-swap against arbitrary concurrent writers. Start
 Desktop normally afterward and inspect its MCP connection. A new generation
 requires another prepare/review/apply/restart; it never silently redirects C.
+An older proposal still targets its recorded generation even after `--fresh`;
+check its generation and prepare a new proposal when switching to the new copy.
 Provider-backed Desktop conversation acceptance remains a human check.
 Moving the demo into the installed Context Router app, including any approved
 reset there, is a separate later operation.
@@ -218,6 +223,8 @@ Existing low-level `prepare --out /new/private/root` and commands with
 never reuse an output directory. V1 A has WRITE but no DEFINE, B has READ without
 prepared database grants, and no C is issued. Their profile paths remain inside
 the root. Durable defaults do not upgrade or alter these earlier instances.
+Legacy Claude A and B share the `claude-*` profile directories: use only one
+Claude role per legacy root. Use durable mode for separate A/B Claude profiles.
 
 ## Data, recovery and reusable pieces
 
@@ -240,7 +247,16 @@ best-effort, with actual persisted events tested. No automatic write replay is
 introduced.
 
 Home mutations are serialized with `writer.lock`. Preparation fsyncs complete
-generation state before publishing selection. An interrupted import/publication
+generation state before publishing selection. Source/build/tool checks and
+validation of existing profile permissions happen before the first layout or
+generation write. A failure at that point releases the owned lock, reports the
+prerequisite and leaves any selected generation usable. The pnpm check discovers
+the installed command on your shell's PATH, then runs it with a clean environment.
+
+During import, **Ctrl-C** or **SIGTERM** lets the current MCP request settle,
+then stops without replay, attempts importer revocation and records `failed.json`.
+Wait for the process to exit. This is graceful cleanup, not a guarantee after
+SIGKILL, power loss or cleanup failure. An interrupted import/publication
 or Desktop replacement retains partial state, lock and recovery artifacts.
 **Do not delete an unknown lock, rerun uncertain writes, or automatically restore
 a backup.** Stop for read-only inspection: identify the writer, inspect selected
@@ -248,6 +264,8 @@ and partial receipts plus database/history, and establish whether publication
 completed. `status` permits a locked home's existing selection but cannot report
 an incomplete first preparation. Recovery requires an explicit decision after
 inspection; there is no automatic stale-lock cleanup or destructive reset.
+Signals before the runtime's state-creation phase or after manifest preparation
+also retain inspection-based recovery; the graceful handler covers import cleanup.
 
 - [records.mjs](records.mjs): pure mapping and bounded source loading/hashes.
 - [mcp-import.mjs](mcp-import.mjs): sequential SDK import with no replay.
@@ -283,3 +301,7 @@ need their own human acceptance after local checks and independent reviews.
 See the [plan and evidence](PLAN.md) for checkpoint results and review status.
 Later CI, PR and merge acceptance remain pending; existing migration/contract/CI
 gates are unchanged.
+The current GitHub workflows do **not** run this example's test suite; a green
+PR does not replace the local command above. Record that command's result for
+each candidate. Installed CLI probes and live provider acceptance are separate
+from CI coverage.

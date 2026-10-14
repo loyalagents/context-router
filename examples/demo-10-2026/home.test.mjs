@@ -66,7 +66,7 @@ test('failed import or selector publication keeps prior selection and uncertain 
   for (const boundary of ['prepare', 'before-selector', 'after-selector']) {
     const { home, input } = await fixture(t); const first = await prepareHome({ home, input });
     let calls = 0;
-    const hooks = boundary === 'prepare' ? { prepare: async ({ out }) => { calls++; await fs.mkdir(out, { mode: 0o700 }); throw new Error('uncertain'); } }
+    const hooks = boundary === 'prepare' ? { prepare: async ({ out }, { beforeCreate }) => { await beforeCreate(); calls++; await fs.mkdir(out, { mode: 0o700 }); throw new Error('uncertain'); } }
       : { checkpoint: async phase => { if (phase === boundary) throw new Error('interrupted'); } };
     await assert.rejects(prepareHome({ home, input, fresh: true }, hooks), /inspection|uncertain/i);
     if (boundary === 'prepare') assert.equal(calls, 1);
@@ -78,6 +78,40 @@ test('failed import or selector publication keeps prior selection and uncertain 
     else { assert.notEqual(retained.root, first.root); await readManifest(retained.root); }
     await readManifest(first.root);
   }
+});
+
+test('real preparation prerequisite failures release the lock without publishing or importing', async t => {
+  const { parent, home, input } = await fixture(t);
+  const cli = fileURLToPath(new URL('./demo.mjs', import.meta.url));
+  const missingTools = path.join(parent, 'empty-path'); await fs.mkdir(missingTools);
+  const attempt = fresh => spawnSync(process.execPath, [cli, 'prepare', '--home', home, '--input', input, ...(fresh ? ['--fresh'] : [])], {
+    env: { ...cleanEnvironment(), PATH: missingTools }, encoding: 'utf8', timeout: 20000,
+  });
+  let result = attempt(false);
+  assert.equal(result.status, 1); assert.match(result.stderr, /pnpm 10\.25\.0/);
+  assert.doesNotMatch(result.stderr, /uncertain/);
+  assert.deepEqual(await fs.readdir(home), []);
+  const first = await prepareHome({ home, input });
+  result = attempt(true);
+  assert.equal(result.status, 1); assert.match(result.stderr, /pnpm 10\.25\.0/);
+  assert.doesNotMatch(result.stderr, /uncertain/);
+  assert.deepEqual(await fs.readdir(path.join(home, 'generations')), [first.generation]);
+  assert.equal((await resolveHome({ home })).root, first.root);
+});
+
+test('changed profile permissions fail before new state and do not lock the selected generation', async t => {
+  const { home, input } = await fixture(t); const first = await prepareHome({ home, input });
+  const config = path.join(first.profileRoot, 'claude-config'); await fs.chmod(config, 0o755);
+  await assert.rejects(prepareHome({ home, fresh: true }), /permissions/);
+  assert.equal((await resolveHome({ home })).root, first.root);
+  assert.deepEqual(await fs.readdir(path.join(home, 'generations')), [first.generation]);
+  await fs.chmod(config, 0o700);
+});
+
+test('uncertain home errors retain only explicitly safe causes', async t => {
+  const { home, input } = await fixture(t); await prepareHome({ home, input });
+  await assert.rejects(withHomeLock(home, mark => { mark(); throw Object.assign(new Error('private content'), { demoSafeMessage: 'Safe stage detail.' }); }), /Safe stage detail.*uncertain/);
+  assert.equal((await resolveHome({ home, allowLocked: true })).locked, true);
 });
 
 test('durable home rejects unsafe aliases and forged selector paths', async t => {

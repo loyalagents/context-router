@@ -122,6 +122,17 @@ test('a lost or rejected mutation stops import immediately without replay', asyn
   assert.deepEqual(calls.map(c => c.arguments.operation), ['CREATE_DEFINITION', 'SET_PREFERENCE']);
 });
 
+test('cancellation waits for the in-flight definition, then stops before SET without replay', async () => {
+  const plan = await loadDemoPlan(), abort = new AbortController(), calls = [];
+  const client = { async callTool(request) {
+    calls.push(request.arguments.operation); abort.abort(new Error('test cancellation'));
+    await new Promise(resolve => setImmediate(resolve));
+    return { structuredContent: { success: true, changed: true, definition: { ...request.arguments.definition, visibility: 'USER' } } };
+  } };
+  await assert.rejects(importEntries(client, plan.entries, { signal: abort.signal }), /Import stopped|cancellation/);
+  assert.deepEqual(calls, ['CREATE_DEFINITION']);
+});
+
 test('serve refuses partial or mismatched preparation without opening it', async t => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-partial-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));

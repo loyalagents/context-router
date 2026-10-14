@@ -622,3 +622,65 @@ home preparation, bounded read/bridge smoke and Desktop proposal come next;
 live profile login, assistant/Desktop acceptance and broader merge/release gates
 remain pending. No push, PR, provider request or live configuration apply is part
 of this repository handoff.
+
+### PR 182 external review correction round
+
+Claude reviewed the complete PR at `76d39bb7db8fca60f315805c268983d127690e85`.
+The coordinator accepted its four concrete defects and the exact-version
+suggestion: prerequisite failures must not strand a home lock, graceful import
+interruption should attempt revocation and record failure, pnpm discovery should
+honor the user's PATH, and npm-global clients alongside Node must be discoverable.
+
+This bounded round keeps one writer (the coordinator) and read-only reviewers.
+Recovery and credential cleanup use the sensitive profile; the independent plan
+review requested Astra/xhigh (effective runtime settings are not observable).
+The plan review approved these checkpoints before implementation:
+
+1. Reproduce prerequisite/discovery/version failures and cancellation without
+   replay; validate source/build/backend and existing profile paths before the
+   first home-layout write. Preserve explicitly safe causes only.
+2. Handle SIGINT/SIGTERM until preparation completes. Let in-flight MCP calls
+   settle, then stop and attempt importer revocation and a failure receipt. The
+   manifest write is the completion boundary. Never remove an unknown lock or
+   unlock an actually mutated home automatically.
+3. Run targeted recovery tests, freeze the bounded correction, renew affected
+   independent review and the full example suite, then update the same draft PR.
+   No product runtime, CI rules, live demo, login or Desktop config changes.
+
+The source/build/backend checks now precede a `beforeCreate` callback that marks
+the home uncertain and initializes its layout. Existing layout/profile validation
+is read-only. A failed prerequisite releases only this invocation's lock, creates
+no generation and leaves any old selection usable. Actual partial imports retain
+the lock and state even after a successful revocation attempt: `failed.json` is
+diagnostic evidence, not proof that all writes or selector publication settled.
+
+The pnpm probe discovers via shell PATH but executes in a clean environment;
+assistant launch environments stay restricted. Client discovery includes the
+running Node bin directory and version checks compare complete whitespace-delimited
+tokens. Graceful cancellation is checked between operations without passing an
+abort signal into an in-flight mutation. SIGKILL/power loss remain inspection cases.
+
+Other review dispositions:
+
+- Documented v1 shared Claude profiles, JSON formatting normalization and exact
+  generation binding of old Desktop proposals. No automatic proposal retargeting.
+- Kept the empty-workspace check; the possible Claude-generated settings file
+  was unverified. A reproduced live-client issue needs a narrowly scoped follow-up,
+  rather than allowing arbitrary workspace/config content now.
+- Agreed that CI does not run the example suite; README and PR evidence explicitly
+  distinguish local suite results from GitHub checks. A dedicated CI lane is deferred
+  to subsequent app-demo integration; this round preserves existing CI policy.
+- Dataset publication remains within the user's earlier fake-data/demo PR request;
+  no new claim of formal anonymization or publication clearance is inferred.
+- The in-process local composition uses explicit database roots, fixed local
+  configuration and the unavailable-model adapter. This inspection is not a full
+  audit of every dependency's environment access; no egress-isolation claim is made.
+
+Seven targeted regressions passed after reproducing their failures. Actual
+SIGINT/SIGTERM tests use owned child processes and SQLite/MCP state, check
+interruption after a persisted import event, importer revocation, failure receipt,
+absence of a prepared manifest, retained lock and preserved prior selection.
+The observer waits for the importer token before opening SQLite so it cannot
+interfere with identity/schema initialization. Full candidate results and review
+verdicts will be recorded on the PR; previous product/build coverage is unaffected,
+while prior home/import/launcher evidence is superseded by this round.

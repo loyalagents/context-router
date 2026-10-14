@@ -31,14 +31,19 @@ export async function call(client, name, args) {
   return payload;
 }
 
-export async function importEntries(client, entries) {
+export async function importEntries(client, entries, { signal } = {}) {
   try {
     for (const entry of entries) {
+      signal?.throwIfAborted();
+      // Let each mutation settle before observing cancellation; never abort an
+      // in-flight request, guess whether it committed, or replay it.
       const result = await call(client, 'mutatePreferences', { operation: 'CREATE_DEFINITION', definition: entry.definition });
+      signal?.throwIfAborted();
       const def = result.definition;
       if (result.changed !== true || def?.slug !== entry.definition.slug || def.valueType !== 'STRING' ||
           def.scope !== 'GLOBAL' || def.isSensitive !== true || def.visibility !== 'USER') throw new Error();
       const written = await call(client, 'mutatePreferences', { operation: 'SET_PREFERENCE', preference: entry.preference });
+      signal?.throwIfAborted();
       if (written.changed !== true || written.preference?.slug !== entry.definition.slug ||
           written.preference.value !== JSON.parse(entry.preference.value)) throw new Error();
     }

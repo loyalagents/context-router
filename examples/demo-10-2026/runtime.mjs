@@ -68,10 +68,17 @@ async function treeDigest(root) {
 }
 export async function buildEvidence() {
   if (process.versions.node !== '24.21.0') throw safeError('Use Node 24.21.0.');
-  const pnpm = spawnSync('pnpm', ['--version'], { env: cleanEnvironment(), encoding: 'utf8' });
-  if (pnpm.status !== 0 || pnpm.stdout.trim() !== '10.25.0') throw safeError('Use pnpm 10.25.0.');
-  await fs.access(path.join(backendRoot, 'dist/local-identity.js'));
-  const webBuildId = (await fs.readFile(path.join(repoRoot, 'apps/web/.next/BUILD_ID'), 'utf8')).trim();
+  // Discover the user's installation, then execute only this check with the
+  // same clean environment used for demo processes (no inherited secrets).
+  const found = spawnSync('/usr/bin/which', ['pnpm'], { env: { PATH: process.env.PATH ?? cleanEnvironment().PATH }, encoding: 'utf8', timeout: 10000 });
+  if (found.status !== 0) throw safeError('Make pnpm 10.25.0 available on PATH.');
+  const pnpm = spawnSync(path.resolve(found.stdout.trim()), ['--version'], { env: cleanEnvironment(), encoding: 'utf8', timeout: 10000 });
+  if (pnpm.status !== 0 || pnpm.stdout.trim() !== '10.25.0') throw safeError('Use pnpm 10.25.0 on PATH.');
+  try { await fs.access(path.join(backendRoot, 'dist/local-identity.js')); }
+  catch { throw safeError('Backend build missing; run pnpm --filter backend build.'); }
+  let webBuildId;
+  try { webBuildId = (await fs.readFile(path.join(repoRoot, 'apps/web/.next/BUILD_ID'), 'utf8')).trim(); }
+  catch { throw safeError('Web build missing; run pnpm --filter web build.'); }
   const git = args => { const result = spawnSync('/usr/bin/git', args, { cwd: repoRoot, encoding: 'utf8' }); if (result.status !== 0) throw new Error('Source revision unavailable'); return result.stdout.trim(); };
   return { node: process.versions.node, pnpm: pnpm.stdout.trim(), sourceRevision: git(['rev-parse', 'HEAD']),
     dirty: Boolean(git(['status', '--porcelain'])), sourceStatus: git(['status', '--porcelain']),
@@ -117,34 +124,47 @@ export async function verifyApplication(application, principalId, plan, { strict
   return { active: rows.length, importAuditsVerified: plan.entries.length, modified };
 }
 
-export async function prepareDemo({ out, input, dataset = 'demo001', durable = false }) {
+export async function prepareDemo({ out, input, dataset = 'demo001', durable = false }, { beforeCreate = async () => {} } = {}) {
   if (out === repoRoot || out?.startsWith(repoRoot + path.sep)) throw safeError('Prepare private state outside the repository.');
   const plan = await loadDemoPlan(input, dataset);
   if (!plan.entries.length) throw safeError('The source has no active memories.');
-  const builds = await buildEvidence(), b = backend();
-  await createFreshRoot(out);
-  let runtime, importer, credentials, seed, revoked = false, stage = 'initialize', cleanupError;
+  const builds = await buildEvidence();
+  let b;
+  try { b = backend(); } catch { throw safeError('Backend modules unavailable; install dependencies, generate Prisma and rebuild the backend.'); }
+  const abort = new AbortController();
+  let interruptedBy;
+  const onInterrupt = signal => { interruptedBy ??= signal; abort.abort(safeError(`Preparation interrupted by ${interruptedBy}; partial state is preserved and must not be replayed.`)); };
+  const onInt = () => onInterrupt('SIGINT'), onTerm = () => onInterrupt('SIGTERM');
+  process.on('SIGINT', onInt); process.on('SIGTERM', onTerm);
+  let runtime, importer, credentials, seed, revoked = false, stage = 'initialize', cleanupError, rootCreated = false;
+  const advance = next => { abort.signal.throwIfAborted(); stage = next; };
   try {
-    for (const name of ['exports', 'claude-workspace', 'codex-workspace', 'claude-home', 'codex-home', 'claude-config', 'codex-config', 'codex-a-workspace', 'codex-a-home', 'codex-a-config']) await fs.mkdir(path.join(out, name), { mode: 0o700 });
+    await beforeCreate(); abort.signal.throwIfAborted();
+    await createFreshRoot(out); rootCreated = true; abort.signal.throwIfAborted();
+    for (const name of ['exports', 'claude-workspace', 'codex-workspace', 'claude-home', 'codex-home', 'claude-config', 'codex-config', 'codex-a-workspace', 'codex-a-home', 'codex-a-config']) {
+      abort.signal.throwIfAborted(); await fs.mkdir(path.join(out, name), { mode: 0o700 });
+    }
     await writeJson(path.join(out, 'import-plan.json'), plan);
+    abort.signal.throwIfAborted();
     const config = configuration(out);
     const initialized = spawnSync(process.execPath, ['--no-global-search-paths', path.join(backendRoot, 'dist/local-identity.js'), 'initialize'], {
       cwd: backendRoot, env: { ...cleanEnvironment(), LOCAL_DATABASE_ROOT: config.databaseRoot, LOCAL_IDENTITY_STATE_ROOT: config.stateRoot }, encoding: 'utf8', timeout: 20000,
     });
     if (initialized.status !== 0) throw new Error();
-    stage = 'credentials';
+    advance('credentials');
     const identity = await privateJson(path.join(config.stateRoot, 'identity.json'));
+    abort.signal.throwIfAborted();
     const db = b.SqliteDatabase.open({ databaseRoot: config.databaseRoot, identityRoot: config.stateRoot });
     credentials = new b.SqliteMcpCredentials(db, identity.principalId); credentials.upgrade();
     const targets = plan.sources.map(s => `${s.file.slice(0, -6)}.${dataset}.*`);
     seed = credentials.provision('demo preparation', path.join(out, 'exports/importer.token'));
     credentials.permissions(seed.id, policy(['preferences:write', 'preferences:define'], targets));
-    stage = 'start'; runtime = await b.createLocalMcpApplication(config, { port: 0 });
-    stage = 'connect'; importer = await connect(runtime.port, path.join(out, 'exports/importer.token'));
-    stage = 'import'; await importEntries(importer, plan.entries);
-    stage = 'verify'; await verifyApplication(runtime.application, identity.principalId, plan, { strict: true, importerId: seed.id });
-    stage = 'revoke'; credentials.revoke(seed.id); revoked = true;
-    stage = 'clients';
+    advance('start'); runtime = await b.createLocalMcpApplication(config, { port: 0 });
+    advance('connect'); importer = await connect(runtime.port, path.join(out, 'exports/importer.token'));
+    advance('import'); await importEntries(importer, plan.entries, { signal: abort.signal });
+    advance('verify'); await verifyApplication(runtime.application, identity.principalId, plan, { strict: true, importerId: seed.id });
+    advance('revoke'); credentials.revoke(seed.id); revoked = true;
+    advance('clients');
     const agentA = credentials.provision('Demo agent A — writer', path.join(out, 'exports/agent-a.token'));
     const agentB = credentials.provision('Demo agent B — reader', path.join(out, 'exports/agent-b.token'));
     credentials.permissions(agentA.id, policy(durable ? ['preferences:write', 'preferences:define'] : ['preferences:write'], targets));
@@ -156,21 +176,24 @@ export async function prepareDemo({ out, input, dataset = 'demo001', durable = f
       credentials.permissions(agentC.id, policy(['preferences:read'], bTargets));
       for (const client of [agentB, agentC]) credentials.grant(client.id, 'health.*', 'READ', 'DENY');
     }
-    stage = 'close'; await importer.close(); importer = undefined; await runtime.close(); runtime = undefined;
+    advance('close'); await importer.close(); importer = undefined; await runtime.close(); runtime = undefined;
     const manifest = { format: durable ? 'context-router-portability-demo-v2' : 'context-router-portability-demo-v1', status: 'prepared', root: out, principalId: identity.principalId,
       preparedAt: new Date().toISOString(), builds, ...summarize(plan), importerId: seed.id,
       planSha256: hash(await fs.readFile(path.join(out, 'import-plan.json'))),
       clients: { agentA: { id: agentA.id, write: true, targets }, agentB: { id: agentB.id, write: false, targets: bTargets },
         ...(durable ? { agentC: { id: agentC.id, write: false, targets: bTargets } } : {}) },
       limits: ['Native MCP SET sourceType is INFERRED.', 'Ordinary SET without evidence clears live evidence; import audit retains it.', 'Live assistant rehearsal pending.'] };
-    stage = 'manifest'; await writeJson(path.join(out, 'manifest.json'), manifest); return manifest;
+    // Manifest publication is the completion boundary. A later signal must not
+    // turn a completed preparation into both a prepared and failed receipt.
+    advance('manifest'); await writeJson(path.join(out, 'manifest.json'), manifest); return manifest;
   } catch (error) {
     if (seed && !revoked) { try { credentials.revoke(seed.id); revoked = true; } catch { cleanupError = true; } }
-    await writeJson(path.join(out, 'failed.json'), { status: 'failed', stage, partialStatePreserved: true, importerRevoked: revoked, cleanupRequiresInspection: Boolean(cleanupError), retry: 'Use a new output directory; never replay.' }).catch(() => {});
+    if (rootCreated) await writeJson(path.join(out, 'failed.json'), { status: 'failed', stage, ...(interruptedBy ? { interruptedBy } : {}), partialStatePreserved: true, importerRevoked: revoked, cleanupRequiresInspection: Boolean(cleanupError), retry: 'Use a new output directory; never replay.' }).catch(() => {});
     throw error?.demoSafeMessage ? error : safeError(`Demo preparation failed during ${stage}; partial state preserved. Use a new directory.`);
   } finally {
     // Attempt both closures even when one fails. Never erase partial or uncertain state.
-    try { await importer?.close(); } finally { await runtime?.close(); }
+    try { try { await importer?.close(); } finally { await runtime?.close(); } }
+    finally { process.off('SIGINT', onInt); process.off('SIGTERM', onTerm); }
   }
 }
 

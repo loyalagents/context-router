@@ -44,7 +44,7 @@ export async function withHomeLock(home, action) {
   catch (e) { if (e.code === 'EEXIST') throw safeError('Demo home writer lock exists. Stop and inspect; no automatic stale-lock cleanup.'); throw e; }
   await syncDirectory(home);
   try { const result = await action(() => { uncertain = true; }); succeeded = true; return result; }
-  catch (e) { if (uncertain) throw safeError('Demo home mutation uncertain. Stop for read-only inspection of writer.lock and retained artifacts; do not replay.'); throw e; }
+  catch (e) { if (uncertain) throw safeError(`${e?.demoSafeMessage ? e.demoSafeMessage + ' ' : ''}Demo home mutation uncertain. Stop for read-only inspection of writer.lock and retained artifacts; do not replay.`); throw e; }
   finally { if (succeeded || !uncertain) { await fs.unlink(lock); await syncDirectory(home); } }
 }
 
@@ -70,6 +70,16 @@ async function initializeLayout(home) {
     if (!await exists(dir)) await fs.mkdir(dir, { mode: 0o700 }); await privatePath(dir, true);
   }
   await syncDirectory(path.join(home, 'profiles')); await syncDirectory(home);
+}
+
+async function validateExistingLayout(home) {
+  if (await exists(path.join(home, 'home.json'))) await readHomeIdentity(home);
+  const directories = ['generations', 'profiles', 'desktop',
+    ...['codex-a', 'codex', 'claude', 'claude-a'].flatMap(prefix => ['home', 'config', 'workspace'].map(suffix => `profiles/${prefix}-${suffix}`))];
+  for (const name of directories) {
+    const dir = path.join(home, name);
+    if (await exists(dir)) await trustedDirectory(dir);
+  }
 }
 
 export async function readHomeIdentity(home) {
@@ -113,9 +123,12 @@ export async function prepareHome({ home = defaultHome(), input, dataset, port, 
     const plan = await loadDemoPlan(source, dataset ?? selected?.dataset ?? 'demo001');
     const ports = [port ?? selected?.port ?? 3004, mcpPort ?? selected?.mcpPort ?? 8789];
     if (!ports.every(p => Number.isInteger(p) && p > 0 && p <= 65535) || ports[0] === ports[1]) throw safeError('Invalid distinct demo ports.');
-    markUncertain(); await initializeLayout(home);
+    await validateExistingLayout(home);
     const generation = randomUUID(), root = path.join(home, 'generations', generation);
-    await prepare({ out: root, input: source, dataset: plan.dataset, durable: true });
+    await prepare({ out: root, input: source, dataset: plan.dataset, durable: true }, {
+      // Source/build/backend preflight completes before the first layout write.
+      beforeCreate: async () => { markUncertain(); await initializeLayout(home); },
+    });
     await verifyDemo(root);
     const receipt = { format: 'context-router-demo-generation-v1', home, homeId: (await readHomeIdentity(home)).id, generation, root, input: source, dataset: plan.dataset, port: ports[0], mcpPort: ports[1] };
     await writeSyncedJson(path.join(root, 'generation.json'), receipt);

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { loadDemoPlan, parseJsonl, mapRecord, validateDataset } from './records.mjs';
-import { createFreshRoot } from './runtime.mjs';
+import { createFreshRoot, buildEvidence } from './runtime.mjs';
 import { parseOptions } from './demo.mjs';
 
 const source = fileURLToPath(new URL('./001_user_001/', import.meta.url));
@@ -135,4 +135,20 @@ test('default command inspects; durable commands and explicit legacy destination
 test('preparation refuses repository-local state before creating artifacts', async () => {
   const { prepareDemo, repoRoot } = await import('./runtime.mjs');
   await assert.rejects(prepareDemo({ out: path.join(repoRoot, 'examples/demo-10-2026/private-state') }), /outside the repository/);
+});
+
+test('build preflight discovers pnpm on the user PATH but does not inherit shell secrets', async t => {
+  const root = await temporary(t), marker = path.join(root, 'pnpm-ran');
+  await fs.writeFile(path.join(root, 'pnpm'), `#!${process.execPath}\nimport fs from 'node:fs';\nfs.writeFileSync(${JSON.stringify(marker)}, JSON.stringify({secret:process.env.DEMO_TEST_SECRET,nodeOptions:process.env.NODE_OPTIONS,path:process.env.PATH}));\nconsole.log('10.25.0');\n`, { mode: 0o700 });
+  const original = process.env.PATH;
+  process.env.PATH = root; process.env.DEMO_TEST_SECRET = 'must-not-inherit';
+  try {
+    assert.equal((await buildEvidence()).pnpm, '10.25.0');
+    const observed = JSON.parse(await fs.readFile(marker, 'utf8'));
+    assert.equal(observed.secret, undefined); assert.equal(observed.nodeOptions, undefined);
+    assert.notEqual(observed.path, root);
+  } finally {
+    if (original === undefined) delete process.env.PATH; else process.env.PATH = original;
+    delete process.env.DEMO_TEST_SECRET;
+  }
 });

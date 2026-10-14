@@ -5,6 +5,28 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { clientLaunchSpec, preflightClient, loginSpec } from './clients.mjs';
+
+test('CLI discovery includes the running Node installation used by npm global installs', async t => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-nvm-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const executable = path.join(root, 'codex');
+  await fs.writeFile(executable, '#!/bin/sh\necho codex-cli 0.160.0\n', { mode: 0o700 });
+  const spec = clientLaunchSpec({ command: 'codex', root, dataset: 'demo001', mcpPort: 1 }, { nodeExecutable: path.join(root, 'node') });
+  assert.equal(spec.executable, executable);
+});
+
+test('client version preflight rejects suffixes and larger versions containing the pinned version', async t => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-version-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'claude-workspace'));
+  const executable = path.join(root, 'client');
+  const spec = clientLaunchSpec({ command: 'claude', root, dataset: 'demo001', mcpPort: 1 }, { executable });
+  for (const version of ['2.1.299', '2.1.299 (Claude Code)', '2.1.299-alpha', '12.1.299', '2.1.2990']) {
+    await fs.writeFile(executable, `#!${process.execPath}\nconsole.log(process.argv.includes('--version') ? ${JSON.stringify(version)} : '--bare --strict-mcp-config --tools --setting-sources --disable-slash-commands --no-chrome');\n`, { mode: 0o700 });
+    if (['2.1.299', '2.1.299 (Claude Code)'].includes(version)) assert.equal(preflightClient(spec).offlineControls, 'passed');
+    else assert.throws(() => preflightClient(spec), /Unsupported client version/);
+  }
+});
 import { parseOptions } from './demo.mjs';
 
 test('durable profiles stay stable while endpoint and selected-generation credential remain pinned', async t => {

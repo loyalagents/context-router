@@ -21,7 +21,7 @@ function claudeSubscriptionPaths(home, config) {
   return { HOME: process.platform === 'darwin' ? os.userInfo().homedir : home,
     ANTHROPIC_CONFIG_DIR: path.join(config, 'anthropic') };
 }
-export function clientLaunchSpec({ command, root, profileRoot = root, mcpPort, dataset, agent = command === 'claude' ? 'a' : 'b', auth = command === 'claude' ? 'api-key' : undefined }, { executable } = {}) {
+export function clientLaunchSpec({ command, root, profileRoot = root, mcpPort, dataset, agent = command === 'claude' ? 'a' : 'b', auth = command === 'claude' ? 'api-key' : undefined }, { executable, nodeExecutable = process.execPath } = {}) {
   validateDataset(dataset);
   if (!['claude', 'codex'].includes(command)) throw safeError('Unknown demo client.');
   if (!['a', 'b'].includes(agent)) throw safeError('Unsupported client role.');
@@ -53,7 +53,7 @@ export function clientLaunchSpec({ command, root, profileRoot = root, mcpPort, d
     version = '0.160.0';
   }
   if (!executable) {
-    const found = spawnSync('/usr/bin/which', [command], { env: { PATH: `${path.join(os.homedir(), '.local/bin')}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin` }, encoding: 'utf8' });
+    const found = spawnSync('/usr/bin/which', [command], { env: { PATH: `${path.dirname(nodeExecutable)}:${path.join(os.homedir(), '.local/bin')}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin` }, encoding: 'utf8' });
     if (found.status !== 0) throw safeError(`Install the qualified ${command} CLI before launching this demo.`);
     executable = found.stdout.trim();
   }
@@ -113,7 +113,7 @@ export function preflightClient(spec) {
     if (result.status !== 0) throw safeError('Unsupported client or isolation settings. No assistant was started.');
     return result.stdout;
   };
-  if (!run(['--version']).includes(spec.version)) throw safeError('Unsupported client version; revalidate isolation controls before using it.');
+  if (!run(['--version']).trim().split(/\s+/).includes(spec.version)) throw safeError('Unsupported client version; revalidate isolation controls before using it.');
   const help = run(['--help']);
   const required = spec.command === 'claude' ? [spec.auth === 'subscription' ? '--restricted' : '--bare', '--strict-mcp-config', '--tools', '--setting-sources', '--disable-slash-commands', '--no-chrome'] : ['--no-daemon', '--strict-config', '--sandbox'];
   if (required.some(flag => !help.includes(flag))) throw safeError('Unsupported client isolation controls.');
