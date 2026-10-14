@@ -109,7 +109,7 @@ test(
   },
 );
 
-test('browser caches stay inside the owned profile and leave the application home untouched', async () => {
+test('browser launch uses a mock keychain and keeps caches inside the owned profile', async () => {
   const { mkdtemp, writeFile, mkdir, readdir, readFile, stat, rm } =
     await import('node:fs/promises');
   const { tmpdir } = await import('node:os');
@@ -135,6 +135,7 @@ test('browser caches stay inside the owned profile and leave the application hom
         `fs.writeFileSync(path.join(cache, 'entry'), 'synthetic browser cache');\n` +
         `fs.chmodSync(path.join(cache, 'entry'), 0o644);\n` +
         `fs.writeFileSync(${JSON.stringify(path.join(profile, 'environment.json'))}, JSON.stringify({ home: process.env.HOME, temporaryDirectory: process.env.TMPDIR }));\n` +
+        `fs.writeFileSync(${JSON.stringify(path.join(profile, 'arguments.json'))}, JSON.stringify(process.argv.slice(2)));\n` +
         `process.exitCode = 23;\n`,
       { mode: 0o700 },
     );
@@ -173,6 +174,12 @@ test('browser caches stay inside the owned profile and leave the application hom
       assert.deepEqual(errors, []);
     }
     assert.deepEqual(await readdir(home), []);
+    const args = JSON.parse(
+      await readFile(path.join(profile, 'arguments.json'), 'utf8'),
+    );
+    assert.ok(args.includes('--use-mock-keychain'));
+    assert.ok(args.includes('--password-store=basic'));
+    assert.ok(args.includes(`--user-data-dir=${profile}`));
     assert.deepEqual(
       JSON.parse(
         await readFile(path.join(profile, 'environment.json'), 'utf8'),
