@@ -514,6 +514,20 @@ silently expand this PR or promise completion within a day.
 Do not combine this follow-up with general profiles, universal MCP onboarding,
 a new chat client, provider-credential migration or a permissions redesign.
 
+**Next-stage TODO: optional reuse of an installed local model in demo.** Current
+demo remains model-free: runtime preparation enables a model only in personal
+mode. Model assets already live outside the per-mode stores in the same managed
+envelope. A separately activated follow-up may offer explicit opt-in reuse of
+existing verified compatible assets in that same installation, with no silent
+download/copy, adoption from another envelope or reuse of a running inference
+session. Start a fresh owned inference session and preserve normal drain/ownership
+rules across switch, restart and reset. Demo data and permissions must remain
+isolated, the no-model fast path must still work, and original assets must remain
+preserved. Existing model compatibility, lifecycle and acceptance limitations are
+not waived. This optional TODO is separate from required final validation and
+does not block current demo or Codex/Claude connection testing; it does not add
+general model/provider selection to this PR.
+
 The shared cross-language malformed-metadata acceptance/rejection corpus promised
 above remains final-validation/maintenance evidence to settle before final
 qualification, not an optional next-PR deletion of that requirement. Independent
