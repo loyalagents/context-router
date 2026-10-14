@@ -203,6 +203,15 @@ required manual acceptance and exact-head CI. Valid trial evidence can contribut
 only after explicit input/impact assessment; do not rebuild solely to rename an
 unchanged trial artifact "final."
 
+Once the agreed candidate is stable and required documentation is ready, commit
+and push/open its draft PR promptly. Run exact-candidate remote CI, required full
+local qualification and independent complete-diff review concurrently when their
+inputs and resources are isolated. Do not add a serial CI waiting period by
+finishing every local check and review before pushing. Record the actual local
+source separately from PR head and test-merge checkout identities. Put final run
+links/results in the PR description or receipts where possible; avoid commits
+solely to announce a pass.
+
 If corrections follow, return to targeted iteration and renew affected review;
 then renew required final validation on the corrected frozen candidate. For
 migration runtime changes this includes the full final local gate and applicable
@@ -218,6 +227,14 @@ dependencies, toolchain, fixtures, environment and artifact), command, result an
 limitations. Reuse only unaffected evidence with an explicit impact assessment;
 never present an older pass for changed inputs. Do not repeat valid identical
 checks solely for each reviewer. Broaden checks/review when impact is uncertain.
+
+For the two migration CI profiles, a durable passed summary is committed only
+after bounded finalization and required receipt publication. A pending or failed
+summary cannot confer qualification; both workflow jobs and same-attempt receipts
+must succeed. Compare runner identities using the explicit
+[CI compatibility policy](../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles):
+retain actual release/patch values, allow only supported patch drift, and require
+matching image family, pinned runtimes and browser identity.
 
 Before an expensive run, state its command/purpose, what relevant inputs changed
 since the previous pass, and why it is needed now, including any approved-plan

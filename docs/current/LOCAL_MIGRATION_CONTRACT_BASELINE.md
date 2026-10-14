@@ -235,9 +235,21 @@ browser tests after its build. `local-orchestrator`, evaluation and Harbor phase
 remain hosted-only. All twelve phase IDs/order remain. Step 08 P3 increases only
 the expanded packaging phase from fifteen to twenty-five minutes; other phase
 allowances remain unchanged, and active phase budgets now total 104 minutes.
-The dedicated workflow adds a bounded ten-minute pinned Chromium prerequisite
-and a two-minute sanitized database-evidence upload; step budgets total 175 minutes
-within a 185-minute job, preserving ten minutes of workflow overhead. Absolute gate deadlines are preflight T+3, phase cancellation
+Each dedicated CI execution lane retains the bounded ten-minute pinned Chromium
+prerequisite and two-minute optional sanitized database-evidence upload, and adds
+a two-minute required qualification receipt upload. A one-minute runner step
+initializes private caches before package setup. The packaging lane additionally
+prepares its pinned Prisma native engine with `pnpm --filter backend exec prisma
+--version` before the gate copies and snapshots dependencies; no generated source
+or build is reused. Inside the owned copied workspace, only `ci-packaging`
+repeats that fixed version command during preflight to prepare Prisma's
+absolute-path-keyed config cache before dependency integrity is captured. It
+uses the isolated gate environment, owned log, 120-second subprocess bound and
+existing shared T+3 preflight deadline; failure or cancellation prevents phases.
+The full, source and smoke-only paths do not perform this extra preparation.
+Step/job budgets are 178/188 minutes for source and 180/190
+minutes for packaging, preserving ten minutes of workflow overhead. Absolute
+gate deadlines are preflight T+3, phase cancellation
 T+107, child settlement T+110 and final cleanup T+113 minutes. The 118-minute
 gate-step fail-safe preserves five additional minutes. Every supported mode must retain active contract, build, state,
 restart, and integrity evidence. Each mode records active/retired status and at
@@ -249,6 +261,77 @@ contract-baseline phase command and fails if the bound artifact directory is
 missing. Direct checker runs remain useful for current-tree validation and
 report `baseComparison=skipped`; aggregate runs report
 `baseComparison=performed` so the comparison cannot disappear silently.
+
+### CI Qualification Profiles
+
+The dedicated workflow starts two independent jobs with their own full-history
+checkout, dependencies, writable stores/caches, PostgreSQL service, browser
+prerequisites and disposable gate workspace. The fixed `--ci-source` profile runs
+phases 1–10 in their existing order followed by repository-integrity; the fixed
+`--ci-packaging` profile runs packaged-composition-smoke followed by its own
+repository-integrity. Full manifest/schema, exact commands, all six modes and
+retirement rules remain validated before either selection. There is no arbitrary
+phase-skipping option. The default local `pnpm migration:gate` still runs all
+twelve phases sequentially; restart smoke-only behavior is retained.
+
+Both profiles preserve the outer smoke lifecycle validators, bounded settlement,
+caller/generated integrity, owned-resource cleanup and successful finalization.
+Required versioned receipts are published only after the finalizer and bounded
+stage runner return successfully. For CI profiles, the external summary remains
+`running` with `cleanupPending=required-receipt-publication` until the required
+receipt has been published. The passed summary is then staged privately; all
+writes, sync/close, ownership and final cancellation/deadline checks precede one
+synchronous atomic rename. That rename is the terminal commit, followed immediately
+by signal-handler disposal and return without further verdict work. Earlier
+failure leaves a failed/cancelled or nonterminal summary even if failure-summary
+persistence also fails. Both success and failure publication retain the captured
+parent/target ownership and use the same guarded atomic path. A replaced target or
+parent is left untouched; a downgrade is skipped when ownership or the cleanup
+deadline is lost. Read-only no-follow descriptors pin the original parent, target
+and stage inodes throughout awaited work, preventing unlink/recreate inode reuse.
+The stage pin is acquired while its writer remains open. The synchronous commit
+checks all live descriptor/path identities, attempts every checked descriptor close,
+then checks cancellation/deadline and renames without yielding. Once publication
+ownership is released, failure paths cannot downgrade the target or unlink a stage
+using stale identities; pending evidence and a private diagnostic stage may remain.
+Close failures fail qualification, preserving the first error while attempting all
+releases once. This retains the existing external-process path-check/rename race;
+it does not claim hostile-process atomicity. Default full/smoke finalization is unchanged.
+
+The stable `local-migration-baseline` combined job always evaluates both dependency
+results, requires explicit success and
+exactly two current-run/current-attempt receipts, and independently reconstructs
+the clean copied source and verified base bindings. It checks the actual checkout
+SHA (the test-merge SHA on PR runs), separate PR head, source digest, base bundle,
+manifest/partition, commands/modes/evidence coverage, observed toolchain and all
+required integrity/lifecycle/finalization/cleanup outcomes. For a PR, actual HEAD
+must equal the workflow checkout SHA and have exactly two parents, with the second
+equal to the event PR-head SHA. The validated base retains its ancestor requirement;
+it need not equal the first parent of a regenerated test merge. Push checkouts have
+no merge-shape requirement.
+
+Each lane must report Linux/X64 and a bounded Ubuntu image-family/release identity.
+Image family and exact Node 24.21.0, pnpm 10.25.0, Playwright 1.63.0 and Chromium
+identity must match across lanes. Image build releases, Python 3.12 patch versions
+and PostgreSQL 15 patch/distribution versions may differ; all observed values remain
+in the receipts. Each gate still verifies Chromium against the locked Playwright
+metadata. This explicit compatibility policy permits supported runner updates
+without accepting a different platform, image family or browser.
+
+Missing, stale, mismatched, incomplete, failed, cancelled or skipped evidence fails
+closed. Public combiner failures expose only typed, allowlisted categories; unknown,
+parse and filesystem failures use a generic category without echoing receipt values.
+Required upload/download names bind the same run and attempt, and both download
+actions are pinned to the reviewed v4.3.0 commit.
+Required artifact transport failure is a gate failure; optional sanitized
+diagnostics and timings do not confer or revoke qualification.
+
+A partial failed-job rerun can leave only one receipt for the new attempt;
+use GitHub's **Re-run all jobs** when both lanes must produce matching evidence.
+No incompatible attempt is silently combined. Neither sibling failure nor a new
+push automatically cancels the other lane's cleanup. The combined job has a
+20-minute bound (18 minutes of step budgets). Local qualification records its
+own actual source and does not claim to have tested the PR merge checkout.
 
 The Step 03 restart and sealed-package evidence starts the compiled local
 preview twice around a credential rotation, preserves one principal and its
