@@ -4,7 +4,9 @@
   "description": "NestJS GraphQL monolith with Prisma and PostgreSQL",
   "main": "dist/main.js",
   "files": [
-    "dist"
+    "dist",
+    "scripts/demo",
+    "scripts/mcp-bridge"
   ],
   "scripts": {
     "prebuild": "node ../../scripts/check-toolchain.mjs",

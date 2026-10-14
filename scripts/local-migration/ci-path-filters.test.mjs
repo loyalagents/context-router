@@ -308,3 +308,10 @@ test("CI receipt transports and independent provenance use exact matching attemp
     assert.ok(summary.run.includes(artifact.with.name.split("-${{")[0] + " artifact"));
   }
 });
+
+test('historical corpus selects shared product lanes and frontend runs the bounded foundation suite',async()=>{
+ const workflow=parse(await readFile(ciPath,'utf8')),filters=parse(workflow.jobs.changes.steps.find(step=>step.id==='filter').with.filters);
+ for(const file of ['examples/demo-10-2026/001_user_001/home.jsonl','apps/backend/scripts/demo/domain.mjs'])assert.deepEqual(selectedFilters(filters,file),['backend','desktop','frontend']);
+ const step=workflow.jobs['frontend-build'].steps.find(step=>step.name==='Test historical demo foundation without provider sessions');
+ assert.equal(step.run,'node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs');assert.equal(step['working-directory'],'.');assert.equal(step['timeout-minutes'],5);assert.equal(step.env,undefined);
+});

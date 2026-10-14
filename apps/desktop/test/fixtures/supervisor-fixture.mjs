@@ -20,14 +20,14 @@ export async function fixture(t,variant='normal') {
 const cap=JSON.parse(fs.readFileSync(4));fs.closeSync(4);
 const guardian=path.resolve(import.meta.dirname,'../../../MacOS/context-router');
 if(execFileSync(guardian,['verify-inherited'],{env:{},stdio:['ignore','pipe','ignore',3]}).toString().trim()!==cap.bootId)throw new Error();
-const control=await openManagedControl(cap.generation,{onStop:()=>{},onCommand:command=>{if(cap.role==='application'&&${JSON.stringify(variant)}==='status-eof'&&command==='unlock')fs.closeSync(6);}});
+const control=await openManagedControl(cap.generation,{onStop:()=>{},onCommand:command=>{if(cap.role==='application'&&${JSON.stringify(variant)}==='status-eof'&&command==='unlock')fs.closeSync(6);}},{allowOrderlyStopDuringStart:cap.role==='demo-prepare'});
 const pair=path.join(cap.envelope,'stores',cap.storeId);`;
   await writeFile(path.join(runtime,'prepare.mjs'),common+`
-if(cap.operation==='initialize'){for(const name of ['data','identity'])fs.mkdirSync(path.join(pair,name),{mode:0o700});fs.writeFileSync(path.join(pair,'identity/identity.json'),JSON.stringify({databaseTargetId:'A'.repeat(43)}),{mode:0o600});}
-await control.send('prepared',{targetId:'A'.repeat(43),modelEnabled:false,modelPort:Number(process.argv[2])});await control.close();`);
+if(cap.operation==='initialize'){for(const name of ['data','identity'])fs.mkdirSync(path.join(pair,name),{mode:0o700});fs.writeFileSync(path.join(pair,'identity/identity.json'),JSON.stringify({databaseTargetId:'A'.repeat(43),principalId:'P'.repeat(43)}),{mode:0o600});}
+await control.send('prepared',{targetId:cap.mode==='demo'?'D'.repeat(43):'A'.repeat(43),modelEnabled:false,modelPort:Number(process.argv[2])});await control.close();`);
   await writeFile(path.join(runtime,'application.mjs'),common+`
 const unlockFile=path.join(cap.envelope,'exports',cap.generation,'unlock-aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa.token');fs.writeFileSync(unlockFile,'fixture',{mode:0o600});
-await control.send('ready',{origin:'http://127.0.0.1:3210',mcpOrigin:'http://127.0.0.1:3211/mcp',unlockFile,modelEnabled:false});
+await control.send('ready',{origin:'http://127.0.0.1:3210',mcpOrigin:'http://127.0.0.1:'+process.argv[3]+'/mcp',unlockFile,modelEnabled:false});
 ${variant==='busy'?"await control.send('model-status',{state:'busy'});":''}
 ${variant==='lost-app' ? 'process.exit(2);' : variant==='status-eof' ? 'await control.stopped;await control.close();' : variant==='unsolicited-drain' ? "await control.send('drained');await control.stopped;await control.close();" : "await control.stopped;await control.send('drained');await control.close();"+(variant==='failed-exit'?'process.exitCode=2;':'')}`);
   if(variant==='failed-startup') {
@@ -54,6 +54,17 @@ const [models,generation]=process.argv.slice(2);if(path.basename(models)!=='mode
 const lifetime=admitDownloadLifetime(models,generation);lifetime.assertHeld();
 execFileSync(path.resolve(import.meta.dirname,'../../../MacOS/context-router'),['verify-inherited'],{env:{},stdio:['ignore','pipe','ignore',3]});
 const control=await openManagedControl(generation,{onStop(){},onCommand(){}});await control.send('download-progress',{received:1,total:5680522464});await control.stopped;await control.send('download-cancelled');await control.close();`);
+  await writeFile(path.join(resources,'demo-seed.json'),JSON.stringify({version:'historical-2024-2025-v1',sha256:'a'.repeat(64)}));
+  await writeFile(path.join(runtime,'demo-prepare.mjs'),common+`
+for(const name of ['data','identity'])fs.mkdirSync(path.join(pair,name),{mode:0o700});
+fs.writeFileSync(path.join(pair,'identity/identity.json'),JSON.stringify({databaseTargetId:'D'.repeat(43),principalId:'P'.repeat(43)}),{mode:0o600});
+if(['demo-failure','demo-slow'].includes(${JSON.stringify(variant)})){if(${JSON.stringify(variant)}==='demo-slow')await control.stopped;await control.send('demo-complete',{exitCode:1});await control.close();process.exitCode=1;}
+else {fs.writeFileSync(path.join(cap.envelope,'demo',cap.storeId,'generation.json'),JSON.stringify({version:1,status:'complete',installationId:cap.installationId,storeId:cap.storeId,principalId:'P'.repeat(43),targetId:'D'.repeat(43),seedVersion:'historical-2024-2025-v1',seedSha256:'a'.repeat(64),planSha256:'b'.repeat(64),importerId:'I'.repeat(22),clients:{agentA:'A'.repeat(22),agentB:'B'.repeat(22),agentC:'C'.repeat(22)}}),{mode:0o600});await control.send('demo-complete',{exitCode:0});if(${JSON.stringify(variant)}==='demo-late')await control.stopped;await control.close();}
+`);
+  await writeFile(path.join(runtime,'demo.mjs'),`import fs from 'node:fs';import {spawnSync} from 'node:child_process';
+const code=\`const fs=require('node:fs');const fds=[];for(let i=20;i<24;i++){try{fs.fstatSync(i);fds.push(i);}catch{}}console.log(JSON.stringify({fds,env:process.env}));\`;
+const child=spawnSync(process.execPath,['-e',code],{env:{PATH:'',CR_DEMO_TOKEN:'synthetic-demo-only'},stdio:['ignore','pipe','pipe'],encoding:'utf8'});
+const fds=[];for(let i=20;i<24;i++){try{fs.fstatSync(i);fds.push(i);}catch{}}console.log(JSON.stringify({wrapper:process.env,fds,child:JSON.parse(child.stdout)}));`);
   await writeSignedFixture(bundle);
   const children=[],accepted=[];
   t.after(async()=>{
@@ -69,7 +80,7 @@ const control=await openManagedControl(generation,{onStop(){},onCommand(){}});aw
     await rm(top,{recursive:true,force:true});
   });
   function launch(){
-    const child=spawn(executable,['guardian','--root',envelope,'--ui-port','3210','--mcp-port','3211'],{env:{},stdio:['pipe','pipe','pipe']});children.push(child);child.ended=once(child,'close');
+    const child=spawn(executable,['guardian','--root',envelope,'--ui-port','3210','--mcp-port','3211','--demo-mcp-port','3213'],{env:{},stdio:['pipe','pipe','pipe']});children.push(child);child.ended=once(child,'close');
     const events=[];child.events=events;let pending='',diagnostic='';child.stdin.on('error',()=>{});child.stderr.on('data',bytes=>{diagnostic+=bytes;});child.stdout.on('data',bytes=>{pending+=bytes;let end;while((end=pending.indexOf('\n'))>=0){events.push(JSON.parse(pending.slice(0,end)));pending=pending.slice(end+1);}});
     const event=async(type,after=0)=>{const deadline=performance.now()+6000;while(!events.slice(after).some(e=>e.type===type)){assert.ok(child.exitCode===null&&child.signalCode===null,diagnostic);assert.ok(performance.now()<deadline,JSON.stringify(events)+(await readFile(path.join(top,'fixture-error.json'),'utf8').catch(()=>'')));await wait(10);}return events.slice(after).find(e=>e.type===type);};
     const send=(command,generation)=>child.stdin.write(JSON.stringify({version:1,generation,command})+'\n');

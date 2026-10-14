@@ -6,3 +6,12 @@ for(const reason of ['quit','eof','failure','malformed'])test(`control distingui
   await control.stopped;assert.equal(control.quitRequested,reason==='quit');assert.equal(control.signal.aborted,true);
   if(reason==='quit'){control.fail();assert.equal(control.failed,true);}
 });
+test('finite preparation may retain authority for orderly cleanup, but later protocol loss revokes it', async () => {
+  const generation = 'a'.repeat(32), stops = [];
+  const control = new ControlProtocol(generation, { onStop: reason => stops.push(reason), onCommand() {} });
+  const send = command => control.push(Buffer.from(JSON.stringify({ version: 1, generation, command }) + '\n'));
+  send('start'); await control.started; send('quit'); await control.stopped;
+  assert.deepEqual(stops, [{ orderly: true }]);
+  control.fail();
+  assert.deepEqual(stops, [{ orderly: true }, { orderly: false }]);
+});

@@ -12,10 +12,12 @@ import http from 'node:http';
 import { verifyPinnedArtifact } from './artifact-preflight.mjs';
 import { requestMcpSmoke } from '../local-mcp-smoke.mjs';
 import { createPilotLossProxy } from '../../../apps/backend/test/local-mcp/fixtures/pilot-loss-proxy.mjs';
+import { offlineModelRetention } from './offline-model-retention.mjs';
 import { observePilotProcessExit } from './pilot-process-exit.mjs';
 
 const { values } = parseArgs({ strict: true, options: {
   from: { type: 'string' }, to: { type: 'string' }, out: { type: 'string' },
+  'model-file': { type: 'string' },
   'from-manifest': { type: 'string' }, 'to-manifest': { type: 'string' },
   'from-sealed-payload': { type: 'string' }, 'from-sealed-payload-sha256': { type: 'string' },
   'to-sealed-payload': { type: 'string' }, 'to-sealed-payload-sha256': { type: 'string' },
@@ -42,17 +44,18 @@ const manifest = async p => readFile(path.join(p, 'Contents/Resources/package-ma
 const aBytes = await manifest(values.from), bBytes = await manifest(values.to);
 assert.equal(hash(aBytes), values['from-manifest']); assert.equal(hash(bBytes), values['to-manifest']);
 const pinned = side => ({ manifestSha256: values[`${side}-manifest`], sealedPayload: values[`${side}-sealed-payload`], sealedPayloadSha256: values[`${side}-sealed-payload-sha256`] });
-const aManifest = await verifyPinnedArtifact(values.from, pinned('from')), bManifest = await verifyPinnedArtifact(values.to, pinned('to'));
+const aManifest = await verifyPinnedArtifact(values.from, {...pinned('from'),allowPreviousEpoch1:true}), bManifest = await verifyPinnedArtifact(values.to, pinned('to'));
 assert.notEqual(aManifest.source, bManifest.source);
 assert.notEqual(hash(JSON.stringify(aManifest.files)), hash(JSON.stringify(bManifest.files)));
-for (const key of ['securityEpoch', 'node', 'sqliteVersions', 'identityVersion', 'model'])
+assert.ok(aManifest.securityEpoch===bManifest.securityEpoch||(aManifest.securityEpoch===1&&bManifest.securityEpoch===2));
+for (const key of ['node', 'sqliteVersions', 'identityVersion', 'model'])
   assert.equal(JSON.stringify(aManifest[key]), JSON.stringify(bManifest[key]));
 await mkdir(root, { mode: 0o700 }); // Must be absent; retain all outputs on failure.
 const receipt = { version: 1, status: 'running', fromManifest: hash(aBytes), toManifest: hash(bBytes),
   fromSealedPayloadSha256: values['from-sealed-payload-sha256'] ?? null, toSealedPayloadSha256: values['to-sealed-payload-sha256'] ?? null,
   phases: [], disk: [], limitations: [
     'Synthetic isolated state and ephemeral ports; no actual Claude UI or personal configuration.',
-    'No download, Gatekeeper, signing, model assets/inference or new hardware acceptance.',
+    'No download, Gatekeeper, signing, model inference or new hardware acceptance. Optional verified-weight retention is offline only.',
     'Allocated blocks may share APFS clone extents; phase samples are not an exact instantaneous peak.',
   ] };
 const owners = [], clients = [];
@@ -205,6 +208,7 @@ async function inspectLive(owner) {
 try {
   const proofPaths = ['scripts/local-migration/installation/pilot-rehearsal.mjs',
     'scripts/local-migration/installation/pilot-process-exit.mjs',
+    'scripts/local-migration/installation/offline-model-retention.mjs',
     'scripts/local-migration/installation/artifact-preflight.mjs',
     'apps/desktop/src/package-manifest.mjs', 'apps/desktop/src/legacy-package-manifest.mjs',
     'apps/backend/test/local-mcp/fixtures/pilot-loss-proxy.mjs',
@@ -218,7 +222,7 @@ try {
   await measure('before-copy');
   await cp(values.from, app, { recursive: true, verbatimSymlinks: true });
   assert.equal(hash(await manifest(app)), values['from-manifest']);
-  await verifyPinnedArtifact(app, pinned('from')); command(['verify-package']);
+  await verifyPinnedArtifact(app, {...pinned('from'),allowPreviousEpoch1:true}); command(['verify-package']);
   const initial = await launch(); await stop(initial);
   const file = path.join(root, 'writer.token');
   const writer = command(['mcp', 'provision', '--label', 'Synthetic replacement writer', '--out', file])[0].result;
@@ -253,6 +257,13 @@ try {
   assert.equal((await set(callB, 'synthetic-version-b')).isError, false);
   await stop(second); const after = await state(); assert.equal(after.count, before.count + 1);
   await phase('B-authority-and-state-continuity');
+  if(aManifest.securityEpoch===1&&bManifest.securityEpoch===2){
+    const upgraded=await readFile(path.join(envelope,'installation.json')),journal=await readFile(path.join(envelope,'owner.json'));
+    const rejected=spawnSync('/usr/bin/sandbox-exec',['-f',profile,path.join(root,'previous.app/Contents/MacOS/context-router'),'--root',envelope,'mcp','list'],{env:{PATH:'',LC_ALL:'C'},encoding:'utf8',timeout:30000});
+    assert.equal(rejected.error,undefined);assert.equal(rejected.status,1);assert.equal(rejected.stdout,'');
+    assert.deepEqual(await readFile(path.join(envelope,'installation.json')),upgraded);assert.deepEqual(await readFile(path.join(envelope,'owner.json')),journal);assert.deepEqual((await state()).hashes,after.hashes);
+    await phase('epoch1-artifact-refuses-upgraded-envelope-without-state-mutation');
+  }
   const require = createRequire(path.join(repository, 'apps/backend/package.json'));
   const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
   const { StdioClientTransport } = require('@modelcontextprotocol/sdk/client/stdio.js');
@@ -298,6 +309,8 @@ try {
   command(['mcp', 'revoke', '--id', writer.id]);
   for (const [p, digest] of Object.entries(receipt.inputHashes)) assert.equal(hash(await readFile(path.join(repository, p))), digest);
   await phase('bundled-node-bridge-lost-reply-one-commit-explicit-read-and-durable-restart');
+  if(values['model-file']){receipt.offlineModelRetention=await offlineModelRetention({root,previous:path.join(root,'previous.app'),current:app,source:values['model-file'],model:bManifest.model});await phase('verified-real-weight-clone-offline-epoch-retention');}
+  else receipt.limitations.push('No trusted real-weight input supplied; real-weight retention remains unproved.');
   receipt.status = 'passed';
 } catch {
   receipt.status = 'failed'; receipt.failure = 'Rehearsal assertion or owned-process failure; preserve output for diagnosis.';

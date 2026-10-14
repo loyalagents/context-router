@@ -255,7 +255,8 @@ test(
       assert.equal(await page.getByRole('button', { name: 'Unlock local dashboard' }).count(), 0);
       assert.equal(await page.getByRole('heading', { name: 'Dashboard', exact: true }).count(), 0);
       assert.equal(await page.evaluate(() => sessionStorage.length), 0);
-      await page.getByText('CR → Open dashboard', { exact: false }).waitFor();
+      assert.equal(await page.getByText('CR → Open dashboard', { exact: false }).count(),0);
+      await page.getByText('current dashboard address from your running launcher', { exact: false }).waitFor();
       await page.getByText('Close this tab', { exact: false }).waitFor();
     }
   },

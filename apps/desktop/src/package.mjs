@@ -8,6 +8,7 @@ import path from 'node:path';
 import {prepareDisposableWorkspace} from '../../../scripts/local-migration/migration-gate.mjs';
 import {runCommand,captureCallerIntegrity,assertCallerIntegrity} from '../../../scripts/local-migration/gate-runner.mjs';
 import {strictToolEnvironment,copyLocalUiDeployment} from '../../../scripts/local-migration/packaging-smoke.mjs';
+import {copyDemoSeed} from './demo-seed.mjs';
 import {createPackageManifest,inventoryPayload,verifyPackage,sealedByteReceipt} from './package-manifest.mjs';
 const {values}=parseArgs({strict:true,options:{out:{type:'string'},'node-archive':{type:'string'},'model-archive':{type:'string'},'model-license':{type:'string'}}});
 assert.equal(process.platform,'darwin');assert.equal(process.arch,'arm64');assert.equal(process.version,'v24.21.0');
@@ -42,6 +43,8 @@ try{
   await copyLocalUiDeployment(webDeploy,path.join(resources,'app'));
   const next=path.join(workspace.workspace,'apps/web/.next');await cp(next,path.join(resources,'app/.next'),{recursive:true,verbatimSymlinks:true,filter:file=>!['cache','standalone'].includes(path.relative(next,file).split(path.sep)[0])});
   for(const name of ['node_modules','runtime'])await cp(path.join(desktopDeploy,name),path.join(resources,'desktop',name),{recursive:true,verbatimSymlinks:true});
+  receipt.demoSeed=await copyDemoSeed(path.join(workspace.workspace,'examples/demo-10-2026/001_user_001'),path.join(resources,'demo-seed-v1'));
+  await writeFile(path.join(resources,'demo-seed.json'),JSON.stringify(receipt.demoSeed));
   await copyFile(path.join(workspace.workspace,'apps/desktop/certificate-closure.json'),path.join(resources,'desktop/certificate-closure.json'));
   await copyFile(path.join(workspace.workspace,'apps/desktop/build/context-router'),path.join(bundle,'Contents/MacOS/context-router'));
   await command('node-extract',['/usr/bin/tar','-xJf',values['node-archive'],'--strip-components','1','-C',resources,'node-v24.21.0-darwin-arm64/bin/node','node-v24.21.0-darwin-arm64/LICENSE'],env,root);
@@ -51,7 +54,7 @@ try{
   await writeFile(path.join(resources,'licenses/Qwen3.5-9B-LICENSE'),license);
   await writeFile(path.join(bundle,'Contents/Info.plist'),`<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict><key>CFBundleIdentifier</key><string>local.context-router.pilot</string><key>CFBundleName</key><string>Context Router</string><key>CFBundleDisplayName</key><string>Context Router</string><key>CFBundleExecutable</key><string>context-router</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleShortVersionString</key><string>0.1.0</string><key>CFBundleVersion</key><string>1</string><key>LSUIElement</key><true/><key>LSMinimumSystemVersion</key><string>15.1.1</string><key>NSHighResolutionCapable</key><true/></dict></plist>\n`);
   const payloadRequire=createRequire(path.join(resources,'app/local-ui.mjs'));
-  for(const entry of ['next','backend/dist/bootstrap/local-ui.js','backend/dist/infrastructure/managed/managed-prepare.js'])assert.ok((await realpath(payloadRequire.resolve(entry))).startsWith(resources+path.sep));
+  for(const entry of ['next','backend/dist/bootstrap/local-ui.js','backend/dist/infrastructure/managed/managed-prepare.js','backend/scripts/demo/records.mjs','backend/scripts/demo/mcp-import.mjs','backend/scripts/demo/domain.mjs','backend/scripts/demo/installed-clients.mjs','backend/scripts/demo/installed-desktop.mjs','backend/scripts/mcp-bridge/bridge.mjs'])assert.ok((await realpath(payloadRequire.resolve(entry))).startsWith(resources+path.sep));
   const node=path.join(resources,'bin/node');assert.equal(hash(await readFile(node)),'e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b');
   const files=await inventoryPayload(bundle,{forSigning:true}),manifest=createPackageManifest({source:receipt.source.copiedInputsSha256,files});
   await writeFile(path.join(resources,'package-manifest.json'),JSON.stringify(manifest)+'\n');

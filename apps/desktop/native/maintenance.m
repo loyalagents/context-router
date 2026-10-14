@@ -61,11 +61,13 @@ static int runJob(NSString *bundle,CREnvelope *owner,NSString *role,NSString *op
 }
 int CRRunMaintenance(NSString *bundle,NSArray<NSString *> *input){
   umask(0077);signal(SIGPIPE,SIG_IGN);signal(SIGTERM,stopSignal);signal(SIGINT,stopSignal);signal(SIGHUP,stopSignal);signal(SIGCHLD,SIG_DFL);
-  NSMutableArray *args=[input mutableCopy];NSString *root=nil,*pendingID=nil;
+  NSMutableArray *args=[input mutableCopy];NSString *root=nil,*pendingID=nil,*mode=@"personal";
   if(args.count>=2&&[args[0] isEqual:@"--root"]){root=args[1];[args removeObjectsInRange:NSMakeRange(0,2)];}
+  if(args.count>=2&&[args[0] isEqual:@"--mode"]){mode=args[1];if(![@[@"personal",@"demo"] containsObject:mode])CRFail();[args removeObjectsInRange:NSMakeRange(0,2)];}
   if(args.count>=2&&[args[0] isEqual:@"--pending-store"]){pendingID=args[1];if(!CRPattern(pendingID,@"[a-f0-9]{32}"))CRFail();[args removeObjectsInRange:NSMakeRange(0,2)];}
   if(!args.count||args.count>128)CRFail();for(NSString *arg in args)if(arg.length>4096||[arg rangeOfCharacterFromSet:[NSCharacterSet controlCharacterSet]].location!=NSNotFound)CRFail();
   NSString *command=args[0];BOOL activate=[command isEqual:@"activate-restore"],abandon=[command isEqual:@"abandon-restore"],restore=[command isEqual:@"restore"],backup=[command isEqual:@"backup"],prepare=[@[@"resume-setup",@"initialize-recovered"] containsObject:command];
+  if([mode isEqual:@"demo"]&&(pendingID||![@[@"mcp",@"inspect",@"verify-demo"] containsObject:command]))CRFail();
   if([command isEqual:@"cleanup-downloads"]){
     if(args.count!=1||pendingID)CRFail();CREnvelope *owner=[[CREnvelope alloc] initWithRoot:root?:CRDefaultRoot(NO) allowFresh:NO];
     NSDictionary *plan=CRPlanModelCleanup(owner);[owner beginModelCleanup];CRApplyModelCleanup(owner,plan);[owner finishOutcome:@"ok"];
@@ -82,20 +84,22 @@ int CRRunMaintenance(NSString *bundle,NSArray<NSString *> *input){
     if(pendingID&&![operation isEqual:@"admin"])CRFail();
   }else if([command isEqual:@"mcp"]){if(args.count<2||![@[@"list",@"provision",@"rotate",@"revoke",@"permissions",@"grant",@"upgrade"] containsObject:args[1]])CRFail();}
   else if([command isEqual:@"inspect"]){if(args.count!=2||!CRPattern(args[1],@"[A-Za-z0-9_-]{22}"))CRFail();}
+  else if([command isEqual:@"verify-demo"]){if(![mode isEqual:@"demo"]||args.count!=2||!CRPattern(args[1],@"[a-f0-9]{32}"))CRFail();}
   else CRFail();
   CREnvelope *owner=[[CREnvelope alloc] initWithRoot:root?:CRDefaultRoot(NO) allowFresh:NO];id pending=owner.installation[@"pendingRestore"];
   if(pendingID){if(pending==[NSNull null]||![pending[@"storeId"] isEqual:pendingID])CRFail();}
   else if(pending!=[NSNull null])CRFail();
-  NSString *store=pendingID?:owner.installation[@"selectedStore"];
+  NSString *store=pendingID?:owner.installation[[mode isEqual:@"demo"]?@"demoStore":@"personalStore"];
+  if(!CRPattern(store,@"[a-f0-9]{32}")||([command isEqual:@"verify-demo"]&&![args[1] isEqual:store]))CRFail();
   if(activate||abandon){
     if(activate){if(![pending[@"status"] isEqual:@"complete"])CRFail();int verified=runJob(bundle,owner,@"maintenance",@"admin",store,@[@"verify-pending"]);if(verified)return verified;}
     [owner beginMetadataOperation:command pendingStore:store expectedSelection:pending[@"expectedSelection"]];
-    NSMutableDictionary *value=[owner.installation mutableCopy];if(activate){value[@"selectedStore"]=store;value[@"setup"]=@"ready";}value[@"pendingRestore"]=[NSNull null];
+    NSMutableDictionary *value=[owner.installation mutableCopy];if(activate){value[@"selectedStore"]=store;value[@"personalStore"]=store;value[@"mode"]=@"personal";value[@"setup"]=@"ready";}value[@"pendingRestore"]=[NSNull null];
     [owner publishInstallation:value];[owner finishOutcome:@"ok"];return 0;
   }
   if(restore){
     NSString *source=args[2];(void)CRPrivatePin(source,YES);NSData *marker=CRReadData([source stringByAppendingPathComponent:@"complete.json"],1024,YES);
-    store=CRRandom(16);NSMutableDictionary *value=[owner.installation mutableCopy];value[@"pendingRestore"]=@{@"storeId":store,@"sourceDigest":CRSHA256(marker),@"expectedSelection":value[@"selectedStore"],@"status":@"reserved"};[owner publishInstallation:value];
+    store=CRRandom(16);NSMutableDictionary *value=[owner.installation mutableCopy];value[@"pendingRestore"]=@{@"storeId":store,@"sourceDigest":CRSHA256(marker),@"expectedSelection":value[@"personalStore"],@"status":@"reserved"};[owner publishInstallation:value];
   }
   int result=runJob(bundle,owner,prepare?@"prepare":@"maintenance",operation,store,prepare?@[]:args);
   if(restore){

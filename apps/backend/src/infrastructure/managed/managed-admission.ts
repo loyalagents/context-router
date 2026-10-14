@@ -7,16 +7,19 @@ import { isMainThread } from "node:worker_threads";
 import { StorageUnavailableError } from "../../domains/shared/storage/storage-errors";
 import { assertRoot, privateRoot, regular, samePin, pin, type RootPin, type FilePin } from "../filesystem/private-files";
 
+import { validateManagedInstallation, type ManagedMode } from "./managed-installation";
+
 type Inode = Readonly<{ dev: number; ino: number }>;
 export interface ManagedCapability {
   version: 1;
-  epoch: 1;
+  epoch: 2;
+  mode: ManagedMode;
   envelope: string;
   installationId: string;
   storeId: string;
   generation: string;
   bootId: string;
-  role: "prepare" | "application" | "maintenance";
+  role: "prepare" | "application" | "maintenance" | "demo-prepare";
   operation: "initialize" | "verify" | "resume-setup" | "serve" | "admin" | "backup" | "restore" | "recover-bootstrap" | "recover-identity" | "initialize-recovered";
   nonce: string;
   envelopePin: Inode;
@@ -55,8 +58,8 @@ const pairPaths = (cap: ManagedCapability) => {
 /** Parsing is deliberately separate from authority: no parsed value grants access. */
 export function validateManagedCapability(value: unknown): ManagedCapability {
   const v = value as ManagedCapability;
-  if (!exact(v, ["version", "epoch", "envelope", "installationId", "storeId", "generation", "bootId", "role", "operation", "nonce", "envelopePin", "lockPin", "dataPin", "identityPin", "targetId"]) ||
-    v.version !== 1 || v.epoch !== 1 || typeof v.envelope !== "string" || v.envelope.length > 4096 ||
+  if (!exact(v, ["version", "epoch", "mode", "envelope", "installationId", "storeId", "generation", "bootId", "role", "operation", "nonce", "envelopePin", "lockPin", "dataPin", "identityPin", "targetId"]) ||
+    v.version !== 1 || v.epoch !== 2 || !["personal", "demo"].includes(v.mode) || typeof v.envelope !== "string" || v.envelope.length > 4096 ||
     !isAbsolute(v.envelope) || resolve(v.envelope) !== v.envelope || basename(v.envelope) !== "managed-v1" || v.envelope.includes("\0") ||
     !id(v.installationId) || !id(v.storeId) || !id(v.generation) ||
     typeof v.bootId !== "string" || !/^[A-Za-z0-9-]{1,64}$/.test(v.bootId) ||
@@ -65,11 +68,14 @@ export function validateManagedCapability(value: unknown): ManagedCapability {
     (v.identityPin !== null && !inode(v.identityPin)) ||
     (v.targetId !== null && (typeof v.targetId !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(v.targetId)))) fail();
   const operations = {
+    "demo-prepare": ["initialize"],
     prepare: ["initialize", "initialize-recovered", "verify", "resume-setup"],
     application: ["serve"],
     maintenance: ["admin", "backup", "restore", "recover-bootstrap", "recover-identity", "resume-setup"],
   };
   if (!Object.prototype.hasOwnProperty.call(operations, v.role) || !operations[v.role].includes(v.operation)) fail();
+  if ((v.role === "demo-prepare" && v.mode !== "demo") || (v.mode === "demo" && v.role === "prepare" && v.operation !== "verify") ||
+      (v.mode === "demo" && v.role === "maintenance" && v.operation !== "admin")) fail();
   if ((v.role === "application" || ["verify", "admin", "backup"].includes(v.operation)) &&
     (!v.dataPin || !v.identityPin || v.targetId === null)) fail();
   if (v.operation === "recover-identity" && (!v.dataPin || !v.identityPin)) fail();
@@ -109,27 +115,25 @@ function readPrivateJson(file: string): { value: any; filePin: FilePin } {
 function checkMetadata(a: Admission): void {
   const c = a.capability;
   const installation = readPrivateJson(join(c.envelope, "installation.json"));
-  const i = installation.value;
-  if (!samePin(installation.filePin as fs.Stats, a.installationPin) ||
-    !exact(i, ["version", "installationId", "selectedStore", "minimumEpoch", "setup", "pendingRestore"]) ||
-    i.version !== 1 || i.installationId !== c.installationId || !id(i.selectedStore) ||
-    !Number.isSafeInteger(i.minimumEpoch) || i.minimumEpoch < 1 || i.minimumEpoch > c.epoch ||
-    !["initializing", "ready", "failed"].includes(i.setup)) fail();
+  const i = validateManagedInstallation(installation.value);
+  if (!samePin(installation.filePin as fs.Stats, a.installationPin) || i.installationId !== c.installationId || i.minimumEpoch > c.epoch) fail();
   if (i.pendingRestore !== null) {
-    const p = i.pendingRestore;
-    if (!exact(p, ["storeId", "sourceDigest", "expectedSelection", "status"]) || !id(p.storeId) ||
-      typeof p.sourceDigest !== "string" || !/^[a-f0-9]{64}$/.test(p.sourceDigest) || p.expectedSelection !== i.selectedStore ||
-      !["reserved", "complete", "failed"].includes(p.status) || c.role !== "maintenance" ||
-      c.storeId !== p.storeId || !["restore", "admin"].includes(c.operation)) fail();
-  } else if (i.selectedStore !== c.storeId || c.operation === "restore") fail();
+    if (c.role !== "maintenance" || c.mode !== "personal" || c.storeId !== i.pendingRestore.storeId || !["restore", "admin"].includes(c.operation)) fail();
+  } else if (i.pendingDemo !== null) {
+    if (c.role !== "demo-prepare" || c.mode !== "demo" || c.operation !== "initialize" ||
+        i.pendingDemo.status !== "reserved" || c.storeId !== i.pendingDemo.storeId) fail();
+  } else {
+    if (c.role === "demo-prepare" || c.operation === "restore" || c.storeId !== (c.mode === "personal" ? i.personalStore : i.demoStore)) fail();
+    if (c.role !== "maintenance" && (c.mode !== i.mode || c.storeId !== i.selectedStore)) fail();
+  }
   if ((c.role === "application" || c.operation === "verify") && i.setup !== "ready") fail();
-  if (c.operation === "initialize" && i.setup !== "initializing") fail();
+  if (c.role === "prepare" && c.operation === "initialize" && i.setup !== "initializing") fail();
   if (c.operation === "initialize-recovered" && i.setup === "ready") fail();
   const journal = readPrivateJson(join(c.envelope, "owner.json"));
   const j = journal.value;
   if (!samePin(journal.filePin as fs.Stats, a.journalPin) ||
-    !exact(j, ["version", "lifecycle", "outcome", "generation", "bootId", "installationId", "storeId", "role", "operation", "nonceHash"]) ||
-    j.version !== 1 || j.lifecycle !== "active" || j.outcome !== "pending" || j.generation !== c.generation ||
+    !exact(j, ["version", "mode", "lifecycle", "outcome", "generation", "bootId", "installationId", "storeId", "role", "operation", "nonceHash"]) ||
+    j.version !== 2 || j.mode !== c.mode || j.lifecycle !== "active" || j.outcome !== "pending" || j.generation !== c.generation ||
     j.bootId !== c.bootId || j.installationId !== c.installationId || j.storeId !== c.storeId ||
     j.role !== c.role || j.operation !== c.operation || j.nonceHash !== createHash("sha256").update(c.nonce).digest("hex")) fail();
 }
@@ -270,7 +274,7 @@ export function managedApplication(): boolean {
 export function assertManagedSchemaUpgrade(): void {
   if (!admitted) { if (attempted) fail(); return; }
   const c = managedCapability();
-  if (!(c.role === "prepare" && ["initialize", "initialize-recovered", "resume-setup"].includes(c.operation)) &&
+  if (!((c.role === "prepare" && ["initialize", "initialize-recovered", "resume-setup"].includes(c.operation) || c.role === "demo-prepare" && c.operation === "initialize")) &&
       !(c.role === "maintenance" && c.operation === "admin")) fail();
 }
 export function revokeManagedAdmission(): void {
@@ -296,7 +300,7 @@ export function managedModelAuthority(configuration: { root: string; databaseRoo
   }
   assertManagedDatabasePaths(configuration.databaseRoot, configuration.identityRoot);
   const c = admitted.capability;
-  if (c.role !== "application" || configuration.root !== join(c.envelope, "sessions", c.generation)) fail();
+  if (c.role !== "application" || c.mode !== "personal" || configuration.root !== join(c.envelope, "sessions", c.generation)) fail();
   return { signal: modelInvalidation.signal, assertHeld: () => checkCurrent(admitted) };
 }
 export function managedLifetimeDescriptor(): number | undefined {
@@ -331,7 +335,7 @@ export function assertManagedDatabasePaths(databaseRoot: string, identityRoot: s
   if (!admitted) return;
   const c = admitted.capability, pair = pairPaths(c);
   if ((databaseRoot !== pair.data && !(operation === "open" && databaseRoot === bootstrapScratch)) || identityRoot !== pair.identity ||
-    (operation === "bootstrap" && (c.role !== "prepare" || c.operation !== "initialize")) ||
+    (operation === "bootstrap" && (!["prepare", "demo-prepare"].includes(c.role) || c.operation !== "initialize")) ||
     (operation === "recover-bootstrap" && (c.role !== "maintenance" || c.operation !== "recover-bootstrap"))) {
     revokeManagedAdmission(); fail();
   }
@@ -341,14 +345,14 @@ export function assertManagedIdentityMutation(): void {
   if (!admitted) { if (attempted) fail(); return; }
   checkCurrent(admitted);
   const c = admitted.capability;
-  if (!((c.role === "prepare" && ["initialize", "initialize-recovered"].includes(c.operation)) ||
+  if (!(((["prepare", "demo-prepare"].includes(c.role) && ["initialize", "initialize-recovered"].includes(c.operation))) ||
     (c.role === "maintenance" && ["admin", "recover-identity"].includes(c.operation)))) fail();
 }
 export function assertManagedIdentityOperation(operation: "initialize" | "rotate" | "recover"): void {
   assertManagedIdentityMutation();
   if (!admitted) return;
   const c = admitted.capability;
-  const allowed = operation === "initialize" ? c.role === "prepare" && ["initialize", "initialize-recovered"].includes(c.operation) :
+  const allowed = operation === "initialize" ? (["prepare", "demo-prepare"].includes(c.role) && ["initialize", "initialize-recovered"].includes(c.operation)) :
     c.role === "maintenance" && (operation === "recover" ? ["admin", "recover-identity"].includes(c.operation) : c.operation === "admin");
   if (!allowed) fail();
 }

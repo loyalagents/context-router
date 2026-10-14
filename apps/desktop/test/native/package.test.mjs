@@ -8,8 +8,8 @@ import os from 'node:os';
 import { inventoryPayload, verifyPackage, sealedByteReceipt, validatePackageManifest } from '../../src/package-manifest.mjs';
 import { writeSignedFixture, sealFixture, fixtureInfo } from '../fixtures/signed-package.mjs';
 assert.equal(process.platform, 'darwin'); assert.equal(process.arch, 'arm64');
-const required = ['Contents/Resources/bin/node', 'Contents/Resources/model/llama-server', 'Contents/Resources/app/local-ui.mjs',
-  ...['prepare', 'prepare-store', 'application', 'maintenance', 'download'].map(name => `Contents/Resources/desktop/runtime/${name}.mjs`)];
+const required = ['Contents/Resources/bin/node', 'Contents/Resources/model/llama-server', 'Contents/Resources/app/local-ui.mjs','Contents/Resources/demo-seed.json',
+  ...['prepare', 'prepare-store', 'application', 'maintenance', 'download','demo','demo-prepare'].map(name => `Contents/Resources/desktop/runtime/${name}.mjs`)];
 async function fixture(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'desktop-native-package-'));
   t.after(() => rm(root, { recursive: true, force: true }));
@@ -41,7 +41,7 @@ test('native preflight verifies its complete own bundle before invoking any runt
     assert.equal(entry.sha256, createHash('sha256').update(bytes).digest('hex'));
   }
   assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(JSON.parse(result.stdout), { version: 1, distribution: 'local-candidate', source: 'a'.repeat(64), securityEpoch: 1 });
+  assert.deepEqual(JSON.parse(result.stdout), { version: 1, distribution: 'local-candidate', source: 'a'.repeat(64), securityEpoch: 2 });
 });
 for (const variant of ['altered', 'missing', 'extra', 'mode', 'hardlink', 'external-link', 'floor', 'platform', 'metadata', 'missing-required','model-pin', 'v1', 'missing-seal-marker', 'wrong-signature-role', 'wrong-bundle-id']) {
   test(`native package preflight rejects ${variant}`, async t => {
@@ -193,4 +193,14 @@ test('legacy live proposal refuses v2 before creating state or reading model ass
     { env: { PATH: '', LC_ALL: 'C', TMPDIR: temp }, encoding: 'utf8', timeout: 3000 });
   assert.equal(result.status, 1); assert.match(result.stderr, /Legacy live proposal requires manifest v1/);
   assert.deepEqual(await (await import('node:fs/promises')).readdir(temp), []);
+});
+test('sealed previous epoch1 artifact requires explicit pinned compatibility verification',async t=>{
+  const f=await fixture(t),{manifest}=await writeSignedFixture(f.root,m=>{m.securityEpoch=1;});
+  const {verifyPinnedArtifact}=await import('../../../../scripts/local-migration/installation/artifact-preflight.mjs');
+  const receipt=path.join(await realpath(path.dirname(f.root)),path.basename(f.root)+'-sealed.json');t.after(()=>rm(receipt,{force:true}));
+  const bytes=Buffer.from(JSON.stringify({version:1,files:await sealedByteReceipt(f.root)}));await writeFile(receipt,bytes,{mode:0o600});
+  const pin={manifestSha256:createHash('sha256').update(await readFile(f.manifestFile)).digest('hex'),sealedPayload:receipt,sealedPayloadSha256:createHash('sha256').update(bytes).digest('hex')};
+  await assert.rejects(verifyPinnedArtifact(f.root,pin));
+  assert.deepEqual(await verifyPinnedArtifact(f.root,{...pin,allowPreviousEpoch1:true}),manifest);
+  await assert.rejects(verifyPinnedArtifact(f.root,{...pin,allowPreviousEpoch1:true,sealedPayloadSha256:'f'.repeat(64)}));
 });

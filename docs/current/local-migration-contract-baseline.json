@@ -3026,6 +3026,14 @@
             "chromium.connectOverCDP",
             "fetch(ready.origin"
           ]
+        },
+        {
+          "path": "scripts/local-migration/installation/demo-smoke.mjs",
+          "fingerprints": [
+            "spawnSync('/usr/bin/sandbox-exec'",
+            "spawn('/usr/bin/sandbox-exec'",
+            "chromium.launch("
+          ]
         }
       ],
       "destination": "Opt-in actual installed bundle qualification with private synthetic state, bundled-only execution and source/toolchain read denial; application outbound restricted by OS policy to loopback. Separately owned Chromium uses fixed test browser routing.",
@@ -3045,6 +3053,14 @@
             "spawn('/usr/bin/sandbox-exec'",
             "spawnSync('/usr/bin/sandbox-exec'",
             "http.request({ hostname: '127.0.0.1'"
+          ]
+        },
+        {
+          "path": "scripts/local-migration/installation/offline-model-retention.mjs",
+          "fingerprints": [
+            "spawn(old,",
+            "spawnSync('/bin/cp'",
+            "spawnSync(executable,"
           ]
         }
       ],
@@ -3116,6 +3132,37 @@
       "disposition": "RETAIN",
       "ownerSteps": [
         "07"
+      ]
+    },
+    {
+      "id": "managed-demo-helpers",
+      "sources": [
+        {
+          "path": "apps/desktop/native/guardian.m",
+          "fingerprints": [
+            "execve(args[0],args,environment)"
+          ]
+        },
+        {
+          "path": "apps/desktop/native/demo-ready.m",
+          "fingerprints": [
+            "socket(AF_INET,SOCK_STREAM,0)",
+            "accept(_fd,NULL,NULL)"
+          ]
+        },
+        {
+          "path": "apps/desktop/runtime/demo.mjs",
+          "fingerprints": [
+            "spawnSync(path.resolve(resources,'../MacOS/context-router')"
+          ]
+        }
+      ],
+      "destination": "Explicit demo helper invocation: verified bundled Node and native offline maintenance, and a native-owned literal-loopback readiness listener. The listener has no commands or DB authority.",
+      "payload": "Nonsecret store/runtime-generation/endpoint receipts. The native wrapper excludes inherited managed descriptors and debug/provider environment; explicit A/B clients use a dedicated profile and only their MCP token. Provider-backed sessions require a separate user invocation.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
       ]
     }
   ],
@@ -3774,14 +3821,6 @@
       ]
     },
     {
-      "path": "apps/web/app/dashboard/preferences/PreferencesClient.tsx",
-      "kind": "query",
-      "operation": "LocalSavedPreferences",
-      "rootFields": [
-        "activePreferences"
-      ]
-    },
-    {
       "path": "apps/web/app/dashboard/preferences/components/AuditHistoryTab.tsx",
       "kind": "query",
       "operation": "PreferenceAuditHistoryForTab",
@@ -3883,6 +3922,14 @@
       "operation": "SuggestedPreferences",
       "rootFields": [
         "suggestedPreferences"
+      ]
+    },
+    {
+      "path": "apps/web/app/dashboard/preferences/PreferencesClient.tsx",
+      "kind": "query",
+      "operation": "LocalSavedPreferences",
+      "rootFields": [
+        "activePreferences"
       ]
     },
     {
@@ -5131,6 +5178,18 @@
       }
     },
     {
+      "path": "apps/desktop/native/demo-ready.m",
+      "sinks": {
+        "native-connect": 1
+      }
+    },
+    {
+      "path": "apps/desktop/native/guardian.m",
+      "sinks": {
+        "native-exec": 1
+      }
+    },
+    {
       "path": "apps/desktop/native/menu.m",
       "sinks": {
         "native-task-launch": 1,
@@ -5148,6 +5207,12 @@
       "path": "apps/desktop/native/supervisor.m",
       "sinks": {
         "native-connect": 2
+      }
+    },
+    {
+      "path": "apps/desktop/runtime/demo.mjs",
+      "sinks": {
+        "spawn": 1
       }
     },
     {
@@ -5452,6 +5517,12 @@
       }
     },
     {
+      "path": "scripts/local-migration/installation/demo-smoke.mjs",
+      "sinks": {
+        "spawn": 4
+      }
+    },
+    {
       "path": "scripts/local-migration/installation/guardian-probe.c",
       "sinks": {
         "native-exec": 1,
@@ -5486,9 +5557,9 @@
       }
     },
     {
-      "path": "scripts/local-migration/installation/process-fixture.mjs",
+      "path": "scripts/local-migration/installation/offline-model-retention.mjs",
       "sinks": {
-        "spawn": 1
+        "spawn": 3
       }
     },
     {
@@ -5496,7 +5567,13 @@
       "sinks": {
         "http-client": 1,
         "node-http-import": 1,
-        "spawn": 3
+        "spawn": 4
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/process-fixture.mjs",
+      "sinks": {
+        "spawn": 1
       }
     },
     {

@@ -59,12 +59,108 @@ to it; **Quit Context Router** drains work and stops owned children. No login it
 automatic update, background restart or external-client configuration is installed.
 Quit the menu application before offline CLI administration.
 
-The dashboard uses an available loopback port. The menu's MCP endpoint is fixed at
+The dashboard uses an available loopback port. Personal MCP defaults to
 `http://127.0.0.1:8787/mcp`, matching the existing manual setup. An already occupied
 requested port is refused before managed state is opened. There is no fallback
 listener or interference with the occupying process. This is a preflight, not a
 reservation: a later port race or partial-startup failure can still leave uncertain
 state that blocks launch. Freeing a port does not clear an uncertain generation.
+
+## Historical Demo Mode
+
+This candidate implements a separate persistent demo inside the same managed
+envelope. **CR → Enter demo mode…** prepares the frozen historical 2024–2025
+sample on first entry, then reopens that store on later entries. **CR Demo** and
+the authenticated dashboard banner identify demo mode. AI is disabled; personal
+model files remain retained. **Return to personal mode…** restores the personal
+slot. Quit/relaunch remembers the last successfully selected mode. Each switch
+closes existing browser/MCP sessions; use the newly opened dashboard and fresh
+client conversations.
+
+**Reset sample data…** confirms creation of a new store/principal with 189
+active memories, original definitions/import history and fresh A/B/C credentials.
+Later changes, custom clients and grants do not carry forward. Old stores/exports
+and isolated provider login profiles remain retained. Reset is not secure erasure.
+Use Clear memory or Clear history only for their separately described behavior.
+Controlled preparation failure offers explicit return or fresh retry; uncertain
+ownership remains refused and retained. Do not clear journals or profile guards.
+
+**Demo setup…** shows selectable commands with the current store, native runtime
+generation and actual MCP endpoint. Select one command line and choose **Copy selected command**, then paste it into Terminal. Run each intended action separately. They use
+the bundled runtime and need no checkout, pnpm, handwritten MCP config or copied
+tokens. `status` validates native readiness and immutable receipts only; it does
+not assert unchanged current memories/grants. Inspect actual state in the app.
+After Quit, the same bound command with `verify` runs native offline baseline
+verification; edits may correctly cause a baseline mismatch. Offline authority
+commands use `--root ROOT --mode demo mcp ...`; other maintenance defaults to the
+personal slot, even when demo was selected. Demo recovery/backup/restore is not
+exposed. Existing personal restore rules and pending-operation exclusion remain.
+
+The primary story uses Codex 0.160.0 as Agent A and Claude Code 2.1.299 subscription
+as Agent B. Install these external CLIs separately. The panel explicitly selects
+B's client/auth; A defaults to Codex. Run `login A` or `login B --client claude
+--auth subscription` explicitly to establish fresh app-demo provider profiles,
+then the corresponding `launch` command for each fresh conversation. Never copy
+old demo/personal credentials. Optional `launch B --client codex` and Claude A/B
+`--auth subscription` or `--auth api-key` use the same guards. API-key launch
+requires the explicit `CR_DEMO_ANTHROPIC_API_KEY` environment variable; inherited
+ordinary provider variables are not adopted. Provider sessions may send retrieved
+sample context off-device. Human provider acceptance of this candidate is pending.
+
+Discovery accepts the exact qualified native arm64 foreground CLI, rejecting
+arbitrary shell/Node/npm wrappers. Use `--executable /absolute/native/client`
+when PATH resolves to an unsupported wrapper. The helper qualifies pinned
+version/isolation settings with empty temporary profiles before using a stable
+per-role login. Claude uses its dedicated config and workspace; macOS OS-account
+HOME is retained only for Keychain discovery. Background/agent-view tasks are
+disabled and behavior-probed. Only this role's MCP credential enters the client.
+The guard covers the qualified native foreground invocation. Normal owned-client
+exit is its supported completion boundary; observed ownership loss or abnormal
+termination retains refusal. It does not promise arbitrary descendant extinction.
+Concurrent raw launches, detached/daemon clients and manually changed executables
+are unsupported. A normal nonzero exit can release its exact guard; signal death,
+helper loss or replaced records cannot. The app does not stop external assistants
+when switching/resetting; old commands remain pinned and become unusable.
+
+The narrow Darwin Codex Homebrew exception accepts only canonical
+`/opt/homebrew/Caskroom/codex/0.160.0/bin/codex` through current-user-owned admin
+(group 80) mode-0775 `/opt/homebrew/Caskroom`; all other ancestors/files remain
+strict. This trusts local privileged admins and is not publisher authentication
+or protection against an administrator changing a binary at execution time.
+Generic source/config/proposal paths never use that exception.
+
+For Agent C, `desktop prepare` validates the active generation and writes a
+private immutable bundled-Node/bridge snapshot and review proposal. It prints the
+config path, entry, generation/endpoint and exact `applyCommand`; no config is
+changed. Review it, close Desktop and config editors, then explicitly run that
+command including `--desktop-closed`. The helper compares exact original bytes,
+preserves unrelated settings, creates a backup and verifies atomic replacement.
+Changed config, unknown collisions, stale generations or uncertain application
+retain evidence and refuse replay. Start Desktop normally and use a fresh
+conversation. After every native runtime restart/reset, prepare a new proposal;
+old snapshots never follow a mutable current selector. The envelope and config
+must be durable private locations outside temporary directories. Packaged app
+bytes may be temporary because snapshot copies are durable. No actual user
+Desktop config has been changed by automated implementation checks.
+
+For an isolated human trial, choose a **fresh durable** root such as a named
+private directory under `~/Library/Application Support/Context Router Trials/`,
+ending in `managed-v1`, and invoke the exact qualified artifact:
+
+```sh
+"$router_cli" menu --root /absolute/private/durable/trial/managed-v1 \
+  --ui-port 0 --mcp-port 0 --demo-mcp-port 0
+```
+
+All three zeros request independent available ports. Fixed nonzero choices must
+be distinct and free; defaults remain UI ephemeral, personal MCP 8787, demo 8790.
+The receipt/panel records actual endpoints, so never reuse old copied commands.
+Do not point a trial at personal state or retained source-demo homes. New binaries
+upgrade quiescent v1 installation metadata to v2/epoch2; old apps then refuse that
+envelope. This is a metadata transition, not a database conversion or permission
+to discard source documents, old stores or compatible weights. The unbundled
+previous-epoch verifier is restricted to explicitly pinned replacement rehearsals;
+production verification does not accept old package epochs.
 
 ## Model And Restart
 
@@ -139,7 +235,7 @@ The token export must be absent and have a private parent directory. Use the
 existing [manual MCP client setup](MCP_LOCAL_SETUP.md) with port 8787 and that
 client's credential. For the source-only Claude Desktop trial, use the
 [private-file bridge recipe](MCP_LOCAL_SETUP.md#claude-desktop-assisted-source-bridge-trial);
-the current installed bundle does not include that bridge. Browser unlock, human identity, MCP and inference credentials
+the installed bundle includes a generation-bound bridge for the demo workflow below; personal Desktop setup retains the source recipe. Browser unlock, human identity, MCP and inference credentials
 are distinct. A client credential is not a browser unlock code. Provision/rotate
 exports are sensitive; routine menu diagnostics do not contain them. Permission
 and grant syntax is unchanged from the existing CLI. The installed wrapper also
@@ -176,8 +272,8 @@ abandoned-owner recovery is not qualified; no automatic repair is provided.
 
 If ownership is uncertain, stop and preserve the app, envelope and diagnostics.
 Reinstalling does not clear it. Do not remove journals, claims, exports or compatible
-model assets to make launch succeed. There is no general reset command or designated
-reset release in this pilot.
+model assets to make launch succeed. There is no personal reset command or designated
+reset release in this pilot. Demo reset is the bounded operation described below.
 
 SIGINT (Ctrl-C), SIGTERM and terminal SIGHUP request orderly cancellation of a
 running administration or setup child. A matching completion after native-owner
@@ -256,7 +352,7 @@ rollback; never launch an older source binary against managed roots.
 
 Default uninstall means Quit, then remove only `Context Router.app`. Keep the
 private envelope: reinstall reuses its selected pair, identity, client credentials,
-models and backups. There is no destructive reset/removal command in this pilot.
+models and backups. There is no destructive personal reset/removal command in this pilot.
 
 ## Build And Evidence
 

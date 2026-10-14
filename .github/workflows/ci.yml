@@ -44,6 +44,7 @@ jobs:
               - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/backend/**'
               - 'apps/desktop/**'
+              - 'examples/demo-10-2026/**'
               - 'apps/web/local-ui.mjs'
             desktop:
               - '.github/workflows/ci.yml'
@@ -57,6 +58,7 @@ jobs:
               - 'scripts/local-migration/**'
               - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/desktop/**'
+              - 'examples/demo-10-2026/**'
               - 'apps/backend/**'
               - 'apps/web/**'
             local_orchestrator:
@@ -108,6 +110,7 @@ jobs:
               - 'apps/web/**'
               - 'apps/backend/**'
               - 'apps/desktop/**'
+              - 'examples/demo-10-2026/**'
 
   documentation-checks:
     runs-on: ubuntu-latest
@@ -336,6 +339,11 @@ jobs:
         run: pnpm test:local-ui
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+
+      - name: Test historical demo foundation without provider sessions
+        timeout-minutes: 5
+        run: node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs
+        working-directory: .
 
   desktop-native:
     needs: changes

@@ -20,3 +20,13 @@ test('native restore preserves selection until explicit verified activation; pen
   assert.equal(cli(f,['activate-restore',pending.pendingRestore.storeId,'--acknowledge-restored-authority']).status,0);
   const active=JSON.parse(await readFile(file));assert.equal(active.selectedStore,pending.pendingRestore.storeId);assert.equal(active.pendingRestore,null);f.acceptQuiescent(JSON.parse(await readFile(path.join(f.envelope,'owner.json'))));
 });
+test('offline admin defaults to personal even after demo selection and demo recovery is forbidden',async t=>{
+  const f=await fixture(t),r=f.launch();let ready=await r.event('ready');
+  r.send('enter-demo',ready.generation);ready=await r.event('ready',r.events.length);
+  r.send('quit',ready.generation);await ended(r.child);
+  const state=JSON.parse(await readFile(path.join(f.envelope,'installation.json')));
+  const personal=cli(f,['mcp','list']);assert.equal(personal.status,0,personal.stderr);assert.equal(JSON.parse(personal.stdout).store,state.personalStore);
+  const demo=cli(f,['--mode','demo','mcp','list']);assert.equal(demo.status,0,demo.stderr);assert.equal(JSON.parse(demo.stdout).store,state.demoStore);
+  for(const args of [['backup'],['identity','rotate'],['resume-setup'],['cleanup-downloads']])assert.equal(cli(f,['--mode','demo',...args]).status,1);
+  f.acceptQuiescent(JSON.parse(await readFile(path.join(f.envelope,'owner.json'))));
+});

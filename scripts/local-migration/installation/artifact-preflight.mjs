@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {constants} from 'node:fs';
 import {lstat,open,realpath} from 'node:fs/promises';
 import path from 'node:path';
-import {MANIFEST_PATH,sealedByteReceipt,verifyPackage} from '../../../apps/desktop/src/package-manifest.mjs';
+import {MANIFEST_PATH,sealedByteReceipt,verifyPackage,verifyPreviousEpoch1Package} from '../../../apps/desktop/src/package-manifest.mjs';
 import {verifyLegacyPackage} from '../../../apps/desktop/src/legacy-package-manifest.mjs';
 const fail=()=>{throw new Error('Pinned artifact verification failed');};
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -43,7 +43,7 @@ export async function verifyCapturedArtifact(bundle,expected){
   sameReceipt(await captureTrustedArtifact(bundle),expected);
 }
 /** v2 must include an external receipt and its independently supplied raw digest. */
-export async function verifyPinnedArtifact(bundle,{manifestSha256,sealedPayload,sealedPayloadSha256}={}){
+export async function verifyPinnedArtifact(bundle,{manifestSha256,sealedPayload,sealedPayloadSha256,allowPreviousEpoch1=false}={}){
   if(!digest(manifestSha256))fail();
   const {bytes}=await readBounded(path.join(bundle,MANIFEST_PATH));
   if(hash(bytes)!==manifestSha256)fail();
@@ -60,6 +60,7 @@ export async function verifyPinnedArtifact(bundle,{manifestSha256,sealedPayload,
   if(hash(external.bytes)!==sealedPayloadSha256)fail();
   const expected=JSON.parse(external.bytes);
   sameReceipt({version:1,files:await sealedByteReceipt(bundle)},expected);
-  await verifyPackage(bundle,manifest);
+  if(allowPreviousEpoch1===true&&manifest.securityEpoch===1)await verifyPreviousEpoch1Package(bundle,manifest);
+  else await verifyPackage(bundle,manifest);
   return manifest;
 }

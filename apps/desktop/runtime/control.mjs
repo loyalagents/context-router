@@ -58,13 +58,13 @@ export class ControlProtocol {
       }
     } catch { this.fail(); }
   }
-  fail() { this.#failed = true; this.end(); }
+  fail() { const ended = this.signal.aborted; this.#failed = true; if (ended) this.#onStop({ orderly: false }); else this.end(); }
   end() {
     if (this.signal.aborted) return;
     if (!this.#ready || this.#buffer.length) this.#failed = true;
     clearTimeout(this.#timer); this.#buffer = Buffer.alloc(0);
     this.#abort.abort(); this.#rejectStart(failure());
-    try { this.#onStop(); } finally { this.#stop(); }
+    try { this.#onStop({ orderly: this.orderlyStopRequested }); } finally { this.#stop(); }
   }
   assertActive() { if (!this.#ready || this.signal.aborted) throw failure(); }
 }
@@ -74,14 +74,16 @@ export class ManagedControl extends ControlProtocol {
   #pending = new Set();
   #bytes = 0;
   #closed = false;
-  constructor(generation, handlers) {
+  #retainAfterStop = false;
+  constructor(generation, handlers, { allowOrderlyStopDuringStart = false } = {}) {
     if (![5,6].every(fd => fstatSync(fd).isFIFO())) throw failure();
     super(generation, handlers);
+    this.#retainAfterStop = allowOrderlyStopDuringStart;
     try {
       this.#input = new Socket({ fd: 5, readable: true, writable: false });
       this.#output = new Socket({ fd: 6, readable: false, writable: true });
-      this.#input.on('data', bytes => this.push(bytes));
-      this.#input.once('end', () => this.end());
+      this.#input.on('data', bytes => { if(this.signal.aborted && this.#retainAfterStop && !this.#closed)this.fail(); else this.push(bytes); });
+      this.#input.once('end', () => { if(this.signal.aborted && this.#retainAfterStop && !this.#closed)this.fail(); else this.end(); });
       this.#input.once('error', () => this.fail());
       this.#output.once('error', () => this.fail());
     } catch { this.fail(); throw failure(); }
@@ -103,7 +105,7 @@ export class ManagedControl extends ControlProtocol {
     catch { this.fail(); }
     return record.promise;
   }
-  end() { super.end(); this.#input?.destroy(); }
+  end() { super.end(); if(!this.#retainAfterStop || !this.orderlyStopRequested)this.#input?.destroy(); }
   fail() {
     super.fail(); this.#output?.destroy();
     for (const record of this.#pending) this.#settle(record, failure());
@@ -111,17 +113,19 @@ export class ManagedControl extends ControlProtocol {
   async close() {
     this.#closed = true;
     try { await Promise.all([...this.#pending].map(record => record.promise)); }
-    finally { this.end(); this.#output?.destroy(); }
+    finally { this.end(); this.#input?.destroy(); this.#output?.destroy(); }
   }
 }
 /** Own the channel even when admission fails before the caller receives it. */
-export async function openManagedControl(generation, handlers) {
+export async function openManagedControl(generation, handlers, options = {}) {
   let control;
   try {
-    control = new ManagedControl(generation, handlers);
-    await control.started; control.assertActive(); return control;
+    control = new ManagedControl(generation, handlers, options);
+    await control.started;
+    if(!(options.allowOrderlyStopDuringStart && control.orderlyStopRequested && !control.failed))control.assertActive();
+    return control;
   } catch {
-    try { handlers.onStop(); } finally { await control?.close().catch(() => {}); }
+    try { handlers.onStop({ orderly: false }); } finally { await control?.close().catch(() => {}); }
     throw failure();
   }
 }

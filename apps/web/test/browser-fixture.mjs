@@ -8,7 +8,7 @@ import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
 
 const webRoot = path.resolve(import.meta.dirname, '..');
-export async function browserFixture(t, { model = false } = {}) {
+export async function browserFixture(t, { model = false, demo = false } = {}) {
   const root = fs.realpathSync(
     fs.mkdtempSync(path.join(os.tmpdir(), 'cr-ui-browser-')),
   );
@@ -90,6 +90,13 @@ export async function browserFixture(t, { model = false } = {}) {
   });
   cli('local-identity.js', 'initialize');
   cli('local-mcp.js', 'upgrade');
+  if (demo) {
+    const { seedDemo } = await import('../../backend/scripts/demo/domain.mjs');
+    const { loadBundledSeed } = await import('../../backend/scripts/demo/seed.mjs');
+    const { configuration } = await import('../../../examples/demo-10-2026/runtime.mjs');
+    const directory=path.join(root,'demo');fs.mkdirSync(directory,{mode:0o700});fs.mkdirSync(path.join(directory,'exports'),{mode:0o700});
+    await seedDemo({configuration:configuration(root),directory,seed:await loadBundledSeed(path.resolve(webRoot,'../../examples/demo-10-2026/001_user_001')),storeId:'b'.repeat(32),installationId:'a'.repeat(32)});
+  }
   cli(
     'local-mcp.js',
     'provision',

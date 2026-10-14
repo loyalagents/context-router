@@ -17,6 +17,7 @@ import {
 } from '@/lib/authenticated-fetch';
 
 export interface LocalCapabilities {
+  runtime?: { mode: 'personal' | 'demo'; launcher: 'native' | 'terminal'; generation?: string; storeId?: string };
   remainingMilliseconds: number;
   operations: {
     analysis: { mimeTypes: string[]; maxFileSizeBytes: number };
@@ -68,6 +69,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
   const [disconnected, setDisconnected] = useState(false);
   const [version, setVersion] = useState(0);
   const epoch = useRef(0);
+  const launcher = useRef<'native' | 'terminal' | undefined>(undefined);
   const expiryTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
@@ -125,6 +127,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
     const started = performance.now(), wall = Date.now();
     const next = await sessionJson<LocalCapabilities>('/api/local/capabilities');
     if (!updateLifetime(next.remainingMilliseconds, current, started, wall)) return false;
+    launcher.current = next.runtime?.launcher;
     setCapabilities(next);
     return true;
   };
@@ -231,7 +234,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
         error,
         !exchanged && error instanceof LocalRequestError && error.status === 429
           ? 'Unlock is busy. Wait for other unlock attempts to finish or lock another dashboard, then retry the same unexpired unlock token.'
-          : 'Unlock failed. Use a fresh unlock code and enable session storage. After restarting the Mac app, choose CR → Open dashboard and unlock there.',
+          : 'Unlock failed. Use a fresh unlock code and enable session storage. After restarting, open the current dashboard from your launcher and unlock there.',
       );
     } finally {
       setBusy(false);
@@ -266,15 +269,9 @@ export default function LocalSession({ children }: { children: ReactNode }) {
             Dashboard disconnected
           </h1>
           <p>This tab can no longer reach the local runtime. Its browser session has been cleared.</p>
-          <p>
-            Close this tab and use the dashboard opened after Restart, or choose
-            CR → Open dashboard from the Mac menu bar. Request a fresh unlock
-            code there.
-          </p>
-          <p className="text-sm text-gray-600">
-            Using the terminal launcher? Open the current dashboard address
-            printed by the running launcher.
-          </p>
+          <p>{launcher.current === 'native'
+            ? 'Close this tab and choose CR → Open dashboard from the Mac menu bar. Request a fresh unlock code there.'
+            : 'Close this tab and open the current dashboard address from your running launcher. Request a fresh unlock code there.'}</p>
         </section>
       </main>
     );
@@ -284,9 +281,8 @@ export default function LocalSession({ children }: { children: ReactNode }) {
         <form onSubmit={unlock} className="w-full max-w-lg space-y-5">
           <h1 className="text-3xl font-bold">Context Router</h1>
           <p>
-            In the Mac app, choose CR → New unlock code… in the menu bar, then
-            copy and paste the code here. It expires after five minutes and
-            works once.
+            Request an unlock code from the launcher that opened this dashboard,
+            then paste it here. It expires after five minutes and works once.
           </p>
           <label htmlFor="local-unlock" className="block font-medium">
             Unlock token
@@ -318,9 +314,8 @@ export default function LocalSession({ children }: { children: ReactNode }) {
             launcher for a new file.
           </p>
           <p className="text-sm text-gray-600">
-            Restarting signs out all browser sessions. In the Mac app, use the
-            dashboard opened after Restart, or choose CR → Open dashboard.
-            Older tabs may have an obsolete address.
+            Restarting or switching modes signs out browser sessions. Open the
+            current dashboard from your launcher; older tabs may have an obsolete address.
           </p>
         </form>
       </main>
@@ -347,6 +342,15 @@ export default function LocalSession({ children }: { children: ReactNode }) {
           Lock dashboard
         </button>
       </div>
+      {capabilities.runtime?.mode === 'demo' ? (
+        <aside aria-label="Demo mode" className="mx-10 mt-5 rounded border border-amber-400 bg-amber-50 p-4 text-amber-950">
+          <strong>Demo mode — historical 2024–2025 sample</strong>
+          <p className="mt-1">Edits persist. AI is disabled in demo. Use CR → Demo setup for client commands, CR → Reset sample data for a fresh sample, or CR → Return to personal mode.</p>
+          <p className="mt-1 text-sm">Clear memory removes memories; Clear history removes audit history. Neither resets the demo identity or client tokens.</p>
+        </aside>
+      ) : capabilities.runtime?.launcher === 'native' ? (
+        <p className="mx-10 mt-4 text-sm text-gray-600">Personal mode · Use CR → Enter demo mode to explore the historical sample.</p>
+      ) : null}
       {children}
     </SessionContext.Provider>
   );

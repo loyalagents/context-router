@@ -1034,3 +1034,12 @@ test('me is retained and user(id) is deprecated while its self-only compatibilit
   );
   assert.equal(fields.me.deprecationReason, undefined);
 });
+
+test('runtime presentation is authenticated and source launches do not claim native controls', async t => {
+  const f=await fixture(t);
+  assert.equal((await f.request('/api/local/capabilities')).status,401);
+  const {token}=await f.unlock();
+  const result=await f.request('/api/local/capabilities',{token});
+  assert.deepEqual(result.json().runtime,{mode:'personal',launcher:'terminal'});
+  assert.equal((await f.request('/api/local/capabilities',{token,body:{mode:'demo'}})).status,400);
+});

@@ -9,7 +9,11 @@ try {
   const state=await admit('prepare');control=state.control;
   const prepared=await backend('backend/dist/infrastructure/managed/managed-prepare.js').prepareManagedStore();
   control.assertActive();
-  const modelEnabled=await inspectModel(path.join(state.cap.envelope,'models'),control.signal);
+  if(state.cap.mode==='demo'){
+    const {readDemoGeneration}=await import(backend.resolve('backend/scripts/demo/domain.mjs'));
+    await readDemoGeneration({configuration:state.configuration,directory:path.join(state.cap.envelope,'demo',state.cap.storeId),installationId:state.cap.installationId,storeId:state.cap.storeId});
+  }
+  const modelEnabled=state.cap.mode==='personal'&&await inspectModel(path.join(state.cap.envelope,'models'),control.signal);
   control.assertActive();
   if(modelEnabled){
     const keys=await generateModelCertificate();control.assertActive();

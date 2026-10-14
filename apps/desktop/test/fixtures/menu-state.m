@@ -21,5 +21,11 @@ int main(int argc,const char *argv[]){@autoreleasepool{@try{
   record(menu,one,@"model-status",@{@"state":@"busy"});
   record(menu,one,@"download-starting",@{});[menu cancelDownload:nil];[menu cancelDownload:nil];BOOL once=menu.captured.count==1&&[menu.captured[0] isEqual:@"cancel-download"];
   [menu.captured removeAllObjects];[menu beginRestart];[menu sleepWake:nil];record(menu,one,@"stopped",@{@"outcome":@"ok"});record(menu,two,@"starting",@{@"phase":@"preparing"});record(menu,two,@"ready",ready(two));BOOL restart=[menu.captured containsObject:@"model-unavailable"];
+  [menu setValue:@"demo" forKey:@"mode"];[menu setValue:one forKey:@"storeId"];
+  NSString *commands=[menu demoSetupCommands];
+  BOOL setup=[commands containsString:@"login B --client claude --auth subscription"]&&[commands containsString:@"launch B --client claude --auth subscription"]&&[commands containsString:@"--generation 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'"]&&[commands containsString:@"--endpoint 'http://127.0.0.1:3211/mcp'"]&&[commands containsString:@"login A"]&&[commands containsString:@"desktop prepare"];
+  if(!setup)return 3;
+  NSString *selected=CRSelectedDemoCommand(commands,[commands rangeOfString:@"launch B --client claude --auth subscription"]);
+  if(![selected hasSuffix:@"launch B --client claude --auth subscription"]||[selected containsString:@"\n"]||CRSelectedDemoCommand(commands,NSMakeRange(0,commands.length))||CRSelectedDemoCommand(commands,[commands rangeOfString:@"Historical sample data"]))return 4;
   printf("{\"initialSleep\":%s,\"restartSleep\":%s,\"cancelOnce\":%s}\n",initial?"true":"false",restart?"true":"false",once?"true":"false");return initial&&restart&&once?0:2;
 }@catch(NSException *e){(void)e;return 1;}}}

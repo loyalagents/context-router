@@ -180,6 +180,7 @@ export default function LocalPage({ page }: { page: Page }) {
       </main>
     );
   const accessToken = session.token;
+  if (page === 'dashboard' && session.capabilities.runtime?.mode === 'demo') return <DemoGuide />;
   if (page === 'dashboard')
     return (
       <DashboardView
@@ -243,4 +244,26 @@ export default function LocalPage({ page }: { page: Page }) {
       </div>
     </main>
   );
+}
+
+function DemoGuide() {
+  const prompts = [
+    'Read travel.demo001.* and food.demo001.* preferences. These are historical 2024–2025 memories; do not assume dates or bookings are current.',
+    'Propose one change to a travel.demo001.* preference. Wait for my explicit approval before writing it, then confirm the stored value.',
+    'In a fresh Agent B or C conversation, read the exact changed slug again and report the current stored value.',
+    'Read health.demo001.* and finance.demo001.*. Report what the tools permit; do not guess or infer restricted values.',
+    'Review the changed memory’s Modified by field and its Audit History. Compare the original importer event with the later agent change and MCP Access event.',
+  ];
+  return <main className="p-10 max-w-5xl space-y-6">
+    <h1 className="text-3xl font-bold">Explore the demo</h1>
+    <p>The sample contains historical memories. Read by category prefix because one response is limited to 100 results. The current permissions and history views show real stored state, including your changes.</p>
+    <nav aria-label="Demo walkthrough" className="flex flex-wrap gap-5 text-blue-700 underline">
+      <a href="/dashboard/preferences">Memories</a><a href="/dashboard/permissions">Agent permissions</a><a href="/dashboard/history">Changes and access</a>
+    </nav>
+    <p>Use CR → Demo setup for the current generation’s client commands. Agent A starts with write and definition access; B and C start as readers with health and finance restrictions. Inspect Agent permissions for their actual current grants. Start fresh conversations after every mode switch or reset.</p>
+    <ol className="list-decimal pl-6 space-y-5">{prompts.map((prompt, index) => <li key={prompt}>
+      <p>{prompt}</p><button type="button" className="mt-1 text-blue-700 underline" onClick={() => void navigator.clipboard.writeText(prompt)}>Copy step {index + 1} prompt</button>
+    </li>)}</ol>
+    <p className="text-sm text-gray-600">Use sensitive-value reveal deliberately in history. A denied read is evidence of the active grants, while an empty allowed read can mean no matching memories.</p>
+  </main>;
 }
