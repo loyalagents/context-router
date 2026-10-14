@@ -1,0 +1,92 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { spawn, spawnSync } from 'node:child_process';
+import { readManifest, cleanEnvironment, safeError, privatePath } from './runtime.mjs';
+import { validateDataset } from './records.mjs';
+import { readCredential } from '../../apps/backend/scripts/mcp-bridge/credential.mjs';
+
+// Version-pinned controls, verified offline before a provider-backed session can start.
+const disabled = ['shell_tool', 'unified_exec', 'shell_snapshot', 'view_image', 'apps', 'plugins', 'hooks', 'browser_use', 'browser_use_external', 'computer_use', 'in_app_browser', 'multi_agent', 'multi_agent_v2', 'workspace_dependencies', 'image_generation', 'skill_search', 'skill_mcp_dependency_install', 'tool_suggest', 'memories'];
+export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = command === 'claude' ? 'a' : 'b' }, { executable } = {}) {
+  validateDataset(dataset);
+  if (!['claude', 'codex'].includes(command)) throw safeError('Unknown demo client.');
+  if (!['a', 'b'].includes(agent) || (command === 'claude' && agent !== 'a')) throw safeError('Unsupported client role.');
+  const prefix = command === 'codex' && agent === 'a' ? 'codex-a' : command;
+  const env = { ...cleanEnvironment(), HOME: path.join(root, `${prefix}-home`), TMPDIR: path.join(root, `${prefix}-home`) };
+  const cwd = path.join(root, `${prefix}-workspace`), url = `http://127.0.0.1:${mcpPort}/mcp`;
+  const instruction = `This is a Context Router portability rehearsal. Retrieve saved personal context only through context_router_demo MCP tools. The saved context is a historical 2024–2025 snapshot, not a claim of current facts. Use fresh searchPreferences category-prefix reads such as home.${dataset}., family.${dataset}., leisure.${dataset}., tech.${dataset}. and work.${dataset}. A single unfiltered read may truncate. Do not use smartSearchPreferences or consolidateSchema: no local model is running. Save a change only when explicitly requested. Explain missing or denied context honestly.`;
+  let args, version;
+  if (command === 'claude') {
+    env.CLAUDE_CONFIG_DIR = path.join(root, 'claude-config');
+    args = ['--bare', '--setting-sources', '', '--settings', '{"disableAllHooks":true}', '--disable-slash-commands', '--no-chrome',
+      '--strict-mcp-config', '--mcp-config', JSON.stringify({ mcpServers: { context_router_demo: { type: 'http', url, headers: { Authorization: 'Bearer ${CR_DEMO_TOKEN}' } } } }),
+      '--tools', '', '--append-system-prompt', instruction];
+    version = '2.1.296';
+  } else {
+    env.CODEX_HOME = path.join(root, `${prefix}-config`);
+    args = ['--no-daemon', '--strict-config', '--sandbox', 'read-only', '--ask-for-approval', 'never',
+      ...disabled.flatMap(name => ['-c', `features.${name}=false`]),
+      '-c', 'tools.view_image=false', '-c', 'web_search="disabled"', '-c', 'cli_auth_credentials_store="file"',
+      '-c', 'project_doc_max_bytes=0', '-c', 'apps._default.enabled=false',
+      '-c', `mcp_servers.context_router_demo.url=${JSON.stringify(url)}`,
+      '-c', 'mcp_servers.context_router_demo.bearer_token_env_var="CR_DEMO_TOKEN"',
+      '-c', `mcp_servers.context_router_demo.enabled_tools=${JSON.stringify(['listPreferenceSlugs','searchPreferences','listPermissionGrants', ...(agent === 'a' ? ['mutatePreferences'] : [])])}`,
+      '-c', 'mcp_servers.context_router_demo.required=true', instruction];
+    version = '0.160.0';
+  }
+  if (!executable) {
+    const found = spawnSync('/usr/bin/which', [command], { env: { PATH: `${path.join(os.homedir(), '.local/bin')}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin` }, encoding: 'utf8' });
+    if (found.status !== 0) throw safeError(`Install the qualified ${command} CLI before launching this demo.`);
+    executable = found.stdout.trim();
+  }
+  return { command, prefix, agent, executable, credential: agent === 'a' ? 'agent-a.token' : 'agent-b.token', version, cwd, args, env };
+}
+
+export function preflightClient(spec) {
+  const run = args => {
+    const result = spawnSync(spec.executable, args, { cwd: spec.cwd, env: spec.env, encoding: 'utf8', timeout: 10000, maxBuffer: 1024 * 1024 });
+    if (result.status !== 0) throw safeError('Unsupported client or isolation settings. No assistant was started.');
+    return result.stdout;
+  };
+  if (!run(['--version']).includes(spec.version)) throw safeError('Unsupported client version; revalidate isolation controls before using it.');
+  const help = run(['--help']);
+  const required = spec.command === 'claude' ? ['--bare', '--strict-mcp-config', '--tools', '--setting-sources', '--disable-slash-commands', '--no-chrome'] : ['--no-daemon', '--strict-config', '--sandbox'];
+  if (required.some(flag => !help.includes(flag))) throw safeError('Unsupported client isolation controls.');
+  if (spec.command === 'codex') {
+    // This version restricts --strict-config to interactive/exec; features and mcp list are offline readers.
+    const offline = spec.args.slice(0, -1).filter(arg => arg !== '--strict-config');
+    const servers = JSON.parse(run([...offline, 'mcp', 'list', '--json']));
+    if (servers.length !== 1 || servers[0].name !== 'context_router_demo' || servers[0].transport.bearer_token_env_var !== 'CR_DEMO_TOKEN') throw safeError('Unexpected Codex MCP configuration.');
+    const output = run([...offline, 'features', 'list']);
+    // unified_exec selects the execution transport; documented user opt-outs are ignored.
+    // shell_tool is the command-execution exposure gate and must actually be false.
+    for (const name of disabled.filter(name => name !== 'unified_exec')) if (!new RegExp(`^${name}\\s+[^\\n]*\\sfalse$`, 'm').test(output)) throw safeError('Unsupported Codex native-tool controls.');
+  }
+  return { client: spec.command, version: spec.version, offlineControls: 'passed', ...(spec.command === 'codex' ? { unifiedExec: 'User opt-out may be ignored; shell_tool exposure is disabled.' } : {}) };
+}
+
+export async function launchClient(options) {
+  const manifest = await readManifest(options.root);
+  const spec = clientLaunchSpec({ ...options, dataset: manifest.dataset });
+  for (const suffix of ['workspace', 'home', 'config']) await privatePath(path.join(options.root, `${spec.prefix}-${suffix}`), true);
+  // Fresh workspaces deliberately contain no corpus, import report or repository instruction files.
+  // Client-generated session/config state can persist in the dedicated HOME/config roots.
+  if ((await fs.readdir(spec.cwd)).length) throw safeError('Demo client workspace must remain empty. Move unrelated files before launching.');
+  preflightClient(spec);
+  if (options.command === 'claude') {
+    if (!process.env.CR_DEMO_ANTHROPIC_API_KEY) throw safeError('Claude bare isolation requires an explicitly supplied CR_DEMO_ANTHROPIC_API_KEY for this launch; personal OAuth/keychain auth is not copied.');
+    spec.env.ANTHROPIC_API_KEY = process.env.CR_DEMO_ANTHROPIC_API_KEY;
+  } else {
+    // Only an explicitly user-created demo login is accepted; no personal auth fallback.
+    try { await privatePath(path.join(spec.env.CODEX_HOME, 'auth.json')); }
+    catch { throw safeError('Sign in to the demo-only CODEX_HOME first using the README login command. Personal auth is not copied.'); }
+  }
+  spec.env.CR_DEMO_TOKEN = readCredential(path.join(options.root, 'exports', spec.credential));
+  console.log('Starting demo-only assistant configuration. Its provider may receive retrieved demo context.');
+  const child = spawn(spec.executable, spec.args, { cwd: spec.cwd, env: spec.env, stdio: 'inherit' });
+  return await new Promise((resolve, reject) => {
+    child.once('error', () => reject(safeError('Could not start the selected demo assistant.')));
+    child.once('exit', code => resolve(code ?? 1));
+  });
+}
