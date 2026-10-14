@@ -97,6 +97,15 @@ seams initially failed as absent APIs; those are distinguished from behavioral
 reproductions. Focused identity/workflow/category tests then passed 4/4; initial
 finalizer/staging tests passed 18/18, followed by expanded tests for both CI profiles,
 pre-receipt bounded failures, parent/target/stage replacement and safe CLI output.
+Independent complete-diff review of the first correction candidate `ee11ea5`
+found a failure-catch ownership gap: an ordinary downgrade could overwrite the
+replacement rejected by terminal publication. New production-seam tests reproduced
+both parent and target overwrite. Success and failure publication now share the
+captured ownership and guarded atomic path; lost ownership/deadline skips the
+write. Staging fault tests use real rename except the dedicated rename-failure case
+and assert the intended rejection, so one injected failure cannot mask another.
+A real existing nonancestor Git base is also rejected. The already-started `ee11ea5`
+CI attempt is retained; no local full gate ran on that superseded candidate.
 Final focused counts and source-bound results belong in the PR evidence record.
 
 After the related corrections and documentation are ready, coordinate a clean

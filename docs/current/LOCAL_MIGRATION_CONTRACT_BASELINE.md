@@ -284,7 +284,10 @@ writes, sync/close, ownership and final cancellation/deadline checks precede one
 synchronous atomic rename. That rename is the terminal commit, followed immediately
 by signal-handler disposal and return without further verdict work. Earlier
 failure leaves a failed/cancelled or nonterminal summary even if failure-summary
-persistence also fails. Default full/smoke finalization is unchanged.
+persistence also fails. Both success and failure publication retain the captured
+parent/target ownership and use the same guarded atomic path. A replaced target or
+parent is left untouched; a downgrade is skipped when ownership or the cleanup
+deadline is lost. Default full/smoke finalization is unchanged.
 
 The stable `local-migration-baseline` combined job always evaluates both dependency
 results, requires explicit success and

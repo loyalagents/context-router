@@ -3,7 +3,7 @@ import { localMcpLifecycleResources } from './fixtures/local-mcp-lifecycle.mjs';
 import { localModelLifecycleResources } from './fixtures/local-model-lifecycle.mjs';
 import { localDatabaseLifecycleResources } from "./fixtures/local-database-lifecycle.mjs";
 import assert from "node:assert/strict";
-import { constants } from "node:fs";
+import { constants, renameSync } from "node:fs";
 import {
   chmod,
   cp,
@@ -2854,6 +2854,8 @@ test("CI qualification combined entrypoint succeeds without installed dependenci
     env = await prepare(head);
     assert.notEqual(execute({}).status, 0, "PR checkout must have exactly two parents");
   }
+  env = await prepare(merge);
+  assert.equal(execute({ MIGRATION_GATE_BASE_SHA: commit([]) }).stderr.trim(), "ci-qualification: failed; base", "existing nonancestor base fails");
   env = await prepare(merge, "pull_request", first);
   assert.notEqual(execute({}).status, 0, "consistent receipt/event relabelling cannot replace actual second parent");
   env = await prepare(first, "push");
@@ -3103,10 +3105,8 @@ test("CI production orchestration cannot expose pass before its terminal commit"
           const prepared = await timingGate.prepareCiTerminalSummary(...args);
           return { ...prepared, commit() { events.push("commit"); prepared.commit(); } };
         },
-        persistFailure: async (...args) => {
-          if (fault === "failure-persist") throw new Error("failure persistence failed too");
-          return persistExternalGateSummary(...args);
-        },
+        persistFailure: fault === "failure-persist"
+          ? async () => { throw new Error("failure persistence failed too"); } : undefined,
         dispose: () => events.push("dispose"),
       });
       if (fault === "none") {
@@ -3167,10 +3167,15 @@ test("CI terminal summary staging faults leave pending evidence and preserve for
               },
             };
           },
-          commitRename: () => { throw new Error("rename failure"); },
+          commitRename: fault === "rename" ? () => { throw new Error("rename failure"); } : renameSync,
         });
         prepared.commit();
-      });
+      }, {
+        write: /staged write failure/, sync: /staged sync failure/, close: /staged close failure/,
+        identity: /identity changed/, target: /identity changed/, "target-symlink": /identity changed/,
+        parent: /identity changed/, rename: /rename failure/, cancel: /staged cancellation/,
+        deadline: /final cleanup deadline exceeded/,
+      }[fault]);
       await prepared?.discard();
       assert.equal(await readFile(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "utf8"), ["target", "target-symlink", "parent"].includes(fault) ? "foreign" : pending);
       if (fault === "identity") assert.equal(await readFile(stagePath, "utf8"), "foreign");
@@ -3178,4 +3183,30 @@ test("CI terminal summary staging faults leave pending evidence and preserve for
       else await assert.rejects(lstat(stagePath), { code: "ENOENT" });
     });
   }
+});
+
+test("CI production failure persistence cannot overwrite a replaced summary target or parent", async t => {
+  for (const replacement of ["target", "parent"]) await t.test(replacement, async t => {
+    const f = await ciFinalizationFixture(t);
+    const outcome = await timingGate.runCiQualificationAttempt({
+      environment: f.environment, evidence: f.evidence, dispose: () => {},
+      stages: { timeline: f.timeline, cancellationSignal: f.controller.signal,
+        execute: async ({ completePreflight }) => { completePreflight(); return {}; },
+        cleanup: async () => {}, finalize: f.finalize },
+      prepare: async (...args) => {
+        const prepared = await timingGate.prepareCiTerminalSummary(...args);
+        if (replacement === "parent") {
+          const { rename } = await import("node:fs/promises");
+          const moved = f.root + "-original";
+          await rename(f.root, moved); t.after(() => rm(moved, { recursive: true, force: true }));
+          await mkdir(f.root, { mode: 0o700 });
+        } else await rm(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH);
+        await writeFile(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "foreign summary", { mode: 0o600 });
+        return prepared;
+      },
+    });
+    assert.notEqual(outcome.ciCommitted, true);
+    assert.ok(outcome.secondaryErrors.length);
+    assert.equal(await readFile(f.environment.MIGRATION_GATE_CI_SUMMARY_PATH, "utf8"), "foreign summary");
+  });
 });

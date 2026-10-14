@@ -288,24 +288,38 @@ export async function persistExternalGateSummary(environment, summary, canaries 
   return target;
 }
 
+const sameCiIdentity = (actual, expected) => actual.dev === expected.dev && actual.ino === expected.ino;
+const privateCiFile = value => value.isFile() && !value.isSymbolicLink() &&
+  value.uid === process.getuid() && (value.mode & 0o777) === 0o600;
+function assertCiSummaryOwnership({ target, parent, parentIdentity, targetIdentity }) {
+  const currentParent = lstatSync(parent), currentTarget = lstatSync(target);
+  if (!currentParent.isDirectory() || currentParent.isSymbolicLink() ||
+      currentParent.uid !== process.getuid() || !sameCiIdentity(currentParent, parentIdentity) ||
+      realpathSync(parent) !== parent || !privateCiFile(currentTarget) ||
+      !sameCiIdentity(currentTarget, targetIdentity)) {
+    throw new Error("CI terminal summary publication identity changed");
+  }
+}
+async function captureCiSummaryOwnership(environment) {
+  const target = await externalGateSummaryTarget(environment);
+  if (!target) throw new Error("CI terminal summary requires an export path");
+  const parent = path.dirname(target);
+  const ownership = { target, parent, parentIdentity: await lstat(parent), targetIdentity: await lstat(target) };
+  assertCiSummaryOwnership(ownership);
+  return ownership;
+}
+
 // CI alone has required evidence after bounded finalization. Prepare privately,
 // then commit synchronously after all async work and final guards. The fixed
 // external path stays nonterminal if any preparation/publication operation fails.
 export async function prepareCiTerminalSummary(environment, summary, {
   signal, timeline, canaries = [], openFile = open, commitRename = renameSync,
+  ownership: suppliedOwnership,
 } = {}) {
-  const target = await externalGateSummaryTarget(environment);
-  if (!target) throw new Error("CI terminal summary requires an export path");
-  const parent = path.dirname(target);
-  const parentIdentity = await lstat(parent);
-  const targetIdentity = await lstat(target);
-  const same = (actual, expected) => actual.dev === expected.dev && actual.ino === expected.ino;
-  const regularOwned = value => value.isFile() && !value.isSymbolicLink() &&
-    value.uid === process.getuid() && (value.mode & 0o777) === 0o600;
-  if (!parentIdentity.isDirectory() || parentIdentity.isSymbolicLink() ||
-      parentIdentity.uid !== process.getuid() || !regularOwned(targetIdentity)) {
-    throw new Error("CI terminal summary ownership invalid");
-  }
+  const ownership = suppliedOwnership ?? await captureCiSummaryOwnership(environment);
+  const { target, parent, parentIdentity } = ownership;
+  if (await externalGateSummaryTarget(environment) !== target) throw new Error("CI summary target changed");
+  assertCiSummaryOwnership(ownership);
   const staged = path.join(parent, ".local-migration-gate-summary.ci-" + randomBytes(16).toString("hex"));
   let handle, identity;
   const discard = async () => {
@@ -313,9 +327,9 @@ export async function prepareCiTerminalSummary(environment, summary, {
     if (identity) {
       const currentParent = await lstat(parent).catch(() => null);
       if (!currentParent?.isDirectory() || currentParent.isSymbolicLink() ||
-          !same(currentParent, parentIdentity) || await realpath(parent) !== parent) return;
+          !sameCiIdentity(currentParent, parentIdentity) || await realpath(parent) !== parent) return;
       const current = await lstat(staged).catch(() => null);
-      if (current?.isFile() && !current.isSymbolicLink() && same(current, identity)) {
+      if (current?.isFile() && !current.isSymbolicLink() && sameCiIdentity(current, identity)) {
         await rm(staged);
       }
     }
@@ -336,11 +350,9 @@ export async function prepareCiTerminalSummary(environment, summary, {
     return {
       discard,
       commit() {
-        const currentParent = lstatSync(parent), currentTarget = lstatSync(target), currentStage = lstatSync(staged);
-        if (!currentParent.isDirectory() || currentParent.isSymbolicLink() ||
-            !same(currentParent, parentIdentity) || realpathSync(parent) !== parent ||
-            !regularOwned(currentTarget) || !same(currentTarget, targetIdentity) ||
-            !regularOwned(currentStage) || !same(currentStage, identity)) {
+        assertCiSummaryOwnership(ownership);
+        const currentStage = lstatSync(staged);
+        if (!privateCiFile(currentStage) || !sameCiIdentity(currentStage, identity)) {
           throw new Error("CI terminal summary publication identity changed");
         }
         check();
@@ -2373,21 +2385,30 @@ export async function publishCompletedCiQualification({
   });
 }
 
+async function persistOwnedCiFailure(environment, summary, canaries, { ownership, timeline }) {
+  // A downgrade uses the same atomic ownership-checked path as terminal success.
+  // If ownership or the deadline was lost, leave pending/foreign evidence alone.
+  const prepared = await prepareCiTerminalSummary(environment, summary, { ownership, timeline, canaries });
+  try { prepared.commit(); }
+  finally { await prepared.discard(); }
+}
+
 // This is the production CI orchestration seam: finalizer and bounded-stage
 // postchecks, required receipt, private terminal summary preparation, then commit.
 export async function runCiQualificationAttempt({
   stages, evidence, environment, summaryCanaries = [], dispose,
   publish = publishCompletedCiQualification,
   prepare = prepareCiTerminalSummary,
-  persistFailure = persistExternalGateSummary,
+  persistFailure = persistOwnedCiFailure,
 }) {
   const outcome = await runBoundedGateStages(stages);
   const details = evidence();
-  let prepared;
+  let prepared, ownership;
   try {
+    ownership = await captureCiSummaryOwnership(environment);
     await publish({ ...details, outcome });
     prepared = await prepare(environment, details.summary, {
-      signal: details.signal, timeline: details.timeline, canaries: summaryCanaries,
+      signal: details.signal, timeline: details.timeline, canaries: summaryCanaries, ownership,
     });
     // No await or verdict-affecting work is allowed after this commit. Listener
     // disposal is synchronous and signals delivered afterwards are post-completion.
@@ -2404,8 +2425,10 @@ export async function runCiQualificationAttempt({
     failed.cleanupErrors = outcome.secondaryErrors.map(error => redactSecrets(error.message, summaryCanaries));
     const primary = outcome.primaryError ?? outcome.secondaryErrors[0];
     failed.failure = { message: redactSecrets(primary.message, summaryCanaries), exitCode: primary.exitCode ?? 1 };
-    try { await persistFailure(environment, failed, summaryCanaries); }
-    catch (persistenceError) { outcome.secondaryErrors.push(persistenceError); }
+    if (ownership) {
+      try { await persistFailure(environment, failed, summaryCanaries, { ownership, timeline: details.timeline }); }
+      catch (persistenceError) { outcome.secondaryErrors.push(persistenceError); }
+    }
     return outcome;
   }
 }
