@@ -11,8 +11,10 @@ test('Claude subscription B selects its read credential and isolated OAuth confi
   const options = parseOptions(['claude', '--root', '/private/tmp/example', '--agent', 'b', '--auth', 'subscription']);
   const spec = clientLaunchSpec(options, { executable: '/bin/false' });
   assert.equal(spec.agent, 'b'); assert.equal(spec.auth, 'subscription'); assert.equal(spec.credential, 'agent-b.token');
-  assert.equal(spec.env.HOME, '/private/tmp/example/claude-home');
+  assert.equal(spec.env.HOME, process.platform === 'darwin' ? os.userInfo().homedir : '/private/tmp/example/claude-home');
   assert.equal(spec.env.CLAUDE_CONFIG_DIR, '/private/tmp/example/claude-config');
+  assert.equal(spec.env.ANTHROPIC_CONFIG_DIR, '/private/tmp/example/claude-config/anthropic');
+  assert.equal(spec.env.TMPDIR, '/private/tmp/example/claude-home');
   assert.equal(spec.cwd, '/private/tmp/example/claude-workspace');
   assert.ok(spec.args.includes('--restricted')); assert.equal(spec.args.includes('--bare'), false);
   assert.equal(spec.args[spec.args.indexOf('--tools') + 1], '');
@@ -31,6 +33,8 @@ test('Claude subscription B selects its read credential and isolated OAuth confi
   for (const key of ['ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN', 'CLAUDE_CODE_SIMPLE']) assert.equal(spec.env[key], undefined);
   const legacy = clientLaunchSpec({ ...options, agent: undefined, auth: undefined }, { executable: '/bin/false' });
   assert.equal(legacy.agent, 'a'); assert.equal(legacy.auth, 'api-key'); assert.ok(legacy.args.includes('--bare'));
+  assert.equal(legacy.env.HOME, '/private/tmp/example/claude-home');
+  assert.equal(legacy.env.ANTHROPIC_CONFIG_DIR, undefined);
   for (const args of [ ['codex', '--auth', 'subscription'], ['claude', '--auth', 'unknown'], ['serve', '--agent', 'b'] ]) {
     assert.throws(() => parseOptions([...args, '--root', '/private/tmp/example']));
   }
@@ -41,10 +45,21 @@ test('Claude subscription preflight requires restricted mode and exact fresh aut
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   for (const p of ['home', 'config', 'workspace']) await fs.mkdir(path.join(root, `claude-${p}`));
   const executable = path.join(root, 'client');
+  const observedFile = path.join(root, 'observed.json');
   const spec = clientLaunchSpec({ command: 'claude', auth: 'subscription', agent: 'b', root, dataset: 'demo001', mcpPort: 1 }, { executable });
   for (const behavior of ['valid', 'missing-flag', 'logged-in', 'unexpected-error']) {
-    await fs.writeFile(executable, `#!${process.execPath}\nconst a=process.argv.slice(2);\nif(a.includes('--version'))console.log('2.1.299');\nelse if(a.includes('--help'))console.log('--strict-mcp-config --tools --setting-sources --disable-slash-commands --no-chrome ${behavior === 'missing-flag' ? '' : '--restricted'}');\nelse { console.log(${JSON.stringify(behavior)}==='unexpected-error'?'error':JSON.stringify({loggedIn:${behavior === 'logged-in'},authMethod:'none',apiProvider:'firstParty',analyticsDisabled:true,configDirectory:process.env.CLAUDE_CONFIG_DIR}));process.exitCode=1; }\n`, { mode: 0o700 });
-    if (behavior === 'valid') assert.equal(preflightClient(spec).offlineControls, 'passed');
+    await fs.writeFile(executable, `#!${process.execPath}\nimport fs from 'node:fs';\nconst a=process.argv.slice(2);\nif(a.includes('--version'))console.log('2.1.299');\nelse if(a.includes('--help'))console.log('--strict-mcp-config --tools --setting-sources --disable-slash-commands --no-chrome ${behavior === 'missing-flag' ? '' : '--restricted'}');\nelse { fs.writeFileSync(${JSON.stringify(observedFile)},JSON.stringify({env:process.env,cwd:process.cwd()}));console.log(${JSON.stringify(behavior)}==='unexpected-error'?'error':JSON.stringify({loggedIn:${behavior === 'logged-in'},authMethod:'none',apiProvider:'firstParty',analyticsDisabled:true,configDirectory:process.env.CLAUDE_CONFIG_DIR}));process.exitCode=1; }\n`, { mode: 0o700 });
+    if (behavior === 'valid') {
+      assert.equal(preflightClient(spec).offlineControls, 'passed');
+      const observed = JSON.parse(await fs.readFile(observedFile, 'utf8'));
+      assert.notEqual(observed.env.CLAUDE_CONFIG_DIR, spec.env.CLAUDE_CONFIG_DIR);
+      assert.equal(observed.env.ANTHROPIC_CONFIG_DIR, path.join(observed.env.CLAUDE_CONFIG_DIR, 'anthropic'));
+      const probeRoot = path.dirname(observed.env.CLAUDE_CONFIG_DIR);
+      assert.equal(observed.env.HOME, process.platform === 'darwin' ? os.userInfo().homedir : path.join(probeRoot, 'home'));
+      assert.equal(observed.env.TMPDIR, path.join(probeRoot, 'home'));
+      assert.equal(observed.cwd, path.join(probeRoot, 'workspace'));
+      await assert.rejects(fs.access(probeRoot));
+    }
     else assert.throws(() => preflightClient(spec), /controls|auth-status/);
   }
 });
@@ -59,6 +74,13 @@ test('installed Claude accepts full subscription B argv in fresh unauthenticated
   const status = JSON.parse(result.stdout);
   assert.equal(status.loggedIn, false); assert.equal(status.authMethod, 'none'); assert.equal(status.apiProvider, 'firstParty');
   assert.equal(status.analyticsDisabled, true); assert.equal(status.configDirectory, spec.env.CLAUDE_CONFIG_DIR);
+  if (process.platform === 'darwin') {
+    // Read the default keychain path only; never query credentials or change it.
+    const keychain = spawnSync('/usr/bin/security', ['default-keychain', '-d', 'user'], { env: spec.env, encoding: 'utf8', timeout: 5000 });
+    assert.equal(keychain.error, undefined); assert.equal(keychain.signal, null);
+    assert.equal(keychain.status, 0); assert.equal(keychain.stderr, '');
+    assert.match(keychain.stdout.trim(), /^"\/.+"$/);
+  }
   assert.equal(preflightClient(spec).offlineControls, 'passed');
   assert.throws(() => preflightClient({ ...spec, args: [...spec.args, '--demo-unknown-option'] }), /auth-status/);
 });
@@ -93,6 +115,16 @@ test('launch specs confine config/workspace and omit ambient secrets, tools and 
       assert.equal(spec.env.CODEX_HOME, path.join(root, 'codex-config'));
     }
   }
+  const subscription = clientLaunchSpec({ command: 'claude', auth: 'subscription', agent: 'b', root, mcpPort: 8788, dataset: 'custom' }, { executable });
+  const result = spawnSync(subscription.executable, subscription.args, { cwd: subscription.cwd, env: subscription.env, encoding: 'utf8' });
+  assert.equal(result.status, 0);
+  const actual = JSON.parse(result.stdout);
+  assert.equal(actual.env.HOME, process.platform === 'darwin' ? os.userInfo().homedir : path.join(root, 'claude-home'));
+  assert.equal(actual.env.CLAUDE_CONFIG_DIR, path.join(root, 'claude-config'));
+  assert.equal(actual.env.ANTHROPIC_CONFIG_DIR, path.join(root, 'claude-config', 'anthropic'));
+  assert.equal(actual.env.TMPDIR, path.join(root, 'claude-home'));
+  assert.equal(actual.cwd, path.join(root, 'claude-workspace'));
+  for (const key of ['ANTHROPIC_API_KEY', 'ANTHROPIC_PROFILE', 'CLAUDE_CODE_OAUTH_TOKEN']) assert.equal(actual.env[key], undefined);
 });
 
 test('unsupported installed controls fail closed during offline preflight', async t => {

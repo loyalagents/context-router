@@ -48,9 +48,11 @@ Closing the browser alone does not stop the server.
 Supported offline checks currently pin **Codex CLI 0.160.0** and **Claude Code
 2.1.299**. Launchers fail on unsupported versions or missing controls. Personal
 config, hooks, plugins, connectors and authentication are not copied. Workspaces
-start empty and must remain empty; state stays in separate demo HOME/config
-folders. No credentials are put in argv or MCP configuration; tokens are passed
-only in child environments.
+start empty and must remain empty; client settings, profiles and temporary files
+use dedicated demo directories. Codex and bare Claude also use a separate HOME.
+On macOS, subscription Claude uses the OS account HOME for Keychain discovery,
+with the demo-specific configuration described below. No credentials are put in
+argv or MCP configuration; tokens are passed only in child environments.
 
 For Claude Code B with Claude Pro, run this from the repository root:
 
@@ -62,10 +64,19 @@ Complete the fresh demo login using **Claude.ai with your Pro subscription**.
 Do not select Console/API billing. `forceLoginMethod: claudeai` preselects the
 subscription login, but terminal onboarding still allows another choice.
 The separate `claude-config` directory has its own login and macOS Keychain
-entry; no existing login is copied. This one Claude Code session uses the
-prepared `claude-home`, `claude-config` and empty `claude-workspace` folders for
-either selected role, so do not run both Claude roles in them concurrently.
+entry in the existing account Keychain; no existing login is copied. macOS
+requires the OS account HOME to find that Keychain. `CLAUDE_CONFIG_DIR` remains
+the demo's `claude-config`, `ANTHROPIC_CONFIG_DIR` is its `anthropic` subdirectory,
+`TMPDIR` remains `claude-home`, and the workspace stays `claude-workspace`.
+The explicit Anthropic directory prevents fallback to the account's profiles;
+see the [profile directory reference](https://platform.claude.com/docs/en/manage-claude/wif-reference#configuration-directory).
+This is one Claude Code session for either selected role, so do not run both
+Claude roles in these directories concurrently.
 See the [Claude authentication documentation](https://code.claude.com/docs/en/authentication).
+
+If the earlier failed launch leaves a Keychain-not-found/create/reset dialog,
+choose **Cancel**, exit that Claude process, and retry the command above with
+this fix. Do not create, replace or reset the account Keychain for the demo.
 
 Subscription mode uses `--restricted`, empty built-in tools, strict demo-only
 MCP configuration, explicit settings and disabled hooks/skills/Chrome. It also
@@ -75,9 +86,12 @@ traffic through documented environment controls. It supplies no API key or
 ambient OAuth token. See the [CLI reference](https://code.claude.com/docs/en/cli-reference)
 and [environment reference](https://code.claude.com/docs/en/env-vars).
 Offline preflight parses the complete launch arguments using `auth status`
-inside disposable fresh directories and requires an unauthenticated first-party
-result naming that exact configuration directory. This proves argument parsing
-and the isolated auth probe, not interactive login or model readiness.
+with disposable fresh config/profile/temp/workspace directories and the same
+macOS account-HOME behavior. It requires an unauthenticated first-party result
+naming that exact fresh configuration directory. This proves argument parsing
+and the isolated auth probe, not interactive login or model readiness. The
+opt-in macOS regression also reads the default Keychain path without querying
+stored passwords or changing Keychains.
 
 For two Codex sessions, explicitly log in to each demo-only configuration root
 first. Run these from outside the repository; the login commands use file auth

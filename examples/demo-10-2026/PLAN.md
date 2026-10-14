@@ -6,6 +6,8 @@ Live authentication, assistant behavior and the user walkthrough remain pending.
 The later Claude Pro B/Desktop C adapter extension below has focused checks
 passed and affected implementation approval, including the subsequent
 installed-version requalification. User-run Pro login/discovery remains pending.
+The later macOS Keychain correction below has focused checks and both affected
+implementation reviews passed. The user's live Pro retry remains pending.
 
 ## Outcome and scope
 
@@ -368,3 +370,41 @@ approvals; documentation links and whitespace checks were renewed before the
 local commit. User-run Pro login/discovery, actual assistant behavior and the
 later Desktop C setup remain pending. No login, inference, live-state/auth/config
 change, push or PR occurred during this qualification.
+
+
+## macOS subscription Keychain correction (2026-10-13)
+
+The user's Claude Pro B launch reported KeychainNotFound. A read-only lookup of
+the default user Keychain succeeded with the OS account HOME and failed with a
+fresh temporary HOME. Earlier auth-status tests did not exercise that discovery
+boundary. Both plan reviewers approved this bounded four-file correction before
+implementation: only macOS Claude subscription mode uses `os.userInfo().homedir`
+for HOME. Codex, bare Claude and non-macOS HOME behavior remain unchanged.
+
+Retain the demo `CLAUDE_CONFIG_DIR`, workspace, TMPDIR and every existing guard.
+Set `ANTHROPIC_CONFIG_DIR` to the demo config's `anthropic` subdirectory to avoid
+personal-profile fallback under the account HOME. The
+[profile reference](https://platform.claude.com/docs/en/manage-claude/wif-reference#configuration-directory)
+documents this explicit directory's precedence and Claude Code support. macOS
+uses the existing account Keychain with a distinct entry selected by the demo
+Claude configuration directory; no credential is copied, reset or inspected.
+The preflight uses the same HOME/profile semantics with fresh disposable
+configuration, profile, temporary and workspace directories, never the user's
+signed-in demo configuration. README instructs cancelling the earlier failed
+launch's Keychain dialog and retrying without creating/resetting a Keychain.
+
+Four focused regressions failed first: the subscription HOME assertion, missing
+preflight profile path, actual default-Keychain lookup and spawned child HOME.
+After the correction, all nine client tests passed with both installed-CLI
+opt-ins enabled (3,020.152 ms). Coverage includes actual spawned environment,
+fresh preflight paths/cleanup, retained role/controls, exact unauthenticated
+Claude 2.1.299 full-argv result, unknown-option rejection, read-only default
+Keychain-path discovery and Codex A/B strict checks. No password queries,
+Keychain writes/resets, login, inference or retained-state changes occurred.
+Unchanged import, MCP, persistence, browser and Desktop coverage carries forward.
+Both affected reviewers approved all four frozen file hashes without findings.
+The coordinator independently passed all nine installed-client tests in
+2,968.425 ms, the documentation-link check (149 files) and whitespace checks.
+This final factual evidence update preserves those approvals; documentation
+and whitespace checks were renewed before the local commit. The user's live
+Pro retry remains pending. No push, PR or live-state action was performed.

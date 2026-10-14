@@ -15,6 +15,12 @@ const claudeSubscriptionEnvironment = {
   CLAUDE_CODE_DISABLE_AUTO_MEMORY: '1', CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL: '1',
   CLAUDE_CODE_DISABLE_CLAUDE_MDS: '1',
 };
+function claudeSubscriptionPaths(home, config) {
+  // macOS Keychain discovery needs the OS account HOME. Keep Claude settings
+  // and Anthropic profile fallback explicitly inside the selected demo config.
+  return { HOME: process.platform === 'darwin' ? os.userInfo().homedir : home,
+    ANTHROPIC_CONFIG_DIR: path.join(config, 'anthropic') };
+}
 export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = command === 'claude' ? 'a' : 'b', auth = command === 'claude' ? 'api-key' : undefined }, { executable } = {}) {
   validateDataset(dataset);
   if (!['claude', 'codex'].includes(command)) throw safeError('Unknown demo client.');
@@ -27,7 +33,7 @@ export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = comm
   let args, version;
   if (command === 'claude') {
     env.CLAUDE_CONFIG_DIR = path.join(root, 'claude-config');
-    if (auth === 'subscription') Object.assign(env, claudeSubscriptionEnvironment);
+    if (auth === 'subscription') Object.assign(env, claudeSubscriptionEnvironment, claudeSubscriptionPaths(env.HOME, env.CLAUDE_CONFIG_DIR));
     args = [auth === 'subscription' ? '--restricted' : '--bare', '--setting-sources', '',
       '--settings', JSON.stringify({ disableAllHooks: true, ...(auth === 'subscription' ? { forceLoginMethod: 'claudeai' } : {}) }), '--disable-slash-commands', '--no-chrome',
       '--strict-mcp-config', '--mcp-config', JSON.stringify({ mcpServers: { context_router_demo: { type: 'http', url, headers: { Authorization: 'Bearer ${CR_DEMO_TOKEN}' } } } }),
@@ -81,7 +87,7 @@ function checkClaudeSubscriptionStartup(spec) {
     const config = path.join(root, 'config');
     const result = spawnSync(spec.executable, [...spec.args, 'auth', 'status', '--json'], {
       cwd: path.join(root, 'workspace'),
-      env: { ...cleanEnvironment(), ...claudeSubscriptionEnvironment, HOME: path.join(root, 'home'), CLAUDE_CONFIG_DIR: config, TMPDIR: path.join(root, 'home') },
+      env: { ...cleanEnvironment(), ...claudeSubscriptionEnvironment, ...claudeSubscriptionPaths(path.join(root, 'home'), config), CLAUDE_CONFIG_DIR: config, TMPDIR: path.join(root, 'home') },
       input: '', encoding: 'utf8', timeout: 10000, maxBuffer: 65536,
     });
     let status;
@@ -124,7 +130,8 @@ export async function launchClient(options) {
   const spec = clientLaunchSpec({ ...options, dataset: manifest.dataset });
   for (const suffix of ['workspace', 'home', 'config']) await privatePath(path.join(options.root, `${spec.prefix}-${suffix}`), true);
   // Fresh workspaces deliberately contain no corpus, import report or repository instruction files.
-  // Client-generated session/config state can persist in the dedicated HOME/config roots.
+  // Client-generated session/config state persists in the dedicated config roots;
+  // macOS subscription auth uses the account Keychain with a distinct demo entry.
   if ((await fs.readdir(spec.cwd)).length) throw safeError('Demo client workspace must remain empty. Move unrelated files before launching.');
   preflightClient(spec);
   if (options.command === 'claude') {
