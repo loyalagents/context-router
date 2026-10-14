@@ -21,18 +21,18 @@ function claudeSubscriptionPaths(home, config) {
   return { HOME: process.platform === 'darwin' ? os.userInfo().homedir : home,
     ANTHROPIC_CONFIG_DIR: path.join(config, 'anthropic') };
 }
-export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = command === 'claude' ? 'a' : 'b', auth = command === 'claude' ? 'api-key' : undefined }, { executable } = {}) {
+export function clientLaunchSpec({ command, root, profileRoot = root, mcpPort, dataset, agent = command === 'claude' ? 'a' : 'b', auth = command === 'claude' ? 'api-key' : undefined }, { executable } = {}) {
   validateDataset(dataset);
   if (!['claude', 'codex'].includes(command)) throw safeError('Unknown demo client.');
   if (!['a', 'b'].includes(agent)) throw safeError('Unsupported client role.');
   if (command === 'claude' ? !['api-key', 'subscription'].includes(auth) : auth !== undefined) throw safeError('Unsupported client authentication mode.');
-  const prefix = command === 'codex' && agent === 'a' ? 'codex-a' : command;
-  const env = { ...cleanEnvironment(), HOME: path.join(root, `${prefix}-home`), TMPDIR: path.join(root, `${prefix}-home`) };
-  const cwd = path.join(root, `${prefix}-workspace`), url = `http://127.0.0.1:${mcpPort}/mcp`;
+  const prefix = agent === 'a' && (command === 'codex' || profileRoot !== root) ? `${command}-a` : command;
+  const env = { ...cleanEnvironment(), HOME: path.join(profileRoot, `${prefix}-home`), TMPDIR: path.join(profileRoot, `${prefix}-home`) };
+  const cwd = path.join(profileRoot, `${prefix}-workspace`), url = `http://127.0.0.1:${mcpPort}/mcp`;
   const instruction = `This is a Context Router portability rehearsal. Retrieve saved personal context only through context_router_demo MCP tools. The saved context is a historical 2024–2025 snapshot, not a claim of current facts. Use fresh searchPreferences category-prefix reads such as home.${dataset}., family.${dataset}., leisure.${dataset}., tech.${dataset}. and work.${dataset}. A single unfiltered read may truncate. Do not use smartSearchPreferences or consolidateSchema: no local model is running. Save a change only when explicitly requested. Explain missing or denied context honestly.`;
   let args, version;
   if (command === 'claude') {
-    env.CLAUDE_CONFIG_DIR = path.join(root, 'claude-config');
+    env.CLAUDE_CONFIG_DIR = path.join(profileRoot, `${prefix}-config`);
     if (auth === 'subscription') Object.assign(env, claudeSubscriptionEnvironment, claudeSubscriptionPaths(env.HOME, env.CLAUDE_CONFIG_DIR));
     args = [auth === 'subscription' ? '--restricted' : '--bare', '--setting-sources', '',
       '--settings', JSON.stringify({ disableAllHooks: true, ...(auth === 'subscription' ? { forceLoginMethod: 'claudeai' } : {}) }), '--disable-slash-commands', '--no-chrome',
@@ -40,7 +40,7 @@ export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = comm
       '--tools', '', '--append-system-prompt', instruction];
     version = '2.1.299';
   } else {
-    env.CODEX_HOME = path.join(root, `${prefix}-config`);
+    env.CODEX_HOME = path.join(profileRoot, `${prefix}-config`);
     args = ['--no-daemon', '--strict-config', '--sandbox', 'read-only', '--ask-for-approval', agent === 'a' ? 'on-request' : 'never',
       ...disabled.flatMap(name => ['-c', `features.${name}=false`]),
       '-c', 'web_search="disabled"', '-c', 'cli_auth_credentials_store="file"',
@@ -57,7 +57,13 @@ export function clientLaunchSpec({ command, root, mcpPort, dataset, agent = comm
     if (found.status !== 0) throw safeError(`Install the qualified ${command} CLI before launching this demo.`);
     executable = found.stdout.trim();
   }
-  return { command, prefix, agent, auth, executable, credential: agent === 'a' ? 'agent-a.token' : 'agent-b.token', version, cwd, args, env };
+  const credential = agent === 'a' ? 'agent-a.token' : 'agent-b.token';
+  return { command, prefix, agent, auth, executable, credential, credentialFile: path.join(root, 'exports', credential), version, cwd, args, env };
+}
+
+export function loginSpec(spec) {
+  if (spec.command !== 'codex') throw safeError('Explicit --login is supported only for Codex.');
+  return { ...spec, args: ['-c', 'cli_auth_credentials_store="file"', 'login'] };
 }
 
 // Validate the exact interactive argv before any session can start. This pinned
@@ -128,14 +134,16 @@ export function preflightClient(spec) {
 
 export async function launchClient(options) {
   const manifest = await readManifest(options.root);
-  const spec = clientLaunchSpec({ ...options, dataset: manifest.dataset });
-  for (const suffix of ['workspace', 'home', 'config']) await privatePath(path.join(options.root, `${spec.prefix}-${suffix}`), true);
+  let spec = clientLaunchSpec({ ...options, dataset: manifest.dataset });
+  for (const suffix of ['workspace', 'home', 'config']) await privatePath(path.join(options.profileRoot ?? options.root, `${spec.prefix}-${suffix}`), true);
   // Fresh workspaces deliberately contain no corpus, import report or repository instruction files.
   // Client-generated session/config state persists in the dedicated config roots;
   // macOS subscription auth uses the account Keychain with a distinct demo entry.
   if ((await fs.readdir(spec.cwd)).length) throw safeError('Demo client workspace must remain empty. Move unrelated files before launching.');
   preflightClient(spec);
-  if (options.command === 'claude') {
+  if (options.login) {
+    spec = loginSpec(spec);
+  } else if (options.command === 'claude') {
     if (spec.auth === 'api-key') {
       if (!process.env.CR_DEMO_ANTHROPIC_API_KEY) throw safeError('Claude bare isolation requires an explicitly supplied CR_DEMO_ANTHROPIC_API_KEY for this launch; use --auth subscription for a separate demo-only Claude Pro login.');
       spec.env.ANTHROPIC_API_KEY = process.env.CR_DEMO_ANTHROPIC_API_KEY;
@@ -145,8 +153,8 @@ export async function launchClient(options) {
     try { await privatePath(path.join(spec.env.CODEX_HOME, 'auth.json')); }
     catch { throw safeError('Sign in to the demo-only CODEX_HOME first using the README login command. Personal auth is not copied.'); }
   }
-  spec.env.CR_DEMO_TOKEN = readCredential(path.join(options.root, 'exports', spec.credential));
-  console.log('Starting demo-only assistant configuration. Its provider may receive retrieved demo context.');
+  if (!options.login) spec.env.CR_DEMO_TOKEN = readCredential(spec.credentialFile);
+  console.log(options.login ? 'Starting explicit login for the selected isolated Codex profile.' : 'Starting demo-only assistant configuration. Its provider may receive retrieved demo context.');
   const child = spawn(spec.executable, spec.args, { cwd: spec.cwd, env: spec.env, stdio: 'inherit' });
   return await new Promise((resolve, reject) => {
     child.once('error', () => reject(safeError('Could not start the selected demo assistant.')));

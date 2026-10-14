@@ -41,16 +41,17 @@ export async function privatePath(name, directory = false) {
       !(directory ? s.isDirectory() : s.isFile() && s.nlink === 1 && s.size <= 16 * 1024 * 1024)) throw safeError('Invalid private demo path ownership, type or permissions.');
   return s;
 }
-async function privateJson(file) {
+export async function privateBytes(file) {
   const before = await privatePath(file), handle = await fs.open(file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   try {
     const opened = await handle.stat();
     if (opened.ino !== before.ino || opened.dev !== before.dev) throw new Error();
     const data = await handle.readFile(), after = await handle.stat();
     if (data.length !== before.size || after.ctimeMs !== before.ctimeMs || after.mtimeMs !== before.mtimeMs) throw new Error();
-    return JSON.parse(data.toString('utf8'));
+    return data;
   } finally { await handle.close(); }
 }
+export const privateJson = async file => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await privateBytes(file)));
 
 async function treeDigest(root) {
   const entries = [];
@@ -116,7 +117,7 @@ export async function verifyApplication(application, principalId, plan, { strict
   return { active: rows.length, importAuditsVerified: plan.entries.length, modified };
 }
 
-export async function prepareDemo({ out, input, dataset = 'demo001' }) {
+export async function prepareDemo({ out, input, dataset = 'demo001', durable = false }) {
   if (out === repoRoot || out?.startsWith(repoRoot + path.sep)) throw safeError('Prepare private state outside the repository.');
   const plan = await loadDemoPlan(input, dataset);
   if (!plan.entries.length) throw safeError('The source has no active memories.');
@@ -146,14 +147,21 @@ export async function prepareDemo({ out, input, dataset = 'demo001' }) {
     stage = 'clients';
     const agentA = credentials.provision('Demo agent A — writer', path.join(out, 'exports/agent-a.token'));
     const agentB = credentials.provision('Demo agent B — reader', path.join(out, 'exports/agent-b.token'));
-    credentials.permissions(agentA.id, policy(['preferences:write'], targets));
+    credentials.permissions(agentA.id, policy(durable ? ['preferences:write', 'preferences:define'] : ['preferences:write'], targets));
     const bTargets = targets.filter(t => !/^(finance|health)\./.test(t));
     credentials.permissions(agentB.id, policy(['preferences:read'], bTargets));
+    let agentC;
+    if (durable) {
+      agentC = credentials.provision('Demo agent C — Desktop reader', path.join(out, 'exports/agent-c.token'));
+      credentials.permissions(agentC.id, policy(['preferences:read'], bTargets));
+      for (const client of [agentB, agentC]) credentials.grant(client.id, 'health.*', 'READ', 'DENY');
+    }
     stage = 'close'; await importer.close(); importer = undefined; await runtime.close(); runtime = undefined;
-    const manifest = { format: 'context-router-portability-demo-v1', status: 'prepared', root: out, principalId: identity.principalId,
+    const manifest = { format: durable ? 'context-router-portability-demo-v2' : 'context-router-portability-demo-v1', status: 'prepared', root: out, principalId: identity.principalId,
       preparedAt: new Date().toISOString(), builds, ...summarize(plan), importerId: seed.id,
       planSha256: hash(await fs.readFile(path.join(out, 'import-plan.json'))),
-      clients: { agentA: { id: agentA.id, write: true, targets }, agentB: { id: agentB.id, write: false, targets: bTargets } },
+      clients: { agentA: { id: agentA.id, write: true, targets }, agentB: { id: agentB.id, write: false, targets: bTargets },
+        ...(durable ? { agentC: { id: agentC.id, write: false, targets: bTargets } } : {}) },
       limits: ['Native MCP SET sourceType is INFERRED.', 'Ordinary SET without evidence clears live evidence; import audit retains it.', 'Live assistant rehearsal pending.'] };
     stage = 'manifest'; await writeJson(path.join(out, 'manifest.json'), manifest); return manifest;
   } catch (error) {
@@ -169,7 +177,7 @@ export async function prepareDemo({ out, input, dataset = 'demo001' }) {
 export async function readManifest(root) {
   await privatePath(root, true);
   const manifest = await privateJson(path.join(root, 'manifest.json'));
-  if (manifest.format !== 'context-router-portability-demo-v1' || manifest.status !== 'prepared' || manifest.root !== root ||
+  if (!['context-router-portability-demo-v1', 'context-router-portability-demo-v2'].includes(manifest.format) || manifest.status !== 'prepared' || manifest.root !== root ||
       !/^[a-f0-9]{64}$/.test(manifest.planSha256) || !manifest.principalId || !manifest.importerId) throw safeError('Only a successfully prepared demo can be opened.');
   validateDataset(manifest.dataset);
   for (const name of ['data', 'identity', 'exports', 'claude-workspace', 'codex-workspace', 'claude-home', 'codex-home', 'claude-config', 'codex-config', 'codex-a-workspace', 'codex-a-home', 'codex-a-config']) await privatePath(path.join(root, name), true);
@@ -177,9 +185,13 @@ export async function readManifest(root) {
   if (hash(await fs.readFile(path.join(root, 'import-plan.json'))) !== manifest.planSha256 || !isDeepStrictEqual(summarize(plan), { dataset: manifest.dataset, total: manifest.total, active: manifest.active, inactiveSkipped: manifest.inactiveSkipped, categories: manifest.categories, sources: manifest.sources })) throw safeError('Demo manifest or import plan mismatch.');
   const identity = await privateJson(path.join(root, 'identity/identity.json'));
   if (identity.principalId !== manifest.principalId) throw safeError('Demo identity mismatch.');
-  for (const [name, client] of Object.entries(manifest.clients ?? {})) {
-    if (!['agentA', 'agentB'].includes(name) || !/^[A-Za-z0-9_-]{22}$/.test(client.id)) throw safeError('Demo client manifest mismatch.');
-    const token = readCredential(path.join(root, 'exports', name === 'agentA' ? 'agent-a.token' : 'agent-b.token'));
+  const names = manifest.format.endsWith('-v2') ? ['agentA', 'agentB', 'agentC'] : ['agentA', 'agentB'];
+  if (!isDeepStrictEqual(Object.keys(manifest.clients ?? {}).sort(), names)) throw safeError('Demo clients missing or unexpected.');
+  const targets = plan.sources.map(s => `${s.file.slice(0, -6)}.${manifest.dataset}.*`);
+  for (const [name, client] of Object.entries(manifest.clients)) {
+    if (!/^[A-Za-z0-9_-]{22}$/.test(client.id) || client.write !== (name === 'agentA') ||
+        !isDeepStrictEqual(client.targets, name === 'agentA' ? targets : targets.filter(t => !/^(finance|health)\./.test(t)))) throw safeError('Demo client manifest mismatch.');
+    const token = readCredential(path.join(root, 'exports', `agent-${name.at(-1).toLowerCase()}.token`));
     if (!token.startsWith(`cr_mcp_${client.id}.`)) throw safeError('Demo credential identity mismatch.');
   }
   if (!manifest.clients?.agentA || !manifest.clients?.agentB) throw safeError('Demo clients missing.');
@@ -197,12 +209,33 @@ export async function verifyDemo(root) {
       let authority;
       try { authority = credentials.inspectForUi(record.id); }
       catch { throw safeError('Verification mismatch: client authority could not be inspected.'); }
-      if (authority.status !== 'AVAILABLE' || authority.client.revoked || authority.grants.length !== 0 ||
-          !isDeepStrictEqual(authority.client.policy, policy([name === 'agentA' ? 'preferences:write' : 'preferences:read'], record.targets))) {
-        throw safeError('Verification mismatch: client authority differs from the prepared policy and empty-grant baseline.');
+      const durable = manifest.format.endsWith('-v2');
+      const capabilities = name === 'agentA' ? (durable ? ['preferences:write', 'preferences:define'] : ['preferences:write']) : ['preferences:read'];
+      const grants = durable && name !== 'agentA' ? [{ target: 'health.*', action: 'READ', effect: 'DENY' }] : [];
+      if (authority.status !== 'AVAILABLE' || authority.client.revoked ||
+          !isDeepStrictEqual(authority.grants.map(({ target, action, effect }) => ({ target, action, effect })), grants) ||
+          !isDeepStrictEqual(authority.client.policy, policy(capabilities, record.targets))) {
+        throw safeError('Verification mismatch: client authority differs from the versioned prepared policy/grant baseline.');
       }
     }
     return { status: 'verified', ...(await verifyApplication(app, manifest.principalId, plan, { importerId: manifest.importerId })) };
+  } finally { await app.close(); }
+}
+
+// Descriptive owner inspection after additions or policy edits; never a baseline
+// check or a claim that a listening server is healthy. No values or tokens shown.
+export async function statusDemo(root) {
+  const manifest = await readManifest(root), b = backend();
+  const identity = b.createSqliteIdentityRuntime(configuration(root)); await identity.service.verifyReadyState();
+  const app = await b.NestFactory.createApplicationContext(b.LocalMcpApplicationModule.register(configuration(root)), { logger: false, abortOnError: false });
+  try {
+    const credentials = new b.SqliteMcpCredentials(identity.database, manifest.principalId);
+    const rows = await app.get(b.PreferenceService).getActivePreferences(manifest.principalId);
+    const defs = await app.get(b.PreferenceDefinitionRepository).getAll(manifest.principalId);
+    return { status: 'descriptive', baselineChecked: false, readinessChecked: false, root, format: manifest.format, dataset: manifest.dataset,
+      active: rows.length, definitions: defs.filter(d => d.ownerUserId === manifest.principalId).length, importedActive: manifest.active,
+      clients: Object.fromEntries(Object.entries(manifest.clients).map(([name, c]) => [name, credentials.inspectForUi(c.id)])),
+      otherClients: credentials.list().filter(c => !Object.values(manifest.clients).some(record => record.id === c.id)) };
   } finally { await app.close(); }
 }
 

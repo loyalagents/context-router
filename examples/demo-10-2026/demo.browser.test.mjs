@@ -6,7 +6,8 @@ import path from 'node:path';
 import net from 'node:net';
 import { createRequire } from 'node:module';
 import { once } from 'node:events';
-import { prepareDemo, startServer, repoRoot, cleanEnvironment, verifyDemo } from './runtime.mjs';
+import { prepareDemo, readManifest, startServer, repoRoot, cleanEnvironment, verifyDemo } from './runtime.mjs';
+import { prepareHome } from './home.mjs';
 import { loadDemoPlan } from './records.mjs';
 import { connect, call } from './mcp-import.mjs';
 import { localUiBrowserPrerequisite } from '../../scripts/local-migration/local-ui-browser.mjs';
@@ -29,13 +30,13 @@ async function stop(child) {
   try { await closed; } finally { clearTimeout(timer); }
 }
 
-test('existing dashboard shows imported context, refreshed MCP change, real client authority and persisted history', { timeout: 90000 }, async t => {
+test('existing dashboard shows a durable generation, refreshed MCP change, A/B/C authority and persisted history', { timeout: 90000 }, async t => {
   const prerequisite = localUiBrowserPrerequisite(repoRoot);
   const parent = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-browser-')));
-  const root = path.join(parent, 'demo');
   let child, browser, a, reader;
   t.after(async () => { await a?.close(); await reader?.close(); await browser?.close(); await stop(child); await fs.rm(parent, { recursive: true, force: true }); });
-  const manifest = await prepareDemo({ out: root });
+  const { root } = await prepareHome({ home: path.join(parent, 'demo') });
+  const manifest = await readManifest(root);
   child = startServer(root, 0, 0, ['ignore', 'pipe', 'pipe']);
   child.stderr.resume();
   const server = await ready(child), origin = server.origin;
@@ -64,9 +65,13 @@ test('existing dashboard shows imported context, refreshed MCP change, real clie
   await page.getByRole('button', { name: `Inspect ${manifest.clients.agentA.id}`, exact: true }).click();
   const authority = page.getByRole('region', { name: 'Selected client authority' });
   await authority.getByText(/preferences:write/).waitFor();
+  await authority.getByText(/preferences:define/).waitFor();
   await page.getByRole('button', { name: `Inspect ${manifest.clients.agentB.id}`, exact: true }).click();
   await authority.getByText(/preferences:read/).waitFor();
   const policy = await authority.textContent(); assert.equal(policy.includes('health.demo001.*'), false); assert.equal(policy.includes('finance.demo001.*'), false);
+  await page.getByRole('button', { name: `Inspect ${manifest.clients.agentC.id}`, exact: true }).click();
+  await authority.getByText(/preferences:read/).waitFor();
+  await authority.getByText('health.* · READ · DENY', { exact: true }).first().waitFor();
   await page.goto(origin + '/dashboard/history');
   await page.getByLabel('Show sensitive values').check();
   await page.getByRole('button', { name: new RegExp(`local:${manifest.clients.agentA.id}`) }).first().click();

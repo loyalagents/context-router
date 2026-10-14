@@ -98,9 +98,16 @@ test('fresh preparation refuses existing state and aliases, never modifying eith
   await assert.rejects(createFreshRoot('relative'), /absolute/);
 });
 
-test('default command only inspects input; prepare requires explicit fresh destination', () => {
+test('default command inspects; durable commands and explicit legacy destinations cannot be mixed', () => {
   assert.equal(parseOptions([]).command, 'inspect');
-  assert.throws(() => parseOptions(['prepare']), /--out/);
+  assert.equal(parseOptions(['prepare']).command, 'prepare');
+  assert.equal(parseOptions(['prepare', '--fresh']).fresh, true);
+  assert.equal(parseOptions(['prepare', '--port', '8788']).port, 8788);
+  assert.equal(parseOptions(['prepare', '--mcp-port', '3003']).mcpPort, 3003);
+  assert.throws(() => parseOptions(['prepare', '--out', '/private/tmp/demo', '--home', '/private/tmp/home']), /mix|combined/);
+  assert.throws(() => parseOptions(['prepare', '--out', '/private/tmp/demo', '--fresh']), /fresh/);
+  assert.throws(() => parseOptions(['claude', '--login']), /login/);
+  assert.equal(parseOptions(['codex', '--agent', 'a', '--login']).login, true);
   assert.throws(() => parseOptions(['prepare', '--out', '/private/tmp/demo', '--reset']), /Unknown/);
   assert.throws(() => parseOptions(['serve', '--root', '/private/tmp/demo', '--mcp-port', '0']), /port/);
   assert.throws(() => parseOptions(['serve', '--root', '/private/tmp/demo', '--mcp-port', '3003']), /distinct/);

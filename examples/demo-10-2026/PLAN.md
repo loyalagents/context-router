@@ -1,15 +1,11 @@
 # Portability demo rehearsal
 
-Status: implementation and local automated validation complete; two fresh
-complete-diff reviews approved, including the affected grant-verification rechecks.
-Live authentication, assistant behavior and the user walkthrough remain pending.
-The later Claude Pro B/Desktop C adapter extension below has focused checks
-passed and affected implementation approval, including the subsequent
-installed-version requalification. User-run Pro login/discovery remains pending.
-The later macOS Keychain correction below has focused checks and both affected
-implementation reviews passed. The user's live Pro retry remains pending.
-The latest Codex A approval correction below has focused checks and both affected
-reviews passed. The user's write-confirmation retry remains pending.
+Status: the user reports the A/B shared-memory and permission rehearsal works,
+including A creating memories after an explicitly requested runtime DEFINE grant.
+Desktop C has a separate matching B policy, passed SDK read/filtering checks, and
+shows Running in Desktop 2.37337.1; provider-backed Desktop chat acceptance remains
+pending. The source-only reproducibility extension below is active. Earlier
+checkpoint results retain their original scope and inputs.
 
 ## Outcome and scope
 
@@ -441,3 +437,188 @@ one intentional unrelated installed-Claude skip, in 2,401.864 ms. Documentation
 links (149 files) and whitespace checks passed and were renewed after this final
 factual evidence update. Code/test approval carries forward to the local commit.
 The live approval UI and write remain pending; no push, PR or live replay occurred.
+
+## Durable, reproducible rehearsal extension (2026-10-13)
+
+The user requested easy local reproduction and a documented route for other
+people. They explicitly chose a fresh durable demo from the original dataset,
+keeping today's working demo available. Base is `5191f41dc158e6f48b86e6636c0cea50f0e4e2d6`.
+The coordinator discussed the workflow before implementation. Scope remains the
+example tooling, tests and docs; original JSONL, reusable mapping/import code,
+production app behavior and CI stay unchanged.
+
+Use the sensitive workflow for credentials and filesystem publication. Planner
+requested Astra/xhigh; independent architecture reviewer requested Astra/high;
+independent safety reviewer requested Astra/xhigh; sole implementer requested
+Astra/xhigh. Effective model/effort settings are not independently verified.
+The planner supplied the proposal; both reviewers approved with the invariants
+below. The coordinator reconciled the plan and now hands all repository writing
+to the implementing subagent. Two independent code reviews follow before the
+local rehearsal handoff. No push or merge is part of this milestone.
+
+### Contract and scope decisions
+
+- Default to a durable private macOS demo home beneath Application Support, with
+  an explicit canonical `--home` override. Separate stable per-vendor/role login
+  profiles from independent `generations/<unique-id>` data/identity/exports.
+- `prepare` creates the first generation and subsequently reports the selected
+  prepared generation. Reject explicit conflicting input, dataset or ports.
+  `prepare --fresh` creates another generation with new identity and credentials;
+  previous and partially failed generations remain. It never deletes history,
+  copies personal authentication, resumes uncertain imports or restores authority.
+- Serialize home mutations. Fsync complete generation metadata and its directory
+  before publishing the selector. Interruption preserves either the previous
+  selection or a complete new selection. A stale lock is an explicit recovery
+  condition, never an invitation to delete it automatically. Failed/uncertain
+  publication is reported with inspection instructions, not replayed.
+- Resolve generation, ports and credential once per invocation. Existing serve
+  and client commands may default to the selected generation; explicit legacy
+  `--out`/`--root` usage remains compatible. Foreground serve, ordinary Ctrl-C,
+  and explicit client restarts remain the process lifecycle. Occupied ports fail
+  without terminating or replacing their owners. Selection is not live readiness.
+- New durable generations give A WRITE+DEFINE over dataset category prefixes.
+  B and C have distinct READ credentials excluding health/finance, each with the
+  demonstrated explicit `health.*` READ DENY. Revoke the import credential.
+  Keep these defaults separate from the immutable v1 preparation contract.
+- Preserve isolated client controls and exact supported versions. Add a Codex
+  `--login` flow using the selected isolated profile and file authentication;
+  Claude subscription login stays its normal explicit launcher flow. Stable
+  profiles survive fresh generations; support one active process per vendor/role
+  and do not automatically resume old conversations. Fresh preparation does not
+  rewrite existing profile contents or redirect active sessions.
+- Preserve strict baseline verification, including original v1 semantics; use
+  versioned expectations for new A/B/C generations. Ordinary audited additions
+  and authority changes can depart from that baseline. Add descriptive `status`
+  showing selected generation, paths, ports, actual client policies/grants and
+  memory counts; it must not claim a baseline or running-server verification.
+  Defer a generic policy-management wrapper; document existing administration.
+- Desktop preparation produces an immutable durable four-module snapshot,
+  absolute pinned Node identity, exact-generation C credential reference, source
+  hashes and a private proposed configuration update. Never use `/tmp` for
+  persistent executable/credential references or follow mutable current selection.
+  Receipt hashes document provenance, not independent trust; copied modules must
+  match reviewed source inputs and record revision/dirty state.
+- Desktop apply is a separate explicit command with user-attested closed Desktop
+  and config editors. Serialize helper writers, validate trusted ancestry and
+  private regular files, preserve unrelated config, refuse entry collisions,
+  and require original bytes to match. Save a private backup, fsync a sibling
+  temporary file, recheck original bytes, atomically rename, and verify readback.
+  This is guarded replacement, not true compare-and-swap against arbitrary
+  writers. Preserve recovery artifacts after uncertainty; never auto-restore.
+  A newly selected generation requires explicit Desktop setup/apply/restart.
+
+### Testable checkpoints and handoff
+
+1. Home lifecycle and CLI: tests first for idempotency/conflicts, fresh generation
+   preservation, stable profile bytes, unsafe paths, writer concurrency, failed
+   preparation and interruption around selector publication.
+2. Authority and compatibility: real MCP/SQLite tests for A DEFINE+SET, B/C allowed
+   reads and write/read denials, independent revocation, import audits, strict
+   versioned baselines and unchanged v1 roots. Old A/B/C tokens must fail against
+   a new generation even if the same port is reused.
+3. Client profiles: actual argv/environment/cwd tests, isolated Codex login,
+   exact generation/endpoint/token binding, preserved Keychain workaround and
+   both installed pinned-client offline preflights. No provider requests.
+4. Desktop: absent/existing configs, collision/private backup/byte preservation,
+   unsafe paths and changed hashes, stale proposal conflicts, interruption
+   boundaries, fixed generation binding and real SDK stdio reads using C.
+5. Freeze the complete extension; two independent code reviews and affected
+   corrections. Run the complete example suite including existing dashboard
+   coverage, installed-client offline checks, documentation links and whitespace.
+   Product code is unchanged, so carry forward only unaffected product evidence;
+   do not run the full migration gate without an affected-boundary justification.
+
+After the local code/review milestone, prepare a fresh durable local generation
+on dashboard 3004 / MCP 8789, retaining the working 3003 / 8788 rehearsal and its
+existing Desktop connection. Verify the new baseline and bounded local reads.
+Prepare a separate Desktop proposal for the new generation; leave personal
+Desktop application and fresh provider login to the named human handoff.
+Report targeted evidence and remaining human/final acceptance honestly.
+
+README must provide separate first-time and next-day walkthroughs, optional fresh
+rehearsal, supported macOS source-checkout prerequisites (repository access,
+Node 24.21.0, pnpm 10.25.0, dependencies/generated client/backend/web builds),
+qualified CLI versions, explicit Desktop switch, permission administration,
+failure/lock recovery without destructive guesses, and demo prompts. Keep
+machine-specific paths, credentials and live client IDs out of repository docs.
+
+### Implementation checkpoint and candidate evidence
+
+The sole writer implemented the approved extension in example files only.
+Durable defaults are explicitly 3004/8789; legacy roots retain 3003/8788. Fresh
+preparation inherits the selected input, dataset and ports unless overridden.
+The home identity, stable profiles and each generation's receipts are separate.
+Preparation verifies the new v2 baseline before syncing state and publishing
+selection. Descriptive status remains usable after additions or authority edits.
+
+Tests preceded implementation for home lifecycle, v2 authority, profile/login
+dispatch and Desktop proposal/apply. Focused regressions caught omitted fresh
+inheritance and the old CLI parser's inappropriate legacy port comparison.
+A Desktop tampered-Node test also demonstrated why proposal data cannot select
+an executable: apply now derives the trusted running Node identity first and
+compares proposal data without executing its candidate path. Snapshot entries
+retain `--no-global-search-paths`. These corrections passed their affected tests.
+
+The frozen-code validation command on pinned Node 24.21.0 was:
+
+```sh
+CR_DEMO_TEST_CODEX=1 CR_DEMO_TEST_CLAUDE=1 node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs
+```
+
+Result: **38 passed, zero failed, zero skipped**, in 75,985.345 ms. This includes
+legacy v1 persistence/denial/recovery, durable A DEFINE and independent B/C
+authority, same-port old-token rejection, home locking/publication interruption,
+actual CLI selected-port/status dispatch, installed auth-free client probes,
+Desktop stdio against a real C credential, backup/conflict/interruption controls,
+and the real dashboard showing v2 A/B/C authority and persisted history.
+Fixtures used only owned temporary state, processes and ports. No provider
+request, personal auth/config change, existing demo mutation or app stop occurred.
+All eleven source JSONL SHA-256 values match the coordinator's pre-work snapshot.
+
+The README now distinguishes first-time setup, next-day reuse, fresh generations,
+strict verification, descriptive inspection and an explicit Desktop switch.
+Markdown links (149 files) and whitespace checks passed. Product builds, mapper,
+MCP importer, source corpus and production bridge remain unchanged; prior product
+coverage carries forward only for those unaffected inputs. Complete-diff reviews
+and the coordinator's independent checks are next. New durable live login,
+assistant acceptance and Desktop switching remain user steps after that milestone;
+later CI/PR/merge acceptance remains pending.
+
+### Complete-diff review corrections
+
+Both independent reviewers identified one P2: Desktop could persist a pinned
+Node executable located in temporary storage. The safety reviewer also identified
+a P2: first preparation did not fsync the new home's parent directory entry.
+No other blockers were reported. Tests reproduced both findings before fixes.
+
+Desktop now rejects canonical temporary Node paths during both prepare and apply,
+including macOS temporary/cache roots when a stripped environment changes
+`os.tmpdir()`. The internal owned-fixture exception remains limited to home/config
+paths and cannot exempt Node. A regression executes an actual copied pinned Node
+binary from owned temporary storage: both operations reject it before creating a
+proposal or editing configuration. The home initializer syncs the trusted parent
+before state/import; an injected sync failure leaves only the empty home and no
+published state, and an explicit retry repeats that boundary.
+
+Affected validation:
+
+```sh
+node --test --test-concurrency=1 examples/demo-10-2026/home.test.mjs examples/demo-10-2026/desktop-setup.test.mjs
+```
+
+Result: **9 passed, zero failed, zero skipped**, in 26,865.459 ms. Markdown links
+and whitespace were renewed. The earlier 38-test evidence carries forward for
+unaffected client, mapping/import, v1/v2 authority and browser inputs; the affected
+home/Desktop coverage is replaced by this run. The correction is frozen for the
+two reviewers' affected rechecks. No commit, push or live-state action occurred.
+
+Both independent reviewers subsequently approved the corrected frozen hashes
+with no remaining findings; unaffected complete-diff coverage carries forward.
+The coordinator authorized the local 13-file commit. This final evidence-only
+addition changes no runtime or test input, so the 38-test run and affected nine
+tests retain their stated scope. Markdown/whitespace checks and all eleven
+original source hashes were renewed before commit. The coordinator's durable
+home preparation, bounded read/bridge smoke and Desktop proposal come next;
+live profile login, assistant/Desktop acceptance and broader merge/release gates
+remain pending. No push, PR, provider request or live configuration apply is part
+of this repository handoff.

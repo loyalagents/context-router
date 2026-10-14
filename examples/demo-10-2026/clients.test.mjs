@@ -4,8 +4,34 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { clientLaunchSpec, preflightClient } from './clients.mjs';
+import { clientLaunchSpec, preflightClient, loginSpec } from './clients.mjs';
 import { parseOptions } from './demo.mjs';
+
+test('durable profiles stay stable while endpoint and selected-generation credential remain pinned', async t => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-profile-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const profiles = path.join(root, 'profiles'); await fs.mkdir(profiles);
+  const executable = path.join(root, 'stub.mjs');
+  await fs.writeFile(executable, `#!${process.execPath}\nconsole.log(JSON.stringify({args:process.argv.slice(2),env:process.env,cwd:process.cwd()}));`, { mode: 0o700 });
+  for (const prefix of ['codex-a', 'claude', 'claude-a']) for (const suffix of ['home', 'config', 'workspace']) await fs.mkdir(path.join(profiles, `${prefix}-${suffix}`));
+  const options = { command: 'codex', agent: 'a', root: path.join(root, 'generation-one'), profileRoot: profiles, dataset: 'fresh', mcpPort: 8789 };
+  const first = clientLaunchSpec(options, { executable });
+  const next = clientLaunchSpec({ ...options, root: path.join(root, 'generation-two'), mcpPort: 8790 }, { executable });
+  assert.equal(first.env.CODEX_HOME, next.env.CODEX_HOME); assert.equal(first.cwd, path.join(profiles, 'codex-a-workspace'));
+  assert.equal(first.credentialFile, path.join(options.root, 'exports/agent-a.token'));
+  assert.equal(next.credentialFile, path.join(root, 'generation-two/exports/agent-a.token'));
+  assert.ok(first.args.includes('mcp_servers.context_router_demo.url="http://127.0.0.1:8789/mcp"'));
+  const login = loginSpec(first);
+  const result = spawnSync(login.executable, login.args, { cwd: login.cwd, env: login.env, encoding: 'utf8' });
+  assert.equal(result.status, 0); const actual = JSON.parse(result.stdout);
+  assert.deepEqual(actual.args, ['-c', 'cli_auth_credentials_store="file"', 'login']);
+  assert.equal(actual.env.CODEX_HOME, first.env.CODEX_HOME); assert.equal(actual.env.CR_DEMO_TOKEN, undefined);
+  assert.equal(actual.args.some(x => x.includes('mcp')), false);
+  const a = clientLaunchSpec({ ...options, command: 'claude', auth: 'subscription' }, { executable });
+  const b = clientLaunchSpec({ ...options, command: 'claude', auth: 'subscription', agent: 'b' }, { executable });
+  assert.notEqual(a.env.CLAUDE_CONFIG_DIR, b.env.CLAUDE_CONFIG_DIR);
+  assert.equal(b.env.CLAUDE_CONFIG_DIR, path.join(profiles, 'claude-config'));
+});
 
 test('Claude subscription B selects its read credential and isolated OAuth configuration', () => {
   const options = parseOptions(['claude', '--root', '/private/tmp/example', '--agent', 'b', '--auth', 'subscription']);
