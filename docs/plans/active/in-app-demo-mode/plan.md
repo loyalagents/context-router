@@ -1,7 +1,7 @@
 # In-app demo mode
 
 Status: **reduced scope and implementation approved by the user on 2026-10-14**.
-Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code and focused coverage are implemented; candidate freeze/final qualification follow.
+Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code and focused coverage are implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Two fresh complete-diff reviews of `b0c5a9f` completed; their correction batch passed focused checks. Affected review rechecks and renewed final qualification are tracked in the PR with exact revisions and receipts; human acceptance remains pending.
 One cohesive PR; the native assistant-control follow-up is tracked below for the
 next PR. General profiles remain future work. Focused evidence is recorded below; full final validation and human acceptance are pending.
 
@@ -835,3 +835,38 @@ unchanged model pin; a separate fresh envelope initializes without weights, then
 performs only offline maintenance after installing the clone. This proves byte
 retention across epoch upgrade without model startup/inference when run; it is
 not yet evidence of a completed qualification.
+
+Checkpoint 5 — review corrections: correctness P2 startup-return and security S1
+share a bounded return-only state. Existing demo metadata must admit as ready,
+with no pending operation and non-uncertain quiescence. An occupied demo port can
+offer Return personal after that admission. A failed prepare/receipt check or app
+failure can offer it only after ordinary child exit, required acknowledgements
+(including app drain), and exact child/lock settlement; protocol/ownership loss
+and unacknowledged partial startup still refuse. The return checks the personal
+port and requires explicit selection; it never repairs/retries demo or stops an
+occupant. Twenty-two focused native recovery/menu/maintenance/clock cases passed,
+including controlled failure and uncertain refusal. Offline mode context goes to
+stderr without changing stdout JSON.
+
+The guide uses data-bound literal search prefixes, with a red-then-green browser
+regression. Source importer evidence version 2 adds the promoted demo and bridge
+closure while retaining the old example-only digest meaning. Same-chunk bytes
+after Quit now revoke orderly finite cleanup authority. Focused backend package
+contract checks passed 8/8; deployment allowlists include only the two intended
+helper subtrees. CI uses an owned private durable copy of its already-pinned Node
+with exact byte/version checks for source Desktop tests; product trust checks
+remain strict. The canonical source alias at the package-copy caller and the
+sleep-clock fixture link list are corrected. Initial local broad runs stopped at
+missing Python/Docker PATH prerequisites and a package corpus alias; initial CI
+reported bounded closure, fixture-link and Node-ancestry integration failures.
+These attempts are not passing final qualification. Affected rechecks, renewed
+full gate/native/package/artifact/CI evidence and human acceptance remain pending.
+The corrected source/CI/deployment/control checks passed 21/21, the guide browser
+regression passed, and the exact private-Node CI foundation command passed 53 with
+its two existing opt-in installed-client probes skipped. Earlier actual pinned
+client qualification is unchanged and carried forward only for those probes.
+The final occupied-port rebuild/recheck, contract baseline, markdown links and
+whitespace checks passed. Python 3.12.8, the cached PostgreSQL image, pinned
+Node/pnpm, compiler/SDK and Chromium prerequisites are available for the final
+round. Record its outcomes in PR #183 and retained receipts, without an
+evidence-only source commit.

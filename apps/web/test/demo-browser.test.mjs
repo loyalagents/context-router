@@ -17,6 +17,10 @@ test('historical demo guide and persistent banner reuse real memory, authority a
  await f.page.getByLabel('Unlock token').fill(f.bootstrap);await f.page.getByRole('button',{name:'Unlock local dashboard'}).click();
  await f.page.getByRole('heading',{name:'Explore the demo'}).waitFor();
  assert.equal(await f.page.getByRole('button',{name:/Copy step [1-5] prompt/}).count(),5);
+ const {loadBundledSeed}=await import('../../backend/scripts/demo/seed.mjs');
+ const seed=await loadBundledSeed(new URL('../../../examples/demo-10-2026/001_user_001',import.meta.url).pathname),prefixes=new Set(seed.plan.sources.map(source=>source.file.slice(0,-6)+'.demo001.'));
+ const promptText=await f.page.locator('main ol').innerText(),shown=[...promptText.matchAll(/[a-z]+\.demo001\.\*?/g)].map(match=>match[0]);assert.ok(shown.length>0);
+ for(const prefix of shown)assert.ok(prefixes.has(prefix),'Prompt must use a real literal search prefix: '+prefix);
  for(const [link,url] of [['Memories','preferences'],['Agent permissions','permissions'],['Changes and access','history']]){
   await f.page.goto(f.ready.origin+'/dashboard');await f.page.getByRole('link',{name:link,exact:true}).click();await f.page.waitForURL('**/dashboard/'+url);
   await f.page.getByRole('complementary',{name:'Demo mode'}).waitFor();assert.match(await f.page.getByRole('complementary',{name:'Demo mode'}).innerText(),/historical 2024–2025/);

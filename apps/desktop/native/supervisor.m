@@ -57,6 +57,26 @@ static NSArray *demoCommands(CRFrames *shell,NSString *generation,NSString *prio
   for(NSDictionary *c in commands)if(!CRExact(c,@[@"version",@"generation",@"command"])||!CRInteger(c[@"version"],1,1)||(![c[@"generation"] isEqual:generation]&&!([c[@"command"] isEqual:@"quit"]&&[c[@"generation"] isEqual:priorGeneration]))||![@[@"quit",@"cancel-demo",@"return-previous",@"retry-demo"] containsObject:c[@"command"]])CRFail();
   return commands;
 }
+// A return-only shell is available only after ordinary envelope admission or a
+// completed cohort has proved quiescence. It neither retries demo nor repairs it.
+static BOOL unavailableDemo(CREnvelope *owner,CRFrames *shell,CRWriteQueue *output,NSInteger personalMcpPort){
+  [owner assertHeld];NSDictionary *state=owner.installation,*journal=CRReadJSON([owner.root stringByAppendingPathComponent:@"owner.json"],16384,YES);
+  if(![state[@"mode"] isEqual:@"demo"]||![state[@"setup"] isEqual:@"ready"]||state[@"pendingDemo"]!=[NSNull null]||state[@"pendingRestore"]!=[NSNull null]||![journal[@"lifecycle"] isEqual:@"quiescent"]||[journal[@"outcome"] isEqual:@"uncertain"])CRFail();
+  NSString *generation=CRRandom(16);emit(output,generation,@"starting",@{@"phase":@"demo-unavailable"});emit(output,generation,@"mode",@{@"mode":@"demo",@"storeId":state[@"selectedStore"]});
+  while(YES){
+    [owner assertHeld];[output flush];NSArray *commands=[shell readFrom:0];BOOL quit=NO,leave=NO;
+    for(NSDictionary *c in commands){
+      if(!CRExact(c,@[@"version",@"generation",@"command"])||!CRInteger(c[@"version"],1,1)||![c[@"generation"] isEqual:generation]||![@[@"quit",@"leave-demo"] containsObject:c[@"command"]])CRFail();
+      if([c[@"command"] isEqual:@"quit"])quit=YES;else leave=YES;
+    }
+    if(quit||shell.ended||interrupted||output.discarded){emit(output,generation,@"stopped",@{@"outcome":@"ok"});[output flush];return NO;}
+    if(leave){
+      @try{requestedPortAvailable(personalMcpPort);}@catch(NSException *e){(void)e;emit(output,generation,@"transition-refused",nil);continue;}
+      [owner selectMode:@"personal"];emit(output,generation,@"stopped",@{@"outcome":@"ok"});return YES;
+    }
+    usleep(10000);
+  }
+}
 static BOOL prepareDemo(CREnvelope *owner,NSString *resources,CRFrames *shell,CRWriteQueue *output){
   // Quit can be queued against the last displayed generation before the shell
   // consumes the finite preparation starting frame. No other old command passes.
@@ -138,19 +158,23 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger per
     struct stat existing;NSString *preflightMode=@"personal";
     if(!lstat(root.fileSystemRepresentation,&existing))preflightMode=CRReadJSON([root stringByAppendingPathComponent:@"installation.json"],16384,YES)[@"mode"]?:@"personal";
     else if(errno!=ENOENT)CRFail();
-    requestedPortAvailable([preflightMode isEqual:@"demo"]?demoMcpPort:personalMcpPort);
-    CREnvelope *owner=[[CREnvelope alloc] initWithRoot:root allowFresh:YES];
+    BOOL demoPortUnavailable=NO;
+    @try{requestedPortAvailable([preflightMode isEqual:@"demo"]?demoMcpPort:personalMcpPort);}
+    @catch(NSException *e){(void)e;if(![preflightMode isEqual:@"demo"])CRFail();demoPortUnavailable=YES;}
+    CREnvelope *owner=[[CREnvelope alloc] initWithRoot:root allowFresh:!demoPortUnavailable];
     if(!owner.fresh&&![owner.installation[@"setup"] isEqual:@"ready"])CRFail();
+    if(demoPortUnavailable){if(!unavailableDemo(owner,shell,output,personalMcpPort))return 0;again=YES;continue;}
       if(owner.installation[@"pendingDemo"]!=[NSNull null]){if(!prepareDemo(owner,resources,shell,output))return 0;again=YES;continue;}
     NSInteger mcpPort=[owner.installation[@"mode"] isEqual:@"demo"]?demoMcpPort:personalMcpPort;
-    requestedPortAvailable(uiPort);requestedPortAvailable(mcpPort);
+    requestedPortAvailable(uiPort);
+    @try{requestedPortAvailable(mcpPort);}@catch(NSException *e){(void)e;if(![owner.installation[@"mode"] isEqual:@"demo"])CRFail();if(!unavailableDemo(owner,shell,output,personalMcpPort))return 0;again=YES;continue;}
     NSString *modeAction=nil;
     NSDictionary *cap=[owner beginRole:@"prepare" operation:owner.fresh?@"initialize":@"verify" store:owner.installation[@"selectedStore"]];
     NSString *generation=owner.generation,*session=[[root stringByAppendingPathComponent:@"sessions"] stringByAppendingPathComponent:generation],*exports=[[root stringByAppendingPathComponent:@"exports"] stringByAppendingPathComponent:generation];
     NSMutableArray<CRChild *> *children=[NSMutableArray array];CRChild *prepare=nil,*app=nil,*model=nil,*download=nil;
     CRDemoReady *demoReady=nil;
     NSString *downloadTerminal=nil;BOOL downloadObserved=NO;long long downloadReceived=0;NSInteger downloadStage=0;double downloadDeadline=0;
-    NSDictionary *prepared=nil;BOOL ready=NO,drained=NO,failed=NO,stopping=NO,restart=NO,quitRequested=NO,forcedApp=NO,appRecordsFailed=NO,modelStopped=NO,modelObserved=NO;
+    NSDictionary *prepared=nil;BOOL ready=NO,drained=NO,failed=NO,stopping=NO,restart=NO,quitRequested=NO,forcedApp=NO,appRecordsFailed=NO,modelStopped=NO,modelObserved=NO,prepareFailed=NO,controlFailed=NO;
     NSInteger stopStage=0,modelPort=vacantPort();double startupDeadline=CRLifecycleNow()+120,stopDeadline=0;
     @try{
       CRDiagnostic(owner,@"starting");
@@ -202,9 +226,9 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger per
             }else if(child==download&&[@[@"download-complete",@"download-cancelled",@"download-failed"] containsObject:type]){
               if(downloadTerminal||!CRExact(record,@[@"version",@"generation",@"type"]))CRFail();downloadTerminal=type;
             }else if((child==prepare||child==app)&&[type isEqual:@"failed"]){
-              if(!CRExact(record,@[@"version",@"generation",@"type",@"category"])||![@[@"prepare-failed",@"application-failed"] containsObject:record[@"category"]])CRFail();failed=YES;stopping=YES;
+              if(!CRExact(record,@[@"version",@"generation",@"type",@"category"])||![record[@"category"] isEqual:child==prepare?@"prepare-failed":@"application-failed"])CRFail();if(child==prepare)prepareFailed=YES;failed=YES;stopping=YES;
             }else CRFail();
-            }@catch(NSException *e){(void)e;if(child==app)appRecordsFailed=YES;failed=YES;stopping=YES;}
+            }@catch(NSException *e){(void)e;if(child==app)appRecordsFailed=YES;controlFailed=YES;failed=YES;stopping=YES;}
           }
           if(child.protocolFailed){failed=YES;stopping=YES;}
         }
@@ -263,7 +287,7 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger per
         }
         if(shell.ended||interrupted||output.discarded){stopping=YES;restart=NO;if(output.discarded)failed=YES;}
         if(!ready&&!stopping&&CRLifecycleNow()>=startupDeadline)CRFail();
-      }@catch(NSException *exception){(void)exception;failed=YES;stopping=YES;}
+      }@catch(NSException *exception){(void)exception;controlFailed=YES;failed=YES;stopping=YES;}
       if(!stopping&&ready){@try{[demoReady pump];}@catch(NSException *e){(void)e;failed=YES;stopping=YES;}}
       if(stopping){
         [demoReady close];
@@ -275,6 +299,9 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger per
         if(allExited){
           BOOL certain=!app||(drained&&!forcedApp&&!app.protocolFailed&&!appRecordsFailed);NSString *outcome=certain?(failed?@"failed":@"ok"):@"uncertain";
           @try{[owner finishOutcome:outcome];CRDiagnostic(owner,[@"stopped-" stringByAppendingString:outcome]);emit(output,generation,@"stopped",@{@"outcome":outcome});double delivery=CRLifecycleNow()+2;while(!output.empty&&CRLifecycleNow()<delivery){[output flush];if(!output.empty)usleep(10000);}if(!output.empty)CRFail();}@catch(NSException *e){(void)e;return 1;}
+          BOOL controlled=certain&&failed&&!controlFailed&&!forcedApp&&prepare&&prepare.exitCode>=0&&(prepareFailed||(prepare.success&&prepared));
+          for(CRChild *child in children)if(child.protocolFailed||child.ownershipLost||child.exitCode<0)controlled=NO;
+          if(controlled&&[owner.installation[@"mode"] isEqual:@"demo"]&&!quitRequested&&!shell.ended&&!interrupted&&!output.discarded){if(!unavailableDemo(owner,shell,output,personalMcpPort))return 0;again=YES;break;}
           if(!certain||failed||output.discarded)return 1;if(modeAction&&!quitRequested&&!shell.ended&&!interrupted){
             if([modeAction isEqual:@"leave-demo"])[owner selectMode:@"personal"];
             else if([modeAction isEqual:@"enter-demo"]&&owner.installation[@"demoStore"]!=[NSNull null])[owner selectMode:@"demo"];

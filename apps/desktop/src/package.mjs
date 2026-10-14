@@ -43,7 +43,7 @@ try{
   await copyLocalUiDeployment(webDeploy,path.join(resources,'app'));
   const next=path.join(workspace.workspace,'apps/web/.next');await cp(next,path.join(resources,'app/.next'),{recursive:true,verbatimSymlinks:true,filter:file=>!['cache','standalone'].includes(path.relative(next,file).split(path.sep)[0])});
   for(const name of ['node_modules','runtime'])await cp(path.join(desktopDeploy,name),path.join(resources,'desktop',name),{recursive:true,verbatimSymlinks:true});
-  receipt.demoSeed=await copyDemoSeed(path.join(workspace.workspace,'examples/demo-10-2026/001_user_001'),path.join(resources,'demo-seed-v1'));
+  receipt.demoSeed=await copyDemoSeed(await realpath(path.join(workspace.workspace,'examples/demo-10-2026/001_user_001')),path.join(resources,'demo-seed-v1'));
   await writeFile(path.join(resources,'demo-seed.json'),JSON.stringify(receipt.demoSeed));
   await copyFile(path.join(workspace.workspace,'apps/desktop/certificate-closure.json'),path.join(resources,'desktop/certificate-closure.json'));
   await copyFile(path.join(workspace.workspace,'apps/desktop/build/context-router'),path.join(bundle,'Contents/MacOS/context-router'));

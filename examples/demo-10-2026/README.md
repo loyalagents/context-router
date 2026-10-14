@@ -56,6 +56,12 @@ private durable location; repeat that option on every command. First preparation
 also accepts `--input`, `--dataset`, `--port` and `--mcp-port`. The selected
 generation records these choices; later commands use its recorded ports.
 
+New source preparation receipts use `importerEvidenceVersion: 2` and
+`importerClosureSha256` to bind the example, shared backend demo helpers, and MCP
+bridge directories. The legacy `importerSha256` field still describes only this
+example directory. Older receipts remain readable but do not prove the promoted
+helper closure; prepare a fresh generation for that evidence.
+
 Open the dashboard origin printed by `serve`. Paste the contents of its printed
 private unlock file into **Unlock token**. Enter `unlock` in the server terminal
 for a new token. Occupied ports fail without stopping their owners. Use **Ctrl-C**

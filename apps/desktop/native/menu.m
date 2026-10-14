@@ -19,7 +19,7 @@ static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
 @end
 @implementation CRMenu {
   NSString *_bundle,*_root,*_generation,*_origin,*_unlockFile,*_mode,*_storeId,*_mcpOrigin;
-  NSInteger _uiPort,_mcpPort,_demoPort;BOOL _preparingDemo,_demoFailed;
+  NSInteger _uiPort,_mcpPort,_demoPort;BOOL _preparingDemo,_demoFailed,_demoUnavailable;
   NSStatusItem *_status;NSMenuItem *_label;NSMutableDictionary<NSString *,NSMenuItem *> *_items;
   NSTask *_guardian;NSPipe *_input,*_output;CRWriteQueue *_commands;CRFrames *_frames;NSTimer *_timer;
   BOOL _ready,_stopping,_quitting,_stopped,_broken,_download,_cancelPending,_sleepInvalidated,_openOnReady,_exitObserved;double _unlockUntil;
@@ -69,7 +69,7 @@ static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
   _items[@"copy"].enabled=active&&_unlockFile&&CRExpiryNow()<_unlockUntil;
   BOOL demo=[_mode isEqual:@"demo"];
   _status.button.title=demo?@"CR Demo":@"CR";
-  _items[@"enter-demo"].enabled=active&&!demo;_items[@"leave-demo"].enabled=active&&demo;
+  _items[@"enter-demo"].enabled=active&&!demo;_items[@"leave-demo"].enabled=demo&&(_ready||_demoUnavailable)&&!_stopping&&!_broken&&_guardian.running;
   _items[@"reset-demo"].enabled=active&&demo;_items[@"setup-demo"].enabled=active&&demo;
   _items[@"cancel-demo"].enabled=_preparingDemo&&!_demoFailed&&!_stopping&&!_broken;
   for(NSString *key in @[@"return-previous",@"retry-demo"])_items[key].enabled=_demoFailed&&!_stopping&&!_broken;
@@ -96,8 +96,8 @@ static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
 - (void)record:(NSDictionary *)record {
   if(!CRInteger(record[@"version"],1,1)||!CRPattern(record[@"generation"],@"[a-f0-9]{32}"))CRFail();NSString *type=record[@"type"];
   if([type isEqual:@"starting"]){
-    if(!CRExact(record,@[@"version",@"generation",@"type",@"phase"])||![@[@"preparing",@"preparing-demo"] containsObject:record[@"phase"]]||(_generation&&!_stopped))CRFail();
-    _preparingDemo=[record[@"phase"] isEqual:@"preparing-demo"];_demoFailed=NO;_generation=record[@"generation"];_ready=NO;_stopped=NO;_stopping=NO;_download=NO;_cancelPending=NO;_origin=nil;_unlockFile=nil;_label.title=_preparingDemo?@"Preparing historical sample data…":@"Starting local runtime…";return;
+    if(!CRExact(record,@[@"version",@"generation",@"type",@"phase"])||![@[@"preparing",@"preparing-demo",@"demo-unavailable"] containsObject:record[@"phase"]]||(_generation&&!_stopped))CRFail();
+    _demoUnavailable=[record[@"phase"] isEqual:@"demo-unavailable"];_preparingDemo=[record[@"phase"] isEqual:@"preparing-demo"];_demoFailed=NO;_generation=record[@"generation"];_ready=NO;_stopped=NO;_stopping=NO;_download=NO;_cancelPending=NO;_origin=nil;_unlockFile=nil;_label.title=_demoUnavailable?@"Demo unavailable — return to personal mode or quit":_preparingDemo?@"Preparing historical sample data…":@"Starting local runtime…";return;
   }
   if(!_generation||![record[@"generation"] isEqual:_generation]||_stopped)CRFail();
   if([type isEqual:@"mode"]){
@@ -105,7 +105,7 @@ static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
   }else if([type isEqual:@"demo-failed"]){
     if(!_preparingDemo||!CRExact(record,@[@"version",@"generation",@"type"]))CRFail();_demoFailed=YES;_stopping=NO;_label.title=@"Demo preparation stopped — candidate retained";
   }else if([type isEqual:@"transition-refused"]){
-    if(!_ready||!CRExact(record,@[@"version",@"generation",@"type"]))CRFail();_stopping=NO;_label.title=@"Mode change unavailable — destination port is occupied";
+    if((!_ready&&!_demoUnavailable)||!CRExact(record,@[@"version",@"generation",@"type"]))CRFail();_stopping=NO;_label.title=@"Mode change unavailable — destination port is occupied";
   }else if([type isEqual:@"ready"]){
     if(_ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"mcpOrigin",@"unlockFile",@"modelEnabled"])||CFGetTypeID((__bridge CFTypeRef)record[@"modelEnabled"])!=CFBooleanGetTypeID()||!CRPattern(record[@"mcpOrigin"],@"http://127\\.0\\.0\\.1:[1-9][0-9]{0,4}/mcp")||[NSURL URLWithString:record[@"mcpOrigin"]].port.integerValue>65535)CRFail();
     [self origin:record[@"origin"]];[self unlock:record[@"unlockFile"]];_mcpOrigin=record[@"mcpOrigin"];_ready=YES;
@@ -160,7 +160,7 @@ static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
 }
 - (void)changeMode:(NSString *)command title:(NSString *)title detail:(NSString *)detail {
   NSAlert *alert=[NSAlert new];alert.messageText=title;alert.informativeText=detail;[alert addButtonWithTitle:@"Continue"];[alert addButtonWithTitle:@"Cancel"];
-  if([alert runModal]==NSAlertFirstButtonReturn&&_ready&&!_stopping){_stopping=YES;_openOnReady=YES;_label.title=@"Stopping local runtime…";[self send:command];}[self update];
+  if([alert runModal]==NSAlertFirstButtonReturn&&(_ready||(_demoUnavailable&&[command isEqual:@"leave-demo"]))&&!_stopping&&!_broken){_stopping=YES;_openOnReady=YES;_label.title=@"Stopping local runtime…";[self send:command];}[self update];
 }
 - (void)enterDemo:(id)sender {(void)sender;[self changeMode:@"enter-demo" title:@"Enter demo mode?" detail:@"This closes current browser sessions and MCP connections. Personal data and model assets stay retained. Demo uses a separate persistent historical sample store with AI disabled. Start fresh client conversations after switching."];}
 - (void)leaveDemo:(id)sender {(void)sender;[self changeMode:@"leave-demo" title:@"Return to personal mode?" detail:@"This closes demo browser sessions and MCP connections and returns to your personal store. Demo edits and client profiles stay retained. Start fresh client conversations after switching."];}

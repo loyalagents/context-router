@@ -50,6 +50,13 @@ async function treeDigest(root) {
   await visit(root);
   return hash(JSON.stringify(entries));
 }
+export async function importerEvidence(root = repoRoot) {
+  const importerInputs = {};
+  for (const name of ['examples/demo-10-2026', 'apps/backend/scripts/demo', 'apps/backend/scripts/mcp-bridge']) importerInputs[name] = await treeDigest(path.join(root, name));
+  return { importerEvidenceVersion: 2, importerInputs, importerClosureSha256: hash(JSON.stringify(importerInputs)),
+    // Preserve the legacy field's meaning; old receipts have only this digest.
+    importerSha256: importerInputs['examples/demo-10-2026'] };
+}
 export async function buildEvidence() {
   if (process.versions.node !== '24.21.0') throw safeError('Use Node 24.21.0.');
   // Discover the user's installation, then execute only this check with the
@@ -69,7 +76,7 @@ export async function buildEvidence() {
     dirty: Boolean(git(['status', '--porcelain'])), sourceStatus: git(['status', '--porcelain']),
     backendSha256: await treeDigest(path.join(backendRoot, 'dist')), webBuildId,
     webServerSha256: await treeDigest(path.join(repoRoot, 'apps/web/.next/server')),
-    importerSha256: await treeDigest(fileURLToPath(new URL('./', import.meta.url))) };
+    ...await importerEvidence() };
 }
 
 export async function prepareDemo({ out, input, dataset = 'demo001', durable = false }, { beforeCreate = async () => {}, onProgress, writeManifest = writeJson } = {}) {

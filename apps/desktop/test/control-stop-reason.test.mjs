@@ -15,3 +15,9 @@ test('finite preparation may retain authority for orderly cleanup, but later pro
   control.fail();
   assert.deepEqual(stops, [{ orderly: true }, { orderly: false }]);
 });
+test('bytes after Quit in the same transport chunk revoke orderly cleanup authority',async()=>{
+ const generation='a'.repeat(32),stops=[],control=new ControlProtocol(generation,{onStop:reason=>stops.push(reason),onCommand(){}});
+ const frame=command=>JSON.stringify({version:1,generation,command})+'\n';
+ control.push(Buffer.from(frame('start')+frame('quit')+'malformed\n'));await control.stopped;
+ assert.equal(control.failed,true);assert.equal(control.orderlyStopRequested,false);assert.deepEqual(stops,[{orderly:true},{orderly:false}]);
+});

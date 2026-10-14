@@ -61,7 +61,9 @@ Quit the menu application before offline CLI administration.
 
 The dashboard uses an available loopback port. Personal MCP defaults to
 `http://127.0.0.1:8787/mcp`, matching the existing manual setup. An already occupied
-requested port is refused before managed state is opened. There is no fallback
+requested personal port is refused before managed state is opened. A selected
+demo with an occupied demo port can admit the existing quiescent envelope and
+offer **Return to personal mode…** without starting demo. There is no fallback
 listener or interference with the occupying process. This is a preflight, not a
 reservation: a later port race or partial-startup failure can still leave uncertain
 state that blocks launch. Freeing a port does not clear an uncertain generation.
@@ -82,8 +84,13 @@ active memories, original definitions/import history and fresh A/B/C credentials
 Later changes, custom clients and grants do not carry forward. Old stores/exports
 and isolated provider login profiles remain retained. Reset is not secure erasure.
 Use Clear memory or Clear history only for their separately described behavior.
-Controlled preparation failure offers explicit return or fresh retry; uncertain
-ownership remains refused and retained. Do not clear journals or profile guards.
+Controlled sample preparation failure offers explicit return or fresh retry.
+A selected demo whose receipt/prepare validation fails, or whose application
+fails with acknowledged drain and proven child/lock settlement, offers only
+**Return to personal mode…** or Quit. This retains the demo for inspection;
+return requires an available personal port. Uncertain ownership, pending
+operations, malformed installation metadata and unacknowledged partial startup
+remain refused and retained. Do not clear journals or profile guards.
 
 **Demo setup…** shows selectable commands with the current store, native runtime
 generation and actual MCP endpoint. Select one command line and choose **Copy selected command**, then paste it into Terminal. Run each intended action separately. They use
@@ -95,6 +102,8 @@ verification; edits may correctly cause a baseline mismatch. Offline authority
 commands use `--root ROOT --mode demo mcp ...`; other maintenance defaults to the
 personal slot, even when demo was selected. Demo recovery/backup/restore is not
 exposed. Existing personal restore rules and pending-operation exclusion remain.
+Admitted offline commands print their nonsecret mode on stderr; stdout JSON stays
+available to scripts.
 
 The primary story uses Codex 0.160.0 as Agent A and Claude Code 2.1.299 subscription
 as Agent B. Install these external CLIs separately. The panel explicitly selects

@@ -27,5 +27,8 @@ int main(int argc,const char *argv[]){@autoreleasepool{@try{
   if(!setup)return 3;
   NSString *selected=CRSelectedDemoCommand(commands,[commands rangeOfString:@"launch B --client claude --auth subscription"]);
   if(![selected hasSuffix:@"launch B --client claude --auth subscription"]||[selected containsString:@"\n"]||CRSelectedDemoCommand(commands,NSMakeRange(0,commands.length))||CRSelectedDemoCommand(commands,[commands rangeOfString:@"Historical sample data"]))return 4;
+  record(menu,two,@"stopped",@{@"outcome":@"failed"});record(menu,one,@"starting",@{@"phase":@"demo-unavailable"});record(menu,one,@"mode",@{@"mode":@"demo",@"storeId":two});
+  if(![[menu valueForKey:@"demoUnavailable"] boolValue]||[[menu valueForKey:@"ready"] boolValue])return 5;
+  record(menu,one,@"transition-refused",@{});if([[menu valueForKey:@"stopping"] boolValue])return 6;
   printf("{\"initialSleep\":%s,\"restartSleep\":%s,\"cancelOnce\":%s}\n",initial?"true":"false",restart?"true":"false",once?"true":"false");return initial&&restart&&once?0:2;
 }@catch(NSException *e){(void)e;return 1;}}}

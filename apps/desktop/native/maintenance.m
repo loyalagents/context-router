@@ -16,6 +16,7 @@ NSString *CRDefaultRoot(BOOL create){
 }
 static int runJob(NSString *bundle,CREnvelope *owner,NSString *role,NSString *operation,NSString *store,NSArray *arguments){
   NSDictionary *cap=[owner beginRole:role operation:operation store:store];BOOL prepare=[role isEqual:@"prepare"];
+  fprintf(stderr,"Managed mode: %s\n",[cap[@"mode"] UTF8String]);
   NSString *resources=[bundle stringByAppendingPathComponent:@"Contents/Resources"],*entry=[resources stringByAppendingPathComponent:prepare?@"desktop/runtime/prepare-store.mjs":@"desktop/runtime/maintenance.mjs"];
   CRChild *child=nil;NSNumber *ack=nil;NSString *target=nil;BOOL stopping=NO,forced=NO,unsafe=NO;NSInteger stage=0;
   double deadline=CRLifecycleNow()+([@[@"backup",@"restore"] containsObject:operation]?600:120);

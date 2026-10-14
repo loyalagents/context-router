@@ -24,10 +24,12 @@ const control=await openManagedControl(cap.generation,{onStop:()=>{},onCommand:c
 const pair=path.join(cap.envelope,'stores',cap.storeId);`;
   await writeFile(path.join(runtime,'prepare.mjs'),common+`
 if(cap.operation==='initialize'){for(const name of ['data','identity'])fs.mkdirSync(path.join(pair,name),{mode:0o700});fs.writeFileSync(path.join(pair,'identity/identity.json'),JSON.stringify({databaseTargetId:'A'.repeat(43),principalId:'P'.repeat(43)}),{mode:0o600});}
+if(cap.mode==='demo'&&(${JSON.stringify(variant)}==='demo-prepare-failure'||JSON.parse(fs.readFileSync(path.join(cap.envelope,'demo',cap.storeId,'generation.json'))).status!=='complete')){await control.send('failed',{category:'prepare-failed'});await control.close();process.exit(1);}
 await control.send('prepared',{targetId:cap.mode==='demo'?'D'.repeat(43):'A'.repeat(43),modelEnabled:false,modelPort:Number(process.argv[2])});await control.close();`);
   await writeFile(path.join(runtime,'application.mjs'),common+`
 const unlockFile=path.join(cap.envelope,'exports',cap.generation,'unlock-aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa.token');fs.writeFileSync(unlockFile,'fixture',{mode:0o600});
 await control.send('ready',{origin:'http://127.0.0.1:3210',mcpOrigin:'http://127.0.0.1:'+process.argv[3]+'/mcp',unlockFile,modelEnabled:false});
+if(cap.mode==='demo'&&['demo-drained-failure','demo-undrained-failure'].includes(${JSON.stringify(variant)})){await control.send('failed',{category:'application-failed'});if(${JSON.stringify(variant)}==='demo-drained-failure')await control.send('drained');await control.close();process.exit(1);}
 ${variant==='busy'?"await control.send('model-status',{state:'busy'});":''}
 ${variant==='lost-app' ? 'process.exit(2);' : variant==='status-eof' ? 'await control.stopped;await control.close();' : variant==='unsolicited-drain' ? "await control.send('drained');await control.stopped;await control.close();" : "await control.stopped;await control.send('drained');await control.close();"+(variant==='failed-exit'?'process.exitCode=2;':'')}`);
   if(variant==='failed-startup') {

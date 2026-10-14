@@ -52,7 +52,7 @@ export class ControlProtocol {
           if (!['unlock','quit','model-unavailable'].includes(frame.command)) throw failure();
           if (frame.command === 'quit') this.#quitRequested = true;
           this.#onCommand(frame.command);
-          if (frame.command === 'quit') { this.end(); return; }
+          if (frame.command === 'quit') { this.end(); if (end + 1 < bytes.length) this.fail(); return; }
         }
         cursor = end + 1;
       }

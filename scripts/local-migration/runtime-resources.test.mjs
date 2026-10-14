@@ -305,7 +305,7 @@ test("built backend resources and production dependencies are cwd-independent an
       backendManifest.dependencies["@google-cloud/vertexai"],
       rootManifest.dependencies["@google-cloud/vertexai"],
     );
-    assert.deepEqual(backendManifest.files, ["dist"]);
+    assert.deepEqual(backendManifest.files, ["dist", "scripts/demo", "scripts/mcp-bridge"]);
     assert.equal(
       backendManifest.scripts["schema:generate"],
       "ts-node -r tsconfig-paths/register scripts/graphql-schema-fixture.ts --write",
@@ -540,7 +540,10 @@ test("built backend resources and production dependencies are cwd-independent an
       "node_modules",
       "package.json",
       "pnpm-lock.yaml",
+      "scripts",
     ]);
+    assert.deepEqual((await readdir(path.join(stageBackend, "scripts"))).sort(), ["demo", "mcp-bridge"]);
+    for (const file of ["demo/domain.mjs", "demo/installed-clients.mjs", "demo/installed-desktop.mjs", "demo/desktop-bridge.mjs", "mcp-bridge/cli.mjs", "mcp-bridge/bridge.mjs", "mcp-bridge/credential.mjs"]) assert.equal((await lstat(path.join(stageBackend, "scripts", file))).isFile(), true);
     for (const forbidden of [".env", ".env.local", "src", "test", "prisma"]) {
       await assert.rejects(lstat(path.join(stageBackend, forbidden)), {
         code: "ENOENT",

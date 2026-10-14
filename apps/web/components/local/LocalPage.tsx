@@ -248,10 +248,10 @@ export default function LocalPage({ page }: { page: Page }) {
 
 function DemoGuide() {
   const prompts = [
-    'Read travel.demo001.* and food.demo001.* preferences. These are historical 2024–2025 memories; do not assume dates or bookings are current.',
-    'Propose one change to a travel.demo001.* preference. Wait for my explicit approval before writing it, then confirm the stored value.',
+    'Search preferences using the literal prefixes travel.demo001. and home.demo001. These are historical 2024–2025 memories; do not assume dates or bookings are current.',
+    'Search with the prefix travel.demo001. and propose one change to a returned preference. Wait for my explicit approval before writing it, then confirm the stored value.',
     'In a fresh Agent B or C conversation, read the exact changed slug again and report the current stored value.',
-    'Read health.demo001.* and finance.demo001.*. Report what the tools permit; do not guess or infer restricted values.',
+    'Search using the literal prefixes health.demo001. and finance.demo001. Report what the tools permit; do not guess or infer restricted values.',
     'Review the changed memory’s Modified by field and its Audit History. Compare the original importer event with the later agent change and MCP Access event.',
   ];
   return <main className="p-10 max-w-5xl space-y-6">

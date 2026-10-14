@@ -342,7 +342,15 @@ jobs:
 
       - name: Test historical demo foundation without provider sessions
         timeout-minutes: 5
-        run: node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs
+        run: |
+          umask 077
+          demo_node_root="$(mktemp -d "$HOME/.context-router-ci-node.XXXXXX")"
+          trap 'rm -rf -- "$demo_node_root"' EXIT
+          demo_node_source="$(node -p 'require("node:fs").realpathSync(process.execPath)')"
+          install -m 700 "$demo_node_source" "$demo_node_root/node"
+          cmp "$demo_node_source" "$demo_node_root/node"
+          test "$("$demo_node_root/node" --version)" = v24.21.0
+          "$demo_node_root/node" --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs
         working-directory: .
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
