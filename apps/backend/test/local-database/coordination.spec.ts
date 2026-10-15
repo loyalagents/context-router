@@ -10,7 +10,7 @@ localCoordinationContract("SQLite real held worker", async () =>
   coordinationFixture(),
 );
 
-// One budget covers real worker startup and each request. Leave CI startup room
+// Allow real worker startup and normal requests before fault injection to finish
 // while keeping the fault/cleanup assertions below bounded to 1500 ms.
 const faultDeadlineMs = 1000;
 
@@ -71,6 +71,7 @@ describe("local held-worker ownership and deadlines", () => {
     expect(fixture.workers).toHaveLength(0);
   });
   it("bounds actual exit cleanup for a busy worker and retains process fencing on uncertain cleanup", async () => {
+    let busyReplyAt: number | undefined;
     fixture = coordinationFixture();
     const held = await fixture.acquire();
     const coordination = new SqliteLocalIdentityCoordination({
@@ -85,13 +86,20 @@ describe("local held-worker ownership and deadlines", () => {
           `require(${JSON.stringify(entry)}); setInterval(() => {}, 1000)`,
           { ...options, eval: true },
         );
+        worker.on("message", (reply) => {
+          if (
+            busyReplyAt === undefined &&
+            reply?.ok === false &&
+            reply.failure === "busy"
+          ) busyReplyAt = performance.now();
+        });
         fixture.workers.push(worker);
         return worker;
       },
     });
-    const started = Date.now();
     await expect(coordination.acquire()).rejects.toThrow("busy");
-    expect(Date.now() - started).toBeLessThan(1500);
+    expect(busyReplyAt).toBeDefined();
+    expect(performance.now() - busyReplyAt!).toBeLessThan(1500);
     held.assertHeld();
     await Promise.all(
       fixture.workers.slice(1).map((worker) => worker.terminate()),
