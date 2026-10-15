@@ -1,6 +1,6 @@
 # Agent workflow efficiency
 
-- Status: bounded overview and workflow clarifications implemented; broader experiments deferred
+- Status: overview/workflow clarifications implemented; approved narrow CI selection in validation
 - Owner: the product owner selects the next implementation slice
 - Updated: 2026-10-15
 - Policy: [agent workflow](../../../useful/AGENT_WORKFLOW.md)
@@ -64,6 +64,51 @@ the added test file, explaining the difference from the earlier observation.
 Output bytes fell about 83%; billed-token and elapsed-task savings remain unproved.
 
 ## Other options
+
+The product owner approved a modification-only, nine-file migration CI exception
+on 2026-10-15. The exact allowlist, mandatory consumers, failure handling and
+receipt distinction live in the existing
+[contract policy](../../../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#nonruntime-ci-selection).
+No broad documentation/script exemption or individual-test selection is added.
+Standard CI and the default full local gate remain unchanged. Separating
+documentation CI definitions is deferred: that could avoid application-suite
+dispatch for documentation-test definition edits, but leaves the migration
+critical path and adds another workflow boundary. Keeping routing unchanged has
+no selection-maintenance cost but retains the observed qualification cost.
+
+Measured from the naturally occurring #186 runs (not performance experiments):
+
+| Run/check | Event-to-final-job elapsed | Summed runner occupancy |
+| --- | ---: | ---: |
+| [Regular CI](https://github.com/loyalagents/context-router/actions/runs/38698847195) | 8m25s | 26m36s |
+| Documentation job within regular CI | 12s job duration | 12s |
+| [Migration](https://github.com/loyalagents/context-router/actions/runs/38698846895) | 17m11s | 32m06s |
+
+Source took 15m00s, packaging 16m48s and aggregation 18s; packaging was the
+critical path. Both workflows totalled 58m42s occupancy (50m36s Linux, 8m06s
+macOS), not billed minutes or dollar costs. Recent completed migration runs
+[38694303197](https://github.com/loyalagents/context-router/actions/runs/38694303197)
+and [38695450063](https://github.com/loyalagents/context-router/actions/runs/38695450063)
+took 15m54s–17m36s elapsed and 26m38s–34m04s runner occupancy.
+
+Estimate, not measurement: a 1–3 minute lightweight path would save roughly
+13–17 minutes elapsed and 24–33 runner-minutes per eligible run. Actual eligible
+Actions duration remains unmeasured. Standard suites already skip for these
+nine paths, so their #186 cost is not an additional saving. #186 itself remains
+ineligible because it changed CI and added files. Confirm scheduling and summaries
+on the first naturally occurring eligible run; no metrics subsystem is added.
+
+Implementation base is freshly fetched `4d68bcf`, including merged #185's separate
+database timing fixes; the reviewed policy base was `f7514fa`. Main agent is the
+sole writer. Requested coordinator and independent plan/final reviewers are
+GPT-6 Astra/xhigh. Plan-review spawn explicitly accepted those settings; exact
+coordinator settings and independent runtime attestation are unavailable. The
+read-only plan review found no blockers; complete-diff final review is pending.
+The agreed freeze follows resolved corrections, green focused checks and ready
+docs, then one draft PR, exact-head CI, full local gate and fresh final review.
+This CI implementation requires full qualification. Reverting the cohesive PR
+restores unconditional lanes; receipt meanings never change. Final evidence
+belongs in the PR, not a pass-announcement commit.
 
 | Option | Hypothesized benefit | Boundary or cost |
 | --- | --- | --- |

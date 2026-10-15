@@ -10,7 +10,67 @@ permissions:
   contents: read
 
 jobs:
+  validation-selection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    outputs:
+      profile: ${{ steps.selection.outputs.profile }}
+      binding: ${{ steps.selection.outputs.binding }}
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        timeout-minutes: 5
+        with:
+          node-version: '24.21.0'
+      - name: Select required validation from complete Git changes
+        id: selection
+        timeout-minutes: 2
+        run: node scripts/local-migration/ci-validation-policy.mjs --select
+
+  nonruntime-checks:
+    needs: validation-selection
+    if: needs.validation-selection.result == 'success' && needs.validation-selection.outputs.profile == 'nonruntime'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 5
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6.0.8
+        timeout-minutes: 5
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        timeout-minutes: 5
+        with:
+          node-version: '24.21.0'
+          cache: pnpm
+      - name: Verify toolchain
+        timeout-minutes: 1
+        run: node scripts/check-toolchain.mjs
+      - name: Install dependencies
+        timeout-minutes: 15
+        run: pnpm install --frozen-lockfile
+      - name: Test documentation consumers and validation policy
+        timeout-minutes: 5
+        run: node --test scripts/check-markdown-links.test.mjs scripts/print-repo-structure.test.mjs scripts/local-migration/ci-path-filters.test.mjs scripts/local-migration/check-contract-baseline.test.mjs
+      - name: Check repository Markdown links
+        timeout-minutes: 1
+        run: node scripts/check-markdown-links.mjs
+      - name: Check contracts against the verified base and whitespace
+        timeout-minutes: 3
+        run: node scripts/local-migration/check-nonruntime.mjs
+        env:
+          MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+
   source-qualification:
+    needs: validation-selection
+    # Override implicit success(): failed detection never grants an exemption.
+    if: always() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime')
     runs-on: ubuntu-latest
     timeout-minutes: 188
 
@@ -133,6 +193,8 @@ jobs:
           retention-days: 7
 
   packaging-qualification:
+    needs: validation-selection
+    if: always() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime')
     runs-on: ubuntu-latest
     timeout-minutes: 190
 
@@ -258,23 +320,14 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Preserve the existing check name. Failed/skipped dependencies must still fail
-  # this job; neither an absent receipt nor a prior attempt can confer success.
+  # Preserve the check name and explicitly distinguish non-applicability from
+  # qualification. Full qualification still requires both current-attempt receipts.
   local-migration-baseline:
-    needs: [source-qualification, packaging-qualification]
+    needs: [validation-selection, nonruntime-checks, source-qualification, packaging-qualification]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Require successful execution lanes
-        timeout-minutes: 1
-        env:
-          SOURCE_RESULT: ${{ needs.source-qualification.result }}
-          PACKAGING_RESULT: ${{ needs.packaging-qualification.result }}
-        run: |
-          test "$SOURCE_RESULT" = success
-          test "$PACKAGING_RESULT" = success
-
       - uses: actions/checkout@v4
         timeout-minutes: 5
         with:
@@ -285,7 +338,20 @@ jobs:
         with:
           node-version: '24.21.0'
 
+      - name: Recompute selection and require actual job outcomes
+        id: validation-result
+        timeout-minutes: 2
+        run: node scripts/local-migration/ci-validation-policy.mjs --aggregate
+        env:
+          SELECTION_RESULT: ${{ needs.validation-selection.result }}
+          SELECTION_PROFILE: ${{ needs.validation-selection.outputs.profile }}
+          SELECTION_BINDING: ${{ needs.validation-selection.outputs.binding }}
+          NONRUNTIME_RESULT: ${{ needs.nonruntime-checks.result }}
+          SOURCE_RESULT: ${{ needs.source-qualification.result }}
+          PACKAGING_RESULT: ${{ needs.packaging-qualification.result }}
+
       - name: Download source qualification receipt
+        if: steps.validation-result.outputs.profile == 'full'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         timeout-minutes: 2
         with:
@@ -293,6 +359,7 @@ jobs:
           path: ${{ runner.temp }}/qualification-receipts
 
       - name: Download packaging qualification receipt
+        if: steps.validation-result.outputs.profile == 'full'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         timeout-minutes: 2
         with:
@@ -300,6 +367,7 @@ jobs:
           path: ${{ runner.temp }}/qualification-receipts
 
       - name: Verify complete qualification
+        if: steps.validation-result.outputs.profile == 'full'
         timeout-minutes: 3
         run: node scripts/local-migration/combine-ci-qualification.mjs --combine
         env:

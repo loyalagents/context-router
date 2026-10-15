@@ -264,7 +264,7 @@ report `baseComparison=skipped`; aggregate runs report
 
 ### CI Qualification Profiles
 
-The dedicated workflow starts two independent jobs with their own full-history
+When full qualification is selected, the workflow starts two independent jobs with full-history
 checkout, dependencies, writable stores/caches, PostgreSQL service, browser
 prerequisites and disposable gate workspace. The fixed `--ci-source` profile runs
 phases 1–10 in their existing order followed by repository-integrity; the fixed
@@ -298,8 +298,8 @@ Close failures fail qualification, preserving the first error while attempting a
 releases once. This retains the existing external-process path-check/rename race;
 it does not claim hostile-process atomicity. Default full/smoke finalization is unchanged.
 
-The stable `local-migration-baseline` combined job always evaluates both dependency
-results, requires explicit success and
+The stable `local-migration-baseline` combined job always evaluates selection and
+actual dependency results. For full qualification it requires explicit success and
 exactly two current-run/current-attempt receipts, and independently reconstructs
 the clean copied source and verified base bindings. It checks the actual checkout
 SHA (the test-merge SHA on PR runs), separate PR head, source digest, base bundle,
@@ -330,8 +330,59 @@ A partial failed-job rerun can leave only one receipt for the new attempt;
 use GitHub's **Re-run all jobs** when both lanes must produce matching evidence.
 No incompatible attempt is silently combined. Neither sibling failure nor a new
 push automatically cancels the other lane's cleanup. The combined job has a
-20-minute bound (18 minutes of step budgets). Local qualification records its
+20-minute bound (19 minutes of step budgets). Local qualification records its
 own actual source and does not claim to have tested the PR merge checkout.
+
+### Nonruntime CI Selection
+
+Policy v1 permits a separate nonruntime check lane only for a nonempty diff of
+content modifications to these exact files, with regular-file type and
+permissions unchanged:
+
+- `AGENTS.md`, `CLAUDE.md`, `docs/README.md`, `docs/plans/README.md`;
+- `docs/plans/backlog/stabilization/README.md` and `agent-efficiency.md` in that directory;
+- `docs/useful/AGENT_WORKFLOW.md`;
+- `print-repo-structure.sh` and `scripts/print-repo-structure.test.mjs`.
+
+All other paths, mixed changes, additions, deletions, renames, type/permission
+changes and empty diffs require full qualification. There is no `docs/**` or
+`scripts/**` exemption. Root README has backend consumers; operational runbooks,
+contract registries and frozen evidence remain fully qualified. CI, gate/checker,
+dependency and toolchain changes are full. Adding a new consumer of an allowlisted
+file requires covering it in the nonruntime lane or removing that exemption.
+Guidance prose does not authorize executable gate changes or remove human review.
+
+The workflow still runs on every PR to main and push to main. Selection requires
+a clean full-history checkout matching the event. PRs compare both the branch
+from its unique merge base and the actual test merge from the event base; an
+advanced merge first parent selects full qualification. Pushes compare the
+verified ancestor `before` to the actual `after` checkout. NUL-delimited Git
+changes include modes and both endpoints of moves by disabling rename detection.
+Invalid metadata, unsupported events, ambiguous/missing/shallow history, failed
+Git commands or incomplete output cannot exempt validation. Merge queues and
+manual dispatch are not supported events. Failed selection starts the full lanes
+but also fails the final result; it cannot become an implicit success.
+
+The nonruntime lane requires the pinned toolchain, frozen dependencies, complete
+Markdown/overview, routing and contract-checker test suites, strict links,
+whitespace and the actual contract checker with a verified base bundle. This
+preserves the maintained-document reference census. It runs no application
+build, database, browser or model and produces no qualification receipt.
+
+The always-running `local-migration-baseline` job independently recomputes the
+selection and verifies the exported binding and every dependency result. The
+nonruntime branch requires its checks to succeed and both qualification lanes to
+be skipped, then explicitly reports source/package qualification **not applicable**
+with the eligible paths and comparison identities. The full branch requires both
+lanes to succeed and retains the unchanged receipt combiner. Failed, cancelled,
+missing or unexpectedly skipped results fail. A skipped job is not itself proof
+of non-applicability; workflow-level path filters are not used.
+
+This changes CI acceptance selection, not receipt meanings or the default local
+twelve-phase gate. Standard CI routing remains unchanged. GitHub API inspection
+on 2026-10-15 found no main branch protection or applicable rulesets: repository
+policy still requires the final aggregate and applicable standard checks before
+human merge, but these are not currently server-enforced required checks.
 
 The Step 03 restart and sealed-package evidence starts the compiled local
 preview twice around a credential rotation, preserves one principal and its
