@@ -187,7 +187,7 @@ test('desktop changes select native CI plus both shared product owners with exac
   const commands = job.steps.map(s => s.run).filter(Boolean);
   assert.deepEqual(commands, [
     `node -e "if(process.platform!=='darwin'||process.arch!=='arm64')process.exit(1)"`,
-    'node scripts/check-toolchain.mjs', '/usr/bin/clang --version && /usr/bin/xcrun --show-sdk-path',
+    'bash scripts/local-migration/ci-private-node.sh', 'node scripts/check-toolchain.mjs', '/usr/bin/clang --version && /usr/bin/xcrun --show-sdk-path',
     'pnpm install --frozen-lockfile', 'pnpm --filter backend prisma:generate', 'pnpm --filter backend build',
     'pnpm --filter desktop test', 'pnpm --filter desktop build:native', 'pnpm --filter desktop test:native',
   ]);
@@ -307,4 +307,21 @@ test("CI receipt transports and independent provenance use exact matching attemp
     const summary = steps.find(s => s.name === "Persist sanitized gate evidence");
     assert.ok(summary.run.includes(artifact.with.name.split("-${{")[0] + " artifact"));
   }
+});
+
+test('historical corpus selects shared product lanes and frontend runs the bounded foundation suite',async()=>{
+ const workflow=parse(await readFile(ciPath,'utf8')),filters=parse(workflow.jobs.changes.steps.find(step=>step.id==='filter').with.filters);
+ for(const file of ['examples/demo-10-2026/001_user_001/home.jsonl','apps/backend/scripts/demo/domain.mjs'])assert.deepEqual(selectedFilters(filters,file),['backend','desktop','frontend']);
+ const step=workflow.jobs['frontend-build'].steps.find(step=>step.name==='Test historical demo foundation without provider sessions');
+ assert.equal(step.run,'node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs');
+ assert.equal(step['working-directory'],'.');assert.equal(step['timeout-minutes'],5);assert.deepEqual(step.env,{PLAYWRIGHT_BROWSERS_PATH:'${{ runner.temp }}/playwright'});
+});
+
+test('all jobs with trusted client fixtures inherit one private pinned Node before qualification',async()=>{
+ for(const [file,job] of [[ciPath,'frontend-build'],[ciPath,'desktop-native'],[dedicatedPath,'source-qualification'],[dedicatedPath,'packaging-qualification']]){
+  const steps=parse(await readFile(file,'utf8')).jobs[job].steps,setup=steps.findIndex(s=>s.uses==='actions/setup-node@v4'),privateNode=steps.findIndex(s=>s.run?.split('\n').includes('bash scripts/local-migration/ci-private-node.sh')),install=steps.findIndex(s=>s.run==='pnpm install --frozen-lockfile');
+  assert.ok(setup<privateNode&&privateNode<install,job);if(file===ciPath){assert.equal(steps[privateNode]['working-directory'],'.');assert.equal(steps[privateNode]['timeout-minutes'],1);}else{assert.equal(steps[privateNode].name,'Verify toolchain and seed offline Corepack runtime');assert.equal(steps[privateNode]['timeout-minutes'],5);}
+ }
+ const script=await readFile(path.join(repositoryRoot,'scripts/local-migration/ci-private-node.sh'),'utf8');
+ assert.ok(script.includes('mktemp -d "$HOME/.context-router-ci-node.XXXXXX"'));assert.ok(script.includes('install -m 700 "$ci_node_source" "$ci_node_root/node"'));assert.ok(script.includes('cmp "$ci_node_source" "$ci_node_root/node"'));assert.ok(script.includes('= v24.21.0'));assert.ok(script.includes('>> "$GITHUB_PATH"'));
 });

@@ -219,3 +219,13 @@ unverified observations. Its reusable checklist does not turn those observations
 into independently passing tests. Use synthetic data and isolated client
 configuration for future runs; Step 09 managed installation and native model
 qualification require their own evidence and applicable authorization.
+
+## Installed Historical Demo
+
+The native app now owns a separate persistent historical demo store. Its
+**Demo setup…** panel provides packaged generation/endpoint-bound A/B login and
+launch commands plus C Desktop prepare/apply. No checkout or manual token/config
+construction is needed for that flow. The existing source/manual recipes above
+remain independent. See [installed demo mode](INSTALLED_MAC_APP.md#historical-demo-mode)
+for lifecycle, explicit provider login, stale-command refusal, durable C snapshots
+and the remaining human acceptance limits.

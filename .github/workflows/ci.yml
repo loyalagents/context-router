@@ -44,6 +44,7 @@ jobs:
               - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/backend/**'
               - 'apps/desktop/**'
+              - 'examples/demo-10-2026/**'
               - 'apps/web/local-ui.mjs'
             desktop:
               - '.github/workflows/ci.yml'
@@ -57,6 +58,7 @@ jobs:
               - 'scripts/local-migration/**'
               - 'docs/current/local-migration-contract-baseline.json'
               - 'apps/desktop/**'
+              - 'examples/demo-10-2026/**'
               - 'apps/backend/**'
               - 'apps/web/**'
             local_orchestrator:
@@ -108,6 +110,7 @@ jobs:
               - 'apps/web/**'
               - 'apps/backend/**'
               - 'apps/desktop/**'
+              - 'examples/demo-10-2026/**'
 
   documentation-checks:
     runs-on: ubuntu-latest
@@ -305,6 +308,11 @@ jobs:
           node-version: '24.21.0'
           cache: 'pnpm'
 
+      - name: Qualify private pinned Node for isolated client fixtures
+        timeout-minutes: 1
+        run: bash scripts/local-migration/ci-private-node.sh
+        working-directory: .
+
       - name: Verify toolchain
         run: node scripts/check-toolchain.mjs
         working-directory: .
@@ -337,6 +345,13 @@ jobs:
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
 
+      - name: Test historical demo foundation without provider sessions
+        timeout-minutes: 5
+        run: node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs
+        working-directory: .
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+
   desktop-native:
     needs: changes
     if: needs.changes.outputs.desktop == 'true'
@@ -354,6 +369,11 @@ jobs:
           cache: 'pnpm'
       - name: Assert native pilot architecture
         run: node -e "if(process.platform!=='darwin'||process.arch!=='arm64')process.exit(1)"
+      - name: Qualify private pinned Node for isolated client fixtures
+        timeout-minutes: 1
+        run: bash scripts/local-migration/ci-private-node.sh
+        working-directory: .
+
       - name: Verify toolchain
         run: node scripts/check-toolchain.mjs
       - name: Verify compiler and SDK

@@ -81,14 +81,15 @@ export async function inventoryPayload(root, options) {
   return (await collectPayload(root, options)).files;
 }
 export function createPackageManifest({ source, files }) {
-  const manifest = { version: 2, distribution: 'local-candidate', platform: 'darwin', arch: 'arm64', securityEpoch: 1,
+  const manifest = { version: 2, distribution: 'local-candidate', platform: 'darwin', arch: 'arm64', securityEpoch: 2,
     node: '24.21.0', sqliteVersions: [1, 2], identityVersion: 1, model:{...modelMetadata},source, files };
   validatePackageManifest(manifest);
   return manifest;
 }
-export function validatePackageManifest(m) {
+export function validatePackageManifest(m) { return validateForEpoch(m,2); }
+function validateForEpoch(m,epoch) {
   if (!exact(m, ['version', 'distribution', 'platform', 'arch', 'securityEpoch', 'node', 'sqliteVersions', 'identityVersion','model', 'source', 'files']) ||
-    m.version !== 2 || m.distribution !== 'local-candidate' || m.platform !== 'darwin' || m.arch !== 'arm64' || m.securityEpoch !== 1 ||
+    m.version !== 2 || m.distribution !== 'local-candidate' || m.platform !== 'darwin' || m.arch !== 'arm64' || m.securityEpoch !== epoch ||
     m.node !== '24.21.0' || JSON.stringify(m.sqliteVersions) !== '[1,2]' || m.identityVersion !== 1 || !hex(m.source) ||
     !Array.isArray(m.files) || !m.files.length || m.files.length > 100_000 || !exact(m.model,Object.keys(modelMetadata)) || Object.entries(modelMetadata).some(([key,value])=>m.model[key]!==value)) reject();
   let previous = '', total = 0;
@@ -111,10 +112,15 @@ export function validatePackageManifest(m) {
   return m;
 }
 /** Complete verification uses the OS seal as well as the ordinary byte inventory. */
-export async function verifyPackage(root, manifest) {
-  validatePackageManifest(manifest);
+export async function verifyPackage(root, manifest) { return verifyForEpoch(root,manifest,2); }
+// Test tooling for a separately pinned previous artifact only. Current native
+// admission and ordinary package verification never accept this older epoch.
+export async function verifyPreviousEpoch1Package(root,manifest) { return verifyForEpoch(root,manifest,1); }
+async function verifyForEpoch(root,manifest,epoch) {
+  validateForEpoch(manifest,epoch);
   for (const name of ['Contents/Resources/bin/node', 'Contents/Resources/model/llama-server', 'Contents/Resources/app/local-ui.mjs',
-    ...['prepare', 'application', 'maintenance', 'prepare-store', 'download'].map(name => `Contents/Resources/desktop/runtime/${name}.mjs`)]) {
+    ...(epoch===2?['Contents/Resources/demo-seed.json']:[]),
+    ...['prepare', 'application', 'maintenance', 'prepare-store', 'download',...(epoch===2?['demo','demo-prepare']:[])].map(name => `Contents/Resources/desktop/runtime/${name}.mjs`)]) {
     if (!manifest.files.some(entry => entry.path === name && entry.kind === 'file')) reject();
   }
   root = await realpath(root);

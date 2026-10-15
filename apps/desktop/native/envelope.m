@@ -54,23 +54,44 @@ void CRAtomicJSON(NSString *file, NSDictionary *value) {
   if (!okay || rename(stage.fileSystemRepresentation, file.fileSystemRepresentation)) CRFail();
   syncDirectory(file.stringByDeletingLastPathComponent);
 }
+static BOOL storeID(id value){return CRPattern(value,@"[a-f0-9]{32}");}
+static void installationV1Valid(NSDictionary *m) {
+  if (!CRExact(m,@[@"version",@"installationId",@"selectedStore",@"minimumEpoch",@"setup",@"pendingRestore"]) ||
+      !CRInteger(m[@"version"],1,1)||!storeID(m[@"installationId"])||!storeID(m[@"selectedStore"])||
+      !CRInteger(m[@"minimumEpoch"],1,1)||![@[@"initializing",@"ready",@"failed"] containsObject:m[@"setup"]])CRFail();
+  id p=m[@"pendingRestore"];
+  if(p!=[NSNull null]&&(!CRExact(p,@[@"storeId",@"sourceDigest",@"expectedSelection",@"status"])||!storeID(p[@"storeId"])||
+      [p[@"storeId"] isEqual:m[@"selectedStore"]]||!CRPattern(p[@"sourceDigest"],@"[a-f0-9]{64}")||
+      ![p[@"expectedSelection"] isEqual:m[@"selectedStore"]]||![@[@"reserved",@"complete",@"failed"] containsObject:p[@"status"]]))CRFail();
+}
 static void installationValid(NSDictionary *m) {
-  if (!CRExact(m, @[@"version", @"installationId", @"selectedStore", @"minimumEpoch", @"setup", @"pendingRestore"]) ||
-      !CRInteger(m[@"version"], 1, 1) || !CRPattern(m[@"installationId"], @"[a-f0-9]{32}") || !CRPattern(m[@"selectedStore"], @"[a-f0-9]{32}") ||
-      !CRInteger(m[@"minimumEpoch"], 1, 1) || ![@[@"initializing", @"ready", @"failed"] containsObject:m[@"setup"]]) CRFail();
-  id p = m[@"pendingRestore"];
-  if (p != [NSNull null] && (!CRExact(p, @[@"storeId", @"sourceDigest", @"expectedSelection", @"status"]) ||
-      !CRPattern(p[@"storeId"], @"[a-f0-9]{32}") || !CRPattern(p[@"sourceDigest"], @"[a-f0-9]{64}") ||
-      ![p[@"expectedSelection"] isEqual:m[@"selectedStore"]] || ![@[@"reserved", @"complete", @"failed"] containsObject:p[@"status"]])) CRFail();
+  if(!CRExact(m,@[@"version",@"installationId",@"selectedStore",@"minimumEpoch",@"setup",@"pendingRestore",@"personalStore",@"demoStore",@"mode",@"pendingDemo"])||
+      !CRInteger(m[@"version"],2,2)||!CRInteger(m[@"minimumEpoch"],2,2)||!storeID(m[@"installationId"])||!storeID(m[@"personalStore"])||
+      ![@[@"personal",@"demo"] containsObject:m[@"mode"]]||![@[@"initializing",@"ready",@"failed"] containsObject:m[@"setup"]])CRFail();
+  id demo=m[@"demoStore"];
+  if(demo!=[NSNull null]&&(!storeID(demo)||[demo isEqual:m[@"personalStore"]]))CRFail();
+  if(!storeID(m[@"selectedStore"])||![m[@"selectedStore"] isEqual:[m[@"mode"] isEqual:@"personal"]?m[@"personalStore"]:demo]||
+      ([m[@"mode"] isEqual:@"demo"]&&![m[@"setup"] isEqual:@"ready"]))CRFail();
+  id r=m[@"pendingRestore"],d=m[@"pendingDemo"];
+  if(r!=[NSNull null]&&(!CRExact(r,@[@"storeId",@"sourceDigest",@"expectedSelection",@"status"])||!storeID(r[@"storeId"])||
+      [r[@"storeId"] isEqual:m[@"personalStore"]]||[r[@"storeId"] isEqual:demo]||!CRPattern(r[@"sourceDigest"],@"[a-f0-9]{64}")||
+      ![r[@"expectedSelection"] isEqual:m[@"personalStore"]]||![@[@"reserved",@"complete",@"failed"] containsObject:r[@"status"]]||d!=[NSNull null]))CRFail();
+  if(d!=[NSNull null]&&(!CRExact(d,@[@"storeId",@"priorMode",@"priorStore",@"seedVersion",@"seedSha256",@"status"])||!storeID(d[@"storeId"])||
+      [d[@"storeId"] isEqual:m[@"personalStore"]]||[d[@"storeId"] isEqual:demo]||![d[@"priorMode"] isEqual:m[@"mode"]]||![d[@"priorStore"] isEqual:m[@"selectedStore"]]||
+      ![d[@"seedVersion"] isEqual:@"historical-2024-2025-v1"]||!CRPattern(d[@"seedSha256"],@"[a-f0-9]{64}")||
+      ![@[@"reserved",@"failed"] containsObject:d[@"status"]]||![m[@"setup"] isEqual:@"ready"]))CRFail();
 }
 static BOOL roleOperationValid(NSString *role, NSString *operation) {
-  NSDictionary *operations = @{@"prepare": @[@"initialize", @"initialize-recovered", @"verify", @"resume-setup"], @"application": @[@"serve"],
-    @"maintenance": @[@"admin", @"backup", @"restore", @"recover-bootstrap", @"recover-identity", @"resume-setup"],@"metadata":@[@"activate-restore",@"abandon-restore",@"cleanup-downloads"]};
+  NSDictionary *operations = @{@"demo-prepare":@[@"initialize"],@"prepare": @[@"initialize", @"initialize-recovered", @"verify", @"resume-setup"], @"application": @[@"serve"],
+    @"maintenance": @[@"admin", @"backup", @"restore", @"recover-bootstrap", @"recover-identity", @"resume-setup"],@"metadata":@[@"activate-restore",@"abandon-restore",@"cleanup-downloads",@"select-mode",@"reserve-demo",@"publish-demo",@"retain-demo"]};
   return [role isKindOfClass:[NSString class]] && [operation isKindOfClass:[NSString class]] && [operations[role] containsObject:operation];
 }
 static void journalValid(NSDictionary *j, NSDictionary *m) {
-  if (!CRExact(j, @[@"version", @"lifecycle", @"outcome", @"generation", @"bootId", @"installationId", @"storeId", @"role", @"operation", @"nonceHash"]) ||
-      !CRInteger(j[@"version"], 1, 1) || ![@[@"active", @"quiescent"] containsObject:j[@"lifecycle"]] ||
+  BOOL modern=CRInteger(j[@"version"],2,2);
+  NSArray *keys=@[@"version",@"lifecycle",@"outcome",@"generation",@"bootId",@"installationId",@"storeId",@"role",@"operation",@"nonceHash"];
+  if(modern)keys=[keys arrayByAddingObject:@"mode"];
+  if (!CRExact(j, keys) || (modern&&![@[@"personal",@"demo"] containsObject:j[@"mode"]]) || !CRInteger(j[@"version"],1,2) ||
+      ![@[@"active", @"quiescent"] containsObject:j[@"lifecycle"]] ||
       ![@[@"pending", @"ok", @"failed", @"uncertain"] containsObject:j[@"outcome"]] ||
       !CRPattern(j[@"generation"], @"[a-f0-9]{32}") || !CRPattern(j[@"bootId"], @"[A-Za-z0-9-]{1,64}") ||
       ![j[@"installationId"] isEqual:m[@"installationId"]] || !CRPattern(j[@"storeId"], @"[a-f0-9]{32}") ||
@@ -124,23 +145,36 @@ static void journalValid(NSDictionary *j, NSDictionary *m) {
   if (_fresh) { if (fsync(_lockFD)) CRFail(); syncDirectory(root); }
   _roots[root] = CRPrivatePin(root, YES);
   _boot = CRBootID();
-  NSSet *allowed = [NSSet setWithArray:@[@"installation.json", @"owner.lock", @"owner.json", @"stores", @"models", @"sessions", @"exports", @"diagnostics"]];
+  NSSet *allowed = [NSSet setWithArray:@[@"installation.json", @"owner.lock", @"owner.json", @"stores", @"models", @"sessions", @"exports", @"diagnostics", @"demo"]];
   for (NSString *name in entries) if (![allowed containsObject:name]) CRFail();
   for (NSString *name in @[@"stores", @"models", @"sessions", @"exports", @"diagnostics"]) {
     NSString *dir = [root stringByAppendingPathComponent:name]; CRPrivateDirectory(dir, _fresh); _roots[dir] = CRPrivatePin(dir, YES);
   }
   NSString *manifest = [root stringByAppendingPathComponent:@"installation.json"];
   if (_fresh) {
-    _installation = @{@"version": @1, @"installationId": CRRandom(16), @"selectedStore": CRRandom(16), @"minimumEpoch": @1, @"setup": @"initializing", @"pendingRestore": [NSNull null]};
+    NSString *personal=CRRandom(16);
+    _installation = @{@"version":@2,@"installationId":CRRandom(16),@"selectedStore":personal,@"personalStore":personal,@"demoStore":[NSNull null],@"mode":@"personal",@"pendingDemo":[NSNull null],@"minimumEpoch":@2,@"setup":@"initializing",@"pendingRestore":[NSNull null]};
+    CRPrivateDirectory([root stringByAppendingPathComponent:@"demo"],YES);
     CRPrivateDirectory([[root stringByAppendingPathComponent:@"stores"] stringByAppendingPathComponent:_installation[@"selectedStore"]], YES);
     CRAtomicJSON(manifest, _installation);
   } else {
-    _installation = CRReadJSON(manifest, 16384, YES); installationValid(_installation);
+    _installation = CRReadJSON(manifest, 16384, YES);
+    BOOL upgrade=CRInteger(_installation[@"version"],1,1);
+    if(upgrade)installationV1Valid(_installation);else installationValid(_installation);
     NSString *journal = [root stringByAppendingPathComponent:@"owner.json"];
     _journal = CRReadJSON(journal, 16384, YES); journalValid(_journal, _installation);
     _journalPin = CRPrivatePin(journal, NO);
     if (![_journal[@"lifecycle"] isEqual:@"quiescent"] || [_journal[@"outcome"] isEqual:@"uncertain"]) CRFail();
+    if(upgrade){
+      // Only a proven quiescent v1 envelope can advance. Interrupted stages or
+      // a pre-existing demo directory remain explicit refusal, never cleanup.
+      CRPrivateDirectory([root stringByAppendingPathComponent:@"demo"],YES);
+      NSMutableDictionary *next=[_installation mutableCopy];next[@"version"]=@2;next[@"minimumEpoch"]=@2;
+      next[@"personalStore"]=next[@"selectedStore"];next[@"demoStore"]=[NSNull null];next[@"mode"]=@"personal";next[@"pendingDemo"]=[NSNull null];
+      installationValid(next);CRAtomicJSON(manifest,next);_installation=next;
+    }
   }
+  _roots[[root stringByAppendingPathComponent:@"demo"]]=CRPrivatePin([root stringByAppendingPathComponent:@"demo"],YES);
   _installationPin = CRPrivatePin(manifest, NO);
   [self assertHeld]; return self;
 }
@@ -173,12 +207,20 @@ static void journalValid(NSDictionary *j, NSDictionary *m) {
 - (NSDictionary *)beginRole:(NSString *)role operation:(NSString *)operation store:(NSString *)store {
   [self assertHeld];
   if ([role isEqual:@"metadata"] || !roleOperationValid(role, operation) || !CRPattern(store, @"[a-f0-9]{32}")) CRFail();
-  id pending = _installation[@"pendingRestore"];
-  if (pending != [NSNull null]) {
-    if (![role isEqual:@"maintenance"] || ![@[@"admin", @"restore"] containsObject:operation] || ![store isEqual:pending[@"storeId"]]) CRFail();
-  } else if (![store isEqual:_installation[@"selectedStore"]] || [operation isEqual:@"restore"]) CRFail();
+  id pending=_installation[@"pendingRestore"],demo=_installation[@"pendingDemo"];
+  NSString *mode=[store isEqual:_installation[@"personalStore"]]?@"personal":@"demo";
+  if(pending!=[NSNull null]){
+    mode=@"personal";
+    if(![role isEqual:@"maintenance"]||![@[@"admin",@"restore"] containsObject:operation]||![store isEqual:pending[@"storeId"]])CRFail();
+  }else if(demo!=[NSNull null]){
+    if(![role isEqual:@"demo-prepare"]||![operation isEqual:@"initialize"]||![demo[@"status"] isEqual:@"reserved"]||![store isEqual:demo[@"storeId"]])CRFail();
+  }else{
+    if([role isEqual:@"demo-prepare"]||[operation isEqual:@"restore"]||(![store isEqual:_installation[@"personalStore"]]&&![store isEqual:_installation[@"demoStore"]]))CRFail();
+    if(![role isEqual:@"maintenance"]&&![store isEqual:_installation[@"selectedStore"]])CRFail();
+  }
+  if([mode isEqual:@"demo"]&&(([role isEqual:@"prepare"]&&![operation isEqual:@"verify"])||([role isEqual:@"maintenance"]&&![operation isEqual:@"admin"])))CRFail();
   if (([role isEqual:@"application"] || [operation isEqual:@"verify"]) && ![_installation[@"setup"] isEqual:@"ready"]) CRFail();
-  if ([operation isEqual:@"initialize"] && (!_fresh || ![_installation[@"setup"] isEqual:@"initializing"])) CRFail();
+  if ([role isEqual:@"prepare"] && [operation isEqual:@"initialize"] && (!_fresh || ![_installation[@"setup"] isEqual:@"initializing"])) CRFail();
   BOOL recovered = [operation isEqual:@"initialize-recovered"];
   BOOL bootstrapRecovered = recovered && [_journal[@"operation"] isEqual:@"recover-bootstrap"];
   if (recovered && ([_installation[@"setup"] isEqual:@"ready"] || ![_journal[@"lifecycle"] isEqual:@"quiescent"] ||
@@ -207,35 +249,98 @@ static void journalValid(NSDictionary *j, NSDictionary *m) {
   if (([role isEqual:@"application"] || [@[@"verify", @"admin", @"backup"] containsObject:operation]) &&
       (dataPin == [NSNull null] || identityPin == [NSNull null] || target == [NSNull null])) CRFail();
   if ((recovered || [operation isEqual:@"recover-identity"]) && (dataPin == [NSNull null] || (identityPin == [NSNull null] && !bootstrapRecovered))) CRFail();
-  _journal = @{@"version": @1, @"lifecycle": @"active", @"outcome": @"pending", @"generation": _generation, @"bootId": _boot,
+  _journal = @{@"version": @2,@"mode":mode, @"lifecycle": @"active", @"outcome": @"pending", @"generation": _generation, @"bootId": _boot,
     @"installationId": _installation[@"installationId"], @"storeId": store, @"role": role, @"operation": operation,
     @"nonceHash": CRSHA256([nonce dataUsingEncoding:NSUTF8StringEncoding])};
   NSString *journal = [_root stringByAppendingPathComponent:@"owner.json"];
   CRAtomicJSON(journal, _journal); _journalPin = CRPrivatePin(journal, NO);
-  return @{@"version": @1, @"epoch": @1, @"envelope": _root, @"installationId": _installation[@"installationId"], @"storeId": store,
+  return @{@"version": @1, @"epoch": @2,@"mode":mode, @"envelope": _root, @"installationId": _installation[@"installationId"], @"storeId": store,
     @"generation": _generation, @"bootId": _boot, @"role": role, @"operation": operation, @"nonce": nonce,
     @"envelopePin": _roots[_root], @"lockPin": _lockPin, @"dataPin": dataPin, @"identityPin": identityPin, @"targetId": target};
 }
 - (void)beginMetadataOperation:(NSString *)operation pendingStore:(NSString *)store expectedSelection:(NSString *)selected {
   [self assertHeld];id pending=_installation[@"pendingRestore"];
   if(![@[@"activate-restore",@"abandon-restore"] containsObject:operation]||!CRPattern(store,@"[a-f0-9]{32}")||pending==[NSNull null]||
-    ![pending[@"storeId"] isEqual:store]||![pending[@"expectedSelection"] isEqual:selected]||![_installation[@"selectedStore"] isEqual:selected]||
+    ![pending[@"storeId"] isEqual:store]||![pending[@"expectedSelection"] isEqual:selected]||![_installation[@"personalStore"] isEqual:selected]||
     ![_journal[@"lifecycle"] isEqual:@"quiescent"]||[_journal[@"outcome"] isEqual:@"uncertain"])CRFail();
   if([operation isEqual:@"activate-restore"]&&(![pending[@"status"] isEqual:@"complete"]||![_journal[@"outcome"] isEqual:@"ok"]||
     ![_journal[@"role"] isEqual:@"maintenance"]||![_journal[@"operation"] isEqual:@"admin"]||![_journal[@"storeId"] isEqual:store]))CRFail();
   _generation=CRRandom(16);
-  _journal=@{@"version":@1,@"lifecycle":@"active",@"outcome":@"pending",@"generation":_generation,@"bootId":_boot,
+  _journal=@{@"version":@2,@"mode":@"personal",@"lifecycle":@"active",@"outcome":@"pending",@"generation":_generation,@"bootId":_boot,
     @"installationId":_installation[@"installationId"],@"storeId":store,@"role":@"metadata",@"operation":operation,@"nonceHash":CRRandom(32)};
   NSString *file=[_root stringByAppendingPathComponent:@"owner.json"];CRAtomicJSON(file,_journal);_journalPin=CRPrivatePin(file,NO);
 }
 - (void)beginModelCleanup {
   [self assertHeld];
-  if(![_installation[@"setup"] isEqual:@"ready"]||_installation[@"pendingRestore"]!=[NSNull null]||
+  if(![_installation[@"setup"] isEqual:@"ready"]||_installation[@"pendingRestore"]!=[NSNull null]||_installation[@"pendingDemo"]!=[NSNull null]||
      ![_journal[@"lifecycle"] isEqual:@"quiescent"]||[_journal[@"outcome"] isEqual:@"uncertain"])CRFail();
   _generation=CRRandom(16);
-  _journal=@{@"version":@1,@"lifecycle":@"active",@"outcome":@"pending",@"generation":_generation,@"bootId":_boot,
-    @"installationId":_installation[@"installationId"],@"storeId":_installation[@"selectedStore"],@"role":@"metadata",@"operation":@"cleanup-downloads",@"nonceHash":CRRandom(32)};
+  _journal=@{@"version":@2,@"mode":@"personal",@"lifecycle":@"active",@"outcome":@"pending",@"generation":_generation,@"bootId":_boot,
+    @"installationId":_installation[@"installationId"],@"storeId":_installation[@"personalStore"],@"role":@"metadata",@"operation":@"cleanup-downloads",@"nonceHash":CRRandom(32)};
   NSString *file=[_root stringByAppendingPathComponent:@"owner.json"];CRAtomicJSON(file,_journal);_journalPin=CRPrivatePin(file,NO);
+}
+- (void)beginDemoMetadata:(NSString *)operation store:(NSString *)store {
+  [self assertHeld];
+  if(![_journal[@"lifecycle"] isEqual:@"quiescent"]||[_journal[@"outcome"] isEqual:@"uncertain"]||
+      ![_installation[@"setup"] isEqual:@"ready"]||_installation[@"pendingRestore"]!=[NSNull null])CRFail();
+  _generation=CRRandom(16);
+  _journal=@{@"version":@2,@"mode":_installation[@"mode"],@"lifecycle":@"active",@"outcome":@"pending",@"generation":_generation,@"bootId":_boot,
+    @"installationId":_installation[@"installationId"],@"storeId":store,@"role":@"metadata",@"operation":operation,@"nonceHash":CRRandom(32)};
+  NSString *file=[_root stringByAppendingPathComponent:@"owner.json"];CRAtomicJSON(file,_journal);_journalPin=CRPrivatePin(file,NO);
+}
+- (NSString *)reserveDemoWithSeed:(NSString *)version hash:(NSString *)hash {
+  [self assertHeld];
+  if(_installation[@"pendingDemo"]!=[NSNull null]||![version isEqual:@"historical-2024-2025-v1"]||!CRPattern(hash,@"[a-f0-9]{64}"))CRFail();
+  NSString *store=CRRandom(16);[self beginDemoMetadata:@"reserve-demo" store:store];
+  CRPrivateDirectory([[_root stringByAppendingPathComponent:@"stores"] stringByAppendingPathComponent:store],YES);
+  NSString *demo=[[_root stringByAppendingPathComponent:@"demo"] stringByAppendingPathComponent:store];CRPrivateDirectory(demo,YES);
+  CRPrivateDirectory([demo stringByAppendingPathComponent:@"exports"],YES);
+  NSMutableDictionary *next=[_installation mutableCopy];
+  next[@"pendingDemo"]=@{@"storeId":store,@"priorMode":next[@"mode"],@"priorStore":next[@"selectedStore"],@"seedVersion":version,@"seedSha256":hash,@"status":@"reserved"};
+  [self publishInstallation:next];[self finishOutcome:@"ok"];return store;
+}
+- (void)failDemo {
+  [self assertHeld];id pending=_installation[@"pendingDemo"];
+  if(pending==[NSNull null]||![_journal[@"lifecycle"] isEqual:@"quiescent"]||![@[@"ok",@"failed"] containsObject:_journal[@"outcome"]]||
+      ![_journal[@"role"] isEqual:@"demo-prepare"]||![_journal[@"storeId"] isEqual:pending[@"storeId"]])CRFail();
+  NSMutableDictionary *next=[_installation mutableCopy],*failed=[pending mutableCopy];failed[@"status"]=@"failed";next[@"pendingDemo"]=failed;[self publishInstallation:next];
+}
+- (void)retainFailedDemo {
+  [self assertHeld];id pending=_installation[@"pendingDemo"];
+  if(pending==[NSNull null]||![pending[@"status"] isEqual:@"failed"])CRFail();
+  [self beginDemoMetadata:@"retain-demo" store:pending[@"storeId"]];
+  NSMutableDictionary *next=[_installation mutableCopy];next[@"pendingDemo"]=[NSNull null];[self publishInstallation:next];[self finishOutcome:@"ok"];
+}
+- (NSDictionary *)demoReceipt:(NSString *)store {
+  NSDictionary *r=CRReadJSON([[[_root stringByAppendingPathComponent:@"demo"] stringByAppendingPathComponent:store] stringByAppendingPathComponent:@"generation.json"],16384,YES);
+  if(!CRExact(r,@[@"version",@"status",@"storeId",@"installationId",@"principalId",@"targetId",@"seedVersion",@"seedSha256",@"planSha256",@"importerId",@"clients"])||
+      !CRInteger(r[@"version"],1,1)||![r[@"status"] isEqual:@"complete"]||![r[@"storeId"] isEqual:store]||![r[@"installationId"] isEqual:_installation[@"installationId"]]||
+      !CRPattern(r[@"principalId"],@"[A-Za-z0-9_-]{43}")||!CRPattern(r[@"targetId"],@"[A-Za-z0-9_-]{43}")||
+      ![r[@"seedVersion"] isEqual:@"historical-2024-2025-v1"]||!CRPattern(r[@"seedSha256"],@"[a-f0-9]{64}")||!CRPattern(r[@"planSha256"],@"[a-f0-9]{64}")||
+      !CRPattern(r[@"importerId"],@"[A-Za-z0-9_-]{22}")||!CRExact(r[@"clients"],@[@"agentA",@"agentB",@"agentC"]))CRFail();
+  for(id client in [r[@"clients"] allValues])if(!CRPattern(client,@"[A-Za-z0-9_-]{22}"))CRFail();
+  NSDictionary *identity=CRReadJSON([[[[_root stringByAppendingPathComponent:@"stores"] stringByAppendingPathComponent:store] stringByAppendingPathComponent:@"identity"] stringByAppendingPathComponent:@"identity.json"],16384,YES);
+  if(![identity[@"databaseTargetId"] isEqual:r[@"targetId"]]||![identity[@"principalId"] isEqual:r[@"principalId"]])CRFail();
+  return r;
+}
+- (void)publishDemo {
+  [self assertHeld];id pending=_installation[@"pendingDemo"];
+  if(pending==[NSNull null]||![pending[@"status"] isEqual:@"reserved"]||![_journal[@"lifecycle"] isEqual:@"quiescent"]||
+      ![_journal[@"outcome"] isEqual:@"ok"]||![_journal[@"role"] isEqual:@"demo-prepare"]||![_journal[@"storeId"] isEqual:pending[@"storeId"]])CRFail();
+  NSDictionary *receipt=[self demoReceipt:pending[@"storeId"]];
+  if(![receipt[@"seedVersion"] isEqual:pending[@"seedVersion"]]||![receipt[@"seedSha256"] isEqual:pending[@"seedSha256"]])CRFail();
+  [self beginDemoMetadata:@"publish-demo" store:pending[@"storeId"]];
+  NSMutableDictionary *next=[_installation mutableCopy];next[@"mode"]=@"demo";next[@"demoStore"]=pending[@"storeId"];next[@"selectedStore"]=pending[@"storeId"];next[@"pendingDemo"]=[NSNull null];
+  [self publishInstallation:next];[self finishOutcome:@"ok"];
+}
+- (void)selectMode:(NSString *)mode {
+  [self assertHeld];
+  if(![@[@"personal",@"demo"] containsObject:mode]||_installation[@"pendingDemo"]!=[NSNull null])CRFail();
+  NSString *store=[mode isEqual:@"personal"]?_installation[@"personalStore"]:_installation[@"demoStore"];
+  if(!storeID(store))CRFail();
+  if([mode isEqual:@"demo"])(void)[self demoReceipt:store];
+  [self beginDemoMetadata:@"select-mode" store:store];
+  NSMutableDictionary *next=[_installation mutableCopy];next[@"mode"]=mode;next[@"selectedStore"]=store;[self publishInstallation:next];[self finishOutcome:@"ok"];
 }
 - (void)finishOutcome:(NSString *)outcome {
   [self assertHeld];

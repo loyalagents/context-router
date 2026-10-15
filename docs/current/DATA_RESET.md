@@ -85,3 +85,19 @@ history streams. **Clear both history streams** is a distinct confirmed
 uncertain outcomes, retained authority and backup limits are documented in
 [Audit and Access History](AUDIT_AND_ACCESS_HISTORY.md). The local UI does not
 expose the hosted advanced demo-reset controls.
+
+## Installed Demo Reset
+
+**CR → Reset sample data…** is a separate native lifecycle operation. It drains
+the active demo, prepares a fresh unique store/principal through the real MCP
+importer, and publishes only a verified settled candidate. It restores the 189
+active historical sample memories, original definitions/import history and fresh
+A/B/C client credentials. Later edits, custom clients and grant changes do not
+carry forward. Personal data/authority and model assets are preserved. Prior demo
+stores/exports and stable provider profiles remain retained; this is not secure
+erasure. Browser sessions, copied commands and Desktop proposals become stale.
+
+Controlled seed failure/cancellation retains the candidate and prior selection,
+with explicit return or fresh retry. Unknown ownership/completion refuses further
+operations; no automatic replay or deletion. Clear memory and Clear history keep
+their independent semantics above. See [installed demo](../useful/INSTALLED_MAC_APP.md#historical-demo-mode).

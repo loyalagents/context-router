@@ -7,7 +7,11 @@ try{
   process.env.LOCAL_DATABASE_ROOT=state.configuration.databaseRoot;process.env.LOCAL_IDENTITY_STATE_ROOT=state.configuration.stateRoot;
   if(group==='mcp'&&operation==='admin'&&['list','provision','rename','rotate','revoke','permissions','grant','upgrade'].includes(args[0])){
     exitCode=await backend('backend/dist/local-mcp.js').runLocalMcp(args);
-  }else if(group==='identity'&&args.length===1&&((operation==='admin'&&args[0]==='rotate')||
+  }else if(group==='verify-demo'&&args.length===1&&args[0]===state.cap.storeId&&state.cap.mode==='demo'&&operation==='admin'){
+    const {verifyDemoBaseline}=await import(backend.resolve('backend/scripts/demo/domain.mjs'));
+    const result=await verifyDemoBaseline({configuration:state.configuration,directory:path.join(state.cap.envelope,'demo',state.cap.storeId),installationId:state.cap.installationId,storeId:state.cap.storeId});
+    process.stdout.write(JSON.stringify(result)+'\n');exitCode=0;
+  }else if(group==='identity'&&state.cap.mode==='personal'&&args.length===1&&((operation==='admin'&&args[0]==='rotate')||
     (operation==='recover-identity'&&['recover-initialize','recover-rotation'].includes(args[0]))||
     (operation==='recover-bootstrap'&&args[0]==='recover-database-bootstrap'))){
     exitCode=await backend('backend/dist/modules/auth/local-identity-admin.cli.js').runLocalDatabaseAdminCli({argv:args});

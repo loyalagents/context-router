@@ -1069,3 +1069,12 @@ test('rename and label routes require browser authority, exact envelopes and pre
   assert.equal((await f.request('/api/local/mcp/labels',{token,body:labels})).status,401);
   assert.equal((await f.request('/api/local/mcp/rename',{token,body:{...rename,expectedLabel:'Browser name'}})).status,401);
 });
+
+test('runtime presentation is authenticated and source launches do not claim native controls', async t => {
+  const f=await fixture(t);
+  assert.equal((await f.request('/api/local/capabilities')).status,401);
+  const {token}=await f.unlock();
+  const result=await f.request('/api/local/capabilities',{token});
+  assert.deepEqual(result.json().runtime,{mode:'personal',launcher:'terminal'});
+  assert.equal((await f.request('/api/local/capabilities',{token,body:{mode:'demo'}})).status,400);
+});

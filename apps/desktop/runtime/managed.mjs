@@ -14,7 +14,7 @@ export async function admit(role, onCommand = () => {}) {
   try {
     cap = await authority.admitManagedProcess(guardian);
     if (cap.role !== role) throw failure();
-    control = await openManagedControl(cap.generation, { onStop: () => authority.revokeManagedAdmission(), onCommand });
+    control = await openManagedControl(cap.generation, { onStop: ({ orderly }) => { if (role !== 'demo-prepare' || !orderly) authority.revokeManagedAdmission(); }, onCommand }, { allowOrderlyStopDuringStart: role === 'demo-prepare' });
     for (const signal of ['SIGINT','SIGTERM','SIGHUP']) process.once(signal, () => control.requestSignalStop());
   } catch { authority.revokeManagedAdmission(); await control?.close().catch(() => {}); throw failure(); }
   const store = path.join(cap.envelope, 'stores', cap.storeId);

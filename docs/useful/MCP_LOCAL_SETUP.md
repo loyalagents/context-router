@@ -389,3 +389,13 @@ instance. The browser can inspect and rename actual client IDs, narrow grants an
 provision, rotate and maximum-policy commands remain this CLI. Its browser bearer
 never authenticates MCP, and MCP retains native Origin denial. Hosted setup above
 is unchanged.
+
+## Installed Historical Demo
+
+The native app now owns a separate persistent historical demo store. Its
+**Demo setup…** panel provides packaged generation/endpoint-bound A/B login and
+launch commands plus C Desktop prepare/apply. No checkout or manual token/config
+construction is needed for that flow. The existing source/manual recipes above
+remain independent. See [installed demo mode](INSTALLED_MAC_APP.md#historical-demo-mode)
+for lifecycle, explicit provider login, stale-command refusal, durable C snapshots
+and the remaining human acceptance limits.

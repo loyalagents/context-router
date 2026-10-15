@@ -3,7 +3,7 @@ import { validateManagedCapability } from "./managed-admission";
 const id = "a".repeat(32);
 const pin = { dev: 1, ino: 2 };
 const capability = () => ({
-  version: 1, epoch: 1, envelope: "/private/pilot/managed-v1",
+  version: 1, epoch: 2, mode: "personal", envelope: "/private/pilot/managed-v1",
   installationId: id, storeId: id, generation: id, bootId: "boot-1",
   role: "prepare", operation: "initialize", nonce: "b".repeat(64),
   envelopePin: pin, lockPin: pin, dataPin: null, identityPin: null, targetId: null,
@@ -14,7 +14,7 @@ describe("managed inherited capability grammar (parsing never grants admission)"
     expect(validateManagedCapability(capability())).toEqual(capability());
   });
   it.each([
-    ["version", 2], ["epoch", 0], ["envelope", "/private/pilot/other"],
+    ["version", 2], ["epoch", 0], ["epoch", 1], ["mode", "third"], ["envelope", "/private/pilot/other"],
     ["envelope", "/private/../managed-v1"], ["envelope", "managed-v1"],
     ["nonce", "b".repeat(63)], ["role", "browser"], ["operation", "anything"],
     ["storeId", "../escape"], ["generation", ""], ["bootId", "\n"],
@@ -31,6 +31,16 @@ describe("managed inherited capability grammar (parsing never grants admission)"
     for (const source of [{ ...capability(), authorized: true }, omitted, null, [],
       { ...capability(), envelope: "/" + "x".repeat(20_000) + "/managed-v1" }]) {
       expect(() => validateManagedCapability(source)).toThrow();
+    }
+  });
+  it("admits fresh demo preparation only with demo mode and initialize operation", () => {
+    const source = { ...capability(), mode: "demo", role: "demo-prepare" };
+    expect(validateManagedCapability(source)).toEqual(source);
+    expect(() => validateManagedCapability({ ...source, mode: "personal" })).toThrow();
+    expect(() => validateManagedCapability({ ...source, operation: "verify" })).toThrow();
+    expect(() => validateManagedCapability({ ...capability(), mode: "demo" })).toThrow();
+    for (const operation of ['resume-setup', 'backup', 'restore', 'recover-bootstrap', 'recover-identity']) {
+      expect(() => validateManagedCapability({ ...source, role: "maintenance", operation })).toThrow();
     }
   });
   it("requires a pinned target and both roots for an application", () => {

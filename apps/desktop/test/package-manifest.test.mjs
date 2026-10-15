@@ -82,7 +82,7 @@ test('legacy verification is explicit and binds raw manifest bytes to its indepe
   }
   files.push({ path: 'Contents/Resources/module.js', kind: 'symlink', target: 'lib/module.js' });
   const current = createPackageManifest({ source: 'a'.repeat(64), files: await inventoryPayload(root, { forSigning: true }) });
-  const legacy = { ...current, version: 1, files }, bytes = JSON.stringify(legacy);
+  const legacy = { ...current, version: 1, securityEpoch: 1, files }, bytes = JSON.stringify(legacy);
   await writeFile(path.join(root, 'Contents/Resources/package-manifest.json'), bytes);
   await assert.rejects(verifyPackage(root, legacy));
   const { verifyLegacyPackage } = await import('../src/legacy-package-manifest.mjs');

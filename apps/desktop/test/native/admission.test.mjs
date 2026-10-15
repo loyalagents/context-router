@@ -27,10 +27,10 @@ function fixture(variant) {
   const id = 'a'.repeat(32);
   const store = path.join(envelope, 'stores', id); mkdirSync(store, { recursive: true, mode: 0o700 });
   writeFileSync(path.join(envelope, 'owner.lock'), '', { mode: 0o600 });
-  const cap = { version: 1, epoch: 1, envelope, installationId: id, storeId: id, generation: id, bootId,
+  const cap = { version: 1, epoch: 2, mode: 'personal', envelope, installationId: id, storeId: id, generation: id, bootId,
     role: 'prepare', operation: 'initialize', nonce: 'b'.repeat(64), envelopePin: inode(envelope), lockPin: inode(path.join(envelope, 'owner.lock')),
     dataPin: null, identityPin: null, targetId: null };
-  const installation = { version: 1, installationId: id, selectedStore: id, minimumEpoch: variant === 'floor' ? 2 : 1, setup: 'initializing', pendingRestore: null };
+  const installation = { version: 2, installationId: id, selectedStore: id, personalStore: id, demoStore: null, mode: 'personal', pendingDemo: null, minimumEpoch: variant === 'floor' ? 3 : 2, setup: 'initializing', pendingRestore: null };
   if (['recovery','identity-recovery','identity-candidate','identity-operation','recovered-empty','recovered-occupied'].includes(variant)) {
     const data = path.join(parent, 'data'), identity = path.join(parent, 'identity');
     const seeded = spawnSync(process.execPath, ['-e', 'console.log(require(process.argv[1]).SqliteDatabase.bootstrap(JSON.parse(process.argv[2])).targetId)',
@@ -81,11 +81,11 @@ function fixture(variant) {
         { env: {}, encoding: 'utf8', timeout: 10_000 });
       assert.equal(created.status, 0, created.stderr);
       rmdirSync(store);
-      installation.selectedStore = 'd'.repeat(32);
+      installation.selectedStore = 'd'.repeat(32); installation.personalStore = installation.selectedStore;
       installation.pendingRestore = { storeId: id, sourceDigest: createHash('sha256').update(readFileSync(path.join(bundle, 'complete.json'))).digest('hex'), expectedSelection: installation.selectedStore, status: 'reserved' };
     }
   }
-  const journal = { version: 1, lifecycle: 'active', outcome: 'pending', generation: id, bootId, installationId: id, storeId: id, role: 'prepare', operation: 'initialize', nonceHash: createHash('sha256').update(cap.nonce).digest('hex') };
+  const journal = { version: 2, mode: 'personal', lifecycle: 'active', outcome: 'pending', generation: id, bootId, installationId: id, storeId: id, role: 'prepare', operation: 'initialize', nonceHash: createHash('sha256').update(cap.nonce).digest('hex') };
   journal.role = cap.role; journal.operation = cap.operation;
   if (variant === 'nonce') cap.nonce = 'c'.repeat(64);
   if (variant === 'generation') cap.generation = 'c'.repeat(32);

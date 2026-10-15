@@ -1,6 +1,6 @@
 # MCP Client Names
 
-- Status: bounded external-review corrections; renewed final qualification pending
+- Status: integrating requested main/demo work; renewed final qualification pending
 - Priority: bounded UI usability slice supporting the assisted pilot
 - Base: `2497cc209e4d8c1233a7dcd6852b9fd8f4b1b42c`; branch `codex/mcp-client-names`
 - Workspace: isolated `1487/context-router`; one cohesive PR, no automatic merge
@@ -36,7 +36,7 @@ and accessibility review. Follow [agent workflow](../../../useful/AGENT_WORKFLOW
 | Read-only plan security reviewer | `/root/plan_security` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
 | Read-only plan compatibility reviewer | `/root/plan_compatibility` | GPT-6 Astra High | delegation accepted; execution internals unverified |
 | Initial implementation writer/integrator (idle after transfer) | `/root/client_names_writer` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
-| Sole external-review correction writer/integrator | `/root/claude_review_fixes` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
+| Sole correction/main-integration writer | `/root/claude_review_fixes` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
 | Read-only complete-diff security reviewer | `/root/code_security_review` | GPT-6 Astra Extra High | delegation accepted; execution internals unverified |
 | Read-only complete-diff UI/compatibility reviewer | `/root/code_ui_review` | GPT-6 Astra High | delegation accepted; execution internals unverified |
 
@@ -364,6 +364,54 @@ explicit reviewer assessment. Changed web/source inputs require renewed full gat
 Mac artifact/installed smoke and exact-head CI after freeze. Run installed smoke
 sequentially after the full local gate, preserving the existing 360-second deadline.
 
+### Demo Main Integration
+
+After the external-review candidate `c21d84c` passed its full gate, isolated Mac
+package/installed smoke, both reviews and exact-head CI, the user requested a
+fetch and merge of main into the same PR. The frozen incoming revision is
+`3bc606ffb9d90ab364d26f6bea5977be30f31b13` (standalone demo PR #182 and persistent
+native demo PR #183), with common base `b5bc3aeb453bc020f0d7ed11e989402b643aa488`.
+The existing writer/settings above remain in force; both independent reviewers
+approved the integration plan and the coordinator remains read-only.
+
+The merge retains both features in four textual conflicts: HTTP test groups,
+guardian help, native maintenance test groups and the shared LocalPage provider
+plus optional demo guide. The native and JS maintenance allowlists retain rename;
+offline administration defaults to personal, with explicit `--mode demo` for the
+demo store. The provider stays keyed to page/browser session, while incoming
+session teardown disposes authenticated children on runtime/session changes.
+The exact contract registration union keeps both additive name routes and all
+incoming demo references, outbound inventory and scanner changes. No rename
+backend/store behavior, schema or credential contract is adapted by this merge.
+
+Focused integration coverage exercises native default/explicit store targeting
+and seeded-demo rename through the real browser/MCP/history paths. Only runtime
+presentation metadata is injected in that source browser fixture; actual native
+switching remains a separate artifact proof. The existing full demo artifact
+cycle additionally checks native rename, wrong-domain rejection, preserved token,
+receipt and authority, reopen and helper status in owned synthetic state.
+
+Carry forward only unchanged rename transaction/authentication invariants and
+explicitly unaffected prior review coverage. Incoming admitted metadata, epoch,
+native/runtime, package, session and CI changes require fresh native validation,
+the full local gate and a newly sealed Mac artifact. After the gate completes,
+run the existing installed smoke and full demo cycle sequentially on that artifact;
+preserve all deadlines. Review the integrated diff and require both exact-head CI
+lanes and standard CI. No live provider/client login, personal configuration,
+real model retention or replacement rehearsal is activated by this integration.
+Keep final source/artifact receipts in the PR/external evidence without pass-only
+source commits.
+
+Focused checks passed: merged HTTP suite 28/28; rebuilt native/runtime maintenance
+10/10; browser/parser/transport 29/29 across the unchanged 28 passing cases and
+the corrected demo test; checker tests 75/75; 151 Markdown links, exact contract
+union and whitespace. The new browser test initially selected the wrong Audit
+field, then omitted its existing More filters interaction; both test-only failures
+are retained. The first native attempt used the previous binary with incoming
+fixtures and failed before readiness; rebuilding the matching native source
+resolved it. No production guards or assertions were weakened. Targeted checks
+passed; final validation pending.
+
 ## Validation And Finalization
 
 Planning edits require Markdown links, whitespace and reader discovery only.
@@ -445,8 +493,11 @@ sources. A trial, if later requested, must say “Targeted checks passed; final
 validation pending.” Failure/uncertainty stays visible; no hidden retries, gate
 retirement, arbitrary cleanup, off-device data submission or automatic merge.
 
-Rollback is a compatible source/app rollback after owned processes stop: the same
-v2 SQLite schema and current labels remain readable, and older clients keep
-working. Old UI/CLI lacks rename/lookup routes but retains provisioning and stable
-identity. To undo a name use another explicit rename after a fresh read, not a
-backup restore or history rewrite. Older backups naturally contain older labels.
+The rename feature keeps the v2 SQLite schema and stable client identity, so
+existing MCP clients continue working. This does not authorize an older packaged
+binary against upgraded managed state: demo mode upgrades installation metadata
+to v2/security epoch 2, which older apps must refuse. Any app replacement must
+satisfy the installed runbook's compatible-artifact and security-floor checks
+after owned processes stop; never launch an older source binary against managed
+roots. To undo a name use another explicit rename after a fresh read, not a backup
+restore or history rewrite. Older backups naturally contain older labels.

@@ -45,3 +45,20 @@ test('native rename rejects Unicode format characters before maintenance and for
   assert.deepEqual(JSON.parse(accepted.stdout).args,args);
   f.acceptQuiescent(JSON.parse(await readFile(owner)));
 });
+test('offline admin defaults to personal even after demo selection and demo recovery is forbidden',async t=>{
+  const f=await fixture(t),r=f.launch();let ready=await r.event('ready');
+  r.send('enter-demo',ready.generation);ready=await r.event('ready',r.events.length);
+  r.send('quit',ready.generation);await ended(r.child);
+  const state=JSON.parse(await readFile(path.join(f.envelope,'installation.json')));
+  const personal=cli(f,['mcp','list']);assert.equal(personal.status,0,personal.stderr);assert.equal(JSON.parse(personal.stdout).store,state.personalStore);
+  const demo=cli(f,['--mode','demo','mcp','list']);assert.equal(demo.status,0,demo.stderr);assert.equal(JSON.parse(demo.stdout).store,state.demoStore);
+  assert.match(personal.stderr,/Managed mode: personal\n/);assert.match(demo.stderr,/Managed mode: demo\n/);
+  const args=['mcp','rename','--id','A'.repeat(22),'--label','Demo laptop'];
+  for(const [prefix,store] of [[[],state.personalStore],[['--mode','personal'],state.personalStore],[['--mode','demo'],state.demoStore]]){
+    const renamed=cli(f,[...prefix,...args]);assert.equal(renamed.status,0,renamed.stderr);
+    assert.equal(JSON.parse(renamed.stdout).store,store);assert.deepEqual(JSON.parse(renamed.stdout).args,args);
+  }
+  assert.deepEqual(JSON.parse(await readFile(path.join(f.envelope,'installation.json'))),state,'offline rename must not change active selection');
+  for(const args of [['backup'],['identity','rotate'],['resume-setup'],['cleanup-downloads']])assert.equal(cli(f,['--mode','demo',...args]).status,1);
+  f.acceptQuiescent(JSON.parse(await readFile(path.join(f.envelope,'owner.json'))));
+});

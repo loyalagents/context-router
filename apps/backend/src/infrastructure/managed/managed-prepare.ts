@@ -8,7 +8,7 @@ import { waitForNativeOwners } from '../storage/sqlite/sqlite-database';
 /** Finite preparation only. Ready startup verifies; failed valid setup resumes explicitly. */
 export async function prepareManagedStore(): Promise<{ targetId: string }> {
   const cap = managedCapability();
-  if (cap.role !== 'prepare' || !['initialize', 'initialize-recovered', 'resume-setup', 'verify'].includes(cap.operation)) throw new Error('Managed prepare unavailable');
+  if (!['prepare', 'demo-prepare'].includes(cap.role) || !['initialize', 'initialize-recovered', 'resume-setup', 'verify'].includes(cap.operation)) throw new Error('Managed prepare unavailable');
   const store = join(cap.envelope, 'stores', cap.storeId);
   const { database, service } = createSqliteIdentityRuntime({ kind: 'sqlite',
     databaseRoot: join(store, 'data'), stateRoot: join(store, 'identity') }, cap.operation === 'initialize');
