@@ -13,6 +13,10 @@ import {
 } from "@/modules/auth/local-identity-state.codec";
 import { OwnedIdentityProcesses, waitForStopped } from "./process.fixture";
 
+// These cases start and reap multiple children in sequence. Their individual
+// message and reap deadlines remain 5000 ms in OwnedIdentityProcesses.
+const multiProcessTimeoutMs = 15_000;
+
 const token = () => randomBytes(32).toString("base64url");
 const stages = (prefix: string) =>
   ["create", "partial-write", "write", "file-fsync"].map(
@@ -146,6 +150,7 @@ describe("real SQLite process and identity recovery", () => {
       ]);
       expect((await command("verifyReadyState")).kind).toBe("done");
     },
+    multiProcessTimeoutMs,
   );
   it.each(rotationCases)(
     "retains the correct credential generation after terminating rotation at %s",
@@ -178,6 +183,7 @@ describe("real SQLite process and identity recovery", () => {
       expect(ready.credential === old.credential).toBe(!afterRename);
       expect(rows()).toEqual(beforeRows);
     },
+    multiProcessTimeoutMs,
   );
   it("retains ownership in a stopped original process; recovery starts only after kill and actual reap", async () => {
     const original = processes.start(
@@ -208,7 +214,7 @@ describe("real SQLite process and identity recovery", () => {
     expect(fs.readFileSync(canonical())).toEqual(
       before.find((item) => item.name.startsWith("identity.pending-"))!.bytes,
     );
-  });
+  }, multiProcessTimeoutMs);
   it.each([
     "database.before-commit",
     "database.after-commit-before-ack",
@@ -246,6 +252,7 @@ describe("real SQLite process and identity recovery", () => {
         before.find((item) => item.name === "identity.json");
       expect(fs.readFileSync(canonical())).toEqual(proposed!.bytes);
     },
+    multiProcessTimeoutMs,
   );
   it("replays a real spilled hot journal through production admission after terminating its writer", async () => {
     expect((await command("initialize")).kind).toBe("done");
@@ -268,7 +275,7 @@ describe("real SQLite process and identity recovery", () => {
     expect(fs.readFileSync(canonical())).toEqual(bytes);
     expect(fs.existsSync(journal)).toBe(false);
     expect((await command("verifyReadyState")).kind).toBe("done");
-  });
+  }, multiProcessTimeoutMs);
   it.each([
     "bootstrap.before-commit",
     "bootstrap.after-commit",
@@ -335,6 +342,7 @@ describe("real SQLite process and identity recovery", () => {
       }
       expect(fs.existsSync(freshIdentity)).toBe(false);
     },
+    multiProcessTimeoutMs,
   );
   it("has no orphan worker when the original parent loses its supervisor IPC", async () => {
     const original = processes.start(
@@ -349,7 +357,7 @@ describe("real SQLite process and identity recovery", () => {
     expect(original.child.exitCode).toBe(2);
     expect((await command("recoverInitialize")).kind).toBe("done");
     expect(rows().users).toHaveLength(1);
-  });
+  }, multiProcessTimeoutMs);
   it("preserves exact candidate and operation after a lost real COMMIT acknowledgement and recovers the same principal", async () => {
     const original = processes.start(
       database.paths.databaseRoot,
@@ -373,7 +381,7 @@ describe("real SQLite process and identity recovery", () => {
     ]);
     expect((await command("recoverInitialize")).kind).toBe("done");
     expect(fs.readFileSync(canonical())).toEqual(candidate.bytes);
-  });
+  }, multiProcessTimeoutMs);
   it("elects one database in a simultaneous shared-identity-root operation-stage race", async () => {
     const other = SqliteDatabase.bootstrap({
       databaseRoot: path.join(parent, "other-data"),
@@ -427,7 +435,7 @@ describe("real SQLite process and identity recovery", () => {
       ).kind,
     ).toBe("failed");
     expect(artifacts()).toEqual(before);
-  });
+  }, multiProcessTimeoutMs);
 
   function foreignPrincipal() {
     const c = database.connect();
@@ -541,6 +549,7 @@ describe("real SQLite process and identity recovery", () => {
       expect(names()).toEqual([]);
       expect(rows()).toEqual(before);
     },
+    multiProcessTimeoutMs,
   );
   it("recovers complete candidates with redundant same-inode stages and a losing operation stage", async () => {
     root();
