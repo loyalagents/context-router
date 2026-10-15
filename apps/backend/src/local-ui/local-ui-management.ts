@@ -1,9 +1,10 @@
+import { setImmediate as yieldToRequests } from 'node:timers/promises';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { SqliteMcpCredentials } from '../infrastructure/storage/sqlite/sqlite-mcp-credentials';
 import { McpAuthorizationService } from '../mcp/auth/mcp-authorization.service';
 import { LocalMcpAuthGuard } from '../mcp/local/local-mcp-auth.guard';
 import { PermissionGrantService } from '../modules/permission-grant/permission-grant.service';
-import { validateLocalMcpPolicy, validateLocalMcpGrantEdits, type LocalMcpAuthoritySnapshot } from '../mcp/local/local-mcp-credentials';
+import { validLocalMcpTarget, validateLocalMcpPolicy, validateLocalMcpGrantEdits, type LocalMcpAuthoritySnapshot } from '../mcp/local/local-mcp-credentials';
 import { requireEditable, summarizePermissions, previewPermissions } from './local-ui-mcp-permissions';
 
 /** Browser administration reads one bounded SQLite snapshot, then uses MCP's evaluator. */
@@ -72,17 +73,25 @@ export class LocalUiManagement {
     if (route === '/api/local/mcp/list') {
       if (keys !== '' && (keys !== 'after' || typeof body.after !== 'string'))
         invalid();
-      const page = this.credentials.listForUi(body.after as string | undefined);
+      const page = this.credentials.cardSnapshots(
+        body.after as string | undefined,
+      );
       const items = [];
-      for (const client of page.items) {
-        const snapshot = this.credentials.editorSnapshot(client.id);
+      for (const snapshot of page.items) {
+        await yieldToRequests();
         const summary =
-          snapshot.status === 'AVAILABLE' && snapshot.catalogStatus === 'AVAILABLE'
-            ? await summarizePermissions(snapshot, this.credentials, this.principalId)
+          snapshot.status === 'AVAILABLE' &&
+          snapshot.catalogStatus === 'AVAILABLE'
+            ? await summarizePermissions(
+                snapshot,
+                this.credentials,
+                this.principalId,
+              )
             : null;
         items.push({
           ...snapshot.client,
-          ruleCount: snapshot.status === 'AVAILABLE' ? snapshot.grants.length : null,
+          ruleCount:
+            snapshot.status === 'AVAILABLE' ? snapshot.grants.length : null,
           // The card already carries policy.targets. Do not duplicate up to 64
           // maximal targets per client inside the bounded 32-client response.
           summary: summary && {
@@ -93,7 +102,10 @@ export class LocalUiManagement {
           },
         });
       }
-      return { ...page, items };
+      const result = { nextCursor: page.nextCursor, items };
+      if (Buffer.byteLength(JSON.stringify(result)) > 512 * 1024)
+        return invalid();
+      return result;
     }
     if (route === '/api/local/mcp/labels') {
       if (keys !== 'ids') return invalid();
@@ -173,9 +185,14 @@ export class LocalUiManagement {
       for (const field of snapshot.catalog.filter(
         (row) => row.archivedAt === null,
       )) {
-        const parts = field.slug.split('.');
-        for (let i = 1; i < parts.length; i++)
-          categories.add(parts.slice(0, i).join('.') + '.*');
+        for (
+          let at = field.slug.indexOf('.');
+          at >= 0 && at + 2 <= 128;
+          at = field.slug.indexOf('.', at + 1)
+        ) {
+          const prefix = field.slug.slice(0, at) + '.*';
+          if (validLocalMcpTarget(prefix)) categories.add(prefix);
+        }
       }
       const items = [
         {
@@ -183,32 +200,48 @@ export class LocalUiManagement {
           target: '*',
           name: 'All fields (including future fields)',
         },
-        ...[...categories]
-          .sort()
-          .map((target) => ({
-            kind: 'category',
-            target,
-            name:
-              target.slice(0, -2).replace(/[._]/g, ' ') + ' — prefix ' + target,
-          })),
+        ...[...categories].sort().map((target) => ({
+          kind: 'category',
+          target,
+          name:
+            target.slice(0, -2).replace(/[._]/g, ' ') + ' — prefix ' + target,
+        })),
         ...snapshot.catalog
-          .filter((row) => row.archivedAt === null)
+          .filter(
+            (row) =>
+              row.archivedAt === null &&
+              (row.slug + ' ' + (row.displayName ?? ''))
+                .toLowerCase()
+                .includes(query),
+          )
           .map((row) => ({
             kind: 'field',
-            target: row.slug,
-            name: row.displayName ?? row.slug,
+            ...(validLocalMcpTarget(row.slug) ? { target: row.slug } : {}),
+            selectable: validLocalMcpTarget(row.slug),
+            displaySlug: row.slug.slice(0, 128),
+            displaySlugTruncated: row.slug.length > 128,
+            name: row.displayName ?? row.slug.slice(0, 128),
+            nameTruncated:
+              row.displayName === null
+                ? row.slug.length > 128
+                : row.displayNameTruncated,
             namespace: row.namespace,
             sensitive: row.isSensitive,
           })),
-      ].filter((item) =>
-        (item.target + ' ' + item.name).toLowerCase().includes(query),
+      ].filter(
+        (item) =>
+          item.kind === 'field' ||
+          ((item.target ?? '') + ' ' + item.name).toLowerCase().includes(query),
       );
-      return {
+      const result = {
         revision: snapshot.revision,
         catalogRevision: snapshot.catalogRevision,
         items: items.slice(0, 32),
         hasMore: items.length > 32,
       };
+      if (Buffer.byteLength(JSON.stringify(result)) > 256 * 1024)
+        return invalid();
+      return result;
     }
     if (route === '/api/local/mcp/preview' || route === '/api/local/mcp/save') {
       const saving = route.endsWith('/save');
@@ -264,6 +297,7 @@ export class LocalUiManagement {
         this.credentials,
         this.principalId,
       );
+      if (Buffer.byteLength(JSON.stringify(preview)) > 256 * 1024) return invalid();
       if (!saving) return preview;
       if (body.previewKey !== preview.previewKey)
         throw new ConflictException(

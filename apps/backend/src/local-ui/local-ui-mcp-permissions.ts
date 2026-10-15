@@ -1,3 +1,4 @@
+import { setImmediate as yieldToRequests } from "node:timers/promises";
 import { createHash } from "node:crypto";
 import { BadRequestException, ConflictException } from "@nestjs/common";
 import type {
@@ -35,19 +36,53 @@ export function permissionEvaluator(
   credentials: SqliteMcpCredentials,
   principal: string,
 ) {
+  const byAction = new Map<string, LocalMcpGrantSnapshot[]>();
+  for (const grant of snapshot.grants) {
+    const rows = byAction.get(grant.action) ?? [];
+    rows.push(grant);
+    byAction.set(grant.action, rows);
+  }
+  const byTarget = new Map(
+    [...byAction].map(([action, rows]) => {
+      const targets = new Map<string, LocalMcpGrantSnapshot[]>();
+      for (const row of rows)
+        targets.set(row.target, [...(targets.get(row.target) ?? []), row]);
+      return [action, targets] as const;
+    }),
+  );
+  const matching = (action: string, slug: string) => {
+    const targets = byTarget.get(action);
+    if (!targets) return [];
+    const found = [...(targets.get(slug) ?? []), ...(targets.get("*") ?? [])];
+    // All editable stored grant selectors are at most 128 characters. The
+    // full slug stays exact; only possible legal prefix keys are constructed.
+    for (
+      let at = slug.indexOf(".");
+      at >= 0 && at + 2 <= 128;
+      at = slug.indexOf(".", at + 1)
+    )
+      found.push(...(targets.get(slug.slice(0, at) + ".*") ?? []));
+    return found;
+  };
   const grants = new PermissionGrantService({
     findMatchingGrants: async (_user, _client, action, prefixes) =>
-      snapshot.grants.filter(
-        (grant) => grant.action === action && prefixes.includes(grant.target),
+      (byAction.get(action) ?? []).filter((grant) =>
+        prefixes.includes(grant.target),
       ),
+    findMatchingGrantsForSlug: async (_user, _client, action, slug) =>
+      matching(action, slug),
     findByUserClientAction: async (_user, _client, action) =>
-      snapshot.grants.filter((grant) => grant.action === action),
+      byAction.get(action) ?? [],
   });
+  const active = snapshot.catalog.filter((row) => row.archivedAt === null);
+  const sensitive = new Set(
+    active.filter((row) => row.isSensitive).map((row) => row.slug),
+  );
+  const byId = new Map(snapshot.catalog.map((row) => [row.id, row]));
   const authorization = new McpAuthorizationService(grants, {
-    getAll: async () =>
-      snapshot.catalog.filter((row) => row.archivedAt === null),
-    getDefinitionById: async (id) =>
-      snapshot.catalog.find((row) => row.id === id) ?? null,
+    getAll: async () => active,
+    isSensitiveSlug: async (_user, slug) => sensitive.has(slug),
+    getDefinitionById: async (id) => byId.get(id) ?? null,
   });
   const context = new LocalMcpAuthGuard(credentials).context({
     ...snapshot.client,
@@ -95,8 +130,8 @@ export async function summarizePermissions(
   snapshot: EditableAuthority,
   credentials: SqliteMcpCredentials,
   principal: string,
+  evaluate = permissionEvaluator(snapshot, credentials, principal),
 ) {
-  const evaluate = permissionEvaluator(snapshot, credentials, principal);
   const fields = snapshot.catalog.filter(
     (row) =>
       row.archivedAt === null &&
@@ -105,7 +140,8 @@ export async function summarizePermissions(
       ),
   );
   const counts = { blocked: 0, read: 0, suggest: 0, write: 0, define: 0 };
-  for (const field of fields) {
+  for (const [index, field] of fields.entries()) {
+    if (index % 32 === 0) await yieldToRequests();
     const access = await evaluate(field.slug);
     counts[
       access.write
@@ -183,26 +219,44 @@ export async function previewPermissions(
       snapshot,
       credentials,
       principal,
+      oldEvaluate,
     ),
-    afterSummary = await summarizePermissions(after, credentials, principal);
+    afterSummary = await summarizePermissions(
+      after,
+      credentials,
+      principal,
+      newEvaluate,
+    );
   let expandedFields = 0;
+  let narrowedFields = 0;
   const examples: {
     target: string;
+    targetTruncated: boolean;
     name: string;
+    nameTruncated: boolean;
     before: Awaited<ReturnType<typeof oldEvaluate>>;
     after: Awaited<ReturnType<typeof newEvaluate>>;
   }[] = [];
+  let fieldIndex = 0;
   for (const field of snapshot.catalog.filter(
     (row) => row.archivedAt === null,
   )) {
+    if (fieldIndex++ % 32 === 0) await yieldToRequests();
     const before = await oldEvaluate(field.slug),
       next = await newEvaluate(field.slug);
     if (actions.some((action) => !before[action] && next[action]))
       expandedFields++;
+    if (actions.some((action) => before[action] && !next[action]))
+      narrowedFields++;
     if (JSON.stringify(before) !== JSON.stringify(next) && examples.length < 32)
       examples.push({
-        target: field.slug,
-        name: field.displayName ?? field.slug,
+        target: field.slug.slice(0, 128),
+        targetTruncated: field.slug.length > 128,
+        name: field.displayName ?? field.slug.slice(0, 128),
+        nameTruncated:
+          field.displayName === null
+            ? field.slug.length > 128
+            : field.displayNameTruncated,
         before,
         after: next,
       });
@@ -265,6 +319,49 @@ export async function previewPermissions(
     widening.push(
       "Retained ALLOW rules may reactivate under the expanded maximum.",
     );
+  const narrowing: string[] = [];
+  if (narrowedFields)
+    narrowing.push(
+      `Access decreases for ${narrowedFields} current field definitions.`,
+    );
+  if (level(policy) < level(old))
+    narrowing.push(
+      "The maximum value access decreases, including future fields and values with archived definitions in the allowed scope.",
+    );
+  if (
+    old.capabilities.includes("preferences:define") &&
+    !policy.capabilities.includes("preferences:define")
+  )
+    narrowing.push(
+      "Definition management is disabled by the proposed maximum.",
+    );
+  if (
+    old.targets.some(
+      (target) =>
+        !policy.targets.some((range) => targetContains(range, target)),
+    )
+  )
+    narrowing.push(
+      "The allowed scope loses target ranges, including future fields and values with archived definitions.",
+    );
+  if (old.allowSensitive && !policy.allowSensitive)
+    narrowing.push(
+      "Sensitive data is excluded, including values with archived sensitive definitions.",
+    );
+  if (
+    edits.some((edit) => {
+      const previous = snapshot.grants.find(
+        (grant) => grant.target === edit.target && grant.action === edit.action,
+      );
+      return (
+        (edit.effect === "DENY" && previous?.effect !== "DENY") ||
+        (edit.effect === "REMOVE" && previous?.effect === "ALLOW")
+      );
+    })
+  )
+    narrowing.push(
+      "Rule changes may decrease access to current or future fields and values with archived definitions matching those targets, subject to the maximum and remaining exceptions.",
+    );
   const previewKey = createHash("sha256")
     .update(
       JSON.stringify([
@@ -291,6 +388,7 @@ export async function previewPermissions(
     before: beforeSummary,
     after: afterSummary,
     widening,
+    narrowing,
     examples,
     changedFields: examples.length < 32 ? examples.length : undefined,
   };

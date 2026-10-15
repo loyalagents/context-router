@@ -232,9 +232,13 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
     });
   }
 
-  private boundedAuthority(c: SqliteConnection, id: string, targets: string[] = []): LocalMcpAuthoritySnapshot {
+  private boundedAuthority(c: SqliteConnection, id: string, targets: string[] = [], includeRevision = true): LocalMcpAuthoritySnapshot {
     const client = this.boundedClient(c, id);
-    const adminRevision = mcpAdministrationRevision(c, this.database.targetId, this.principalId, client);
+    // Card snapshots never expose or consume a revision. Administration paths
+    // retain the complete digest, including unavailable/corrupt projections.
+    const adminRevision = includeRevision
+      ? mcpAdministrationRevision(c, this.database.targetId, this.principalId, client)
+      : '';
     const unavailable: LocalMcpAuthoritySnapshot = { status: 'AUTHORITY_UNAVAILABLE', client, adminRevision };
     // SQL bounds each variable-length column before materializing rows in JS.
     const rows = c.all(`SELECT
@@ -266,9 +270,7 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
     try { c.exec('BEGIN'); const result = this.boundedAuthority(c, id, targets); c.exec('COMMIT'); return result; }
     finally { try { if (c.inTransaction) c.exec('ROLLBACK'); } finally { c.close(); } }
   }
-  private boundedCatalog(
-    c: SqliteConnection,
-  ):
+  private boundedCatalog(c: SqliteConnection):
     | { catalogStatus: 'CATALOG_UNAVAILABLE' }
     | {
         catalogStatus: 'AVAILABLE';
@@ -278,65 +280,152 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
     const unavailable = { catalogStatus: 'CATALOG_UNAVAILABLE' as const };
     const catalog: LocalMcpCatalogDefinition[] = [];
     let bytes = 0;
-    for (let offset = 0; offset <= 2048; offset += 32) {
-      const rows = c.all(
+    let after: string | null = null;
+    // Size and type preflight precedes reading each exact slug. Labels are only
+    // presentation: SQL bounds their Unicode prefix before JS sees the value.
+    // Pin the existing primary-key index: the namespace/owner OR otherwise
+    // selects a repeated multi-index union and sort instead of an ID range seek.
+    for (;;) {
+      const row = c.get(
         `SELECT
         CASE WHEN typeof(id)='text' AND length(CAST(id AS BLOB)) BETWEEN 1 AND 128 THEN id END id,
         CASE WHEN typeof(namespace)='text' AND length(CAST(namespace AS BLOB))<=256 THEN namespace END namespace,
         CASE WHEN owner_user_id IS NULL OR typeof(owner_user_id)='text' AND length(CAST(owner_user_id AS BLOB))<=128 THEN owner_user_id ELSE 0 END ownerUserId,
-        CASE WHEN typeof(slug)='text' AND length(CAST(slug AS BLOB))<=128 THEN slug END slug,
-        CASE WHEN display_name IS NULL OR typeof(display_name)='text' AND length(CAST(display_name AS BLOB))<=512 THEN display_name ELSE 0 END displayName,
+        CASE WHEN typeof(slug)='text' THEN length(CAST(slug AS BLOB)) END slugBytes,
+        CASE WHEN typeof(display_name)='text' THEN substr(display_name,1,128) END displayName,
+        CASE WHEN typeof(display_name)='text' THEN length(CAST(display_name AS BLOB))>length(CAST(substr(display_name,1,128) AS BLOB)) ELSE 0 END displayNameTruncated,
         CASE WHEN typeof(is_sensitive)='integer' AND is_sensitive IN (0,1) THEN is_sensitive END sensitive,
         CASE WHEN archived_at IS NULL OR typeof(archived_at)='integer' AND archived_at BETWEEN -9007199254740991 AND 9007199254740991 THEN archived_at ELSE 'invalid' END archivedAt
-        FROM preference_definitions WHERE namespace IN (?,?) OR owner_user_id=?
-        ORDER BY id COLLATE BINARY LIMIT 32 OFFSET ?`,
-        ['GLOBAL', `USER:${this.principalId}`, this.principalId, offset],
+        FROM preference_definitions INDEXED BY sqlite_autoindex_preference_definitions_1
+        WHERE (namespace IN (?,?) OR owner_user_id=?)
+          ${after === null ? '' : 'AND id COLLATE BINARY > ?'}
+        ORDER BY preference_definitions.id COLLATE BINARY LIMIT 1`,
+        [
+          'GLOBAL',
+          `USER:${this.principalId}`,
+          this.principalId,
+          ...(after === null ? [] : [after]),
+        ],
       );
-      for (const row of rows) {
-        if (
-          catalog.length >= 2048 ||
-          typeof row.id !== 'string' ||
-          typeof row.namespace !== 'string' ||
-          !(row.ownerUserId === null || row.ownerUserId === this.principalId) ||
-          (row.namespace === 'GLOBAL'
-            ? row.ownerUserId !== null
-            : row.namespace !== `USER:${this.principalId}` ||
-              row.ownerUserId !== this.principalId) ||
-          !validLocalMcpTarget(row.slug) ||
-          row.slug.includes('*') ||
-          !(row.displayName === null || typeof row.displayName === 'string') ||
-          ![0, 1].includes(row.sensitive) ||
-          !(row.archivedAt === null || Number.isSafeInteger(row.archivedAt))
-        )
-          return unavailable;
-        const definition: LocalMcpCatalogDefinition = {
-          id: row.id,
-          namespace: row.namespace,
-          ownerUserId: row.ownerUserId,
-          slug: row.slug,
-          displayName: row.displayName,
-          isSensitive: row.sensitive === 1,
-          archivedAt: row.archivedAt,
-        };
-        bytes += Buffer.byteLength(JSON.stringify(definition));
-        if (bytes > 2 * 1024 * 1024) return unavailable;
-        catalog.push(definition);
+      if (!row) break;
+      if (
+        catalog.length >= 2048 ||
+        typeof row.id !== 'string' ||
+        typeof row.namespace !== 'string' ||
+        !(row.ownerUserId === null || row.ownerUserId === this.principalId) ||
+        (row.namespace === 'GLOBAL'
+          ? row.ownerUserId !== null
+          : row.namespace !== `USER:${this.principalId}` ||
+            row.ownerUserId !== this.principalId) ||
+        !Number.isSafeInteger(row.slugBytes) ||
+        row.slugBytes < 1 ||
+        ![0, 1].includes(row.sensitive) ||
+        !(row.archivedAt === null || Number.isSafeInteger(row.archivedAt))
+      )
+        return unavailable;
+      const definition: LocalMcpCatalogDefinition = {
+        id: row.id,
+        namespace: row.namespace,
+        ownerUserId: row.ownerUserId,
+        slug: '',
+        displayName: row.displayName,
+        displayNameTruncated: row.displayNameTruncated === 1,
+        isSensitive: row.sensitive === 1,
+        archivedAt: row.archivedAt,
+      };
+      const projectedBytes =
+        Buffer.byteLength(JSON.stringify(definition)) + row.slugBytes;
+      if (projectedBytes > 2 * 1024 * 1024 - bytes) return unavailable;
+      const exact = c.get(
+        'SELECT slug FROM preference_definitions WHERE id=?',
+        [row.id],
+      );
+      // Definition grammar is independent of the 128-character rule selector
+      // limit. Scan linearly: deeply dotted valid slugs must not overflow a regex.
+      const slug = exact?.slug;
+      if (
+        typeof slug !== 'string' ||
+        !/^[a-z]/.test(slug) ||
+        !slug.includes('.')
+      )
+        return unavailable;
+      let dot = false;
+      for (let i = 0; i < slug.length; i++) {
+        const code = slug.charCodeAt(i);
+        if (code === 46) {
+          if (dot || i === slug.length - 1) return unavailable;
+          dot = true;
+        } else {
+          if (
+            !(
+              (code >= 97 && code <= 122) ||
+              (code >= 48 && code <= 57) ||
+              code === 95
+            )
+          )
+            return unavailable;
+          dot = false;
+        }
       }
-      if (rows.length < 32)
-        return {
-          catalogStatus: 'AVAILABLE',
-          catalog,
-          catalogRevision: digest(
-            JSON.stringify([
-              'local-mcp-catalog-v1',
-              this.database.targetId,
-              this.principalId,
-              catalog,
-            ]),
-          ),
-        };
+      definition.slug = slug;
+      bytes += projectedBytes;
+      catalog.push(definition);
+      after = row.id;
     }
-    return unavailable;
+    return {
+      catalogStatus: 'AVAILABLE',
+      catalog,
+      catalogRevision: digest(
+        JSON.stringify([
+          'local-mcp-catalog-v2',
+          this.database.targetId,
+          this.principalId,
+          catalog.map(
+            ({
+              displayName: _label,
+              displayNameTruncated: _truncated,
+              ...authority
+            }) => authority,
+          ),
+        ]),
+      ),
+    };
+  }
+
+  /** One consistent page snapshot. Empty internal revisions are never sent by the card route. */
+  cardSnapshots(after?: string): {
+    items: LocalMcpEditorSnapshot[];
+    nextCursor: string | null;
+  } {
+    if (after !== undefined && !validId(after)) fail();
+    const c = this.connection();
+    try {
+      c.exec('BEGIN');
+      const ids = c.all(
+        'SELECT CASE WHEN length(CAST(id AS BLOB))=22 THEN id END id FROM local_mcp_clients WHERE principal_id=? AND id>? ORDER BY id LIMIT 33',
+        [this.principalId, after ?? ''],
+      );
+      if (ids.some((row) => !validId(row.id))) return fail();
+      const catalog = this.boundedCatalog(c);
+      const items = ids
+        .slice(0, 32)
+        .map((row) => ({
+          ...this.boundedAuthority(c, row.id, [], false),
+          ...catalog,
+        }));
+      const result = {
+        items,
+        nextCursor: ids.length > 32 ? items[31].client.id : null,
+      };
+      c.exec('COMMIT');
+      return result;
+    } finally {
+      try {
+        if (c.inTransaction) c.exec('ROLLBACK');
+      } finally {
+        c.close();
+      }
+    }
   }
   editorSnapshot(id: string, targets: string[] = []): LocalMcpEditorSnapshot {
     if (

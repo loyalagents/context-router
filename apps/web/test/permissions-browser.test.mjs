@@ -263,7 +263,8 @@ test(
       "--capabilities",
       "preferences:suggest",
       "--targets",
-      "profile.*",
+      "profile.*,work.*",
+      "--allow-sensitive",
     );
     await panel
       .getByRole("button", { name: "Save permissions", exact: true })
@@ -276,8 +277,11 @@ test(
     await panel
       .getByRole("button", { name: "Read current permissions" })
       .click();
+    await panel.getByRole("button", {name:"Keep draft Maximum value access",exact:true}).click();
     await save(panel);
     assert.deepEqual(clients(f)[0].policy.capabilities, ["preferences:write"]);
+    assert.deepEqual(clients(f)[0].policy.targets,["profile.*","work.*"]);
+    assert.equal(clients(f)[0].policy.allowSensitive,true);
   },
 );
 
@@ -403,7 +407,21 @@ test(
     const id = JSON.parse(receipt).clients.agentB,
       panel = await open(f, id);
     await panel.getByLabel("Maximum value access").selectOption("Write");
-    await save(panel);
+    await preview(panel);
+    // Acknowledgement precedes independent reconciliation. Wait for both read
+    // handlers before starting the separate CLI process used for isolation checks.
+    const inspected = f.page.waitForResponse((response) =>
+      response.url().endsWith("/api/local/mcp/inspect"),
+    );
+    const listed = f.page.waitForResponse((response) =>
+      response.url().endsWith("/api/local/mcp/list"),
+    );
+    await panel.getByRole("button", { name: "Save permissions", exact: true }).click();
+    await panel.getByText("Permissions saved", { exact: true }).waitFor();
+    for (const response of await Promise.all([inspected, listed])) {
+      assert.equal(response.status(), 200);
+      assert.equal(await response.finished(), null);
+    }
     const after = clients(f);
     assert.deepEqual(
       after.filter((c) => c.id !== id),
@@ -712,6 +730,10 @@ for (const mode of ["confirmed", "committed-lost"])
         .getByText("Current saved authority", { exact: true })
         .waitFor();
       await first.getByLabel("Maximum value access").selectOption("Write");
+      await first.getByLabel("Allow sensitive data").check();
+      await first.getByText(/Advanced rules and custom targets/).click();
+      await first.getByLabel("Custom maximum target").fill("work.*");
+      await first.getByRole("button",{name:"Add custom target",exact:true}).click();
       await preview(first);
       await first
         .getByRole("button", { name: "Save permissions", exact: true })
@@ -750,5 +772,210 @@ for (const mode of ["confirmed", "committed-lost"])
         0,
       );
       assert.equal(saves, 1);
+      await editor.getByRole("button",{name:"Read current permissions"}).click();
+      await editor.getByRole("button",{name:"Use current Maximum value access",exact:true}).click();
+      assert.equal(await editor.getByLabel("Maximum value access").inputValue(),"Write");
+      assert.equal(await editor.getByLabel("Allow sensitive data").isChecked(),true);
+      await editor.getByRole("button",{name:"Remove maximum target work.*",exact:true}).waitFor();
+      await editor.getByText("Save not confirmed",{exact:true}).waitFor();
+      await preview(editor);
+      assert.equal(saves,1,"reconciliation never replays a mutation");
     },
   );
+
+
+test(
+  "focus refresh rebases untouched scope and sensitivity while preserving deliberate target edits",
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t),
+      client = clients(f)[0];
+    f.cli(
+      "local-mcp.js",
+      "permissions",
+      "--id",
+      client.id,
+      "--capabilities",
+      "preferences:read",
+      "--targets",
+      "profile.*,old.*",
+    );
+    const panel = await open(f, client.id);
+    await panel.getByLabel("Maximum value access").selectOption("Write");
+    await panel
+      .getByRole("button", { name: "Remove maximum target old.*", exact: true })
+      .click();
+    await panel.getByText(/Advanced rules and custom targets/).click();
+    await panel.getByLabel("Custom maximum target").fill("draft.*");
+    await panel
+      .getByRole("button", { name: "Add custom target", exact: true })
+      .click();
+    f.cli(
+      "local-mcp.js",
+      "permissions",
+      "--id",
+      client.id,
+      "--capabilities",
+      "preferences:read,preferences:define",
+      "--targets",
+      "profile.*,old.*,work.*",
+      "--allow-sensitive",
+    );
+    await f.page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await panel
+      .getByRole("button", { name: "Read current permissions" })
+      .click();
+    await panel
+      .getByRole("button", {
+        name: "Remove maximum target work.*",
+        exact: true,
+      })
+      .waitFor();
+    assert.equal(
+      await panel.getByLabel("Allow sensitive data").isChecked(),
+      true,
+    );
+    assert.equal(
+      await panel
+        .getByLabel("Allow definition management (DEFINE)")
+        .isChecked(),
+      true,
+    );
+    assert.equal(
+      await panel
+        .getByRole("button", {
+          name: "Remove maximum target old.*",
+          exact: true,
+        })
+        .count(),
+      0,
+    );
+    await save(panel);
+    assert.deepEqual(clients(f)[0].policy, {
+      capabilities: ["preferences:write", "preferences:define"],
+      targets: ["profile.*", "work.*", "draft.*"],
+      allowSensitive: true,
+    });
+  },
+);
+
+test(
+  "same grant key conflict requires an explicit choice before preview and preserves unrelated current rules",
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t),
+      client = clients(f)[0];
+    f.cli(
+      "local-mcp.js",
+      "permissions",
+      "--id",
+      client.id,
+      "--capabilities",
+      "preferences:write",
+      "--targets",
+      "profile.*",
+    );
+    const panel = await open(f, client.id);
+    await panel.getByText(/Advanced rules and custom targets/).click();
+    await panel.getByLabel("Advanced target").fill("profile.first_name");
+    await panel.getByLabel("Advanced effect").selectOption("ALLOW");
+    await panel
+      .getByRole("button", { name: "Add rule change", exact: true })
+      .click();
+    f.cli(
+      "local-mcp.js",
+      "grant",
+      "--id",
+      client.id,
+      "--target",
+      "profile.first_name",
+      "--action",
+      "READ",
+      "--effect",
+      "DENY",
+    );
+    f.cli(
+      "local-mcp.js",
+      "grant",
+      "--id",
+      client.id,
+      "--target",
+      "profile.last_name",
+      "--action",
+      "READ",
+      "--effect",
+      "DENY",
+    );
+    await panel
+      .getByRole("button", { name: "Read current permissions" })
+      .click();
+    await panel
+      .getByRole("button", {
+        name: "Keep draft Rule profile.first_name READ",
+        exact: true,
+      })
+      .waitFor();
+    assert.equal(
+      await panel
+        .getByRole("button", { name: "Preview resulting access" })
+        .isEnabled(),
+      false,
+    );
+    await panel
+      .getByRole("button", { name: "Read current permissions" })
+      .click();
+    await panel
+      .getByRole("button", {
+        name: "Keep draft Rule profile.first_name READ",
+        exact: true,
+      })
+      .click();
+    await save(panel);
+    assert.deepEqual(
+      rules(f, client.id).map((row) => [row.target, row.effect]),
+      [
+        ["profile.first_name", "ALLOW"],
+        ["profile.last_name", "DENY"],
+      ],
+    );
+  },
+);
+
+test(
+  "long field identifiers and labels are clearly shortened and cannot become truncated rule selectors",
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t),
+      c = f.database.connect();
+    c.run(
+      `INSERT INTO preference_definitions(id,namespace,slug,display_name,description,value_type,scope,is_sensitive,created_at,updated_at) VALUES('long-display','GLOBAL',?,?,'','STRING','GLOBAL',0,1,1)`,
+      ["synthetic." + "x".repeat(120), "Readable ".repeat(100)],
+    );
+    c.close();
+    const panel = await open(f);
+    await panel.getByLabel("Search categories or fields").fill("Readable");
+    const item = panel
+      .getByRole("listitem")
+      .filter({ hasText: "identifier shortened" });
+    await item.waitFor();
+    assert.ok((await item.innerText()).includes("label shortened"));
+    assert.equal(
+      await item
+        .getByRole("button", { name: /^Exact field unavailable: synthetic\./ })
+        .isEnabled(),
+      false,
+    );
+    assert.equal(
+      await item
+        .getByRole("button", { name: "Use for default", exact: true })
+        .isEnabled(),
+      false,
+    );
+    await panel.getByLabel("Search categories or fields").fill("synthetic.*");
+    await panel
+      .getByRole("button", { name: /Allow target synthetic\.\*/ })
+      .click();
+    await save(panel);
+    assert.deepEqual(clients(f)[0].policy.targets, ["synthetic.*"]);
+  },
+);

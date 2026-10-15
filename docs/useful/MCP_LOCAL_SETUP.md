@@ -79,6 +79,13 @@ callers may still supply generation alone. The complete revision uses bounded
 chunks even when the browser's 512-rule editable projection is unavailable.
 Exact A→B→A restored content may match again: this is a content comparison, not an
 event counter. Renaming invalidates permission drafts without changing credentials.
+After a fresh browser read, untouched settings follow current authority; deliberate
+changes remain in the draft. Concurrent changes to the same setting or rule require
+an explicit choice and new preview. Cosmetic definition labels do not change the
+catalog authority revision. Valid long definition slugs/labels stay editable within
+the complete catalog budget; shortened display text is never a rule selector.
+The browser selector limit remains 128 characters, with CLI/revoke recovery
+available when the complete catalog exceeds its documented bounds.
 
 ## Local Listener And Model
 

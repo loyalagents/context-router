@@ -2,6 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { localJson, LocalRequestError } from "@/lib/authenticated-fetch";
+import {
+  createPermissionDraft,
+  editPermissionDraft,
+  rebasePermissionDraft,
+  projectPermissionDraft,
+  resolvePermissionConflict,
+  type PermissionDraft,
+  type PermissionConflict,
+} from "./permissions-draft";
 import { ClientName } from "./ClientNames";
 
 export type McpPolicy = {
@@ -46,16 +55,23 @@ type Preview = {
   before: PermissionSummary;
   after: PermissionSummary;
   widening: string[];
+  narrowing: string[];
   examples: {
     target: string;
+    targetTruncated?: boolean;
     name: string;
+    nameTruncated?: boolean;
     before: Record<string, boolean>;
     after: Record<string, boolean>;
   }[];
 };
 type Target = {
   kind: string;
-  target: string;
+  target?: string;
+  selectable?: boolean;
+  displaySlug?: string;
+  displaySlugTruncated?: boolean;
+  nameTruncated?: boolean;
   name: string;
   namespace?: string;
   sensitive?: boolean;
@@ -132,6 +148,8 @@ export default function McpPermissionsEditor({
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [policy, setPolicy] = useState<McpPolicy | null>(null);
   const [edits, setEdits] = useState<Edit[]>([]);
+  const [conflicts, setConflicts] = useState<PermissionConflict[]>([]);
+  const intent = useRef<PermissionDraft | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [stale, setStale] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -175,13 +193,24 @@ export default function McpPermissionsEditor({
     life.current.controllers.add(c);
     return c;
   }
-  function change(nextPolicy: McpPolicy, nextEdits = edits) {
+  function publishDraft(next: PermissionDraft) {
+    intent.current = next;
+    const projected = projectPermissionDraft(next);
     life.current.version++;
-    draft.current = { policy: nextPolicy, edits: nextEdits };
-    setPolicy(nextPolicy);
-    setEdits(nextEdits);
+    draft.current = { policy: projected.policy, edits: projected.edits };
+    setPolicy(projected.policy);
+    setEdits(projected.edits);
+    setConflicts(projected.conflicts);
     setPreview(null);
     setError("");
+  }
+  function change(nextPolicy: McpPolicy, nextEdits = edits) {
+    if (intent.current)
+      publishDraft(editPermissionDraft(intent.current, nextPolicy, nextEdits));
+  }
+  function resolveConflict(key: string, choice: "draft" | "current") {
+    if (intent.current)
+      publishDraft(resolvePermissionConflict(intent.current, key, choice));
   }
   async function readCurrent(initial = false) {
     const s = life.current;
@@ -201,17 +230,19 @@ export default function McpPermissionsEditor({
       if (!s.mounted || c.signal.aborted || read !== s.read) return;
       if (
         data.client?.id !== client.id ||
-        typeof data.adminRevision !== "string"
+        typeof data.adminRevision !== "string" ||
+        !validPolicy(data.client.policy) ||
+        (data.status === "AVAILABLE" && !Array.isArray(data.grants))
       )
         throw new Error();
       setSnapshot(data);
       setStale(false);
-      life.current.version++;
-      if (initial || !draft.current.policy) {
-        draft.current = { policy: data.client.policy, edits: [] };
-        setPolicy(data.client.policy);
-        setEdits([]);
-      }
+      const current = { policy: data.client.policy, grants: data.grants ?? [] };
+      publishDraft(
+        initial || !intent.current
+          ? createPermissionDraft(current)
+          : rebasePermissionDraft(intent.current, current),
+      );
     } catch {
       if (s.mounted && !c.signal.aborted && read === s.read)
         setError(
@@ -249,6 +280,7 @@ export default function McpPermissionsEditor({
       s.controllers.forEach((c) => c.abort());
       s.controllers.clear();
       draft.current = { policy: null, edits: [] };
+      intent.current = null;
       channel.close();
       window.removeEventListener("focus", invalidate);
       window.removeEventListener("pageshow", invalidate);
@@ -332,7 +364,16 @@ export default function McpPermissionsEditor({
   }
   async function inspectDraft() {
     const s = life.current;
-    if (!valid || stale || busy || s.submitting || !policy) return;
+    if (
+      !valid ||
+      stale ||
+      busy ||
+      s.submitting ||
+      !policy ||
+      conflicts.length ||
+      !validPolicy(policy)
+    )
+      return;
     const version = s.version,
       c = controller(),
       body = proposedBody();
@@ -371,9 +412,18 @@ export default function McpPermissionsEditor({
   }
   async function save() {
     const s = life.current;
-    if (!preview || stale || busy || s.submitting || !valid) return;
+    if (!preview || stale || busy || s.submitting || !valid || conflicts.length)
+      return;
     const body = { ...proposedBody(), previewKey: preview.previewKey },
       c = controller();
+    const acknowledgedGrants: Edit[] = [...(snapshot?.grants ?? [])];
+    for (const edit of body.edits) {
+      const at = acknowledgedGrants.findIndex(
+        (row) => row.target === edit.target && row.action === edit.action,
+      );
+      if (at >= 0) acknowledgedGrants.splice(at, 1);
+      if (edit.effect !== "REMOVE") acknowledgedGrants.push(edit);
+    }
     s.submitting = true;
     interacted.current = false;
     setSaving(true);
@@ -398,9 +448,12 @@ export default function McpPermissionsEditor({
         typeof result.client.revoked !== "boolean"
       )
         throw new Error();
-      draft.current = { policy: result.client.policy, edits: [] };
-      setPolicy(result.client.policy);
-      setEdits([]);
+      publishDraft(
+        createPermissionDraft({
+          policy: result.client.policy,
+          grants: acknowledgedGrants,
+        }),
+      );
       setOutcome({
         kind: "confirmed",
         message:
@@ -515,6 +568,41 @@ export default function McpPermissionsEditor({
       >
         Read current permissions
       </button>
+      {!!conflicts.length && (
+        <div
+          role="alert"
+          className="space-y-3 rounded border border-amber-600 bg-amber-50 p-3"
+        >
+          <h3 className="font-semibold">Concurrent changes need your choice</h3>
+          <p>
+            Untouched settings use current saved permissions. Choose how to
+            handle each setting changed both here and elsewhere before
+            previewing.
+          </p>
+          {conflicts.map((conflict) => (
+            <div key={conflict.key} className="space-y-2">
+              <p className="break-all">
+                <strong>{conflict.label}</strong>: Current: {conflict.current}.
+                Draft: {conflict.proposed}.
+              </p>
+              <button
+                className={button}
+                disabled={busy || saving}
+                onClick={() => resolveConflict(conflict.key, "draft")}
+              >
+                Keep draft {conflict.label}
+              </button>{" "}
+              <button
+                className={button}
+                disabled={busy || saving}
+                onClick={() => resolveConflict(conflict.key, "current")}
+              >
+                Use current {conflict.label}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       {policy && (
         <fieldset disabled={!valid || saving} className="space-y-4">
           <legend className="font-semibold">Proposed maximum</legend>
@@ -626,28 +714,42 @@ export default function McpPermissionsEditor({
               >
                 <span>
                   {item.name}
+                  {item.nameTruncated ? "… (label shortened)" : ""}
                   <small className="block text-slate-600 break-all">
-                    {item.target} ·{" "}
+                    {item.target ?? item.displaySlug}
+                    {item.displaySlugTruncated
+                      ? "… (identifier shortened)"
+                      : ""}{" "}
+                    ·{" "}
                     {item.kind === "category"
                       ? "slug prefix"
                       : item.namespace === "GLOBAL"
                         ? "global field"
                         : "personal field"}
                     {item.sensitive ? " · sensitive" : ""}
+                    {item.selectable === false
+                      ? " · Identifier is too long for an exact rule. Use a shorter prefix to include this field."
+                      : ""}
                   </small>
                 </span>
                 <span className="flex gap-2">
                   <button
                     className={button}
                     disabled={
+                      !item.target ||
+                      item.selectable === false ||
                       policy.targets.includes(item.target) ||
                       policy.targets.length >= 64
                     }
-                    aria-label={`Allow target ${item.target} ${index}`}
+                    aria-label={
+                      item.target
+                        ? `Allow target ${item.target} ${index}`
+                        : `Exact field unavailable: ${item.displaySlug}. Use a shorter prefix.`
+                    }
                     onClick={() =>
                       change({
                         ...policy,
-                        targets: [...policy.targets, item.target],
+                        targets: [...policy.targets, item.target!],
                       })
                     }
                   >
@@ -655,7 +757,8 @@ export default function McpPermissionsEditor({
                   </button>
                   <button
                     className={button}
-                    onClick={() => setScopeTarget(item.target)}
+                    disabled={!item.target || item.selectable === false}
+                    onClick={() => setScopeTarget(item.target!)}
                   >
                     Use for default
                   </button>
@@ -838,12 +941,24 @@ export default function McpPermissionsEditor({
           ) : (
             <p>No access widening found for this proposal.</p>
           )}
+          {!!preview.narrowing?.length && (
+            <>
+              <h4 className="font-semibold">Access narrowing</h4>
+              <ul className="list-disc pl-5">
+                {preview.narrowing.map((message) => (
+                  <li key={message}>{message}</li>
+                ))}
+              </ul>
+            </>
+          )}
           <details>
             <summary>Illustrative changed fields (up to 32)</summary>
             <ul>
               {preview.examples.map((row, index) => (
                 <li key={row.target + index}>
-                  {row.name} ({row.target}):{" "}
+                  {row.name}
+                  {row.nameTruncated ? "… (label shortened)" : ""} ({row.target}
+                  {row.targetTruncated ? "…; identifier shortened" : ""}):{" "}
                   {["read", "suggest", "write", "define"]
                     .filter((action) => row.before[action])
                     .join(", ") || "blocked"}{" "}
@@ -860,14 +975,24 @@ export default function McpPermissionsEditor({
       <div className="flex flex-wrap gap-3">
         <button
           className={button}
-          disabled={!valid || busy || saving || stale}
+          disabled={
+            !valid ||
+            busy ||
+            saving ||
+            stale ||
+            !!conflicts.length ||
+            !policy ||
+            !validPolicy(policy)
+          }
           onClick={() => void inspectDraft()}
         >
           Preview resulting access
         </button>
         <button
           className={`${button} bg-blue-700 text-white`}
-          disabled={!preview || busy || saving || stale || !valid}
+          disabled={
+            !preview || busy || saving || stale || !valid || !!conflicts.length
+          }
           onClick={() => void save()}
         >
           {saving ? "Saving…" : "Save permissions"}

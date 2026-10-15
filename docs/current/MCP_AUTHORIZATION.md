@@ -188,8 +188,24 @@ those revisions. It is not authority. New ALLOWs must fit the final maximum;
 unchanged inert rules survive reductions. Value presets write READ/SUGGEST/WRITE
 explicitly and preserve descendant exceptions and DEFINE. No matching rule still
 uses the maximum. Current effective summaries cover complete active metadata in
-scope; future-prefix and archived-value widening is separately disclosed. Corrupt
-or oversized projections disable editing without disabling terminal revocation.
+scope; future-prefix and archived-value widening and narrowing are separately
+disclosed. The complete catalog retains exact slugs and active/archived owned and
+global definitions within 2048 rows/2 MiB. SQL size preflight precedes exact slug
+materialization; bounded, flagged display labels are excluded from its authority
+revision. The 128-character maximum/rule selector limit does not limit definition
+slugs. Shortened display identifiers are never authorization targets. Corrupt or
+oversized projections disable editing without disabling terminal revocation.
+
+Cards capture the client page, bounded grants and one catalog in a consistent
+SQLite snapshot. Only this display path skips unused complete authority digests;
+inspect, preview, Save and CLI retain them. Request-local indexes and optional
+indexed readers use the shared grant/sensitivity evaluator, preserving repository
+fallbacks, exact/prefix matching, specificity and hierarchical value access.
+Bounded evaluation batches yield after the read transaction closes; no persistent
+permission cache is introduced. Final list output is limited to 512 KiB;
+inspect/search/preview output to 256 KiB, with at most 32 search/examples rows.
+Browser reconciliation retains explicit user intent, requires choices for the same
+changed setting/grant key, and preserves uncertainty about earlier requests.
 
 CLI policy/grant/rotation/revoke compare complete content atomically too; legacy
 generation-only revoke remains compatible. Exact restored content can match after

@@ -102,7 +102,12 @@ try {
     });
   else throw new Error();
   process.stdout.write('ok\n');
-} catch {
-  process.stderr.write('conflict\n');
-  process.exitCode = 1;
+} catch (error) {
+  if (error instanceof Error && error.message === 'Local MCP administration conflict') {
+    process.stderr.write('conflict:Local MCP administration conflict\n');
+    process.exitCode = 1;
+  } else {
+    process.stderr.write('unexpected:' + (error?.code ?? error?.name ?? 'unknown') + '\n');
+    process.exitCode = 2;
+  }
 }

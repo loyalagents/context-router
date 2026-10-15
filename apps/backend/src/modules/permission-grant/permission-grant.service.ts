@@ -8,8 +8,23 @@ import { MANAGED_MCP_CLIENT_KEYS } from './permission-grant.constants';
 
 export type PermissionGrantDecision = 'allow' | 'deny' | 'no-grant';
 export interface PermissionGrantReader {
-  findMatchingGrants(userId: string, clientKey: string, action: GrantAction, prefixChain: string[]): Promise<Array<{ target: string; effect: GrantEffect }>>;
-  findByUserClientAction(userId: string, clientKey: string, action: GrantAction): Promise<Array<{ target: string; effect: GrantEffect }>>;
+  findMatchingGrantsForSlug?(
+    userId: string,
+    clientKey: string,
+    action: GrantAction,
+    slug: string,
+  ): Promise<Array<{ target: string; effect: GrantEffect }>>;
+  findMatchingGrants(
+    userId: string,
+    clientKey: string,
+    action: GrantAction,
+    prefixChain: string[],
+  ): Promise<Array<{ target: string; effect: GrantEffect }>>;
+  findByUserClientAction(
+    userId: string,
+    clientKey: string,
+    action: GrantAction,
+  ): Promise<Array<{ target: string; effect: GrantEffect }>>;
 }
 type PermissionGrantActionInput =
   | GrantAction
@@ -20,9 +35,17 @@ type PermissionGrantActionInput =
 export const PERMISSION_GRANT_TARGET_PATTERN =
   /^\*$|^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*(?:\.\*)$|^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$/;
 
+/** Same membership as buildPrefixChain, without materializing all slug prefixes. */
+export const matchesGrantTarget = (target: string, slug: string): boolean =>
+  target === '*' || target === slug ||
+  (target.endsWith('.*') && slug.startsWith(target.slice(0, -1)));
+
 @Injectable()
 export class PermissionGrantService {
-  constructor(@Inject(PermissionGrantRepository) private readonly repository: PermissionGrantReader) {}
+  constructor(
+    @Inject(PermissionGrantRepository)
+    private readonly repository: PermissionGrantReader,
+  ) {}
 
   private getSpecificity(target: string): number {
     if (target === '*') {
@@ -54,12 +77,19 @@ export class PermissionGrantService {
     action: PermissionGrantActionInput,
     slug: string,
   ): Promise<PermissionGrantDecision> {
-    const grants = await this.repository.findMatchingGrants(
-      userId,
-      clientKey,
-      this.normalizeAction(action),
-      this.buildPrefixChain(slug),
-    );
+    const grants = this.repository.findMatchingGrantsForSlug
+      ? await this.repository.findMatchingGrantsForSlug(
+          userId,
+          clientKey,
+          this.normalizeAction(action),
+          slug,
+        )
+      : await this.repository.findMatchingGrants(
+          userId,
+          clientKey,
+          this.normalizeAction(action),
+          this.buildPrefixChain(slug),
+        );
 
     return this.evaluateAgainstGrants(grants, slug);
   }
@@ -89,8 +119,9 @@ export class PermissionGrantService {
       return 'no-grant';
     }
 
-    const prefixChain = new Set(this.buildPrefixChain(slug));
-    const matches = grants.filter((grant) => prefixChain.has(grant.target));
+    const matches = grants.filter((grant) =>
+      matchesGrantTarget(grant.target, slug),
+    );
 
     if (matches.length === 0) {
       return 'no-grant';

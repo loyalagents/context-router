@@ -1129,3 +1129,106 @@ for(const mode of ['logout','expiry','replacement'])test(`browser ${mode} during
   assert.deepEqual(store.authenticate(f.mcpToken).policy,state.client.policy);
   assert.equal(store.inspectForUi(id).grants.length,0);
 });
+
+test(
+  'socket disconnect during detached Save preflight settles without writing policy or grants',
+  { timeout: 15000 },
+  async (t) => {
+    const f = await fixture(t),
+      { token } = await f.unlock();
+    const id = (await f.request('/api/local/mcp/list', { token })).json()
+      .items[0].id;
+    const state = (
+      await f.request('/api/local/mcp/inspect', { token, body: { id } })
+    ).json();
+    const body = {
+      id,
+      generation: state.client.generation,
+      revision: state.revision,
+      catalogRevision: state.catalogRevision,
+      policy: {
+        capabilities: ['preferences:write'],
+        targets: ['*'],
+        allowSensitive: true,
+      },
+      edits: [{ target: '*', action: 'WRITE', effect: 'DENY' }],
+    };
+    const preview = (
+      await f.request('/api/local/mcp/preview', { token, body })
+    ).json();
+    const {
+      McpAuthorizationService,
+    } = require('../../dist/mcp/auth/mcp-authorization.service.js');
+    const {
+      LocalUiManagement,
+    } = require('../../dist/local-ui/local-ui-management.js');
+    const {
+      LocalUiSessions,
+    } = require('../../dist/local-ui/local-ui-sessions.js');
+    const sessions = f.runtime.application.get(LocalUiSessions),
+      track = sessions.track.bind(sessions);
+    let entered, release, settled, aborted;
+    const enteredPromise = new Promise((r) => (entered = r)),
+      resume = new Promise((r) => (release = r)),
+      settledPromise = new Promise((r) => (settled = r)),
+      abortedPromise = new Promise((r) => (aborted = r));
+    const original = McpAuthorizationService.prototype.canAccessTarget,
+      handle = LocalUiManagement.prototype.handle;
+    sessions.track = (...args) => {
+      args[1].signal.addEventListener('abort', aborted, { once: true });
+      return track(...args);
+    };
+    McpAuthorizationService.prototype.canAccessTarget = async function (
+      ...args
+    ) {
+      entered();
+      await resume;
+      return original.apply(this, args);
+    };
+    LocalUiManagement.prototype.handle = async function (route, ...args) {
+      try {
+        return await handle.call(this, route, ...args);
+      } finally {
+        if (route === '/api/local/mcp/save') settled();
+      }
+    };
+    const request = http.request({
+      hostname: '127.0.0.1',
+      port: f.runtime.port,
+      path: '/api/local/mcp/save',
+      method: 'POST',
+      headers: {
+        origin: f.origin,
+        'content-type': 'application/json',
+        'x-context-router-ui': '1',
+        authorization: `Bearer ${token}`,
+      },
+    });
+    request.on('error', () => {});
+    try {
+      request.end(JSON.stringify({ ...body, previewKey: preview.previewKey }));
+      await enteredPromise;
+      request.destroy();
+      await abortedPromise;
+      release();
+      await settledPromise;
+      const db = SqliteDatabase.open({
+          databaseRoot: f.configuration.databaseRoot,
+          identityRoot: f.configuration.stateRoot,
+        }),
+        store = new SqliteMcpCredentials(db, f.identity.principalId);
+      assert.deepEqual(
+        store.authenticate(f.mcpToken).policy,
+        state.client.policy,
+      );
+      assert.equal(store.inspectForUi(id).revision, state.revision);
+      assert.equal(store.inspectForUi(id).grants.length, 0);
+    } finally {
+      request.destroy();
+      release();
+      McpAuthorizationService.prototype.canAccessTarget = original;
+      LocalUiManagement.prototype.handle = handle;
+      sessions.track = track;
+    }
+  },
+);

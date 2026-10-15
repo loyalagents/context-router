@@ -74,6 +74,7 @@ export interface LocalMcpCatalogDefinition {
   ownerUserId: string | null;
   slug: string;
   displayName: string | null;
+  displayNameTruncated: boolean;
   isSensitive: boolean;
   archivedAt: number | null;
 }

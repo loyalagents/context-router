@@ -20,7 +20,10 @@ is active in an isolated worktree on `codex/mcp-client-permissions` from
 `071b329731103ef3be5113ff79faf12b856aa68e`. `/root/permissions_implementer` owns
 all edits; coordinator and independent reviewers are read-only. It adds clearer
 cards, server previews and atomic human maximum-policy/grant editing; issuance,
-rotation UI and native lifecycle are outside scope. Final qualification is pending.
+rotation UI and native lifecycle are outside scope. External review follow-up
+corrects draft reconciliation and bounded catalog responsiveness in the same PR;
+earlier qualifications apply to the earlier candidate. Renewed final qualification
+is pending.
 
 ## Three Lanes
 

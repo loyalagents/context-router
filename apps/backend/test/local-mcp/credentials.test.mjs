@@ -278,8 +278,31 @@ async function race(f, modes) {
     }
     fs.writeFileSync(children[0].release, 'go');
     const first = await children[0].done;
+    const winner = {
+      clients: f.query('SELECT * FROM local_mcp_clients ORDER BY id'),
+      grants: f.query('SELECT * FROM permission_grants ORDER BY id'),
+    };
     fs.writeFileSync(children[1].release, 'go');
-    return [first, await children[1].done];
+    const second = await children[1].done;
+    f.raceEvidence = {
+      winner,
+      outputs: children.map((child) => child.output()),
+    };
+    if (second[0] === 1) {
+      assert.equal(
+        children[1].output(),
+        'conflict:Local MCP administration conflict\n',
+      );
+      assert.deepEqual(
+        {
+          clients: f.query('SELECT * FROM local_mcp_clients ORDER BY id'),
+          grants: f.query('SELECT * FROM permission_grants ORDER BY id'),
+        },
+        winner,
+        'loser cannot write any client/grant column',
+      );
+    }
+    return [first, second];
   } finally {
     for (const c of children)
       if (c.child.exitCode === null && c.child.signalCode === null)
@@ -484,6 +507,13 @@ for (const modes of [
   const f=fixture(t); f.store.upgrade();
   f.client=f.store.provision('synthetic',path.join(f.root,'original.token'));
   assert.deepEqual(await race(f,modes), [[0,null],[1,null]]);
+  assert.equal(f.raceEvidence.outputs[0],'ok\n');
+  const client=f.store.authenticate(f.token('original.token'));
+  assert.equal(client.generation,1);assert.equal(client.revoked,false);assert.equal(client.label,'synthetic');
+  assert.deepEqual(client.policy,modes[0]==='policy'?{capabilities:['preferences:write'],targets:['*'],allowSensitive:true}:{capabilities:['preferences:read'],targets:[],allowSensitive:false});
+  const grants=f.store.inspectForUi(f.client.id).grants;
+  assert.deepEqual(grants.map(({target,action,effect})=>({target,action,effect})),modes[0]==='grant'?[{target:'profile.first_name',action:'READ',effect:'DENY'}]:[]);
+  if(modes[1]==='rotate' && fs.existsSync(path.join(f.root,'race-1.token'))) assert.equal(f.store.authenticate(f.token('race-1.token')),null,'losing rotation export is inert');
 });
 
 test('complete administration revision survives oversized/corrupt projection and changes with every grant byte', (t) => {

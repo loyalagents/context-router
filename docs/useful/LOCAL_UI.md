@@ -108,10 +108,16 @@ rules offer explicit removal/inheritance, which can widen access. Reducing a
 maximum retains inert ALLOW rules; expansion or sensitive access can reactivate
 them. New ALLOW rules must fit the proposed final maximum.
 
-Preview shows server-evaluated before/after access and possible widening, including
-new ranges, future fields and archived-definition values. Every draft change
+Preview shows server-evaluated before/after access and possible widening and
+narrowing, including scope, value level, definition management, sensitivity and
+rules affecting future fields or archived-definition values. Every draft change
 invalidates its preview. Save requires that exact preview and current authority
-and catalog revisions. A conflict preserves the draft for a fresh read and preview.
+and catalog revisions. Fresh reads preserve deliberate draft edits and use current
+saved settings for untouched dimensions. Target additions/removals preserve other
+concurrent targets. If the same setting or rule changed elsewhere, choose **Keep
+draft** or **Use current** before Preview/Save. Returning a control to its earlier
+value is still a deliberate choice when a prior request may have changed authority;
+it is not silently discarded. Every resolution needs a new preview.
 Only an acknowledged commit confirms Save. Transport/malformed/generic failures
 remain uncertain, even beside a fresh state read; reads cannot prove the earlier
 attempt rolled back or cannot settle later. There is no automatic mutation retry.
@@ -121,7 +127,14 @@ session replacement clear them.
 
 Complete summaries/preview/editing are unavailable if grants or catalog metadata
 cannot be safely projected (512 editable rules; 2048 definitions/2 MiB metadata).
-No omitted rules are treated as allow. Revocation and CLI recovery remain usable.
+Definition slugs remain exact within that complete budget, independently of the
+128-character rule-selector limit. Long labels and displayed identifiers are
+marked as shortened; a long exact identifier cannot be selected as a truncated
+rule. Choose a legal listed prefix or an explicit advanced target instead. Label
+changes do not invalidate an authority preview; slug, ownership, sensitivity and
+archive changes do. No omitted rules are treated as allow. Revocation and CLI
+recovery remain usable. Known precommit conflicts in the older grant/revoke panel
+say the change was not saved; generic or transport failures remain uncertain.
 Sensitive values follow their actual stored definition IDs, including archived
 ones; global/personal fields sharing a slug share rules. Revoke affects only the
 selected instance. Issuance and rotation remain [CLI operations](MCP_LOCAL_SETUP.md);

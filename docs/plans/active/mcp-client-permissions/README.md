@@ -209,3 +209,103 @@ carries forward subject to the focused delta review and renewed final gates.
 - Regression logs: `review-list-red.log` and `review-broadcast-red.log` under the
   task evidence root. Corrected-candidate focused results, review disposition and
   final gate/package/installed/CI receipts will be recorded in PR #187.
+
+## External review follow-up (2026-10-15)
+
+Claude reviewed clean `b33a1bae0cb5a205e63c697f2d38e57486112b26` and
+reported stale full-policy overwrite, valid catalog metadata rejected by narrower
+reader limits, repeated catalog/evaluator work blocking the shared process, and
+race/disconnect/boundary coverage gaps. The coordinator accepted these findings;
+the existing independent plan reviewer approved the following scoped amendment.
+Earlier final receipts remain evidence for that earlier candidate only. All final
+gates, package/installed/demo qualification and exact-head CI must be renewed after
+this correction batch. Follow-up evidence is retained outside the repository at
+`/private/tmp/mcp-permissions-followup-t4MJAi`.
+
+1. Tests first: valid long labels/slugs through MCP create/archive, cosmetic label
+   edits versus authority revisions, exact catalog limits and giant dotted slugs;
+   strengthen process races to prove conflict classification and durable winner,
+   and exercise a real disconnected Save during asynchronous preflight.
+2. Keep exact full definition slugs within the existing complete 2048-row/2 MiB
+   budget; check SQL lengths/remaining budget before materialization. Bound and
+   flag display labels, exclude them from catalog authority revisions, keep
+   archived definitions, and never use shortened display strings as selectors.
+   Long exact slugs are not selectable; only legal prefixes of at most 128
+   characters may be offered. No definition-write/schema cap or new recovery path.
+3. Read the client page, bounded grants and catalog in one consistent snapshot;
+   keyset reads, request-local indexes and evaluator reuse remove repeated scans.
+   Only the card path may omit unused complete administration digests. Shared
+   evaluator optional indexed readers retain repository fallbacks and exact,
+   wildcard and dot-prefix matching semantics. Yield outside SQLite transactions;
+   prove timer fairness and query bounds at 32 clients/2048 definitions/512 grants.
+   No persistent cache. Enforce final list/search/preview response byte limits.
+4. Three-way draft reconciliation preserves untouched current dimensions and
+   exact arrays, replays deliberate target add/remove intent, and requires an
+   explicit choice for concurrent changes to the same dimension or grant key
+   before Preview/Save. Preserve uncertain outcomes and late-response guards.
+   Preview discloses narrowing as well as widening, including future/archived
+   scope, value level, DEFINE, sensitivity and grant changes.
+5. Update affected contracts/runbooks, batch focused checks, freeze/push the same
+   draft PR, obtain the existing independent reviewer's affected-diff review, then
+   renew required final qualification. Keep complete CLI CAS, definition counts,
+   fail-closed oversized/corrupt metadata and revoke/CLI recovery. A known legacy
+   precommit 409 may say not saved; generic/malformed/transport failures remain
+   uncertain. No merge.
+
+Sole writer and requested/verified model roster remain unchanged: implementer
+Astra/high, independent plan/implementation reviewer Astra/xhigh; explicit spawn
+settings accepted, execution internals independently unobservable.
+
+### Follow-up implementation checkpoints
+
+- Valid catalog metadata tests first failed with `CATALOG_UNAVAILABLE` for a
+  129-character slug/513-character label and a deeply dotted exact slug. Bounded
+  exact reading, presentation flags and label-independent revisions then passed.
+  Authoritative corruption and true row/byte overflow still disable complete
+  claims; oversize exact text is rejected before materialization.
+- The maximum fixture (32 clients, 2048 definitions, 512 grants/client) first
+  failed because its zero-delay timer ran only after list completion. Query-plan
+  tests separately caught namespace-union sorting and a projected-ID alias sort.
+  The corrected query seeks the existing primary-key ID index, snapshots one
+  catalog, omits card-only unused digests and yields outside transactions.
+  Timings are retained with fixture scope in external logs, not compared as a
+  controlled benchmark against another reviewer's machine/run.
+- Six process races now classify only the expected conflict as conflict, assert
+  the exact durable winner and unchanged rows after the loser, and allow only an
+  inert losing rotation export. Real socket disconnect waits for the server abort
+  and full handler settlement before proving unchanged policy/grants/revision.
+  Real MCP long-label/slug create/update/archive retains editor availability;
+  Save accepts the exact preview across a cosmetic rename and rejects it across
+  archive changes.
+- Browser stale-draft regressions first reproduced missing same-setting choices
+  and lost untouched scope on refresh. Three-way intent tests cover preserved
+  exact arrays, explicit choices, repeated reads, convergence and absent-rule
+  baselines. Existing uncertain-Save coverage additionally caught explicit
+  reversion being dropped while a read was pending; the original expectation is
+  retained, with a value/rule regression and corrected intent retention.
+- A combined affected-backend run reported 106/107 passing and an HTTP client
+  `EPIPE` during the existing oversized-body endpoint test. Two isolated repeats
+  passed without runtime changes; the original failure is retained for final
+  qualification scrutiny. This is not recorded as a clean combined pass.
+- Shared evaluator unit consumers passed 30/30; management and actual CLI
+  compatibility passed 29/29. The final maximum fixture measured list 3184 ms,
+  inspect 684 ms and preview 763 ms, with one catalog read, no card-only digest
+  and timer progress before completion. These are fixture measurements, not a
+  controlled comparison with the external review timings.
+- The affected real-backend permissions browser suite and draft units passed
+  25/25 after correcting the long-field disabled button's accessible name. A
+  separate demo assertion initially started CLI inspection immediately after Save
+  acknowledgement, overlapping reconciliation. Its unchanged isolated repeat
+  passed; it now waits for both actual reconciliation responses before the CLI
+  isolation assertions. No read retry, sleep or storage behavior change was added.
+  Both earlier failure logs remain retained.
+- Documentation reader tests passed 75/75, links passed for 152 Markdown files,
+  and the verified-base contract census passed. Renewed independent review and
+  full local/CI/package/installed/demo qualification remain pending for the next
+  frozen candidate; final exact-head receipts belong in PR evidence.
+
+Disposition: accepted findings 1, 2, 3 and gaps 4(a–e). Retained complete CLI CAS,
+active/archived catalog membership, definition counts (including slug collisions),
+2048-row/2 MiB fail-closed limits and terminal recovery. Rejected suggestions to
+add write-side definition caps, drop archived authority metadata or introduce a
+persistent cache. These would alter authority/contracts unnecessarily.

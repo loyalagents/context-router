@@ -256,12 +256,14 @@ export default function McpClients() {
                 ? 'Grant removed. Reload to inspect current authority.'
                 : 'Grant saved. Reload to inspect current authority.',
         });
-    } catch {
+    } catch (error) {
       if (mutation.current === controller && !controller.signal.aborted)
         setOutcome({
           ...attempted,
-          status: 'uncertain',
-          message: 'Change was not confirmed. Authority may have changed. Reload and inspect before deciding whether to submit again.',
+          status: error instanceof LocalRequestError && error.status === 409 ? 'rejected' : 'uncertain',
+          message: error instanceof LocalRequestError && error.status === 409
+            ? 'Change was not saved because authority changed. Reload and inspect before deciding whether to submit again.'
+            : 'Change was not confirmed. Authority may have changed. Reload and inspect before deciding whether to submit again.',
         });
     } finally {
       if (mutation.current === controller && !controller.signal.aborted) {
@@ -438,7 +440,7 @@ export default function McpClients() {
         >
           <h2 id="mcp-change-title" className="text-lg font-semibold">
             {outcome.status === 'rejected'
-              ? outcome.kind === 'rename' ? 'Name not saved' : 'Grant not saved'
+              ? outcome.kind === 'rename' ? 'Name not saved' : outcome.kind === 'revoke' ? 'Revoke not saved' : 'Grant not saved'
               : outcome.status === 'uncertain'
                 ? 'Change not confirmed'
                 : outcome.kind === 'rename' ? 'Client name saved'
