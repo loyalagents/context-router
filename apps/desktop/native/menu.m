@@ -76,7 +76,7 @@
   _items[@"cancel-demo"].enabled=_preparingDemo&&!_demoFailed&&!_stopping&&!_broken;
   for(NSString *key in @[@"return-previous",@"retry-demo"])_items[key].enabled=_demoFailed&&!_stopping&&!_broken;
   _items[@"download"].enabled=active&&!demo&&!_download;_items[@"cancel"].enabled=active&&_download&&!_cancelPending;_items[@"quit"].enabled=!_quitting;[self updateDemoActions];
-  if(!_quitting){if(_demoOperation.ownershipLost)_label.title=@"Setup ownership uncertain — state retained";else if(_demoQuitPending)_label.title=@"Quit pending — finishing setup shutdown…";}
+  if(!_quitting&&!_broken&&!_stopped){if(_demoOperation.ownershipLost)_label.title=@"Setup ownership uncertain — state retained";else if(_demoQuitPending)_label.title=@"Quit pending — finishing setup shutdown…";}
 }
 - (void)breakControl {
   _broken=YES;_ready=NO;_label.title=@"Runtime unavailable — state retained";

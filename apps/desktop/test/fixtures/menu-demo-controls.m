@@ -74,21 +74,35 @@ static void desktopFeedback(NSString *root,NSString *domain,NSDictionary *propos
  }
  [button(panel,@"demo-desktop-prepare") performClick:nil];failSetup(menu,jsonBytes(failureEnvelope(menu,@"Desktop config changed; prepare a new proposal.")),@"Setup timed out; inspect retained state.");expect([feedback(panel) hasPrefix:@"Setup timed out"],@"Native lifecycle uncertainty takes precedence");
  ((NSTextField *)findControl(panel.accessoryView,@"demo-copy-feedback")).toolTip=@"stale";[button(panel,@"demo-desktop-prepare") performClick:nil];expect(((NSTextField *)findControl(panel.accessoryView,@"demo-copy-feedback")).toolTip==nil,@"New action clears old tooltip");finish(menu,proposal);expect(((NSTextField *)findControl(panel.accessoryView,@"demo-copy-feedback")).toolTip==nil,@"Success clears old tooltip");
- for(NSString *kind in @[@"prepare",@"apply-success",@"apply-failure",@"apply-malformed",@"apply-reopened"]){
+ [button(panel,@"demo-desktop-closed") performClick:nil];[button(panel,@"demo-desktop-apply") performClick:nil];failSetup(menu,[NSData data],nil);
+ expect([feedback(panel) hasPrefix:@"Apply is not confirmed"]&&[feedback(panel) containsString:@"do not replay"],@"Unknown visible apply failure retains uncertainty guidance");
+ for(NSString *kind in @[@"prepare",@"apply-success",@"apply-failure",@"apply-unknown",@"apply-malformed",@"apply-reopened"]){
   NSTimer *dismiss=[NSTimer timerWithTimeInterval:0.02 repeats:NO block:^(NSTimer *timer){(void)timer;NSView *content=NSApp.modalWindow.contentView;[(NSButton *)findControl(content,@"demo-desktop-prepare") performClick:nil];if(![kind isEqual:@"prepare"]){finish(menu,proposal);[(NSButton *)findControl(content,@"demo-desktop-closed") performClick:nil];[(NSButton *)findControl(content,@"demo-desktop-apply") performClick:nil];}[doneButton(content) performClick:nil];}];[NSRunLoop.mainRunLoop addTimer:dismiss forMode:NSModalPanelRunLoopMode];[menu demoSetup:nil];
   BOOL reopened=[kind isEqual:@"apply-reopened"];if(reopened){panel=[menu demoSetupAlert];expect([feedback(panel) containsString:@"finishing"],@"Reopened panel shows the pending operation");}
   if([kind isEqual:@"prepare"])finish(menu,proposal);
   else if([kind isEqual:@"apply-success"]||reopened)finish(menu,@{@"status":@"applied",@"backup":NSNull.null});
   else if([kind isEqual:@"apply-failure"])failSetup(menu,jsonBytes(failureEnvelope(menu,@"The reviewed proposal changed. Prepare and review a new proposal; no config has changed.")),nil);
+  else if([kind isEqual:@"apply-unknown"])failSetup(menu,[NSData data],nil);
   else finish(menu,@{@"status":@"unexpected"});
   if(!reopened){expect([menu valueForKey:@"demoCopyFeedback"]==nil,@"Hidden completion does not write dismissed views");panel=[menu demoSetupAlert];}
-  NSString *expected=[kind isEqual:@"prepare"]?@"Prepare again":([kind isEqual:@"apply-success"]||reopened)?@"Setup applied":[kind isEqual:@"apply-failure"]?@"reviewed proposal changed":@"could not be verified";
+  NSString *expected=[kind isEqual:@"prepare"]?@"Prepare again":([kind isEqual:@"apply-success"]||reopened)?@"Setup applied":[kind isEqual:@"apply-failure"]?@"reviewed proposal changed":[kind isEqual:@"apply-unknown"]?@"Apply is not confirmed":@"could not be verified";
   expect([feedback(panel) containsString:expected],@"Reopened panel retains the bound Desktop outcome");expect(![feedback(panel) containsString:@"original configuration backup is retained"],@"No nonexistent backup claim");
+  if([kind isEqual:@"apply-unknown"])expect([feedback(panel) containsString:@"do not replay"],@"Unknown retained apply failure preserves no-replay guidance");
   expect([menu valueForKey:@"demoProposal"]==nil&&!button(panel,@"demo-desktop-apply").enabled&&button(panel,@"demo-desktop-closed").state==NSControlStateValueOff,@"Outcome never revives proposal or closed attestation");
  }
  [button(panel,@"demo-desktop-prepare") performClick:nil];expect([menu valueForKey:@"demoOutcome"]==nil,@"New Desktop work clears the old outcome");finish(menu,proposal);
  [menu setValue:@"cccccccccccccccccccccccccccccccc" forKey:@"generation"];panel=[menu demoSetupAlert];expect([menu valueForKey:@"demoOutcome"]==nil&&[feedback(panel) hasPrefix:@"Choose an action"],@"Changed binding clears prior outcome");
  [button(panel,@"demo-desktop-prepare") performClick:nil];[menu setValue:@"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" forKey:@"generation"];finish(menu,proposal);expect([menu valueForKey:@"demoOutcome"]==nil,@"Stale completion cannot cache an outcome");
+}
+static void runtimeOutcomePrecedence(NSString *root,NSString *domain){
+ for(NSNumber *pending in @[@NO,@YES])for(NSNumber *stopped in @[@NO,@YES]){
+  ControlMenu *menu=freshMenu(root,domain);NSAlert *panel=[menu demoSetupAlert];[button(panel,@"demo-desktop-prepare") performClick:nil];
+  menu.operation.ownershipLost=!pending.boolValue;[menu setValue:pending forKey:@"demoQuitPending"];[menu update];
+  NSMenuItem *label=[menu valueForKey:@"label"];expect([label.title hasPrefix:pending.boolValue?@"Quit pending":@"Setup ownership uncertain"],@"Setup status is visible while the runtime is active");
+  if(stopped.boolValue){[menu record:@{@"version":@1,@"generation":[menu valueForKey:@"generation"],@"type":@"stopped",@"outcome":@"uncertain"}];[menu update];expect([label.title isEqual:@"Runtime stopped — state retained"],@"Stopped runtime outcome takes precedence over setup status");}
+  else{[menu breakControl];expect([label.title isEqual:@"Runtime unavailable — state retained"],@"Broken runtime outcome takes precedence over setup status");}
+  expect([menu valueForKey:@"demoOperation"]!=nil,@"Runtime feedback never releases the uncertain operation");[(NSTimer *)[menu valueForKey:@"demoOperationTimer"] invalidate];
+ }
 }
 static void uncertainQuit(NSString *root,NSString *domain,BOOL pending){
  ControlMenu *menu=freshMenu(root,domain);
@@ -137,6 +151,6 @@ int main(int argc,const char **argv){@autoreleasepool{@try{
  [button(panel,@"demo-desktop-apply") performClick:nil];NSArray *apply=menu.arguments.lastObject;expect([apply containsObject:@"--proposal-sha256"]&&[apply containsObject:proposal[@"proposalSha256"]]&&![apply containsObject:proposal[@"applyCommand"]],@"Apply uses exact reviewed digest, never returned shell command");
  expect([menu valueForKey:@"demoProposal"]==nil,@"Submitted proposal cannot be replayed from panel");
  expect([menu applicationShouldTerminate:NSApp]==NSTerminateCancel&&menu.operation.cancelled&&menu.sent.count==0,@"Quit waits for finite cancellation before guardian command");finish(menu,@{@"status":@"applied"});expect([menu.sent isEqual:@[@"quit"]],@"Guardian Quit follows finite settlement");
- desktopFeedback(root,domain,proposal);uncertainQuit(root,domain,NO);uncertainQuit(root,domain,YES);
+ desktopFeedback(root,domain,proposal);runtimeOutcomePrecedence(root,domain);uncertainQuit(root,domain,NO);uncertainQuit(root,domain,YES);
  [menu.defaults removePersistentDomainForName:domain];puts("{\"picker\":true,\"savedRevalidation\":true,\"staleRefusal\":true,\"exactApply\":true,\"transitionInterlock\":true,\"doneLifetime\":true,\"latestTerminalFeedback\":true,\"quitOrder\":true,\"uncertainQuit\":true}");return 0;
 }@catch(NSException *e){fprintf(stderr,"%s\n",e.reason.UTF8String);return 1;}}}

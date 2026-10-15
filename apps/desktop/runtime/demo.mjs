@@ -40,10 +40,10 @@ try{
     console.log(JSON.stringify(result,null,2));
   }else throw new Error();
 }catch(error){
-  let message=error?.demoSafeMessage??unavailable;
+  let message=error?.demoSafeMessage;
   if(nativeResult){
     if(typeof message!=='string'||!message.trim()||!message.isWellFormed()||Buffer.byteLength(message,'utf8')>800||/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(message))message=unavailable;
-    process.stdout.write(JSON.stringify({...nativeResult,message})+'\n');
+    else process.stdout.write(JSON.stringify({...nativeResult,message})+'\n');
   }
-  process.stderr.write(message+'\n');process.exitCode=1;
+  process.stderr.write((message??unavailable)+'\n');process.exitCode=1;
 }

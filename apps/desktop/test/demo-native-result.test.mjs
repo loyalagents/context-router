@@ -26,9 +26,14 @@ test('native diagnostics reject unsafe messages and never substitute exception t
  const f=await fixture(t);
  for(const value of [undefined,17,'secret\nline','secret\u001b[31m','secret\u202e','\ud800', 'é'.repeat(401)]){
   await f.helper(`throw Object.assign(new Error('private exception'),{demoSafeMessage:${JSON.stringify(value)??'undefined'}});`);
-  const r=f.run(['desktop','prepare']);assert.equal(r.status,1);assert.equal(JSON.parse(r.stdout).message,fallback);assert.equal(r.stderr,fallback+'\n');
+  const r=f.run(['desktop','prepare']);assert.equal(r.status,1);assert.equal(r.stdout,'');assert.equal(r.stderr,fallback+'\n');
  }
  await f.helper(`throw Object.assign(new Error(),{demoSafeMessage:'é'.repeat(400)});`);assert.equal(JSON.parse(f.run(['desktop','prepare']).stdout).message,'é'.repeat(400));
+});
+test('unexpected apply errors leave native output empty so the menu retains its uncertain-apply guidance',async t=>{
+ const f=await fixture(t);await f.helper(`throw Object.assign(new Error('private filesystem path'),{code:'ENOSPC'});`);
+ const r=f.run(['desktop','apply','--proposal','/owned/proposal.json','--desktop-closed']);
+ assert.equal(r.status,1);assert.equal(r.stdout,'');assert.equal(r.stderr,fallback+'\n');assert.doesNotMatch(r.stdout+r.stderr,/private filesystem path/);
 });
 test('native-result is restricted to fully classified finite commands and successful payloads remain compatible',async t=>{
  const f=await fixture(t);await f.helper(`return {path:'/native/client',sha256:'c'.repeat(64),version:'0.160.0'};`);

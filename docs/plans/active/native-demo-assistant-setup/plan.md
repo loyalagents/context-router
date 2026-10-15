@@ -110,8 +110,10 @@ native mode changes racing a reviewed Desktop apply. This bounded
 finite-helper ownership is necessary setup lifecycle, not assistant supervision.
 
 Finite inspect/prepare/apply requests use the additive `--native-result` option.
-On failure, stdout contains one exact JSON envelope bound to action and full
-context, with only constructor-provided safe text or a fixed fallback. Reject
+On failure with valid constructor-provided safe text, stdout contains one exact
+JSON envelope bound to action and full context. Unknown or invalid diagnostics
+leave stdout empty so native per-action uncertainty guidance remains authoritative;
+the ordinary safe stderr fallback is unchanged. Reject
 messages over 800 UTF-8 bytes, malformed Unicode or control characters. Native
 parses the whole envelope, never raw stderr; lifecycle uncertainty takes priority.
 Other commands reject the flag and ordinary CLI stderr remains compatible.
