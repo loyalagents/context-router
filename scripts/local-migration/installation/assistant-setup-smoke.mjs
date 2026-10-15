@@ -20,12 +20,15 @@ const envelope=path.join(root,'managed-v1'),exe=path.join(bundle,'Contents/MacOS
 const receipt={version:1,status:'running',scope:'packaged-native-helper-assistant-setup',root,bundle,source,phases:[],limitations:['Synthetic offline native CLI; no real provider, login, Terminal LaunchServices or installed AppKit interaction.','Request writer is compiled from candidate source; request is executed by shell through the sealed installed native wrapper and packaged Node. Human native controls/Terminal/Desktop acceptance remains pending.']};
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const phase=name=>{receipt.phases.push(name);console.log('Assistant artifact: '+name);};
-const run=(file,args,options={})=>{const r=spawnSync(file,args,{env:{PATH:'',LC_ALL:'C'},encoding:'utf8',timeout:30000,maxBuffer:1024*1024,...options});assert.equal(r.status,options.expected??0,r.stderr);return r.stdout;};
+const run=(file,args,options={})=>{const r=spawnSync(file,args,{env:{PATH:'',LC_ALL:'C'},encoding:'utf8',timeout:30000,maxBuffer:1024*1024,...options});assert.equal(r.status,options.expected??0,r.stderr);if(options.expectedStderr)assert.match(r.stderr,options.expectedStderr);return r.stdout;};
 const command=(args,expected=0)=>run('/usr/bin/sandbox-exec',['-f',profile,exe,...args],{expected});
 const native=path.join(repository,'apps/desktop/native'),fixture=path.join(repository,'apps/desktop/test/fixtures');
 run('/usr/bin/clang',['-Wall','-Wextra','-Werror',path.join(fixture,'demo-artifact-client.c'),'-o',client]);
 run('/usr/bin/clang',['-Wall','-Wextra','-Werror','-fobjc-arc','-framework','Foundation','-framework','Security','-I',native,path.join(fixture,'demo-artifact-request.m'),...['demo-operation','package','envelope'].map(n=>path.join(native,n+'.m')),'-o',driver]);
-await fs.writeFile(profile,'(version 1)\n(allow default)\n(deny network-outbound)\n(allow network-outbound (remote ip "localhost:*"))\n(deny process-exec)\n'+[exe,node,client,'/bin/sh','/usr/bin/env'].map(p=>`(allow process-exec (literal ${JSON.stringify(p)}))\n`).join(''),{mode:0o600});
+await fs.writeFile(profile,'(version 1)\n(allow default)\n(deny network-outbound)\n(allow network-outbound (remote ip "localhost:*"))\n(deny process-exec)\n'+[exe,node,client,'/bin/sh','/bin/bash','/usr/bin/env'].map(p=>`(allow process-exec (literal ${JSON.stringify(p)}))\n`).join(''),{mode:0o600});
+// macOS /bin/sh dispatches to this fixed system variant; other interpreters stay denied.
+run('/usr/bin/sandbox-exec',['-f',profile,'/bin/sh','-c','exit 0']);
+run('/usr/bin/sandbox-exec',['-f',profile,'/bin/zsh','-c','exit 0'],{expected:71,expectedStderr:/Operation not permitted/});
 const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
 let owner,closed,events,pending,error,ready;
 function launch(){owner=spawn('/usr/bin/sandbox-exec',['-f',profile,exe,'guardian','--root',envelope,'--ui-port','0','--mcp-port','0','--demo-mcp-port',String(port)],{env:{PATH:'',LC_ALL:'C'},stdio:['pipe','pipe','pipe']});closed=once(owner,'close');events=[];pending='';error='';ready=undefined;
