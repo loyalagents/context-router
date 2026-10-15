@@ -180,15 +180,17 @@ export default function LocalPage({ page }: { page: Page }) {
       </main>
     );
   const accessToken = session.token;
-  if (page === 'dashboard' && session.capabilities.runtime?.mode === 'demo') return <DemoGuide />;
   if (page === 'dashboard')
     return (
+      <>
       <DashboardView
         activePreferences={data!.activePreferences}
         userData={data!.me}
         error={null}
         local
       />
+      {session.capabilities.runtime?.mode === 'demo' && <DemoGuide />}
+      </>
     );
   if (page === 'preferences')
     return (
@@ -254,16 +256,15 @@ function DemoGuide() {
     'Search using the literal prefixes health.demo001. and finance.demo001. Report what the tools permit; do not guess or infer restricted values.',
     'Review the changed memory’s Modified by field and its Audit History. Compare the original importer event with the later agent change and MCP Access event.',
   ];
-  return <main className="p-10 max-w-5xl space-y-6">
-    <h1 className="text-3xl font-bold">Explore the demo</h1>
+  return <details className="mx-10 mb-10 max-w-5xl rounded border p-5">
+    <summary className="cursor-pointer font-semibold">Demo walkthrough (optional)</summary>
+    <div className="mt-4 space-y-6">
     <p>The sample contains historical memories. Read by category prefix because one response is limited to 100 results. The current permissions and history views show real stored state, including your changes.</p>
-    <nav aria-label="Demo walkthrough" className="flex flex-wrap gap-5 text-blue-700 underline">
-      <a href="/dashboard/preferences">Memories</a><a href="/dashboard/permissions">Agent permissions</a><a href="/dashboard/history">Changes and access</a>
-    </nav>
-    <p>Use CR → Demo setup for the current generation’s client commands. Agent A starts with write and definition access; B and C start as readers with health and finance restrictions. Inspect Agent permissions for their actual current grants. Start fresh conversations after every mode switch or reset.</p>
+    <p>Use CR → Demo setup for the current generation’s client commands. Agent A starts with write and definition access; B and C start as readers with health and finance restrictions. Inspect Permission Grants for their actual current grants. Start fresh conversations after every mode switch or reset.</p>
     <ol className="list-decimal pl-6 space-y-5">{prompts.map((prompt, index) => <li key={prompt}>
       <p>{prompt}</p><button type="button" className="mt-1 text-blue-700 underline" onClick={() => void navigator.clipboard.writeText(prompt)}>Copy step {index + 1} prompt</button>
     </li>)}</ol>
     <p className="text-sm text-gray-600">Use sensitive-value reveal deliberately in history. A denied read is evidence of the active grants, while an empty allowed read can mean no matching memories.</p>
-  </main>;
+    </div>
+  </details>;
 }

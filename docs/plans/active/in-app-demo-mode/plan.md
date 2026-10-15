@@ -4,6 +4,9 @@ Status: **reduced scope and implementation approved by the user on 2026-10-14**.
 Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code is implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Both complete-diff reviews and automated qualification passed through `5dfadcf`; exact receipts are in the PR. The user then requested assessment and useful fixes from an external static review before hands-on testing. This bounded correction round targets a source/artifact-bound isolated human trial after affected checks/reviews; renewed final qualification follows the human-feedback round. Human acceptance remains pending.
 The subsequent hands-on trial reported the menu disappearing after demo entry;
 the bounded compact-label correction and retest scope are recorded below.
+The user then explicitly required the normal dashboard UI in demo, with its
+historical banner/data and only optional walkthrough help; that correction
+supersedes the earlier replacement-homepage provision below.
 One cohesive PR; the native assistant-control follow-up is tracked below for the
 next PR. General profiles remain future work. Focused evidence is recorded below; full final validation and human acceptance are pending.
 
@@ -90,18 +93,21 @@ authenticated runtime metadata, never a URL flag or browser storage. A
 stale/disconnected managed tab keeps the existing session-clearing behavior and
 directs the user to CR → Open dashboard; source UI retains its own launch guidance.
 
-In demo, replace the dashboard's otherwise empty profile/account emphasis with
-a compact demo guide, retaining existing views rather than building new ones:
+**User override (2026-10-14):** demo uses the same `DashboardView` as personal,
+including Account Information, Profile Memory and all normal local navigation:
+Edit Profile, Preferences, Form Fill, Audit History, Preference Schema and
+Permission Grants. Demo data and the authenticated historical banner distinguish
+the mode. This explicitly supersedes the earlier requirement to replace the
+dashboard with a guide; there is no separate demo landing page.
 
-- **Memories** opens Preferences; historical-context notice and suggested
-  category-prefix reads avoid the 100-result limit.
-- **Agent permissions** opens MCP Clients, using actual credential identities
-  and actual stored grants, including later presenter edits.
-- **Changes and access** opens the existing Audit History/MCP Access tabs and
-  explains Modified by, sensitive-value reveal and importer versus agent events.
-- A short five-step script links these views: fresh read, one explicitly approved
-  A change, B/C fresh read, restricted health/finance read, attribution/history.
-  Copyable prompts contain slugs/instructions, never credentials.
+Keep the existing five-step walkthrough only in **Demo walkthrough (optional)**,
+a native details/summary section after the dashboard, closed by default and
+absent in personal mode. It has no second main heading or duplicate navigation.
+Its prompts cover historical category-prefix reads (within the 100-result limit),
+one explicitly approved A change, fresh B/C reads, restricted health/finance reads,
+and attribution/history. Permission Grants shows actual stored grants; Audit
+History/MCP Access and Modified by preserve the existing evidence workflow.
+Copyable prompts contain slugs/instructions, never credentials.
 
 Keep the existing Clear memory and Clear history actions and their separate
 semantics clear; **Reset sample data** is a native lifecycle action, not the
@@ -478,7 +484,7 @@ changes their presentation/launch surface, not authority, persistence or safety.
 | --- | --- | --- |
 | Historical 198-record corpus, 189 active/9 inactive, exact mapping/provenance | Bundled seed and shared mapper/importer; originals unchanged | Counts/hashes, real import/audit and package closure |
 | Prepare once, reopen edits, explicit fresh generation | Native enter/reopen/reset/leave with managed ownership | Native persistence/failure/return-personal and artifact cycle |
-| Memory, authority, audit/access walkthrough | Existing views, demo indicator and compact guide | Actual API/browser/history checks |
+| Memory, authority, audit/access walkthrough | Shared normal dashboard, demo indicator and optional collapsed guide | Actual API/browser/history checks |
 | A WRITE+DEFINE with explicit mutation approval; B READ with health/finance restrictions | Guarded packaged Codex/Claude helpers; alternative supported A/B client roles retained | Shared launch specs, exact pins, actual argv/env and SDK authority checks |
 | Dedicated login, next-day reuse and fresh conversation after reset | Packaged Codex login and explicit Claude subscription flow, stable private profiles | Byte-preservation, helper concurrency and offline installed-client probes; human login separate |
 | Independent C credential, exact-generation proposal, review/apply/backup | Packaged Desktop prepare/apply helpers, immutable bridge/Node snapshot | Config conflict/interruption/backup and real SDK stdio tests |
@@ -1030,3 +1036,39 @@ forward after explicit input assessment. The earlier artifact cycle does not
 qualify this new menu presentation. No automatic repeat of the full migration
 gate or full artifact cycle is required for this focused retest. Final gates,
 CI and human acceptance remain required at the post-feedback milestone above.
+
+### Approved shared-dashboard correction (2026-10-14)
+
+The user rejected the separate **Explore the demo** homepage during hands-on
+testing and explicitly required the normal UI plus demo banner/data. This user
+instruction overrides the earlier guide-replaces-dashboard design. The approved
+implementation removes only the demo-specific `DashboardView` bypass, reuses the
+unchanged normal component and appends the five prompts in a closed native
+details/summary section. There is no duplicate navigation or second main heading.
+The optional help uses the real **Permission Grants** label. Data, credentials,
+lifecycle and the current no-model policy are unchanged.
+
+Failure-first production-browser evidence passed personal mode but failed demo
+waiting for the normal Dashboard heading. After correction, all three focused
+browser cases passed: normal personal profile editing plus personal/demo heading
+and exact navigation parity, authenticated demo-only banner, collapsed/expanded
+help with real clipboard copy, valid literal search prefixes, existing
+profile/schema/preferences/permissions/history routes and the real 189-memory
+sample. These isolated source fixtures inject only admitted presentation metadata;
+native admission remains a separate packaged check.
+
+After affected review, freeze and build one new sealed UI trial. The existing
+artifact harness's explicit `--browser-only` path records its three-phase scope:
+artifact isolation, native demo entry/personal byte preservation, and real
+packaged shared-dashboard/help/view assertions. It retains normal awaited
+guardian stop/reap and cleanup. It excludes the later client-authority, Desktop,
+reconnect, reset and personal-return proofs; no-flag invocation still runs the
+full nine-phase cycle, and unknown/extra arguments are rejected. Capture the
+default dashboard and expanded help for visual review. Prior full-cycle evidence
+keeps its original source/artifact binding and does not qualify this changed UI.
+
+Requested writer/affected-review settings remain Astra/xhigh; effective settings
+are unverified. The running human trial and durable root remain untouched.
+**Targeted checks passed; final validation pending.** Human UI/provider testing
+and the agreed post-feedback final gates remain outstanding; no full migration
+gate or broad qualification is automatically repeated for this UI iteration.

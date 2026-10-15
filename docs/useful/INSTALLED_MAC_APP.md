@@ -81,6 +81,13 @@ slot. Quit/relaunch remembers the last successfully selected mode. Each switch
 closes existing browser/MCP sessions; use the newly opened dashboard and fresh
 client conversations.
 
+Demo uses the same dashboard and navigation as personal mode, including Account
+Information, Profile Memory, Edit Profile, Preferences, Form Fill, Audit History,
+Preference Schema and Permission Grants. The historical banner and demo data
+identify the mode. **Demo walkthrough (optional)** below the dashboard is closed
+by default; expand it for the five-step script and copyable prompts. It does not
+replace the homepage or add a second navigation menu.
+
 **Reset sample data…** confirms creation of a new store/principal with 189
 active memories, original definitions/import history and fresh A/B/C credentials.
 Later changes, custom clients and grants do not carry forward. Old stores/exports

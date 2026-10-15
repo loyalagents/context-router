@@ -72,8 +72,10 @@ reset restores original definitions/import history and fresh A/B/C credentials,
 retaining old stores and stable isolated provider profiles. Demo has no model
 startup/download. Existing personal assets remain retained.
 
-Authenticated demo pages show the historical banner and a short guide to the
-existing Memories, Agent permissions and Changes/access views. The read-only
+Demo uses the same dashboard and navigation as personal mode, with historical
+data and an authenticated demo banner. The optional five-step walkthrough is
+collapsed below the dashboard; normal profile, preferences, schema, permissions
+and history views remain available. The read-only
 **Demo setup…** panel supplies generation/endpoint-bound packaged Terminal commands:
 Codex A writes, Claude Code subscription B and Desktop C read with health/finance
 restrictions. Later grants are shown from actual state. External provider sessions
