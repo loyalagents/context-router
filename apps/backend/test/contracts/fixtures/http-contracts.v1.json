@@ -467,6 +467,77 @@
         "status": 200
       },
       "sharedBoundary": "localBrowser"
+    },
+    "localMcpRename": {
+      "mode": "local-ui",
+      "method": "POST",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "sharedBoundary": "localBrowser",
+      "path": "/api/local/mcp/rename",
+      "request": {
+        "required": [
+          "id",
+          "label",
+          "expectedLabel",
+          "generation"
+        ],
+        "additionalFields": false
+      },
+      "bounds": {
+        "maxBodyBytes": 262144,
+        "idBase64urlCharacters": 22,
+        "maxLabelUtf16CodeUnits": 64
+      },
+      "success": {
+        "status": 200,
+        "required": [
+          "client"
+        ],
+        "clientFields": [
+          "id",
+          "label",
+          "generation"
+        ]
+      },
+      "conflict": {
+        "status": 409,
+        "semantics": "Expected label or credential generation changed; no write"
+      },
+      "semantics": "Trimmed display metadata only; credentials, sessions, policy, grants and history keys unchanged; revoked instances remain revoked; no automatic retry"
+    },
+    "localMcpLabels": {
+      "mode": "local-ui",
+      "method": "POST",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "sharedBoundary": "localBrowser",
+      "path": "/api/local/mcp/labels",
+      "request": {
+        "required": [
+          "ids"
+        ],
+        "additionalFields": false
+      },
+      "bounds": {
+        "maxBodyBytes": 262144,
+        "minDistinctIds": 1,
+        "maxDistinctIds": 100,
+        "idBase64urlCharacters": 22,
+        "maxLabelUtf16CodeUnits": 64,
+        "maxStoredLabelBytes": 256
+      },
+      "success": {
+        "status": 200,
+        "required": [
+          "items"
+        ],
+        "itemFields": [
+          "id",
+          "label"
+        ]
+      },
+      "semantics": "Principal-scoped exact IDs including revoked instances; missing or unusable names omitted; no authority or history data; independent of grants bound"
     }
   },
   "supportRoutes": [
@@ -527,7 +598,8 @@
         "one local runtime unlocks browser APIs, exposes inert shells and rejects every other authority",
         "me is retained and user(id) is deprecated while its self-only compatibility behavior remains",
         "reviewed apply GraphQL reports conflicts per item while the legacy apply remains an upsert",
-        "capabilities report selected upload intersections and client deadlines only shorten the bound"
+        "capabilities report selected upload intersections and client deadlines only shorten the bound",
+        "rename and label routes require browser authority, exact envelopes and preserve token identity"
       ]
     }
   ],

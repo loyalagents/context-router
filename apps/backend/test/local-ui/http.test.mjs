@@ -1035,6 +1035,41 @@ test('me is retained and user(id) is deprecated while its self-only compatibilit
   assert.equal(fields.me.deprecationReason, undefined);
 });
 
+test('rename and label routes require browser authority, exact envelopes and preserve token identity', async (t) => {
+  const f = await fixture(t), {token} = await f.unlock();
+  const client = f.runtime.credentials.list()[0];
+  const rename = {id:client.id,label:'Browser name',expectedLabel:client.label,generation:client.generation};
+  const labels = {ids:[client.id]};
+  for (const [route, body] of [['/api/local/mcp/rename',rename], ['/api/local/mcp/labels',labels]]) {
+    for (const otherToken of [undefined, f.mcpToken, f.identity.credential])
+      assert.equal((await f.request(route,{token:otherToken,body})).status,401);
+    for (const headers of [{origin:'https://evil.test'}, {host:'localhost'}, {'x-context-router-ui':'0'}])
+      assert.equal((await f.request(route,{token,body,headers})).status,403);
+    assert.equal((await f.request(route,{token,body,method:'GET'})).status,405);
+    assert.equal((await f.request(route,{token,body,headers:{'content-type':'text/plain'}})).status,415);
+    for (const invalid of [{}, {...body,extra:true}, [], null])
+      assert.equal((await f.request(route,{token,body:invalid})).status,400);
+    assert.equal((await f.request(route,{token,chunked:true,rawBody:JSON.stringify(body)+' '.repeat(256*1024)})).status,413);
+    assert.equal((await f.request(route+'?unexpected=1',{token,body})).status,404);
+  }
+  for (const extra of [{label:''}, {label:'x'.repeat(65)}, {label:'x\ny'}, {expectedLabel:null}, {expectedLabel:'x'.repeat(65)}, {generation:0}, {id:'Z'.repeat(22)}])
+    assert.equal((await f.request('/api/local/mcp/rename',{token,body:{...rename,...extra}})).status,400);
+  for (const ids of [[],[client.id,client.id],Array.from({length:101}, (_,i)=>String(i).padStart(22,'A')),['bad']])
+    assert.equal((await f.request('/api/local/mcp/labels',{token,body:{ids}})).status,400);
+  const renamed = await f.request('/api/local/mcp/rename',{token,body:rename});
+  assert.equal(renamed.status,200,renamed.text);
+  assert.deepEqual(renamed.json(),{client:{id:client.id,label:'Browser name',generation:1}});
+  assert.equal((await f.request('/api/local/mcp/rename',{token,body:rename})).status,409);
+  assert.equal(f.runtime.credentials.authenticate(f.mcpToken).generation,1);
+  const names=await f.request('/api/local/mcp/labels',{token,body:{ids:[client.id,'Z'.repeat(22)]}});
+  assert.equal(names.status,200,names.text);
+  assert.deepEqual(names.json(),{items:[{id:client.id,label:'Browser name'}]});
+  for (const key of ['secret_digest','policy','grants','generation','cr_mcp_']) assert.equal(names.text.includes(key),false);
+  await f.request('/api/local/logout',{token});
+  assert.equal((await f.request('/api/local/mcp/labels',{token,body:labels})).status,401);
+  assert.equal((await f.request('/api/local/mcp/rename',{token,body:{...rename,expectedLabel:'Browser name'}})).status,401);
+});
+
 test('runtime presentation is authenticated and source launches do not claim native controls', async t => {
   const f=await fixture(t);
   assert.equal((await f.request('/api/local/capabilities')).status,401);

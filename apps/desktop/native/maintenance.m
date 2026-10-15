@@ -83,7 +83,7 @@ int CRRunMaintenance(NSString *bundle,NSArray<NSString *> *input){
     if(args.count!=2||![@[@"rotate",@"recover-initialize",@"recover-rotation",@"recover-database-bootstrap"] containsObject:args[1]])CRFail();
     operation=[args[1] isEqual:@"recover-database-bootstrap"]?@"recover-bootstrap":[args[1] hasPrefix:@"recover-"]?@"recover-identity":@"admin";
     if(pendingID&&![operation isEqual:@"admin"])CRFail();
-  }else if([command isEqual:@"mcp"]){if(args.count<2||![@[@"list",@"provision",@"rotate",@"revoke",@"permissions",@"grant",@"upgrade"] containsObject:args[1]])CRFail();}
+  }else if([command isEqual:@"mcp"]){if(args.count<2||![@[@"list",@"provision",@"rename",@"rotate",@"revoke",@"permissions",@"grant",@"upgrade"] containsObject:args[1]])CRFail();}
   else if([command isEqual:@"inspect"]){if(args.count!=2||!CRPattern(args[1],@"[A-Za-z0-9_-]{22}"))CRFail();}
   else if([command isEqual:@"verify-demo"]){if(![mode isEqual:@"demo"]||args.count!=2||!CRPattern(args[1],@"[a-f0-9]{32}"))CRFail();}
   else CRFail();

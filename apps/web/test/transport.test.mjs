@@ -97,3 +97,19 @@ test('locking clears local authority immediately while a bounded separate reques
   settle();
   await pending;
 });
+
+test('name lookup and rename use fixed authenticated routes and never retry lost mutation responses', async () => {
+  const calls=[];
+  const transport=createLocalTransport(async (route,options)=>{
+    calls.push([route,options]);
+    if(route==='/api/local/mcp/rename') throw new Error('lost response');
+    return new Response('{"items":[]}');
+  });
+  transport.setSession(token);
+  await transport.request('/api/local/mcp/labels',{method:'POST',body:'{"ids":[]}'});
+  await assert.rejects(transport.request('/api/local/mcp/rename',{method:'POST',body:'{}'}), /lost response/);
+  assert.equal(calls.length,2);
+  assert.equal(calls[1][1].headers.get('authorization'),'Bearer '+token);
+  transport.clear();
+  await assert.rejects(transport.request('/api/local/mcp/labels',{method:'POST'}));
+});

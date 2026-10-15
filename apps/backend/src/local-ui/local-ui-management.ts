@@ -73,6 +73,10 @@ export class LocalUiManagement {
         invalid();
       return this.credentials.listForUi(body.after as string | undefined);
     }
+    if (route === '/api/local/mcp/labels') {
+      if (keys !== 'ids') return invalid();
+      return this.credentials.labelsForUi(body.ids as string[]);
+    }
     if (typeof id !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(id))
       return invalid();
     if (route === '/api/local/mcp/inspect') {
@@ -134,6 +138,11 @@ export class LocalUiManagement {
     if (!Number.isSafeInteger(body.generation) || Number(body.generation) < 1)
       invalid();
     try {
+      if (route === '/api/local/mcp/rename' && keys === 'expectedLabel,generation,id,label') {
+        return { client: this.credentials.rename(id, body.label as string, {
+          label: body.expectedLabel as string, generation: body.generation as number,
+        }) };
+      }
       if (route === '/api/local/mcp/revoke' && keys === 'generation,id') {
         return {
           client: this.credentials.revoke(id, body.generation as number),

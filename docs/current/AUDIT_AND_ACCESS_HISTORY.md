@@ -151,6 +151,17 @@ suggestions by default. Reveal is reset on history invalidation. This is a UI
 presentation safeguard; authenticated APIs still return the user's snapshots.
 The MCP tab renders sanitized JSON metadata rather than a specialized tree.
 
+In local mode, history rows and client filter chips resolve the current user-owned
+instance name alongside a short ID suffix, with full keys available in accessible
+text and expanded rows/filter chips. Revoked instances retain names; missing or
+unusable labels fall back to the full stored key. Renaming affects presentation of
+old events only; event snapshots and exact actor/client filters are unchanged.
+View activity uses a validated client-ID fragment to initialize both streams and
+opens MCP Access first. Changing/resetting the client filter updates that shared
+selection so refresh, back/forward and tab changes cannot revive an old filter.
+Name lookups are bounded to loaded IDs and fail independently of history reads.
+Hosted client labels and non-MCP actor attribution are unchanged.
+
 There is no rollback or revert action in either history tab.
 
 ## Known limitations

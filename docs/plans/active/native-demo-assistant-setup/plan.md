@@ -360,3 +360,35 @@ include `native.log`, `native-existing-recheck.log`,
 `f/exit-observation/result.log` under the owned qualification root. New runtime
 bytes require affected exact-head review and renewed final gate/native/artifact/CI
 qualification. No human trial or personal provider session has been started.
+
+
+## Integration with merged MCP client names
+
+Candidate `cb2992981f0757bb6bceec7019f26a4168ed5a63` passed both independent
+final review dimensions and the complete native suite (241/241, 432.8 s). Its
+sealed build succeeded with caller integrity. Its renewed gate was deliberately
+cancelled during phase 4 after main advanced; the retained cancelled receipt
+records phases 1–3 passed, caller integrity and owned database/administration
+cleanup. A nested synthetic integration container was separately removed only
+after its immutable ID, fixture label and owned mount were verified. No unrelated
+process or container was stopped. These results remain scoped to that source.
+
+Verified main `071b329731103ef3be5113ff79faf12b856aa68e` merged PR #181 while
+this round was in progress. Integrate it as an ordinary merge, preserving current
+MCP names, display-only rename, history attribution and the expanded installed/demo
+checks. Resolve the sole textual guardian-help conflict by retaining both `rename`
+and native demo inspect/digest options. Review the automatic documentation,
+contract-baseline and supervisor-fixture unions. This is integration, with no new
+product scope; the original branch base remains `3bc606f` in historical evidence.
+
+The integrated final candidate uses `071b329` as the migration comparison base.
+Run focused native forwarding/setup, helper and documentation/contract consumers,
+then freeze for affected independent review of the integrated PR diff, a renewed
+full migration gate, applicable native and original example coverage, a new sealed
+artifact and all installed/demo/assistant-setup/replacement checks. The old original
+browser example cannot be carried forward because main changed it. Reconfirm main
+before push and require exact-head CI with same-attempt qualification receipts;
+no workflow ran for cb29929 because the PR was conflicting. Retain only explicitly
+unchanged input coverage. Human acceptance and the bounded Claude offline probe
+remain pending; no human trial or personal provider action is authorized by this
+integration.

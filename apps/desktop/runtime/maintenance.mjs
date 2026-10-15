@@ -5,7 +5,7 @@ try{
   const state=await admit('maintenance');control=state.control;
   const [group,...args]=process.argv.slice(2),operation=state.cap.operation;
   process.env.LOCAL_DATABASE_ROOT=state.configuration.databaseRoot;process.env.LOCAL_IDENTITY_STATE_ROOT=state.configuration.stateRoot;
-  if(group==='mcp'&&operation==='admin'&&['list','provision','rotate','revoke','permissions','grant','upgrade'].includes(args[0])){
+  if(group==='mcp'&&operation==='admin'&&['list','provision','rename','rotate','revoke','permissions','grant','upgrade'].includes(args[0])){
     exitCode=await backend('backend/dist/local-mcp.js').runLocalMcp(args);
   }else if(group==='verify-demo'&&args.length===1&&args[0]===state.cap.storeId&&state.cap.mode==='demo'&&operation==='admin'){
     const {verifyDemoBaseline}=await import(backend.resolve('backend/scripts/demo/domain.mjs'));

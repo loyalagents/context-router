@@ -1,6 +1,7 @@
 'use client';
 
 import { authenticatedFetch } from '@/lib/authenticated-fetch';
+import { ClientName } from '@/components/local/ClientNames';
 
 import { gql } from '@apollo/client';
 import { print } from 'graphql';
@@ -130,6 +131,8 @@ interface AuditHistoryTabProps {
   }>;
   shouldLoad: boolean;
   invalidationSignal?: AbortSignal;
+  clientFilter?: string;
+  onClientFilterChange?: (value: string) => void;
   showHeader?: boolean;
 }
 
@@ -225,10 +228,12 @@ export default function AuditHistoryTab({
   preferenceDefinitions,
   shouldLoad,
   invalidationSignal,
+  clientFilter,
+  onClientFilterChange,
   showHeader = true,
 }: AuditHistoryTabProps) {
-  const [draftFilters, setDraftFilters] = useState<HistoryFilters>(DEFAULT_FILTERS);
-  const [appliedFilters, setAppliedFilters] = useState<HistoryFilters>(DEFAULT_FILTERS);
+  const [draftFilters, setDraftFilters] = useState<HistoryFilters>({...DEFAULT_FILTERS, actorClientKey: clientFilter ?? ''});
+  const [appliedFilters, setAppliedFilters] = useState<HistoryFilters>({...DEFAULT_FILTERS, actorClientKey: clientFilter ?? ''});
   const [items, setItems] = useState<AuditHistoryItem[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -245,6 +250,14 @@ export default function AuditHistoryTab({
   const requestVersionRef = useRef(0);
   const pendingRef = useRef<AbortController | null>(null);
   useEffect(() => () => { requestVersionRef.current++; pendingRef.current?.abort(); }, []);
+
+  useEffect(() => {
+    if (clientFilter === undefined) return;
+    requestVersionRef.current++; pendingRef.current?.abort();
+    setItems([]); setNextCursor(null); setHasNextPage(false); setExpandedIds({});
+    setDraftFilters(previous => ({...previous, actorClientKey: clientFilter}));
+    setAppliedFilters(previous => ({...previous, actorClientKey: clientFilter}));
+  }, [clientFilter]);
 
   const sanitizedAppliedFilters = useMemo(
     () => sanitizeFilters(appliedFilters),
@@ -405,9 +418,11 @@ export default function AuditHistoryTab({
 
   const handleApplyFilters = () => {
     setAppliedFilters({ ...draftFilters });
+    onClientFilterChange?.(draftFilters.actorClientKey.trim());
   };
 
   const handleResetFilters = () => {
+    onClientFilterChange?.('');
     setDraftFilters(DEFAULT_FILTERS);
     setAppliedFilters(DEFAULT_FILTERS);
     setShowMoreFilters(false);
@@ -638,7 +653,8 @@ export default function AuditHistoryTab({
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-xs text-gray-700"
               >
                 <span className="font-medium">{chip.label}:</span>
-                <span>{chip.value}</span>
+                {chip.key === 'actorClientKey' ? <ClientName clientKey={chip.value} fullId /> : <span>{chip.value}</span>}
+                {chip.key === 'actorClientKey' && onClientFilterChange && <button type="button" aria-label="Remove client filter" className="underline ml-1" onClick={() => onClientFilterChange('')}>Remove</button>}
               </span>
             ))}
           </div>
@@ -702,9 +718,7 @@ export default function AuditHistoryTab({
                             {ORIGIN_LABELS[item.origin] || item.origin}
                           </span>
                           <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
-                            {item.actorClientKey ||
-                              ACTOR_TYPE_LABELS[item.actorType] ||
-                              item.actorType}
+                            {item.actorClientKey ? <ClientName clientKey={item.actorClientKey} /> : ACTOR_TYPE_LABELS[item.actorType] || item.actorType}
                           </span>
                           {isSensitive && !showSensitiveValues && (
                             <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
@@ -752,6 +766,7 @@ export default function AuditHistoryTab({
 
                   {isExpanded && (
                     <div className="mt-5 space-y-4">
+                      <p className="text-xs break-all">Client key: <code>{item.actorClientKey || 'None'}</code></p>
                       {isSensitive && !showSensitiveValues ? (
                         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                           This event was sensitive when recorded, or its historical classification is unknown. Turn on “Show

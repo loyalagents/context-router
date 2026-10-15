@@ -1,6 +1,7 @@
 'use client';
 
 import { authenticatedFetch } from '@/lib/authenticated-fetch';
+import { ClientName } from '@/components/local/ClientNames';
 
 import { gql } from '@apollo/client';
 import { print } from 'graphql';
@@ -85,6 +86,8 @@ interface McpAccessHistoryTabProps {
   accessToken: string;
   shouldLoad: boolean;
   invalidationSignal?: AbortSignal;
+  clientFilter?: string;
+  onClientFilterChange?: (value: string) => void;
 }
 
 function formatAbsoluteTimestamp(value: string): string {
@@ -175,9 +178,11 @@ export default function McpAccessHistoryTab({
   accessToken,
   shouldLoad,
   invalidationSignal,
+  clientFilter,
+  onClientFilterChange,
 }: McpAccessHistoryTabProps) {
-  const [draftFilters, setDraftFilters] = useState<McpAccessFilters>(DEFAULT_FILTERS);
-  const [appliedFilters, setAppliedFilters] = useState<McpAccessFilters>(DEFAULT_FILTERS);
+  const [draftFilters, setDraftFilters] = useState<McpAccessFilters>({...DEFAULT_FILTERS, clientKey: clientFilter ?? ''});
+  const [appliedFilters, setAppliedFilters] = useState<McpAccessFilters>({...DEFAULT_FILTERS, clientKey: clientFilter ?? ''});
   const [items, setItems] = useState<McpAccessHistoryItem[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -192,6 +197,14 @@ export default function McpAccessHistoryTab({
   const requestVersionRef = useRef(0);
   const pendingRef = useRef<AbortController | null>(null);
   useEffect(() => () => { requestVersionRef.current++; pendingRef.current?.abort(); }, []);
+
+  useEffect(() => {
+    if (clientFilter === undefined) return;
+    requestVersionRef.current++; pendingRef.current?.abort();
+    setItems([]); setNextCursor(null); setHasNextPage(false); setExpandedIds({});
+    setDraftFilters(previous => ({...previous, clientKey: clientFilter}));
+    setAppliedFilters(previous => ({...previous, clientKey: clientFilter}));
+  }, [clientFilter]);
 
   const sanitizedAppliedFilters = useMemo(
     () => sanitizeFilters(appliedFilters),
@@ -337,9 +350,11 @@ export default function McpAccessHistoryTab({
 
   const handleApplyFilters = () => {
     setAppliedFilters({ ...draftFilters });
+    onClientFilterChange?.(draftFilters.clientKey.trim());
   };
 
   const handleResetFilters = () => {
+    onClientFilterChange?.('');
     setDraftFilters(DEFAULT_FILTERS);
     setAppliedFilters(DEFAULT_FILTERS);
   };
@@ -515,7 +530,8 @@ export default function McpAccessHistoryTab({
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-xs text-gray-700"
               >
                 <span className="font-medium">{chip.label}:</span>
-                <span>{chip.value}</span>
+                {chip.key === 'clientKey' ? <ClientName clientKey={chip.value} fullId /> : <span>{chip.value}</span>}
+                {chip.key === 'clientKey' && onClientFilterChange && <button type="button" aria-label="Remove client filter" className="underline ml-1" onClick={() => onClientFilterChange('')}>Remove</button>}
               </span>
             ))}
           </div>
@@ -564,6 +580,7 @@ export default function McpAccessHistoryTab({
                   <button
                     type="button"
                     onClick={() => toggleExpanded(item.id)}
+                    aria-expanded={isExpanded}
                     className="w-full text-left"
                   >
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -587,7 +604,7 @@ export default function McpAccessHistoryTab({
                             {OUTCOME_LABELS[item.outcome] || item.outcome}
                           </span>
                           <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-                            {item.clientKey}
+                            <ClientName clientKey={item.clientKey} />
                           </span>
                           <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                             {item.latencyMs}ms
@@ -629,6 +646,7 @@ export default function McpAccessHistoryTab({
 
                   {isExpanded && (
                     <div className="mt-5 space-y-4">
+                      <p className="text-xs break-all">Client key: <code>{item.clientKey || 'None'}</code></p>
                       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                         <div className="rounded-lg border border-gray-200">
                           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">

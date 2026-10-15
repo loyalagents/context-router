@@ -78,8 +78,14 @@ test('existing dashboard shows a durable generation, refreshed MCP change, A/B/C
   await page.getByText(value, { exact: false }).first().waitFor();
   await page.getByText(update.audit.correlationId, { exact: false }).first().waitFor();
   await page.getByRole('tab', { name: 'MCP Access', exact: true }).click();
-  await page.getByText(`local:${manifest.clients.agentB.id}`, { exact: true }).first().waitFor();
-  await page.getByText('searchPreferences', { exact: true }).first().waitFor();
+  const access = page.getByRole('tabpanel', { name: 'MCP Access', exact: true });
+  const bKey = `local:${manifest.clients.agentB.id}`;
+  const bRow = access.getByRole('button').filter({ hasText: bKey }).filter({ hasText: 'searchPreferences' }).first();
+  await bRow.getByText('Demo agent B — reader', { exact: true }).waitFor();
+  await bRow.getByText('searchPreferences', { exact: true }).waitFor();
+  assert.ok((await bRow.ariaSnapshot()).includes(bKey));
+  await bRow.click();
+  await access.getByText(`Client key: ${bKey}`, { exact: true }).waitFor();
   assert.deepEqual(blocked, []);
   await a.close(); a = undefined; await reader.close(); reader = undefined;
   await browser.close(); browser = undefined; await stop(child); child = undefined;

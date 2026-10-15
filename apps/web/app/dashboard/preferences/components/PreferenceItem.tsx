@@ -3,6 +3,9 @@
 import { authenticatedFetch } from '@/lib/authenticated-fetch';
 
 import { useState } from 'react';
+import { ClientName } from '@/components/local/ClientNames';
+import { useLocalSession } from '@/components/local/LocalSession';
+import { localClientId } from '@/lib/local-client-name';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
 interface Preference {
@@ -192,6 +195,9 @@ export default function PreferenceItem({
 
   // Extract the key part from slug (e.g., "food.dietary_restrictions" -> "dietary_restrictions")
   const displayName = preference.slug.split('.').pop() || preference.slug;
+  const local = useLocalSession();
+  const clientKey = preference.lastModifiedBy?.actorClientKey;
+  const namedClient = local && localClientId(clientKey) && preference.lastModifiedBy?.origin !== 'DOCUMENT_ANALYSIS';
   const lastModifiedLabel = formatLastModifiedBy(preference.lastModifiedBy);
 
   return (
@@ -212,7 +218,7 @@ export default function PreferenceItem({
             )}
             {lastModifiedLabel && (
               <span className="text-xs text-gray-500">
-                {lastModifiedLabel}
+                {namedClient ? <>Modified by <ClientName clientKey={clientKey!} fullId /></> : lastModifiedLabel}
               </span>
             )}
           </div>

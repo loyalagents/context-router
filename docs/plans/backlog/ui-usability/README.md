@@ -1,6 +1,6 @@
 # Local UI Usability Follow-Up
 
-- Status: other items remain backlog; item 7 is implemented in merged [PR #173](https://github.com/loyalagents/context-router/pull/173), with two scoped packaged D UI journeys passed in the pilot
+- Status: item 2 is activated in the [MCP client names plan](../../active/mcp-client-names/README.md); other items remain backlog; item 7 is implemented in merged [PR #173](https://github.com/loyalagents/context-router/pull/173), with two scoped packaged D UI journeys passed in the pilot
 - Outcome owner: product owner and next assigned UI coordinator
 - Trigger: pilot triage; fixes for blocked tasks, false success or privacy outrank polish
 - Source: [Step 08 user-run acceptance](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/08-local-ui/implementation.md#2026-10-04-user-run-browser-and-native-client-acceptance)
@@ -11,7 +11,9 @@ Keep this a focused cleanup of the existing dashboard and packaged menu:
 1. Make rejected-grant feedback prominent and close to the attempted action.
    This is the strongest candidate for a small earlier follow-up.
 2. Show configured MCP client labels prominently in history, retaining IDs for
-   disambiguation and as a fallback when labels are missing.
+   disambiguation and as a fallback when labels are missing. The activated
+   [client names slice](../../active/mcp-client-names/README.md) also includes shared
+   current-name presentation, browser/CLI rename and exact-instance View activity.
 3. Show concise before/after preference values in collapsed history rows, with
    full snapshots available on expansion.
 4. Put recovery guidance beside the dashboard's AI status. Consider a

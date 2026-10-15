@@ -325,3 +325,42 @@ test('browser ALLOW with no maximum authority is rejected atomically and explici
     { changed: true },
   );
 });
+
+test('label projection is exact, bounded, principal scoped and independent of unavailable authority', (t) => {
+  const f = fixture(t);
+  f.store.revoke(f.b.id);
+  const c = f.database.connect();
+  try {
+    for (let i=0;i<513;i++) c.run('INSERT INTO permission_grants(id,user_id,client_key,target,action,effect,created_at,updated_at) VALUES(?,?,?,?,?,?,1,1)',
+      ['label-grant-'+i, f.principalId, `local:${f.a.id}`, 'synthetic.'+i, 'READ', 'DENY']);
+  } finally { c.close(); }
+  assert.equal(f.store.inspectForUi(f.a.id).status, 'AUTHORITY_UNAVAILABLE');
+  assert.deepEqual(f.store.labelsForUi([f.a.id, f.b.id, 'Z'.repeat(22)]), {items: [{id:f.a.id,label:'same-product'}, {id:f.b.id,label:'same-product'}]});
+  for (const ids of [[], Array(101).fill(f.a.id), [f.a.id, f.a.id], ['wrong'], null, 'id'])
+    assert.throws(() => f.store.labelsForUi(ids));
+  const hundred = Array.from({length:100}, (_,i)=>String(i).padStart(22,'A'));
+  assert.deepEqual(f.store.labelsForUi(hundred), {items:[]});
+  assert.throws(() => new SqliteMcpCredentials(f.database,'foreign').labelsForUi([f.a.id]));
+});
+
+test('label lookup never materializes corrupt large columns and returns a stable-ID fallback', (t) => {
+  const f = fixture(t), connect = f.database.connect.bind(f.database);
+  let maxMaterialized = 0;
+  f.database.connect = () => {
+    const c = connect(), all = c.all.bind(c);
+    c.all = (...args) => {
+      const rows = all(...args);
+      for (const row of rows) for (const v of Object.values(row))
+        if (typeof v === 'string' || Buffer.isBuffer(v)) maxMaterialized=Math.max(maxMaterialized,Buffer.byteLength(v));
+      return rows;
+    };
+    return c;
+  };
+  for (const label of ['x'.repeat(300000), 'a\0'+ 'x'.repeat(300000), Buffer.alloc(300000), '', '  ', 'bad\nlabel']) {
+    const c=connect();
+    try { c.exec('PRAGMA ignore_check_constraints=ON'); c.run('UPDATE local_mcp_clients SET label=?,policy=? WHERE id=?', [label,JSON.stringify({oversized:'x'.repeat(300000)}),f.a.id]); }
+    finally { c.close(); }
+    assert.deepEqual(f.store.labelsForUi([f.a.id]), {items:[]});
+  }
+  assert.ok(maxMaterialized<=256, 'projection must bound values in SQLite');
+});
