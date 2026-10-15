@@ -115,7 +115,9 @@ test('installed Claude accepts full subscription B argv in fresh unauthenticated
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-real-pro-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   for (const suffix of ['home', 'config', 'workspace']) await fs.mkdir(path.join(root, `claude-${suffix}`), { mode: 0o700 });
-  const spec = clientLaunchSpec({ command: 'claude', auth: 'subscription', agent: 'b', root, dataset: 'demo001', mcpPort: 1 });
+  const executable = process.env.CR_DEMO_TEST_CLAUDE_EXECUTABLE;
+  if (executable) { assert.ok(path.isAbsolute(executable)); await fs.access(executable, fs.constants.X_OK); }
+  const spec = clientLaunchSpec({ command: 'claude', auth: 'subscription', agent: 'b', root, dataset: 'demo001', mcpPort: 1 }, { executable });
   const result = spawnSync(spec.executable, [...spec.args, 'auth', 'status', '--json'], { cwd: spec.cwd, env: spec.env, input: '', encoding: 'utf8', timeout: 10000 });
   assert.equal(result.error, undefined); assert.equal(result.signal, null); assert.equal(result.status, 1); assert.equal(result.stderr, '');
   const status = JSON.parse(result.stdout);
@@ -244,7 +246,9 @@ test('installed Codex accepts complete strict A/B launch argv before the nonterm
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   for (const role of ['codex-a', 'codex']) for (const suffix of ['home', 'config', 'workspace']) await fs.mkdir(path.join(root, `${role}-${suffix}`), { mode: 0o700 });
   for (const agent of ['a', 'b']) {
-    const spec = clientLaunchSpec({ command: 'codex', agent, root, mcpPort: 1, dataset: 'demo001' });
+    const executable = process.env.CR_DEMO_TEST_CODEX_EXECUTABLE;
+    if (executable) { assert.ok(path.isAbsolute(executable)); await fs.access(executable, fs.constants.X_OK); }
+    const spec = clientLaunchSpec({ command: 'codex', agent, root, mcpPort: 1, dataset: 'demo001' }, { executable });
     assert.equal(spec.args[spec.args.indexOf('--ask-for-approval') + 1], agent === 'a' ? 'on-request' : 'never');
     const run = args => spawnSync(spec.executable, args, { cwd: spec.cwd, env: spec.env, input: '', encoding: 'utf8', timeout: 5000, maxBuffer: 65536 });
     assert.equal(run(['--version']).stdout.trim(), 'codex-cli 0.160.0');

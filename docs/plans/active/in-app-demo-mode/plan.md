@@ -1,14 +1,14 @@
 # In-app demo mode
 
 Status: **reduced scope and implementation approved by the user on 2026-10-14**.
-Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code is implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Both complete-diff reviews and automated qualification passed through `5dfadcf`; exact receipts are in the PR. The user then requested assessment and useful fixes from an external static review before hands-on testing. This bounded correction round targets a source/artifact-bound isolated human trial after affected checks/reviews; renewed final qualification follows the human-feedback round. Live Codex and Claude Code demo connectivity, followed by an approved Codex change, fresh Claude Code read and Audit History inspection, are user-confirmed; remaining human acceptance is pending, as scoped below.
+Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code is implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Both complete-diff reviews and automated qualification passed through `5dfadcf`; exact receipts are in the PR. The user then requested assessment and useful fixes from an external static review before hands-on testing. This bounded correction round targets a source/artifact-bound isolated human trial after affected checks/reviews; renewed final qualification follows the human-feedback round. Live Codex/Claude Code connectivity and approved write → fresh read → Audit History were user-confirmed earlier. The user has now also confirmed Desktop apply/connect/read, restrictions, Quit/reopen with edits preserved, reset sample and return to personal. The agreed human-feedback round is complete; final automated qualification and fresh complete-diff reviews are now required before merge.
 The subsequent hands-on trial reported the menu disappearing after demo entry;
 the bounded compact-label correction and retest scope are recorded below.
 The user then explicitly required the normal dashboard UI in demo, with its
 historical banner/data and only optional walkthrough help; that correction
 supersedes the earlier replacement-homepage provision below.
 One cohesive PR; the native assistant-control follow-up is tracked below for the
-next PR. General profiles remain future work. Focused evidence is recorded below; full final validation and remaining human acceptance are pending.
+next PR. General profiles remain future work. Focused evidence is recorded below; final automated validation and complete-diff review are pending.
 
 ## Outcome, ownership and starting evidence
 
@@ -216,6 +216,12 @@ Offline installed administration defaults explicitly to **personal**, even if th
 last active mode was demo. Add an explicit `--mode demo` only for bounded existing
 MCP list/inspect/provision/rotate/revoke/permissions/grant administration; outputs
 identify their mode. Require Quit as today. No implicit arbitrary-store argument.
+Rotating/revoking built-in A/B/C authority invalidates its packaged connection;
+reopen preserves the changed authority. There is no in-place export refresh or
+rebinding, and prepare/apply is not credential repair. Never delete, overwrite or
+adopt exports. Explicitly confirmed reset creates new baseline credentials while
+resetting edits/custom clients/grant changes and retaining the old store; it is
+not a credential-only repair.
 Backup/restore and named identity recovery remain personal-only in this PR. A
 pending personal restore blocks app launch/mode changes/reset just as it blocks
 current startup. Restore selection checks bind the personal slot; activation
@@ -471,8 +477,10 @@ store, endpoint, C client ID and credential hash. Only a newly started C bridge 
 discover the current active owner generation for those exact pins, validate the
 native receipt/challenge and post-probe metadata, and use its once-read validated
 credential. Same-store/same-endpoint reopen therefore needs no config rewrite.
-Reset, endpoint, installation or credential changes require new explicit
-prepare/apply; no selector following or mutation replay is added. Existing
+Reset or an explicit endpoint/installation change requires new explicit
+prepare/apply. Built-in credential rotation/revocation invalidates its connection
+and cannot be repaired by prepare/apply or export rebinding. No selector following
+or mutation replay is added. Existing
 immutable snapshots require one explicit prepare/apply for the new behavior.
 Provider-backed
 Desktop acceptance remains a human check using the designated demo entry; other
@@ -538,12 +546,12 @@ not waived. This optional TODO is separate from required final validation and
 does not block current demo or Codex/Claude connection testing; it does not add
 general model/provider selection to this PR.
 
-The shared cross-language malformed-metadata acceptance/rejection corpus promised
-above remains final-validation/maintenance evidence to settle before final
-qualification, not an optional next-PR deletion of that requirement. Independent
-native/backend/lifetime admission cases already exist; read-only helper readiness
-checks grant no managed authority. This isolated trial does not require a schema
-framework or expanding admission code. Transient `accept()` error handling remains
+The promised shared cross-language metadata corpus is implemented as 117 resolved
+acceptance/rejection cases, consumed by the native parser, backend validator and
+stricter downloader subset. Focused checks pass (130 backend cases; 12 native/
+lifetime tests including both complete corpus consumers). IDs/hashes with trailing
+line terminators reject consistently; no product schema change was required.
+Read-only helper readiness checks grant no managed authority. Transient `accept()` error handling remains
 an unconfirmed follow-up investigation; no probe semantics change in this round.
 
 ## Checkpoints and focused evidence
@@ -1125,3 +1133,67 @@ menu/unlock/restart behavior. The first real pasteboard attempt was sandbox-deni
 the same owned fixture passed with required macOS service access. No system
 clipboard contents were read or changed. **Targeted checks passed; final
 validation pending.** Final broad qualification follows the agreed feedback round.
+
+### Human acceptance and final qualification round (2026-10-14)
+
+The user confirmed the Desktop prepare → explicit apply → connect → read flow
+worked. Immediately before those instructions, the coordinator verified the
+running `fb2210b` trial/root and the actual prepared command returned by the user;
+the user performed apply. The user then answered “All of those checks passed” to
+the remaining restrictions, Quit/reopen with edits preserved, reset sample and
+return-personal checklist. Together with the previously scoped A/B approved
+change → fresh read → Audit History reports, this closes the agreed human round.
+It does not retroactively establish the artifact identity of earlier reports or
+claim arbitrary UI behavior beyond the exercised flows. Agents did not log in,
+run provider conversations or alter the user's app/config/state.
+
+Fresh complete-diff reviewers identified required evidence gaps before final
+qualification: the shared metadata corpus, real seeder/durability fault matrix,
+and deployed helper contract/outbound discovery. The approved bounded batch adds
+only tests/checker inventory/docs; product admission and lifecycle are unchanged.
+The 117-case corpus covers exact fields/types/slots/invariants and malformed
+IDs/hashes, including trailing line terminators. The scanner regression first
+failed because `scripts/demo` was undiscovered; both censuses now include it,
+with exact spawn, loopback readiness and MCP SDK transport classifications.
+
+The real-seeder fixture uses actual SQLite/MCP and one-shot or explicitly
+persistent revoke failure, service-close failure, generation write/file-sync/
+directory-sync failure, and failure/cancellation after a complete receipt. It
+checks exact injection counts, honest revocation state and retained receipt
+contents only after native owners settle. A separate test-only native driver
+reserves exact IDs before the source seed, copies the fully closed pair/evidence
+under the native lock, and exercises real begin/finish/publish methods. A positive
+publication control prevents vacuous refusals. Before-installation-rename and
+after-rename/directory-sync failures retain active journals and unchanged bytes
+on refused relaunch; a failed prepare terminal cannot be overridden by a complete
+receipt. Expected-uncertain roots remain retained. This proves durability-error
+handling and native publication admission, not physical power loss or managed
+child seeding through the capability; existing packaged full-cycle and native
+control/cancellation tests provide the complementary coverage.
+
+The complete original example/offline CLI tests may select an explicit absolute
+executable through `CR_DEMO_TEST_CLAUDE_EXECUTABLE` or
+`CR_DEMO_TEST_CODEX_EXECUTABLE` only inside their existing opt-in tests. Executable,
+pinned version and isolation checks remain required. This avoids changing the
+user's newer default Claude symlink; no product discovery policy changes.
+
+Freeze this batch, then complete the full local migration gate, original offline
+example suite, portable/native/backend/web tests, installed/full-nine-phase demo
+and replacement/offline compatible-weight retention qualification, exact-head CI
+and affected final reviewer rechecks. Keep the PR draft until those checks pass;
+no automatic merge. Reuse the immutable `fb2210b` sealed artifact only after
+explicit unchanged product/package-input assessment, retaining its original
+source provenance separately from the final test/harness revision. Final results
+belong in PR #183 and receipts, avoiding evidence-only commits after qualification.
+
+**Paused checkpoint at the user's request.** No broad qualification was started.
+Completed focused evidence: backend corpus 130/130, native/lifetime 12/12,
+real seed/native publication faults 9/9, contract checker tests 55/55 and current
+contract baseline check passed. The first fault run's eight failures were a test
+`name`/`label` assertion typo after the intended injections; the corrected run
+passes and both logs remain. No product defect or runtime edit was needed.
+The new explicit offline CLI executable overrides have not yet been exercised
+against the actual pinned CLIs in this round. That run, the final gates/artifact
+cycles/CI and final SHA-bound review disposition remain pending on resume.
+Expected-uncertain native roots and receipts are retained; all fixture subprocesses
+were awaited. The user's running trial, state and configuration remain untouched.

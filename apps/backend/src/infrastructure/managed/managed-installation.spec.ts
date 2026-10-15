@@ -1,10 +1,23 @@
 import { validateManagedInstallation } from './managed-installation';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+const sharedCorpus = JSON.parse(readFileSync(resolve(__dirname, '../../../../desktop/test/fixtures/managed-installation-cases.json'), 'utf8')) as {
+  version: number; cases: Array<{ name: string; accepted: boolean; value: unknown }>;
+};
 const personal = 'a'.repeat(32), demo = 'b'.repeat(32);
 const installation = () => ({ version: 2, installationId: 'c'.repeat(32), minimumEpoch: 2,
   personalStore: personal, demoStore: demo, mode: 'personal', selectedStore: personal,
   setup: 'ready', pendingRestore: null, pendingDemo: null });
 
 describe('managed fixed personal/demo installation grammar', () => {
+  it('uses the versioned shared cross-language corpus', () => {
+    expect(sharedCorpus.version).toBe(1);
+    expect(new Set(sharedCorpus.cases.map(item => item.name)).size).toBe(sharedCorpus.cases.length);
+  });
+  it.each(sharedCorpus.cases)('shared metadata case: $name', ({ value, accepted }) => {
+    if (accepted) expect(validateManagedInstallation(value)).toEqual(value);
+    else expect(() => validateManagedInstallation(value)).toThrow();
+  });
   it('accepts exactly two named slots and binds selection to mode', () => {
     expect(validateManagedInstallation(installation())).toEqual(installation());
     const active = { ...installation(), mode: 'demo', selectedStore: demo };

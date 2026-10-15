@@ -1302,7 +1302,8 @@ const OUTBOUND_SINK_PATTERNS = [
   ["http-client", /(?:https?\.(?:get|request)|axios\.(?:get|post|request))\s*\(/g],
   // Import-level tripwire also covers aliases and injected transport functions.
   ["node-http-import", /(?:\bimport\s+(?:[A-Za-z_$][\w$]*(?:\s*,\s*\{[^}]*\})?|\*\s+as\s+[A-Za-z_$][\w$]*|\{[^}]*\b(?:get|request)\b[^}]*\})\s+from\s*|\b(?:require|import)\s*\(\s*)["'](?:node:)?https?["']/g],
-  ["net-connect", /\bnet\.connect\s*\(/g],
+  ["net-connect", /\bnet\.(?:connect|createConnection)\s*\(/g],
+  ["mcp-http-transport", /new\s+StreamableHTTPClientTransport\s*\(/g],
   ["websocket", /new\s+(?:WebSocket|EventSource)\s*\(/g],
 ];
 
@@ -2932,6 +2933,7 @@ const GRAPHQL_CONSUMER_ROOTS = [
 ];
 export const CONTRACT_REFERENCE_ROOTS = [
   "apps/backend/scripts/mcp-bridge",
+  "apps/backend/scripts/demo",
   "README.md",
   "apps/web",
   "apps/desktop",
@@ -2961,6 +2963,7 @@ export const CONTRACT_REFERENCE_ROOTS = [
 ];
 export const OUTBOUND_SINK_ROOTS = [
   "apps/backend/scripts/mcp-bridge",
+  "apps/backend/scripts/demo",
   "apps/backend/src",
   "apps/web",
   "apps/desktop",

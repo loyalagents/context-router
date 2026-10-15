@@ -1,8 +1,18 @@
 import assert from 'node:assert/strict';import test from 'node:test';
 import * as lifetime from '../runtime/lifetime.mjs';
+import { readFileSync } from 'node:fs';
 const generation='a'.repeat(32),boot='fixture-boot';
 const manifest=()=>({version:2,installationId:'b'.repeat(32),selectedStore:'c'.repeat(32),personalStore:'c'.repeat(32),demoStore:null,mode:'personal',pendingDemo:null,minimumEpoch:2,setup:'ready',pendingRestore:null});
 const journal=()=>({version:2,mode:'personal',lifecycle:'active',outcome:'pending',generation,bootId:boot,installationId:'b'.repeat(32),storeId:'c'.repeat(32),role:'application',operation:'serve',nonceHash:'d'.repeat(64)});
+const corpus=JSON.parse(readFileSync(new URL('./fixtures/managed-installation-cases.json',import.meta.url),'utf8'));
+test('downloader uses the shared metadata corpus with its stricter personal-ready subset',()=>{
+  assert.equal(corpus.version,1);
+  for(const {name,value,downloadAccepted} of corpus.cases){
+    const j={...journal(),installationId:value?.installationId,storeId:value?.selectedStore};
+    const validate=()=>lifetime.validateDownloadMetadata(j,value,generation,boot);
+    if(downloadAccepted)assert.doesNotThrow(validate,name);else assert.throws(validate,{message:'Managed lifetime unavailable'},name);
+  }
+});
 test('downloader lifetime requires exact complete active application metadata',()=>{assert.doesNotThrow(()=>lifetime.validateDownloadMetadata(journal(),manifest(),generation,boot));});
 for(const variant of ['installation-id','store-id','nonce','extra-journal','extra-installation','invalid-id','pending','wrong-generation'])test(`downloader rejects ${variant}`,()=>{
   const j=journal(),m=manifest();

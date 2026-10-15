@@ -3164,6 +3164,84 @@
       "ownerSteps": [
         "09"
       ]
+    },
+    {
+      "id": "demo-native-readiness",
+      "sources": [
+        {
+          "path": "apps/backend/scripts/demo/active.mjs",
+          "fingerprints": [
+            "net.createConnection({host:'127.0.0.1',port:receipt.probePort})",
+            "socket.end(receipt.challenge+'\\n')"
+          ]
+        }
+      ],
+      "destination": "The admitted native demo readiness listener on explicit 127.0.0.1 only; immutable receipt and current installation/store/generation/endpoint are checked before and after the challenge.",
+      "payload": "Nonsecret per-runtime challenge and exact connection receipt only; no MCP bearer, preference content or provider call.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "07"
+      ]
+    },
+    {
+      "id": "demo-seed-mcp",
+      "sources": [
+        {
+          "path": "apps/backend/scripts/demo/mcp-import.mjs",
+          "fingerprints": [
+            "new StreamableHTTPClientTransport",
+            "http://127.0.0.1:${port}/mcp"
+          ]
+        }
+      ],
+      "destination": "Owned local MCP loopback endpoint for the explicit seed/import adapter; sequential calls with no ambiguous mutation retry or endpoint redirection.",
+      "payload": "Exact exported per-client MCP credential and planned historical definitions/preferences; the temporary importer is revoked before successful publication.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "07"
+      ]
+    },
+    {
+      "id": "demo-qualified-cli-probes",
+      "sources": [
+        {
+          "path": "apps/backend/scripts/demo/clients.mjs",
+          "fingerprints": [
+            "spawnSync('/usr/bin/which'",
+            "spawnSync(spec.executable",
+            "version = '2.1.299'",
+            "version = '0.160.0'"
+          ]
+        }
+      ],
+      "destination": "Explicit local CLI discovery and pinned offline version/help/config/auth-status/foreground-control probes. Disposable unauthenticated preflight profiles; no assistant session or provider inference from these probes.",
+      "payload": "Sanitized argv/environment, fixed loopback MCP endpoint and credential environment-variable name; preflight does not receive the exported MCP token or copy a provider profile.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "07"
+      ]
+    },
+    {
+      "id": "demo-qualified-cli-launch",
+      "sources": [
+        {
+          "path": "apps/backend/scripts/demo/installed-clients.mjs",
+          "fingerprints": [
+            "child=spawn(launch.executable,launch.args",
+            "stdio:['inherit','inherit','inherit']"
+          ]
+        }
+      ],
+      "destination": "Explicit user-requested login or launch of the qualified native foreground CLI under a per-role profile guard. Provider traffic occurs only in the user-requested external client session; personal profiles/config are not adopted.",
+      "payload": "Selected demo role MCP token only for launch, sanitized environment and isolated persistent app-demo provider profile; login omits MCP credentials. Guard spans preflight/session/owned normal-exit boundary and retains uncertain ownership.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "07"
+      ]
     }
   ],
   "externalClients": [
@@ -4226,6 +4304,60 @@
       "reference": "/oauth/register"
     },
     {
+      "path": "apps/backend/scripts/demo/clients.mjs",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
+      "path": "apps/backend/scripts/demo/clients.mjs",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "consolidateSchema"
+    },
+    {
+      "path": "apps/backend/scripts/demo/clients.mjs",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPermissionGrants"
+    },
+    {
+      "path": "apps/backend/scripts/demo/clients.mjs",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPreferenceSlugs"
+    },
+    {
+      "path": "apps/backend/scripts/demo/clients.mjs",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "apps/backend/scripts/demo/clients.mjs",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
+    },
+    {
+      "path": "apps/backend/scripts/demo/clients.mjs",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "smartSearchPreferences"
+    },
+    {
+      "path": "apps/backend/scripts/demo/mcp-import.mjs",
+      "contract": "mcp",
+      "kind": "route",
+      "reference": "/mcp"
+    },
+    {
+      "path": "apps/backend/scripts/demo/mcp-import.mjs",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
       "path": "apps/backend/scripts/mcp-bridge/bridge.mjs",
       "contract": "mcp",
       "kind": "route",
@@ -5109,6 +5241,30 @@
     }
   ],
   "outboundSinkInventory": [
+    {
+      "path": "apps/backend/scripts/demo/active.mjs",
+      "sinks": {
+        "net-connect": 1
+      }
+    },
+    {
+      "path": "apps/backend/scripts/demo/clients.mjs",
+      "sinks": {
+        "spawn": 5
+      }
+    },
+    {
+      "path": "apps/backend/scripts/demo/installed-clients.mjs",
+      "sinks": {
+        "spawn": 1
+      }
+    },
+    {
+      "path": "apps/backend/scripts/demo/mcp-import.mjs",
+      "sinks": {
+        "mcp-http-transport": 1
+      }
+    },
     {
       "path": "apps/backend/scripts/mcp-bridge/bridge.mjs",
       "sinks": {

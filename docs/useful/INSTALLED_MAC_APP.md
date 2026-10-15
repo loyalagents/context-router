@@ -120,6 +120,12 @@ personal slot, even when demo was selected. Demo recovery/backup/restore is not
 exposed. Existing personal restore rules and pending-operation exclusion remain.
 Admitted offline commands print their nonsecret mode on stderr; stdout JSON stays
 available to scripts.
+Rotating or revoking a built-in A/B/C client invalidates its packaged connection.
+Reopening preserves that changed authority; prepare/apply does not repair it.
+There is no in-place export refresh or rebinding: do not delete, overwrite or adopt
+exports. An explicitly confirmed **Reset sample data…** creates new baseline
+credentials, but also resets demo edits, custom clients and grant changes; the old
+store is retained. It is not a credential-only repair.
 
 The primary story uses Codex 0.160.0 as Agent A and Claude Code 2.1.299 subscription
 as Agent B. Install these external CLIs separately. The panel explicitly selects
@@ -178,8 +184,10 @@ conversation. The applied entry pins installation, store, endpoint, C client ID,
 credential hash and immutable snapshot. A newly started bridge may discover the
 current native runtime generation only for that same installation/store/endpoint,
 then verify its native readiness challenge. Ordinary Quit/relaunch or Restart at
-the same endpoint needs no new apply. Reset, endpoint or credential changes require
-explicit prepare/review/apply; there is no automatic redirection or mutation replay.
+the same endpoint needs no new apply. After reset or an explicit endpoint change,
+prepare/review/apply a new entry. Built-in client rotation/revocation instead
+invalidates the connection as described above; prepare/apply cannot refresh its
+export. There is no automatic redirection or mutation replay.
 Previously applied snapshots retain their old behavior and need one explicit new
 prepare/apply to obtain this reconnect behavior. Prepare/apply commands themselves
 remain bound to the runtime generation shown in Demo setup.
