@@ -58,7 +58,16 @@
   }
   // Darwin getpgid may reject a zombie. The complete group census below must
   // positively find the still-waitable leader before any post-exit signal.
-  if(!_leaderExited&&getpgid(_pid)!=_pid){_ownershipLost=YES;_failure=@"Setup process group changed; retain state for inspection.";return NO;}
+  if(!_leaderExited&&getpgid(_pid)!=_pid){
+    // Exit can occur after the no-event waitid above and before getpgid.
+    // Reobserve that exact unreaped child, then positively find its held leader
+    // in a complete group census. Empty/ECHILD/error is never exit proof.
+    siginfo_t exited={0};int observed=waitid(P_PID,(id_t)_pid,&exited,WEXITED|WNOHANG|WNOWAIT);
+    if(observed&&errno==EINTR)return NO;
+    if(!observed&&exited.si_pid==_pid&&[@[@(CLD_EXITED),@(CLD_KILLED),@(CLD_DUMPED)] containsObject:@(exited.si_code)]&&[self groupMembers]>=1){
+      _leaderExited=YES;_exitCode=exited.si_code==CLD_EXITED?exited.si_status:-1;
+    }else{_ownershipLost=YES;_failure=@"Setup process group changed; retain state for inspection.";return NO;}
+  }
   return YES;
 }
 - (NSInteger)groupMembers {

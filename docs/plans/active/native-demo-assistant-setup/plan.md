@@ -271,3 +271,53 @@ root/store/runtime/endpoint and reviewed digest, with readable unescaped paths.
 New finite-process and opt-in artifact test sinks are additively classified in the
 existing outbound inventory; contract checker tests 55/55 and current baseline
 pass. No CI requirement, trigger, permission or guard rule was weakened.
+
+## First frozen candidate and review correction
+
+Candidate `566940e6dceb6296581a57e0ce5906285bdb6ef2` opened draft
+[PR #184](https://github.com/loyalagents/context-router/pull/184). Independent
+complete-diff architecture/usability/maintainability/compatibility/test/scope review
+approved it. Security identified P2: child exit between no-event WNOWAIT and
+`getpgid` could falsely latch ownership loss. A test-only translation-unit
+interposition forces that exact real-child interleaving; before the fix it failed
+with permanent unsettled ownership. The correction reobserves the exact exited
+unreaped child and a positive complete held-leader census. Empty/ECHILD/error
+still never settle; signaling still stops before reap. Affected review is required.
+
+The complete desktop/native/original-example suite at that candidate passed
+396/398, with two optional real-provider probes skipped (626 s). A separately
+auto-approved Codex 0.160.0 offline disposable-profile preflight passed 1/1; its
+source/client byte pins are retained in `/private/tmp/context-router-native-setup-codex-offline-566940e-inputs.json`.
+Claude's real offline host-HOME/Keychain probe was rejected by automatic approval
+review under the personal-provider-state restriction; bounded user clarification
+is pending, and no such probe ran. Neither probe constitutes human acceptance.
+
+The initial full gate failed at the portable desktop suite: 97/101 passed, three
+explicit `Credential unavailable` errors and existing seed revoke-once progress
+0/189. An owned deterministic counterexample showed unrelated directory creation
+changing a checked ancestor's nlink while credential bytes/dev/inode/mode/uid stayed
+unchanged. The seed failure is not conclusively attributed; its fixture cleanup
+removed the failed root. All four failures remain recorded in the original log.
+Unchanged full portable tests then passed **101/101** (45.9 s) with serialized
+files and an owned stable TMPDIR. Architecture and security reviewers approved the
+narrow scheduling amendment: serialize the same desktop portable test glob, matching
+the existing native policy, preserving every test, assertion and internal
+concurrency case. Production credential checks and CI requirements/triggers are
+unchanged. Private TMPDIR alone does not prevent churn in shared ancestors;
+subsequent qualification must isolate scheduling and resources as well.
+
+Initial logs: `/private/tmp/context-router-native-setup-gate-566940e.log`,
+`/private/tmp/context-router-native-setup-suites-566940e.log`,
+`/private/tmp/context-router-portable-serial-566940e.log`; mechanism receipt:
+`/private/tmp/context-router-credential-ancestor-proof-566940e.json`.
+The clean566940e sealed build succeeded with caller integrity, but is preliminary:
+changed native bytes require a new sealed artifact. Full corrected-candidate gate,
+applicable installed checks, exact-head CI and affected reviews remain required.
+
+The same correction batch also closes a feedback race found by the coordinator:
+a delayed older LaunchServices callback could replace a newer action's status in
+the same panel. A reversed-callback fixture failed first; Terminal result/error
+feedback now checks the latest captured request ID as well as panel and binding.
+External Terminal ownership is unchanged. The existing CI-path contract assertion
+was updated solely to require the approved serial portable command with its same
+glob; no workflow trigger/job/requirement changed.

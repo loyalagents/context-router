@@ -18,7 +18,7 @@
   NSTask *_guardian;NSPipe *_input,*_output;CRWriteQueue *_commands;CRFrames *_frames;NSTimer *_timer;
   NSDictionary *_demoCopyBinding;NSArray<NSString *> *_demoCopyCommands,*_demoCopyNames;NSTextField *_demoCopyFeedback;
   CRDemoOperation *_demoOperation;NSTimer *_demoOperationTimer;NSDictionary *_demoRequest,*_demoProposal;
-  NSMutableDictionary *_demoChoices;NSMutableArray<NSButton *> *_demoActions;NSString *_demoPanelIdentity;
+  NSMutableDictionary *_demoChoices;NSMutableArray<NSButton *> *_demoActions;NSString *_demoPanelIdentity,*_demoLatestRequestIdentity;
   NSTextField *_demoReview;NSButton *_demoClosed,*_demoApply,*_demoDetails;BOOL _demoQuitPending;
   BOOL _ready,_stopping,_quitting,_stopped,_broken,_download,_cancelPending,_sleepInvalidated,_openOnReady,_exitObserved;double _unlockUntil;
 }
@@ -198,7 +198,7 @@
 }
 - (void)startDemoOperation:(NSArray *)action request:(NSDictionary *)request {
   if(_demoOperation||![self demoBindingCurrent:_demoCopyBinding]){_demoCopyFeedback.stringValue=@"Reopen Demo setup after the current operation finishes.";return;}
-  NSMutableDictionary *bound=[request mutableCopy];bound[@"binding"]=_demoCopyBinding;bound[@"panel"]=_demoPanelIdentity;bound[@"id"]=CRRandom(16);
+  NSMutableDictionary *bound=[request mutableCopy];bound[@"binding"]=_demoCopyBinding;bound[@"panel"]=_demoPanelIdentity;bound[@"id"]=CRRandom(16);_demoLatestRequestIdentity=bound[@"id"];
   @try{
     _demoOperation=[self demoOperationWithArguments:[self demoArguments:_demoCopyBinding action:action]];_demoRequest=bound;
     _demoCopyFeedback.stringValue=@"Checking setup… You can close this panel while it finishes.";
@@ -228,10 +228,10 @@
   NSMutableArray *action=[@[request[@"action"],role,@"--client",vendor,@"--executable",result[@"path"]] mutableCopy];if([vendor isEqual:@"claude"])[action addObjectsFromArray:@[@"--auth",@"subscription"]];
   @try{
     NSString *file=CRDemoLaunchRequest(_root,[_bundle stringByAppendingPathComponent:@"Contents/MacOS/context-router"],[self demoArguments:request[@"binding"] action:action]);
-    __weak CRMenu *weakSelf=self;[self openDemoTerminal:file completion:^(BOOL opened){CRMenu *menu=weakSelf;if(!menu||![menu->_demoPanelIdentity isEqual:request[@"panel"]]||![menu demoBindingCurrent:request[@"binding"]])return;
+    __weak CRMenu *weakSelf=self;[self openDemoTerminal:file completion:^(BOOL opened){CRMenu *menu=weakSelf;if(!menu||![menu->_demoPanelIdentity isEqual:request[@"panel"]]||![menu->_demoLatestRequestIdentity isEqual:request[@"id"]]||![menu demoBindingCurrent:request[@"binding"]])return;
       menu->_demoCopyFeedback.stringValue=opened?@"Terminal opened. Continue there; connection is not yet confirmed. Start a fresh conversation.":@"Terminal could not open. Use Copy sign-in/launch, or reopen setup to try again. The request is retained.";
     }];
-  }@catch(NSException *error){(void)error;_demoCopyFeedback.stringValue=@"Could not prepare Terminal. Use the Copy command; retained requests are not removed.";}
+  }@catch(NSException *error){(void)error;if(![_demoPanelIdentity isEqual:request[@"panel"]]||![_demoLatestRequestIdentity isEqual:request[@"id"]]||![self demoBindingCurrent:request[@"binding"]])return;_demoCopyFeedback.stringValue=@"Could not prepare Terminal. Use the Copy command; retained requests are not removed.";}
 }
 - (void)prepareDemoDesktop:(id)sender {(void)sender;if(_demoOperation||![self demoBindingCurrent:_demoCopyBinding])return;_demoProposal=nil;_demoClosed.state=NSControlStateValueOff;[self startDemoOperation:@[@"desktop",@"prepare"] request:@{@"kind":@"prepare"}];}
 - (void)applyDemoDesktop:(id)sender {

@@ -8,7 +8,7 @@
     "build": "node src/build.mjs",
     "build:native": "node src/build-native.mjs",
     "package": "node src/package.mjs",
-    "test": "node --test test/*.test.mjs",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
     "test:native": "node --test --test-concurrency=1 test/native/*.test.mjs"
   },
   "dependencies": {
