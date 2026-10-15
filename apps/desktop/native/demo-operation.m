@@ -13,8 +13,8 @@
 @implementation CRDemoOperation {
   int _outFD,_errFD,_exitCode;
   NSMutableData *_outBytes,*_errBytes;
-  BOOL _leaderExited,_outEnded,_errEnded,_killed;
-  double _deadline,_cancelDeadline,_grace;
+  BOOL _leaderExited,_outEnded,_errEnded,_termComplete,_killed;
+  double _deadline,_cancelDeadline,_grace,_exitObservationDeadline,_signalObservationDeadline;
 }
 - (instancetype)initWithExecutable:(NSString *)file arguments:(NSArray<NSString *> *)arguments directory:(NSString *)directory environment:(NSDictionary<NSString *,NSString *> *)environment timeout:(double)timeout grace:(double)grace {
   self=[super init];if(!self)return nil;_outFD=_errFD=_exitCode=-1;
@@ -58,14 +58,23 @@
   }
   // Darwin getpgid may reject a zombie. The complete group census below must
   // positively find the still-waitable leader before any post-exit signal.
-  if(!_leaderExited&&getpgid(_pid)!=_pid){
+  pid_t group=_leaderExited?_pid:getpgid(_pid);int groupError=errno;
+  if(!_leaderExited&&group!=_pid){
     // Exit can occur after the no-event waitid above and before getpgid.
     // Reobserve that exact unreaped child, then positively find its held leader
     // in a complete group census. Empty/ECHILD/error is never exit proof.
     siginfo_t exited={0};int observed=waitid(P_PID,(id_t)_pid,&exited,WEXITED|WNOHANG|WNOWAIT);
     if(observed&&errno==EINTR)return NO;
-    if(!observed&&exited.si_pid==_pid&&[@[@(CLD_EXITED),@(CLD_KILLED),@(CLD_DUMPED)] containsObject:@(exited.si_code)]&&[self groupMembers]>=1){
+    if(group==-1&&!observed&&exited.si_pid==_pid&&[@[@(CLD_EXITED),@(CLD_KILLED),@(CLD_DUMPED)] containsObject:@(exited.si_code)]&&[self groupMembers]>=1){
       _leaderExited=YES;_exitCode=exited.si_code==CLD_EXITED?exited.si_status:-1;
+    }else if(group==-1&&groupError==ESRCH&&!observed&&!exited.si_pid&&!exited.si_code&&[self groupMembers]>=1){
+      // Darwin can hide the exiting process from getpgid before waitid exposes
+      // its exit. Keep the exact child and positive census, but neither signal
+      // nor reap until proof is restored. Repeated observations never extend
+      // this first-observation budget.
+      double now=CRLifecycleNow();if(!_exitObservationDeadline)_exitObservationDeadline=now+5;
+      if(now<_exitObservationDeadline)return NO;
+      _ownershipLost=YES;_failure=@"Setup exit observation is uncertain; retain state for inspection.";return NO;
     }else{_ownershipLost=YES;_failure=@"Setup process group changed; retain state for inspection.";return NO;}
   }
   return YES;
@@ -79,18 +88,36 @@
   }
   return leader?(NSInteger)seen.count:-1;
 }
-- (void)signalGroup:(int)number {
-  if(![self observeLeader])return;
-  if(_leaderExited){NSInteger members=[self groupMembers];if(members<1){_ownershipLost=YES;_failure=@"Setup group ownership is uncertain; retain state.";return;}if(members==1)return;}
+- (BOOL)signalGroup:(int)number {
+  if(![self observeLeader])return NO;
+  if(_leaderExited){NSInteger members=[self groupMembers];if(members<1){_ownershipLost=YES;_failure=@"Setup group ownership is uncertain; retain state.";return NO;}if(members==1)return YES;}
   if(kill(-_pid,number)){
     // The last live member can exit between census and kill. ESRCH is not
     // settlement: retain the exact waitable leader and continue census/drain.
-    if(errno==ESRCH&&[self observeLeader]&&_leaderExited&&[self groupMembers]>=1)return;
+    if(errno==ESRCH){
+      if(![self observeLeader])return NO;
+      if(_leaderExited){NSInteger members=[self groupMembers];if(members==1)return YES;
+        if(members>1){
+          // A complete census can include only zombies, but multiple members
+          // are not settlement. Retry observation with a fixed bounded budget.
+          double now=CRLifecycleNow();if(!_signalObservationDeadline)_signalObservationDeadline=now+5;
+          if(now<_signalObservationDeadline)return NO;
+        }
+      }
+    }
     _ownershipLost=YES;_failure=@"Setup group settlement could not be confirmed; retain state.";
+    return NO;
   }
+  _signalObservationDeadline=0;return YES;
+}
+- (void)advanceCancellation {
+  if(!_cancelled||_finished||_ownershipLost)return;
+  if(!_termComplete){if([self signalGroup:SIGTERM]){_termComplete=YES;_cancelDeadline=CRLifecycleNow()+_grace;}return;}
+  if(!_killed&&CRLifecycleNow()>=_cancelDeadline&&[self signalGroup:SIGKILL]){_killed=YES;_cancelDeadline=CRLifecycleNow()+5;}
+  if(_killed&&!_ownershipLost&&CRLifecycleNow()>=_cancelDeadline){_ownershipLost=YES;_failure=@"Setup shutdown is uncertain; retain state for inspection.";}
 }
 - (void)cancel:(NSString *)reason {
-  if(_cancelled||_finished||_ownershipLost)return;_cancelled=YES;_failure=[reason copy];_cancelDeadline=CRLifecycleNow()+_grace;[self signalGroup:SIGTERM];
+  if(_cancelled||_finished||_ownershipLost)return;_cancelled=YES;_failure=[reason copy];[self advanceCancellation];
 }
 - (void)read:(int)fd into:(NSMutableData *)bytes ended:(BOOL *)ended {
   if(*ended)return;unsigned char buffer[4096];NSUInteger received=0;
@@ -118,8 +145,7 @@
     }
   }
   if(!_cancelled&&CRLifecycleNow()>=_deadline)[self cancel:@"Setup timed out; inspect retained state before retrying."];
-  if(_cancelled&&!_killed&&CRLifecycleNow()>=_cancelDeadline){[self signalGroup:SIGKILL];_killed=YES;_cancelDeadline=CRLifecycleNow()+5;}
-  if(_killed&&!_ownershipLost&&CRLifecycleNow()>=_cancelDeadline){_ownershipLost=YES;_failure=@"Setup shutdown is uncertain; retain state for inspection.";}
+  [self advanceCancellation];
 }
 @end
 

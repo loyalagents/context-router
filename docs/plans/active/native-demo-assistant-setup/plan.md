@@ -321,3 +321,42 @@ feedback now checks the latest captured request ID as well as panel and binding.
 External Terminal ownership is unchanged. The existing CI-path contract assertion
 was updated solely to require the approved serial portable command with its same
 glob; no workflow trigger/job/requirement changed.
+
+## Exit-observation follow-up
+
+Corrected candidate `91106ba26f44129adeb71a93d919a7bc7e092378` passed the full
+local migration gate (12 phases, 1437.9 s), both complete-diff review dimensions
+and exact-head CI. The first renewed gate attempt used an unsuitable nested
+repository TMPDIR: an existing staging assertion rejected ancestor node_modules,
+and its 116-byte Unix socket path reproduced EINVAL. Both unchanged tests passed
+in the short private qualification root `/Users/lucasnovak/.crq91106ba` before
+the successful gate. No staging or credential assertion was weakened.
+
+The subsequent native suite passed 238/241. The finite-helper normal-exit case
+exposed a second Darwin interval: getpgid returns ESRCH while both nonblocking
+waitid observations still report no event, with a positive complete leader census.
+An owned diagnostic copy reproduced those exact values on attempt 539. A new
+deterministic observation fixture failed first against unchanged production code.
+The two existing maintenance/codesign deadline failures passed an unchanged
+focused rerun (2/2, 24.3 s); their original failures remain retained and unattributed.
+
+Both independent reviewers approved this narrow amendment before production edits:
+only ESRCH plus successful no-event wait and positive complete leader census may
+defer observation for a fixed, nonresetting five-second budget. No signal, reap or
+successful result is permitted during that interval. Exact exit/group proof is
+still required; changed group, ECHILD and invalid/empty census fail closed.
+Cancellation tracks conclusive signal outcomes: deferred TERM/KILL is retried
+after proof returns, grace starts only after TERM completes, and deferred KILL
+cannot consume its attempt or start its post-signal deadline. Repeated kill ESRCH
+with multiple inventoried members has its own fixed bounded observation budget;
+multiple members never count as settled. Uncertainty retains state without replay.
+
+Fixtures now cover one delayed observation, persistent uncertainty, cancellation
+during observation, pending KILL, kill-ESRCH follow-up with a surviving descendant,
+repeated signal ESRCH, and an actual changed process group, alongside prior cases.
+Focused process/control checks passed 2/2 (17 process scenarios). Retained logs
+include `native.log`, `native-existing-recheck.log`,
+`exit-transient-failed-first.log`, `exit-observation-focused.log`, and
+`f/exit-observation/result.log` under the owned qualification root. New runtime
+bytes require affected exact-head review and renewed final gate/native/artifact/CI
+qualification. No human trial or personal provider session has been started.
