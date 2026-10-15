@@ -58,6 +58,19 @@ static int deterministicKill(pid_t pid,int number){
 @end
 int main(int argc,const char **argv){@autoreleasepool{@try{
  if(argc!=3)return 2;NSString *file=[NSString stringWithUTF8String:argv[1]],*kind=[NSString stringWithUTF8String:argv[2]];
+ if([kind isEqual:@"nstask"]){
+  NSString *barrier=[file stringByAppendingString:@".coexist"];NSObject *lock=[NSObject new];__block BOOL notified=NO;__block int taskStatus=-1;
+  NSTask *task=[NSTask new];task.executableURL=[NSURL fileURLWithPath:file];task.arguments=@[@"coexist",barrier];task.environment=@{@"PATH":@"/usr/bin:/bin"};task.standardInput=NSFileHandle.fileHandleWithNullDevice;task.standardOutput=NSFileHandle.fileHandleWithNullDevice;task.standardError=NSFileHandle.fileHandleWithNullDevice;
+  task.terminationHandler=^(NSTask *ended){@synchronized(lock){taskStatus=ended.terminationStatus;notified=YES;}};
+  if(![task launchAndReturnError:nil])return 17;
+  CRDemoOperation *operation=[[CRDemoOperation alloc] initWithExecutable:file arguments:@[@"coexist",barrier] directory:file.stringByDeletingLastPathComponent environment:@{@"PATH":@"/usr/bin:/bin"} timeout:2 grace:0.15];
+  if(![[NSData data] writeToFile:barrier atomically:YES])return 18;
+  double deadline=CRLifecycleNow()+4;BOOL taskDone=NO;
+  while(CRLifecycleNow()<deadline){[operation pump];@synchronized(lock){taskDone=notified;}if(operation.finished&&taskDone)break;usleep(1000);}
+  int status;BOOL reaped=waitpid(operation.pid,&status,WNOHANG)==-1&&errno==ECHILD;
+  @synchronized(lock){if(!notified||taskStatus!=0||!operation.success||!reaped)return 19;}
+  puts("{\"coexist\":true,\"reaped\":true}");return 0;
+ }
  BOOL transient=[kind hasPrefix:@"exit-transient"],stuck=[kind isEqual:@"exit-transient-stuck"],cancelTransient=[kind isEqual:@"exit-transient-cancel"],killTransient=[kind isEqual:@"kill-transient"],pendingKill=[kind isEqual:@"kill-observation-transient"],changedGroup=[kind isEqual:@"changed-group"];
  repeatSignalESRCH=[kind isEqual:@"signal-esrch-stuck"];
  forceExitRace=[kind isEqual:@"exit-race"]||transient;maskRemaining=transient?1:0;maskForever=stuck;killExitRace=killTransient;

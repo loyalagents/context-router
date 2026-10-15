@@ -116,9 +116,17 @@ keeps the panel open. Every action binds the root, store, runtime generation and
 endpoint captured by the panel. Changed/stopped context refuses; reopen the panel
 for current actions. While an inspect/prepare/apply helper is outstanding, native
 mode/reset/restart actions are disabled and refused. **Done** can close the panel;
-the menu still owns that finite operation. Quit first settles its exact owned
-helper group before stopping the guardian. Timeout/output loss can leave uncertain
-state: retain guards, proposal and backups; never replay an uncertain mutation.
+the menu still owns that finite operation. Reopening the panel shows its completed
+Desktop outcome for the same demo. A hidden prepare requires a fresh visible
+prepare/review; no old proposal or closed-Desktop confirmation is restored.
+Normal Quit settles its exact owned helper group before stopping the guardian.
+If ownership becomes uncertain, polling stops and actions remain blocked. Quit
+offers **Cancel** by default or explicit **Quit and retain state**; this stops the
+local runtime without further helper signals or claiming setup finished. The helper
+may still finish changing Desktop configuration. Keep Desktop and config editors
+closed, and inspect retained state before opening Desktop or retrying. Interrupted
+apply can retain its guard, proposal and backup; never delete a guard or replay an
+uncertain mutation. Restart is not automatic recovery.
 
 Terminal handoffs use unique private retained `demo/launch-requests/.../open.command`
 files. They contain quoted helper arguments and no credentials, use a clean

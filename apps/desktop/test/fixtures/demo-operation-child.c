@@ -7,6 +7,7 @@
 static void finish(int signal){(void)signal;_exit(0);}
 int main(int argc,char **argv){
  if(argc<2)return 2;
+ if(!strcmp(argv[1],"coexist")){if(argc!=3)return 10;for(int i=0;i<5000;i++){if(!access(argv[2],F_OK))return 0;usleep(1000);}return 11;}
  if(!strcmp(argv[1],"normal")){for(int fd=3;fd<64;fd++)if(fcntl(fd,F_GETFD)>=0)return 3;if(getenv("CR_DEMO_TOKEN")||getenv("LOCAL_DATABASE_ROOT"))return 4;puts("{\"ok\":true}");return 0;}
  if(!strcmp(argv[1],"changed-group")){if(setpgid(0,getpgid(getppid())))return 9;for(;;)pause();}
  if(!strcmp(argv[1],"exit-race")||!strcmp(argv[1],"exit-race-tree")){

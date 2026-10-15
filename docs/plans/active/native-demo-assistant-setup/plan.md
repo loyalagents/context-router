@@ -1,6 +1,6 @@
 # Native demo assistant setup
 
-Status: C1/C2 targeted checks passed; candidate preparation and final validation pending.
+Status: review corrections in focused validation; a corrected trial and final validation remain pending.
 One cohesive draft PR; do not merge automatically.
 
 ## Outcome and ownership
@@ -95,12 +95,33 @@ Done may dismiss the panel while the menu-owned operation and request identity
 survive; callbacks cannot write dead views or revive stale proposals. Normal Quit
 first cancels and settles the finite helper group as above, then sends the existing
 guardian Quit. If settlement cannot be established, report retained uncertainty
-and do not claim completion. The app never owns, waits for or kills externally
+and stop polling without releasing the operation, request or transition interlocks.
+Quit then requires an explicit Cancel-default confirmation, including system
+termination; it may stop the guardian without further helper signals/reaping or
+a settlement claim. Explain that the helper may still finish changing Desktop
+configuration: keep Desktop/editors closed and inspect retained state before
+opening or retrying. One confirmation is in flight; accepted Quit is latched
+against reentry. Pending normal Quit reaching ownership loss uses the same path.
+The app never owns, waits for or kills externally
 launched Terminal/assistant sessions during switch/reset/Quit. Enter/leave/reset/
 restart controls are disabled and their action handlers independently refuse
 while finite work is unsettled, even after Done dismisses the panel. This prevents
 native mode changes racing a reviewed Desktop apply. This bounded
 finite-helper ownership is necessary setup lifecycle, not assistant supervision.
+
+Finite inspect/prepare/apply requests use the additive `--native-result` option.
+On failure, stdout contains one exact JSON envelope bound to action and full
+context, with only constructor-provided safe text or a fixed fallback. Reject
+messages over 800 UTF-8 bytes, malformed Unicode or control characters. Native
+parses the whole envelope, never raw stderr; lifecycle uncertainty takes priority.
+Other commands reject the flag and ordinary CLI stderr remains compatible.
+Clear old feedback tooltips on actions/results.
+
+Retain only the latest validated Desktop outcome and safe message in memory,
+bound to root/store/generation/endpoint/request. A same-binding reopened panel
+shows completion even if it was reopened while work was running. Never restore
+a proposal, digest or closed-Desktop attestation; hidden prepare requires a fresh
+visible prepare/review. New Desktop work and binding changes clear the outcome.
 
 Terminal transport writes a unique retained nonsecret request at
 `root/demo/launch-requests/<nonce>/open.command`: directory 0700, file 0500,
@@ -392,3 +413,27 @@ no workflow ran for cb29929 because the PR was conflicting. Retain only explicit
 unchanged input coverage. Human acceptance and the bounded Claude offline probe
 remain pending; no human trial or personal provider action is authorized by this
 integration.
+
+## Review correction round
+
+All three supplied review findings are accepted: ownership-loss Quit feedback,
+safe visible helper reasons, and Desktop outcomes after Done. Architecture and
+security independently approved the bounded amendments above before dependent
+implementation. Refusing transitions still protects against new native races;
+it does not prove that an already-past-checkpoint helper cannot rename config
+after Quit. Interrupted apply can retain its root-wide guard, proposal and backup.
+Do not reclaim that guard, replay apply or describe restart as recovery.
+
+Tests first reproduced the stopped-timer failure, missing safe-result protocol,
+and reopened-panel completion bug. Focused fixtures cover Cancel/confirmed Quit,
+reentry, closed panels, lifecycle precedence, malformed envelopes, hidden outcomes
+and concurrent real NSTask termination alongside the finite adapter. No new
+process cancellation policy or provider action is included.
+
+Main `4d68bcf8cf357b21f08681b8313d28e3d1b4e8a5` adds only two backend timing
+test corrections, with no overlapping files or new instructions. Integrate those
+tests unchanged and use affected checks. Prior `811caf4` CI passed; this round
+does not repeat its broad qualification. The sealed `c941d3c` trial is older and
+does not include these native corrections. A corrected trial, human acceptance
+and final gates wait for the agreed finalization milestone. Targeted checks
+passed; final validation pending.

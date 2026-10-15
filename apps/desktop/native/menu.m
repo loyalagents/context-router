@@ -17,9 +17,9 @@
   NSStatusItem *_status;NSMenuItem *_label;NSMutableDictionary<NSString *,NSMenuItem *> *_items;
   NSTask *_guardian;NSPipe *_input,*_output;CRWriteQueue *_commands;CRFrames *_frames;NSTimer *_timer;
   NSDictionary *_demoCopyBinding;NSArray<NSString *> *_demoCopyCommands,*_demoCopyNames;NSTextField *_demoCopyFeedback;
-  CRDemoOperation *_demoOperation;NSTimer *_demoOperationTimer;NSDictionary *_demoRequest,*_demoProposal;
+  CRDemoOperation *_demoOperation;NSTimer *_demoOperationTimer;NSDictionary *_demoRequest,*_demoProposal,*_demoOutcome;
   NSMutableDictionary *_demoChoices;NSMutableArray<NSButton *> *_demoActions;NSString *_demoPanelIdentity,*_demoLatestRequestIdentity;
-  NSTextField *_demoReview;NSButton *_demoClosed,*_demoApply,*_demoDetails;BOOL _demoQuitPending;
+  NSTextField *_demoReview;NSButton *_demoClosed,*_demoApply,*_demoDetails;BOOL _demoQuitPending,_demoUncertainQuitPrompting,_demoUncertainQuitConfirmed;
   BOOL _ready,_stopping,_quitting,_stopped,_broken,_download,_cancelPending,_sleepInvalidated,_openOnReady,_exitObserved;double _unlockUntil;
 }
 - (instancetype)initWithBundle:(NSString *)bundle root:(NSString *)root {
@@ -62,6 +62,7 @@
   [self update];
 }
 - (void)update {
+  if(_demoOutcome&&![self demoBindingCurrent:_demoOutcome[@"binding"]])_demoOutcome=nil;
   BOOL active=_ready&&!_stopping&&!_broken&&_guardian.running;
   for(NSString *key in @[@"open",@"unlock",@"restart"])_items[key].enabled=active&&(![key isEqual:@"restart"]||!_demoOperation);
   _items[@"copy"].enabled=active&&_unlockFile&&CRExpiryNow()<_unlockUntil;
@@ -75,6 +76,7 @@
   _items[@"cancel-demo"].enabled=_preparingDemo&&!_demoFailed&&!_stopping&&!_broken;
   for(NSString *key in @[@"return-previous",@"retry-demo"])_items[key].enabled=_demoFailed&&!_stopping&&!_broken;
   _items[@"download"].enabled=active&&!demo&&!_download;_items[@"cancel"].enabled=active&&_download&&!_cancelPending;_items[@"quit"].enabled=!_quitting;[self updateDemoActions];
+  if(!_quitting){if(_demoOperation.ownershipLost)_label.title=@"Setup ownership uncertain — state retained";else if(_demoQuitPending)_label.title=@"Quit pending — finishing setup shutdown…";}
 }
 - (void)breakControl {
   _broken=YES;_ready=NO;_label.title=@"Runtime unavailable — state retained";
@@ -198,9 +200,10 @@
 }
 - (void)startDemoOperation:(NSArray *)action request:(NSDictionary *)request {
   if(_demoOperation||![self demoBindingCurrent:_demoCopyBinding]){_demoCopyFeedback.stringValue=@"Reopen Demo setup after the current operation finishes.";return;}
+  _demoCopyFeedback.toolTip=nil;if([@[@"prepare",@"apply"] containsObject:request[@"kind"]])_demoOutcome=nil;
   NSMutableDictionary *bound=[request mutableCopy];bound[@"binding"]=_demoCopyBinding;bound[@"panel"]=_demoPanelIdentity;bound[@"id"]=CRRandom(16);_demoLatestRequestIdentity=bound[@"id"];
   @try{
-    _demoOperation=[self demoOperationWithArguments:[self demoArguments:_demoCopyBinding action:action]];_demoRequest=bound;
+    _demoOperation=[self demoOperationWithArguments:[[self demoArguments:_demoCopyBinding action:action] arrayByAddingObject:@"--native-result"]];_demoRequest=bound;
     _demoCopyFeedback.stringValue=@"Checking setup… You can close this panel while it finishes.";
     _demoOperationTimer=[NSTimer timerWithTimeInterval:0.05 target:self selector:@selector(pollDemoOperation:) userInfo:nil repeats:YES];
     [NSRunLoop.mainRunLoop addTimer:_demoOperationTimer forMode:NSRunLoopCommonModes];[NSRunLoop.mainRunLoop addTimer:_demoOperationTimer forMode:NSModalPanelRunLoopMode];
@@ -247,18 +250,45 @@
   text.string=[[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:details options:NSJSONWritingPrettyPrinted|NSJSONWritingSortedKeys|NSJSONWritingWithoutEscapingSlashes error:nil] encoding:NSUTF8StringEncoding];scroll.documentView=text;alert.accessoryView=scroll;[alert addButtonWithTitle:@"Done"];[alert runModal];
 }
 - (void)completeDemoQuit {[NSApp terminate:nil];}
+- (NSString *)demoFailureMessage:(CRDemoOperation *)operation request:(NSDictionary *)request {
+  if(operation.failure.length)return operation.failure;
+  NSString *fallback=[request[@"kind"] isEqual:@"inspect"]?@"Client unavailable. Choose a trusted native Codex 0.160.0 or Claude Code 2.1.299 executable. No assistant started.":[request[@"kind"] isEqual:@"prepare"]?@"Setup could not be prepared. Inspect retained setup state before retrying.":@"Apply is not confirmed. Inspect retained setup state; do not replay an uncertain apply.";
+  if(operation.cancelled)return fallback;
+  // Raw stderr can contain loader or pre-import diagnostics. Only the complete,
+  // explicitly requested helper envelope carries a safe user-facing reason.
+  NSDictionary *value=[NSJSONSerialization JSONObjectWithData:operation.output options:0 error:nil];
+  if(![value isKindOfClass:NSDictionary.class]||!CRExact(value,@[@"version",@"status",@"action",@"binding",@"message"])||!CRInteger(value[@"version"],1,1)||![value[@"status"] isEqual:@"failed"]||![value[@"action"] isEqual:request[@"kind"]]||![value[@"binding"] isEqual:request[@"binding"]])return fallback;
+  NSString *message=value[@"message"];
+  if(![message isKindOfClass:NSString.class]||![[message stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] length]||[message lengthOfBytesUsingEncoding:NSUTF8StringEncoding]>800||[message rangeOfCharacterFromSet:NSCharacterSet.controlCharacterSet].location!=NSNotFound||[message rangeOfCharacterFromSet:NSCharacterSet.newlineCharacterSet].location!=NSNotFound)return fallback;
+  return message;
+}
+- (void)retainDemoOutcome:(NSString *)status message:(NSString *)message request:(NSDictionary *)request {
+  if(![@[@"prepare",@"apply"] containsObject:request[@"kind"]]||![self demoBindingCurrent:request[@"binding"]]||![_demoLatestRequestIdentity isEqual:request[@"id"]])return;
+  _demoOutcome=@{@"binding":request[@"binding"],@"id":request[@"id"],@"kind":request[@"kind"],@"status":status,@"message":message};
+  // A panel reopened while work ran may show its safe outcome, but never inherit
+  // the dismissed panel's proposal or closed-Desktop attestation.
+  if([_demoCopyBinding isEqual:request[@"binding"]]){_demoCopyFeedback.toolTip=nil;_demoCopyFeedback.stringValue=message;}
+}
+- (BOOL)confirmUncertainDemoQuit {
+  NSAlert *alert=[NSAlert new];alert.messageText=@"Quit with setup ownership uncertain?";
+  alert.informativeText=@"The setup helper may still be running and may finish changing Claude Desktop configuration. Quit will stop the local runtime without further helper signals or a claim that setup finished. State is retained. Keep Desktop and config editors closed, and inspect the retained state before opening Desktop or retrying setup.";
+  [alert addButtonWithTitle:@"Cancel"];[alert addButtonWithTitle:@"Quit and retain state"];return [alert runModal]==NSAlertSecondButtonReturn;
+}
 - (void)pollDemoOperation:(NSTimer *)timer {
-  (void)timer;[_demoOperation pump];
-  if(_demoOperation.ownershipLost){_demoCopyFeedback.stringValue=_demoOperation.failure?:@"Setup ownership is uncertain. Retain state for inspection.";_label.title=@"Setup ownership uncertain — state retained";return;}
+  (void)timer;if(!_demoOperation)return;if(!_demoOperation.ownershipLost)[_demoOperation pump];
+  if(_demoOperation.ownershipLost){
+    [_demoOperationTimer invalidate];_demoOperationTimer=nil;
+    NSString *message=_demoOperation.failure?:@"Setup ownership is uncertain. Retain state for inspection.";
+    [self retainDemoOutcome:@"uncertain" message:message request:_demoRequest];_demoCopyFeedback.toolTip=nil;_demoCopyFeedback.stringValue=message;[self update];
+    if(_demoQuitPending&&!_demoUncertainQuitPrompting){_demoQuitPending=NO;[self completeDemoQuit];}return;
+  }
   if(!_demoOperation.finished)return;
   CRDemoOperation *operation=_demoOperation;NSDictionary *request=_demoRequest;_demoOperation=nil;_demoRequest=nil;[_demoOperationTimer invalidate];_demoOperationTimer=nil;
   BOOL current=[self demoBindingCurrent:request[@"binding"]],samePanel=[_demoPanelIdentity isEqual:request[@"panel"]],visible=current&&samePanel;
+  if(samePanel)_demoCopyFeedback.toolTip=nil;
   if(current&&!_demoQuitPending){
     @try{
-      if(!operation.success){if(visible){NSString *error=[[NSString alloc] initWithData:operation.errorOutput encoding:NSUTF8StringEncoding];
-        _demoCopyFeedback.stringValue=operation.failure?:([request[@"kind"] isEqual:@"inspect"]?@"Client unavailable. Choose a trusted native Codex 0.160.0 or Claude Code 2.1.299 executable. No assistant started.":[request[@"kind"] isEqual:@"prepare"]?@"Could not prepare. Install/open Claude Desktop once, check its config is private (0600), then reopen setup. Retain any uncertain state.":@"Apply is not confirmed. Inspect the retained proposal, config and backup; do not replay an uncertain apply.");
-        if(error.length&&error.length<=800)_demoCopyFeedback.toolTip=error;
-      }}else{
+      if(!operation.success){NSString *message=[self demoFailureMessage:operation request:request];[self retainDemoOutcome:operation.cancelled||operation.failure.length?@"uncertain":@"failed" message:message request:request];if(visible)_demoCopyFeedback.stringValue=message;}else{
         NSDictionary *result=[NSJSONSerialization JSONObjectWithData:operation.output options:0 error:nil];if(![result isKindOfClass:NSDictionary.class])CRFail();
         if([request[@"kind"] isEqual:@"inspect"]){
           NSString *vendor=request[@"vendor"],*version=[vendor isEqual:@"codex"]?@"0.160.0":@"2.1.299";
@@ -266,12 +296,13 @@
           [[self demoDefaults] setObject:result forKey:[self demoChoiceKey:vendor]];_demoChoices[vendor]=result;if(visible)_demoCopyCommands=[self demoSetupCommands];
           if([request[@"action"] isEqual:@"choose"]){if(visible)_demoCopyFeedback.stringValue=[NSString stringWithFormat:@"Saved %@ %@. It will be checked again each time.",vendor,version];}
           else [self handoffDemoClient:result request:request];
-        }else if([request[@"kind"] isEqual:@"prepare"]&&visible){
+        }else if([request[@"kind"] isEqual:@"prepare"]){
           if(![result[@"status"] isEqual:@"proposed"]||!CRPattern(result[@"proposalSha256"],@"[a-f0-9]{64}")||![result[@"store"] isEqual:request[@"binding"][@"store"]]||![result[@"generation"] isEqual:request[@"binding"][@"generation"]]||![result[@"endpoint"] isEqual:request[@"binding"][@"endpoint"]]||![result[@"review"] isKindOfClass:NSDictionary.class]||![result[@"proposal"] isKindOfClass:NSString.class])CRFail();
-          _demoProposal=result;_demoClosed.state=NSControlStateValueOff;_demoReview.stringValue=[NSString stringWithFormat:@"%@ entry %@\n%@\n%@",[result[@"review"][@"operation"] capitalizedString],result[@"entryName"],result[@"config"],result[@"review"][@"backup"]];_demoCopyFeedback.stringValue=@"Review the exact change, close Desktop and config editors, then confirm below. No config has changed.";
-        }else if([request[@"kind"] isEqual:@"apply"]&&visible){if(![result[@"status"] isEqual:@"applied"])CRFail();_demoProposal=nil;_demoClosed.state=NSControlStateValueOff;_demoReview.stringValue=@"Configuration applied. Start Claude Desktop normally and begin a fresh conversation.";_demoCopyFeedback.stringValue=@"Setup applied; connection is not yet confirmed. Your original configuration backup is retained.";}
+          [self retainDemoOutcome:@"prepared" message:@"Desktop setup was prepared. Prepare again to review a fresh proposal in this panel. No config has changed." request:request];
+          if(visible){_demoProposal=result;_demoClosed.state=NSControlStateValueOff;_demoReview.stringValue=[NSString stringWithFormat:@"%@ entry %@\n%@\n%@",[result[@"review"][@"operation"] capitalizedString],result[@"entryName"],result[@"config"],result[@"review"][@"backup"]];_demoCopyFeedback.stringValue=@"Review the exact change, close Desktop and config editors, then confirm below. No config has changed.";}
+        }else if([request[@"kind"] isEqual:@"apply"]){if(![result[@"status"] isEqual:@"applied"])CRFail();NSString *message=@"Setup applied; connection is not yet confirmed. Start Claude Desktop normally with a fresh conversation.";[self retainDemoOutcome:@"applied" message:message request:request];if(visible){_demoProposal=nil;_demoClosed.state=NSControlStateValueOff;_demoReview.stringValue=@"Configuration applied. Start Claude Desktop normally and begin a fresh conversation.";_demoCopyFeedback.stringValue=message;}}
       }
-    }@catch(NSException *error){(void)error;if(visible){_demoProposal=nil;_demoCopyFeedback.stringValue=@"Setup result could not be verified. Retain state and reopen setup; do not replay an uncertain apply.";}}
+    }@catch(NSException *error){(void)error;NSString *message=@"Setup result could not be verified. Retain state and reopen setup; do not replay an uncertain apply.";[self retainDemoOutcome:@"uncertain" message:message request:request];if(visible){_demoProposal=nil;_demoClosed.state=NSControlStateValueOff;_demoCopyFeedback.stringValue=message;}}
   }else if(samePanel)_demoCopyFeedback.stringValue=@"Demo changed. Reopen Demo setup for current actions.";
   [self update];if(_demoQuitPending){_demoQuitPending=NO;[self completeDemoQuit];}
 }
@@ -289,6 +320,7 @@
 }
 - (NSPasteboard *)demoSetupPasteboard {return NSPasteboard.generalPasteboard;}
 - (void)copyDemoCommand:(NSButton *)sender {
+  _demoCopyFeedback.toolTip=nil;
   NSDictionary *current=[self demoSetupContext];
   if(!current||![_demoCopyBinding isEqualToDictionary:current]){_demoCopyFeedback.stringValue=@"Nothing copied. Reopen Demo setup for current commands.";return;}
   NSInteger index=sender.tag;if(index<0||index>=(NSInteger)_demoCopyCommands.count)return;
@@ -297,6 +329,7 @@
 }
 - (NSAlert *)demoSetupAlert {
   _demoCopyBinding=[self demoSetupContext];if(!_demoCopyBinding)return nil;_demoPanelIdentity=CRRandom(16);_demoProposal=nil;_demoChoices=[NSMutableDictionary dictionary];_demoActions=[NSMutableArray array];
+  if(_demoOutcome&&![_demoOutcome[@"binding"] isEqual:_demoCopyBinding])_demoOutcome=nil;
   for(NSString *vendor in @[@"codex",@"claude"]){id saved=[[self demoDefaults] objectForKey:[self demoChoiceKey:vendor]];if([saved isKindOfClass:NSDictionary.class]&&CRExact(saved,@[@"path",@"sha256",@"version"])&&[saved[@"path"] isKindOfClass:NSString.class]&&[saved[@"path"] isAbsolutePath]&&[saved[@"path"] length]<=4096&&[saved[@"path"] rangeOfCharacterFromSet:NSCharacterSet.controlCharacterSet].location==NSNotFound&&CRPattern(saved[@"sha256"],@"[a-f0-9]{64}")&&[saved[@"version"] isKindOfClass:NSString.class])_demoChoices[vendor]=saved;}
   _demoCopyCommands=[self demoSetupCommands];_demoCopyNames=@[@"Codex A sign-in",@"Codex A launch",@"Claude Code B sign-in",@"Claude Code B launch",@"Claude Desktop C setup",@"Demo status"];
   NSAlert *alert=[NSAlert new];alert.messageText=@"Demo setup";alert.informativeText=@"Sign in or open an assistant in Terminal. Providers may receive demo context. Start a fresh conversation; connection is confirmed in the assistant.";
@@ -323,7 +356,8 @@
   _demoApply=button(desktop,@"Apply reviewed change",@"demo-desktop-apply",@selector(applyDemoDesktop:),0,NSMakeRect(4,8,210,30));copy(desktop,@"Copy setup command",4,NSMakeRect(325,8,210,30));
   copy(view,@"Copy status",5,NSMakeRect(0,82,140,28));label(view,@"Checks native demo readiness, not an assistant connection.",NSMakeRect(152,86,500,20));
   NSTextField *endpoint=label(view,[NSString stringWithFormat:@"Endpoint: %@ · historical sample 2024–2025",_mcpOrigin],NSMakeRect(0,59,660,18));endpoint.font=[NSFont systemFontOfSize:11];endpoint.textColor=NSColor.secondaryLabelColor;endpoint.toolTip=[NSString stringWithFormat:@"Store: %@\nRuntime: %@",_storeId,_generation];
-  _demoCopyFeedback=label(view,_demoOperation?@"Setup is still finishing. Actions will be available after it settles.":@"Choose an action. Copy commands remain available as a Terminal fallback.",NSMakeRect(0,0,660,50));_demoCopyFeedback.identifier=@"demo-copy-feedback";
+  NSString *feedback=_demoOperation.ownershipLost?(_demoOperation.failure?:@"Setup ownership is uncertain. Retain state for inspection."):_demoOperation?@"Setup is still finishing. Actions will be available after it settles.":_demoOutcome?_demoOutcome[@"message"]:@"Choose an action. Copy commands remain available as a Terminal fallback.";
+  _demoCopyFeedback=label(view,feedback,NSMakeRect(0,0,660,50));_demoCopyFeedback.identifier=@"demo-copy-feedback";
   alert.accessoryView=view;[alert addButtonWithTitle:@"Done"];[self updateDemoActions];return alert;
 }
 - (void)demoSetup:(id)sender {
@@ -335,7 +369,18 @@
 - (void)sleepWake:(NSNotification *)notification {(void)notification;_sleepInvalidated=YES;if(_ready&&!_stopping){[self send:@"model-unavailable"];_label.title=@"Dashboard ready · restart required after sleep";}}
 - (void)quit:(id)sender {(void)sender;[NSApp terminate:nil];}
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)application {
-  (void)application;if(_demoOperation){_demoQuitPending=YES;[_demoOperation cancel:@"Quit requested. Setup is settling before the local runtime stops."];_demoCopyFeedback.stringValue=@"Finishing setup shutdown before Quit. Uncertain state is retained.";return NSTerminateCancel;}if(!_guardian.running)return NSTerminateNow;_quitting=YES;_stopping=YES;_label.title=@"Stopping local runtime…";if(_generation)[self send:@"quit"];else @try{[_input.fileHandleForWriting closeFile];}@catch(NSException *e){(void)e;}[self update];return NSTerminateLater;
+  (void)application;if(_quitting)return _guardian.running?NSTerminateLater:NSTerminateNow;
+  if(_demoUncertainQuitPrompting)return NSTerminateCancel;
+  if(_demoOperation&&!_demoUncertainQuitConfirmed){
+    if(_demoOperation.ownershipLost){
+      [_demoOperationTimer invalidate];_demoOperationTimer=nil;_demoQuitPending=NO;
+      _demoUncertainQuitPrompting=YES;BOOL confirmed=NO;@try{confirmed=[self confirmUncertainDemoQuit];}@finally{_demoUncertainQuitPrompting=NO;}
+      if(!confirmed){[self update];return NSTerminateCancel;}_demoUncertainQuitConfirmed=YES;
+      // Retain the operation and request. Confirmation permits only guardian
+      // shutdown, never another helper signal/reap or an ownership claim.
+    }else{_demoQuitPending=YES;[_demoOperation cancel:@"Quit requested. Setup is settling before the local runtime stops."];_demoCopyFeedback.stringValue=@"Finishing setup shutdown before Quit. Uncertain state is retained.";[self update];return NSTerminateCancel;}
+  }
+  if(!_guardian.running)return NSTerminateNow;_quitting=YES;_stopping=YES;_label.title=@"Stopping local runtime…";if(_generation)[self send:@"quit"];else @try{[_input.fileHandleForWriting closeFile];}@catch(NSException *e){(void)e;}[self update];return NSTerminateLater;
 }
 @end
 int CRRunMenu(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcpPort,NSInteger demoMcpPort){
