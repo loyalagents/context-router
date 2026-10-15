@@ -53,7 +53,7 @@ for (const variant of ['missing-metadata','floor','active-journal','impossible-r
   const f=await fixture(t), first=await f.launch(); first.child.stdin.end(); await first.child.ended;
   const file=path.join(f.envelope,'installation.json');
   if(variant==='missing-metadata') await rm(file);
-  if(variant==='floor'){const m=JSON.parse(await readFile(file));m.minimumEpoch=2;await writeFile(file,JSON.stringify(m));}
+  if(variant==='floor'){const m=JSON.parse(await readFile(file));m.minimumEpoch=3;await writeFile(file,JSON.stringify(m));}
   if(variant==='active-journal'){const p=path.join(f.envelope,'owner.json'),m=JSON.parse(await readFile(p));m.lifecycle='active';m.outcome='pending';await writeFile(p,JSON.stringify(m));}
   if(variant==='impossible-role'){const p=path.join(f.envelope,'owner.json'),m=JSON.parse(await readFile(p));m.role='application';m.operation='initialize';await writeFile(p,JSON.stringify(m));}
   if(variant==='wrong-mode'){const {chmod}=await import('node:fs/promises');await chmod(file,0o644);}

@@ -8,6 +8,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { defaultHome, exists, trustedDirectory, readHomeIdentity, withHomeLock, writeSynced, writeSyncedJson, syncDirectory } from './home.mjs';
 import { privateJson, privateBytes, readManifest, repoRoot, cleanEnvironment, safeError } from './runtime.mjs';
 import { hash } from './records.mjs';
+import { parsedConfig, sameConfigBytes } from '../../apps/backend/scripts/demo/desktop-config.mjs';
 import { readCredential } from '../../apps/backend/scripts/mcp-bridge/credential.mjs';
 
 const modules = ['examples/demo-10-2026/desktop-bridge.mjs', ...['cli.mjs', 'bridge.mjs', 'credential.mjs'].map(name => `apps/backend/scripts/mcp-bridge/${name}`)];
@@ -78,12 +79,7 @@ async function configBytes(config) {
   if (bytes.length > 2 * 1024 * 1024) throw safeError('Desktop config exceeds bound.');
   return bytes;
 }
-function parsedConfig(bytes) {
-  let config;
-  try { config = bytes === null ? {} : JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { throw safeError('Desktop config must be valid JSON.'); }
-  if (!config || typeof config !== 'object' || Array.isArray(config) || (config.mcpServers !== undefined && (!config.mcpServers || typeof config.mcpServers !== 'object' || Array.isArray(config.mcpServers)))) throw safeError('Invalid Desktop config structure.');
-  return config;
-}
+
 const entryFor = (snapshot, node, credential, port) => ({ command: node.path, args: ['--no-global-search-paths', path.join(snapshot, modules[0]), '--credential-file', credential, '--mcp-port', String(port)], env: { NODE_OPTIONS: '', NODE_DEBUG: '', NODE_DEBUG_NATIVE: '' } });
 async function collision(home, config, entryName) {
   if (!Object.hasOwn(config.mcpServers ?? {}, entryName)) return;
@@ -139,7 +135,7 @@ export async function applyDesktop({ home = defaultHome(), proposal, desktopClos
     const entry = entryFor(p.snapshot, node, selected.credential, selected.receipt.mcpPort);
     if (!isDeepStrictEqual(entry, p.entry)) throw safeError('Desktop proposal entry mismatch.');
     const original = await configBytes(p.config), expected = p.original === null ? null : Buffer.from(p.original, 'base64');
-    const sameBytes = bytes => bytes === null ? expected === null : expected !== null && bytes.equals(expected);
+    const sameBytes = bytes => sameConfigBytes(bytes, expected);
     if (!sameBytes(original)) throw safeError('Desktop config changed since proposal; prepare and review a new proposal.');
     const config = parsedConfig(original); await collision(home, config, p.entryName);
     const replacement = Buffer.from(JSON.stringify({ ...config, mcpServers: { ...config.mcpServers, [p.entryName]: entry } }, null, 2) + '\n');

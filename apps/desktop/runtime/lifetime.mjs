@@ -6,11 +6,11 @@ const same=(a,b)=>a.dev===b.dev&&a.ino===b.ino;
 const exact=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
 const matches=(value,pattern)=>typeof value==='string'&&pattern.test(value);
 export function validateDownloadMetadata(j,m,generation,boot){
-  if(!exact(m,['version','installationId','selectedStore','minimumEpoch','setup','pendingRestore'])||
-    !exact(j,['version','lifecycle','outcome','generation','bootId','installationId','storeId','role','operation','nonceHash'])||
+  if(!exact(m,['version','installationId','selectedStore','minimumEpoch','setup','pendingRestore','personalStore','demoStore','mode','pendingDemo'])||
+    !exact(j,['version','mode','lifecycle','outcome','generation','bootId','installationId','storeId','role','operation','nonceHash'])||
     !matches(generation,/^[a-f0-9]{32}$/)||!matches(boot,/^[A-Za-z0-9-]{1,64}$/)||
     !matches(m.installationId,/^[a-f0-9]{32}$/)||!matches(m.selectedStore,/^[a-f0-9]{32}$/)||!matches(j.nonceHash,/^[a-f0-9]{64}$/)||
-    j.version!==1||j.lifecycle!=='active'||j.outcome!=='pending'||j.generation!==generation||j.bootId!==boot||j.role!=='application'||j.operation!=='serve'||j.installationId!==m.installationId||j.storeId!==m.selectedStore||m.version!==1||m.minimumEpoch!==1||m.setup!=='ready'||m.pendingRestore!==null)fail();
+    j.version!==2||j.mode!=='personal'||j.lifecycle!=='active'||j.outcome!=='pending'||j.generation!==generation||j.bootId!==boot||j.role!=='application'||j.operation!=='serve'||j.installationId!==m.installationId||j.storeId!==m.selectedStore||m.version!==2||m.minimumEpoch!==2||m.mode!=='personal'||m.personalStore!==m.selectedStore||m.pendingDemo!==null||(m.demoStore!==null&&(!matches(m.demoStore,/^[a-f0-9]{32}$/)||m.demoStore===m.personalStore))||m.setup!=='ready'||m.pendingRestore!==null)fail();
 }
 function pinned(file,directory){const s=lstatSync(file);if(s.uid!==process.getuid()||(s.mode&0o7777)!==(directory?0o700:0o600)||(directory?!s.isDirectory():!s.isFile()||s.nlink!==1)||realpathSync(file)!==file)fail();return s;}
 function json(file){

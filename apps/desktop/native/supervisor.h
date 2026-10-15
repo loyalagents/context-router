@@ -1,2 +1,2 @@
 #import "envelope.h"
-int CRRunGuardian(NSString *bundle, NSString *root, NSInteger uiPort, NSInteger mcpPort);
+int CRRunGuardian(NSString *bundle, NSString *root, NSInteger uiPort, NSInteger personalMcpPort, NSInteger demoMcpPort);

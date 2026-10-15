@@ -12,6 +12,7 @@ import {
   UI_UPLOAD_POLICY,
   type LocalUiRequest,
 } from './local-ui-request';
+import { localUiRuntime } from './local-ui-runtime';
 import type { LocalUiAiPolicy } from './local-ui-ai';
 import { LocalUiManagement } from './local-ui-management';
 
@@ -405,6 +406,7 @@ export class LocalUiBoundary {
             status,
             remainingMilliseconds,
             operations: this.aiPolicy,
+            runtime: localUiRuntime(),
           });
         }
       }

@@ -267,7 +267,7 @@ describe('runtime resource and package closure contract', () => {
     const backendTsconfig = JSON.parse(read('apps/backend/tsconfig.json'));
     const lockfile = read('pnpm-lock.yaml');
 
-    expect(backendPackage.files).toEqual(['dist']);
+    expect(backendPackage.files).toEqual(['dist', 'scripts/demo', 'scripts/mcp-bridge']);
     expect(read('pnpm-workspace.yaml')).toMatch(
       /^injectWorkspacePackages: true$/m,
     );

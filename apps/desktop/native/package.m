@@ -180,7 +180,7 @@ NSDictionary *CRVerifyPackage(NSString *root) {
   NSDictionary *m = CRReadJSON(manifestFile, 32 * 1024 * 1024, NO);
   if (!CRExact(m, @[@"version", @"distribution", @"platform", @"arch", @"securityEpoch", @"node", @"sqliteVersions", @"identityVersion", @"model", @"source", @"files"]) ||
       !CRInteger(m[@"version"], 2, 2) || ![m[@"distribution"] isEqual:@"local-candidate"] || ![m[@"platform"] isEqual:@"darwin"] ||
-      ![m[@"arch"] isEqual:@"arm64"] || !CRInteger(m[@"securityEpoch"], 1, 1) || ![m[@"node"] isEqual:@"24.21.0"] ||
+      ![m[@"arch"] isEqual:@"arm64"] || !CRInteger(m[@"securityEpoch"], 2, 2) || ![m[@"node"] isEqual:@"24.21.0"] ||
       ![m[@"sqliteVersions"] isEqual:@[@1, @2]] || !CRInteger(m[@"identityVersion"], 1, 1) || !CRPattern(m[@"source"], @"[a-f0-9]{64}") ||
       ![m[@"files"] isKindOfClass:[NSArray class]] || ![m[@"files"] count] || [m[@"files"] count] > 100000) CRFail();
   NSDictionary *model = m[@"model"];
@@ -199,7 +199,7 @@ NSDictionary *CRVerifyPackage(NSString *root) {
     if (!expected[name] || ![expected[name][@"kind"] isEqual:@"signature"]) CRFail();
   for (NSString *name in @[@"Contents/Resources/bin/node", @"Contents/Resources/model/llama-server",
       @"Contents/Resources/app/local-ui.mjs", @"Contents/Resources/desktop/runtime/prepare.mjs", @"Contents/Resources/desktop/runtime/application.mjs",
-      @"Contents/Resources/desktop/runtime/maintenance.mjs", @"Contents/Resources/desktop/runtime/prepare-store.mjs", @"Contents/Resources/desktop/runtime/download.mjs"])
+      @"Contents/Resources/desktop/runtime/maintenance.mjs", @"Contents/Resources/desktop/runtime/prepare-store.mjs", @"Contents/Resources/desktop/runtime/download.mjs", @"Contents/Resources/desktop/runtime/demo.mjs", @"Contents/Resources/desktop/runtime/demo-prepare.mjs", @"Contents/Resources/demo-seed.json"])
     if (!expected[name] || ![expected[name][@"kind"] isEqual:@"file"]) CRFail();
   NSMutableSet *seen = [NSMutableSet set]; unsigned long long total = 0;
   NSMutableDictionary *snapshots = [NSMutableDictionary dictionary];

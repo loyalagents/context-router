@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "seed": "historical-2024-2025-v1",
+  "dataset": "demo001",
+  "total": 198,
+  "active": 189,
+  "inactive": 9,
+  "sources": [
+    {
+      "file": "career.jsonl",
+      "sha256": "06a77cff51c32bb1c13b5a5479e59d4d7bee1227fa577cb82ad7fb73dff6b511",
+      "bytes": 3199
+    },
+    {
+      "file": "education.jsonl",
+      "sha256": "91884c6294ece23cfc94bccecf9d5d19cf690dcee8b15d9ab5f93f874ff2aa6a",
+      "bytes": 2962
+    },
+    {
+      "file": "family.jsonl",
+      "sha256": "cdbf910ffccbc620d21f726367c62352cde533785ff1253cb3dedbc1d3d175d6",
+      "bytes": 12261
+    },
+    {
+      "file": "finance.jsonl",
+      "sha256": "a8be73688bb64e07880074c9c2da548cedbf62dd237b86279053647b5f69de45",
+      "bytes": 8202
+    },
+    {
+      "file": "health.jsonl",
+      "sha256": "9d9376a623a44cf48d95a3586d0004c84ee49330eb09b872806a47ccfeed8c3b",
+      "bytes": 12576
+    },
+    {
+      "file": "home.jsonl",
+      "sha256": "3814d0578e63633dde71c79afcb3b592d97307ce278b360e9e76aab14346e160",
+      "bytes": 12410
+    },
+    {
+      "file": "leisure.jsonl",
+      "sha256": "400688de5f6598f9754b5aa02e8de33f20729155b51e5115e1033561b9d78d2a",
+      "bytes": 6148
+    },
+    {
+      "file": "social.jsonl",
+      "sha256": "b4f2497a49d946a3619af81984cd901f8c2682f6f5d8c18f4e49d8b50fad150c",
+      "bytes": 6662
+    },
+    {
+      "file": "tech.jsonl",
+      "sha256": "3d1f7f64cdd8a5a8ae89cea45ee1e4fa03b20dc8483cc93dcca90dbd1ce7efcb",
+      "bytes": 4331
+    },
+    {
+      "file": "travel.jsonl",
+      "sha256": "ed982f9ac24386a3999de068be8d42c4d673640c4f858d17c0ab72a33c36297b",
+      "bytes": 2401
+    },
+    {
+      "file": "work.jsonl",
+      "sha256": "49c7a54035fe1959198af99a01a6008a0b4f84fdd1e24f9005cad9412a855ebb",
+      "bytes": 11293
+    }
+  ]
+}

@@ -3030,17 +3030,18 @@ test("automatic outbound inventory pins sink paths, kinds, counts, and classific
   );
 });
 
-test("configured discovery includes desktop native sources, excludes generated output and rejects unregistered sinks", async () => {
+test("configured discovery includes deployed demo and desktop sources, excludes generated output and rejects unregistered sinks", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "desktop-contract-discovery-"));
   try {
     for (const name of [...CONTRACT_REFERENCE_ROOTS, ...OUTBOUND_SINK_ROOTS,
       "examples/eval-harbor/tasks/dynamicmem-user001-cp00-02-memory-final-v1/tests/score_dynamicmem_prediction.py",
-      "apps/desktop/native", "apps/desktop/build", "apps/desktop/src", "apps/desktop/test"]) {
+      "apps/desktop/native", "apps/desktop/build", "apps/desktop/src", "apps/desktop/test", "apps/backend/scripts/demo"]) {
       await mkdir(path.join(root, name), { recursive: true });
     }
     for (const [name, body] of [
       ["apps/desktop/native/extra.mm", 'pid_t owner = fork(); execv(file, argv); connect(fd, address, size); [task launchAndReturnError:&error]; [workspace openURL:url];'],
       ["apps/desktop/src/extra.mjs", "fetch(url); spawnSync(binary, []); execFileSync(binary, []);"],
+      ["apps/backend/scripts/demo/extra.mjs", 'callTool("searchPreferences"); spawn(binary, []); spawnSync(binary, []); net.createConnection(options); new StreamableHTTPClientTransport(url);'],
       ["apps/desktop/build/generated.m", "fork();"],
       ["apps/desktop/test/fixture.m", "fork();"],
     ]) await writeFile(path.join(root, name), body);
@@ -3049,15 +3050,22 @@ test("configured discovery includes desktop native sources, excludes generated o
     for (const files of [outbound, references]) {
       assert.ok(files.has("apps/desktop/native/extra.mm"));
       assert.ok(files.has("apps/desktop/src/extra.mjs"));
+      assert.ok(files.has("apps/backend/scripts/demo/extra.mjs"));
       assert.equal(files.has("apps/desktop/build/generated.m"), false);
       assert.equal(files.has("apps/desktop/test/fixture.m"), false);
     }
     const discovered = collectOutboundSinkInventory(outbound);
     assert.deepEqual(discovered.find(row => row.path.endsWith('.mm')).sinks,
       { 'native-connect': 1, 'native-exec': 1, 'native-fork': 1, 'native-task-launch': 1, 'native-url-open': 1 });
-    assert.deepEqual(discovered.find(row => row.path.endsWith('.mjs')).sinks,
+    assert.deepEqual(discovered.find(row => row.path === 'apps/desktop/src/extra.mjs').sinks,
       { 'exec-file': 1, fetch: 1, spawn: 1 });
+    const demo = discovered.find(row => row.path === 'apps/backend/scripts/demo/extra.mjs');
+    assert.deepEqual(demo.sinks, { 'mcp-http-transport': 1, 'net-connect': 1, spawn: 2 });
+    assert.ok(collectContractReferences(references, { httpContract: { routes: [] }, mcpContract: { tools: [{ descriptor: { name: 'searchPreferences' } }] } }).some(row => row.path === demo.path));
     const errors = validateOutboundSinkInventory(discovered, [], []);
+    assert.ok(errors.some(error => error.includes(`missing outbound sink inventory ${demo.path}`)));
+    assert.ok(errors.some(error => error.includes(`unclassified outbound sink ${demo.path}`)));
+    assert.ok(validateOutboundSinkInventory([demo], [{ ...demo, sinks: { ...demo.sinks, spawn: 1 } }], [{ sources: [{ path: demo.path }] }]).some(error => error.includes('counts changed')));
     assert.ok(errors.some(error => error.includes('missing outbound sink inventory apps/desktop/native/extra.mm')));
     assert.ok(errors.some(error => error.includes('unclassified outbound sink apps/desktop/src/extra.mjs')));
     assert.deepEqual(collectOutboundSinkInventory(new Map([["example.mjs", "object.connect(); fork();"]])), []);

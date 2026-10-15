@@ -1,0 +1,2190 @@
+{
+  "version": 1,
+  "description": "Resolved v2 installation parser cases shared by native and backend; downloader expectations are the narrower personal-ready/no-pending-operation subset. Parsing alone grants no authority.",
+  "cases": [
+    {
+      "name": "personal-ready",
+      "accepted": true,
+      "downloadAccepted": true,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "personal-ready-without-demo",
+      "accepted": true,
+      "downloadAccepted": true,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": null,
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "personal-initializing",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "initializing",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "personal-failed",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "failed",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-ready",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "demo",
+        "selectedStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "personal-restore-reserved",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-selected-personal-restore-reserved",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "demo",
+        "selectedStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "personal-restore-complete",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "complete"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-selected-personal-restore-complete",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "demo",
+        "selectedStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "complete"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "personal-restore-failed",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "failed"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-selected-personal-restore-failed",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "demo",
+        "selectedStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "failed"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "personal-demo-candidate-reserved",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "demo-reset-candidate-reserved",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "demo",
+        "selectedStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "demo",
+          "priorStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "personal-demo-candidate-failed",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "name": "demo-reset-candidate-failed",
+      "accepted": true,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "demo",
+        "selectedStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "demo",
+          "priorStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "name": "root-null",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": null
+    },
+    {
+      "name": "root-array",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": []
+    },
+    {
+      "name": "root-string",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": "metadata"
+    },
+    {
+      "name": "root-number",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": 2
+    },
+    {
+      "name": "root-boolean",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": false
+    },
+    {
+      "name": "missing-version",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "missing-installationId",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "missing-minimumEpoch",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "missing-personalStore",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "missing-demoStore",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "missing-mode",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "missing-selectedStore",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "missing-setup",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "missing-pendingRestore",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "missing-pendingDemo",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null
+      }
+    },
+    {
+      "name": "unknown-field",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null,
+        "extra": true
+      }
+    },
+    {
+      "name": "invalid-version-1",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 1,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-version-2",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 3,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-version-3",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": "2",
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-version-4",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": true,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-version-5",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2.5,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-minimumEpoch-1",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 1,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-minimumEpoch-2",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 3,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-minimumEpoch-3",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": "2",
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-minimumEpoch-4",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": true,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-minimumEpoch-5",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2.5,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-installationId-1",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": null,
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-installationId-2",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": 1,
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-installationId-3",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-installationId-4",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-installationId-5",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "../escape",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-personalStore-1",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": null,
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-personalStore-2",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": 1,
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-personalStore-3",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-demoStore-1",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": false,
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-demoStore-2",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": 1,
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-demoStore-3",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-demoStore-4",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-selectedStore-1",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": null,
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-selectedStore-2",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": 1,
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-selectedStore-3",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "dddddddddddddddddddddddddddddddd",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-selectedStore-4",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-mode-1",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "third",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-mode-2",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": null,
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-mode-3",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": true,
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-setup-1",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "unknown",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-setup-2",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": null,
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "invalid-setup-3",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": false,
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-mode-selects-personal",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "demo",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-mode-missing-demo-slot",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": null,
+        "mode": "demo",
+        "selectedStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-initializing-forbidden",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "demo",
+        "selectedStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "setup": "initializing",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-failed-forbidden",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "demo",
+        "selectedStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "setup": "failed",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "installation-id-trailing-LF",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc\n",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-id-trailing-LF",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-hash-trailing-LF",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "seed-hash-trailing-LF",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "installation-id-trailing-CR",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc\r",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-id-trailing-CR",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\r",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-hash-trailing-CR",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\r",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "seed-hash-trailing-CR",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\r",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "installation-id-trailing-CRLF",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc\r\n",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-id-trailing-CRLF",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\r\n",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-hash-trailing-CRLF",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\r\n",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "seed-hash-trailing-CRLF",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\r\n",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "installation-id-trailing-LS",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc ",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-id-trailing-LS",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb ",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-hash-trailing-LS",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "seed-hash-trailing-LS",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "installation-id-trailing-PS",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc ",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-id-trailing-PS",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb ",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-hash-trailing-PS",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "seed-hash-trailing-PS",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "installation-id-trailing-NUL",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc\u0000",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-id-trailing-NUL",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\u0000",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-hash-trailing-NUL",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\u0000",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "seed-hash-trailing-NUL",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\u0000",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "installation-id-leading-space",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": " cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "personal-id-leading-space",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": " aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": " aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-array",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": [],
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-boolean",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": false,
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-missing-status",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-unknown-field",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved",
+          "extra": true
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-personal-collision",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-demo-collision",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-bad-candidate",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "bad",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-bad-digest",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "bad",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-wrong-selection",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "status": "reserved"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "restore-unknown-status",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "active"
+        },
+        "pendingDemo": null
+      }
+    },
+    {
+      "name": "demo-operation-array",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": []
+      }
+    },
+    {
+      "name": "demo-operation-boolean",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": false
+      }
+    },
+    {
+      "name": "demo-operation-missing-status",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+        }
+      }
+    },
+    {
+      "name": "demo-operation-unknown-field",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved",
+          "extra": true
+        }
+      }
+    },
+    {
+      "name": "demo-operation-personal-collision",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "demo-operation-demo-collision",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "demo-operation-bad-candidate",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "bad",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "demo-operation-wrong-prior-mode",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "demo",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "demo-operation-wrong-prior-store",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "demo-operation-wrong-seed-version",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-future",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "demo-operation-bad-seed-hash",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "bad",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "demo-operation-unknown-status",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "complete"
+        }
+      }
+    },
+    {
+      "name": "demo-operation-before-ready",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "initializing",
+        "pendingRestore": null,
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved"
+        }
+      }
+    },
+    {
+      "name": "restore-and-demo-mutually-exclusive",
+      "accepted": false,
+      "downloadAccepted": false,
+      "value": {
+        "version": 2,
+        "installationId": "cccccccccccccccccccccccccccccccc",
+        "minimumEpoch": 2,
+        "personalStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "demoStore": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "mode": "personal",
+        "selectedStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "setup": "ready",
+        "pendingRestore": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "sourceDigest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "expectedSelection": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "reserved"
+        },
+        "pendingDemo": {
+          "storeId": "dddddddddddddddddddddddddddddddd",
+          "priorMode": "personal",
+          "priorStore": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "seedVersion": "historical-2024-2025-v1",
+          "seedSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "status": "reserved"
+        }
+      }
+    }
+  ]
+}

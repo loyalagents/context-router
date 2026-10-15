@@ -65,6 +65,7 @@ jobs:
       - name: Verify toolchain and seed offline Corepack runtime
         timeout-minutes: 5
         run: |
+          bash scripts/local-migration/ci-private-node.sh
           node scripts/check-toolchain.mjs
           corepack prepare pnpm@10.25.0 --activate
 
@@ -186,6 +187,7 @@ jobs:
       - name: Verify toolchain and seed offline Corepack runtime
         timeout-minutes: 5
         run: |
+          bash scripts/local-migration/ci-private-node.sh
           node scripts/check-toolchain.mjs
           corepack prepare pnpm@10.25.0 --activate
 

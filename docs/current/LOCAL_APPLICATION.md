@@ -14,7 +14,7 @@ MCP credentials and private inference credentials are distinct authorities.
 
 The dashboard and MCP use the same application services, SQLite store and one
 model admission owner. MCP is loopback Streamable HTTP at
-`http://127.0.0.1:8787/mcp`; the dashboard uses a current ephemeral loopback address.
+`http://127.0.0.1:8787/mcp` in personal mode and 8790 in demo by default; the dashboard uses a current ephemeral loopback address.
 GraphQL `/graphql` is exposed only through the selected UI/hosted compositions,
 not the MCP-only preview. Local mode has no Auth0 or hosted-model dependency and
 no silent cloud fallback. Hosted PostgreSQL/Auth0/Vertex composition remains
@@ -62,6 +62,28 @@ not a new command or a waiver of filesystem/process safety.
 - Manual developer compositions and matching-pair backup/restore remain
   documented in [identity](../useful/LOCAL_IDENTITY_ADMIN.md),
   [model](../useful/LOCAL_MODEL.md) and [UI](../useful/LOCAL_UI.md) runbooks.
+
+## Installed Historical Demo
+
+The CR menu enters/reopens a separate persistent demo store, returns to personal,
+and resets demo through a new store/identity. The sample has 189 active memories
+from 198 historical 2024–2025 records. Reopen preserves presenter edits and grants;
+reset restores original definitions/import history and fresh A/B/C credentials,
+retaining old stores and stable isolated provider profiles. Demo has no model
+startup/download. Existing personal assets remain retained.
+
+Demo uses the same dashboard and navigation as personal mode, with historical
+data and an authenticated demo banner. The optional five-step walkthrough is
+collapsed below the dashboard; normal profile, preferences, schema, permissions
+and history views remain available. The read-only
+**Demo setup…** panel supplies generation/endpoint-bound packaged Terminal commands:
+Codex A writes, Claude Code subscription B and Desktop C read with health/finance
+restrictions. Later grants are shown from actual state. External provider sessions
+are explicit user actions; the app does not supervise them. See the
+[installed helper workflow](../useful/INSTALLED_MAC_APP.md#historical-demo-mode).
+Manual source UI does not advertise native menu controls. New demo provider/human
+acceptance remains pending; older recorded client observations below do not
+qualify the new helper/artifact pair.
 
 ## Qualification And Known Limits
 

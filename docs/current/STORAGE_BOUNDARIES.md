@@ -69,3 +69,21 @@ The standalone `test:local-database` project runs real file-backed adapters, unc
 SQLite version-one schema and random target metadata are private adapter resources compiled into the production closure. The selected Node builtin adds no native addon dependency. Ordinary SQLite transactions make one yielded `BEGIN IMMEDIATE` attempt with zero busy wait; application retry policy stays unchanged. Full schema, safe roots, current file pins and target are validated on each new connection. See the administration runbook for intrinsic hot-journal/WAL-header admission effects and closed-copy backup rules.
 
 Step 04's extraction used the same PostgreSQL database/root on rollback. Step 05 adds a separate store: stop and reap local processes, preserve SQLite and identity files, and restore compatible code before reopening. Earlier PostgreSQL-only binaries cannot read local SQLite state; reference PostgreSQL state remains separately operable through its explicit command. There is no historical-data conversion, provider call or new listener. Windows and hardware power-loss qualification remain outside local macOS/Linux CI evidence.
+
+## Managed Personal And Demo Slots
+
+The installed envelope uses strict management metadata v2/security epoch 2 with
+exactly personal and demo slots. Quiescent v1 upgrade preserves the original
+personal store and identity/data bytes; old epoch binaries refuse the upgraded
+envelope. Demo initialization obtains a capability for one reserved fresh
+candidate, never personal authority. Publication waits for the finite importer,
+credential revocation, receipt and native child/lock settlement. Reopen verifies
+identity/receipt integrity without restoring baseline content or grants.
+
+Offline administration defaults to personal even when demo was last selected.
+Explicit demo maintenance supports MCP authority administration and baseline
+verification only. Personal backup/restore/recovery does not silently select or
+reset demo. No helper opens live SQLite to discover the current generation; it
+uses immutable connection receipts and native readiness. Retained candidate and
+prior generation files are never automatically reclaimed. See the
+[installed runbook](../useful/INSTALLED_MAC_APP.md#historical-demo-mode).

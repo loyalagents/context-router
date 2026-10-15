@@ -1818,7 +1818,10 @@ async function assembleAndSealStage({
     "node_modules",
     "package.json",
     "pnpm-lock.yaml",
+    "scripts",
   ]);
+  assert.deepEqual((await readdir(path.join(stageBackend, 'scripts'))).sort(), ['demo', 'mcp-bridge']);
+  for(const entry of ['demo/records.mjs','demo/mcp-import.mjs','demo/domain.mjs','demo/installed-clients.mjs','demo/installed-desktop.mjs','mcp-bridge/bridge.mjs'])assert.ok((await lstat(path.join(stageBackend,'scripts',entry))).isFile());
 
   // Custom Next servers are outside standalone tracing. Materialize a separate
   // production web workspace closure, then copy only the immutable build output.

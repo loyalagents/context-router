@@ -8,23 +8,36 @@
 #include <unistd.h>
 @interface CRMenu : NSObject <NSApplicationDelegate>
 - (instancetype)initWithBundle:(NSString *)bundle root:(NSString *)root;
+- (instancetype)initWithBundle:(NSString *)bundle root:(NSString *)root uiPort:(NSInteger)ui mcpPort:(NSInteger)mcp demoPort:(NSInteger)demo;
 @end
 @implementation CRMenu {
-  NSString *_bundle,*_root,*_generation,*_origin,*_unlockFile;
+  NSString *_bundle,*_root,*_generation,*_origin,*_unlockFile,*_mode,*_storeId,*_mcpOrigin;
+  NSInteger _uiPort,_mcpPort,_demoPort;BOOL _preparingDemo,_demoFailed,_demoUnavailable;
   NSStatusItem *_status;NSMenuItem *_label;NSMutableDictionary<NSString *,NSMenuItem *> *_items;
   NSTask *_guardian;NSPipe *_input,*_output;CRWriteQueue *_commands;CRFrames *_frames;NSTimer *_timer;
+  NSDictionary *_demoCopyBinding;NSArray<NSString *> *_demoCopyCommands,*_demoCopyNames;NSTextField *_demoCopyFeedback;
   BOOL _ready,_stopping,_quitting,_stopped,_broken,_download,_cancelPending,_sleepInvalidated,_openOnReady,_exitObserved;double _unlockUntil;
 }
 - (instancetype)initWithBundle:(NSString *)bundle root:(NSString *)root {
-  self=[super init];if(self){_bundle=bundle;_root=root;_items=[NSMutableDictionary dictionary];_openOnReady=YES;}return self;
+  return [self initWithBundle:bundle root:root uiPort:0 mcpPort:8787 demoPort:8790];
+}
+- (instancetype)initWithBundle:(NSString *)bundle root:(NSString *)root uiPort:(NSInteger)ui mcpPort:(NSInteger)mcp demoPort:(NSInteger)demo {
+  self=[super init];if(self){_bundle=bundle;_root=root;_uiPort=ui;_mcpPort=mcp;_demoPort=demo;_mode=@"personal";_items=[NSMutableDictionary dictionary];_openOnReady=YES;}return self;
 }
 - (void)add:(NSString *)title action:(SEL)action key:(NSString *)key menu:(NSMenu *)menu {
   NSMenuItem *item=[[NSMenuItem alloc] initWithTitle:title action:action keyEquivalent:@""];item.target=self;[menu addItem:item];_items[key]=item;
 }
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
-  (void)notification;_status=[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];_status.button.title=@"CR";_status.button.toolTip=@"Context Router private Mac pilot";
+  (void)notification;_status=[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];_status.button.title=@"CR";_status.button.toolTip=@"Context Router";_status.button.accessibilityLabel=@"Context Router";
   NSMenu *menu=[NSMenu new];menu.autoenablesItems=NO;_label=[[NSMenuItem alloc] initWithTitle:@"Starting local runtime…" action:nil keyEquivalent:@""];_label.enabled=NO;[menu addItem:_label];[menu addItem:[NSMenuItem separatorItem]];
   [self add:@"Open dashboard" action:@selector(openDashboard:) key:@"open" menu:menu];[self add:@"New unlock code…" action:@selector(newUnlock:) key:@"unlock" menu:menu];[self add:@"Copy unlock code" action:@selector(copyUnlock:) key:@"copy" menu:menu];[menu addItem:[NSMenuItem separatorItem]];
+  [self add:@"Enter demo mode…" action:@selector(enterDemo:) key:@"enter-demo" menu:menu];
+  [self add:@"Return to personal mode…" action:@selector(leaveDemo:) key:@"leave-demo" menu:menu];
+  [self add:@"Reset sample data…" action:@selector(resetDemo:) key:@"reset-demo" menu:menu];
+  [self add:@"Demo setup…" action:@selector(demoSetup:) key:@"setup-demo" menu:menu];
+  [self add:@"Cancel demo preparation" action:@selector(cancelDemo:) key:@"cancel-demo" menu:menu];
+  [self add:@"Return to previous mode" action:@selector(returnPrevious:) key:@"return-previous" menu:menu];
+  [self add:@"Retry demo preparation…" action:@selector(retryDemo:) key:@"retry-demo" menu:menu];[menu addItem:[NSMenuItem separatorItem]];
   [self add:@"Download Qwen3.5 9B model…" action:@selector(downloadModel:) key:@"download" menu:menu];[self add:@"Cancel download" action:@selector(cancelDownload:) key:@"cancel" menu:menu];[menu addItem:[NSMenuItem separatorItem]];
   [self add:@"Restart local runtime…" action:@selector(restart:) key:@"restart" menu:menu];[self add:@"Quit Context Router" action:@selector(quit:) key:@"quit" menu:menu];_status.menu=menu;
   NSNotificationCenter *center=NSWorkspace.sharedWorkspace.notificationCenter;
@@ -32,7 +45,7 @@
   @try {
     _input=[NSPipe pipe];_output=[NSPipe pipe];_frames=[CRFrames new];_guardian=[NSTask new];
     _guardian.executableURL=[NSURL fileURLWithPath:[_bundle stringByAppendingPathComponent:@"Contents/MacOS/context-router"]];
-    _guardian.arguments=@[@"guardian",@"--root",_root,@"--ui-port",@"0",@"--mcp-port",@"8787"];_guardian.environment=@{};_guardian.currentDirectoryURL=[NSURL fileURLWithPath:_bundle];
+    _guardian.arguments=@[@"guardian",@"--root",_root,@"--ui-port",[@(_uiPort) stringValue],@"--mcp-port",[@(_mcpPort) stringValue],@"--demo-mcp-port",[@(_demoPort) stringValue]];_guardian.environment=@{};_guardian.currentDirectoryURL=[NSURL fileURLWithPath:_bundle];
     _guardian.standardInput=_input;_guardian.standardOutput=_output;_guardian.standardError=[NSFileHandle fileHandleWithNullDevice];
     __weak CRMenu *weakSelf=self;_guardian.terminationHandler=^(NSTask *task){(void)task;dispatch_async(dispatch_get_main_queue(),^{[weakSelf tick:nil];});};
     NSError *error=nil;if(![_guardian launchAndReturnError:&error])CRFail();
@@ -48,7 +61,16 @@
   BOOL active=_ready&&!_stopping&&!_broken&&_guardian.running;
   for(NSString *key in @[@"open",@"unlock",@"restart"])_items[key].enabled=active;
   _items[@"copy"].enabled=active&&_unlockFile&&CRExpiryNow()<_unlockUntil;
-  _items[@"download"].enabled=active&&!_download;_items[@"cancel"].enabled=active&&_download&&!_cancelPending;_items[@"quit"].enabled=!_quitting;
+  BOOL demo=[_mode isEqual:@"demo"];
+  // Keep the status item's contents compact while macOS allocates menu-bar space.
+  _status.button.title=@"CR";
+  NSString *description=!_storeId?@"Context Router":demo?@"Context Router — Demo mode · historical sample":@"Context Router — Personal mode";
+  _status.button.toolTip=description;_status.button.accessibilityLabel=description;
+  _items[@"enter-demo"].enabled=active&&!demo;_items[@"leave-demo"].enabled=demo&&(_ready||_demoUnavailable)&&!_stopping&&!_broken&&_guardian.running;
+  _items[@"reset-demo"].enabled=active&&demo;_items[@"setup-demo"].enabled=active&&demo;
+  _items[@"cancel-demo"].enabled=_preparingDemo&&!_demoFailed&&!_stopping&&!_broken;
+  for(NSString *key in @[@"return-previous",@"retry-demo"])_items[key].enabled=_demoFailed&&!_stopping&&!_broken;
+  _items[@"download"].enabled=active&&!demo&&!_download;_items[@"cancel"].enabled=active&&_download&&!_cancelPending;_items[@"quit"].enabled=!_quitting;
 }
 - (void)breakControl {
   _broken=YES;_ready=NO;_label.title=@"Runtime unavailable — state retained";
@@ -71,14 +93,20 @@
 - (void)record:(NSDictionary *)record {
   if(!CRInteger(record[@"version"],1,1)||!CRPattern(record[@"generation"],@"[a-f0-9]{32}"))CRFail();NSString *type=record[@"type"];
   if([type isEqual:@"starting"]){
-    if(!CRExact(record,@[@"version",@"generation",@"type",@"phase"])||![record[@"phase"] isEqual:@"preparing"]||(_generation&&!_stopped))CRFail();
-    _generation=record[@"generation"];_ready=NO;_stopped=NO;_stopping=NO;_download=NO;_cancelPending=NO;_origin=nil;_unlockFile=nil;_label.title=@"Starting local runtime…";return;
+    if(!CRExact(record,@[@"version",@"generation",@"type",@"phase"])||![@[@"preparing",@"preparing-demo",@"demo-unavailable"] containsObject:record[@"phase"]]||(_generation&&!_stopped))CRFail();
+    _demoUnavailable=[record[@"phase"] isEqual:@"demo-unavailable"];_preparingDemo=[record[@"phase"] isEqual:@"preparing-demo"];_demoFailed=NO;_generation=record[@"generation"];_ready=NO;_stopped=NO;_stopping=NO;_download=NO;_cancelPending=NO;_origin=nil;_unlockFile=nil;_label.title=_demoUnavailable?@"Demo unavailable — return to personal mode or quit":_preparingDemo?@"Preparing historical sample data…":@"Starting local runtime…";return;
   }
   if(!_generation||![record[@"generation"] isEqual:_generation]||_stopped)CRFail();
-  if([type isEqual:@"ready"]){
+  if([type isEqual:@"mode"]){
+    if(!CRExact(record,@[@"version",@"generation",@"type",@"mode",@"storeId"])||![@[@"personal",@"demo"] containsObject:record[@"mode"]]||!CRPattern(record[@"storeId"],@"[a-f0-9]{32}"))CRFail();_mode=record[@"mode"];_storeId=record[@"storeId"];
+  }else if([type isEqual:@"demo-failed"]){
+    if(!_preparingDemo||!CRExact(record,@[@"version",@"generation",@"type"]))CRFail();_demoFailed=YES;_stopping=NO;_label.title=@"Demo preparation stopped — candidate retained";
+  }else if([type isEqual:@"transition-refused"]){
+    if((!_ready&&!_demoUnavailable)||!CRExact(record,@[@"version",@"generation",@"type"]))CRFail();_stopping=NO;_label.title=@"Mode change unavailable — destination port is occupied";
+  }else if([type isEqual:@"ready"]){
     if(_ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"mcpOrigin",@"unlockFile",@"modelEnabled"])||CFGetTypeID((__bridge CFTypeRef)record[@"modelEnabled"])!=CFBooleanGetTypeID()||!CRPattern(record[@"mcpOrigin"],@"http://127\\.0\\.0\\.1:[1-9][0-9]{0,4}/mcp")||[NSURL URLWithString:record[@"mcpOrigin"]].port.integerValue>65535)CRFail();
-    [self origin:record[@"origin"]];[self unlock:record[@"unlockFile"]];_ready=YES;
-    if(!_stopping&&!_quitting){_label.title=[record[@"modelEnabled"] boolValue]?@"Dashboard ready · AI loading":@"Dashboard ready · model not installed";if(_sleepInvalidated)[self send:@"model-unavailable"];}
+    [self origin:record[@"origin"]];[self unlock:record[@"unlockFile"]];_mcpOrigin=record[@"mcpOrigin"];_ready=YES;
+    if(!_stopping&&!_quitting){_label.title=[_mode isEqual:@"demo"]?@"Demo ready · historical sample 2024–2025":[record[@"modelEnabled"] boolValue]?@"Dashboard ready · AI loading":@"Dashboard ready · model not installed";if(_sleepInvalidated)[self send:@"model-unavailable"];}
     if(_quitting){_stopping=YES;[self send:@"quit"];}
     else if(!_stopping&&!_broken&&_openOnReady){_openOnReady=NO;[self openDashboard:nil];}
   }else if([type isEqual:@"unlock"]){
@@ -127,13 +155,71 @@
   (void)sender;NSAlert *alert=[NSAlert new];alert.messageText=@"Restart local runtime?";alert.informativeText=@"This signs out browser sessions, interrupts MCP connections, drains current work, and starts a fresh local AI session. The current dashboard will open when ready; unlock there with a new code. Older tabs may have an obsolete address. Data, identity, client credentials and installed model assets are preserved.";[alert addButtonWithTitle:@"Restart"];[alert addButtonWithTitle:@"Cancel"];
   if([alert runModal]==NSAlertFirstButtonReturn&&_ready&&!_stopping)[self beginRestart];[self update];
 }
+- (void)changeMode:(NSString *)command title:(NSString *)title detail:(NSString *)detail {
+  NSAlert *alert=[NSAlert new];alert.messageText=title;alert.informativeText=detail;[alert addButtonWithTitle:@"Continue"];[alert addButtonWithTitle:@"Cancel"];
+  if([alert runModal]==NSAlertFirstButtonReturn&&(_ready||(_demoUnavailable&&[command isEqual:@"leave-demo"]))&&!_stopping&&!_broken){_stopping=YES;_openOnReady=YES;_label.title=@"Stopping local runtime…";[self send:command];}[self update];
+}
+- (void)enterDemo:(id)sender {(void)sender;[self changeMode:@"enter-demo" title:@"Enter demo mode?" detail:@"This closes current browser sessions and MCP connections. Personal data and model assets stay retained. Demo uses a separate persistent historical sample store with AI disabled. Start fresh client conversations after switching."];}
+- (void)leaveDemo:(id)sender {(void)sender;[self changeMode:@"leave-demo" title:@"Return to personal mode?" detail:@"This closes demo browser sessions and MCP connections and returns to your personal store. Demo edits and client profiles stay retained. Start fresh client conversations after switching."];}
+- (void)resetDemo:(id)sender {(void)sender;[self changeMode:@"reset-demo" title:@"Reset sample data?" detail:@"This creates a fresh demo store and identity with the original 189 active historical memories, definitions, import history and client tokens. Later demo edits, custom clients and grant changes do not carry forward. The old demo store, exports and login profiles stay retained. Existing connections and Desktop proposals become stale; reconnect with the new setup commands and start fresh conversations."];}
+- (void)cancelDemo:(id)sender {(void)sender;_stopping=YES;[self send:@"cancel-demo"];[self update];}
+- (void)returnPrevious:(id)sender {(void)sender;if(_demoFailed){_stopping=YES;_openOnReady=YES;[self send:@"return-previous"];}[self update];}
+- (void)retryDemo:(id)sender {(void)sender;if(_demoFailed){NSAlert *a=[NSAlert new];a.messageText=@"Prepare a fresh demo candidate?";a.informativeText=@"The failed candidate remains retained. This starts a new sample import with fresh identity and credentials.";[a addButtonWithTitle:@"Retry"];[a addButtonWithTitle:@"Cancel"];if([a runModal]==NSAlertFirstButtonReturn){_stopping=YES;[self send:@"retry-demo"];}}[self update];}
+- (NSArray<NSString *> *)demoSetupCommands {
+  NSString *(^quote)(NSString *)=^NSString *(NSString *v){return [NSString stringWithFormat:@"'%@'",[v stringByReplacingOccurrencesOfString:@"'" withString:@"'\"'\"'"]];};
+  NSString *base=[NSString stringWithFormat:@"%@ demo --root %@ --store %@ --generation %@ --endpoint %@",quote([_bundle stringByAppendingPathComponent:@"Contents/MacOS/context-router"]),quote(_root),quote(_storeId),quote(_generation),quote(_mcpOrigin)];
+  NSMutableArray *commands=[NSMutableArray array];
+  for(NSString *action in @[@"login A",@"launch A",@"login B --client claude --auth subscription",@"launch B --client claude --auth subscription",@"desktop prepare",@"status"])[commands addObject:[NSString stringWithFormat:@"%@ %@",base,action]];
+  return commands;
+}
+- (NSDictionary *)demoSetupContext {
+  if(!_ready||_stopped||_stopping||_broken||_quitting||!_guardian.running||![_mode isEqual:@"demo"]||!_root||!_storeId||!_generation||!_mcpOrigin)return nil;
+  return @{@"root":_root,@"store":_storeId,@"generation":_generation,@"endpoint":_mcpOrigin};
+}
+- (NSPasteboard *)demoSetupPasteboard {return NSPasteboard.generalPasteboard;}
+- (void)copyDemoCommand:(NSButton *)sender {
+  NSDictionary *current=[self demoSetupContext];
+  if(!current||![_demoCopyBinding isEqualToDictionary:current]){_demoCopyFeedback.stringValue=@"Nothing copied. Reopen Demo setup for current commands.";return;}
+  NSInteger index=sender.tag;if(index<0||index>=(NSInteger)_demoCopyCommands.count)return;
+  BOOL copied=NO;@try{NSPasteboard *pasteboard=[self demoSetupPasteboard];copied=[pasteboard clearContents]>=0&&[pasteboard setString:_demoCopyCommands[index] forType:NSPasteboardTypeString];}@catch(NSException *error){(void)error;}
+  _demoCopyFeedback.stringValue=copied?[NSString stringWithFormat:@"Copied %@. Paste it into Terminal.",_demoCopyNames[index]]:@"Could not copy. Try the Copy button again.";
+}
+- (NSAlert *)demoSetupAlert {
+  _demoCopyBinding=[self demoSetupContext];if(!_demoCopyBinding)return nil;
+  _demoCopyCommands=[self demoSetupCommands];_demoCopyNames=@[@"Codex A sign-in",@"Codex A launch",@"Claude Code B sign-in",@"Claude Code B launch",@"Claude Desktop C setup",@"Demo status"];
+  NSAlert *alert=[NSAlert new];alert.messageText=@"Demo setup";alert.informativeText=@"Copy one command, then paste it into Terminal. Start a fresh conversation after connecting.";
+  NSView *view=[[NSView alloc] initWithFrame:NSMakeRect(0,0,600,454)];
+  NSTextField *(^label)(NSView *,NSString *,NSRect)=^NSTextField *(NSView *parent,NSString *text,NSRect frame){NSTextField *field=[NSTextField labelWithString:text];field.frame=frame;field.font=[NSFont systemFontOfSize:12];field.lineBreakMode=NSLineBreakByWordWrapping;field.selectable=YES;[parent addSubview:field];return field;};
+  NSView *(^group)(NSString *,NSRect)=^NSView *(NSString *title,NSRect frame){NSBox *box=[[NSBox alloc] initWithFrame:frame];box.title=title;box.titleFont=[NSFont boldSystemFontOfSize:13];[view addSubview:box];return box.contentView;};
+  NSArray *ids=@[@"demo-copy-login-a",@"demo-copy-launch-a",@"demo-copy-login-b",@"demo-copy-launch-b",@"demo-copy-desktop",@"demo-copy-status"];
+  void (^button)(NSView *,NSString *,NSInteger,NSRect)=^(NSView *parent,NSString *title,NSInteger index,NSRect frame){NSButton *copy=[NSButton buttonWithTitle:title target:self action:@selector(copyDemoCommand:)];copy.frame=frame;copy.tag=index;copy.identifier=ids[index];copy.accessibilityLabel=[@"Copy " stringByAppendingString:self->_demoCopyNames[index]];copy.toolTip=self->_demoCopyCommands[index];[parent addSubview:copy];};
+  NSView *a=group(@"Codex · Agent A",NSMakeRect(0,348,600,100));
+  label(a,@"Writer · approve each intended change",NSMakeRect(8,43,560,20));button(a,@"Copy sign-in",0,NSMakeRect(4,4,155,32));button(a,@"Copy launch",1,NSMakeRect(170,4,155,32));
+  NSView *b=group(@"Claude Code · Agent B",NSMakeRect(0,238,600,100));
+  label(b,@"Subscription reader · health and finance excluded",NSMakeRect(8,43,560,20));button(b,@"Copy sign-in",2,NSMakeRect(4,4,155,32));button(b,@"Copy launch",3,NSMakeRect(170,4,155,32));
+  NSView *c=group(@"Claude Desktop · Agent C",NSMakeRect(0,94,600,134));
+  label(c,@"Reader · health and finance excluded",NSMakeRect(8,77,560,20));
+  label(c,@"1. Run setup in Terminal.  2. Review its proposal.\n3. Close Desktop, then run the printed apply command.",NSMakeRect(8,38,560,36));button(c,@"Copy setup command",4,NSMakeRect(4,2,200,32));
+  button(view,@"Copy status",5,NSMakeRect(0,52,140,28));
+  label(view,@"Checks whether demo mode is running.",NSMakeRect(152,56,445,20));
+  NSTextField *endpoint=label(view,[NSString stringWithFormat:@"Endpoint: %@ · historical sample 2024–2025",_mcpOrigin],NSMakeRect(0,29,600,18));endpoint.font=[NSFont systemFontOfSize:11];endpoint.textColor=NSColor.secondaryLabelColor;
+  endpoint.toolTip=[NSString stringWithFormat:@"Store: %@\nRuntime: %@",_storeId,_generation];
+  _demoCopyFeedback=label(view,@"Choose a Copy button, then paste into Terminal.",NSMakeRect(0,0,600,22));_demoCopyFeedback.identifier=@"demo-copy-feedback";
+  alert.accessoryView=view;[alert addButtonWithTitle:@"Done"];return alert;
+}
+- (void)demoSetup:(id)sender {
+  (void)sender;NSAlert *alert=[self demoSetupAlert];if(!alert)return;
+  @try{[alert runModal];}@finally{
+    _demoCopyBinding=nil;_demoCopyCommands=nil;_demoCopyNames=nil;_demoCopyFeedback=nil;
+  }
+}
 - (void)sleepWake:(NSNotification *)notification {(void)notification;_sleepInvalidated=YES;if(_ready&&!_stopping){[self send:@"model-unavailable"];_label.title=@"Dashboard ready · restart required after sleep";}}
 - (void)quit:(id)sender {(void)sender;[NSApp terminate:nil];}
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)application {
   (void)application;if(!_guardian.running)return NSTerminateNow;_quitting=YES;_stopping=YES;_label.title=@"Stopping local runtime…";if(_generation)[self send:@"quit"];else @try{[_input.fileHandleForWriting closeFile];}@catch(NSException *e){(void)e;}[self update];return NSTerminateLater;
 }
 @end
-int CRRunMenu(NSString *bundle,NSString *root){
+int CRRunMenu(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger mcpPort,NSInteger demoMcpPort){
   signal(SIGPIPE,SIG_IGN);NSApplication *app=[NSApplication sharedApplication];[app setActivationPolicy:NSApplicationActivationPolicyAccessory];
-  __attribute__((objc_precise_lifetime)) CRMenu *delegate=[[CRMenu alloc] initWithBundle:bundle root:root?:CRDefaultRoot(YES)];app.delegate=delegate;[app run];return 0;
+  __attribute__((objc_precise_lifetime)) CRMenu *delegate=[[CRMenu alloc] initWithBundle:bundle root:root?:CRDefaultRoot(YES) uiPort:uiPort mcpPort:mcpPort demoPort:demoMcpPort];app.delegate=delegate;[app run];return 0;
 }
