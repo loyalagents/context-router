@@ -8,12 +8,16 @@ Use the [current application](../current/LOCAL_APPLICATION.md) and
 [scoped closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md), not the old numbered
 steps, to understand the starting point. Historical plans remain in Git.
 
-The user-approved [in-app demo mode](active/in-app-demo-mode/plan.md) is active on
-`codex/in-app-demo-mode`, based on `17c82b3095e04b888b2b80439631a23bf133b5c4`.
-`/root/implementation` is the sole writer; the coordinator/reviewers are read-only.
-This cohesive PR implements native demo lifecycle plus packaged A/B/C helpers.
-Native assistant buttons/settings/proposal screens are tracked in that plan for
-the next PR. Targeted checks do not replace final qualification or human acceptance.
+The [in-app demo mode](active/in-app-demo-mode/plan.md) shipped in merged
+[PR #183](https://github.com/loyalagents/context-router/pull/183), verified at
+`3bc606ffb9d90ab364d26f6bea5977be30f31b13`. The user activated
+[native demo assistant setup](active/native-demo-assistant-setup/plan.md) on
+`codex/demo-assistant-setup` from that base. `/root/implementation` is the sole
+writer; coordinator/planner/reviewers are read-only. Scope is native Sign in/Open,
+remembered trusted executables and Desktop proposal review/apply. Deeper assistant
+supervision, retained-guard recovery and model reuse remain separate unactivated
+follow-ups. The agreed milestone is an automated trial and draft PR;
+hands-on acceptance is explicitly scheduled later and remains required before merge.
 
 ## Three Lanes
 

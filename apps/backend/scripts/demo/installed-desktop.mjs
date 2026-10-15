@@ -13,7 +13,11 @@ const names=['demo/desktop-bridge.mjs','demo/active.mjs','demo/files.mjs','mcp-b
 import { parsedConfig as parsed, sameConfigBytes as same } from './desktop-config.mjs';
 const defaultConfig=()=>path.join(os.userInfo().homedir,'Library/Application Support/Claude/claude_desktop_config.json');
 async function context(spec,config,options){
-  await trustedDirectory(spec.root);await trustedDirectory(path.dirname(config),false);
+  await trustedDirectory(spec.root);
+  try{await trustedDirectory(path.dirname(config),false);}catch(e){
+    if(e.code==='ENOENT')throw safeError('Desktop configuration directory is missing. Install or open Claude Desktop once, then prepare again.');
+    throw safeError('Desktop configuration directory must have canonical trusted ownership and permissions. No permissions were changed.');
+  }
   if(!path.isAbsolute(config)||path.resolve(config)!==config||/[\x00-\x1f\x7f]/.test(config))throw safeError('Config must be canonical.');
   if(options.fixtureRoot!==undefined){
     await trustedDirectory(options.fixtureRoot);
@@ -28,7 +32,11 @@ async function sources(){
   files.push({name:'node',bytes:await trustedBytes(await fs.realpath(process.execPath))});
   return files;
 }
-async function configBytes(file){if(!await exists(file))return null;const bytes=await privateBytes(file);if(bytes.length>2*1024*1024)throw safeError('Desktop config exceeds bound.');return bytes;}
+async function configBytes(file){
+ if(!await exists(file))return null;let bytes;
+ try{bytes=await privateBytes(file);}catch{throw safeError('Desktop config must be a canonical, current-user-owned regular file with one link and private mode 0600. Inspect its ownership and permissions; no permissions were changed.');}
+ if(bytes.length>2*1024*1024)throw safeError('Desktop config exceeds bound.');return bytes;
+}
 
 function entryFor(directory,spec,binding){return{command:path.join(directory,'snapshot/node'),args:['--no-global-search-paths',path.join(directory,'snapshot/demo/desktop-bridge.mjs'),'--root',spec.root,'--installation-id',binding.installationId,'--store',spec.store,'--endpoint',spec.endpoint,'--client-id',binding.clientId,'--credential-file',path.join(spec.root,'demo',spec.store,'exports/agent-c.token'),'--credential-sha256',binding.credentialSha256],env:{NODE_OPTIONS:'',NODE_DEBUG:'',NODE_DEBUG_NATIVE:''}};}
 async function generation(spec,installationId){
@@ -58,8 +66,10 @@ export async function prepareInstalledDesktop(input,options={}){
   for(const file of files)await writeSynced(path.join(snapshot,file.name),file.bytes,file.name==='node'?0o500:0o400);
   for(const name of ['demo','mcp-bridge'])await syncDirectory(path.join(snapshot,name));await syncDirectory(snapshot);await syncDirectory(directory);await syncDirectory(base);
   const entry=entryFor(directory,spec,binding),proposal=path.join(directory,'proposal.json');
-  await writeSyncedJson(proposal,{version:1,id,installationId:active.installationId,spec,config,entryName,entry,files:files.map(({name,bytes})=>({name,sha256:hash(bytes)})),original:original?.toString('base64')??null});
-  guard.settled();return{status:'proposed',proposal,entryName,config,store:spec.store,generation:spec.generation,endpoint:spec.endpoint,snapshot,next:'Close Desktop and config editors. Review this proposal, then explicitly apply with --desktop-closed. No config has changed.'};
+  const proposalBytes=Buffer.from(JSON.stringify({version:1,id,installationId:active.installationId,spec,config,entryName,entry,files:files.map(({name,bytes})=>({name,sha256:hash(bytes)})),original:original?.toString('base64')??null},null,2)+'\n');
+  await writeSynced(proposal,proposalBytes);
+  const review={operation:Object.hasOwn(value.mcpServers??{},entryName)?'replace':'create',config,entryName,entry,backup:original===null?'No existing configuration; no backup is needed.':'Exact original configuration will be saved privately before replacement.'};
+  guard.settled();return{status:'proposed',proposal,proposalSha256:hash(proposalBytes),review,entryName,config,store:spec.store,generation:spec.generation,endpoint:spec.endpoint,snapshot,next:'Close Desktop and config editors. Review this proposal, then explicitly apply with --desktop-closed. No config has changed.'};
  });
 }
 export async function applyInstalledDesktop(input,options={}){
@@ -68,7 +78,9 @@ export async function applyInstalledDesktop(input,options={}){
  if(typeof proposal!=='string'||path.basename(proposal)!=='proposal.json'||path.dirname(path.dirname(proposal))!==path.join(spec.root,'demo/desktop')||!/^[a-f0-9]{32}$/.test(path.basename(path.dirname(proposal))))throw safeError('Proposal must be inside this demo installation.');
  await trustedDirectory(path.dirname(proposal));
  return withClientGuard(spec.root,'desktop',async guard=>{
-  const p=await privateJson(proposal),directory=path.dirname(proposal);
+  const proposalBytes=await privateBytes(proposal),proposalSha256=hash(proposalBytes),directory=path.dirname(proposal);
+  if(input.proposalSha256!==undefined&&(!/^[a-f0-9]{64}$/.test(input.proposalSha256)||input.proposalSha256!==proposalSha256))throw safeError('The reviewed proposal changed. Prepare and review a new proposal; no config has changed.');
+  const p=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(proposalBytes));
   if(Object.keys(p).sort().join()!=='config,entry,entryName,files,id,installationId,original,spec,version'||p.version!==1||p.id!==path.basename(directory)||!isDeepStrictEqual(p.spec,spec)||await exists(path.join(directory,'applied.json')))throw safeError('Invalid or already applied proposal.');
   const active=await context(spec,p.config,options),binding=await generation(spec,active.installationId);
   if(p.installationId!==active.installationId||p.entryName!==`context-router-demo-${active.installationId}`)throw safeError('Proposal identity mismatch.');
@@ -88,7 +100,7 @@ export async function applyInstalledDesktop(input,options={}){
   await context(spec,p.config,options);if(!same(await configBytes(p.config),prior))throw safeError('Config changed immediately before replacement.');await guard.checkpoint();
   await fs.rename(temporary,p.config);await syncDirectory(path.dirname(p.config));await options.checkpoint?.('after-rename');
   if(!same(await configBytes(p.config),replacement))throw safeError('Desktop config readback mismatch; inspect retained evidence, do not replay.');
-  const installed={installationId:active.installationId,entryName:p.entryName,entry:p.entry,proposalSha256:hash(await privateBytes(proposal))};
+  const installed={installationId:active.installationId,entryName:p.entryName,entry:p.entry,proposalSha256};
   await writeSyncedJson(path.join(directory,'applied.json'),installed);
   const stage=path.join(spec.root,'demo/desktop',`installed-${p.id}.json`);await writeSyncedJson(stage,installed);await fs.rename(stage,path.join(spec.root,'demo/desktop/installed.json'));await syncDirectory(path.dirname(stage));
   guard.settled();return{status:'applied',config:p.config,backup,entryName:p.entryName,store:spec.store,generation:spec.generation,next:'Restart Desktop normally. Human provider acceptance remains pending.'};

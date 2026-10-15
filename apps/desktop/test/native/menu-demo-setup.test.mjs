@@ -13,7 +13,7 @@ test('Demo setup buttons copy exact bound commands without selection, remain ope
     const built = spawnSync('/usr/bin/clang', [
       '-Wall', '-Wextra', '-Werror', '-fobjc-arc', '-framework', 'Foundation', '-framework', 'Security', '-framework', 'AppKit',
       '-I', native, path.resolve(import.meta.dirname, '../fixtures/menu-demo-setup.m'),
-      ...['process', 'package', 'envelope', 'maintenance', 'model-cleanup'].map(name => path.join(native, `${name}.m`)), '-o', driver,
+      ...['process', 'package', 'envelope', 'maintenance', 'model-cleanup','demo-operation'].map(name => path.join(native, `${name}.m`)), '-o', driver,
     ], { encoding: 'utf8', timeout: 20000 });
     assert.equal(built.status, 0, built.stderr);
     const result = spawnSync(driver, [root, image], { env: {}, encoding: 'utf8', timeout: 15000 });

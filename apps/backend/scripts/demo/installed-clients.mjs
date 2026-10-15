@@ -60,11 +60,9 @@ export async function qualifiedExecutable(command,searchPath=process.env.PATH??'
   }
   throw safeError(`Install the qualified native ${command} CLI and place it on PATH.`);
 }
-export async function launchInstalledClient(spec,{role,command='codex',login=false,executable:explicit,auth=command==='claude'?'subscription':undefined}){
-  if(!['a','b'].includes(role))throw safeError('Choose Agent A or B.');
-  return withClientGuard(spec.root,role,async guard=>{
-    process.stdout.write('Checking the qualified client and isolated preflight settings…\n');
-    const receipt=await activeDemo(spec),executable=await qualifiedExecutable(command,process.env.PATH,explicit);
+export async function inspectInstalledClient(spec,{command='codex',role=command==='codex'?'a':'b',executable:explicit,auth=command==='claude'?'subscription':undefined}={}){
+    await activeDemo(spec);
+    const executable=await qualifiedExecutable(command,process.env.PATH,explicit);
     // Version/help/config probes use an empty disposable identity, never the
     // persisted demo login or MCP export, and cannot start a model session.
     const probe=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'cr-installed-preflight-')));
@@ -73,11 +71,18 @@ export async function launchInstalledClient(spec,{role,command='codex',login=fal
       for(const value of new Set([probeSpec.cwd,probeSpec.env.TMPDIR,probeSpec.env.CODEX_HOME,probeSpec.env.CLAUDE_CONFIG_DIR].filter(Boolean)))await fs.mkdir(value,{mode:0o700});
       preflightClient(probeSpec);
     }finally{await fs.rm(probe,{recursive:true,force:true});}
+    if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed during preflight.');
+    await activeDemo(spec);
+    return {...executable,version:command==='codex'?'0.160.0':'2.1.299'};
+}
+export async function launchInstalledClient(spec,{role,command='codex',login=false,executable:explicit,auth=command==='claude'?'subscription':undefined}){
+  if(!['a','b'].includes(role))throw safeError('Choose Agent A or B.');
+  return withClientGuard(spec.root,role,async guard=>{
+    process.stdout.write('Checking the qualified client and isolated preflight settings…\n');
+    const receipt=await activeDemo(spec),executable=await inspectInstalledClient(spec,{command,role,executable:explicit,auth});
     // spawnSync probes block signal callbacks. Yield explicitly before any
     // persistent profile work, even if every probe happened to succeed.
     await guard.checkpoint();
-    if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed during preflight.');
-    await activeDemo(spec);
     const profile=await profileFor(spec.root,receipt.installationId,role,guard);
     let launch=clientLaunchSpec({command,root:path.join(spec.root,'demo',spec.store),profileRoot:profile,mcpPort:Number(new URL(spec.endpoint).port),dataset:'demo001',agent:role,auth},{executable:executable.path});
     for(const value of new Set([launch.cwd,launch.env.TMPDIR,launch.env.CODEX_HOME,launch.env.CLAUDE_CONFIG_DIR].filter(Boolean)))await privatePath(value,true);

@@ -102,13 +102,29 @@ operations, malformed installation metadata and unacknowledged partial startup
 remain refused and retained. Do not clear journals or profile guards.
 
 **Demo setup…** groups **Codex · Agent A**, **Claude Code · Agent B** and
-**Claude Desktop · Agent C** separately. Use a group's **Copy sign-in** or
-**Copy launch** button, or Desktop's **Copy setup command**, then paste the command into
-Terminal. No text selection is needed. Copy reports success/failure and keeps the
-panel open; only **Done** closes it. Buttons only copy, never run commands.
-Each command retains the store, native runtime generation and endpoint captured
-when the panel opened. If the runtime stops or changes, copying refuses before
-touching the clipboard; reopen **Demo setup…** for current commands.
+**Claude Desktop · Agent C**. A/B offer **Sign in**, **Open** and **Choose
+executable…**. Sign in/Open asks for explicit provider consent, revalidates the
+qualified native CLI and opens a fresh Terminal document. Continue in Terminal;
+opening it does not confirm login or an assistant connection. Start a fresh
+conversation and check the assistant's own MCP status. The picker remembers only
+the qualified canonical path/hash/version for this installation and vendor; it
+is checked again on every action. It never adopts personal login or MCP settings.
+
+**Copy sign-in**, **Copy launch**, Desktop's **Copy setup command** and **Copy
+status** remain secondary Terminal fallbacks. Copy reports success/failure and
+keeps the panel open. Every action binds the root, store, runtime generation and
+endpoint captured by the panel. Changed/stopped context refuses; reopen the panel
+for current actions. While an inspect/prepare/apply helper is outstanding, native
+mode/reset/restart actions are disabled and refused. **Done** can close the panel;
+the menu still owns that finite operation. Quit first settles its exact owned
+helper group before stopping the guardian. Timeout/output loss can leave uncertain
+state: retain guards, proposal and backups; never replay an uncertain mutation.
+
+Terminal handoffs use unique private retained `demo/launch-requests/.../open.command`
+files. They contain quoted helper arguments and no credentials, use a clean
+Terminal environment, and are never overwritten, reused or automatically removed.
+They are diagnostic records, not proof of client lifetime. External assistants
+remain independent of the menu; the app does not close them on reset or Quit.
 Run each intended action separately. They use
 the bundled runtime and need no checkout, pnpm, handwritten MCP config or copied
 tokens. `status` validates native readiness and immutable receipts only; it does
@@ -138,12 +154,18 @@ requires the explicit `CR_DEMO_ANTHROPIC_API_KEY` environment variable; inherite
 ordinary provider variables are not adopted. Provider sessions may send retrieved
 sample context off-device. The user has confirmed live A/B connectivity and an
 approved Codex change → fresh Claude Code read → Audit History sequence; the
-artifact/version was not independently confirmed. Remaining human end-to-end
-acceptance, including permission denials, restart/reset and Desktop C, is pending.
+artifact/version was not independently confirmed for those earlier A/B reports.
+The user subsequently confirmed Desktop prepare/apply/connect/read, permission
+restrictions, Quit/reopen persistence, reset and return to personal mode for
+merged PR #183. New native setup controls need separate hands-on acceptance.
 
 Discovery accepts the exact qualified native arm64 foreground CLI, rejecting
-arbitrary shell/Node/npm wrappers. Use `--executable /absolute/native/client`
-when PATH resolves to an unsupported wrapper. The helper qualifies pinned
+arbitrary shell/Node/npm wrappers. Use **Choose executable…** to select the native
+payload inside an nvm/npm installation when its public command is a script shim;
+the app does not execute or interpret wrappers to find it. The CLI fallback is
+`--executable /absolute/native/client`. `demo client inspect --client codex|claude`
+with the same current binding optionally accepts that path and returns only its
+canonical path, hash and qualified version. The helper qualifies pinned
 version/isolation settings with empty temporary profiles before using a stable
 per-role login. Claude uses its dedicated config and workspace; macOS OS-account
 HOME is retained only for Keychain discovery. Background/agent-view tasks are
@@ -171,13 +193,23 @@ strict. This trusts local privileged admins and is not publisher authentication
 or protection against an administrator changing a binary at execution time.
 Generic source/config/proposal paths never use that exception.
 
-For Agent C, **Copy setup command** copies `desktop prepare`. Run it in Terminal to
-validate the active generation and write a
-private immutable bundled-Node/bridge snapshot and review proposal. It prints the
-config path, entry, generation/endpoint and exact `applyCommand`; no config is
-changed. Review it, close Desktop and config editors, then explicitly run that
-command including `--desktop-closed`. The helper compares exact original bytes,
-preserves unrelated settings, creates a backup and verifies atomic replacement.
+For Agent C, **Prepare setup** validates the active generation and writes a
+private immutable bundled-Node/bridge snapshot and proposal. The panel shows
+create/replace, target configuration/entry and backup effects. **View exact
+change…** shows the owned command, arguments and environment without unrelated
+configuration or credentials. Close Desktop and all config editors, then check
+the explicit confirmation and choose **Apply reviewed change**. Apply is disabled
+until that confirmation and cannot replay a submitted proposal. No configuration
+changes during prepare/review. The helper compares the exact reviewed proposal
+SHA-256 and original config bytes, preserves unrelated settings, backs up the
+original and verifies atomic replacement. Start Desktop normally afterward and
+confirm its connection in a fresh conversation.
+
+The Terminal fallback `desktop prepare` prints the same safe review, digest and
+exact `applyCommand`, including `--proposal-sha256` and `--desktop-closed`. Review
+before explicitly running it. The digest option is additive for old CLI callers;
+the native panel always requires it. Neither the panel nor apply executes an
+untrusted returned command or proposal-selected executable.
 Changed config, unknown collisions, stale generations or uncertain application
 retain evidence and refuse replay. Start Desktop normally and use a fresh
 conversation. The applied entry pins installation, store, endpoint, C client ID,
@@ -196,8 +228,8 @@ must be durable private locations outside temporary directories. Packaged app
 bytes may be temporary because snapshot copies are durable. No actual user
 Desktop config has been changed by automated implementation checks.
 An existing config must be a canonical current-user-owned regular file with one
-link and mode **0600**, inside a trusted durable directory. A typical 0644 config
-is refused; the helper does not change its permissions automatically.
+link and mode **0600**, inside a trusted durable directory. If the Desktop configuration directory is absent, install/open Desktop once. A
+typical 0644 config is refused; the helper does not change its permissions automatically.
 
 For an isolated human trial, choose a **fresh durable** root such as a named
 private directory under `~/Library/Application Support/Context Router Trials/`,
@@ -436,3 +468,12 @@ archive checksum is retained in the build receipt.
 Weights are not bundled. The [Step 09 evidence](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/09-installation-and-packaging/implementation.md)
 distinguishes deterministic fixtures, installed-artifact checks, live model tests
 and unperformed human/signing/platform acceptance. Do not infer one from another.
+
+The additive installed assistant-setup check is
+`node scripts/local-migration/installation/assistant-setup-smoke.mjs APP NEW_DURABLE_ROOT`.
+Use a new owned private durable fixture directory. It exercises the packaged CLI
+inspect and exact proposal contracts, a compiled request writer through the
+sealed native wrapper/Node to a synthetic client, and retained requests through
+Quit/reopen/reset. It never opens actual Terminal, accesses provider login or edits
+personal Desktop configuration. The full installed demo and replacement checks
+remain separate; this narrower check does not replace them or human acceptance.
