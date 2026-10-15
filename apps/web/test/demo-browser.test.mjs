@@ -53,3 +53,42 @@ for(const demo of [false,true])test(`${demo?'demo':'personal'} uses the normal d
   if(url==='permissions')for(const role of ['A','B','C'])await f.page.getByText('Demo agent '+role,{exact:false}).first().waitFor();
  }
 });
+
+test('seeded demo client rename preserves historical attribution and exact activity navigation', {timeout:60000}, async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);
+ // Presentation metadata only: this source fixture is not native mode-switch proof.
+ await f.page.route('**/api/local/capabilities',async route=>{
+  const response=await route.fetch(),body=await response.json();
+  if(response.status()===200)body.runtime={mode:'demo',launcher:'native',generation:'c'.repeat(32),storeId:'b'.repeat(32)};
+  await route.fulfill({response,json:body});
+ });
+ const {connect,call}=await import('../../backend/scripts/demo/mcp-import.mjs');
+ const {readFile}=await import('node:fs/promises');
+ const receipt=JSON.parse(await readFile(f.root+'/demo/generation.json'));
+ const id=receipt.clients.agentA,key='local:'+id,slug='home.demo001.renamed_note',label='Demo laptop 東京';
+ const peer=await connect(Number(new URL(f.ready.mcpOrigin).port),f.root+'/demo/exports/agent-a.token');
+ try{
+  await call(peer,'mutatePreferences',{operation:'CREATE_DEFINITION',definition:{slug,description:'Owned rename integration fixture',valueType:'STRING',scope:'GLOBAL',isSensitive:false}});
+  await call(peer,'mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug,value:'"retained demo note"'}});
+ }finally{await peer.close();}
+ const history=()=>{const c=f.database.connect();try{return c.all('SELECT id,actor_client_key,before_state,after_state FROM preference_audit_events WHERE subject_slug=? ORDER BY id',[slug]);}finally{c.close();}};
+ const before=history();assert.ok(before.length>=2);assert.ok(before.every(event=>event.actor_client_key===key));
+ await f.page.goto(f.ready.origin+'/dashboard/permissions');await f.page.getByLabel('Unlock token').fill(f.bootstrap);await f.page.getByRole('button',{name:'Unlock local dashboard'}).click();
+ await f.page.getByRole('button',{name:'Rename '+id,exact:true}).click();await f.page.getByLabel('Client name',{exact:true}).fill(label);await f.page.getByRole('button',{name:'Save name'}).click();await f.page.getByRole('status',{name:'Client name saved',exact:true}).waitFor();
+ await f.page.getByRole('link',{name:'View activity '+id,exact:true}).click();
+ for(const tab of ['MCP Access','Audit']){
+  await f.page.getByRole('tab',{name:tab,exact:true}).click();const panel=f.page.getByRole('tabpanel',{name:tab,exact:true});
+  if(tab==='Audit')await panel.getByRole('button',{name:'More filters',exact:true}).click();
+  assert.equal(new URL(f.page.url()).hash,'#mcp-client='+id);assert.equal(await panel.getByLabel(tab==='Audit'?'Actor client key':'Client key').inputValue(),key);
+  await panel.getByText(label,{exact:true}).first().waitFor();
+  const row=panel.getByRole('button').filter({hasText:tab==='Audit'?slug:'mutatePreferences'}).first();await row.click();
+  await panel.getByText('Client key: '+key,{exact:true}).waitFor();await f.page.getByRole('complementary',{name:'Demo mode'}).waitFor();
+ }
+ assert.deepEqual(history(),before,'rename must leave existing audit payloads and exact actor keys intact');
+ await f.page.goto(f.ready.origin+'/dashboard/preferences');await f.page.getByText(label,{exact:true}).waitFor();
+ assert.ok((await f.page.textContent('body')).includes(key));await f.page.getByRole('complementary',{name:'Demo mode'}).waitFor();
+ const after=JSON.parse(f.cli('local-mcp.js','list').stdout).result;
+ assert.equal(after.find(client=>client.id===id).label,label);
+ assert.equal(after.find(client=>client.id===receipt.clients.agentB).label,'Demo agent B — reader');
+ assert.deepEqual(JSON.parse(await readFile(f.root+'/demo/generation.json')),receipt);
+});

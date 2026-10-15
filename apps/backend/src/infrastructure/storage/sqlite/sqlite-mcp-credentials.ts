@@ -179,6 +179,54 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
       c.exec('COMMIT'); return result;
     } finally { try { if (c.inTransaction) c.exec('ROLLBACK'); } finally { c.close(); } }
   }
+  /** Display-only projection: independent of policy, grants and credential secrets. */
+  labelsForUi(ids: string[]): { items: { id: string; label: string }[] } {
+    if (!Array.isArray(ids) || ids.length < 1 || ids.length > 100 ||
+      new Set(ids).size !== ids.length || ids.some((id) => !validId(id))) fail();
+    const c = this.connection();
+    try {
+      const rows = c.all(`SELECT id,
+        CASE WHEN typeof(label)='text' AND length(CAST(label AS BLOB))<=256 THEN label END label
+        FROM local_mcp_clients WHERE principal_id=? AND id IN (${ids.map(() => '?').join(',')})`,
+        [this.principalId, ...ids]);
+      const names = new Map(rows.filter((row) => typeof row.label === 'string' &&
+        row.label.length <= 64 && row.label.trim() && !/[\u0000-\u001f\u007f]/u.test(row.label))
+        .map((row) => [row.id, row.label as string]));
+      return { items: ids.filter((id) => names.has(id)).map((id) => ({ id, label: names.get(id)! })) };
+    } finally { c.close(); }
+  }
+
+  private nameState(c: SqliteConnection, id: string): { id: string; label: string; generation: number } {
+    if (!validId(id)) fail();
+    const row = c.get(`SELECT id,
+      CASE WHEN typeof(label)='text' AND length(CAST(label AS BLOB))<=256 THEN label END label,
+      CASE WHEN typeof(generation)='integer' AND generation BETWEEN 1 AND 9007199254740991 THEN generation END generation
+      FROM local_mcp_clients WHERE id=? AND principal_id=?`, [id, this.principalId]);
+    if (!row || typeof row.label !== 'string' || row.label.length > 64 || !Number.isSafeInteger(row.generation)) fail();
+    return { id, label: row.label, generation: row.generation };
+  }
+
+  rename(id: string, label: string, expected?: { label: string; generation: number }): { id: string; label: string; generation: number } {
+    if (!validId(id) || typeof label !== 'string' || label.length > 64 ||
+      !label.trim() || /[\u0000-\u001f\u007f]/u.test(label)) fail();
+    if (expected && (typeof expected.label !== 'string' || expected.label.length > 64 ||
+      !Number.isSafeInteger(expected.generation) || expected.generation < 1)) fail();
+    // CLI snapshots before entering the write transaction just like browser callers.
+    if (!expected) {
+      const c = this.connection();
+      try { expected = this.nameState(c, id); } finally { c.close(); }
+    }
+    const previous = expected;
+    return this.change((c) => {
+      const current = this.nameState(c, id);
+      if (current.label !== previous.label || current.generation !== previous.generation) conflict();
+      const name = label.trim();
+      if (name !== current.label) c.run('UPDATE local_mcp_clients SET label=?,updated_at=? WHERE id=? AND principal_id=?',
+        [name, Date.now(), id, this.principalId]);
+      return { id, label: name, generation: current.generation };
+    });
+  }
+
   private boundedAuthority(c: SqliteConnection, id: string, targets: string[] = []): LocalMcpAuthoritySnapshot {
     const client = this.boundedClient(c, id);
     const unavailable: LocalMcpAuthoritySnapshot = { status: 'AUTHORITY_UNAVAILABLE', client };

@@ -20,7 +20,7 @@ await fs.cp(source,bundle,{recursive:true,verbatimSymlinks:true});await verifyCa
 const exe=path.join(bundle,'Contents/MacOS/context-router'),node=path.join(bundle,'Contents/Resources/bin/node'),profile=path.join(root,'offline.sb');
 const {parse}=await import('yaml'),store=parse(await fs.readFile(path.join(repository,'node_modules/.modules.yaml'),'utf8')).storeDir;
 await fs.writeFile(profile,'(version 1)\n(allow default)\n'+[repository,store,path.dirname(path.dirname(process.execPath))].map(p=>`(deny file-read* (subpath ${JSON.stringify(p)}))\n`).join('')+'(deny process-exec)\n'+[exe,node].map(p=>`(allow process-exec (literal ${JSON.stringify(p)}))\n`).join('')+`(allow process-exec (subpath ${JSON.stringify(path.join(envelope,'demo/desktop'))}))\n(deny network-outbound)\n(allow network-outbound (remote ip "localhost:*"))\n`,{mode:0o600});
-const receipt={version:1,status:'running',scope:browserOnly?'browser-only':'full-demo-cycle',root,bundle,source:identity,phases:[],limitations:['Synthetic state with real packaged native/backend/browser/MCP. No AppKit interaction, provider login/session, real model retention/startup, distribution or human acceptance.','Desktop uses an injected test-only temporary-root context; human snapshots require a durable private envelope.',...(browserOnly?['Three-phase browser scope only. It excludes the later A/B/C authority, immutable Desktop, reconnect, reset and personal-return proofs.']:[])]},owners=[],clients=[];let browser;
+const receipt={version:1,status:'running',scope:browserOnly?'browser-only':'full-demo-cycle',root,bundle,source:identity,phases:[],limitations:['Synthetic state with real packaged native/backend/browser/MCP. No AppKit interaction, provider login/session, real model retention/startup, distribution or human acceptance.','Desktop uses an injected test-only temporary-root context; human snapshots require a durable private envelope.',...(browserOnly?['Browser-and-rename scope only. It excludes the later A/B/C authority, immutable Desktop, reconnect, reset and personal-return proofs.']:[])]},owners=[],clients=[];let browser;
 const phase=name=>{receipt.phases.push(name);console.log('Demo artifact: '+name);};
 const pause=()=>new Promise(resolve=>setTimeout(resolve,20));
 const portProbe=net.createServer();await new Promise(resolve=>portProbe.listen(0,'127.0.0.1',resolve));const demoPort=portProbe.address().port;await new Promise(resolve=>portProbe.close(resolve));
@@ -48,6 +48,26 @@ try{
  current=launch();ready=await current.event('ready');let after=current.events.length;current.send('enter-demo',ready.generation);ready=await current.event('ready',after);assert.equal(ready.modelEnabled,false);let state=await metadata();const firstStore=state.demoStore;assert.notEqual(firstStore,personal);
  const spec={store:firstStore,generation:ready.generation,endpoint:ready.mcpOrigin};assert.equal(JSON.parse(helper(spec,['status'])).status,'running');helper(spec,['verify'],1);helper(spec,['desktop','prepare','--config',path.join(root,'desktop.json')],1);
  assert.deepEqual(await Promise.all(pairPaths.map(async p=>hash(await fs.readFile(p)))),personalBefore);phase('native-first-entry-personal-byte-preservation-and-bound-status');
+ // Rename through the real offline native wrapper in both store domains. Demo
+ // receipt and authority verification must survive without rewriting exports.
+ await stop(current,ready);
+ const generationFile=path.join(envelope,'demo',firstStore,'generation.json'),generationBefore=await fs.readFile(generationFile),demoReceipt=JSON.parse(generationBefore);
+ const demoToken=path.join(envelope,'demo',firstStore,'exports/agent-a.token'),tokenBefore=await fs.readFile(demoToken);
+ const demoClientsBefore=JSON.parse(command(['--root',envelope,'--mode','demo','mcp','list'])).result;
+ const demoClient=demoClientsBefore.find(client=>client.id===demoReceipt.clients.agentA);assert.ok(demoClient);
+ command(['--root',envelope,'mcp','rename','--id',demoClient.id,'--label','Wrong store'],1);
+ assert.deepEqual(await Promise.all(pairPaths.map(async p=>hash(await fs.readFile(p)))),personalBefore);
+ const renamed=JSON.parse(command(['--root',envelope,'--mode','demo','mcp','rename','--id',demoClient.id,'--label','Artifact demo laptop'])).result;
+ assert.equal(renamed.id,demoClient.id);assert.equal(renamed.label,'Artifact demo laptop');
+ const demoClientsAfter=JSON.parse(command(['--root',envelope,'--mode','demo','mcp','list'])).result;
+ assert.deepEqual(demoClientsAfter,demoClientsBefore.map(client=>client.id===demoClient.id?{...client,label:'Artifact demo laptop'}:client));
+ assert.deepEqual(await fs.readFile(generationFile),generationBefore);assert.deepEqual(await fs.readFile(demoToken),tokenBefore);
+ assert.deepEqual(await Promise.all(pairPaths.map(async p=>hash(await fs.readFile(p)))),personalBefore);
+ helper(spec,['verify']);
+ current=launch();ready=await current.event('ready');assert.equal((await metadata()).demoStore,firstStore);
+ spec.generation=ready.generation;spec.endpoint=ready.mcpOrigin;assert.equal(JSON.parse(helper(spec,['status'])).status,'running');
+ const renamedPeer=await client(ready,demoToken);assert.ok((await renamedPeer.listTools()).tools.some(tool=>tool.name==='mutatePreferences'));await closeClients();
+ phase('native-demo-rename-domain-isolation-reopen-unchanged-token-authority-and-receipt');
  const prerequisite=localUiBrowserPrerequisite(repository,process.env),{chromium}=createRequire(path.join(repository,'apps/web/package.json'))('playwright');browser=await chromium.launch({headless:true,executablePath:prerequisite.executable,env:{PATH:'/usr/bin:/bin',HOME:root}});const context=await browser.newContext(),outbound=[];await context.route('**/*',route=>{if(new URL(route.request().url()).origin!==ready.origin){outbound.push('outside-active-origin');return route.abort();}return route.continue();});const page=await context.newPage();page.setDefaultTimeout(10000);
  await page.goto(ready.origin+'/dashboard');assert.equal(await page.getByRole('complementary',{name:'Demo mode'}).count(),0);await page.getByLabel('Unlock token').fill((await fs.readFile(ready.unlockFile,'utf8')).trim());await page.getByRole('button',{name:'Unlock local dashboard'}).click();
  for(const name of ['Dashboard','Account Information','Profile Memory'])await page.getByRole('heading',{name,exact:true}).waitFor();

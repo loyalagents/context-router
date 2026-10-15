@@ -288,6 +288,7 @@ router_cli="$HOME/Applications/Context Router.app/Contents/MacOS/context-router"
 "$router_cli" --help
 "$router_cli" verify-package
 "$router_cli" mcp list
+"$router_cli" mcp rename --id CLIENT_ID --label 'Personal laptop'
 "$router_cli" mcp provision --label 'My local client' --out /absolute/private/new-client.token
 ```
 
@@ -299,7 +300,25 @@ the installed bundle includes a generation-bound bridge for the demo workflow be
 are distinct. A client credential is not a browser unlock code. Provision/rotate
 exports are sensitive; routine menu diagnostics do not contain them. Permission
 and grant syntax is unchanged from the existing CLI. The installed wrapper also
-provides `mcp rotate`, `revoke`, `permissions`, `grant`, `upgrade`, and `inspect ID`.
+provides `mcp rename`, `rotate`, `revoke`, `permissions`, `grant`, `upgrade`, and `inspect ID`.
+
+Rename is display-only and creates no token export. It preserves credentials,
+policy, grants and stable history keys, including for revoked instances. Quit and
+exclusive-owner checks still apply to this offline CLI command; the browser can
+rename while the app runs. Offline rename defaults to the personal store even
+when demo was selected. Use `--mode demo mcp rename --id CLIENT_ID --label NAME`
+to rename a demo client; the browser edits clients in its active mode.
+Inspect the current name after an unconfirmed result
+before making another explicit attempt. Pending-store administration supports
+`mcp rename` only with the same explicit `--pending-store STORE_ID` selection.
+
+Names are trimmed, nonempty and limited to 64 UTF-16 code units before trimming.
+The installed CLI also rejects Unicode control and format characters in MCP
+command arguments. This includes the zero-width joiner used in emoji such as
+👩‍💻; ordinary non-ASCII names such as `Café 東京 💻` are accepted. To use a name
+containing a format character, rename in the browser instead; its name validation
+rejects C0 controls (U+0000–U+001F) and DEL (U+007F), a narrower rule. The installed
+restriction also applies to provision and is unchanged by rename support.
 
 Back up only after Quit, through the installed command:
 

@@ -5,6 +5,8 @@ import { authenticatedFetch } from '@/lib/authenticated-fetch';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 import AuditHistoryTab from '../preferences/components/AuditHistoryTab';
 import McpAccessHistoryTab from './McpAccessHistoryTab';
+import { useLocalSession } from '@/components/local/LocalSession';
+import { activityClientKey, localClientId } from '@/lib/local-client-name';
 
 interface HistoryTabsProps {
   accessToken: string;
@@ -18,7 +20,9 @@ export default function HistoryTabs({
   accessToken,
   preferenceDefinitions,
 }: HistoryTabsProps) {
-  const [activeTab, setActiveTab] = useState<'audit' | 'mcp'>('audit');
+  const local = !!useLocalSession();
+  const [clientFilter, setClientFilter] = useState(() => local && typeof window !== 'undefined' ? activityClientKey(window.location.hash) : '');
+  const [activeTab, setActiveTab] = useState<'audit' | 'mcp'>(() => clientFilter ? 'mcp' : 'audit');
   const [generation, setGeneration] = useState(0);
   const [clearing, setClearing] = useState(false);
   const [confirmation, setConfirmation] = useState('');
@@ -32,6 +36,25 @@ export default function HistoryTabs({
     pending.current.abort(); pending.current = new AbortController();
     setGeneration((value) => value + 1);
   }, []);
+  useEffect(() => {
+    if (!local) return;
+    const navigate = () => {
+      const key = activityClientKey(window.location.hash);
+      setClientFilter(key);
+      if (key) setActiveTab('mcp');
+      invalidate();
+    };
+    window.addEventListener('hashchange', navigate);
+    window.addEventListener('popstate', navigate);
+    return () => { window.removeEventListener('hashchange', navigate); window.removeEventListener('popstate', navigate); };
+  }, [local, invalidate]);
+  const changeClientFilter = (value: string) => {
+    setClientFilter(value);
+    const id = localClientId(value);
+    const { pathname, search, hash } = window.location;
+    const destination = pathname + search + (id ? `#mcp-client=${id}` : '');
+    if (destination !== pathname + search + hash) window.history.pushState(null, '', destination);
+  };
   useEffect(() => {
     mounted.current = true;
     if (typeof BroadcastChannel !== 'undefined') {
@@ -107,6 +130,8 @@ export default function HistoryTabs({
         <AuditHistoryTab
           key={`audit-${generation}`}
           invalidationSignal={pending.current.signal}
+          clientFilter={local ? clientFilter : undefined}
+          onClientFilterChange={local ? changeClientFilter : undefined}
           accessToken={accessToken}
           preferenceDefinitions={preferenceDefinitions}
           shouldLoad={!clearing && activeTab === 'audit'}
@@ -118,6 +143,8 @@ export default function HistoryTabs({
         <McpAccessHistoryTab
           key={`mcp-${generation}`}
           invalidationSignal={pending.current.signal}
+          clientFilter={local ? clientFilter : undefined}
+          onClientFilterChange={local ? changeClientFilter : undefined}
           accessToken={accessToken}
           shouldLoad={!clearing && activeTab === 'mcp'}
         />

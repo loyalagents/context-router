@@ -30,20 +30,33 @@ const portReservation=createServer();await new Promise(resolve=>portReservation.
 let browserHandle,browser,context;
 async function startBrowser(){
   const prerequisite=localUiBrowserPrerequisite(repository,process.env),profileRoot=await realpath(await mkdtemp('/private/tmp/cr-installed-browser-'));
-  const home=path.join(root,'browser-home');await mkdir(home,{mode:0o700});
+  const home=await mkdtemp(path.join(root,'browser-home-'));
   browserHandle=createGatedNodeChild({entrypoint:path.join(repository,'scripts/local-migration/fixtures/local-ui-smoke/browser.cjs'),operation:'browser',cwd:root,
     env:{PATH:'/usr/bin:/bin',HOME:home,TMPDIR:root,LOCAL_UI_BROWSER_PROFILE:profileRoot,LOCAL_UI_BROWSER_EXECUTABLE:prerequisite.executable},signal:AbortSignal.any([signal,AbortSignal.timeout(20000)])});
   await activateJournaledNodeChild({handle:browserHandle,resourceId:'browser',identity:{profileRoot},journal:{acquired:async(id,record)=>{receipt.browserOwner={id,...record,profileRoot};await writeFile(path.join(root,'browser-owner.json'),JSON.stringify(receipt.browserOwner),{mode:0o600});}}});
   const deadline=performance.now()+10000;while(!browserHandle.output().stdout.endsWith('\n')){assert.ok(performance.now()<deadline&&!browserHandle.output().stderr&&!browserHandle.output().overflow);await wait(20);}
   const ready=JSON.parse(browserHandle.output().stdout);assert.equal(ready.type,'local-ui-browser-ready');const {chromium}=createRequire(path.join(repository,'apps/web/package.json'))('playwright');browser=await chromium.connectOverCDP(ready.endpoint,{timeout:5000});context=await browser.newContext({serviceWorkers:'block'});
 }
-async function browserProof(owner,ready){
+async function browserProof(owner,ready,namedClient){
   await startBrowser();const outbound=[];
   await context.route('**/*',route=>{if(new URL(route.request().url()).origin!==ready.origin){outbound.push('non-loopback-attempt');return route.abort();}return route.continue();});
   const page=await context.newPage();page.setDefaultTimeout(5000);const response=await page.goto(ready.origin+'/dashboard/preferences');assert.equal(response.status(),200);assert.match(response.headers()['content-security-policy'],/nonce-/);
   const bootstrap=(await readFile(ready.unlockFile,'utf8')).trim();secrets.push(bootstrap);assert.equal((await response.text()).includes(bootstrap),false);
   await page.getByLabel('Unlock token').fill(bootstrap);await page.getByRole('button',{name:'Unlock local dashboard'}).click();await page.getByRole('button',{name:'Lock dashboard'}).waitFor();
   const session=await page.evaluate(()=>sessionStorage.getItem('context-router.browser-session.v1'));assert.ok(session);secrets.push(session);
+  if(namedClient){
+    await page.getByText(namedClient.label,{exact:true}).waitFor();
+    await page.goto(ready.origin+'/dashboard/permissions');
+    const row=page.getByRole('listitem').filter({has:page.getByRole('button',{name:`Rename ${namedClient.id}`,exact:true})});
+    await row.getByText(namedClient.label,{exact:true}).waitFor();
+    await row.getByRole('link',{name:`View activity ${namedClient.id}`,exact:true}).click();
+    await page.getByRole('tab',{name:'MCP Access',selected:true}).waitFor();
+    await page.getByRole('tabpanel',{name:'MCP Access'}).getByText(namedClient.label,{exact:true}).first().waitFor();
+    await page.getByRole('button').filter({hasText:'mutatePreferences'}).first().waitFor();
+    await page.getByRole('tab',{name:'Audit',exact:true}).click();
+    await page.getByRole('button').filter({hasText:'synthetic.shared'}).first().waitFor();
+    await page.getByRole('tabpanel',{name:'Audit',exact:true}).getByText(namedClient.label,{exact:true}).first().waitFor();
+  }
   const repeated=await page.evaluate(async bootstrap=>(await fetch('/api/local/unlock',{method:'POST',headers:{'content-type':'application/json','x-context-router-ui':'1'},body:JSON.stringify({bootstrap})})).status,bootstrap);assert.equal(repeated,401);
   await page.getByRole('button',{name:'Lock dashboard'}).click();const count=owner.events.length;owner.send('unlock',ready.generation);const next=await owner.event('unlock',count),replacement=(await readFile(next.unlockFile,'utf8')).trim();secrets.push(replacement);assert.notEqual(replacement,bootstrap);
   await page.getByLabel('Unlock token').fill(replacement);await page.getByRole('button',{name:'Unlock local dashboard'}).click();await page.getByRole('button',{name:'Lock dashboard'}).waitFor();assert.deepEqual(outbound,[]);
@@ -97,6 +110,12 @@ try{
   const edit=await mcpClient(ready,editorToken);await edit('mutatePreferences',{operation:'CREATE_DEFINITION',definition:{slug:'synthetic.shared',description:'Installed fixture',valueType:'STRING',scope:'GLOBAL',isSensitive:false}});await edit('mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug:'synthetic.shared',value:'"retained snapshot"'}});
   assert.equal((await edit('searchPreferences')).active.preferences.find(row=>row.slug==='synthetic.shared')?.value,'retained snapshot');
   const count=run.events.length;run.send('restart',ready.generation);const restarted=await run.event('ready',count);assert.notEqual(restarted.generation,ready.generation);assert.equal(restarted.mcpOrigin,ready.mcpOrigin);assert.equal((await fetch(restarted.origin+'/dashboard/preferences',{signal})).status,200);await stop(run);phase('installed-cli-mcp-and-explicit-fresh-restart');
+  const renamed=command(['mcp','rename','--id',editor.result.id,'--label','Installed personal client'])[0].result;
+  assert.deepEqual(renamed,{id:editor.result.id,label:'Installed personal client',generation:editor.result.generation});
+  assert.equal(command(['mcp','list'])[0].result.find(client=>client.id===editor.result.id).label,renamed.label);
+  const namedRun=launch(),namedReady=await namedRun.event('ready');
+  assert.equal((await initializeMcp(namedReady,editorToken)).status,200);
+  await browserProof(namedRun,namedReady,renamed);await stop(namedRun);phase('installed-rename-durability-token-history-and-browser-presentation');
   const backup=command(['backup']).find(record=>record.status==='backup-complete');assert.ok(backup?.path);const before=JSON.parse(await readFile(path.join(envelope,'installation.json')));
   command(['mcp','revoke','--id',provision.result.id]);const rotatedFile=path.join(root,'rotated-editor.token');command(['mcp','rotate','--id',editor.result.id,'--out',rotatedFile]);const rotatedToken=(await readFile(rotatedFile,'utf8')).trim();secrets.push(rotatedToken);command(['mcp','grant','--id',editor.result.id,'--target','synthetic.shared','--action','READ','--effect','DENY']);
   const changed=launch(),changedReady=await changed.event('ready');assert.equal((await initializeMcp(changedReady,token)).status,401);assert.equal((await initializeMcp(changedReady,editorToken)).status,401);const restricted=await mcpClient(changedReady,rotatedToken);assert.equal((await restricted('searchPreferences')).active.preferences.some(row=>row.slug==='synthetic.shared'),false);await stop(changed);phase('post-backup-revocation-rotation-and-grant-denial');

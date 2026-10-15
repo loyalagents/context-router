@@ -100,6 +100,30 @@ inspection again; oversized authority snapshots are unavailable, not guessed.
 Revoke affects only the selected instance. Issuance, rotation and maximum changes
 remain [CLI operations](MCP_LOCAL_SETUP.md); no client configuration is written.
 
+**Rename** edits the selected instance's current display name, with Save/Cancel
+and an explicit read after a conflict or unconfirmed response. Duplicate names
+remain separate instances; full IDs are shown in management and filter chips,
+accessible labels, and expanded history. Names are plain text, trimmed and limited
+to 64 UTF-16 code units before trimming, with no C0 controls (U+0000–U+001F) or DEL
+(U+007F). The [installed CLI](INSTALLED_MAC_APP.md) has a stricter argument rule
+that also rejects Unicode format characters, including joiner emoji; these names
+can be set in the browser. Renaming also works for revoked
+instances and never restores authority. Credentials, active MCP sessions, grants
+and policy remain unchanged. Open grant snapshots require reinspection after a
+rename. A lost reply is never automatically resubmitted: a fresh read reports the
+present name, not whether that particular attempt committed.
+
+**View activity** opens MCP Access filtered to the exact full instance ID; Audit
+retains the same client filter when switching tabs or refreshing. Removing/resetting
+or manually applying a different client filter updates the selected instance.
+The fragment in the history link contains the instance ID, never its name or token.
+The browser resolves current names for loaded history and visible preference
+attribution in bounded batches, including revoked clients. A renamed client uses
+its current name on older events; stored keys and snapshots are unchanged. Missing
+or unavailable names fall back to full IDs, with a read-only retry. Returning to
+the window refreshes names after CLI changes; management changes invalidate other
+windows. Lock, expiry and navigation discard the page's private names and drafts.
+
 Both history streams are retained until explicitly cleared. Sensitive and UNKNOWN
 legacy audit payloads are masked by default using the stored event-time marker,
 including archived definitions. Reveal is a presentation control; authenticated
