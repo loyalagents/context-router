@@ -948,6 +948,15 @@ for (const operation of ['smart-search', 'legacy-logout', 'legacy-deadline'])
         }
         return false;
       };
+      let browserExecution, admittedAt;
+      if (operation === 'legacy-deadline') {
+        const { UI_EXECUTION } = require('../../dist/local-ui/local-ui-request.js');
+        f.runtime.server.once('request', (req) => {
+          browserExecution = req[UI_EXECUTION];
+          admittedAt = performance.now();
+        });
+      }
+      const requestedAt = performance.now();
       const running = f.request('/graphql', {
         token,
         body: search,
@@ -979,10 +988,17 @@ for (const operation of ['smart-search', 'legacy-logout', 'legacy-deadline'])
           stopped.status === 504 || stopped.json().errors?.length,
           'deadline never publishes generated text',
         );
-        assert.ok(
-          runningOptions.deadline <= performance.now(),
+        // Timers can fire fractionally before the precise clock boundary.
+        // Verify the admitted budget itself, not when the response arrived.
+        assert.ok(browserExecution, 'browser request has execution controls');
+        assert.ok(browserExecution.deadline >= requestedAt + 1500);
+        assert.ok(browserExecution.deadline <= admittedAt + 1500);
+        assert.equal(
+          runningOptions.deadline,
+          browserExecution.deadline,
           'same shortened budget reaches the model',
         );
+        assert.equal(runningOptions.signal, browserExecution.signal);
       } else {
         assert.ok(stopped.json().errors?.length);
         assert.equal(runningOptions.signal.aborted, true);
