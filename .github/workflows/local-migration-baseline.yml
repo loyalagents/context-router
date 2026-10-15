@@ -69,8 +69,8 @@ jobs:
 
   source-qualification:
     needs: validation-selection
-    # Override implicit success(): failed detection never grants an exemption.
-    if: always() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime')
+    # Override implicit success() after detection failure, but honor run cancellation.
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime') }}
     runs-on: ubuntu-latest
     timeout-minutes: 188
 
@@ -194,7 +194,7 @@ jobs:
 
   packaging-qualification:
     needs: validation-selection
-    if: always() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime')
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime') }}
     runs-on: ubuntu-latest
     timeout-minutes: 190
 

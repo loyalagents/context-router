@@ -355,13 +355,18 @@ Guidance prose does not authorize executable gate changes or remove human review
 The workflow still runs on every PR to main and push to main. Selection requires
 a clean full-history checkout matching the event. PRs compare both the branch
 from its unique merge base and the actual test merge from the event base; an
-advanced merge first parent selects full qualification. Pushes compare the
+advanced merge first parent selects full qualification. Multiple valid merge
+bases also select full qualification, bind the complete sorted ancestor set and
+retain the event base for contract/receipt comparison. Pushes compare the
 verified ancestor `before` to the actual `after` checkout. NUL-delimited Git
 changes include modes and both endpoints of moves by disabling rename detection.
-Invalid metadata, unsupported events, ambiguous/missing/shallow history, failed
-Git commands or incomplete output cannot exempt validation. Merge queues and
-manual dispatch are not supported events. Failed selection starts the full lanes
-but also fails the final result; it cannot become an implicit success.
+Invalid metadata, unsupported events, missing/shallow history, malformed merge
+bases, non-UTF-8 Git output, failed Git commands or incomplete output fail selection.
+Merge queues and manual dispatch are not supported events. Failed selection
+starts the full lanes unless the workflow is cancelled, but also fails the final
+result; it cannot become an implicit success. Both heavy jobs honor explicit
+workflow cancellation; the aggregate retains `always()` and rejects cancelled or
+unexpectedly skipped dependencies.
 
 The nonruntime lane requires the pinned toolchain, frozen dependencies, complete
 Markdown/overview, routing and contract-checker test suites, strict links,
@@ -377,6 +382,12 @@ with the eligible paths and comparison identities. The full branch requires both
 lanes to succeed and retains the unchanged receipt combiner. Failed, cancelled,
 missing or unexpectedly skipped results fail. A skipped job is not itself proof
 of non-applicability; workflow-level path filters are not used.
+
+A nonruntime success attests neither full qualification of that checkout nor a
+successful qualification of its base or any ancestor. Release or pilot claims
+requiring qualified source/artifacts must retain their full qualification
+evidence for the actual inputs. Naming a previously qualified ancestor records
+provenance; it does not transfer qualification to a different head or artifact.
 
 This changes CI acceptance selection, not receipt meanings or the default local
 twelve-phase gate. Standard CI routing remains unchanged. GitHub API inspection

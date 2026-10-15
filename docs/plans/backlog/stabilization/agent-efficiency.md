@@ -1,6 +1,6 @@
 # Agent workflow efficiency
 
-- Status: overview/workflow clarifications implemented; approved narrow CI selection in validation
+- Status: overview/workflow clarifications and approved narrow CI selection implemented; eligible-run timing unmeasured
 - Owner: the product owner selects the next implementation slice
 - Updated: 2026-10-15
 - Policy: [agent workflow](../../../useful/AGENT_WORKFLOW.md)
@@ -98,17 +98,12 @@ nine paths, so their #186 cost is not an additional saving. #186 itself remains
 ineligible because it changed CI and added files. Confirm scheduling and summaries
 on the first naturally occurring eligible run; no metrics subsystem is added.
 
-Implementation base is freshly fetched `4d68bcf`, including merged #185's separate
-database timing fixes; the reviewed policy base was `f7514fa`. Main agent is the
-sole writer. Requested coordinator and independent plan/final reviewers are
-GPT-6 Astra/xhigh. Plan-review spawn explicitly accepted those settings; exact
-coordinator settings and independent runtime attestation are unavailable. The
-read-only plan review found no blockers; complete-diff final review is pending.
-The agreed freeze follows resolved corrections, green focused checks and ready
-docs, then one draft PR, exact-head CI, full local gate and fresh final review.
-This CI implementation requires full qualification. Reverting the cohesive PR
-restores unconditional lanes; receipt meanings never change. Final evidence
-belongs in the PR, not a pass-announcement commit.
+The implementation builds on #185's separate database timing fixes. CI selection
+changes require full qualification. Reverting the cohesive selection change
+restores unconditional lanes; receipt meanings never change. Revision-specific
+model settings, review decisions and validation evidence belong in
+[PR #188](https://github.com/loyalagents/context-router/pull/188), rather than
+temporary review status or pass-announcement commits in this durable note.
 
 | Option | Hypothesized benefit | Boundary or cost |
 | --- | --- | --- |

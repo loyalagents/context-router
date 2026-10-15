@@ -40,7 +40,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   catch (error) {
     // Preserve the contract checker's actionable diagnostics, never treat its
     // partial stdout or a missing base as successful validation.
-    console.error(error.stderr || error.message);
+    const streams = [error.stdout, error.stderr]
+      .map(output => Buffer.isBuffer(output) ? output.toString('utf8') : typeof output === 'string' ? output : '')
+      .filter(output => output.trim());
+    // git diff --check reports locations on stdout, often with empty Buffer
+    // stderr. Prefix lines so repository text cannot become an Actions command.
+    for (const line of (streams.join('\n') || error.message).split(/\r?\n/)) console.error(`Nonruntime check failed: ${line}`);
     process.exitCode = 1;
   }
 }

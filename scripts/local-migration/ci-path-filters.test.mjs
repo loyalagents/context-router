@@ -133,6 +133,33 @@ test('push comparison accepts merge and squash results with a verified ancestor'
   });
 });
 
+test('valid criss-cross PR history requires full qualification and binds every merge base', async () => {
+  await policyFixture(async f => {
+    const policy = await import('./ci-validation-policy.mjs');
+    await f.git('switch', '-qc', 'feature'); await f.put('AGENTS.md', 'left\n'); const left = await f.commit();
+    await f.git('switch', '-q', 'main'); await f.put('CLAUDE.md', 'right\n'); const right = await f.commit();
+    await f.git('switch', '-q', 'feature'); await f.git('merge', '--no-ff', '-qm', 'cross left', right);
+    await f.put('AGENTS.md', 'eligible content after crossing\n'); const head = await f.commit();
+    await f.git('switch', '-q', 'main'); await f.git('merge', '--no-ff', '-qm', 'cross right', left);
+    const base = await f.git('rev-parse', 'HEAD');
+    assert.deepEqual((await f.git('merge-base', '--all', base, head)).split('\n').sort(), [left, right].sort());
+    await f.git('merge', '--no-ff', '-qm', 'test merge', head);
+    Object.assign(f.environment, { GITHUB_EVENT_NAME: 'pull_request', GITHUB_REF: 'refs/pull/1/merge' });
+    f.event.pull_request = { base: { sha: base, ref: 'main' }, head: { sha: head } };
+    const selected = await f.detect();
+    assert.equal(selected.profile, 'full'); assert.equal(selected.reason, 'ambiguous-base');
+    assert.equal(selected.baseSha, base); assert.deepEqual(selected.paths, ['AGENTS.md']);
+    const withBases = bases => policy.selectValidation({ cwd: f.cwd, environment: f.environment, event: f.event,
+      git: args => args[0] === 'merge-base' && args[1] === '--all' ? Promise.resolve(bases.join('\n') + '\n') : policy.runGit(f.cwd, args) });
+    assert.equal((await withBases([right, left])).binding, selected.binding, 'ordering is not identity');
+    assert.notEqual((await withBases([right, f.base])).binding, selected.binding, 'different bases change identity');
+    const exported = { profile: selected.profile, binding: selected.binding };
+    const outcomes = { selection: 'success', nonruntime: 'skipped', source: 'success', packaging: 'success' };
+    assert.doesNotThrow(() => policy.validateSelectionResults(selected, exported, outcomes));
+    for (const lane of ['source', 'packaging']) assert.throws(() => policy.validateSelectionResults(selected, exported, { ...outcomes, [lane]: 'skipped' }));
+  });
+});
+
 test('unavailable, nonancestor, malformed, shallow and unsupported comparisons fail closed', async () => {
   await policyFixture(async f => {
     await f.put('AGENTS.md', 'changed\n'); await f.commit();
@@ -161,7 +188,7 @@ test('unavailable, nonancestor, malformed, shallow and unsupported comparisons f
   });
 });
 
-test('incomplete Git data, command failures and ambiguous bases never produce exemptions', async () => {
+test('incomplete Git data, command failures and malformed bases never produce exemptions', async () => {
   await policyFixture(async f => {
     await f.put('AGENTS.md', 'changed\n'); await f.commit(); await f.detect();
     const policy = await import('./ci-validation-policy.mjs');
@@ -181,8 +208,10 @@ test('incomplete Git data, command failures and ambiguous bases never produce ex
     await f.git('merge', '--no-ff', '-qm', 'merge', 'feature');
     Object.assign(f.environment, { GITHUB_EVENT_NAME: 'pull_request', GITHUB_SHA: await f.git('rev-parse', 'HEAD'), GITHUB_REF: 'refs/pull/1/merge' });
     f.event.pull_request = { base: { sha: base, ref: 'main' }, head: { sha: head } };
-    const git = async args => args[0] === 'merge-base' && args[1] === '--all' ? base + '\n' + head + '\n' : policy.runGit(f.cwd, args);
-    await assert.rejects(policy.selectValidation({ cwd: f.cwd, environment: f.environment, event: f.event, git }), /base/);
+    for (const output of ['', base + '\n' + base + '\n', base + '\ninvalid\n']) {
+      const git = async args => args[0] === 'merge-base' && args[1] === '--all' ? output : policy.runGit(f.cwd, args);
+      await assert.rejects(policy.selectValidation({ cwd: f.cwd, environment: f.environment, event: f.event, git }), /base/);
+    }
   });
 });
 
@@ -191,6 +220,14 @@ test('Git output overflow rejects the actual subprocess rather than accepting pa
     await f.put('large.txt', 'x'.repeat(8 * 1024 * 1024 + 1024)); await f.commit();
     const { runGit } = await import('./ci-validation-policy.mjs');
     await assert.rejects(runGit(f.cwd, ['show', 'HEAD:large.txt']), error => error.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER');
+  });
+});
+
+test('invalid UTF-8 Git output fails with a safe encoding category', async () => {
+  await policyFixture(async f => {
+    await f.put('binary.dat', Buffer.from([0xff])); await f.commit();
+    const { runGit } = await import('./ci-validation-policy.mjs');
+    await assert.rejects(runGit(f.cwd, ['show', 'HEAD:binary.dat']), /Git output encoding.*UTF-8/);
   });
 });
 
@@ -406,7 +443,7 @@ test("CI lanes retain prerequisites and run unless successful selection explicit
   for (const [jobId, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"]]) {
     const job = workflow.jobs[jobId];
     assert.equal(job.needs, 'validation-selection');
-    assert.equal(job.if, "always() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime')");
+    assert.equal(job.if, "${{ !cancelled() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime') }}");
     assert.equal(job.strategy, undefined);
     assert.equal(job["runs-on"], "ubuntu-latest");
     assert.equal(job.services.postgres.image, "postgres:15-alpine");
@@ -443,6 +480,25 @@ test("CI lanes retain prerequisites and run unless successful selection explicit
     assert.ok(combined.steps.indexOf(step) > combined.steps.indexOf(verdict));
   }
   for (const step of combined.steps) assert.equal(step["continue-on-error"], undefined);
+});
+
+test('qualification conditions honor cancellation while detection failures still require both lanes', async () => {
+  const workflow = parse(await readFile(dedicatedPath, 'utf8'));
+  for (const lane of ['source-qualification', 'packaging-qualification']) {
+    const expression = workflow.jobs[lane].if.replace(/^\$\{\{\s*|\s*\}\}$/g, '')
+      .replaceAll('needs.validation-selection.result', 'result')
+      .replaceAll('needs.validation-selection.outputs.profile', 'profile');
+    // Evaluate the actual YAML condition for the supported status/string subset;
+    // platform cancellation delivery itself remains GitHub's responsibility.
+    const condition = new Function('cancelled', 'always', 'result', 'profile', `return (${expression});`);
+    for (const cancelled of [false, true]) for (const result of ['success', 'failure', 'cancelled', 'skipped', '', undefined, 'neutral']) {
+      for (const profile of ['nonruntime', 'full', '', undefined]) {
+        assert.equal(condition(() => cancelled, () => true, result, profile),
+          !cancelled && (result !== 'success' || profile !== 'nonruntime'), `${lane}: ${cancelled}/${result}/${profile}`);
+      }
+    }
+  }
+  assert.equal(workflow.jobs['local-migration-baseline'].if, 'always()');
 });
 
 test('nonruntime checks and classification retain complete consumers and always-on workflow triggers', async () => {
@@ -488,8 +544,9 @@ test('selection CLI explains non-applicability without receipts and rejects fail
       assert.match(await readFile(summary, 'utf8'), /AGENTS.md/);
       const previousOutput = await readFile(output, 'utf8');
       for (const extra of [{ NONRUNTIME_RESULT: 'failure' }, { SELECTION_RESULT: 'cancelled' }, { SOURCE_RESULT: 'success' }, { SELECTION_BINDING: '' }]) {
-        await assert.rejects(run('--aggregate', extra), error => error.code === 1 && /no exemption/.test(error.stderr));
+        await assert.rejects(run('--aggregate', extra), error => error.code === 1 && /job outcomes or classification mismatch.*no exemption/.test(error.stderr));
       }
+      await assert.rejects(run('--select', { GITHUB_SHA: f.base }), error => error.code === 1 && /selection: checkout.*no exemption/.test(error.stderr));
       await writeFile(eventFile, '{malformed');
       await assert.rejects(run('--select'), error => error.code === 1 && !error.stderr.includes('malformed'));
       assert.equal(await readFile(output, 'utf8'), previousOutput, 'failures export no routing success');
@@ -518,6 +575,13 @@ test('nonruntime checker actually compares the base and rejects changed document
     const doc = path.join(checkout, 'docs/useful/AGENT_WORKFLOW.md');
     await writeFile(doc, (await readFile(doc, 'utf8')) + '\nCall `POST /api/preferences/analysis`.\n');
     await assert.rejects(run(), error => error.code === 1 && /contract reference/.test(error.stderr));
+    // diff --check examines committed base-to-head changes and reports on stdout.
+    await execFileAsync('git', ['restore', '--source', base, '--', 'docs/useful/AGENT_WORKFLOW.md'], { cwd: checkout });
+    const guidance = path.join(checkout, 'AGENTS.md');
+    await writeFile(guidance, (await readFile(guidance, 'utf8')) + '\nTrailing whitespace.  \n');
+    await execFileAsync('git', ['add', 'AGENTS.md'], { cwd: checkout });
+    await execFileAsync('git', ['-c', 'core.hooksPath=/dev/null', '-c', 'user.name=CI Fixture', '-c', 'user.email=ci@example.invalid', 'commit', '-qm', 'whitespace fixture'], { cwd: checkout });
+    await assert.rejects(run(), error => error.code === 1 && /AGENTS\.md:\d+: trailing whitespace/.test(error.stderr) && !error.stderr.includes('<Buffer'));
   } finally { await rm(scratch, { recursive: true, force: true }); }
 });
 

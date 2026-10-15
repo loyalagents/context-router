@@ -19,7 +19,12 @@ export const NONRUNTIME_PATHS = Object.freeze([
 const exec = promisify(execFile);
 const MAX_GIT_BYTES = 8 * 1024 * 1024;
 const shaPattern = /^[a-f0-9]{40}$/;
-const fail = category => { throw new Error(`CI validation selection: ${category}`); };
+const failureCategories = new Set(['event', 'checkout', 'base', 'history', 'clean checkout required',
+  'diff', 'classification', 'job outcomes or classification mismatch', 'invocation', 'Git output encoding (UTF-8 required)']);
+class SelectionError extends Error {
+  constructor(category) { super(`CI validation selection: ${category}`); this.category = category; }
+}
+const fail = category => { throw new SelectionError(category); };
 function sha(value, category) {
   if (typeof value !== 'string' || !shaPattern.test(value) || /^0+$/.test(value)) fail(category);
   return value;
@@ -33,7 +38,8 @@ export async function runGit(cwd, args) {
     env: { PATH: process.env.PATH, HOME: process.env.HOME,
       GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_TERMINAL_PROMPT: '0' },
   });
-  return new TextDecoder('utf-8', { fatal: true }).decode(result.stdout);
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(result.stdout); }
+  catch { fail('Git output encoding (UTF-8 required)'); }
 }
 
 function parseDiff(output) {
@@ -68,6 +74,7 @@ export async function selectValidation({ cwd, environment = process.env, event, 
     await git(['merge-base', '--is-ancestor', baseSha, checkoutSha]);
   } catch { fail('base'); }
   let pullRequestHeadSha = null, branchBaseSha = null, advancedBase = false;
+  let ambiguousBaseShas = [];
   const comparisons = [[baseSha, checkoutSha]];
   if (eventName === 'push') {
     if (event.after !== checkoutSha) fail('checkout');
@@ -77,9 +84,16 @@ export async function selectValidation({ cwd, environment = process.env, event, 
     if (event.pull_request?.base?.ref !== 'main' || !/^refs\/pull\/[1-9][0-9]*\/merge$/.test(environment.GITHUB_REF ?? '')) fail('event');
     if (parents.length !== 3 || parents[2] !== pullRequestHeadSha) fail('checkout');
     const bases = (await git(['merge-base', '--all', baseSha, pullRequestHeadSha])).trim().split(/\s+/);
-    if (bases.length !== 1) fail('base');
-    branchBaseSha = sha(bases[0], 'base');
-    comparisons.push([branchBaseSha, pullRequestHeadSha]);
+    bases.forEach(value => sha(value, 'base'));
+    if (new Set(bases).size !== bases.length) fail('base');
+    if (bases.length === 1) {
+      branchBaseSha = bases[0];
+      comparisons.push([branchBaseSha, pullRequestHeadSha]);
+    } else {
+      // Criss-cross history is valid but cannot obtain an exemption. Bind every
+      // returned base; the event base remains the contract/receipt comparison.
+      ambiguousBaseShas = bases.sort();
+    }
     advancedBase = parents[1] !== baseSha;
   }
   const changes = [];
@@ -90,9 +104,9 @@ export async function selectValidation({ cwd, environment = process.env, event, 
   const eligible = changes.length > 0 && changes.every(c =>
     NONRUNTIME_PATHS.includes(c.file) && c.status === 'M' &&
     ['100644', '100755'].includes(c.oldMode) && c.oldMode === c.newMode && c.oldBlob !== c.newBlob);
-  const reason = advancedBase ? 'advanced-base' : !changes.length ? 'empty-diff' : eligible ? 'allowlisted-content' : 'full-required';
+  const reason = ambiguousBaseShas.length ? 'ambiguous-base' : advancedBase ? 'advanced-base' : !changes.length ? 'empty-diff' : eligible ? 'allowlisted-content' : 'full-required';
   const profile = reason === 'allowlisted-content' ? 'nonruntime' : 'full';
-  const identity = { policyVersion: 1, eventName, checkoutSha, baseSha, branchBaseSha, pullRequestHeadSha, profile, reason, changes };
+  const identity = { policyVersion: 1, eventName, checkoutSha, baseSha, branchBaseSha, ambiguousBaseShas, pullRequestHeadSha, profile, reason, changes };
   return { policyVersion: 1, profile, reason, baseSha, checkoutSha, paths,
     binding: createHash('sha256').update(JSON.stringify(identity)).digest('hex') };
 }
@@ -133,10 +147,12 @@ async function main() {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try { await main(); }
-  catch {
+  catch (error) {
     // Git/event/file errors may contain untrusted paths or data. Missing output
     // never grants an exemption, even when the failed selector is followed by full lanes.
-    console.error('CI validation selection failed; no exemption is valid.');
+    const message = error instanceof SelectionError && failureCategories.has(error.category)
+      ? error.message : 'CI validation selection failed';
+    console.error(`${message}; no exemption is valid.`);
     process.exitCode = 1;
   }
 }
