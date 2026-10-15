@@ -964,7 +964,7 @@ for (const operation of ['smart-search', 'legacy-logout', 'legacy-deadline'])
           'x-context-router-timeout-ms':
             operation === 'legacy-deadline' ? '1500' : '10000',
         },
-      });
+      }).then((response) => ({ response, stoppedAt: performance.now() }));
       await atCompletion;
       const runningOptions = observed;
       const busy = await client.callTool({
@@ -982,14 +982,13 @@ for (const operation of ['smart-search', 'legacy-logout', 'legacy-deadline'])
           (await f.request('/api/local/logout', { token })).status,
           200,
         );
-      const stopped = await running;
+      const { response: stopped, stoppedAt } = await running;
       if (operation === 'legacy-deadline') {
         assert.ok(
           stopped.status === 504 || stopped.json().errors?.length,
           'deadline never publishes generated text',
         );
-        // Timers can fire fractionally before the precise clock boundary.
-        // Verify the admitted budget itself, not when the response arrived.
+        // Verify the admitted budget independently of response timing.
         assert.ok(browserExecution, 'browser request has execution controls');
         assert.ok(browserExecution.deadline >= requestedAt + 1500);
         assert.ok(browserExecution.deadline <= admittedAt + 1500);
@@ -999,6 +998,13 @@ for (const operation of ['smart-search', 'legacy-logout', 'legacy-deadline'])
           'same shortened budget reaches the model',
         );
         assert.equal(runningOptions.signal, browserExecution.signal);
+        // Allow timer granularity, but still catch substantially early failures.
+        // Record arrival above so intervening MCP calls cannot hide an early stop.
+        const earlyTimerToleranceMs = 25;
+        assert.ok(
+          stoppedAt >= browserExecution.deadline - earlyTimerToleranceMs,
+          'held request must run to within 25 ms of its deadline',
+        );
       } else {
         assert.ok(stopped.json().errors?.length);
         assert.equal(runningOptions.signal.aborted, true);
