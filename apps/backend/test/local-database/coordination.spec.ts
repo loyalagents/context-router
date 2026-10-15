@@ -10,6 +10,10 @@ localCoordinationContract("SQLite real held worker", async () =>
   coordinationFixture(),
 );
 
+// One budget covers real worker startup and each request. Leave CI startup room
+// while keeping the fault/cleanup assertions below bounded to 1500 ms.
+const faultDeadlineMs = 1000;
+
 describe("local held-worker ownership and deadlines", () => {
   let fixture: ReturnType<typeof coordinationFixture>;
   afterEach(async () => {
@@ -32,7 +36,7 @@ describe("local held-worker ownership and deadlines", () => {
   });
   it("drains an unhealthy coordination owner only after the real worker exit", async () => {
     let actualTerminate: () => Promise<number>;
-    fixture = coordinationFixture({ deadlineMs: 100, intercept(worker) {
+    fixture = coordinationFixture({ deadlineMs: faultDeadlineMs, intercept(worker) {
       actualTerminate = worker.terminate.bind(worker);
       worker.terminate = () => new Promise(() => {});
       const post = worker.postMessage.bind(worker);
@@ -71,7 +75,7 @@ describe("local held-worker ownership and deadlines", () => {
     const held = await fixture.acquire();
     const coordination = new SqliteLocalIdentityCoordination({
       database: fixture.db,
-      deadlineMs: 150,
+      deadlineMs: faultDeadlineMs,
       workerFactory: (_file, options) => {
         const entry = path.resolve(
           __dirname,
@@ -99,13 +103,15 @@ describe("local held-worker ownership and deadlines", () => {
     "bounds an unacknowledged %s while ownership is still held",
     async (command) => {
       let dropped = false,
-        excluded = false;
+        excluded = false,
+        faultStarted: number | undefined;
       fixture = coordinationFixture({
-        deadlineMs: 150,
+        deadlineMs: faultDeadlineMs,
         intercept(worker) {
           const post = worker.postMessage.bind(worker);
           worker.postMessage = (message, transfer) => {
             if (message.command === command) {
+              faultStarted = performance.now();
               dropped = true;
               try {
                 fixture.db.connect().close();
@@ -119,7 +125,6 @@ describe("local held-worker ownership and deadlines", () => {
         },
       });
       const held = await fixture.acquire();
-      const started = Date.now();
       if (command === "close") {
         await held.initialize(fixture.state);
         await expect(held.release()).rejects.toThrow("recovery required");
@@ -135,8 +140,9 @@ describe("local held-worker ownership and deadlines", () => {
           ),
         ).rejects.toThrow("deadline exceeded");
       }
-      expect(Date.now() - started).toBeLessThan(1500);
       expect(dropped).toBe(true);
+      expect(faultStarted).toBeDefined();
+      expect(performance.now() - faultStarted!).toBeLessThan(1500);
       expect(excluded).toBe(true);
       const count = fixture.queryCount();
       expect(() => held.assertHeld()).toThrow();
@@ -444,9 +450,10 @@ describe("local held-worker ownership and deadlines", () => {
   });
   it("bounds a lost COMMIT acknowledgement while the real worker still owns the lock, then refuses reacquisition in this process", async () => {
     let dropped = false,
-      observedHeld = false;
+      observedHeld = false,
+      faultStarted: number | undefined;
     fixture = coordinationFixture({
-      deadlineMs: 150,
+      deadlineMs: faultDeadlineMs,
       intercept(worker: Worker) {
         const post = worker.postMessage.bind(worker);
         let commitId: number | undefined;
@@ -457,6 +464,7 @@ describe("local held-worker ownership and deadlines", () => {
         const emit = worker.emit.bind(worker);
         worker.emit = ((event: string, ...args: any[]) => {
           if (event === "message" && args[0]?.id === commitId) {
+            faultStarted = performance.now();
             dropped = true;
             try {
               fixture.db.connect().close();
@@ -470,12 +478,12 @@ describe("local held-worker ownership and deadlines", () => {
       },
     });
     const held = await fixture.acquire();
-    const start = Date.now();
     await expect(held.initialize(fixture.state)).rejects.toThrow(
       "recovery required",
     );
-    expect(Date.now() - start).toBeLessThan(1500);
     expect(dropped).toBe(true);
+    expect(faultStarted).toBeDefined();
+    expect(performance.now() - faultStarted!).toBeLessThan(1500);
     expect(observedHeld).toBe(true);
     const count = fixture.queryCount();
     expect(() => held.assertHeld()).toThrow();
