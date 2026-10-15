@@ -1,7 +1,7 @@
 # In-app demo mode
 
 Status: **reduced scope and implementation approved by the user on 2026-10-14**.
-Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code is implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Both complete-diff reviews and automated qualification passed through `5dfadcf`; exact receipts are in the PR. The user then requested assessment and useful fixes from an external static review before hands-on testing. This bounded correction round targets a source/artifact-bound isolated human trial after affected checks/reviews; renewed final qualification follows the human-feedback round. Live Codex and Claude Code demo connectivity is now user-confirmed; remaining human acceptance is pending, as scoped below.
+Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code is implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Both complete-diff reviews and automated qualification passed through `5dfadcf`; exact receipts are in the PR. The user then requested assessment and useful fixes from an external static review before hands-on testing. This bounded correction round targets a source/artifact-bound isolated human trial after affected checks/reviews; renewed final qualification follows the human-feedback round. Live Codex and Claude Code demo connectivity, followed by an approved Codex change, fresh Claude Code read and Audit History inspection, are user-confirmed; remaining human acceptance is pending, as scoped below.
 The subsequent hands-on trial reported the menu disappearing after demo entry;
 the bounded compact-label correction and retest scope are recorded below.
 The user then explicitly required the normal dashboard UI in demo, with its
@@ -68,9 +68,13 @@ Controls are disabled during a transition; Quit remains available and requests
 orderly cancellation. Do not expose browser mode/reset commands or a general
 profile picker.
 
-**Demo setup…** opens a small read-only native instruction panel, showing the
-active historical sample, generation, endpoint, A/B/C roles and exact commands
-for the verified installed helper. Text is selectable, with Copy selected command for one nonsecret command line at a time. It neither launches an assistant nor prepares/
+**Demo setup…** opens a small native instruction panel with separate Codex A,
+Claude Code B and Claude Desktop C groups. Dedicated Copy buttons provide each
+exact nonsecret command without selecting text; only Done closes the panel.
+Copy success/failure is visible, and the endpoint/runtime details are secondary.
+Commands retain their captured root/store/generation/endpoint; unavailable or
+changed runtime state refuses copy with reopen guidance, never silent rebinding.
+It neither launches an assistant nor prepares/
 applies Desktop configuration. The dashboard demo guide directs presenters to
 this panel. This keeps setup discoverable without adding native executable
 settings, assistant process coordination or a Desktop configuration editor.
@@ -1086,3 +1090,38 @@ Claude Desktop C and UI/menu acceptance remain unconfirmed by this statement.
 Historical automated evidence retains its original scope and source/artifact
 bindings. This factual acceptance update changes no product inputs, performs no
 live action and does not complete final qualification.
+
+### Approved Demo setup copy-button correction (2026-10-14)
+
+The user subsequently said “That all works well” about the immediately preceding
+Codex approved change → fresh Claude Code read → Audit History sequence. Record
+that sequence as user-confirmed, without inferring permission-denial, restart,
+reset, Desktop C or complete UI/menu acceptance. The exact artifact/version used
+is still not independently confirmed.
+
+The user then reported that the Demo setup command was hard to find and could
+not be copied, and requested a cleaner panel. The affected plan review approved
+one compact NSAlert with separate client groups, dedicated Copy sign-in/launch
+buttons for A/B, an obvious Desktop C Copy setup command button and secondary Copy status.
+Desktop guidance remains prepare in Terminal → review proposal → close Desktop
+→ run the printed apply command. Copy performs no helper or provider action;
+only Done dismisses the panel. Existing command quoting and all bindings remain.
+Copy refuses unavailable, stopped, stopping, broken, quitting or changed context
+before touching the pasteboard and asks the user to reopen the panel.
+
+Use a compiled owned AppKit fixture with actual NSButton target/action dispatch,
+a uniquely named real test pasteboard, visible success/failure, repeated copy,
+stale-context refusal, quoted paths and a bounded modal loop closed through Done.
+It must not register a status item, start a guardian or touch the system clipboard.
+A synthetic panel-only PNG supports visual review; it is not a screenshot of the
+user's app or proof of the user's mouse/clipboard workflow. Run affected native
+menu/unlock/restart tests and docs checks, obtain affected review, then build one
+sealed source-bound trial for the named copy-button retest. No domain, provider,
+lifecycle or current no-model policy changes; preserve the running user trial.
+The failure-first fixture rejected the old selection-only panel. Four focused
+native cases passed, including real button dispatch/private-pasteboard copying,
+modal persistence, copy failure, eleven stale/unavailable cases and existing
+menu/unlock/restart behavior. The first real pasteboard attempt was sandbox-denied;
+the same owned fixture passed with required macOS service access. No system
+clipboard contents were read or changed. **Targeted checks passed; final
+validation pending.** Final broad qualification follows the agreed feedback round.

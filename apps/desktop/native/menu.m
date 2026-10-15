@@ -6,13 +6,6 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
-static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
-  if(selected.location==NSNotFound||NSMaxRange(selected)>text.length)return nil;
-  NSRange line=[text lineRangeForRange:selected];
-  NSString *value=[[text substringWithRange:line] stringByTrimmingCharactersInSet:NSCharacterSet.newlineCharacterSet];
-  if([value containsString:@"\n"]||[value containsString:@"\r"]||![value hasPrefix:@"'"]||![value containsString:@"/Contents/MacOS/context-router' demo --root "])return nil;
-  return value;
-}
 @interface CRMenu : NSObject <NSApplicationDelegate>
 - (instancetype)initWithBundle:(NSString *)bundle root:(NSString *)root;
 - (instancetype)initWithBundle:(NSString *)bundle root:(NSString *)root uiPort:(NSInteger)ui mcpPort:(NSInteger)mcp demoPort:(NSInteger)demo;
@@ -22,6 +15,7 @@ static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
   NSInteger _uiPort,_mcpPort,_demoPort;BOOL _preparingDemo,_demoFailed,_demoUnavailable;
   NSStatusItem *_status;NSMenuItem *_label;NSMutableDictionary<NSString *,NSMenuItem *> *_items;
   NSTask *_guardian;NSPipe *_input,*_output;CRWriteQueue *_commands;CRFrames *_frames;NSTimer *_timer;
+  NSDictionary *_demoCopyBinding;NSArray<NSString *> *_demoCopyCommands,*_demoCopyNames;NSTextField *_demoCopyFeedback;
   BOOL _ready,_stopping,_quitting,_stopped,_broken,_download,_cancelPending,_sleepInvalidated,_openOnReady,_exitObserved;double _unlockUntil;
 }
 - (instancetype)initWithBundle:(NSString *)bundle root:(NSString *)root {
@@ -171,23 +165,52 @@ static NSString *CRSelectedDemoCommand(NSString *text,NSRange selected){
 - (void)cancelDemo:(id)sender {(void)sender;_stopping=YES;[self send:@"cancel-demo"];[self update];}
 - (void)returnPrevious:(id)sender {(void)sender;if(_demoFailed){_stopping=YES;_openOnReady=YES;[self send:@"return-previous"];}[self update];}
 - (void)retryDemo:(id)sender {(void)sender;if(_demoFailed){NSAlert *a=[NSAlert new];a.messageText=@"Prepare a fresh demo candidate?";a.informativeText=@"The failed candidate remains retained. This starts a new sample import with fresh identity and credentials.";[a addButtonWithTitle:@"Retry"];[a addButtonWithTitle:@"Cancel"];if([a runModal]==NSAlertFirstButtonReturn){_stopping=YES;[self send:@"retry-demo"];}}[self update];}
-- (NSString *)demoSetupCommands {
+- (NSArray<NSString *> *)demoSetupCommands {
   NSString *(^quote)(NSString *)=^NSString *(NSString *v){return [NSString stringWithFormat:@"'%@'",[v stringByReplacingOccurrencesOfString:@"'" withString:@"'\"'\"'"]];};
   NSString *base=[NSString stringWithFormat:@"%@ demo --root %@ --store %@ --generation %@ --endpoint %@",quote([_bundle stringByAppendingPathComponent:@"Contents/MacOS/context-router"]),quote(_root),quote(_storeId),quote(_generation),quote(_mcpOrigin)];
-  NSString *commands=[NSString stringWithFormat:@"Historical sample data · 2024–2025\nEndpoint: %@\nRuntime: %@\nAgent A: Codex writer · Agent B: Claude Code subscription reader · Agent C: Desktop reader\nReaders exclude health and finance\n\n%@ status\n%@ login A\n%@ launch A\n%@ login B --client claude --auth subscription\n%@ launch B --client claude --auth subscription\n%@ desktop prepare\n\nStart fresh conversations. These commands require the current demo runtime. Run verify only after quitting Context Router. Desktop apply is a separate explicit command shown by prepare.",_mcpOrigin,_generation,base,base,base,base,base,base];
+  NSMutableArray *commands=[NSMutableArray array];
+  for(NSString *action in @[@"login A",@"launch A",@"login B --client claude --auth subscription",@"launch B --client claude --auth subscription",@"desktop prepare",@"status"])[commands addObject:[NSString stringWithFormat:@"%@ %@",base,action]];
   return commands;
 }
+- (NSDictionary *)demoSetupContext {
+  if(!_ready||_stopped||_stopping||_broken||_quitting||!_guardian.running||![_mode isEqual:@"demo"]||!_root||!_storeId||!_generation||!_mcpOrigin)return nil;
+  return @{@"root":_root,@"store":_storeId,@"generation":_generation,@"endpoint":_mcpOrigin};
+}
+- (NSPasteboard *)demoSetupPasteboard {return NSPasteboard.generalPasteboard;}
+- (void)copyDemoCommand:(NSButton *)sender {
+  NSDictionary *current=[self demoSetupContext];
+  if(!current||![_demoCopyBinding isEqualToDictionary:current]){_demoCopyFeedback.stringValue=@"Nothing copied. Reopen Demo setup for current commands.";return;}
+  NSInteger index=sender.tag;if(index<0||index>=(NSInteger)_demoCopyCommands.count)return;
+  BOOL copied=NO;@try{NSPasteboard *pasteboard=[self demoSetupPasteboard];copied=[pasteboard clearContents]>=0&&[pasteboard setString:_demoCopyCommands[index] forType:NSPasteboardTypeString];}@catch(NSException *error){(void)error;}
+  _demoCopyFeedback.stringValue=copied?[NSString stringWithFormat:@"Copied %@. Paste it into Terminal.",_demoCopyNames[index]]:@"Could not copy. Try the Copy button again.";
+}
+- (NSAlert *)demoSetupAlert {
+  _demoCopyBinding=[self demoSetupContext];if(!_demoCopyBinding)return nil;
+  _demoCopyCommands=[self demoSetupCommands];_demoCopyNames=@[@"Codex A sign-in",@"Codex A launch",@"Claude Code B sign-in",@"Claude Code B launch",@"Claude Desktop C setup",@"Demo status"];
+  NSAlert *alert=[NSAlert new];alert.messageText=@"Demo setup";alert.informativeText=@"Copy one command, then paste it into Terminal. Start a fresh conversation after connecting.";
+  NSView *view=[[NSView alloc] initWithFrame:NSMakeRect(0,0,600,454)];
+  NSTextField *(^label)(NSView *,NSString *,NSRect)=^NSTextField *(NSView *parent,NSString *text,NSRect frame){NSTextField *field=[NSTextField labelWithString:text];field.frame=frame;field.font=[NSFont systemFontOfSize:12];field.lineBreakMode=NSLineBreakByWordWrapping;field.selectable=YES;[parent addSubview:field];return field;};
+  NSView *(^group)(NSString *,NSRect)=^NSView *(NSString *title,NSRect frame){NSBox *box=[[NSBox alloc] initWithFrame:frame];box.title=title;box.titleFont=[NSFont boldSystemFontOfSize:13];[view addSubview:box];return box.contentView;};
+  NSArray *ids=@[@"demo-copy-login-a",@"demo-copy-launch-a",@"demo-copy-login-b",@"demo-copy-launch-b",@"demo-copy-desktop",@"demo-copy-status"];
+  void (^button)(NSView *,NSString *,NSInteger,NSRect)=^(NSView *parent,NSString *title,NSInteger index,NSRect frame){NSButton *copy=[NSButton buttonWithTitle:title target:self action:@selector(copyDemoCommand:)];copy.frame=frame;copy.tag=index;copy.identifier=ids[index];copy.accessibilityLabel=[@"Copy " stringByAppendingString:self->_demoCopyNames[index]];copy.toolTip=self->_demoCopyCommands[index];[parent addSubview:copy];};
+  NSView *a=group(@"Codex · Agent A",NSMakeRect(0,348,600,100));
+  label(a,@"Writer · approve each intended change",NSMakeRect(8,43,560,20));button(a,@"Copy sign-in",0,NSMakeRect(4,4,155,32));button(a,@"Copy launch",1,NSMakeRect(170,4,155,32));
+  NSView *b=group(@"Claude Code · Agent B",NSMakeRect(0,238,600,100));
+  label(b,@"Subscription reader · health and finance excluded",NSMakeRect(8,43,560,20));button(b,@"Copy sign-in",2,NSMakeRect(4,4,155,32));button(b,@"Copy launch",3,NSMakeRect(170,4,155,32));
+  NSView *c=group(@"Claude Desktop · Agent C",NSMakeRect(0,94,600,134));
+  label(c,@"Reader · health and finance excluded",NSMakeRect(8,77,560,20));
+  label(c,@"1. Run setup in Terminal.  2. Review its proposal.\n3. Close Desktop, then run the printed apply command.",NSMakeRect(8,38,560,36));button(c,@"Copy setup command",4,NSMakeRect(4,2,200,32));
+  button(view,@"Copy status",5,NSMakeRect(0,52,140,28));
+  label(view,@"Checks whether demo mode is running.",NSMakeRect(152,56,445,20));
+  NSTextField *endpoint=label(view,[NSString stringWithFormat:@"Endpoint: %@ · historical sample 2024–2025",_mcpOrigin],NSMakeRect(0,29,600,18));endpoint.font=[NSFont systemFontOfSize:11];endpoint.textColor=NSColor.secondaryLabelColor;
+  endpoint.toolTip=[NSString stringWithFormat:@"Store: %@\nRuntime: %@",_storeId,_generation];
+  _demoCopyFeedback=label(view,@"Choose a Copy button, then paste into Terminal.",NSMakeRect(0,0,600,22));_demoCopyFeedback.identifier=@"demo-copy-feedback";
+  alert.accessoryView=view;[alert addButtonWithTitle:@"Done"];return alert;
+}
 - (void)demoSetup:(id)sender {
-  (void)sender;if(!_ready||![_mode isEqual:@"demo"]||!_storeId)return;
-  NSString *commands=[self demoSetupCommands];
-  NSAlert *alert=[NSAlert new];alert.messageText=@"Demo setup";alert.informativeText=@"Select text within one command line, then copy that command. Run each intended action separately in Terminal.";
-  NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(0,0,620,300)];scroll.hasVerticalScroller=YES;
-  NSTextView *text=[[NSTextView alloc] initWithFrame:scroll.bounds];text.string=commands;text.editable=NO;text.selectable=YES;text.font=[NSFont monospacedSystemFontOfSize:11 weight:NSFontWeightRegular];scroll.documentView=text;alert.accessoryView=scroll;
-  [alert addButtonWithTitle:@"Copy selected command"];[alert addButtonWithTitle:@"Done"];
-  while([alert runModal]==NSAlertFirstButtonReturn){
-    NSString *selected=CRSelectedDemoCommand(commands,text.selectedRange);
-    if(!selected){alert.informativeText=@"Nothing copied. Select text within one command line, then choose Copy selected command.";continue;}
-    [NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:selected forType:NSPasteboardTypeString];break;
+  (void)sender;NSAlert *alert=[self demoSetupAlert];if(!alert)return;
+  @try{[alert runModal];}@finally{
+    _demoCopyBinding=nil;_demoCopyCommands=nil;_demoCopyNames=nil;_demoCopyFeedback=nil;
   }
 }
 - (void)sleepWake:(NSNotification *)notification {(void)notification;_sleepInvalidated=YES;if(_ready&&!_stopping){[self send:@"model-unavailable"];_label.title=@"Dashboard ready · restart required after sleep";}}

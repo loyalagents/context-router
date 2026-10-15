@@ -101,8 +101,15 @@ return requires an available personal port. Uncertain ownership, pending
 operations, malformed installation metadata and unacknowledged partial startup
 remain refused and retained. Do not clear journals or profile guards.
 
-**Demo setup…** shows selectable commands with the current store, native runtime
-generation and actual MCP endpoint. Select one command line and choose **Copy selected command**, then paste it into Terminal. Run each intended action separately. They use
+**Demo setup…** groups **Codex · Agent A**, **Claude Code · Agent B** and
+**Claude Desktop · Agent C** separately. Use a group's **Copy sign-in** or
+**Copy launch** button, or Desktop's **Copy setup command**, then paste the command into
+Terminal. No text selection is needed. Copy reports success/failure and keeps the
+panel open; only **Done** closes it. Buttons only copy, never run commands.
+Each command retains the store, native runtime generation and endpoint captured
+when the panel opened. If the runtime stops or changes, copying refuses before
+touching the clipboard; reopen **Demo setup…** for current commands.
+Run each intended action separately. They use
 the bundled runtime and need no checkout, pnpm, handwritten MCP config or copied
 tokens. `status` validates native readiness and immutable receipts only; it does
 not assert unchanged current memories/grants. Inspect actual state in the app.
@@ -123,7 +130,10 @@ old demo/personal credentials. Optional `launch B --client codex` and Claude A/B
 `--auth subscription` or `--auth api-key` use the same guards. API-key launch
 requires the explicit `CR_DEMO_ANTHROPIC_API_KEY` environment variable; inherited
 ordinary provider variables are not adopted. Provider sessions may send retrieved
-sample context off-device. Human provider acceptance of this candidate is pending.
+sample context off-device. The user has confirmed live A/B connectivity and an
+approved Codex change → fresh Claude Code read → Audit History sequence; the
+artifact/version was not independently confirmed. Remaining human end-to-end
+acceptance, including permission denials, restart/reset and Desktop C, is pending.
 
 Discovery accepts the exact qualified native arm64 foreground CLI, rejecting
 arbitrary shell/Node/npm wrappers. Use `--executable /absolute/native/client`
@@ -155,7 +165,8 @@ strict. This trusts local privileged admins and is not publisher authentication
 or protection against an administrator changing a binary at execution time.
 Generic source/config/proposal paths never use that exception.
 
-For Agent C, `desktop prepare` validates the active generation and writes a
+For Agent C, **Copy setup command** copies `desktop prepare`. Run it in Terminal to
+validate the active generation and write a
 private immutable bundled-Node/bridge snapshot and review proposal. It prints the
 config path, entry, generation/endpoint and exact `applyCommand`; no config is
 changed. Review it, close Desktop and config editors, then explicitly run that
