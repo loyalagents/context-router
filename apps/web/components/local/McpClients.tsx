@@ -12,7 +12,7 @@ type Client = {
   generation: number;
   revoked: boolean;
   ruleCount?: number | null;
-  summary?: PermissionSummary | null;
+  summary?: Omit<PermissionSummary, 'scope'> | null;
   policy: {
     capabilities: string[];
     targets: string[];
@@ -374,7 +374,7 @@ export default function McpClients() {
           <button type="button" className={button} disabled={busy} onClick={()=>{cancelledRename.current=renameDraft.client.id;setRenameDraft(null);setRenameError('');}}>Cancel rename</button>
         </div>
       </form>}
-      {editing&&<McpPermissionsEditor key={editing.id} client={editing} onChanged={invalidate} onClose={()=>{const id=editing.id;setEditing(null);queueMicrotask(()=>editButtons.current.get(id)?.focus());}}/>}
+      {editing&&<McpPermissionsEditor key={editing.id} client={editing} onChanged={()=>{channel.current?.postMessage('invalidate');invalidate();}} onClose={()=>{const id=editing.id;setEditing(null);queueMicrotask(()=>editButtons.current.get(id)?.focus());}}/>}
       <ul className="space-y-3">
         {items.map((client) => (
           <li key={client.id} className="rounded border p-4">

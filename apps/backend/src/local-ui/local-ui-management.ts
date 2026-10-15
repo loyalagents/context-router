@@ -76,8 +76,22 @@ export class LocalUiManagement {
       const items = [];
       for (const client of page.items) {
         const snapshot = this.credentials.editorSnapshot(client.id);
-        items.push({ ...snapshot.client, ruleCount: snapshot.status === 'AVAILABLE' ? snapshot.grants.length : null,
-          summary: snapshot.status === 'AVAILABLE' && snapshot.catalogStatus === 'AVAILABLE' ? await summarizePermissions(snapshot, this.credentials, this.principalId) : null });
+        const summary =
+          snapshot.status === 'AVAILABLE' && snapshot.catalogStatus === 'AVAILABLE'
+            ? await summarizePermissions(snapshot, this.credentials, this.principalId)
+            : null;
+        items.push({
+          ...snapshot.client,
+          ruleCount: snapshot.status === 'AVAILABLE' ? snapshot.grants.length : null,
+          // The card already carries policy.targets. Do not duplicate up to 64
+          // maximal targets per client inside the bounded 32-client response.
+          summary: summary && {
+            level: summary.level,
+            total: summary.total,
+            counts: summary.counts,
+            ruleCount: summary.ruleCount,
+          },
+        });
       }
       return { ...page, items };
     }

@@ -640,3 +640,115 @@ test(
     );
   },
 );
+
+for (const mode of ["confirmed", "committed-lost"])
+  test(
+    `permissions ${mode} settlement broadcasts to another window without focus or losing its draft and outcome`,
+    { timeout: 60000 },
+    async (t) => {
+      const f = await browserFixture(t),
+        client = clients(f)[0],
+        first = await open(f, client.id);
+      const second = await f.context.newPage();
+      second.setDefaultTimeout(5000);
+      const token = await f.page.evaluate(() =>
+        sessionStorage.getItem("context-router.browser-session.v1"),
+      );
+      await second.addInitScript(
+        (token) =>
+          sessionStorage.setItem("context-router.browser-session.v1", token),
+        token,
+      );
+      await second.goto(f.ready.origin + "/dashboard/permissions");
+      await second
+        .getByRole("button", {
+          name: "Edit permissions " + client.id,
+          exact: true,
+        })
+        .click();
+      const editor = second.getByRole("region", {
+        name: "Edit permissions",
+        exact: true,
+      });
+      await editor.getByLabel("Maximum value access").waitFor();
+      await second.route("**/api/local/mcp/save", (route) =>
+        route.abort("failed"),
+      );
+      await preview(editor);
+      await editor
+        .getByRole("button", { name: "Save permissions", exact: true })
+        .click();
+      await editor.getByText("Save not confirmed", { exact: true }).waitFor();
+      await editor
+        .getByText("Current saved authority", { exact: true })
+        .waitFor();
+      await second.unroute("**/api/local/mcp/save");
+      await editor
+        .getByLabel("Maximum value access")
+        .selectOption("Suggest changes");
+      await preview(editor);
+      assert.equal(
+        await editor
+          .getByRole("button", { name: "Save permissions", exact: true })
+          .isEnabled(),
+        true,
+      );
+      await second.evaluate(() => {
+        window.permissionsFocusEvents = 0;
+        window.addEventListener("focus", () => window.permissionsFocusEvents++);
+      });
+      let saves = 0;
+      await f.page.route("**/api/local/mcp/save", async (route) => {
+        saves++;
+        if (mode === "committed-lost") {
+          await route.fetch();
+          await route.abort("failed");
+        } else await route.continue();
+      });
+      await first
+        .getByRole("button", { name: "Read current permissions" })
+        .click();
+      await first
+        .getByText("Current saved authority", { exact: true })
+        .waitFor();
+      await first.getByLabel("Maximum value access").selectOption("Write");
+      await preview(first);
+      await first
+        .getByRole("button", { name: "Save permissions", exact: true })
+        .click();
+      await first
+        .getByText(
+          mode === "confirmed" ? "Permissions saved" : "Save not confirmed",
+          { exact: true },
+        )
+        .waitFor();
+      const card = second
+        .getByRole("listitem")
+        .filter({
+          has: second.getByRole("button", {
+            name: "Rename " + client.id,
+            exact: true,
+          }),
+        });
+      await card
+        .locator("strong")
+        .filter({ hasText: /^Write$/ })
+        .waitFor();
+      assert.equal(
+        await editor.getByLabel("Maximum value access").inputValue(),
+        "Suggest changes",
+      );
+      assert.equal(
+        await editor
+          .getByRole("button", { name: "Save permissions", exact: true })
+          .isEnabled(),
+        false,
+      );
+      await editor.getByText("Save not confirmed", { exact: true }).waitFor();
+      assert.equal(
+        await second.evaluate(() => window.permissionsFocusEvents),
+        0,
+      );
+      assert.equal(saves, 1);
+    },
+  );

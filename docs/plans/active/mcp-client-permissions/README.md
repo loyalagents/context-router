@@ -13,7 +13,7 @@
 | Planner | `/root/permissions_planner` | GPT-6 Astra/xhigh | explicit spawn API accepted; execution internals unobservable |
 | Independent plan reviewer | `/root/permissions_plan_review` | GPT-6 Astra/xhigh | explicit spawn API accepted; execution internals unobservable |
 | Sole implementer | `/root/permissions_implementer` | GPT-6 Astra/high | explicit spawn API accepted; execution internals unobservable |
-| Independent complete-diff reviewer | assigned after freeze | GPT-6 Astra/xhigh | pending |
+| Independent complete-diff reviewer | `/root/permissions_implementation_review` | GPT-6 Astra/xhigh | explicit spawn API accepted; execution internals unobservable |
 
 The independent plan review approved implementation with the amendments below.
 The coordinator showed the compact UI preview and presented the finalization
@@ -185,3 +185,27 @@ Keep final receipts/log links in PR/external evidence, not pass-only commits.
 - Final validation remains pending: frozen full migration gate, exact-head CI,
   complete-diff independent review, isolated Mac package/seal, installed Save and
   restart/CLI compatibility, and full installed personal/demo cycle. No merge.
+
+## Complete-Diff Review Correction Batch
+
+The independent reviewer requested changes on `3a3db649ce618bedf9c21a17d4b75a8b801d663d`
+for two P2 findings, accepted by the coordinator. The rest of the reviewed scope
+carries forward subject to the focused delta review and renewed final gates.
+
+- The enriched client list duplicated maximum targets in `summary.scope`, exceeding
+  the 512 KiB response bound for 32 valid maximal policies. A boundary regression
+  failed first. The card projection now omits that redundant scope while retaining
+  every client and its complete policy, counts and effective summary.
+- Permissions Save settlement refreshed only its own window. Two authenticated
+  window regressions failed first for confirmed and committed-lost responses. The
+  existing management broadcast now publishes settlement, refreshing other cards
+  and invalidating their previews while preserving drafts/outcomes without retries.
+- The prior frozen gate passed contract, documentation and backend unit/build
+  phases, then was deliberately interrupted during database integration for this
+  correction batch. Exit 130 is not a gate pass. Its lifecycle receipt confirms the
+  owned database/container were removed; diagnostics remain at
+  `/private/var/folders/pn/rnjt7b1d5xb4pckyss2s55qc0000gn/T/context-router-lmbg-7SVDv0`.
+  Remote CI was not cancelled. No package was built from the superseded candidate.
+- Regression logs: `review-list-red.log` and `review-broadcast-red.log` under the
+  task evidence root. Corrected-candidate focused results, review disposition and
+  final gate/package/installed/CI receipts will be recorded in PR #187.

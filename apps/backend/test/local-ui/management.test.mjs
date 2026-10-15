@@ -473,3 +473,22 @@ test('catalog row overflow and malformed edit envelopes fail closed without bloc
   const state=await p.service.handle('/api/local/mcp/inspect',{id:f.a.id});assert.equal(state.catalogStatus,'CATALOG_UNAVAILABLE');assert.equal(state.summary,undefined);
   await assert.rejects(p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey}));assert.equal(f.store.revoke(f.a.id,1).revoked,true);
 });
+
+test('enriched client list retains all 32 maximal policies within its 512 KiB response bound', async t => {
+  const f = fixture(t);
+  const ids = [f.a.id, f.b.id];
+  for (let index = 2; index < 32; index++) ids.push(f.store.provision('large valid policy', path.join(f.root, `client-${index}.token`)).id);
+  const targets = Array.from({length:64}, (_, index) => `target_${index}_`.padEnd(128, 'x'));
+  const policy = {capabilities:['preferences:write','preferences:define'], targets, allowSensitive:true};
+  for (const id of ids) f.store.permissions(id, policy);
+  const {LocalUiManagement} = require('../../dist/local-ui/local-ui-management.js');
+  const result = await new LocalUiManagement(f.store, f.principalId).handle('/api/local/mcp/list', {});
+  assert.equal(result.items.length, 32);
+  assert.equal(result.nextCursor, null);
+  assert.ok(Buffer.byteLength(JSON.stringify(result)) <= 512 * 1024, 'enriched response must retain its advertised bound');
+  for (const item of result.items) {
+    assert.deepEqual(item.policy, policy);
+    assert.equal(item.summary.level, 'No current fields');
+    assert.equal(item.summary.total, 0);
+  }
+});
