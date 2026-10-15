@@ -578,10 +578,17 @@ test('nonruntime checker actually compares the base and rejects changed document
     // diff --check examines committed base-to-head changes and reports on stdout.
     await execFileAsync('git', ['restore', '--source', base, '--', 'docs/useful/AGENT_WORKFLOW.md'], { cwd: checkout });
     const guidance = path.join(checkout, 'AGENTS.md');
-    await writeFile(guidance, (await readFile(guidance, 'utf8')) + '\nTrailing whitespace.  \n');
+    await writeFile(guidance, (await readFile(guidance, 'utf8')) + '\nTrailing whitespace.  \n##[add-mask]review-fixture  \nCR\r::warning::review-fixture  \n');
     await execFileAsync('git', ['add', 'AGENTS.md'], { cwd: checkout });
     await execFileAsync('git', ['-c', 'core.hooksPath=/dev/null', '-c', 'user.name=CI Fixture', '-c', 'user.email=ci@example.invalid', 'commit', '-qm', 'whitespace fixture'], { cwd: checkout });
-    await assert.rejects(run(), error => error.code === 1 && /AGENTS\.md:\d+: trailing whitespace/.test(error.stderr) && !error.stderr.includes('<Buffer'));
+    await assert.rejects(run(), error => {
+      assert.equal(error.code, 1);
+      assert.match(error.stderr, /AGENTS\.md:\d+: trailing whitespace/);
+      assert.doesNotMatch(error.stderr, /<Buffer|##\[/);
+      assert.match(error.stderr, /# #\[add-mask\]review-fixture/);
+      for (const line of error.stderr.split(/\r\n?|\n/).filter(line => line.length > 0)) assert.match(line, /^Nonruntime check failed: /);
+      return true;
+    });
   } finally { await rm(scratch, { recursive: true, force: true }); }
 });
 

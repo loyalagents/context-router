@@ -44,8 +44,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       .map(output => Buffer.isBuffer(output) ? output.toString('utf8') : typeof output === 'string' ? output : '')
       .filter(output => output.trim());
     // git diff --check reports locations on stdout, often with empty Buffer
-    // stderr. Prefix lines so repository text cannot become an Actions command.
-    for (const line of (streams.join('\n') || error.message).split(/\r?\n/)) console.error(`Nonruntime check failed: ${line}`);
+    // stderr. Prefix every CR/LF line for modern Actions commands and render
+    // legacy commands inert: the legacy parser accepts ##[ anywhere in a line.
+    for (const line of (streams.join('\n') || error.message).split(/\r\n?|\n/)) {
+      console.error(`Nonruntime check failed: ${line.replaceAll('##[', '# #[')}`);
+    }
     process.exitCode = 1;
   }
 }
