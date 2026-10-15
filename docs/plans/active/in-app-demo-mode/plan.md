@@ -1,14 +1,14 @@
 # In-app demo mode
 
 Status: **reduced scope and implementation approved by the user on 2026-10-14**.
-Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code is implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Both complete-diff reviews and automated qualification passed through `5dfadcf`; exact receipts are in the PR. The user then requested assessment and useful fixes from an external static review before hands-on testing. This bounded correction round targets a source/artifact-bound isolated human trial after affected checks/reviews; renewed final qualification follows the human-feedback round. Human acceptance remains pending.
+Both affected independent plan rechecks approved frozen design `40419393519379f54d9de25167d91a7d2937ea3676197556fe54a257024ce3ce`. Feature code is implemented in [draft PR #183](https://github.com/loyalagents/context-router/pull/183). Both complete-diff reviews and automated qualification passed through `5dfadcf`; exact receipts are in the PR. The user then requested assessment and useful fixes from an external static review before hands-on testing. This bounded correction round targets a source/artifact-bound isolated human trial after affected checks/reviews; renewed final qualification follows the human-feedback round. Live Codex and Claude Code demo connectivity is now user-confirmed; remaining human acceptance is pending, as scoped below.
 The subsequent hands-on trial reported the menu disappearing after demo entry;
 the bounded compact-label correction and retest scope are recorded below.
 The user then explicitly required the normal dashboard UI in demo, with its
 historical banner/data and only optional walkthrough help; that correction
 supersedes the earlier replacement-homepage provision below.
 One cohesive PR; the native assistant-control follow-up is tracked below for the
-next PR. General profiles remain future work. Focused evidence is recorded below; full final validation and human acceptance are pending.
+next PR. General profiles remain future work. Focused evidence is recorded below; full final validation and remaining human acceptance are pending.
 
 ## Outcome, ownership and starting evidence
 
@@ -1069,6 +1069,20 @@ keeps its original source/artifact binding and does not qualify this changed UI.
 
 Requested writer/affected-review settings remain Astra/xhigh; effective settings
 are unverified. The running human trial and durable root remain untouched.
-**Targeted checks passed; final validation pending.** Human UI/provider testing
+**Targeted checks passed; final validation pending.** Remaining human UI/provider scenarios
 and the agreed post-feedback final gates remain outstanding; no full migration
 gate or broad qualification is automatically repeated for this UI iteration.
+
+### User-confirmed live A/B connectivity (2026-10-14)
+
+The user reported: “I was able to test out connecting codex and claude code to
+the demo mode. It worked successfully”. This confirms successful live Codex and
+Claude Code demo connectivity only. The last trial handed off was built from
+`13556af32979cf98d7b3c0f6d10b888b8a0c6c80`; the report does not independently
+confirm the artifact/version used and is not attributed to that artifact.
+
+The full approved-write/fresh-read/denial/audit story, restart/reset behavior,
+Claude Desktop C and UI/menu acceptance remain unconfirmed by this statement.
+Historical automated evidence retains its original scope and source/artifact
+bindings. This factual acceptance update changes no product inputs, performs no
+live action and does not complete final qualification.
