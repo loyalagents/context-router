@@ -1,50 +1,82 @@
 #!/bin/bash
 
-# Dynamic script to print clean, accurate file structure
-# Excludes common noise directories while showing the actual project structure
+# One bounded renderer for macOS Bash 3.2 and Linux; no external tree dependency.
+set -eo pipefail
+export LC_ALL=C
+unset GLOBIGNORE
+shopt -s nullglob dotglob
 
-REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+usage() {
+  printf '%s\n' 'Usage: ./print-repo-structure.sh [--depth N]' \
+    'Print the repository layout (default depth: 4; N: 1-64, no leading zeros).' \
+    'Use --depth 6 for a deeper view, or --help for this message.'
+}
 
-echo "# Context Router - Project Structure"
-echo ""
-echo "\`\`\`"
-
-tree -I 'node_modules|dist|.next|build|coverage|.git|*.lock|.cache|.pnpm-store|.claude' \
-  -L 4 \
-  --dirsfirst \
-  -F \
-  --charset ascii \
-  "$REPO_ROOT" 2>/dev/null
-
-# Fallback if tree is not installed
-if [ $? -ne 0 ]; then
-  find "$REPO_ROOT" \
-    -not -path "*/node_modules/*" \
-    -not -path "*/.next/*" \
-    -not -path "*/dist/*" \
-    -not -path "*/dist" \
-    -not -path "*/.git/*" \
-    -not -path "*/coverage/*" \
-    -not -path "*/build/*" \
-    -not -path "*/.pnpm-store/*" \
-    -not -path "*/.pnpm-store" \
-    -not -path "*/.claude/*" \
-    -not -path "*/.claude" \
-    -not -name "*.lock" \
-    -not -name ".DS_Store" \
-    -print | sed -e "s;$REPO_ROOT;.;" | sort | sed -e 's;[^/]*/;|  ;g;s;|  \([^|]\);+--\1;'
+depth=4
+if [[ $# -eq 1 && $1 == --help ]]; then
+  usage
+  exit 0
+elif [[ $# -eq 2 && $1 == --depth ]]; then
+  depth=$2
+  if ! [[ $depth =~ ^[1-9][0-9]?$ && $depth -le 64 ]]; then
+    printf '%s\n' 'Error: depth must be an integer from 1 to 64 without leading zeros.' >&2
+    exit 2
+  fi
+elif [[ $# -ne 0 ]]; then
+  usage >&2
+  exit 2
 fi
 
-echo "\`\`\`"
-echo ""
-echo "## Key Directories"
-echo ""
-echo "- **apps/backend**: NestJS GraphQL API with Prisma ORM"
-echo "  - **src/modules**: Feature modules (user, preferences, etc.)"
-echo "  - **src/mcp**: Model Context Protocol integration"
-echo "  - **prisma**: Database schema and migrations"
-echo ""
-echo "- **apps/web**: Next.js frontend application"
-echo "  - **app**: Next.js App Router pages and components"
-echo ""
-echo "- Root level contains Docker config, environment templates, and utility scripts"
+script_directory=.
+if [[ ${BASH_SOURCE[0]} == */* ]]; then
+  script_directory=${BASH_SOURCE[0]%/*}
+fi
+REPO_ROOT=$(CDPATH= cd -- "$script_directory" && pwd -P)
+
+excluded() {
+  case "$1" in
+    node_modules|dist|.next|build|coverage|.git|*.lock|.cache|.pnpm-store|.claude|.DS_Store)
+      return 0 ;;
+  esac
+  return 1
+}
+
+render_directory() {
+  local directory=$1 prefix=$2 remaining=$3 entry name group suffix is_directory
+  if [[ ! -r $directory || ! -x $directory ]]; then
+    printf 'Error: cannot read or search directory: %s\n' "$directory" >&2
+    return 1
+  fi
+  local entries=("$directory"/*)
+  for group in directories files; do
+    for entry in "${entries[@]}"; do
+      name=${entry##*/}
+      if excluded "$name"; then continue; fi
+      is_directory=false
+      suffix=
+      if [[ -L $entry ]]; then
+        suffix=@
+      elif [[ -d $entry ]]; then
+        is_directory=true
+        suffix=/
+      elif [[ -f $entry && -x $entry ]]; then
+        suffix='*'
+      fi
+      if [[ $group == directories && $is_directory == false ]] ||
+         [[ $group == files && $is_directory == true ]]; then continue; fi
+      printf '%s+--%s%s\n' "$prefix" "$name" "$suffix"
+      if [[ $is_directory == true && $remaining -gt 1 ]]; then
+        render_directory "$entry" "$prefix|  " "$((remaining - 1))"
+      fi
+    done
+  done
+}
+
+printf '# Context Router - Project Structure\n\nDepth: %s (use --depth N to change).\n\n```\n.\n' "$depth"
+render_directory "$REPO_ROOT" '' "$depth"
+printf '%s\n' '```' '' '## Key Directories' '' \
+  '- **apps/backend**: NestJS GraphQL API, Prisma storage, and MCP' \
+  '- **apps/web**: Next.js dashboard and support routes' \
+  '- **apps/desktop**: native Mac menu/guardian and installed-app packaging' \
+  '- **docs**: current references, runbooks, and work plans' \
+  '- **scripts**: repository validation and development utilities'
