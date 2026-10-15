@@ -171,3 +171,29 @@ Mutation access-log metadata is sanitized. It stores operation, target slug when
 - Static target rules with namespace matching are rejected at startup.
 - Grants are slug-based today, so a slug grant applies to both global and user-owned definitions with the same slug.
 - Setup details belong in `docs/useful/MCP_LOCAL_SETUP.md`, not here.
+
+## Local Human Permissions Administration
+
+The authenticated local browser can edit an instance's maximum policy and a bounded
+set of explicit grant edits atomically. Detached preflight uses the same MCP
+capability, hierarchy, sensitivity and permission-grant evaluators. A complete
+content-based authority revision plus complete catalog metadata revision is checked
+inside BEGIN IMMEDIATE; browser admission is revalidated immediately before the
+first write, after async evaluation. Commit acknowledgement returns the resulting
+revision. Client IDs, names, credential digests/generations, untouched rule IDs,
+identity, history and attribution remain intact.
+
+An exact preview checksum binds the validated proposed policy and sorted edits to
+those revisions. It is not authority. New ALLOWs must fit the final maximum;
+unchanged inert rules survive reductions. Value presets write READ/SUGGEST/WRITE
+explicitly and preserve descendant exceptions and DEFINE. No matching rule still
+uses the maximum. Current effective summaries cover complete active metadata in
+scope; future-prefix and archived-value widening is separately disclosed. Corrupt
+or oversized projections disable editing without disabling terminal revocation.
+
+CLI policy/grant/rotation/revoke compare complete content atomically too; legacy
+generation-only revoke remains compatible. Exact restored content can match after
+A→B→A; revoked clients never revive. Already admitted operations retain their prior
+completion contract. Hosted GraphQL managed-client validation, MCP credential
+separation and reset/grant-clearing boundaries remain unchanged. No MCP tool can
+expand its own maximum. See [dashboard behavior](../useful/LOCAL_UI.md).

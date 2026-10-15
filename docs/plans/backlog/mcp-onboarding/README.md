@@ -18,12 +18,13 @@ slice. This is product work after the completed migration, not another numbered 
 Step 07 provides CLI-managed, independently revocable client instances over
 loopback HTTP. Merged Step 08 reuses the dashboard for listing those
 instances, explaining effective authority, editing narrowing grants and
-revoking access (discussion option B). Credential issuance, rotation and
-maximum-policy changes remain CLI operations; Step 09 packages that supported
-manual administration path without activating full onboarding.
+revoking access (discussion option B). The permissions editor now adds maximum-policy
+and grant editing in one previewed atomic Save. Credential issuance and rotation
+remain CLI operations; Step 09 packages that supported manual administration path
+without activating full onboarding.
 
-Full onboarding (option C) would add UI creation, maximum-policy editing,
-rotation and secure one-time credential delivery with client-specific setup
+Full onboarding (option C) would add UI creation, rotation and secure one-time
+credential delivery with client-specific setup
 guidance. This can remove terminal use for Context Router's credential tasks;
 it does not automatically eliminate terminal use required by a third-party CLI.
 

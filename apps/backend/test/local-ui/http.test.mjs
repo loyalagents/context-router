@@ -1078,3 +1078,54 @@ test('runtime presentation is authenticated and source launches do not claim nat
   assert.deepEqual(result.json().runtime,{mode:'personal',launcher:'terminal'});
   assert.equal((await f.request('/api/local/capabilities',{token,body:{mode:'demo'}})).status,400);
 });
+
+test('permissions endpoints are strict human-only local browser administration and return commit revision',async t=>{
+  const f=await fixture(t),{token}=await f.unlock();
+  const clients=(await f.request('/api/local/mcp/list',{token})).json().items;
+  const id=clients[0].id;
+  const inspect=(await f.request('/api/local/mcp/inspect',{token,body:{id}})).json();
+  const body={id,generation:1,revision:inspect.revision,catalogRevision:inspect.catalogRevision,policy:{capabilities:['preferences:write'],targets:['profile.*'],allowSensitive:false},edits:[]};
+  for(const route of ['/api/local/mcp/targets','/api/local/mcp/preview','/api/local/mcp/save']){
+    for(const wrong of [undefined,f.identity.credential,f.mcpToken])assert.equal((await f.request(route,{token:wrong,body})).status,401);
+    assert.equal((await f.request(route,{token,method:'GET'})).status,405);
+    assert.equal((await f.request(route,{token,body,headers:{origin:'http://attacker.invalid'}})).status,403);
+    assert.equal((await f.request(route,{token,body,headers:{'x-context-router-ui':'0'}})).status,403);
+    assert.equal((await f.request(route,{token,body,headers:{'content-type':'text/plain'}})).status,415);
+    assert.equal((await f.request(route,{token,body:{...body,principalId:f.identity.principalId}})).status,400);
+    assert.equal((await f.request(route,{token,body:{blob:'x'.repeat(256*1024)}})).status,413);
+  }
+  const preview=await f.request('/api/local/mcp/preview',{token,body});assert.equal(preview.status,200,preview.text);
+  assert.equal((await f.request('/api/local/mcp/save',{token,body:{...body,previewKey:'0'.repeat(64)}})).status,409);
+  const saved=await f.request('/api/local/mcp/save',{token,body:{...body,previewKey:preview.json().previewKey}});
+  assert.equal(saved.status,200,saved.text);assert.equal(saved.json().changed,true);assert.match(saved.json().revision,/^[a-f0-9]{64}$/);
+  assert.equal((await f.request('/api/local/mcp/save',{token,body:{...body,previewKey:preview.json().previewKey}})).status,409);
+  for(const mutation of ['setPermissionGrant(input: {clientKey: "local:'+id+'", target: "*", action: READ, effect: ALLOW}) { id }','removePermissionGrant(clientKey: "local:'+id+'", target: "*", action: READ)']){
+    const response=await f.request('/graphql',{token,body:{query:'mutation { '+mutation+' }'}});assert.ok(response.json().errors);
+  }
+});
+
+for(const mode of ['logout','expiry','replacement'])test(`browser ${mode} during detached Save preflight cannot commit`,async t=>{
+  const f=await fixture(t),{token}=await f.unlock();
+  const id=(await f.request('/api/local/mcp/list',{token})).json().items[0].id;
+  const state=(await f.request('/api/local/mcp/inspect',{token,body:{id}})).json();
+  const body={id,generation:1,revision:state.revision,catalogRevision:state.catalogRevision,policy:{capabilities:['preferences:write'],targets:['*'],allowSensitive:true},edits:[{target:'*',action:'WRITE',effect:'DENY'}]};
+  const preview=(await f.request('/api/local/mcp/preview',{token,body})).json();
+  const {McpAuthorizationService}=require('../../dist/mcp/auth/mcp-authorization.service.js');
+  const {LocalUiSessions}=require('../../dist/local-ui/local-ui-sessions.js');
+  const sessions=f.runtime.application.get(LocalUiSessions);
+  const original=McpAuthorizationService.prototype.canAccessTarget;
+  let entered,release;const barrier=new Promise(r=>{entered=r;}),resume=new Promise(r=>{release=r;});
+  McpAuthorizationService.prototype.canAccessTarget=async function(...args){entered();await resume;return original.apply(this,args);};
+  try{
+    const response=f.request('/api/local/mcp/save',{token,body:{...body,previewKey:preview.previewKey}});
+    await barrier;
+    if(mode==='logout')sessions.logout(token);
+    else if(mode==='expiry')sessions.now=()=>Date.now()+9*60*60*1000;
+    else sessions.close();
+    release();assert.equal((await response).status,401);
+  }finally{release();McpAuthorizationService.prototype.canAccessTarget=original;}
+  const db=SqliteDatabase.open({databaseRoot:f.configuration.databaseRoot,identityRoot:f.configuration.stateRoot});
+  const store=new SqliteMcpCredentials(db,f.identity.principalId);
+  assert.deepEqual(store.authenticate(f.mcpToken).policy,state.client.policy);
+  assert.equal(store.inspectForUi(id).grants.length,0);
+});

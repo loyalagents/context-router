@@ -44,6 +44,9 @@ const apiRoutes = new Set([
   '/api/local/mcp/revoke',
   '/api/local/mcp/rename',
   '/api/local/mcp/labels',
+  '/api/local/mcp/targets',
+  '/api/local/mcp/preview',
+  '/api/local/mcp/save',
 ]);
 const securityHeaders = new Set([
   'host',
@@ -374,7 +377,7 @@ export class LocalUiBoundary {
       if (route.startsWith('/api/local/mcp/')) {
         req[UI_REVALIDATE]();
         if (!this.management) return rejectUiRequest(res, 503);
-        const result = await this.management.handle(route, body);
+        const result = await this.management.handle(route, body, req[UI_REVALIDATE]);
         req[UI_REVALIDATE]();
         reply(res, 200, result);
         return;

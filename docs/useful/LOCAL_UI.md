@@ -92,13 +92,41 @@ personal schema creation/edit/archive and JSON export. Definition changes valida
 future writes; they do not rewrite older saved values. Location-scoped manual
 creation remains outside the existing preference form.
 
-**MCP Clients** identifies actual instances by stable ID. Inspect shows the CLI
-maximum, stored grants and understandable effective authority for bounded exact
-targets. Labels may repeat. Grants can narrow that maximum; ALLOW never expands
-it. An out-of-maximum ALLOW is rejected. Stale generation/revision changes require
-inspection again; oversized authority snapshots are unavailable, not guessed.
-Revoke affects only the selected instance. Issuance, rotation and maximum changes
-remain [CLI operations](MCP_LOCAL_SETUP.md); no client configuration is written.
+**MCP Clients** identifies actual instances by stable ID and shows each maximum
+value level, allowed scope, independent DEFINE maximum, sensitivity, rule count
+and effective access across current active definitions in that scope. Mixed means
+those fields have different value access. Prefixes also apply to future fields;
+a current summary is not a guarantee of uniform future access.
+
+**Edit permissions** changes the maximum and related rules with one atomic Save.
+Choose Blocked, Read, Suggest changes or Write; Write includes Suggest and Read.
+Definition management independently allows creating, updating and archiving field
+definitions subject to scope and rules. Search categories (explicit slug prefixes)
+or readable fields instead of typing identifiers; existing custom targets survive.
+A scope default preserves more-specific exceptions and DEFINE rules. Advanced
+rules offer explicit removal/inheritance, which can widen access. Reducing a
+maximum retains inert ALLOW rules; expansion or sensitive access can reactivate
+them. New ALLOW rules must fit the proposed final maximum.
+
+Preview shows server-evaluated before/after access and possible widening, including
+new ranges, future fields and archived-definition values. Every draft change
+invalidates its preview. Save requires that exact preview and current authority
+and catalog revisions. A conflict preserves the draft for a fresh read and preview.
+Only an acknowledged commit confirms Save. Transport/malformed/generic failures
+remain uncertain, even beside a fresh state read; reads cannot prove the earlier
+attempt rolled back or cannot settle later. There is no automatic mutation retry.
+A failed reconciliation marks the previous authority stale and offers read-only
+retry. Focus/broadcast refresh preserves drafts; lock, expiry, navigation and
+session replacement clear them.
+
+Complete summaries/preview/editing are unavailable if grants or catalog metadata
+cannot be safely projected (512 editable rules; 2048 definitions/2 MiB metadata).
+No omitted rules are treated as allow. Revocation and CLI recovery remain usable.
+Sensitive values follow their actual stored definition IDs, including archived
+ones; global/personal fields sharing a slug share rules. Revoke affects only the
+selected instance. Issuance and rotation remain [CLI operations](MCP_LOCAL_SETUP.md);
+no client configuration is written. The older exact-slug inspection/grant routes
+remain compatible.
 
 **Rename** edits the selected instance's current display name, with Save/Cancel
 and an explicit read after a conflict or unconfirmed response. Duplicate names

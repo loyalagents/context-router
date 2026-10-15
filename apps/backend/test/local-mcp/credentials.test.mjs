@@ -453,9 +453,9 @@ for (const [modes, codes] of [
   [['rename', 'rename'], [0, 1]],
   [['rotate', 'rename'], [0, 1]],
   [['revoke', 'rename'], [0, 1]],
-  [['rename', 'rotate'], [0, 0]],
-  [['rename', 'revoke'], [0, 0]],
-  [['rename', 'policy'], [0, 0]],
+  [['rename', 'rotate'], [0, 1]],
+  [['rename', 'revoke'], [0, 1]],
+  [['rename', 'policy'], [0, 1]],
   [['grant', 'rename'], [0, 0]],
 ]) test(`independent-process ${modes.join('/')} preserves rename and authority transitions`, async (t) => {
   const f = fixture(t); f.store.upgrade();
@@ -463,8 +463,8 @@ for (const [modes, codes] of [
   assert.deepEqual(await race(f, modes), codes.map(code => [code, null]));
   const row = f.store.list()[0];
   assert.equal(row.label, modes[0] === 'rename' || codes[1] === 0 && modes[1] === 'rename' ? 'renamed' : 'codex');
-  assert.equal(row.generation, modes.includes('rotate') || modes.includes('revoke') ? 2 : 1);
-  if (modes.includes('policy')) assert.deepEqual(row.policy.targets, ['*']);
+  assert.equal(row.generation, (modes[0] === 'rotate' || modes[0] === 'revoke' || codes[1] === 0 && (modes[1] === 'rotate' || modes[1] === 'revoke')) ? 2 : 1);
+  if (modes.includes('policy')) assert.deepEqual(row.policy.targets, codes[1] === 0 ? ['*'] : []);
   if (modes.includes('grant')) assert.equal(f.query('SELECT * FROM permission_grants').length, 1);
 });
 
@@ -475,4 +475,60 @@ test('rename exception before commit rolls back without changing any client colu
   assert.throws(()=>f.store.rename(a.id,'new',{label:a.label,generation:1}),/injected/);
   f.db.connect=connect;
   assert.deepEqual(f.query('SELECT * FROM local_mcp_clients'),before);
+});
+
+for (const modes of [
+  ['policy','policy'], ['policy','grant'], ['grant','policy'],
+  ['grant','rotate'], ['policy','rotate'], ['policy','revoke'],
+]) test(`complete content CAS: independent-process ${modes.join('/')} has one winner`, async (t) => {
+  const f=fixture(t); f.store.upgrade();
+  f.client=f.store.provision('synthetic',path.join(f.root,'original.token'));
+  assert.deepEqual(await race(f,modes), [[0,null],[1,null]]);
+});
+
+test('complete administration revision survives oversized/corrupt projection and changes with every grant byte', (t) => {
+  const f=fixture(t); f.store.upgrade(); const a=f.store.provision('synthetic',path.join(f.root,'a.token'));
+  const c=f.db.connect();
+  try {
+    c.exec('BEGIN IMMEDIATE');
+    for(let i=0;i<520;i++) c.run('INSERT INTO permission_grants(id,user_id,client_key,target,action,effect,created_at,updated_at) VALUES(?,?,?,?,?,?,1,1)',
+      ['rule-'+i,f.principal,`local:${a.id}`,'synthetic.'+i,'READ','DENY']);
+    c.run('UPDATE permission_grants SET target=? WHERE id=?',['x'.repeat(300000),'rule-519']);
+    c.exec('COMMIT');
+  } finally {c.close();}
+  const before=f.store.inspectForUi(a.id);
+  assert.equal(before.status,'AUTHORITY_UNAVAILABLE');
+  assert.match(before.adminRevision,/^[a-f0-9]{64}$/);
+  const change=f.db.connect();
+  change.run('UPDATE permission_grants SET target=? WHERE id=?',['x'.repeat(299999)+'y','rule-519']); change.close();
+  assert.notEqual(f.store.inspectForUi(a.id).adminRevision,before.adminRevision);
+  assert.throws(()=>f.store.revoke(a.id,1,before.adminRevision),/conflict/);
+  // Browser projection limits must never become command/recovery limits.
+  f.store.permissions(a.id,{capabilities:['preferences:write'],targets:['*'],allowSensitive:false});
+  f.store.grant(a.id,'*','READ','DENY');
+  assert.equal(f.store.revoke(a.id,1).revoked,true);
+});
+
+test('policy content ABA is accepted, different same-generation policy and grant content conflict', (t) => {
+  const f=fixture(t); f.store.upgrade();const a=f.store.provision('synthetic',path.join(f.root,'a.token'));
+  const before=f.store.inspectForUi(a.id);
+  const expanded={capabilities:['preferences:write'],targets:['*'],allowSensitive:false};
+  f.store.permissions(a.id,expanded);
+  assert.throws(()=>f.store.permissions(a.id,a.policy,before.revision),/conflict/);
+  f.store.permissions(a.id,a.policy);
+  assert.equal(f.store.inspectForUi(a.id).revision,before.revision);
+  f.store.permissions(a.id,expanded,before.revision);
+  const next=f.store.inspectForUi(a.id);
+  f.store.grant(a.id,'*','READ','DENY');
+  assert.throws(()=>f.store.permissions(a.id,a.policy,next.revision),/conflict/);
+});
+
+for (const stage of ['before','after']) test(`atomic permissions Save crash ${stage} commit has whole durable outcome`,t=>{
+  const f=fixture(t);f.store.upgrade();const a=f.store.provision('save-crash',path.join(f.root,'original.token'));
+  const child=spawnSync(process.execPath,[childFile,f.root,'publish-save-'+stage,a.id,'unused'],{encoding:'utf8',timeout:10000});assert.equal(child.status,77,child.stderr);
+  const reopened=new SqliteMcpCredentials(SqliteDatabase.open(f.db.paths),f.principal),client=reopened.authenticate(f.token('original.token'));
+  assert.equal(client.generation,1);assert.equal(client.label,'save-crash');
+  assert.deepEqual(client.policy.targets,stage==='after'?['synthetic.*']:[]);
+  assert.equal(reopened.inspectForUi(a.id).grants.length,stage==='after'?1:0);
+  assert.deepEqual(fs.readFileSync(path.join(f.db.paths.identityRoot,'identity.json')),f.identity);
 });

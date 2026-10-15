@@ -22,8 +22,8 @@ export interface LocalMcpGrantSnapshot {
   id: string; target: string; action: 'READ' | 'SUGGEST' | 'WRITE' | 'DEFINE'; effect: 'ALLOW' | 'DENY';
   createdAt: number; updatedAt: number;
 }
-export type LocalMcpAuthoritySnapshot = { status: 'AUTHORITY_UNAVAILABLE'; client: LocalMcpClientSummary } | {
-  status: 'AVAILABLE'; client: LocalMcpClientSummary; grants: LocalMcpGrantSnapshot[]; revision: string;
+export type LocalMcpAuthoritySnapshot = { status: 'AUTHORITY_UNAVAILABLE'; client: LocalMcpClientSummary; adminRevision: string } | {
+  status: 'AVAILABLE'; adminRevision: string; client: LocalMcpClientSummary; grants: LocalMcpGrantSnapshot[]; revision: string;
   definitions: { slug: string; isSensitive: boolean }[];
 };
 export interface LocalMcpExpectedAuthority { generation: number; revision: string; }
@@ -61,4 +61,51 @@ export function validateLocalMcpPolicy(value: unknown): LocalMcpPolicy {
     targets: [...policy.targets],
     allowSensitive: policy.allowSensitive,
   };
+}
+
+export interface LocalMcpGrantEdit {
+  target: string;
+  action: 'READ' | 'SUGGEST' | 'WRITE' | 'DEFINE';
+  effect: 'ALLOW' | 'DENY' | 'REMOVE';
+}
+export interface LocalMcpCatalogDefinition {
+  id: string;
+  namespace: string;
+  ownerUserId: string | null;
+  slug: string;
+  displayName: string | null;
+  isSensitive: boolean;
+  archivedAt: number | null;
+}
+export type LocalMcpEditorSnapshot = LocalMcpAuthoritySnapshot &
+  (
+    | { catalogStatus: 'CATALOG_UNAVAILABLE' }
+    | {
+        catalogStatus: 'AVAILABLE';
+        catalogRevision: string;
+        catalog: LocalMcpCatalogDefinition[];
+      }
+  );
+export function validateLocalMcpGrantEdits(
+  value: unknown,
+): LocalMcpGrantEdit[] {
+  if (!Array.isArray(value) || value.length > 512)
+    throw new Error('Invalid local MCP grant edits');
+  const keys = new Set<string>();
+  return value.map((edit) => {
+    if (
+      !edit ||
+      typeof edit !== 'object' ||
+      Array.isArray(edit) ||
+      Object.keys(edit).sort().join() !== 'action,effect,target' ||
+      !validLocalMcpTarget(edit.target) ||
+      !['READ', 'SUGGEST', 'WRITE', 'DEFINE'].includes(edit.action) ||
+      !['ALLOW', 'DENY', 'REMOVE'].includes(edit.effect)
+    )
+      throw new Error('Invalid local MCP grant edits');
+    const key = edit.target + ':' + edit.action;
+    if (keys.has(key)) throw new Error('Invalid local MCP grant edits');
+    keys.add(key);
+    return { target: edit.target, action: edit.action, effect: edit.effect };
+  });
 }

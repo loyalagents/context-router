@@ -364,3 +364,112 @@ test('label lookup never materializes corrupt large columns and returns a stable
   }
   assert.ok(maxMaterialized<=256, 'projection must bound values in SQLite');
 });
+
+const fullPolicy = {capabilities:['preferences:write','preferences:define'],targets:['*'],allowSensitive:true};
+async function proposal(f, policy=fullPolicy, edits=[]) {
+  const {LocalUiManagement}=require('../../dist/local-ui/local-ui-management.js');
+  const service=new LocalUiManagement(f.store,f.principalId);
+  const state=await service.handle('/api/local/mcp/inspect',{id:f.a.id});
+  const body={id:f.a.id,generation:state.client.generation,revision:state.revision,catalogRevision:state.catalogRevision,policy,edits};
+  const preview=await service.handle('/api/local/mcp/preview',body);
+  return {service,body,preview};
+}
+test('one browser Save binds an exact preview and atomically preserves credentials and untouched exceptions', async t=>{
+  const f=fixture(t); f.store.grant(f.a.id,'work.special','READ','ALLOW');
+  const before=f.store.inspectForUi(f.a.id).grants[0];
+  const p=await proposal(f,fullPolicy,[{target:'work.*',action:'READ',effect:'DENY'},{target:'work.*',action:'SUGGEST',effect:'DENY'},{target:'work.*',action:'WRITE',effect:'DENY'}]);
+  assert.match(p.preview.previewKey,/^[a-f0-9]{64}$/);
+  assert.ok(p.preview.widening.length);
+  let admitted=0;
+  const result=await p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey},()=>{admitted++;});
+  assert.equal(admitted,1);assert.equal(result.changed,true);assert.match(result.revision,/^[a-f0-9]{64}$/);
+  assert.equal(result.client.generation,1);assert.equal(result.client.label,f.a.label);
+  assert.deepEqual(f.store.authenticate(f.token).policy,fullPolicy);
+  assert.deepEqual(f.store.inspectForUi(f.a.id).grants.find(g=>g.id===before.id),before);
+  assert.deepEqual(f.store.list().find(c=>c.id===f.b.id),f.b);
+  assert.equal((await p.service.handle('/api/local/mcp/inspect',{id:f.a.id,targets:['work.special']})).effective[0].write,false);
+});
+test('changed preview input, stale policy, catalog change, and admission failure never partially write',async t=>{
+  for(const mode of ['input','policy','catalog','admission','late-write']){
+    const f=fixture(t);const p=await proposal(f,fullPolicy,[{target:'*',action:'READ',effect:'DENY'}]);
+    const c=f.database.connect();const before=c.all('SELECT * FROM local_mcp_clients ORDER BY id');c.close();
+    if(mode==='input')p.body.policy={...fullPolicy,allowSensitive:false};
+    if(mode==='policy')f.store.permissions(f.a.id,{...fullPolicy,targets:['work.*']});
+    if(mode==='catalog'){const db=f.database.connect();db.run('UPDATE preference_definitions SET is_sensitive=1 WHERE slug=?',['profile.first_name']);db.close();}
+    const connect=f.database.connect.bind(f.database);
+    if(mode==='late-write')f.database.connect=()=>{const db=connect(),run=db.run.bind(db);db.run=(sql,...args)=>{if(sql.startsWith('INSERT INTO permission_grants'))throw new Error('injected');return run(sql,...args);};return db;};
+    await assert.rejects(p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey},()=>{if(mode==='admission')throw new Error('expired');}));
+    f.database.connect=connect;
+    assert.equal(f.store.inspectForUi(f.a.id).grants.length,0);
+    if(mode!=='policy'){const db=connect();assert.deepEqual(db.all('SELECT * FROM local_mcp_clients ORDER BY id'),before);db.close();}
+  }
+});
+test('new ALLOW uses final maximum, unchanged inert ALLOW survives reduction and reactivates with widening',async t=>{
+  const f=fixture(t);
+  let p=await proposal(f,fullPolicy,[{target:'profile.first_name',action:'WRITE',effect:'ALLOW'}]);
+  await p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey});
+  const grant=f.store.inspectForUi(f.a.id).grants[0];
+  p=await proposal(f,{capabilities:['preferences:read'],targets:['*'],allowSensitive:false});
+  await p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey});
+  assert.deepEqual(f.store.inspectForUi(f.a.id).grants[0],grant);
+  p=await proposal(f,fullPolicy);
+  assert.ok(p.preview.widening.some(message=>/retained|reactivat/i.test(message)));
+  const bad={...p.body,policy:{capabilities:[],targets:[],allowSensitive:false},edits:[{target:'*',action:'WRITE',effect:'ALLOW'}]};
+  await assert.rejects(p.service.handle('/api/local/mcp/preview',bad));
+});
+test('complete catalog fingerprints archived sensitivity and preserves global/personal collisions with bounded search',async t=>{
+  const f=fixture(t);const {LocalUiManagement}=require('../../dist/local-ui/local-ui-management.js');const service=new LocalUiManagement(f.store,f.principalId);
+  f.store.permissions(f.a.id,fullPolicy);
+  const first=await service.handle('/api/local/mcp/inspect',{id:f.a.id});
+  assert.match(first.catalogRevision,/^[a-f0-9]{64}$/);assert.ok(first.summary.total>0);
+  const c=f.database.connect();c.run("INSERT INTO preference_definitions(id,namespace,slug,display_name,description,value_type,scope,is_sensitive,owner_user_id,created_at,updated_at) VALUES('personal-collision',?, 'profile.first_name','Personal first name','','STRING','GLOBAL',1,?,1,1)",[`USER:${f.principalId}`,f.principalId]);c.close();
+  const second=await service.handle('/api/local/mcp/inspect',{id:f.a.id});assert.notEqual(second.catalogRevision,first.catalogRevision);
+  const search=await service.handle('/api/local/mcp/targets',{id:f.a.id,query:'first_name'});
+  assert.equal(search.items.filter(x=>x.target==='profile.first_name'&&x.kind==='field').length,2);
+  assert.ok(search.items.length<=32);assert.ok(Buffer.byteLength(JSON.stringify(search))<=256*1024);
+  const db=f.database.connect();db.run("UPDATE preference_definitions SET archived_at=1 WHERE id='personal-collision'");db.close();
+  const third=await service.handle('/api/local/mcp/inspect',{id:f.a.id});assert.notEqual(third.catalogRevision,second.catalogRevision);
+});
+test('corrupt or oversized catalog disables complete claims and Save while leaving CLI and terminal revoke available',async t=>{
+  const f=fixture(t);const c=f.database.connect();c.run('UPDATE preference_definitions SET display_name=? WHERE slug=?',['x'.repeat(300000),'profile.first_name']);c.close();
+  const {LocalUiManagement}=require('../../dist/local-ui/local-ui-management.js');const service=new LocalUiManagement(f.store,f.principalId);
+  const state=await service.handle('/api/local/mcp/inspect',{id:f.a.id});
+  assert.equal(state.catalogStatus,'CATALOG_UNAVAILABLE');assert.equal(state.summary,undefined);
+  await assert.rejects(proposal(f));
+  f.store.permissions(f.a.id,fullPolicy);assert.equal(f.store.revoke(f.a.id,1).revoked,true);
+});
+
+test('a failure after COMMIT remains an error even though one complete Save is durable',async t=>{
+  const f=fixture(t),p=await proposal(f,fullPolicy,[{target:'*',action:'WRITE',effect:'DENY'}]);
+  const connect=f.database.connect.bind(f.database);
+  f.database.connect=()=>{const c=connect(),exec=c.exec.bind(c);let writing=false;c.exec=sql=>{if(sql==='BEGIN IMMEDIATE')writing=true;const result=exec(sql);if(writing&&sql==='COMMIT')throw new Error('lost commit acknowledgement');return result;};return c;};
+  await assert.rejects(p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey}),/lost commit acknowledgement/);
+  f.database.connect=connect;
+  assert.deepEqual(f.store.authenticate(f.token).policy,fullPolicy);
+  assert.equal(f.store.inspectForUi(f.a.id).grants.length,1);
+});
+
+test('future and archived targets disclose rule-removal or ALLOW widening even without current matching fields',async t=>{
+  const f=fixture(t);f.store.permissions(f.a.id,fullPolicy);f.store.grant(f.a.id,'future_only.*','READ','DENY');
+  for(const edit of [{target:'future_only.*',action:'READ',effect:'REMOVE'},{target:'future_only.exact',action:'READ',effect:'ALLOW'}]){
+    const p=await proposal(f,fullPolicy,[edit]);assert.ok(p.preview.widening.some(message=>/future|archived/i.test(message)));
+  }
+});
+test('each client card pairs policy and summary from the same authority snapshot',async t=>{
+  const f=fixture(t),original=f.store.listForUi.bind(f.store);
+  f.store.listForUi=(...args)=>{const result=original(...args);f.store.permissions(f.a.id,fullPolicy);return result;};
+  const {LocalUiManagement}=require('../../dist/local-ui/local-ui-management.js');
+  const result=await new LocalUiManagement(f.store,f.principalId).handle('/api/local/mcp/list',{});
+  assert.deepEqual(result.items.find(item=>item.id===f.a.id).policy,fullPolicy);
+});
+
+test('catalog row overflow and malformed edit envelopes fail closed without blocking terminal recovery',async t=>{
+  const f=fixture(t);const p=await proposal(f);
+  for(const edits of [[{target:'*',action:'READ',effect:'DENY',extra:true}],Array(513).fill({target:'*',action:'READ',effect:'DENY'}),[{target:'*',action:'READ',effect:'DENY'},{target:'*',action:'READ',effect:'ALLOW'}]])
+    await assert.rejects(p.service.handle('/api/local/mcp/preview',{...p.body,edits}));
+  const c=f.database.connect();c.exec('BEGIN IMMEDIATE');
+  for(let i=0;i<2049;i++)c.run('INSERT INTO preference_definitions(id,namespace,slug,description,value_type,scope,created_at,updated_at) VALUES(?,\'GLOBAL\',?,\'\',\'STRING\',\'GLOBAL\',1,1)',['overflow-'+i,'overflow.'+i]);
+  c.exec('COMMIT');c.close();
+  const state=await p.service.handle('/api/local/mcp/inspect',{id:f.a.id});assert.equal(state.catalogStatus,'CATALOG_UNAVAILABLE');assert.equal(state.summary,undefined);
+  await assert.rejects(p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey}));assert.equal(f.store.revoke(f.a.id,1).revoked,true);
+});

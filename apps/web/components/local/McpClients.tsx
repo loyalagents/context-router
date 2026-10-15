@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { localJson, LocalRequestError } from '@/lib/authenticated-fetch';
 import { ClientName } from './ClientNames';
+import McpPermissionsEditor, { maximumValueLevel, type PermissionSummary } from './McpPermissionsEditor';
 import { usableClientName } from '@/lib/local-client-name';
 
 type Client = {
@@ -10,6 +11,8 @@ type Client = {
   label: string;
   generation: number;
   revoked: boolean;
+  ruleCount?: number | null;
+  summary?: PermissionSummary | null;
   policy: {
     capabilities: string[];
     targets: string[];
@@ -29,6 +32,7 @@ type Snapshot = {
   status: 'AVAILABLE' | 'AUTHORITY_UNAVAILABLE';
   client: Client;
   revision?: string;
+  adminRevision?: string;
   grants?: Grant[];
   effective?: {
     target: string;
@@ -43,6 +47,8 @@ type Snapshot = {
 const button = 'rounded border px-3 py-2 disabled:opacity-50';
 
 export default function McpClients() {
+  const [editing,setEditing]=useState<Client|null>(null);
+  const editButtons=useRef(new Map<string,HTMLButtonElement>());
   const [items, setItems] = useState<Client[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
   const [next, setNext] = useState<string | null>(null);
@@ -234,7 +240,7 @@ export default function McpClients() {
           generation: captured.client.generation,
           ...(kind === 'grant'
             ? { revision: captured.revision, ...grant }
-            : {}),
+            : {revision:captured.adminRevision}),
         },
         controller.signal,
       );
@@ -318,11 +324,11 @@ export default function McpClients() {
     <div className="space-y-6">
       <p>
         Each row is a separately issued client instance. Matching product labels
-        do not share identity. Issue, rotate, or change maximum policy with the
-        local MCP CLI.
+        do not share identity. Edit maximum policy and rules here. Issue or rotate
+        credentials with the local MCP CLI.
       </p>
       <p>
-        Database grants narrow the CLI maximum. ALLOW can override a less
+        Database grants narrow the maximum policy. ALLOW can override a less
         specific database DENY, but cannot expand that maximum. Write also
         requires read and suggest access.
       </p>
@@ -368,6 +374,7 @@ export default function McpClients() {
           <button type="button" className={button} disabled={busy} onClick={()=>{cancelledRename.current=renameDraft.client.id;setRenameDraft(null);setRenameError('');}}>Cancel rename</button>
         </div>
       </form>}
+      {editing&&<McpPermissionsEditor key={editing.id} client={editing} onChanged={invalidate} onClose={()=>{const id=editing.id;setEditing(null);queueMicrotask(()=>editButtons.current.get(id)?.focus());}}/>}
       <ul className="space-y-3">
         {items.map((client) => (
           <li key={client.id} className="rounded border p-4">
@@ -375,7 +382,12 @@ export default function McpClients() {
               <ClientName clientKey={`local:${client.id}`} label={client.label} /> {client.revoked && '(revoked)'}
             </div>
             <code className="break-all">{client.id}</code>
-            <p>Generation {client.generation}</p>
+            <p>Maximum values: <strong>{maximumValueLevel(client.policy)}</strong> · Definition management maximum: {client.policy.capabilities.includes('preferences:define')?'allowed':'blocked'} · Sensitive {client.policy.allowSensitive?'allowed':'blocked'}</p>
+            <p className="break-all">Allowed scope: {client.policy.targets.join(', ')||'No targets'} · {client.ruleCount===null?'Rule count unavailable':`${client.ruleCount??0} rules`}</p>
+            <p>Current effective access: {client.summary?`${client.summary.level} across ${client.summary.total} active field definitions in scope`:'Unavailable'}. More specific exceptions may apply; prefixes also cover future fields.</p>
+            <p className="text-xs">Generation {client.generation}</p>
+            <button ref={element=>{if(element)editButtons.current.set(client.id,element);else editButtons.current.delete(client.id);}} className={button} disabled={busy||client.revoked||!!editing} aria-label={`Edit permissions ${client.id}`} onClick={()=>setEditing(client)}>Edit permissions</button>{' '}
+
             <button ref={element=>{if(element)renameButtons.current.set(client.id,element);else renameButtons.current.delete(client.id);}} className={button} disabled={busy || !!renameDraft} aria-label={`Rename ${client.id}`} onClick={()=>{setRenameDraft({client,name:client.label,needsRead:false});setRenameError('');}}>Rename</button>
             {' '}<a className={button} href={`/dashboard/history#mcp-client=${client.id}`} aria-label={`View activity ${client.id}`}>View activity</a>{' '}
 

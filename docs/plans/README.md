@@ -15,6 +15,13 @@ This cohesive PR implements native demo lifecycle plus packaged A/B/C helpers.
 Native assistant buttons/settings/proposal screens are tracked in that plan for
 the next PR. Targeted checks do not replace final qualification or human acceptance.
 
+The user-approved [MCP client permissions slice](active/mcp-client-permissions/README.md)
+is active in an isolated worktree on `codex/mcp-client-permissions` from
+`071b329731103ef3be5113ff79faf12b856aa68e`. `/root/permissions_implementer` owns
+all edits; coordinator and independent reviewers are read-only. It adds clearer
+cards, server previews and atomic human maximum-policy/grant editing; issuance,
+rotation UI and native lifecycle are outside scope. Final qualification is pending.
+
 ## Three Lanes
 
 | Lane | Purpose | Canonical brief |

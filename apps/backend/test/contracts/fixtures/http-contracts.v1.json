@@ -538,6 +538,90 @@
         ]
       },
       "semantics": "Principal-scoped exact IDs including revoked instances; missing or unusable names omitted; no authority or history data; independent of grants bound"
+    },
+    "localMcpTargets": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/mcp/targets",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser",
+      "request": {
+        "required": [
+          "id",
+          "query"
+        ],
+        "additionalFields": false
+      },
+      "bounds": {
+        "maxBodyBytes": 262144,
+        "maxResponseBytes": 262144,
+        "maxCatalogRows": 2048,
+        "maxCatalogProjectedBytes": 2097152,
+        "maxResults": 32
+      }
+    },
+    "localMcpPreview": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/mcp/preview",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser",
+      "request": {
+        "required": [
+          "id",
+          "generation",
+          "revision",
+          "catalogRevision",
+          "policy",
+          "edits"
+        ],
+        "additionalFields": false
+      },
+      "bounds": {
+        "maxBodyBytes": 262144,
+        "maxResponseBytes": 262144,
+        "maxCatalogRows": 2048,
+        "maxCatalogProjectedBytes": 2097152,
+        "maxGrantEdits": 512
+      }
+    },
+    "localMcpSave": {
+      "mode": "local-ui",
+      "method": "POST",
+      "path": "/api/local/mcp/save",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "success": {
+        "status": 200
+      },
+      "sharedBoundary": "localBrowser",
+      "request": {
+        "required": [
+          "id",
+          "generation",
+          "revision",
+          "catalogRevision",
+          "policy",
+          "edits",
+          "previewKey"
+        ],
+        "additionalFields": false
+      },
+      "bounds": {
+        "maxBodyBytes": 262144,
+        "maxResponseBytes": 262144,
+        "maxCatalogRows": 2048,
+        "maxCatalogProjectedBytes": 2097152,
+        "maxGrantEdits": 512
+      }
     }
   },
   "supportRoutes": [
@@ -599,7 +683,8 @@
         "me is retained and user(id) is deprecated while its self-only compatibility behavior remains",
         "reviewed apply GraphQL reports conflicts per item while the legacy apply remains an upsert",
         "capabilities report selected upload intersections and client deadlines only shorten the bound",
-        "rename and label routes require browser authority, exact envelopes and preserve token identity"
+        "rename and label routes require browser authority, exact envelopes and preserve token identity",
+        "permissions endpoints are strict human-only local browser administration and return commit revision"
       ]
     }
   ],

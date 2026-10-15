@@ -336,3 +336,44 @@ test('revoke blocks future admission but already admitted mutation may commit wi
     401,
   );
 });
+
+test('browser atomic permissions Save changes real MCP data, writes and audits without changing credentials',async t=>{
+  const f=await fixture(t);
+  const {LocalUiManagement}=require('../../dist/local-ui/local-ui-management.js');
+  const principal=f.store.authenticate(f.tokens[0]).principalId;
+  const service=new LocalUiManagement(f.store,principal);
+  async function save(id,maximum,edits=[]){
+    const state=await service.handle('/api/local/mcp/inspect',{id});
+    const body={id,generation:state.client.generation,revision:state.revision,catalogRevision:state.catalogRevision,policy:maximum,edits};
+    const preview=await service.handle('/api/local/mcp/preview',body);
+    return service.handle('/api/local/mcp/save',{...body,previewKey:preview.previewKey});
+  }
+  await save(f.a.id,policy(writer,true));
+  const a=(await f.connect()).client,b=(await f.connect(f.tokens[1])).client;
+  await create(a,'synthetic.public');await create(a,'synthetic.private',true);
+  await set(a,'synthetic.public','visible');
+  await set(a,'synthetic.private','private');
+  assert.equal((await search(b)).active.count,0);
+  await save(f.b.id,policy(['preferences:write']),[
+    {target:'synthetic.*',action:'READ',effect:'DENY'},
+    {target:'synthetic.public',action:'READ',effect:'ALLOW'},
+    {target:'synthetic.*',action:'SUGGEST',effect:'DENY'},
+    {target:'synthetic.*',action:'WRITE',effect:'DENY'},
+  ]);
+  assert.equal((await search(b)).active.count,1);
+  let audits=rows(f,'preference_audit_events').length;
+  await set(b,'synthetic.public','blocked',true);assert.equal(rows(f,'preference_audit_events').length,audits);
+  await save(f.b.id,policy(['preferences:write']),[
+    {target:'synthetic.public',action:'SUGGEST',effect:'ALLOW'},
+    {target:'synthetic.public',action:'WRITE',effect:'ALLOW'},
+  ]);
+  await set(b,'synthetic.public','updated');assert.equal(rows(f,'preference_audit_events').length,audits+1);
+  await save(f.b.id,policy(['preferences:define']));
+  await create(b,'synthetic.independent');await set(b,'synthetic.public','no-values',true);
+  assert.equal((await b.callTool({name:'searchPreferences',arguments:{}})).isError,true);
+  await save(f.b.id,policy(['preferences:read'],true),[{target:'synthetic.*',action:'READ',effect:'ALLOW'}]);
+  assert.equal((await search(b)).active.count,2);
+  await save(f.b.id,policy(['preferences:read'],false));assert.equal((await search(b)).active.count,1);
+  assert.equal(f.store.authenticate(f.tokens[1]).generation,1);
+  assert.equal(rows(f,'user_preferences').find(row=>JSON.parse(row.value)==='updated')!==undefined,true);
+});
