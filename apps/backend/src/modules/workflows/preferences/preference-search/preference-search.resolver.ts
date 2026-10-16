@@ -34,6 +34,7 @@ export class PreferenceSearchResolver {
       userId: user.userId,
       clientKey: '__dashboard__',
       filterAccessibleSlugs: async (slugs) => slugs,
+      filterReadableValues: async (values) => values,
       naturalLanguageQuery: input.query,
       locationId: input.locationId,
       includeSuggestions: input.includeSuggestions,

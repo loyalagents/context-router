@@ -82,7 +82,7 @@ async function createServer(material, template, reply = '{"answer":"synthetic"}'
       res.setHeader('content-type', 'text/event-stream');
       for (const event of [
         { index: 0, stop: false, content: '', tokens_predicted: 0, tokens_evaluated: 3, prompt_progress: { total: 3, cache: 0, processed: 0, time_ms: 0 } },
-        { index: 0, stop: true, content: reply, tokens_predicted: 2, tokens_evaluated: 3, stop_type: 'eos', truncated: false },
+        { index: 0, stop: true, content: typeof reply === 'function' ? reply(body.prompt) : reply, tokens_predicted: 2, tokens_evaluated: 3, stop_type: 'eos', truncated: false },
       ]) res.write(`data: ${JSON.stringify(event)}\n\n`);
       res.end();
     } catch { counters.overflow = true; res.destroy(); }

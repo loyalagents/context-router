@@ -132,6 +132,86 @@ describe('PreferenceSearchWorkflow', () => {
     jest.restoreAllMocks();
   });
 
+  it('uses compact local references with authorized values and preserves ordinary definition meaning', async () => {
+    Object.assign(mockAiPort, { localSearchData: true });
+    const ordinary = { ...MOCK_SNAPSHOT.definitions[0], displayName: 'Setting', description: 'Whether peanuts must be avoided.' };
+    const slug = 'leisure.otherdata.memory_12345678123412341234123456789abc';
+    const boilerplate = 'Imported leisure context. Retrieve the stored value for details. Source ID: urn:uuid:12345678-1234-1234-1234-123456789abc.';
+    mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue({ definitions: [ordinary,
+      { ...ordinary, slug, category: 'leisure', displayName: 'Leisure memory 2', description: boilerplate }], promptJson: 'old-definition-prompt' });
+    const rows = [Object.assign(createMockPreference(ordinary.slug), { value: true, evidence: { secret: 'NEVER_EVIDENCE' } }),
+      Object.assign(createMockPreference(slug), { value: 'My favorite hobbies are pottery and cycling.' }),
+      Object.assign(createMockPreference('private.hidden'), { value: 'NEVER_DENIED_SLUG' }),
+      Object.assign(createMockPreference(ordinary.slug), { definitionId: 'archived-sensitive', value: 'NEVER_ARCHIVED_VALUE' })];
+    mockPreferenceService.getActivePreferences.mockResolvedValue(rows);
+    mockAiPort.generateStructured.mockImplementation(async prompt => {
+      expect(prompt).toContain('pottery and cycling'); expect(prompt).toContain(ordinary.description);
+      expect(prompt).not.toContain(boilerplate); expect(prompt).not.toContain('Leisure memory 2');
+      expect(prompt).not.toMatch(/NEVER_|archived-sensitive|12345678|old-definition-prompt/);
+      return { relevantReferences: [1, 1, 500, 0], queryInterpretation: 'Hobbies and settings' } as any;
+    });
+    const filterReadableValues = jest.fn(async (values: EnrichedPreference[]) => values.filter(p => p.definitionId !== 'archived-sensitive'));
+    const result = await workflow.run({ userId: 'user-1', clientKey: 'local', naturalLanguageQuery: 'hobbies', locationId: 'owned-location',
+      filterReadableValues } as any);
+    expect(filterReadableValues).toHaveBeenCalledWith(rows.filter(p => p.slug !== 'private.hidden'));
+    expect(mockPreferenceService.getActivePreferences).toHaveBeenCalledWith('user-1', 'owned-location');
+    expect(mockPreferenceService.getActivePreferences).toHaveBeenCalledTimes(1);
+    expect(result.matchedDefinitions.map(d => d.slug)).toEqual([slug, ordinary.slug]);
+    expect(result.matchedActivePreferences.map(p => p.value)).toEqual(['My favorite hobbies are pottery and cycling.', true]);
+    expect(mockAiPort.generateStructured).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps near-match importer descriptions and fails closed without value permission', async () => {
+    Object.assign(mockAiPort, { localSearchData: true });
+    const description = 'Imported leisure context. Retrieve the stored value for details. Source ID: urn:uuid:12345678-1234-1234-1234-123456789abc. Only on weekends.';
+    mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue({ definitions: [{ ...MOCK_SNAPSHOT.definitions[0],
+      slug: 'leisure.demo001.memory_12345678123412341234123456789abc', category: 'leisure', description }], promptJson: 'old' });
+    mockPreferenceService.getActivePreferences.mockResolvedValue([Object.assign(createMockPreference('leisure.demo001.memory_12345678123412341234123456789abc'), { value: 'NEVER_WITHOUT_PERMISSION' })]);
+    mockAiPort.generateStructured.mockImplementation(async prompt => {
+      expect(prompt).toContain(description); expect(prompt).not.toContain('NEVER_WITHOUT_PERMISSION');
+      return { relevantReferences: [], queryInterpretation: 'None' } as any;
+    });
+    await workflow.run({ userId: 'user-1', clientKey: 'local', naturalLanguageQuery: 'hobbies' });
+  });
+
+  it('does not enrich a hosted or undeclared adapter even when a value filter exists', async () => {
+    const filterReadableValues = jest.fn(async rows => rows);
+    mockAiPort.generateStructured.mockResolvedValue({ relevantSlugs: [], queryInterpretation: 'None' });
+    mockPreferenceService.getActivePreferences.mockResolvedValue([Object.assign(createMockPreference('food.dietary_restrictions'), { value: 'NEVER_HOSTED_VALUE' })]);
+    await workflow.run({ userId: 'user-1', clientKey: 'hosted', naturalLanguageQuery: 'hobbies', filterReadableValues } as any);
+    expect(mockAiPort.generateStructured.mock.calls[0][0]).not.toContain('NEVER_HOSTED_VALUE');
+    expect(filterReadableValues).not.toHaveBeenCalled();
+  });
+
+  it('keeps one local budget through value permission and cancels before inference', async () => {
+    Object.assign(mockAiPort, { localSearchData: true, capabilities: LOCAL_AI_CAPABILITIES });
+    const controller = new AbortController();
+    await expect(workflow.run({ userId: 'user-1', clientKey: 'local', naturalLanguageQuery: 'settings',
+      filterReadableValues: async rows => { controller.abort(); return rows; } },
+    { signal: controller.signal, deadline: performance.now() + 10000 })).rejects.toMatchObject({ kind: 'cancelled' });
+    expect(mockAiPort.generateStructured).not.toHaveBeenCalled();
+    expect(mockPreferenceService.getSuggestedPreferences).not.toHaveBeenCalled();
+  });
+
+  it('includes requested authorized suggestions, retains options, and caps rows after reference order', async () => {
+    Object.assign(mockAiPort, { localSearchData: true, capabilities: LOCAL_AI_CAPABILITIES });
+    const deadline = performance.now() + 10000;
+    const defs = MOCK_SNAPSHOT.definitions.map(d => ({ ...d, options: ['quiet', 'social'] }));
+    mockSnapshotService.getGrantFilteredSnapshot.mockResolvedValue({ definitions: defs, promptJson: 'old' });
+    const row = createMockPreference(defs[2].slug, PreferenceStatus.SUGGESTED); row.value = 'Prefer social outings';
+    mockPreferenceService.getSuggestedPreferences.mockResolvedValue([row]);
+    mockAiPort.generateStructured.mockImplementation(async (prompt, _schema, controls) => {
+      expect(prompt).toContain('Prefer social outings'); expect(prompt).toContain('["quiet","social"]');
+      expect(controls.deadline).toBe(deadline);
+      return { relevantReferences: [2, 0], queryInterpretation: 'Outings' } as any;
+    });
+    const result = await workflow.run({ userId: 'user-1', clientKey: 'local', naturalLanguageQuery: 'outings', includeSuggestions: true,
+      maxResults: 0, filterReadableValues: async rows => rows }, { deadline });
+    expect(result.matchedDefinitions.map(d => d.slug)).toEqual([defs[2].slug, defs[0].slug]);
+    expect(result.matchedSuggestedPreferences).toEqual([]);
+    expect(mockPreferenceService.getSuggestedPreferences).toHaveBeenCalledTimes(1);
+  });
+
   const baseInput: PreferenceSearchWorkflowInput = {
     userId: 'user-1',
     clientKey: 'claude',

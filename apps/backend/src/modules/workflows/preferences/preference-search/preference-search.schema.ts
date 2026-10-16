@@ -6,3 +6,8 @@ export const RelevanceResponseSchema = z.object({
 });
 
 export type RelevanceResponse = z.infer<typeof RelevanceResponseSchema>;
+
+export const LocalRelevanceResponseSchema = z.object({
+  relevantReferences: z.array(z.number().int().nonnegative()),
+  queryInterpretation: z.string(),
+});

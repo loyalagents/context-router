@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { McpContext } from '../types/mcp-context.type';
 import { McpToolInterface } from './base/mcp-tool.interface';
-import { PreferenceSearchWorkflow } from '@modules/workflows/preferences/preference-search/preference-search.workflow';
+import { PreferenceSearchWorkflow, type PreferenceSearchWorkflowInput } from '@modules/workflows/preferences/preference-search/preference-search.workflow';
 import { McpAuthorizationService } from '../auth/mcp-authorization.service';
 import { McpToolExecutionResult } from '../access-log/access-log.types';
 import {
@@ -141,10 +141,11 @@ export class SmartSearchTool implements McpToolInterface {
           slugs,
         );
 
-      const input = {
+      const input: PreferenceSearchWorkflowInput = {
         userId: context!.user.userId,
         clientKey: context!.client.key,
         filterAccessibleSlugs,
+        filterReadableValues: (values) => this.authorizationService.filterValues(context!.client, context!.user.userId, values),
         naturalLanguageQuery: params.query,
         locationId: params.locationId,
         includeSuggestions: params.includeSuggestions,

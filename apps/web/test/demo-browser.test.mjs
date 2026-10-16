@@ -102,12 +102,23 @@ test('demo uses the installed local model for smart search while keeping histori
  });
  await f.page.goto(f.ready.origin+'/dashboard/preferences');await f.page.getByLabel('Unlock token').fill(f.bootstrap);await f.page.getByRole('button',{name:'Unlock local dashboard'}).click();
  await f.page.getByRole('button',{name:'Lock dashboard'}).waitFor();
- const data=await f.graphql('query { activePreferences { slug } }'),slug=data.activePreferences.find(p=>p.slug.startsWith('travel.demo001.')).slug;
- f.peer.state.reply=JSON.stringify({relevantSlugs:[slug],queryInterpretation:'Synthetic historical travel match'});
+ const data=await f.graphql('query { activePreferences { slug value } }'),selected=data.activePreferences.find(p=>p.slug.startsWith('travel.demo001.')),slug=selected.slug;
+ f.peer.state.hook=async(request,_response,body)=>{
+  if(request.url==='/completion'){
+   const rows=JSON.parse(JSON.parse(body).prompt.split('\n').find(line=>line.startsWith('[[')));
+   const row=rows.find(row=>row[6].includes(selected.value));assert.ok(row,'authorized stored memory must be in model context');
+   f.peer.state.reply=JSON.stringify({relevantReferences:[row[0],row[0],999999],queryInterpretation:'Synthetic historical travel match'});
+  }return false;
+ };
  const banner=f.page.getByRole('complementary',{name:'Demo mode'});await banner.waitFor();
  assert.match(await banner.innerText(),/Installed local AI is used when available/);
  assert.doesNotMatch(await banner.innerText(),/AI is disabled/);
  await f.page.getByLabel('Search query',{exact:true}).fill('Historical travel preferences');
+ f.peer.state.tokens=12001;
+ await f.page.getByRole('button',{name:'Smart search',exact:true}).click();
+ await f.page.getByRole('alert').filter({hasText:'This search exceeds the local model’s context limit. Literal search is still available.'}).waitFor();
+ assert.equal(f.peer.state.completionBodies.length,0,'context overflow must not start inference');
+ f.peer.state.tokens=10;
  await f.page.getByRole('button',{name:'Smart search',exact:true}).click();
  const results=f.page.getByLabel('Smart search results');await results.getByText('Synthetic historical travel match',{exact:true}).waitFor();
  await results.getByText(slug,{exact:true}).waitFor();assert.equal(f.peer.state.completionBodies.length,1);

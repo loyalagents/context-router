@@ -487,3 +487,26 @@ unused handler warning was also fixed before its successful native run. Backend,
 web and native builds, Markdown153, contracts and whitespace passed. These are
 synthetic tests, not a real Qwen quality or installed model-enabled acceptance
 claim. The next single sealed build is for the user's named smart-search retest.
+
+## Smart-search context correction (2026-10-16)
+
+The user's real Qwen request returned `Local model context limit`. The existing
+single catalog prompt used 28,420 tokens before chat framing. Keep the unchanged
+12,000-token input limit, one inference call, deadline, cancellation and result
+ordering. The independently reviewed correction uses request-local numeric
+references, authorized active/requested suggested values and compact semantic
+rows only for the local adapter's private explicit opt-in. Hosted/unknown adapters
+keep definition-only prompts. Filter visible slugs and definition-aware value
+permissions before constructing context; absent value permission fails closed.
+Never include evidence, provenance or database row identifiers.
+
+Suppress only descriptions/names that exactly match the current public importer's
+generated boilerplate; preserve ordinary/custom descriptions, options, types and
+all candidate definitions. No persisted/imported data or walkthrough changes.
+The dashboard distinguishes context/input limits and invalid responses using
+fixed safe messages. Tests first cover references, metadata preservation, denied
+and archived-sensitive values, hosted isolation and cancellation; focused actual
+adapter/browser consumers follow. Offline pinned vocabulary-only measurement of
+the complete public 208-definition catalog includes exact chat framing and repair
+text; it is not live inference. One reviewed source-bound trial rebuild supports
+the user's manual Qwen retest. No broad gate during this correction round.

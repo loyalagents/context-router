@@ -130,10 +130,8 @@ test('actual HTTP tools and capability resource propagate strict controls; promp
     captured = args;
     return generate(...args);
   };
-  f.peer.state.reply = JSON.stringify({
-    relevantSlugs: ['synthetic.one', 'synthetic.secret', 'excluded.private'],
-    queryInterpretation: 'Synthetic',
-  });
+  const { localSearchReply } = await import('../local-model/fixtures/search-reply.mjs');
+  f.peer.state.hook = async (request, _response, body) => { if (request.url === '/completion') f.peer.state.reply = JSON.stringify(localSearchReply(JSON.parse(body).prompt, ['synthetic.one', 'synthetic.secret', 'excluded.private'])); return false; };
   const result = await client.callTool({
     name: 'smartSearchPreferences',
     arguments: { query: 'Synthetic query' },
@@ -149,6 +147,7 @@ test('actual HTTP tools and capability resource propagate strict controls; promp
     result.structuredContent.matchedDefinitions.map((d) => d.slug),
     ['synthetic.one'],
   );
+  f.peer.state.hook = null;
   f.peer.state.reply = JSON.stringify({
     consolidationGroups: [],
     summary: 'Synthetic',
