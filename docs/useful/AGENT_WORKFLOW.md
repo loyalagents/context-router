@@ -236,8 +236,15 @@ checks solely for each reviewer. Broaden checks/review when impact is uncertain.
 
 For the two migration CI profiles, a durable passed summary is committed only
 after bounded finalization and required receipt publication. A pending or failed
-summary cannot confer qualification; both workflow jobs and same-attempt receipts
-must succeed. Compare runner identities using the explicit
+summary cannot confer qualification; when full qualification is selected, both
+workflow jobs and same-attempt receipts must succeed. The narrow approved
+[nonruntime CI policy](../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#nonruntime-ci-selection)
+instead requires its documentation/contract consumers and an independently
+verified not-applicable decision. It produces no source/package qualification
+receipt and does not change the full local gate or human-review obligations.
+Adding a consumer of an exempt file requires updating those checks or removing
+the exemption. CI/gate changes themselves receive full final qualification.
+Compare runner identities using the explicit
 [CI compatibility policy](../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles):
 retain actual release/patch values, allow only supported patch drift, and require
 matching image family, pinned runtimes and browser identity.
