@@ -71,8 +71,9 @@ The CR menu enters/reopens a separate persistent demo store, returns to personal
 and resets demo through a new store/identity. The sample has 189 active memories
 from 198 historical 2024–2025 records. Reopen preserves presenter edits and grants;
 reset restores original definitions/import history and fresh A/B/C credentials,
-retaining old stores and stable isolated provider profiles. Demo has no model
-startup/download. Existing personal assets remain retained.
+retaining old stores and stable isolated provider profiles. Demo reuses verified
+installed model weights with a fresh owned inference session. Missing or invalid
+weights keep the no-model path; demo downloads remain disabled. Assets are retained.
 
 Demo uses the same dashboard and navigation as personal mode, with historical
 data and an authenticated demo banner. The optional five-step walkthrough is

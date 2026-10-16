@@ -14,9 +14,10 @@ The [in-app demo mode](active/in-app-demo-mode/plan.md) shipped in merged
 [native demo assistant setup](active/native-demo-assistant-setup/plan.md) on
 `codex/demo-assistant-setup` from that base. `/root/implementation` is the sole
 writer; coordinator/planner/reviewers are read-only. Scope is native Sign in/Open,
-remembered trusted executables and Desktop proposal review/apply. Deeper assistant
-supervision, retained-guard recovery and model reuse remain separate unactivated
-follow-ups. The agreed milestone is an automated trial and draft PR;
+remembered trusted executables and Desktop proposal review/apply. The user also
+activated reuse of verified same-envelope model weights for a targeted demo
+smart-search trial. Deeper assistant supervision and retained-guard recovery
+remain separate unactivated follow-ups. The agreed milestone is an automated trial and draft PR;
 hands-on acceptance is explicitly scheduled later and remains required before merge.
 
 ## Three Lanes

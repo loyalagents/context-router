@@ -300,7 +300,7 @@ export function managedModelAuthority(configuration: { root: string; databaseRoo
   }
   assertManagedDatabasePaths(configuration.databaseRoot, configuration.identityRoot);
   const c = admitted.capability;
-  if (c.role !== "application" || c.mode !== "personal" || configuration.root !== join(c.envelope, "sessions", c.generation)) fail();
+  if (c.role !== "application" || configuration.root !== join(c.envelope, "sessions", c.generation)) fail();
   return { signal: modelInvalidation.signal, assertHeld: () => checkCurrent(admitted) };
 }
 export function managedLifetimeDescriptor(): number | undefined {

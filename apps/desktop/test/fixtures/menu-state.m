@@ -2,6 +2,7 @@
 #include <stdio.h>
 @interface CRMenu (FixtureVisible)
 - (void)beginRestart;
+- (void)beginModeChange:(NSString *)command;
 @end
 @interface FixtureMenu : CRMenu
 @property(nonatomic,strong) NSMutableArray *captured;
@@ -29,6 +30,7 @@ int main(int argc,const char *argv[]){@autoreleasepool{@try{
   NSString *(^unlock)(NSString *)=^NSString *(NSString *generation){return [[[root stringByAppendingPathComponent:@"exports"] stringByAppendingPathComponent:generation] stringByAppendingPathComponent:@"unlock-aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa.token"];};
   NSDictionary *(^ready)(NSString *)=^NSDictionary *(NSString *generation){return @{@"origin":@"http://127.0.0.1:3210",@"mcpOrigin":@"http://127.0.0.1:3211/mcp",@"modelEnabled":@NO,@"unlockFile":unlock(generation)};};
   FixtureMenu *modeMenu=[[FixtureMenu alloc] initWithBundle:@"fixture" root:root];modeMenu.captured=[NSMutableArray array];
+  NSMenuItem *modeLabel=[NSMenuItem new];[modeMenu setValue:modeLabel forKey:@"label"];
   FixtureStatusItem *status=[FixtureStatusItem new];status.button=[FixtureStatusButton new];status.button.title=@"CR";status.length=NSVariableStatusItemLength;[modeMenu setValue:status forKey:@"status"];
   [modeMenu update];BOOL neutral=[status.button.toolTip isEqual:@"Context Router"]&&[status.button.accessibilityLabel isEqual:@"Context Router"];
   NSMutableArray *titles=[NSMutableArray array],*tooltips=[NSMutableArray array],*accessible=[NSMutableArray array],*lengths=[NSMutableArray array];
@@ -37,6 +39,15 @@ int main(int argc,const char *argv[]){@autoreleasepool{@try{
     if(i)record(modeMenu,generations[i-1],@"stopped",@{@"outcome":@"ok"});
     record(modeMenu,generations[i],@"starting",@{@"phase":@"preparing"});[modeMenu update];if(!i)neutral=neutral&&[status.button.toolTip isEqual:@"Context Router"]&&[status.button.accessibilityLabel isEqual:@"Context Router"];
     record(modeMenu,generations[i],@"mode",@{@"mode":modes[i],@"storeId":one});record(modeMenu,generations[i],@"ready",ready(generations[i]));[modeMenu update];
+    if([modes[i] isEqual:@"demo"]){
+      if(![modeLabel.title isEqual:@"Demo ready · model not installed"])return 9;
+      NSDictionary *labels=@{@"loading":@"AI loading",@"available":@"AI available",@"busy":@"AI working",@"unavailable":@"restart required for AI"};
+      for(NSString *state in labels){record(modeMenu,generations[i],@"model-status",@{@"state":state});if(![modeLabel.title isEqual:[@"Demo ready · " stringByAppendingString:labels[state]]])return 10;}
+      [modeMenu sleepWake:nil];if(![modeLabel.title isEqual:@"Demo ready · restart required after sleep"])return 11;
+      [modeMenu.captured removeAllObjects];[modeMenu beginModeChange:@"leave-demo"];
+      if([[modeMenu valueForKey:@"sleepInvalidated"] boolValue]||![modeMenu.captured isEqual:@[@"leave-demo"]])return 12;
+    }
+    if(i==2&&[modeMenu.captured containsObject:@"model-unavailable"])return 13;
     [titles addObject:status.button.title?:@""];[tooltips addObject:status.button.toolTip?:@""];[accessible addObject:status.button.accessibilityLabel?:@""];[lengths addObject:@(status.length)];
   }
   if(![titles isEqual:@[@"CR",@"CR",@"CR"]]||![lengths isEqual:@[@(NSVariableStatusItemLength),@(NSVariableStatusItemLength),@(NSVariableStatusItemLength)]]){fputs("Status title and width policy must remain compact across admitted modes\n",stderr);return 7;}

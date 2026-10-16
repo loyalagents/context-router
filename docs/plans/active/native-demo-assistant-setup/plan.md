@@ -1,6 +1,6 @@
 # Native demo assistant setup
 
-Status: review corrections in focused validation; a corrected trial and final validation remain pending.
+Status: user activated retained local-model reuse for a targeted smart-search trial; final validation remains pending.
 One cohesive draft PR; do not merge automatically.
 
 ## Outcome and ownership
@@ -8,8 +8,8 @@ One cohesive draft PR; do not merge automatically.
 Add native Sign in/Open for Codex A and subscription Claude Code B, a remembered
 executable picker, and Claude Desktop C prepare/review/apply. Reuse packaged
 helpers, isolated profiles, permission contracts, immutable snapshots and guards.
-Keep the normal dashboard, demo banner and optional walkthrough. Demo remains
-model-free. No general profiles, universal onboarding, chat client, credential
+Keep the normal dashboard, demo banner and optional walkthrough. Demo works without
+a model and now reuses verified installed weights when present. No general profiles, universal onboarding, chat client, credential
 migration, permissions redesign, assistant supervision or retained-guard recovery.
 
 Verified remote main/base: `3bc606ffb9d90ab364d26f6bea5977be30f31b13`, the merge
@@ -31,7 +31,8 @@ and `guardian.m`, packaged `runtime/demo.mjs`, shared `installed-clients.mjs`,
 `trusted-files.mjs`, `installed-desktop.mjs`, preflights and affected fixtures.
 All automation uses owned synthetic roots/profiles/ports/processes. Preserve the
 user's app, personal data/configuration/provider sessions and compatible assets.
-No provider conversations, download or live inference is authorized. Never reclaim
+No automated provider conversations, download or live inference is authorized;
+the user will perform local inference in the revised manual trial. Never reclaim
 profiles through PID disappearance/timeouts, delete retained evidence or replay
 uncertain mutations.
 
@@ -224,7 +225,6 @@ packaging still verifies bytes. No download or broad run during planning.
 
 | Purpose | Dependency | Acceptance and activation |
 | --- | --- | --- |
-| Optional reuse of installed model in demo | Explicit opt-in; verified same-installation compatible assets; fresh owned inference lifetime | Preserve no-model path, assets and isolation through switch/restart/reset; no silent download/adoption. Unactivated, out of this PR. |
 | Deeper assistant coordination/supervision | Supported foreground/descendant lifetime and independent ownership review | No descriptor leaks/duplicate profile use; tested owner-loss/shutdown/reconnect; no false connected claims. Unactivated; finite setup ownership is the current boundary. |
 | Explicit retained-guard recovery | Positive lifetime proof beyond vanished PID, timeout or user guess | Preserve records/profiles until proof; no deletion/copy/fresh-profile workaround or mutation replay. Unactivated; independently review before implementation. |
 | Investigate transient accept() error | Reproducible owned fixture and native readiness/error evidence | Confirm cause/effect; regression proves recovery/refusal without weaker admission. Unconfirmed, unactivated investigation. |
@@ -439,3 +439,51 @@ does not repeat its broad qualification. The sealed `c941d3c` trial is older and
 does not include these native corrections. A corrected trial, human acceptance
 and final gates wait for the agreed finalization milestone. Targeted checks
 passed; final validation pending.
+
+## Activated retained-model reuse (2026-10-15)
+
+The user explicitly requested local Qwen smart search in demo, superseding the
+previous unactivated follow-up. Reuse only existing pinned same-envelope weights
+through unchanged canonical-path, owner, mode, link-count, size and full-hash
+inspection. Missing/invalid assets keep the no-model path; demo download stays
+refused. No import, copying, new setting, provider selection or walkthrough edits.
+
+Remove only the personal-mode veto in preparation and managed model authority.
+Preserve application role, exact session generation, selected data/identity pair,
+held owner, current metadata and revocation checks. Existing supervisor ownership
+drains the old application/model before mode/reset/restart and creates fresh
+credentials/session. Native labels retain Demo identity for all AI states and
+sleep; a user-requested mode transition clears the prior sleep latch, while sleep
+during transition still invalidates the new session. Banner availability follows
+actual capability status; configuration alone never claims model readiness.
+
+Coordinator and independent security/lifecycle reviewer approved this bounded
+four-product-file amendment before implementation. Requested Astra/xhigh remains
+unverified. Backend admission and preparation tests fail first, followed by
+focused authority/revocation, no-model/assets, native transition/labels/download
+and synthetic HTTPS smart-search browser evidence. Review the affected diff,
+commit/push once, then build one sealed trial at a new path. Preserve the running
+trial, its model bytes and provider configuration. Prepare a same-root launcher
+for the user to run after normal Quit; do not launch or run live Qwen automatically.
+No full local gate or complete qualification during this feedback round. Report
+“Targeted checks passed; final validation pending.” Required final gates remain
+for the agreed end milestone; older artifact evidence retains its original scope.
+
+Failure-first evidence: the actual demo authority test denied admission, and the
+compiled menu fixture rejected its obsolete label. Preparation initially exposed
+a fixture omission (missing synthetic store ID); after correcting that fixture,
+an owned copy of the original preparation entrypoint failed because demo never
+inspected assets. The corrected entrypoint passes the same assertions. Synthetic
+inspection/certificate collaborators test orchestration; unchanged real asset
+checks and certificate generation retain their own trust boundaries.
+
+Targeted amendment evidence: preparation/assets/download admission16/16; backend
+capability grammar21/21; final affected native authority, labels, mode transitions
+and model-loss/unlock4/4. Existing revocation coverage passed in the prior focused
+6/6 run with unchanged inputs. The browser's three existing demo cases passed;
+the new synthetic smart-search case initially queried before navigation/unlock,
+then passed1/1 after fixture ordering was corrected. An early-exit C fixture's
+unused handler warning was also fixed before its successful native run. Backend,
+web and native builds, Markdown153, contracts and whitespace passed. These are
+synthetic tests, not a real Qwen quality or installed model-enabled acceptance
+claim. The next single sealed build is for the user's named smart-search retest.

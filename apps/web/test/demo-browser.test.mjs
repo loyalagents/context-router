@@ -92,3 +92,24 @@ test('seeded demo client rename preserves historical attribution and exact activ
  assert.equal(after.find(client=>client.id===receipt.clients.agentB).label,'Demo agent B — reader');
  assert.deepEqual(JSON.parse(await readFile(f.root+'/demo/generation.json')),receipt);
 });
+
+test('demo uses the installed local model for smart search while keeping historical identity visible', {timeout:60000}, async t=>{
+ const f=await browserFixture(t,{demo:true,model:true});f.page.setDefaultTimeout(10000);
+ await f.page.route('**/api/local/capabilities',async route=>{
+  const response=await route.fetch(),body=await response.json();
+  if(response.status()===200)body.runtime={mode:'demo',launcher:'native',generation:'c'.repeat(32),storeId:'b'.repeat(32)};
+  await route.fulfill({response,json:body});
+ });
+ await f.page.goto(f.ready.origin+'/dashboard/preferences');await f.page.getByLabel('Unlock token').fill(f.bootstrap);await f.page.getByRole('button',{name:'Unlock local dashboard'}).click();
+ await f.page.getByRole('button',{name:'Lock dashboard'}).waitFor();
+ const data=await f.graphql('query { activePreferences { slug } }'),slug=data.activePreferences.find(p=>p.slug.startsWith('travel.demo001.')).slug;
+ f.peer.state.reply=JSON.stringify({relevantSlugs:[slug],queryInterpretation:'Synthetic historical travel match'});
+ const banner=f.page.getByRole('complementary',{name:'Demo mode'});await banner.waitFor();
+ assert.match(await banner.innerText(),/Installed local AI is used when available/);
+ assert.doesNotMatch(await banner.innerText(),/AI is disabled/);
+ await f.page.getByLabel('Search query',{exact:true}).fill('Historical travel preferences');
+ await f.page.getByRole('button',{name:'Smart search',exact:true}).click();
+ const results=f.page.getByLabel('Smart search results');await results.getByText('Synthetic historical travel match',{exact:true}).waitFor();
+ await results.getByText(slug,{exact:true}).waitFor();assert.equal(f.peer.state.completionBodies.length,1);
+ await banner.waitFor();assert.equal((await f.graphql('query { activePreferences { slug } }')).activePreferences.length,189);
+});

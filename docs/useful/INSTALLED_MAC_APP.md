@@ -75,8 +75,10 @@ envelope. **CR → Enter demo mode…** prepares the frozen historical 2024–20
 sample on first entry, then reopens that store on later entries. The menu-bar
 title stays compact as **CR** in both modes. Its tooltip and accessibility label,
 the menu's status line and the authenticated dashboard banner identify demo mode;
-startup descriptions stay neutral until the mode is admitted. AI is disabled; personal
-model files remain retained. **Return to personal mode…** restores the personal
+startup descriptions stay neutral until the mode is admitted. Verified model weights
+already installed in the same envelope enable local AI, including smart search,
+with fresh inference credentials. Missing or invalid weights keep demo usable
+without AI. Demo does not download models; installed model files remain retained. **Return to personal mode…** restores the personal
 slot. Quit/relaunch remembers the last successfully selected mode. Each switch
 closes existing browser/MCP sessions; use the newly opened dashboard and fresh
 client conversations.

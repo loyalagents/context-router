@@ -112,14 +112,14 @@
   }else if([type isEqual:@"ready"]){
     if(_ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"mcpOrigin",@"unlockFile",@"modelEnabled"])||CFGetTypeID((__bridge CFTypeRef)record[@"modelEnabled"])!=CFBooleanGetTypeID()||!CRPattern(record[@"mcpOrigin"],@"http://127\\.0\\.0\\.1:[1-9][0-9]{0,4}/mcp")||[NSURL URLWithString:record[@"mcpOrigin"]].port.integerValue>65535)CRFail();
     [self origin:record[@"origin"]];[self unlock:record[@"unlockFile"]];_mcpOrigin=record[@"mcpOrigin"];_ready=YES;
-    if(!_stopping&&!_quitting){_label.title=[_mode isEqual:@"demo"]?@"Demo ready · historical sample 2024–2025":[record[@"modelEnabled"] boolValue]?@"Dashboard ready · AI loading":@"Dashboard ready · model not installed";if(_sleepInvalidated)[self send:@"model-unavailable"];}
+    if(!_stopping&&!_quitting){_label.title=[NSString stringWithFormat:@"%@ · %@",[_mode isEqual:@"demo"]?@"Demo ready":@"Dashboard ready",[record[@"modelEnabled"] boolValue]?@"AI loading":@"model not installed"];if(_sleepInvalidated)[self send:@"model-unavailable"];}
     if(_quitting){_stopping=YES;[self send:@"quit"];}
     else if(!_stopping&&!_broken&&_openOnReady){_openOnReady=NO;[self openDashboard:nil];}
   }else if([type isEqual:@"unlock"]){
     if(!_ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"unlockFile"])||![_origin isEqual:record[@"origin"]])CRFail();if([self unlock:record[@"unlockFile"]])[self performSelector:@selector(showUnlock) withObject:nil afterDelay:0];
   }else if([type isEqual:@"model-status"]){
     if(!CRExact(record,@[@"version",@"generation",@"type",@"state"])||![@[@"available",@"busy",@"loading",@"unavailable"] containsObject:record[@"state"]])CRFail();
-    _label.title=[record[@"state"] isEqual:@"available"]?@"Dashboard ready · AI available":[record[@"state"] isEqual:@"busy"]?@"Dashboard ready · AI working":[record[@"state"] isEqual:@"loading"]?@"Dashboard ready · AI loading":@"Dashboard ready · restart required for AI";
+    _label.title=[NSString stringWithFormat:@"%@ · %@",[_mode isEqual:@"demo"]?@"Demo ready":@"Dashboard ready",[record[@"state"] isEqual:@"available"]?@"AI available":[record[@"state"] isEqual:@"busy"]?@"AI working":[record[@"state"] isEqual:@"loading"]?@"AI loading":@"restart required for AI"];
   }else if([type isEqual:@"download-progress"]){
     if(!_download||!CRExact(record,@[@"version",@"generation",@"type",@"received",@"total"])||!CRInteger(record[@"total"],5680522464LL,5680522464LL)||!CRInteger(record[@"received"],0,5680522464LL))CRFail();_label.title=[NSString stringWithFormat:@"Downloading model · %.0f%%",100*[record[@"received"] doubleValue]/5680522464.0];
   }else if([@[@"download-starting",@"download-complete",@"download-cancelled",@"download-failed"] containsObject:type]){
@@ -161,11 +161,12 @@
   (void)sender;if(_demoOperation)return;NSAlert *alert=[NSAlert new];alert.messageText=@"Restart local runtime?";alert.informativeText=@"This signs out browser sessions, interrupts MCP connections, drains current work, and starts a fresh local AI session. The current dashboard will open when ready; unlock there with a new code. Older tabs may have an obsolete address. Data, identity, client credentials and installed model assets are preserved.";[alert addButtonWithTitle:@"Restart"];[alert addButtonWithTitle:@"Cancel"];
   if([alert runModal]==NSAlertFirstButtonReturn&&_ready&&!_stopping&&!_demoOperation)[self beginRestart];[self update];
 }
+- (void)beginModeChange:(NSString *)command {if(_demoOperation)return;_sleepInvalidated=NO;_stopping=YES;_openOnReady=YES;_label.title=@"Stopping local runtime…";[self send:command];}
 - (void)changeMode:(NSString *)command title:(NSString *)title detail:(NSString *)detail {
   if(_demoOperation)return;NSAlert *alert=[NSAlert new];alert.messageText=title;alert.informativeText=detail;[alert addButtonWithTitle:@"Continue"];[alert addButtonWithTitle:@"Cancel"];
-  if([alert runModal]==NSAlertFirstButtonReturn&&(_ready||(_demoUnavailable&&[command isEqual:@"leave-demo"]))&&!_stopping&&!_broken&&!_demoOperation){_stopping=YES;_openOnReady=YES;_label.title=@"Stopping local runtime…";[self send:command];}[self update];
+  if([alert runModal]==NSAlertFirstButtonReturn&&(_ready||(_demoUnavailable&&[command isEqual:@"leave-demo"]))&&!_stopping&&!_broken&&!_demoOperation)[self beginModeChange:command];[self update];
 }
-- (void)enterDemo:(id)sender {(void)sender;[self changeMode:@"enter-demo" title:@"Enter demo mode?" detail:@"This closes current browser sessions and MCP connections. Personal data and model assets stay retained. Demo uses a separate persistent historical sample store with AI disabled. Start fresh client conversations after switching."];}
+- (void)enterDemo:(id)sender {(void)sender;[self changeMode:@"enter-demo" title:@"Enter demo mode?" detail:@"This closes current browser sessions and MCP connections. Personal data and model assets stay retained. Demo uses a separate persistent historical sample store and reuses verified installed model weights with a fresh local AI session. Start fresh client conversations after switching."];}
 - (void)leaveDemo:(id)sender {(void)sender;[self changeMode:@"leave-demo" title:@"Return to personal mode?" detail:@"This closes demo browser sessions and MCP connections and returns to your personal store. Demo edits and client profiles stay retained. Start fresh client conversations after switching."];}
 - (void)resetDemo:(id)sender {(void)sender;[self changeMode:@"reset-demo" title:@"Reset sample data?" detail:@"This creates a fresh demo store and identity with the original 189 active historical memories, definitions, import history and client tokens. Later demo edits, custom clients and grant changes do not carry forward. The old demo store, exports and login profiles stay retained. Existing connections and Desktop proposals become stale; reconnect with the new setup commands and start fresh conversations."];}
 - (void)cancelDemo:(id)sender {(void)sender;_stopping=YES;[self send:@"cancel-demo"];[self update];}
@@ -366,7 +367,7 @@
     _demoCopyBinding=nil;_demoCopyCommands=nil;_demoCopyNames=nil;_demoCopyFeedback=nil;_demoPanelIdentity=nil;_demoProposal=nil;_demoActions=nil;_demoReview=nil;_demoClosed=nil;_demoApply=nil;_demoDetails=nil;
   }
 }
-- (void)sleepWake:(NSNotification *)notification {(void)notification;_sleepInvalidated=YES;if(_ready&&!_stopping){[self send:@"model-unavailable"];_label.title=@"Dashboard ready · restart required after sleep";}}
+- (void)sleepWake:(NSNotification *)notification {(void)notification;_sleepInvalidated=YES;if(_ready&&!_stopping){[self send:@"model-unavailable"];_label.title=[NSString stringWithFormat:@"%@ · restart required after sleep",[_mode isEqual:@"demo"]?@"Demo ready":@"Dashboard ready"];}}
 - (void)quit:(id)sender {(void)sender;[NSApp terminate:nil];}
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)application {
   (void)application;if(_quitting)return _guardian.running?NSTerminateLater:NSTerminateNow;
