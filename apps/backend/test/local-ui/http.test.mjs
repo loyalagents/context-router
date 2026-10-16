@@ -948,6 +948,15 @@ for (const operation of ['smart-search', 'legacy-logout', 'legacy-deadline'])
         }
         return false;
       };
+      let browserExecution, admittedAt;
+      if (operation === 'legacy-deadline') {
+        const { UI_EXECUTION } = require('../../dist/local-ui/local-ui-request.js');
+        f.runtime.server.once('request', (req) => {
+          browserExecution = req[UI_EXECUTION];
+          admittedAt = performance.now();
+        });
+      }
+      const requestedAt = performance.now();
       const running = f.request('/graphql', {
         token,
         body: search,
@@ -955,7 +964,7 @@ for (const operation of ['smart-search', 'legacy-logout', 'legacy-deadline'])
           'x-context-router-timeout-ms':
             operation === 'legacy-deadline' ? '1500' : '10000',
         },
-      });
+      }).then((response) => ({ response, stoppedAt: performance.now() }));
       await atCompletion;
       const runningOptions = observed;
       const busy = await client.callTool({
@@ -973,15 +982,28 @@ for (const operation of ['smart-search', 'legacy-logout', 'legacy-deadline'])
           (await f.request('/api/local/logout', { token })).status,
           200,
         );
-      const stopped = await running;
+      const { response: stopped, stoppedAt } = await running;
       if (operation === 'legacy-deadline') {
         assert.ok(
           stopped.status === 504 || stopped.json().errors?.length,
           'deadline never publishes generated text',
         );
-        assert.ok(
-          runningOptions.deadline <= performance.now(),
+        // Verify the admitted budget independently of response timing.
+        assert.ok(browserExecution, 'browser request has execution controls');
+        assert.ok(browserExecution.deadline >= requestedAt + 1500);
+        assert.ok(browserExecution.deadline <= admittedAt + 1500);
+        assert.equal(
+          runningOptions.deadline,
+          browserExecution.deadline,
           'same shortened budget reaches the model',
+        );
+        assert.equal(runningOptions.signal, browserExecution.signal);
+        // Allow timer granularity, but still catch substantially early failures.
+        // Record arrival above so intervening MCP calls cannot hide an early stop.
+        const earlyTimerToleranceMs = 25;
+        assert.ok(
+          stoppedAt >= browserExecution.deadline - earlyTimerToleranceMs,
+          'held request must run to within 25 ms of its deadline',
         );
       } else {
         assert.ok(stopped.json().errors?.length);
