@@ -336,3 +336,146 @@ test('revoke blocks future admission but already admitted mutation may commit wi
     401,
   );
 });
+
+test('browser atomic permissions Save changes real MCP data, writes and audits without changing credentials',async t=>{
+  const f=await fixture(t);
+  const {LocalUiManagement}=require('../../dist/local-ui/local-ui-management.js');
+  const principal=f.store.authenticate(f.tokens[0]).principalId;
+  const service=new LocalUiManagement(f.store,principal);
+  async function save(id,maximum,edits=[]){
+    const state=await service.handle('/api/local/mcp/inspect',{id});
+    const body={id,generation:state.client.generation,revision:state.revision,catalogRevision:state.catalogRevision,policy:maximum,edits};
+    const preview=await service.handle('/api/local/mcp/preview',body);
+    return service.handle('/api/local/mcp/save',{...body,previewKey:preview.previewKey});
+  }
+  await save(f.a.id,policy(writer,true));
+  const a=(await f.connect()).client,b=(await f.connect(f.tokens[1])).client;
+  await create(a,'synthetic.public');await create(a,'synthetic.private',true);
+  await set(a,'synthetic.public','visible');
+  await set(a,'synthetic.private','private');
+  assert.equal((await search(b)).active.count,0);
+  await save(f.b.id,policy(['preferences:write']),[
+    {target:'synthetic.*',action:'READ',effect:'DENY'},
+    {target:'synthetic.public',action:'READ',effect:'ALLOW'},
+    {target:'synthetic.*',action:'SUGGEST',effect:'DENY'},
+    {target:'synthetic.*',action:'WRITE',effect:'DENY'},
+  ]);
+  assert.equal((await search(b)).active.count,1);
+  let audits=rows(f,'preference_audit_events').length;
+  await set(b,'synthetic.public','blocked',true);assert.equal(rows(f,'preference_audit_events').length,audits);
+  await save(f.b.id,policy(['preferences:write']),[
+    {target:'synthetic.public',action:'SUGGEST',effect:'ALLOW'},
+    {target:'synthetic.public',action:'WRITE',effect:'ALLOW'},
+  ]);
+  await set(b,'synthetic.public','updated');assert.equal(rows(f,'preference_audit_events').length,audits+1);
+  await save(f.b.id,policy(['preferences:define']));
+  await create(b,'synthetic.independent');await set(b,'synthetic.public','no-values',true);
+  assert.equal((await b.callTool({name:'searchPreferences',arguments:{}})).isError,true);
+  await save(f.b.id,policy(['preferences:read'],true),[{target:'synthetic.*',action:'READ',effect:'ALLOW'}]);
+  assert.equal((await search(b)).active.count,2);
+  await save(f.b.id,policy(['preferences:read'],false));assert.equal((await search(b)).active.count,1);
+  assert.equal(f.store.authenticate(f.tokens[1]).generation,1);
+  assert.equal(rows(f,'user_preferences').find(row=>JSON.parse(row.value)==='updated')!==undefined,true);
+});
+
+test('real DEFINE create/update/archive with long labels and slugs leaves browser permissions available', async (t) => {
+  const f = await fixture(t),
+    {
+      LocalUiManagement,
+    } = require('../../dist/local-ui/local-ui-management.js');
+  f.store.permissions(f.a.id, policy(['preferences:define']));
+  const service = new LocalUiManagement(
+      f.store,
+      f.store.authenticate(f.tokens[0]).principalId,
+    ),
+    a = (await f.connect()).client;
+  for (const slug of ['synthetic.long_label', 'synthetic.' + 'x'.repeat(120)]) {
+    const created = await mutate(a, 'CREATE_DEFINITION', {
+      definition: {
+        slug,
+        displayName: 'N'.repeat(513),
+        description: 'Synthetic long catalog metadata',
+        valueType: 'STRING',
+        scope: 'GLOBAL',
+      },
+    });
+    const before = await service.handle('/api/local/mcp/inspect', {
+      id: f.b.id,
+    });
+    assert.equal(before.catalogStatus, 'AVAILABLE');
+    const oldBody = {
+      id: f.b.id,
+      generation: before.client.generation,
+      revision: before.revision,
+      catalogRevision: before.catalogRevision,
+      policy: policy([]),
+      edits: [],
+    };
+    const oldPreview = await service.handle('/api/local/mcp/preview', oldBody);
+    await mutate(a, 'UPDATE_DEFINITION', {
+      definition: {
+        id: created.definition.id,
+        displayName: 'Renamed '.repeat(1000),
+      },
+    });
+    const renamed = await service.handle('/api/local/mcp/inspect', {
+      id: f.b.id,
+    });
+    assert.equal(renamed.catalogRevision, before.catalogRevision);
+    assert.equal(
+      (
+        await service.handle('/api/local/mcp/save', {
+          ...oldBody,
+          previewKey: oldPreview.previewKey,
+        })
+      ).changed,
+      true,
+    );
+    const beforeArchive = await service.handle('/api/local/mcp/inspect', {
+      id: f.b.id,
+    });
+    const archiveBody = {
+      ...oldBody,
+      generation: beforeArchive.client.generation,
+      revision: beforeArchive.revision,
+      catalogRevision: beforeArchive.catalogRevision,
+    };
+    const archivePreview = await service.handle(
+      '/api/local/mcp/preview',
+      archiveBody,
+    );
+    await mutate(a, 'ARCHIVE_DEFINITION', {
+      definition: { id: created.definition.id },
+    });
+    const archived = await service.handle('/api/local/mcp/inspect', {
+      id: f.b.id,
+    });
+    assert.equal(archived.catalogStatus, 'AVAILABLE');
+    assert.notEqual(archived.catalogRevision, before.catalogRevision);
+    await assert.rejects(
+      service.handle('/api/local/mcp/save', {
+        ...archiveBody,
+        previewKey: archivePreview.previewKey,
+      }),
+      (error) => error.getStatus() === 409,
+    );
+    const body = {
+      id: f.b.id,
+      generation: archived.client.generation,
+      revision: archived.revision,
+      catalogRevision: archived.catalogRevision,
+      policy: policy([]),
+      edits: [],
+    };
+    const preview = await service.handle('/api/local/mcp/preview', body);
+    assert.equal(
+      (
+        await service.handle('/api/local/mcp/save', {
+          ...body,
+          previewKey: preview.previewKey,
+        })
+      ).changed,
+      true,
+    );
+  }
+});

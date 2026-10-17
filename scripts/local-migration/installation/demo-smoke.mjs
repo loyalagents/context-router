@@ -20,7 +20,7 @@ await fs.cp(source,bundle,{recursive:true,verbatimSymlinks:true});await verifyCa
 const exe=path.join(bundle,'Contents/MacOS/context-router'),node=path.join(bundle,'Contents/Resources/bin/node'),profile=path.join(root,'offline.sb');
 const {parse}=await import('yaml'),store=parse(await fs.readFile(path.join(repository,'node_modules/.modules.yaml'),'utf8')).storeDir;
 await fs.writeFile(profile,'(version 1)\n(allow default)\n'+[repository,store,path.dirname(path.dirname(process.execPath))].map(p=>`(deny file-read* (subpath ${JSON.stringify(p)}))\n`).join('')+'(deny process-exec)\n'+[exe,node].map(p=>`(allow process-exec (literal ${JSON.stringify(p)}))\n`).join('')+`(allow process-exec (subpath ${JSON.stringify(path.join(envelope,'demo/desktop'))}))\n(deny network-outbound)\n(allow network-outbound (remote ip "localhost:*"))\n`,{mode:0o600});
-const receipt={version:1,status:'running',scope:browserOnly?'browser-only':'full-demo-cycle',root,bundle,source:identity,phases:[],limitations:['Synthetic state with real packaged native/backend/browser/MCP. No AppKit interaction, provider login/session, real model retention/startup, distribution or human acceptance.','Desktop uses an injected test-only temporary-root context; human snapshots require a durable private envelope.',...(browserOnly?['Browser-and-rename scope only. It excludes the later A/B/C authority, immutable Desktop, reconnect, reset and personal-return proofs.']:[])]},owners=[],clients=[];let browser;
+const receipt={version:1,status:'running',scope:browserOnly?'browser-only':'full-demo-cycle',root,bundle,source:identity,phases:[],limitations:['Synthetic state with real packaged native/backend/browser/MCP. No AppKit interaction, provider login/session, real model retention/startup, distribution or human acceptance.','Desktop uses an injected test-only temporary-root context; human snapshots require a durable private envelope.',...(browserOnly?['Browser, rename and permissions scope only. It excludes the later A/B/C authority, immutable Desktop, reconnect, reset and personal-return proofs.']:[])]},owners=[],clients=[];let browser;
 const phase=name=>{receipt.phases.push(name);console.log('Demo artifact: '+name);};
 const pause=()=>new Promise(resolve=>setTimeout(resolve,20));
 const portProbe=net.createServer();await new Promise(resolve=>portProbe.listen(0,'127.0.0.1',resolve));const demoPort=portProbe.address().port;await new Promise(resolve=>portProbe.close(resolve));
@@ -75,7 +75,32 @@ try{
  assert.deepEqual(await page.locator('a[href^="/dashboard/"]').evaluateAll(links=>links.map(a=>[a.textContent.trim(),a.getAttribute('href')])),navigation);
  const summary=page.getByText('Demo walkthrough (optional)',{exact:true}),guide=page.locator('details').filter({has:summary});assert.equal(await guide.getAttribute('open'),null);assert.equal(await guide.getByRole('button',{name:'Copy step 1 prompt',exact:true}).isVisible(),false);await page.screenshot({path:path.join(root,'demo-dashboard.png'),fullPage:true});
  await summary.click();assert.equal(await guide.getByRole('button',{name:/Copy step [1-5] prompt/}).count(),5);await context.grantPermissions(['clipboard-read','clipboard-write'],{origin:ready.origin});const prompt=await guide.locator('li p').first().innerText();await guide.getByRole('button',{name:'Copy step 1 prompt',exact:true}).click();assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),prompt);await page.screenshot({path:path.join(root,'demo-walkthrough-expanded.png'),fullPage:true});await summary.click();assert.equal(await guide.getAttribute('open'),null);
- for(const [label,view,heading] of [['Edit Profile','profile','Edit Profile'],['Preferences','preferences','Preferences'],['Preference Schema','schema','Preference Schema'],['Permission Grants','permissions','MCP Clients'],['Audit History','history','Audit History']]){await page.goto(ready.origin+'/dashboard');await page.getByRole('link',{name:label,exact:true}).click();await page.waitForURL(ready.origin+'/dashboard/'+view);await page.getByRole('heading',{name:heading,exact:true}).waitFor();await page.getByRole('complementary',{name:'Demo mode'}).waitFor();}assert.deepEqual(outbound,[]);await context.close();await browser.close();browser=undefined;phase('real-packaged-shared-dashboard-optional-guide-and-reused-views');
+ for(const [label,view,heading] of [['Edit Profile','profile','Edit Profile'],['Preferences','preferences','Preferences'],['Preference Schema','schema','Preference Schema'],['Permission Grants','permissions','MCP Clients'],['Audit History','history','Audit History']]){await page.goto(ready.origin+'/dashboard');await page.getByRole('link',{name:label,exact:true}).click();await page.waitForURL(ready.origin+'/dashboard/'+view);await page.getByRole('heading',{name:heading,exact:true}).waitFor();await page.getByRole('complementary',{name:'Demo mode'}).waitFor();}
+ await page.goto(ready.origin+'/dashboard/permissions');
+ const authority=()=>page.evaluate(async()=>{const response=await fetch('/api/local/mcp/list',{method:'POST',headers:{'content-type':'application/json','x-context-router-ui':'1',authorization:'Bearer '+sessionStorage.getItem('context-router.browser-session.v1')},body:'{}'});if(!response.ok)throw new Error('Authority read failed');return (await response.json()).items;});
+ const permissionBefore=await authority(),selectedId=demoReceipt.clients.agentB;
+ await page.getByRole('button',{name:'Edit permissions '+selectedId,exact:true}).click();
+ const permissionPanel=page.getByRole('region',{name:'Edit permissions',exact:true});
+ await permissionPanel.getByLabel('Maximum value access').selectOption('Blocked');
+ await permissionPanel.getByRole('button',{name:'Preview resulting access'}).click();
+ await permissionPanel.getByRole('button',{name:'Save permissions',exact:true}).click();
+ await permissionPanel.getByText('Permissions saved',{exact:true}).waitFor();
+ const permissionAfter=await authority();
+ assert.deepEqual(permissionAfter.filter(row=>row.id!==selectedId),permissionBefore.filter(row=>row.id!==selectedId));
+ assert.deepEqual(permissionAfter.find(row=>row.id===selectedId).policy.capabilities,[]);
+ const blockedReader=await client(ready,path.join(envelope,'demo',firstStore,'exports/agent-b.token'));
+ assert.equal((await blockedReader.listTools()).tools.some(tool=>tool.name==='searchPreferences'),false);
+ await closeClients();
+ assert.deepEqual(await fs.readFile(generationFile),generationBefore);
+ assert.deepEqual(await Promise.all(pairPaths.map(async p=>hash(await fs.readFile(p)))),personalBefore);
+ await permissionPanel.getByLabel('Maximum value access').selectOption('Read');
+ await permissionPanel.getByRole('button',{name:'Preview resulting access'}).click();
+ await permissionPanel.getByRole('button',{name:'Save permissions',exact:true}).click();
+ await permissionPanel.getByText('Permissions saved',{exact:true}).waitFor();
+ assert.deepEqual((await authority()).map(({summary,ruleCount,...row})=>row),permissionBefore.map(({summary,ruleCount,...row})=>row));
+ await permissionPanel.screenshot({path:path.join(root,'demo-permissions-save.png')});
+ phase('installed-demo-permissions-save-selected-client-only-personal-receipt-preservation-and-real-mcp');
+ assert.deepEqual(outbound,[]);await context.close();await browser.close();browser=undefined;phase('real-packaged-shared-dashboard-optional-guide-and-reused-views');
  if(browserOnly){await stop(current,ready);receipt.status='passed';}else{
  const exports=path.join(envelope,'demo',firstStore,'exports'),a=await client(ready,path.join(exports,'agent-a.token')),b=await client(ready,path.join(exports,'agent-b.token')),c=await client(ready,path.join(exports,'agent-c.token'));
  const slug='home.demo001.artifact_note';await call(a,'mutatePreferences',{operation:'CREATE_DEFINITION',definition:{slug,description:'Explicit synthetic artifact change',valueType:'STRING',scope:'GLOBAL',isSensitive:true}});await call(a,'mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug,value:'"fresh portable artifact"'}});

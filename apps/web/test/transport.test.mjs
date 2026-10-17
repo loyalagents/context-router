@@ -113,3 +113,10 @@ test('name lookup and rename use fixed authenticated routes and never retry lost
   transport.clear();
   await assert.rejects(transport.request('/api/local/mcp/labels',{method:'POST'}));
 });
+
+test('permissions discovery and preview are fixed human routes and Save is never retried',async()=>{
+  const calls=[];const transport=createLocalTransport(async route=>{calls.push(route);if(route.endsWith('/save'))throw new Error('lost');return new Response('{}');});transport.setSession(token);
+  for(const route of ['targets','preview'])await transport.request('/api/local/mcp/'+route,{method:'POST',body:'{}'});
+  await assert.rejects(transport.request('/api/local/mcp/save',{method:'POST',body:'{}'}),/lost/);
+  assert.deepEqual(calls,['/api/local/mcp/targets','/api/local/mcp/preview','/api/local/mcp/save']);
+});

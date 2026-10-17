@@ -70,6 +70,23 @@ pnpm --filter backend local-mcp restore --from /absolute/private-parent/new-back
 
 Restore selects new `data` and `identity` children. It restores credential digests, policies, grants and revocations as of the snapshot. An older backup can revive old MCP/human credentials; rotate/revoke before reconnecting. Token delivery files are separate private artifacts and are not inside the bundle. Preserve user state and follow [identity recovery](LOCAL_IDENTITY_ADMIN.md), rather than deleting roots to recover from ambiguity.
 
+Browser permissions Save and CLI policy/grant/rotation/revocation use a complete
+content revision over the store/principal/client and all stored grant content.
+Same-generation policy edits can conflict; read and decide again instead of
+retrying a stale command. Rotation compares before replacing authority after
+export, so a losing export may be inert. Revocation is terminal; old browser
+callers may still supply generation alone. The complete revision uses bounded
+chunks even when the browser's 512-rule editable projection is unavailable.
+Exact A→B→A restored content may match again: this is a content comparison, not an
+event counter. Renaming invalidates permission drafts without changing credentials.
+After a fresh browser read, untouched settings follow current authority; deliberate
+changes remain in the draft. Concurrent changes to the same setting or rule require
+an explicit choice and new preview. Cosmetic definition labels do not change the
+catalog authority revision. Valid long definition slugs/labels stay editable within
+the complete catalog budget; shortened display text is never a rule selector.
+The browser selector limit remains 128 characters, with CLI/revoke recovery
+available when the complete catalog exceeds its documented bounds.
+
 ## Local Listener And Model
 
 ```sh
@@ -386,7 +403,8 @@ Then update the local backend configuration that advertises the MCP server URL b
 [Local dashboard](LOCAL_UI.md) starts the same MCP edge alongside its independent
 browser listener. Use that one process instead of a second `local-mcp serve`
 instance. The browser can inspect and rename actual client IDs, narrow grants and revoke;
-provision, rotate and maximum-policy commands remain this CLI. Its browser bearer
+provision and rotate remain CLI operations. The authenticated dashboard can also
+atomically edit maximum policy and grants after a server preview. Its browser bearer
 never authenticates MCP, and MCP retains native Origin denial. Hosted setup above
 is unchanged.
 

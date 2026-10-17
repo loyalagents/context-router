@@ -1100,3 +1100,394 @@ test('runtime presentation is authenticated and source launches do not claim nat
   assert.deepEqual(result.json().runtime,{mode:'personal',launcher:'terminal'});
   assert.equal((await f.request('/api/local/capabilities',{token,body:{mode:'demo'}})).status,400);
 });
+
+test('permissions endpoints are strict human-only local browser administration and return commit revision',async t=>{
+  const f=await fixture(t),{token}=await f.unlock();
+  const clients=(await f.request('/api/local/mcp/list',{token})).json().items;
+  const id=clients[0].id;
+  const inspect=(await f.request('/api/local/mcp/inspect',{token,body:{id}})).json();
+  const body={id,generation:1,revision:inspect.revision,catalogRevision:inspect.catalogRevision,policy:{capabilities:['preferences:write'],targets:['profile.*'],allowSensitive:false},edits:[]};
+  for(const route of ['/api/local/mcp/targets','/api/local/mcp/preview','/api/local/mcp/save']){
+    for(const wrong of [undefined,f.identity.credential,f.mcpToken])assert.equal((await f.request(route,{token:wrong,body})).status,401);
+    assert.equal((await f.request(route,{token,method:'GET'})).status,405);
+    assert.equal((await f.request(route,{token,body,headers:{origin:'http://attacker.invalid'}})).status,403);
+    assert.equal((await f.request(route,{token,body,headers:{'x-context-router-ui':'0'}})).status,403);
+    assert.equal((await f.request(route,{token,body,headers:{'content-type':'text/plain'}})).status,415);
+    assert.equal((await f.request(route,{token,body:{...body,principalId:f.identity.principalId}})).status,400);
+    assert.equal((await f.request(route,{token,body:{blob:'x'.repeat(256*1024)}})).status,413);
+  }
+  const preview=await f.request('/api/local/mcp/preview',{token,body});assert.equal(preview.status,200,preview.text);
+  assert.equal((await f.request('/api/local/mcp/save',{token,body:{...body,previewKey:'0'.repeat(64)}})).status,409);
+  const saved=await f.request('/api/local/mcp/save',{token,body:{...body,previewKey:preview.json().previewKey}});
+  assert.equal(saved.status,200,saved.text);assert.equal(saved.json().changed,true);assert.match(saved.json().revision,/^[a-f0-9]{64}$/);
+  assert.equal((await f.request('/api/local/mcp/save',{token,body:{...body,previewKey:preview.json().previewKey}})).status,409);
+  for(const mutation of ['setPermissionGrant(input: {clientKey: "local:'+id+'", target: "*", action: READ, effect: ALLOW}) { id }','removePermissionGrant(clientKey: "local:'+id+'", target: "*", action: READ)']){
+    const response=await f.request('/graphql',{token,body:{query:'mutation { '+mutation+' }'}});assert.ok(response.json().errors);
+  }
+});
+
+for(const mode of ['logout','expiry','replacement'])test(`browser ${mode} during detached Save preflight cannot commit`,async t=>{
+  const f=await fixture(t),{token}=await f.unlock();
+  const id=(await f.request('/api/local/mcp/list',{token})).json().items[0].id;
+  const state=(await f.request('/api/local/mcp/inspect',{token,body:{id}})).json();
+  const body={id,generation:1,revision:state.revision,catalogRevision:state.catalogRevision,policy:{capabilities:['preferences:write'],targets:['*'],allowSensitive:true},edits:[{target:'*',action:'WRITE',effect:'DENY'}]};
+  const preview=(await f.request('/api/local/mcp/preview',{token,body})).json();
+  const {McpAuthorizationService}=require('../../dist/mcp/auth/mcp-authorization.service.js');
+  const {LocalUiSessions}=require('../../dist/local-ui/local-ui-sessions.js');
+  const sessions=f.runtime.application.get(LocalUiSessions);
+  const original=McpAuthorizationService.prototype.canAccessTarget;
+  let entered,release;const barrier=new Promise(r=>{entered=r;}),resume=new Promise(r=>{release=r;});
+  McpAuthorizationService.prototype.canAccessTarget=async function(...args){entered();await resume;return original.apply(this,args);};
+  try{
+    const response=f.request('/api/local/mcp/save',{token,body:{...body,previewKey:preview.previewKey}});
+    await barrier;
+    if(mode==='logout')sessions.logout(token);
+    else if(mode==='expiry')sessions.now=()=>Date.now()+9*60*60*1000;
+    else sessions.close();
+    release();assert.equal((await response).status,401);
+  }finally{release();McpAuthorizationService.prototype.canAccessTarget=original;}
+  const db=SqliteDatabase.open({databaseRoot:f.configuration.databaseRoot,identityRoot:f.configuration.stateRoot});
+  const store=new SqliteMcpCredentials(db,f.identity.principalId);
+  assert.deepEqual(store.authenticate(f.mcpToken).policy,state.client.policy);
+  assert.equal(store.inspectForUi(id).grants.length,0);
+});
+
+test(
+  'socket disconnect during detached Save preflight settles without writing policy or grants',
+  { timeout: 15000 },
+  async (t) => {
+    const f = await fixture(t),
+      { token } = await f.unlock();
+    const id = (await f.request('/api/local/mcp/list', { token })).json()
+      .items[0].id;
+    const state = (
+      await f.request('/api/local/mcp/inspect', { token, body: { id } })
+    ).json();
+    const body = {
+      id,
+      generation: state.client.generation,
+      revision: state.revision,
+      catalogRevision: state.catalogRevision,
+      policy: {
+        capabilities: ['preferences:write'],
+        targets: ['*'],
+        allowSensitive: true,
+      },
+      edits: [{ target: '*', action: 'WRITE', effect: 'DENY' }],
+    };
+    const preview = (
+      await f.request('/api/local/mcp/preview', { token, body })
+    ).json();
+    const {
+      McpAuthorizationService,
+    } = require('../../dist/mcp/auth/mcp-authorization.service.js');
+    const {
+      LocalUiManagement,
+    } = require('../../dist/local-ui/local-ui-management.js');
+    const {
+      LocalUiSessions,
+    } = require('../../dist/local-ui/local-ui-sessions.js');
+    const sessions = f.runtime.application.get(LocalUiSessions),
+      track = sessions.track.bind(sessions);
+    let entered, release, settled, aborted;
+    const enteredPromise = new Promise((r) => (entered = r)),
+      resume = new Promise((r) => (release = r)),
+      settledPromise = new Promise((r) => (settled = r)),
+      abortedPromise = new Promise((r) => (aborted = r));
+    const original = McpAuthorizationService.prototype.canAccessTarget,
+      handle = LocalUiManagement.prototype.handle;
+    sessions.track = (...args) => {
+      args[1].signal.addEventListener('abort', aborted, { once: true });
+      return track(...args);
+    };
+    McpAuthorizationService.prototype.canAccessTarget = async function (
+      ...args
+    ) {
+      entered();
+      await resume;
+      return original.apply(this, args);
+    };
+    LocalUiManagement.prototype.handle = async function (route, ...args) {
+      try {
+        return await handle.call(this, route, ...args);
+      } finally {
+        if (route === '/api/local/mcp/save') settled();
+      }
+    };
+    const request = http.request({
+      hostname: '127.0.0.1',
+      port: f.runtime.port,
+      path: '/api/local/mcp/save',
+      method: 'POST',
+      headers: {
+        origin: f.origin,
+        'content-type': 'application/json',
+        'x-context-router-ui': '1',
+        authorization: `Bearer ${token}`,
+      },
+    });
+    request.on('error', () => {});
+    try {
+      request.end(JSON.stringify({ ...body, previewKey: preview.previewKey }));
+      await enteredPromise;
+      request.destroy();
+      await abortedPromise;
+      release();
+      await settledPromise;
+      const db = SqliteDatabase.open({
+          databaseRoot: f.configuration.databaseRoot,
+          identityRoot: f.configuration.stateRoot,
+        }),
+        store = new SqliteMcpCredentials(db, f.identity.principalId);
+      assert.deepEqual(
+        store.authenticate(f.mcpToken).policy,
+        state.client.policy,
+      );
+      assert.equal(store.inspectForUi(id).revision, state.revision);
+      assert.equal(store.inspectForUi(id).grants.length, 0);
+    } finally {
+      request.destroy();
+      release();
+      McpAuthorizationService.prototype.canAccessTarget = original;
+      LocalUiManagement.prototype.handle = handle;
+      sessions.track = track;
+    }
+  },
+);
+
+test("browser Save immediately bounds local smart-search context and results on an existing MCP session", async (t) => {
+  const f = await configuredFixture(t);
+  const { token } = await f.unlock();
+  const id = f.runtime.credentials.list()[0].id;
+  const { Client } = require("@modelcontextprotocol/sdk/client/index.js");
+  const {
+    StreamableHTTPClientTransport,
+  } = require("@modelcontextprotocol/sdk/client/streamableHttp.js");
+  const {
+    PreferenceDefinitionRepository,
+  } = require("../../dist/modules/preferences/preference-definition/preference-definition.repository.js");
+  const { localSearchReply } = await import(
+    "../local-model/fixtures/search-reply.mjs"
+  );
+  const maximum = (
+    capabilities,
+    targets = ["integration.*"],
+    allowSensitive = false,
+  ) => ({ capabilities, targets, allowSensitive });
+  async function save(policy, edits = []) {
+    const inspected = await f.request("/api/local/mcp/inspect", {
+      token,
+      body: { id },
+    });
+    assert.equal(inspected.status, 200, inspected.text);
+    const state = inspected.json();
+    const body = {
+      id,
+      generation: state.client.generation,
+      revision: state.revision,
+      catalogRevision: state.catalogRevision,
+      policy,
+      edits,
+    };
+    const preview = await f.request("/api/local/mcp/preview", { token, body });
+    assert.equal(preview.status, 200, preview.text);
+    const saved = await f.request("/api/local/mcp/save", {
+      token,
+      body: { ...body, previewKey: preview.json().previewKey },
+    });
+    assert.equal(saved.status, 200, saved.text);
+    assert.match(saved.json().revision, /^[a-f0-9]{64}$/);
+  }
+  await save(
+    maximum(
+      ["preferences:write", "preferences:define"],
+      ["integration.*"],
+      true,
+    ),
+  );
+  const client = new Client({
+    name: "permissions-search-integration",
+    version: "1",
+  });
+  t.after(() => client.close());
+  await client.connect(
+    new StreamableHTTPClientTransport(
+      new URL(`http://127.0.0.1:${f.runtime.mcpPort}/mcp`),
+      {
+        requestInit: { headers: { authorization: `Bearer ${f.mcpToken}` } },
+      },
+    ),
+  );
+  const provenanceIds = [id, f.identity.principalId];
+  async function mutate(operation, payload) {
+    const result = await client.callTool({
+      name: "mutatePreferences",
+      arguments: { operation, ...payload },
+    });
+    assert.equal(result.isError === true, false, JSON.stringify(result));
+    return JSON.parse(result.content[0].text);
+  }
+  async function define(slug, isSensitive = false) {
+    const result = await mutate("CREATE_DEFINITION", {
+      definition: {
+        slug,
+        description: "Synthetic integration field",
+        valueType: "STRING",
+        scope: "GLOBAL",
+        isSensitive,
+      },
+    });
+    provenanceIds.push(result.definition.id);
+    return result.definition;
+  }
+  async function value(slug, marker) {
+    const result = await mutate("SET_PREFERENCE", {
+      preference: {
+        slug,
+        value: JSON.stringify(marker),
+        evidence: { note: "EVIDENCE_ONLY_CANARY" },
+      },
+    });
+    provenanceIds.push(result.preference.id, result.audit.correlationId);
+  }
+  const markers = {
+    "integration.public": "PUBLIC_VALUE_CANARY",
+    "integration.denied": "GRANT_VALUE_CANARY",
+    "integration.outside": "SCOPE_VALUE_CANARY",
+    "integration.secret": "SENSITIVE_VALUE_CANARY",
+    "integration.archived": "ARCHIVED_VALUE_CANARY",
+    "integration.collision": "COLLISION_VALUE_CANARY",
+  };
+  for (const slug of [
+    "integration.public",
+    "integration.denied",
+    "integration.outside",
+    "integration.secret",
+  ]) {
+    await define(slug, slug === "integration.secret");
+    await value(slug, markers[slug]);
+  }
+  const archived = await define("integration.archived", true);
+  await value(archived.slug, markers[archived.slug]);
+  await mutate("SUGGEST_PREFERENCE", {
+    preference: {
+      slug: archived.slug,
+      value: '"ARCHIVED_SUGGESTION_CANARY"',
+      confidence: 0.8,
+      evidence: { note: "SUGGESTION_EVIDENCE_CANARY" },
+    },
+  });
+  await mutate("ARCHIVE_DEFINITION", { definition: { id: archived.id } });
+  await define(archived.slug);
+  const definitions = f.runtime.application.get(PreferenceDefinitionRepository);
+  const global = await definitions.create({
+    slug: "integration.collision",
+    description: "Global sensitive field",
+    valueType: "STRING",
+    scope: "GLOBAL",
+    isSensitive: true,
+  });
+  provenanceIds.push(global.id);
+  await value(global.slug, markers[global.slug]);
+  await definitions.create({
+    slug: global.slug,
+    description: "Personal nonsensitive field",
+    valueType: "STRING",
+    scope: "GLOBAL",
+    ownerUserId: f.identity.principalId,
+  });
+  const prompts = [];
+  f.peer.state.hook = async (request, _response, body) => {
+    if (request.url === "/completion") {
+      const prompt = JSON.parse(body).prompt;
+      prompts.push(prompt);
+      f.peer.state.reply = JSON.stringify(
+        localSearchReply(prompt, Object.keys(markers)),
+      );
+    }
+    return false;
+  };
+  async function search(
+    expectedSlugs,
+    { blocked = false, archivedSuggestion = false } = {},
+  ) {
+    const before = prompts.length;
+    const result = await client.callTool({
+      name: "smartSearchPreferences",
+      arguments: {
+        query: "Synthetic integration query",
+        includeSuggestions: true,
+      },
+    });
+    if (blocked) {
+      assert.equal(result.isError, true, JSON.stringify(result));
+      assert.equal(
+        prompts.length,
+        before,
+        "blocked maximum cannot send model context",
+      );
+      return;
+    }
+    assert.equal(result.isError === true, false, JSON.stringify(result));
+    assert.equal(
+      prompts.length,
+      before + 1,
+      "one inference per completed request",
+    );
+    const prompt = prompts.at(-1),
+      output = JSON.stringify(result.structuredContent);
+    for (const [slug, marker] of Object.entries(markers)) {
+      assert.equal(
+        prompt.includes(marker),
+        expectedSlugs.includes(slug),
+        `model context: ${slug}`,
+      );
+      assert.equal(
+        output.includes(marker),
+        expectedSlugs.includes(slug),
+        `returned data: ${slug}`,
+      );
+    }
+    assert.equal(
+      prompt.includes("ARCHIVED_SUGGESTION_CANARY"),
+      archivedSuggestion,
+    );
+    assert.equal(
+      output.includes("ARCHIVED_SUGGESTION_CANARY"),
+      archivedSuggestion,
+    );
+    for (const marker of [
+      "EVIDENCE_ONLY_CANARY",
+      "SUGGESTION_EVIDENCE_CANARY",
+      ...provenanceIds.filter(Boolean),
+    ]) {
+      assert.equal(
+        prompt.includes(marker),
+        false,
+        "model context excludes evidence and persisted attribution/identity",
+      );
+    }
+  }
+  // Keep the authenticated SDK session: every subsequent request must use the latest Save.
+  await save(maximum([]));
+  await search([], { blocked: true });
+  await save(maximum(["preferences:read"], ["integration.*"], true));
+  await search(Object.keys(markers), { archivedSuggestion: true });
+  await save(maximum(["preferences:read"]));
+  await search([
+    "integration.public",
+    "integration.denied",
+    "integration.outside",
+  ]);
+  await save(maximum(["preferences:read"], ["integration.public"]));
+  await search(["integration.public"]);
+  await save(maximum(["preferences:read"]), [
+    { target: "integration.*", action: "READ", effect: "DENY" },
+    { target: "integration.public", action: "READ", effect: "ALLOW" },
+  ]);
+  await search(["integration.public"]);
+  await save(maximum(["preferences:read"]), [
+    { target: "integration.public", action: "READ", effect: "DENY" },
+  ]);
+  await search([]);
+});

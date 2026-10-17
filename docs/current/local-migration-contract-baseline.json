@@ -5313,6 +5313,48 @@
       "contract": "http",
       "kind": "route",
       "reference": "/api/local/mcp/rename"
+    },
+    {
+      "path": "apps/web/components/local/McpPermissionsEditor.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/inspect"
+    },
+    {
+      "path": "apps/web/components/local/McpPermissionsEditor.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/preview"
+    },
+    {
+      "path": "apps/web/components/local/McpPermissionsEditor.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/save"
+    },
+    {
+      "path": "apps/web/components/local/McpPermissionsEditor.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/targets"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/preview"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/save"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/targets"
     }
   ],
   "outboundSinkInventory": [
@@ -5762,6 +5804,7 @@
     {
       "path": "scripts/local-migration/installation/demo-smoke.mjs",
       "sinks": {
+        "fetch": 1,
         "spawn": 4
       }
     },

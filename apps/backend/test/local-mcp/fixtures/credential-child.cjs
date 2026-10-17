@@ -32,10 +32,12 @@ if (mode.startsWith('publish-')) {
     store.change = () => process.exit(77);
   } else {
     const exec = SqliteConnection.prototype.exec;
+    let writing = false;
     SqliteConnection.prototype.exec = function (sql) {
-      if (sql === 'COMMIT' && stage === 'before') process.exit(77);
+      if (sql === 'BEGIN IMMEDIATE') writing = true;
+      if (writing && sql === 'COMMIT' && stage === 'before') process.exit(77);
       const result = exec.call(this, sql);
-      if (sql === 'COMMIT' && stage === 'after') process.exit(77);
+      if (writing && sql === 'COMMIT' && stage === 'after') process.exit(77);
       return result;
     };
   }
@@ -76,6 +78,10 @@ try {
   }
   if (mode.startsWith('publish-provision-'))
     store.provision('synthetic', path.join(root, exportName));
+  else if (mode.startsWith('publish-save-')) {
+    const snapshot=store.editorSnapshot(id);
+    store.savePermissions(id,{capabilities:['preferences:write'],targets:['synthetic.*'],allowSensitive:false},[{target:'synthetic.private',action:'READ',effect:'DENY'}],{generation:snapshot.client.generation,revision:snapshot.revision,catalogRevision:snapshot.catalogRevision},()=>{});
+  }
   else if (mode.startsWith('publish-rename-'))
     store.rename(id, 'renamed');
   else if (mode.startsWith('publish-rotate-'))
@@ -96,7 +102,12 @@ try {
     });
   else throw new Error();
   process.stdout.write('ok\n');
-} catch {
-  process.stderr.write('conflict\n');
-  process.exitCode = 1;
+} catch (error) {
+  if (error instanceof Error && error.message === 'Local MCP administration conflict') {
+    process.stderr.write('conflict:Local MCP administration conflict\n');
+    process.exitCode = 1;
+  } else {
+    process.stderr.write('unexpected:' + (error?.code ?? error?.name ?? 'unknown') + '\n');
+    process.exitCode = 2;
+  }
 }

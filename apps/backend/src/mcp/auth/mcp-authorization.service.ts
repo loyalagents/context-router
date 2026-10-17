@@ -16,6 +16,7 @@ const VALUE_ACCESS_CHAIN: Record<McpAccess['action'], McpAccess['action'][]> = {
   define: ['define'],
 };
 export interface McpDefinitionReader {
+  isSensitiveSlug?(userId: string, slug: string): Promise<boolean>;
   getAll(userId?: string | null): Promise<Array<{ slug: string; isSensitive: boolean }>>;
   getDefinitionById(id: string): Promise<{ isSensitive: boolean; ownerUserId: string | null } | null>;
 }
@@ -203,7 +204,9 @@ export class McpAuthorizationService {
     }
 
     if (client.policy.allowSensitive === false &&
-        (!this.definitions || (await this.definitions.getAll(userId)).some((definition) => definition.slug === target.slug && definition.isSensitive))) return false;
+        (!this.definitions || (this.definitions.isSensitiveSlug
+          ? await this.definitions.isSensitiveSlug(userId, target.slug)
+          : (await this.definitions.getAll(userId)).some((definition) => definition.slug === target.slug && definition.isSensitive)))) return false;
 
     for (const action of this.getActionChain(access.action)) {
       const decision = await this.permissionGrantService.evaluateAccess(

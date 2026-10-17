@@ -37,7 +37,7 @@ async function startBrowser(){
   const deadline=performance.now()+10000;while(!browserHandle.output().stdout.endsWith('\n')){assert.ok(performance.now()<deadline&&!browserHandle.output().stderr&&!browserHandle.output().overflow);await wait(20);}
   const ready=JSON.parse(browserHandle.output().stdout);assert.equal(ready.type,'local-ui-browser-ready');const {chromium}=createRequire(path.join(repository,'apps/web/package.json'))('playwright');browser=await chromium.connectOverCDP(ready.endpoint,{timeout:5000});context=await browser.newContext({serviceWorkers:'block'});
 }
-async function browserProof(owner,ready,namedClient){
+async function browserProof(owner,ready,namedClient,clientToken){
   await startBrowser();const outbound=[];
   await context.route('**/*',route=>{if(new URL(route.request().url()).origin!==ready.origin){outbound.push('non-loopback-attempt');return route.abort();}return route.continue();});
   const page=await context.newPage();page.setDefaultTimeout(5000);const response=await page.goto(ready.origin+'/dashboard/preferences');assert.equal(response.status(),200);assert.match(response.headers()['content-security-policy'],/nonce-/);
@@ -56,6 +56,21 @@ async function browserProof(owner,ready,namedClient){
     await page.getByRole('tab',{name:'Audit',exact:true}).click();
     await page.getByRole('button').filter({hasText:'synthetic.shared'}).first().waitFor();
     await page.getByRole('tabpanel',{name:'Audit',exact:true}).getByText(namedClient.label,{exact:true}).first().waitFor();
+    await page.goto(ready.origin+'/dashboard/permissions');
+    await page.getByRole('button',{name:'Edit permissions '+namedClient.id,exact:true}).click();
+    const panel=page.getByRole('region',{name:'Edit permissions',exact:true});
+    await panel.getByLabel('Maximum value access').selectOption('Read');
+    await panel.getByLabel('Default target',{exact:true}).fill('synthetic.future.*');
+    await panel.getByLabel('Scope value default').selectOption('Blocked');
+    await panel.getByRole('button',{name:'Add scope change'}).click();
+    await panel.getByRole('button',{name:'Preview resulting access'}).click();
+    await panel.getByRole('button',{name:'Save permissions',exact:true}).click();
+    await panel.getByText('Permissions saved',{exact:true}).waitFor();
+    const reader=await mcpClient(ready,clientToken);
+    assert.equal((await reader('searchPreferences')).active.preferences.find(row=>row.slug==='synthetic.shared')?.value,'retained snapshot');
+    await reader('mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug:'synthetic.shared',value:'"must not write"'}},true);
+    await panel.screenshot({path:path.join(root,'installed-permissions-save.png')});
+    phase('installed-browser-atomic-permissions-save-and-real-mcp-write-denial');
   }
   const repeated=await page.evaluate(async bootstrap=>(await fetch('/api/local/unlock',{method:'POST',headers:{'content-type':'application/json','x-context-router-ui':'1'},body:JSON.stringify({bootstrap})})).status,bootstrap);assert.equal(repeated,401);
   await page.getByRole('button',{name:'Lock dashboard'}).click();const count=owner.events.length;owner.send('unlock',ready.generation);const next=await owner.event('unlock',count),replacement=(await readFile(next.unlockFile,'utf8')).trim();secrets.push(replacement);assert.notEqual(replacement,bootstrap);
@@ -72,7 +87,7 @@ const initializeMcp=(ready,token)=>requestMcpSmoke(Number(new URL(ready.mcpOrigi
 async function mcpClient(ready,token){
   const initialized=await initializeMcp(ready,token);assert.equal(initialized.status,200);const port=Number(new URL(ready.mcpOrigin).port),headers={'mcp-session-id':initialized.headers['mcp-session-id'],'mcp-protocol-version':'2025-11-25'};
   assert.equal((await requestMcpSmoke(port,token,{jsonrpc:'2.0',method:'notifications/initialized'},headers)).status,202);let id=1;
-  return async(name,args={})=>{const response=await requestMcpSmoke(port,token,{jsonrpc:'2.0',id:id++,method:'tools/call',params:{name,arguments:args}},headers);assert.equal(response.status,200);assert.equal(response.value.error,undefined);const result=response.value.result;assert.ok(result&&typeof result==='object'&&!Array.isArray(result));assert.ok(result.isError===undefined||result.isError===false);return result.structuredContent;};
+  return async(name,args={},expectedError=false)=>{const response=await requestMcpSmoke(port,token,{jsonrpc:'2.0',id:id++,method:'tools/call',params:{name,arguments:args}},headers);assert.equal(response.status,200);assert.equal(response.value.error,undefined);const result=response.value.result;assert.ok(result&&typeof result==='object'&&!Array.isArray(result));assert.equal(result.isError===true,expectedError);return result.structuredContent;};
 }
 function launch(){
   signal.throwIfAborted();const child=spawn('/usr/bin/sandbox-exec',argv(['guardian','--root',envelope,'--ui-port','0','--mcp-port',mcpPort]),{cwd:bundle,env:{PATH:'',LC_ALL:'C'},stdio:['pipe','pipe','pipe']});
@@ -115,7 +130,13 @@ try{
   assert.equal(command(['mcp','list'])[0].result.find(client=>client.id===editor.result.id).label,renamed.label);
   const namedRun=launch(),namedReady=await namedRun.event('ready');
   assert.equal((await initializeMcp(namedReady,editorToken)).status,200);
-  await browserProof(namedRun,namedReady,renamed);await stop(namedRun);phase('installed-rename-durability-token-history-and-browser-presentation');
+  await browserProof(namedRun,namedReady,renamed,editorToken);await stop(namedRun);
+  assert.deepEqual(command(['mcp','list'])[0].result.find(client=>client.id===editor.result.id).policy.capabilities,['preferences:read','preferences:define']);
+  const permissionRestart=launch(),permissionReady=await permissionRestart.event('ready');
+  const durableReader=await mcpClient(permissionReady,editorToken);
+  assert.equal((await durableReader('searchPreferences')).active.preferences.find(row=>row.slug==='synthetic.shared')?.value,'retained snapshot');
+  await durableReader('mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug:'synthetic.shared',value:'"still denied"'}},true);
+  await stop(permissionRestart);phase('installed-permissions-durable-restart-and-cli-compatibility');phase('installed-rename-durability-token-history-and-browser-presentation');
   const backup=command(['backup']).find(record=>record.status==='backup-complete');assert.ok(backup?.path);const before=JSON.parse(await readFile(path.join(envelope,'installation.json')));
   command(['mcp','revoke','--id',provision.result.id]);const rotatedFile=path.join(root,'rotated-editor.token');command(['mcp','rotate','--id',editor.result.id,'--out',rotatedFile]);const rotatedToken=(await readFile(rotatedFile,'utf8')).trim();secrets.push(rotatedToken);command(['mcp','grant','--id',editor.result.id,'--target','synthetic.shared','--action','READ','--effect','DENY']);
   const changed=launch(),changedReady=await changed.event('ready');assert.equal((await initializeMcp(changedReady,token)).status,401);assert.equal((await initializeMcp(changedReady,editorToken)).status,401);const restricted=await mcpClient(changedReady,rotatedToken);assert.equal((await restricted('searchPreferences')).active.preferences.some(row=>row.slug==='synthetic.shared'),false);await stop(changed);phase('post-backup-revocation-rotation-and-grant-denial');

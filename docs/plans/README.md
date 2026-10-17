@@ -20,6 +20,16 @@ smart-search trial. Deeper assistant supervision and retained-guard recovery
 remain separate unactivated follow-ups. The agreed milestone is an automated trial and draft PR;
 hands-on acceptance is explicitly scheduled later and remains required before merge.
 
+The user-approved [MCP client permissions slice](active/mcp-client-permissions/README.md)
+is active in an isolated worktree on `codex/mcp-client-permissions` from
+`071b329731103ef3be5113ff79faf12b856aa68e`. `/root/permissions_implementer` owns
+all edits; coordinator and independent reviewers are read-only. It adds clearer
+cards, server previews and atomic human maximum-policy/grant editing; issuance,
+rotation UI and native lifecycle are outside scope. External review follow-up
+corrects draft reconciliation and bounded catalog responsiveness in the same PR;
+earlier qualifications apply to the earlier candidate. Renewed final qualification
+is pending.
+
 ## Three Lanes
 
 | Lane | Purpose | Canonical brief |

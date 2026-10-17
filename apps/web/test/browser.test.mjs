@@ -994,12 +994,18 @@ test(
     );
     await f.page.getByRole('button', { name: 'Save grant' }).click();
     await f.page
-      .getByText('Change was not confirmed.', { exact: false })
+      .getByText('Change was not saved because authority changed.', { exact: false })
       .waitFor();
     await f.page
       .getByRole('button', { name: `Inspect ${first.id}`, exact: true })
       .click();
     await selected.getByText('* · READ · DENY', { exact: true }).waitFor();
+    f.cli('local-mcp.js','permissions','--id',first.id,'--capabilities','preferences:read','--targets','profile.*');
+    f.page.once('dialog', (dialog) => dialog.accept());
+    await f.page.getByRole('button', { name: 'Revoke this instance' }).click();
+    await f.page.getByRole('heading',{name:'Revoke not saved',exact:true}).waitFor();
+    assert.equal(JSON.parse(f.cli('local-mcp.js','list').stdout).result.find(row=>row.id===first.id).revoked,false);
+    await f.page.getByRole('button',{name:`Inspect ${first.id}`,exact:true}).click();
     f.page.once('dialog', (dialog) => dialog.accept());
     await f.page.getByRole('button', { name: 'Revoke this instance' }).click();
     await f.page

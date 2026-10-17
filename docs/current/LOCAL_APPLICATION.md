@@ -44,9 +44,10 @@ not a new command or a waiver of filesystem/process safety.
   document proposals/search use the existing dashboard. Mutations retain domain
   validation and propose-before-apply behavior; no UI redesign is required.
 - The UI lists and renames MCP client instances, opens their exact activity,
-  narrows grants and revokes authority. Current names appear on history and
+  edits maximum policy and grants atomically after a server preview, reconciles
+  concurrent changes with explicit choices for conflicting draft edits, and revokes authority. Current names appear on history and
   live preference attribution while stable actor keys and credentials remain unchanged. Provisioning,
-  rotation and maximum-policy administration remain installed/manual CLI work.
+  rotation remain installed/manual CLI work.
   See [MCP setup](../useful/MCP_LOCAL_SETUP.md). Claude Code and Codex CLI have
   scoped user-run evidence. Claude Desktop 2.31226.1 Pro ordinary chat passed
   discovery, permitted/denied operations, shared dashboard checks, restart,

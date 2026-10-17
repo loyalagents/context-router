@@ -171,3 +171,45 @@ Mutation access-log metadata is sanitized. It stores operation, target slug when
 - Static target rules with namespace matching are rejected at startup.
 - Grants are slug-based today, so a slug grant applies to both global and user-owned definitions with the same slug.
 - Setup details belong in `docs/useful/MCP_LOCAL_SETUP.md`, not here.
+
+## Local Human Permissions Administration
+
+The authenticated local browser can edit an instance's maximum policy and a bounded
+set of explicit grant edits atomically. Detached preflight uses the same MCP
+capability, hierarchy, sensitivity and permission-grant evaluators. A complete
+content-based authority revision plus complete catalog metadata revision is checked
+inside BEGIN IMMEDIATE; browser admission is revalidated immediately before the
+first write, after async evaluation. Commit acknowledgement returns the resulting
+revision. Client IDs, names, credential digests/generations, untouched rule IDs,
+identity, history and attribution remain intact.
+
+An exact preview checksum binds the validated proposed policy and sorted edits to
+those revisions. It is not authority. New ALLOWs must fit the final maximum;
+unchanged inert rules survive reductions. Value presets write READ/SUGGEST/WRITE
+explicitly and preserve descendant exceptions and DEFINE. No matching rule still
+uses the maximum. Current effective summaries cover complete active metadata in
+scope; future-prefix and archived-value widening and narrowing are separately
+disclosed. The complete catalog retains exact slugs and active/archived owned and
+global definitions within 2048 rows/2 MiB. SQL size preflight precedes exact slug
+materialization; bounded, flagged display labels are excluded from its authority
+revision. The 128-character maximum/rule selector limit does not limit definition
+slugs. Shortened display identifiers are never authorization targets. Corrupt or
+oversized projections disable editing without disabling terminal revocation.
+
+Cards capture the client page, bounded grants and one catalog in a consistent
+SQLite snapshot. Only this display path skips unused complete authority digests;
+inspect, preview, Save and CLI retain them. Request-local indexes and optional
+indexed readers use the shared grant/sensitivity evaluator, preserving repository
+fallbacks, exact/prefix matching, specificity and hierarchical value access.
+Bounded evaluation batches yield after the read transaction closes; no persistent
+permission cache is introduced. Final list output is limited to 512 KiB;
+inspect/search/preview output to 256 KiB, with at most 32 search/examples rows.
+Browser reconciliation retains explicit user intent, requires choices for the same
+changed setting/grant key, and preserves uncertainty about earlier requests.
+
+CLI policy/grant/rotation/revoke compare complete content atomically too; legacy
+generation-only revoke remains compatible. Exact restored content can match after
+A→B→A; revoked clients never revive. Already admitted operations retain their prior
+completion contract. Hosted GraphQL managed-client validation, MCP credential
+separation and reset/grant-clearing boundaries remain unchanged. No MCP tool can
+expand its own maximum. See [dashboard behavior](../useful/LOCAL_UI.md).

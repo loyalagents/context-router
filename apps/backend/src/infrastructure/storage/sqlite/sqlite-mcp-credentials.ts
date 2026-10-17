@@ -1,3 +1,4 @@
+import { mcpAdministrationRevision } from './sqlite-mcp-revision';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { assertManagedSchemaUpgrade } from '../../managed/managed-admission';
@@ -17,6 +18,10 @@ import {
   type LocalMcpAuthoritySnapshot,
   type LocalMcpExpectedAuthority,
   type LocalMcpGrantSnapshot,
+  type LocalMcpEditorSnapshot,
+  type LocalMcpCatalogDefinition,
+  type LocalMcpGrantEdit,
+  validateLocalMcpGrantEdits,
 } from '../../../mcp/local/local-mcp-credentials';
 import {
   SqliteDatabase,
@@ -227,9 +232,14 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
     });
   }
 
-  private boundedAuthority(c: SqliteConnection, id: string, targets: string[] = []): LocalMcpAuthoritySnapshot {
+  private boundedAuthority(c: SqliteConnection, id: string, targets: string[] = [], includeRevision = true): LocalMcpAuthoritySnapshot {
     const client = this.boundedClient(c, id);
-    const unavailable: LocalMcpAuthoritySnapshot = { status: 'AUTHORITY_UNAVAILABLE', client };
+    // Card snapshots never expose or consume a revision. Administration paths
+    // retain the complete digest, including unavailable/corrupt projections.
+    const adminRevision = includeRevision
+      ? mcpAdministrationRevision(c, this.database.targetId, this.principalId, client)
+      : '';
+    const unavailable: LocalMcpAuthoritySnapshot = { status: 'AUTHORITY_UNAVAILABLE', client, adminRevision };
     // SQL bounds each variable-length column before materializing rows in JS.
     const rows = c.all(`SELECT
       CASE WHEN length(CAST(id AS BLOB))<=128 THEN id END id,
@@ -243,13 +253,13 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
       !['READ', 'SUGGEST', 'WRITE', 'DEFINE'].includes(row.action) || !['ALLOW', 'DENY'].includes(row.effect) ||
       !Number.isSafeInteger(row.createdAt) || !Number.isSafeInteger(row.updatedAt))) return unavailable;
     const grants = rows as LocalMcpGrantSnapshot[];
-    const revision = digest(JSON.stringify({ client, grants }));
+    const revision = adminRevision;
     const definitions = targets.length ? c.all(`SELECT
       CASE WHEN length(CAST(slug AS BLOB))<=128 THEN slug END slug,
       CASE WHEN typeof(is_sensitive)='integer' AND is_sensitive IN (0,1) THEN is_sensitive END is_sensitive
       FROM preference_definitions WHERE archived_at IS NULL AND namespace IN (?,?) AND slug IN (${targets.map(() => '?').join(',')}) LIMIT 65`, ['GLOBAL', `USER:${this.principalId}`, ...targets]) : [];
     if (definitions.length > 64 || definitions.some((row) => !targets.includes(row.slug) || ![0,1].includes(row.is_sensitive))) return unavailable;
-    const result: LocalMcpAuthoritySnapshot = { status: 'AVAILABLE', client, grants, revision,
+    const result: LocalMcpAuthoritySnapshot = { status: 'AVAILABLE', client, grants, revision, adminRevision,
       definitions: definitions.map((row) => ({ slug: row.slug, isSensitive: row.is_sensitive === 1 })) };
     if (Buffer.byteLength(JSON.stringify(result)) > 256*1024) return unavailable;
     return result;
@@ -259,6 +269,307 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
     const c = this.connection();
     try { c.exec('BEGIN'); const result = this.boundedAuthority(c, id, targets); c.exec('COMMIT'); return result; }
     finally { try { if (c.inTransaction) c.exec('ROLLBACK'); } finally { c.close(); } }
+  }
+  private boundedCatalog(c: SqliteConnection):
+    | { catalogStatus: 'CATALOG_UNAVAILABLE' }
+    | {
+        catalogStatus: 'AVAILABLE';
+        catalogRevision: string;
+        catalog: LocalMcpCatalogDefinition[];
+      } {
+    const unavailable = { catalogStatus: 'CATALOG_UNAVAILABLE' as const };
+    const catalog: LocalMcpCatalogDefinition[] = [];
+    let bytes = 0;
+    let after: string | null = null;
+    // Size and type preflight precedes reading each exact slug. Labels are only
+    // presentation: SQL bounds their Unicode prefix before JS sees the value.
+    // Pin the existing primary-key index: the namespace/owner OR otherwise
+    // selects a repeated multi-index union and sort instead of an ID range seek.
+    for (;;) {
+      const row = c.get(
+        `SELECT
+        CASE WHEN typeof(id)='text' AND length(CAST(id AS BLOB)) BETWEEN 1 AND 128 THEN id END id,
+        CASE WHEN typeof(namespace)='text' AND length(CAST(namespace AS BLOB))<=256 THEN namespace END namespace,
+        CASE WHEN owner_user_id IS NULL OR typeof(owner_user_id)='text' AND length(CAST(owner_user_id AS BLOB))<=128 THEN owner_user_id ELSE 0 END ownerUserId,
+        CASE WHEN typeof(slug)='text' THEN length(CAST(slug AS BLOB)) END slugBytes,
+        CASE WHEN typeof(display_name)='text' THEN substr(display_name,1,128) END displayName,
+        CASE WHEN typeof(display_name)='text' THEN length(CAST(display_name AS BLOB))>length(CAST(substr(display_name,1,128) AS BLOB)) ELSE 0 END displayNameTruncated,
+        CASE WHEN typeof(is_sensitive)='integer' AND is_sensitive IN (0,1) THEN is_sensitive END sensitive,
+        CASE WHEN archived_at IS NULL OR typeof(archived_at)='integer' AND archived_at BETWEEN -9007199254740991 AND 9007199254740991 THEN archived_at ELSE 'invalid' END archivedAt
+        FROM preference_definitions INDEXED BY sqlite_autoindex_preference_definitions_1
+        WHERE (namespace IN (?,?) OR owner_user_id=?)
+          ${after === null ? '' : 'AND id COLLATE BINARY > ?'}
+        ORDER BY preference_definitions.id COLLATE BINARY LIMIT 1`,
+        [
+          'GLOBAL',
+          `USER:${this.principalId}`,
+          this.principalId,
+          ...(after === null ? [] : [after]),
+        ],
+      );
+      if (!row) break;
+      if (
+        catalog.length >= 2048 ||
+        typeof row.id !== 'string' ||
+        typeof row.namespace !== 'string' ||
+        !(row.ownerUserId === null || row.ownerUserId === this.principalId) ||
+        (row.namespace === 'GLOBAL'
+          ? row.ownerUserId !== null
+          : row.namespace !== `USER:${this.principalId}` ||
+            row.ownerUserId !== this.principalId) ||
+        !Number.isSafeInteger(row.slugBytes) ||
+        row.slugBytes < 1 ||
+        ![0, 1].includes(row.sensitive) ||
+        !(row.archivedAt === null || Number.isSafeInteger(row.archivedAt))
+      )
+        return unavailable;
+      const definition: LocalMcpCatalogDefinition = {
+        id: row.id,
+        namespace: row.namespace,
+        ownerUserId: row.ownerUserId,
+        slug: '',
+        displayName: row.displayName,
+        displayNameTruncated: row.displayNameTruncated === 1,
+        isSensitive: row.sensitive === 1,
+        archivedAt: row.archivedAt,
+      };
+      const projectedBytes =
+        Buffer.byteLength(JSON.stringify(definition)) + row.slugBytes;
+      if (projectedBytes > 2 * 1024 * 1024 - bytes) return unavailable;
+      const exact = c.get(
+        'SELECT slug FROM preference_definitions WHERE id=?',
+        [row.id],
+      );
+      // Definition grammar is independent of the 128-character rule selector
+      // limit. Scan linearly: deeply dotted valid slugs must not overflow a regex.
+      const slug = exact?.slug;
+      if (
+        typeof slug !== 'string' ||
+        !/^[a-z]/.test(slug) ||
+        !slug.includes('.')
+      )
+        return unavailable;
+      let dot = false;
+      for (let i = 0; i < slug.length; i++) {
+        const code = slug.charCodeAt(i);
+        if (code === 46) {
+          if (dot || i === slug.length - 1) return unavailable;
+          dot = true;
+        } else {
+          if (
+            !(
+              (code >= 97 && code <= 122) ||
+              (code >= 48 && code <= 57) ||
+              code === 95
+            )
+          )
+            return unavailable;
+          dot = false;
+        }
+      }
+      definition.slug = slug;
+      bytes += projectedBytes;
+      catalog.push(definition);
+      after = row.id;
+    }
+    return {
+      catalogStatus: 'AVAILABLE',
+      catalog,
+      catalogRevision: digest(
+        JSON.stringify([
+          'local-mcp-catalog-v2',
+          this.database.targetId,
+          this.principalId,
+          catalog.map(
+            ({
+              displayName: _label,
+              displayNameTruncated: _truncated,
+              ...authority
+            }) => authority,
+          ),
+        ]),
+      ),
+    };
+  }
+
+  /** One consistent page snapshot. Empty internal revisions are never sent by the card route. */
+  cardSnapshots(after?: string): {
+    items: LocalMcpEditorSnapshot[];
+    nextCursor: string | null;
+  } {
+    if (after !== undefined && !validId(after)) fail();
+    const c = this.connection();
+    try {
+      c.exec('BEGIN');
+      const ids = c.all(
+        'SELECT CASE WHEN length(CAST(id AS BLOB))=22 THEN id END id FROM local_mcp_clients WHERE principal_id=? AND id>? ORDER BY id LIMIT 33',
+        [this.principalId, after ?? ''],
+      );
+      if (ids.some((row) => !validId(row.id))) return fail();
+      const catalog = this.boundedCatalog(c);
+      const items = ids
+        .slice(0, 32)
+        .map((row) => ({
+          ...this.boundedAuthority(c, row.id, [], false),
+          ...catalog,
+        }));
+      const result = {
+        items,
+        nextCursor: ids.length > 32 ? items[31].client.id : null,
+      };
+      c.exec('COMMIT');
+      return result;
+    } finally {
+      try {
+        if (c.inTransaction) c.exec('ROLLBACK');
+      } finally {
+        c.close();
+      }
+    }
+  }
+  editorSnapshot(id: string, targets: string[] = []): LocalMcpEditorSnapshot {
+    if (
+      !Array.isArray(targets) ||
+      targets.length > 32 ||
+      new Set(targets).size !== targets.length ||
+      targets.some(
+        (target) => !validLocalMcpTarget(target) || target.includes('*'),
+      )
+    )
+      fail();
+    const c = this.connection();
+    try {
+      c.exec('BEGIN');
+      const result = {
+        ...this.boundedAuthority(c, id, targets),
+        ...this.boundedCatalog(c),
+      };
+      c.exec('COMMIT');
+      return result;
+    } finally {
+      try {
+        if (c.inTransaction) c.exec('ROLLBACK');
+      } finally {
+        c.close();
+      }
+    }
+  }
+  savePermissions(
+    id: string,
+    input: unknown,
+    editsInput: unknown,
+    expected: LocalMcpExpectedAuthority & { catalogRevision: string },
+    revalidate: () => void,
+  ): { client: LocalMcpClientSummary; revision: string } {
+    const policy = validateLocalMcpPolicy(input),
+      edits = validateLocalMcpGrantEdits(editsInput);
+    return this.change((c) => {
+      const client = this.assertRevision(c, id, expected.revision);
+      const authority = this.boundedAuthority(c, id),
+        catalog = this.boundedCatalog(c);
+      if (
+        client.revoked ||
+        client.generation !== expected.generation ||
+        catalog.catalogStatus !== 'AVAILABLE' ||
+        catalog.catalogRevision !== expected.catalogRevision
+      )
+        conflict();
+      if (authority.status !== 'AVAILABLE') return fail();
+      const keys = new Set(
+        authority.grants.map((grant) => grant.target + ':' + grant.action),
+      );
+      for (const edit of edits) {
+        const key = edit.target + ':' + edit.action;
+        if (edit.effect === 'REMOVE') keys.delete(key);
+        else keys.add(key);
+      }
+      if (keys.size > 512) fail();
+      // The detached evaluator has finished; revalidate human admission under the
+      // same write lock, after both CAS checks and immediately before any write.
+      revalidate();
+      if (JSON.stringify(client.policy) !== JSON.stringify(policy))
+        c.run(
+          'UPDATE local_mcp_clients SET policy=?,updated_at=? WHERE id=? AND principal_id=?',
+          [JSON.stringify(policy), Date.now(), id, this.principalId],
+        );
+      for (const edit of edits) this.writeGrant(c, id, edit);
+      const result = this.boundedClient(c, id);
+      return {
+        client: result,
+        revision: mcpAdministrationRevision(
+          c,
+          this.database.targetId,
+          this.principalId,
+          result,
+        ),
+      };
+    });
+  }
+  private writeGrant(
+    c: SqliteConnection,
+    id: string,
+    edit: LocalMcpGrantEdit,
+  ): void {
+    if (edit.effect === 'REMOVE')
+      c.run(
+        'DELETE FROM permission_grants WHERE user_id=? AND client_key=? AND target=? AND action=?',
+        [this.principalId, `local:${id}`, edit.target, edit.action],
+      );
+    else
+      c.run(
+        'INSERT INTO permission_grants(id,user_id,client_key,target,action,effect,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(user_id,client_key,target,action) DO UPDATE SET effect=excluded.effect,updated_at=excluded.updated_at WHERE effect<>excluded.effect',
+        [
+          randomUUID(),
+          this.principalId,
+          `local:${id}`,
+          edit.target,
+          edit.action,
+          edit.effect,
+          Date.now(),
+          Date.now(),
+        ],
+      );
+  }
+  private administration(id: string): {
+    client: LocalMcpClientSummary;
+    revision: string;
+  } {
+    const c = this.connection();
+    try {
+      c.exec('BEGIN');
+      const client = this.boundedClient(c, id);
+      const revision = mcpAdministrationRevision(
+        c,
+        this.database.targetId,
+        this.principalId,
+        client,
+      );
+      c.exec('COMMIT');
+      return { client, revision };
+    } finally {
+      try {
+        if (c.inTransaction) c.exec('ROLLBACK');
+      } finally {
+        c.close();
+      }
+    }
+  }
+  private assertRevision(
+    c: SqliteConnection,
+    id: string,
+    revision: string,
+  ): LocalMcpClientSummary {
+    const client = this.boundedClient(c, id);
+    if (
+      mcpAdministrationRevision(
+        c,
+        this.database.targetId,
+        this.principalId,
+        client,
+      ) !== revision
+    )
+      conflict();
+    return client;
   }
   authenticate(token: string): LocalMcpCredential | null {
     const match =
@@ -370,11 +681,12 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
     });
   }
   rotate(id: string, destination: string): LocalMcpClientSummary {
-    const previous = this.read(id);
+    const before = this.administration(id), previous = before.client;
     if (previous.revoked || previous.generation >= Number.MAX_SAFE_INTEGER)
       fail();
     const secretDigest = this.exportToken(destination, id);
     return this.change((c) => {
+      this.assertRevision(c, id, before.revision);
       const row = c.get(
         'UPDATE local_mcp_clients SET secret_digest=?,generation=generation+1,updated_at=? WHERE id=? AND principal_id=? AND generation=? AND revoked=0 RETURNING *',
         [secretDigest, Date.now(), id, this.principalId, previous.generation],
@@ -383,12 +695,15 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
       return this.summary(row);
     });
   }
-  revoke(id: string, expectedGeneration?: number): LocalMcpClientSummary {
-    const previous = this.read(id);
+  revoke(id: string, expectedGeneration?: number, expectedRevision?: string): LocalMcpClientSummary {
+    const before = this.administration(id), previous = before.client;
+    if (expectedRevision !== undefined && before.revision !== expectedRevision) conflict();
     if (expectedGeneration !== undefined && previous.generation !== expectedGeneration) conflict();
     if (previous.revoked) return previous;
     if (previous.generation >= Number.MAX_SAFE_INTEGER) fail();
     return this.change((c) => {
+      // Explicit legacy generation-only callers retain terminal revocation semantics.
+      if (expectedRevision !== undefined || expectedGeneration === undefined) this.assertRevision(c, id, expectedRevision ?? before.revision);
       const row = c.get(
         'UPDATE local_mcp_clients SET revoked=1,generation=generation+1,updated_at=? WHERE id=? AND principal_id=? AND generation=? AND revoked=0 RETURNING id',
         [Date.now(), id, this.principalId, previous.generation],
@@ -397,11 +712,12 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
       return this.boundedClient(c, id);
     });
   }
-  permissions(id: string, input: unknown): LocalMcpClientSummary {
+  permissions(id: string, input: unknown, expectedRevision?: string): LocalMcpClientSummary {
     const policy = validateLocalMcpPolicy(input),
-      previous = this.read(id);
+      before = this.administration(id), previous = before.client;
     if (previous.revoked) fail();
     return this.change((c) => {
+      this.assertRevision(c, id, expectedRevision ?? before.revision);
       const row = c.get(
         'UPDATE local_mcp_clients SET policy=?,updated_at=? WHERE id=? AND principal_id=? AND generation=? AND revoked=0 RETURNING *',
         [
@@ -424,9 +740,10 @@ export class SqliteMcpCredentials extends LocalMcpCredentials {
       !['ALLOW', 'DENY', 'REMOVE'].includes(effect)
     )
       fail();
-    const previous = this.read(id);
+    const before = this.administration(id), previous = before.client;
     if (previous.revoked) fail();
     this.change((c) => {
+      this.assertRevision(c, id, expected?.revision ?? before.revision);
       if (expected) {
         const authority = this.boundedAuthority(c, id, target.includes('*') ? [] : [target]);
         if (authority.status !== 'AVAILABLE') return fail();
