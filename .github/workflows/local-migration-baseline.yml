@@ -58,6 +58,15 @@ jobs:
       - name: Test documentation consumers and validation policy
         timeout-minutes: 5
         run: node --test scripts/check-markdown-links.test.mjs scripts/print-repo-structure.test.mjs scripts/local-migration/ci-path-filters.test.mjs scripts/local-migration/check-contract-baseline.test.mjs
+      - name: Test backend launch-topology documentation
+        timeout-minutes: 2
+        run: pnpm --fail-if-no-match --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts
+      - name: Test web runtime documentation
+        timeout-minutes: 1
+        run: node --test scripts/local-migration/web-runtime-config.test.mjs
+      - name: Test orchestrator operator documentation
+        timeout-minutes: 1
+        run: pnpm --fail-if-no-match --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts
       - name: Check repository Markdown links
         timeout-minutes: 1
         run: node scripts/check-markdown-links.mjs

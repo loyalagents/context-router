@@ -57,6 +57,13 @@ parallel eligibility, internal checkpoints, acceptance evidence and finalization
 milestone. Prefer one cohesive PR; split only for independently useful outcomes,
 not separate planning/review/closeout PRs. Human review and merging remain required.
 
+The [validation matrix and scope rules](../useful/AGENT_WORKFLOW.md#default-and-exceptions)
+govern new work. Completed or merged implementation requirements do not carry into
+new PRs merely because a document remains under `active/`. Separately outstanding
+delivery, recovery and manual acceptance commitments can survive merge; reconcile
+those explicitly with their owner. Reconcile backlog proposals at activation and
+retain current operation-specific runbook requirements and historical receipts.
+
 The [MCP client names slice](active/mcp-client-names/README.md) shipped in merged
 [PR #181](https://github.com/loyalagents/context-router/pull/181), verified at
 `071b329731103ef3be5113ff79faf12b856aa68e`: shared current names, browser/CLI

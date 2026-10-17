@@ -9,6 +9,7 @@ import { promisify } from 'node:util';
 
 // Adding a consumer of one of these files requires adding its checks to the
 // nonruntime lane or removing the exemption. Policy/checker edits are full.
+// These original exact exemptions retain their regular/executable mode semantics.
 export const NONRUNTIME_PATHS = Object.freeze([
   'AGENTS.md', 'CLAUDE.md', 'docs/README.md', 'docs/plans/README.md',
   'docs/plans/backlog/stabilization/README.md',
@@ -16,6 +17,16 @@ export const NONRUNTIME_PATHS = Object.freeze([
   'docs/useful/AGENT_WORKFLOW.md', 'print-repo-structure.sh',
   'scripts/print-repo-structure.test.mjs',
 ]);
+const POLICY_VERSION = 2;
+// Maintained prose only: no hidden/traversal components, whitespace, control
+// characters or Markdown syntax. Unusual names conservatively select full CI.
+const maintainedMarkdown = /^(?:README\.md|docs\/(?:IMPORTANT|current|useful|plans)\/(?:[A-Za-z0-9][A-Za-z0-9._-]*\/)*[A-Za-z0-9][A-Za-z0-9._-]*\.md)(?![\s\S])/;
+function eligibleContentChange(change) {
+  const { file, status, oldMode, newMode, oldBlob, newBlob } = change;
+  if (status !== 'M' || oldMode !== newMode || oldBlob === newBlob) return false;
+  if (NONRUNTIME_PATHS.includes(file)) return ['100644', '100755'].includes(oldMode);
+  return oldMode === '100644' && file.length <= 240 && maintainedMarkdown.test(file);
+}
 const exec = promisify(execFile);
 const MAX_GIT_BYTES = 8 * 1024 * 1024;
 const shaPattern = /^[a-f0-9]{40}$/;
@@ -101,13 +112,11 @@ export async function selectValidation({ cwd, environment = process.env, event, 
     changes.push(...parseDiff(await git(['diff', '--raw', '--no-renames', '--no-abbrev', '--no-ext-diff', '--no-textconv', '-z', from, to, '--'])));
   }
   const paths = [...new Set(changes.map(c => c.file))].sort();
-  const eligible = changes.length > 0 && changes.every(c =>
-    NONRUNTIME_PATHS.includes(c.file) && c.status === 'M' &&
-    ['100644', '100755'].includes(c.oldMode) && c.oldMode === c.newMode && c.oldBlob !== c.newBlob);
+  const eligible = changes.length > 0 && changes.every(eligibleContentChange);
   const reason = ambiguousBaseShas.length ? 'ambiguous-base' : advancedBase ? 'advanced-base' : !changes.length ? 'empty-diff' : eligible ? 'allowlisted-content' : 'full-required';
   const profile = reason === 'allowlisted-content' ? 'nonruntime' : 'full';
-  const identity = { policyVersion: 1, eventName, checkoutSha, baseSha, branchBaseSha, ambiguousBaseShas, pullRequestHeadSha, profile, reason, changes };
-  return { policyVersion: 1, profile, reason, baseSha, checkoutSha, paths,
+  const identity = { policyVersion: POLICY_VERSION, eventName, checkoutSha, baseSha, branchBaseSha, ambiguousBaseShas, pullRequestHeadSha, profile, reason, changes };
+  return { policyVersion: POLICY_VERSION, profile, reason, baseSha, checkoutSha, paths,
     binding: createHash('sha256').update(JSON.stringify(identity)).digest('hex') };
 }
 
@@ -134,10 +143,13 @@ async function main() {
       selection: process.env.SELECTION_RESULT, nonruntime: process.env.NONRUNTIME_RESULT,
       source: process.env.SOURCE_RESULT, packaging: process.env.PACKAGING_RESULT,
     });
+  const reportedPaths = selection.paths.slice(0, 10).join(', ');
+  const additionalPaths = selection.paths.length > 10 ? `; ${selection.paths.length - 10} additional paths` : '';
   const message = selection.profile === 'nonruntime'
-    ? `${mode === '--aggregate' ? 'Nonruntime checks passed; source/package qualification not applicable' : 'Selected nonruntime checks'}: policy v1, verified content-only changes to ${selection.paths.join(', ')}.`
+    ? `${mode === '--aggregate' ? 'Nonruntime checks passed; source/package qualification not applicable' : 'Selected nonruntime checks'}: policy v${selection.policyVersion}, verified content-only changes to ${reportedPaths}${additionalPaths}.`
     : `Full source/package qualification required: ${selection.reason}${mode === '--aggregate' ? '; execution lanes succeeded, receipt verification follows' : ''}.`;
-  // Only finite categories and allowlisted paths enter logs or Actions outputs.
+  // Only finite categories and bounded, ASCII-safe eligible paths enter logs.
+  // Full-profile paths are never printed; Actions outputs remain fixed fields.
   console.log(message);
   if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY,
     `${message}\n\nCheckout: ${selection.checkoutSha}; base: ${selection.baseSha}; selection: ${selection.binding}.\n`);

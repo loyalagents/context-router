@@ -233,7 +233,15 @@ Install the pinned test browser explicitly before browser tests or migration gat
 pnpm --filter web exec playwright install chromium
 pnpm --filter backend test:local-ui
 pnpm --filter web test:local-ui
-MIGRATION_GATE_BASE_SHA=5e2a67dd785500ba053b2e836c47166e8adeada8 pnpm migration:gate
+```
+
+Run the full local gate only when the
+[validation matrix](AGENT_WORKFLOW.md#default-and-exceptions) or a current scoped
+commitment requires it, with isolated resources and the verified merge base for
+the current candidate. Replace the quoted placeholder before running:
+
+```sh
+MIGRATION_GATE_BASE_SHA='<verified-merge-base-sha>' pnpm migration:gate
 ```
 
 Linux CI installs Chromium system dependencies with `playwright install --with-deps

@@ -22,6 +22,10 @@ Validation for all repository changes (backend, web, native, packaging, and docs
   During iteration, run focused checks for changed behavior and affected consumers;
   include integration, browser, native, persistence, or recovery tests as risk requires.
   Documentation edits/moves also require affected tests/checkers that read those files.
+- Runtime PRs use sufficient focused local checks plus all applicable exact-candidate
+  CI. Apply every relevant row of the policy's matrix; a full local migration gate
+  needs a named evidence gap or current scoped requirement under that policy.
+  Name remaining Mac, artifact and manual evidence explicitly.
 - Batch related corrections. Do not automatically run the full migration gate,
   complete package qualification, or every independent review after each small edit.
 - A source/artifact-bound trial build may support a named human retest after the
@@ -66,7 +70,8 @@ When working on the local application or pilot:
 - Keep one writer/integrator in the main checkout; use separate worktrees and
   isolated resources only for explicitly independent tasks. Preserve the user's
   running app and personal state. A backlog entry is not implementation approval.
-- Existing `pnpm migration:gate`, contract baseline and CI requirements remain.
+- The full `pnpm migration:gate` command, contract baseline and CI remain intact;
+  the linked validation policy determines when the full local run is required.
   Program closure does not authorize retiring gates or removing hosted adapters.
 - Pilot releases may explicitly permit resets, but no silent deletion, arbitrary
   journal cleanup, off-device data submission or personal-client changes. Require

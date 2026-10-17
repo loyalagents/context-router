@@ -65,6 +65,8 @@ pnpm install --frozen-lockfile
 ```
 
 Backend behavior changes are tests first. Validate affected behavior during
-iteration, then qualify a frozen candidate with all applicable final checks.
-Existing `pnpm migration:gate`, contract fixtures and CI remain in force despite
-the completed program. See [scoped closeout/evidence](docs/current/LOCAL_MIGRATION_CLOSEOUT.md).
+iteration, then qualify a frozen candidate under the
+[policy for focused local checks and CI](docs/useful/AGENT_WORKFLOW.md#default-and-exceptions).
+The full `pnpm migration:gate` command remains available for its stated exceptions;
+contract fixtures and CI remain in force despite the completed program.
+See [scoped closeout/evidence](docs/current/LOCAL_MIGRATION_CLOSEOUT.md).
