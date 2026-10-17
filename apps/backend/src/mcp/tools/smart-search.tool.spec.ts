@@ -7,7 +7,7 @@ describe('SmartSearchTool', () => {
   let workflow: jest.Mocked<Pick<PreferenceSearchWorkflow, 'run'>>;
   let configService: jest.Mocked<Pick<ConfigService, 'get'>>;
   let authorizationService: jest.Mocked<
-    Pick<McpAuthorizationService, 'filterByTargetAccess'>
+    Pick<McpAuthorizationService, 'filterByTargetAccess' | 'filterValues'>
   >;
   let tool: SmartSearchTool;
 
@@ -62,6 +62,7 @@ describe('SmartSearchTool', () => {
 
     authorizationService = {
       filterByTargetAccess: jest.fn().mockResolvedValue(['system.response_tone']),
+      filterValues: jest.fn().mockImplementation(async (_client, _user, rows) => rows),
     };
 
     tool = new SmartSearchTool(
@@ -116,5 +117,19 @@ describe('SmartSearchTool', () => {
     expect(payload.matchedSuggestedPreferences.map((pref: any) => pref.slug)).toEqual([
       'system.response_tone',
     ]);
+  });
+
+  it('supplies the same definition-aware value authorization before model context', async () => {
+    const rows = [{ slug: 'system.response_tone', definitionId: 'current', value: 'safe' },
+      { slug: 'system.response_tone', definitionId: 'archived-sensitive', value: 'secret' }];
+    authorizationService.filterValues.mockImplementation(async (_client, _user, values) => values.filter(row => row.definitionId === 'current'));
+    workflow.run.mockImplementation(async input => {
+      expect((input as any).filterReadableValues).toEqual(expect.any(Function));
+      expect(await (input as any).filterReadableValues(rows)).toEqual([rows[0]]);
+      return { matchedDefinitions: [], matchedActivePreferences: [], matchedSuggestedPreferences: [], queryInterpretation: 'safe' };
+    });
+    const result = await tool.execute({ query: 'tone' }, { ...context, client: { ...context.client, policy: { ...context.client.policy, allowSensitive: false } } });
+    expect(result.result.structuredContent).toMatchObject({ success: true });
+    expect(authorizationService.filterValues).toHaveBeenCalledWith(expect.objectContaining({ key: 'claude' }), 'user-1', rows);
   });
 });

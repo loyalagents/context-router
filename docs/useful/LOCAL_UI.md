@@ -209,7 +209,12 @@ Local PDF form fill always uses policy v2. Existing nonempty fields remain unles
 the user explicitly names fields to overwrite. This still enforces types, domains,
 source slugs and field policy. Inspect partial/skipped outcomes and the downloaded
 PDF. Existing field values are not added to the model prompt. Smart search uses the
-same selected model; literal search needs no model.
+same selected model; literal search needs no model. Local smart search includes
+authorized stored values alongside compact definition metadata, using temporary
+references that map back to canonical slugs. MCP value permissions apply before
+model context, including archived sensitive definitions. Hosted adapters retain
+definition-only prompts. Oversized catalogs still fail at the model's context
+limit, with literal search remaining available.
 
 The UI offers cancellation and shorter deadlines (5/30/180 seconds). Requests also
 end on disconnect/logout/expiry, and late results cannot repopulate a locked view.

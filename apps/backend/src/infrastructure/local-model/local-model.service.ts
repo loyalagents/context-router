@@ -40,6 +40,7 @@ const errors: Readonly<Record<string, AiErrorKind>> = Object.freeze({
 
 /** One session/admission owner for both AI tokens. Never owns an inference process. */
 export class LocalModelService implements AiTextGeneratorPort, AiStructuredOutputPort {
+  readonly localSearchData = true as const;
   readonly capabilities = capabilities;
   private readonly configuration: ManualModelConfiguration;
   private readonly shutdown = new AbortController();

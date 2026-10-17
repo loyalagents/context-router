@@ -8,12 +8,17 @@ Use the [current application](../current/LOCAL_APPLICATION.md) and
 [scoped closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md), not the old numbered
 steps, to understand the starting point. Historical plans remain in Git.
 
-The user-approved [in-app demo mode](active/in-app-demo-mode/plan.md) is active on
-`codex/in-app-demo-mode`, based on `17c82b3095e04b888b2b80439631a23bf133b5c4`.
-`/root/implementation` is the sole writer; the coordinator/reviewers are read-only.
-This cohesive PR implements native demo lifecycle plus packaged A/B/C helpers.
-Native assistant buttons/settings/proposal screens are tracked in that plan for
-the next PR. Targeted checks do not replace final qualification or human acceptance.
+The [in-app demo mode](active/in-app-demo-mode/plan.md) shipped in merged
+[PR #183](https://github.com/loyalagents/context-router/pull/183), verified at
+`3bc606ffb9d90ab364d26f6bea5977be30f31b13`. The user activated
+[native demo assistant setup](active/native-demo-assistant-setup/plan.md) on
+`codex/demo-assistant-setup` from that base. `/root/implementation` is the sole
+writer; coordinator/planner/reviewers are read-only. Scope is native Sign in/Open,
+remembered trusted executables and Desktop proposal review/apply. The user also
+activated reuse of verified same-envelope model weights for a targeted demo
+smart-search trial. Deeper assistant supervision and retained-guard recovery
+remain separate unactivated follow-ups. The agreed milestone is an automated trial and draft PR;
+hands-on acceptance is explicitly scheduled later and remains required before merge.
 
 The user-approved [MCP client permissions slice](active/mcp-client-permissions/README.md)
 is active in an isolated worktree on `codex/mcp-client-permissions` from
@@ -52,10 +57,11 @@ parallel eligibility, internal checkpoints, acceptance evidence and finalization
 milestone. Prefer one cohesive PR; split only for independently useful outcomes,
 not separate planning/review/closeout PRs. Human review and merging remain required.
 
-The [MCP client names slice](active/mcp-client-names/README.md) is activated from
-UI-usability item 2: shared current names, browser/CLI rename and exact-client
-activity navigation. It uses an isolated worktree with one delegated writer and
-two independent plan and implementation reviews; other usability items stay backlog.
+The [MCP client names slice](active/mcp-client-names/README.md) shipped in merged
+[PR #181](https://github.com/loyalagents/context-router/pull/181), verified at
+`071b329731103ef3be5113ff79faf12b856aa68e`: shared current names, browser/CLI
+rename and exact-client activity navigation. Native demo assistant setup integrates
+that main revision and preserves its behavior; other usability items stay backlog.
 
 The main checkout is the user's playground: one writer/integrator owns it.
 Worktree tasks need separate resources and a reviewed integration order. Default

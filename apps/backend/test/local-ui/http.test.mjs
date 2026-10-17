@@ -890,7 +890,7 @@ for (const operation of ['smart-search', 'legacy-logout', 'legacy-deadline'])
             : '{ askVertexAI(message:"Synthetic") }',
       };
       f.peer.state.reply = JSON.stringify({
-        relevantSlugs: ['profile.first_name'],
+        relevantReferences: [],
         queryInterpretation: 'Synthetic',
       });
       const complete = await f.request('/graphql', {
@@ -1254,3 +1254,240 @@ test(
     }
   },
 );
+
+test("browser Save immediately bounds local smart-search context and results on an existing MCP session", async (t) => {
+  const f = await configuredFixture(t);
+  const { token } = await f.unlock();
+  const id = f.runtime.credentials.list()[0].id;
+  const { Client } = require("@modelcontextprotocol/sdk/client/index.js");
+  const {
+    StreamableHTTPClientTransport,
+  } = require("@modelcontextprotocol/sdk/client/streamableHttp.js");
+  const {
+    PreferenceDefinitionRepository,
+  } = require("../../dist/modules/preferences/preference-definition/preference-definition.repository.js");
+  const { localSearchReply } = await import(
+    "../local-model/fixtures/search-reply.mjs"
+  );
+  const maximum = (
+    capabilities,
+    targets = ["integration.*"],
+    allowSensitive = false,
+  ) => ({ capabilities, targets, allowSensitive });
+  async function save(policy, edits = []) {
+    const inspected = await f.request("/api/local/mcp/inspect", {
+      token,
+      body: { id },
+    });
+    assert.equal(inspected.status, 200, inspected.text);
+    const state = inspected.json();
+    const body = {
+      id,
+      generation: state.client.generation,
+      revision: state.revision,
+      catalogRevision: state.catalogRevision,
+      policy,
+      edits,
+    };
+    const preview = await f.request("/api/local/mcp/preview", { token, body });
+    assert.equal(preview.status, 200, preview.text);
+    const saved = await f.request("/api/local/mcp/save", {
+      token,
+      body: { ...body, previewKey: preview.json().previewKey },
+    });
+    assert.equal(saved.status, 200, saved.text);
+    assert.match(saved.json().revision, /^[a-f0-9]{64}$/);
+  }
+  await save(
+    maximum(
+      ["preferences:write", "preferences:define"],
+      ["integration.*"],
+      true,
+    ),
+  );
+  const client = new Client({
+    name: "permissions-search-integration",
+    version: "1",
+  });
+  t.after(() => client.close());
+  await client.connect(
+    new StreamableHTTPClientTransport(
+      new URL(`http://127.0.0.1:${f.runtime.mcpPort}/mcp`),
+      {
+        requestInit: { headers: { authorization: `Bearer ${f.mcpToken}` } },
+      },
+    ),
+  );
+  const provenanceIds = [id, f.identity.principalId];
+  async function mutate(operation, payload) {
+    const result = await client.callTool({
+      name: "mutatePreferences",
+      arguments: { operation, ...payload },
+    });
+    assert.equal(result.isError === true, false, JSON.stringify(result));
+    return JSON.parse(result.content[0].text);
+  }
+  async function define(slug, isSensitive = false) {
+    const result = await mutate("CREATE_DEFINITION", {
+      definition: {
+        slug,
+        description: "Synthetic integration field",
+        valueType: "STRING",
+        scope: "GLOBAL",
+        isSensitive,
+      },
+    });
+    provenanceIds.push(result.definition.id);
+    return result.definition;
+  }
+  async function value(slug, marker) {
+    const result = await mutate("SET_PREFERENCE", {
+      preference: {
+        slug,
+        value: JSON.stringify(marker),
+        evidence: { note: "EVIDENCE_ONLY_CANARY" },
+      },
+    });
+    provenanceIds.push(result.preference.id, result.audit.correlationId);
+  }
+  const markers = {
+    "integration.public": "PUBLIC_VALUE_CANARY",
+    "integration.denied": "GRANT_VALUE_CANARY",
+    "integration.outside": "SCOPE_VALUE_CANARY",
+    "integration.secret": "SENSITIVE_VALUE_CANARY",
+    "integration.archived": "ARCHIVED_VALUE_CANARY",
+    "integration.collision": "COLLISION_VALUE_CANARY",
+  };
+  for (const slug of [
+    "integration.public",
+    "integration.denied",
+    "integration.outside",
+    "integration.secret",
+  ]) {
+    await define(slug, slug === "integration.secret");
+    await value(slug, markers[slug]);
+  }
+  const archived = await define("integration.archived", true);
+  await value(archived.slug, markers[archived.slug]);
+  await mutate("SUGGEST_PREFERENCE", {
+    preference: {
+      slug: archived.slug,
+      value: '"ARCHIVED_SUGGESTION_CANARY"',
+      confidence: 0.8,
+      evidence: { note: "SUGGESTION_EVIDENCE_CANARY" },
+    },
+  });
+  await mutate("ARCHIVE_DEFINITION", { definition: { id: archived.id } });
+  await define(archived.slug);
+  const definitions = f.runtime.application.get(PreferenceDefinitionRepository);
+  const global = await definitions.create({
+    slug: "integration.collision",
+    description: "Global sensitive field",
+    valueType: "STRING",
+    scope: "GLOBAL",
+    isSensitive: true,
+  });
+  provenanceIds.push(global.id);
+  await value(global.slug, markers[global.slug]);
+  await definitions.create({
+    slug: global.slug,
+    description: "Personal nonsensitive field",
+    valueType: "STRING",
+    scope: "GLOBAL",
+    ownerUserId: f.identity.principalId,
+  });
+  const prompts = [];
+  f.peer.state.hook = async (request, _response, body) => {
+    if (request.url === "/completion") {
+      const prompt = JSON.parse(body).prompt;
+      prompts.push(prompt);
+      f.peer.state.reply = JSON.stringify(
+        localSearchReply(prompt, Object.keys(markers)),
+      );
+    }
+    return false;
+  };
+  async function search(
+    expectedSlugs,
+    { blocked = false, archivedSuggestion = false } = {},
+  ) {
+    const before = prompts.length;
+    const result = await client.callTool({
+      name: "smartSearchPreferences",
+      arguments: {
+        query: "Synthetic integration query",
+        includeSuggestions: true,
+      },
+    });
+    if (blocked) {
+      assert.equal(result.isError, true, JSON.stringify(result));
+      assert.equal(
+        prompts.length,
+        before,
+        "blocked maximum cannot send model context",
+      );
+      return;
+    }
+    assert.equal(result.isError === true, false, JSON.stringify(result));
+    assert.equal(
+      prompts.length,
+      before + 1,
+      "one inference per completed request",
+    );
+    const prompt = prompts.at(-1),
+      output = JSON.stringify(result.structuredContent);
+    for (const [slug, marker] of Object.entries(markers)) {
+      assert.equal(
+        prompt.includes(marker),
+        expectedSlugs.includes(slug),
+        `model context: ${slug}`,
+      );
+      assert.equal(
+        output.includes(marker),
+        expectedSlugs.includes(slug),
+        `returned data: ${slug}`,
+      );
+    }
+    assert.equal(
+      prompt.includes("ARCHIVED_SUGGESTION_CANARY"),
+      archivedSuggestion,
+    );
+    assert.equal(
+      output.includes("ARCHIVED_SUGGESTION_CANARY"),
+      archivedSuggestion,
+    );
+    for (const marker of [
+      "EVIDENCE_ONLY_CANARY",
+      "SUGGESTION_EVIDENCE_CANARY",
+      ...provenanceIds.filter(Boolean),
+    ]) {
+      assert.equal(
+        prompt.includes(marker),
+        false,
+        "model context excludes evidence and persisted attribution/identity",
+      );
+    }
+  }
+  // Keep the authenticated SDK session: every subsequent request must use the latest Save.
+  await save(maximum([]));
+  await search([], { blocked: true });
+  await save(maximum(["preferences:read"], ["integration.*"], true));
+  await search(Object.keys(markers), { archivedSuggestion: true });
+  await save(maximum(["preferences:read"]));
+  await search([
+    "integration.public",
+    "integration.denied",
+    "integration.outside",
+  ]);
+  await save(maximum(["preferences:read"], ["integration.public"]));
+  await search(["integration.public"]);
+  await save(maximum(["preferences:read"]), [
+    { target: "integration.*", action: "READ", effect: "DENY" },
+    { target: "integration.public", action: "READ", effect: "ALLOW" },
+  ]);
+  await search(["integration.public"]);
+  await save(maximum(["preferences:read"]), [
+    { target: "integration.public", action: "READ", effect: "DENY" },
+  ]);
+  await search([]);
+});

@@ -383,3 +383,43 @@ Independent affected review precedes the corrected freeze; renew the complete
 local gate and exact-head CI on that freeze. Production, dependency/toolchain,
 packaging and installed/demo harness inputs remain unchanged, so the explicitly
 source-bound `256ec09` artifact carry-forward amendment still applies.
+
+### Subsequent main integration: native demo and local search
+
+While the resumed gate was running, the user requested inspection of another
+main merge. Fetch verified `a45c4844ac634ba48da12800364ea5cbf65e2326` (PR #184).
+Local main was already checked out in the primary worktree at that revision;
+no primary checkout/ref/runtime was changed. The gate first completed on frozen
+`9941312` against `20d1fe7` (12/12, caller integrity and base comparison verified).
+That evidence remains bound to those inputs. Only then was the clean ordinary
+merge applied; all five shared-file changes are retained.
+
+The incoming changes add native demo setup helpers, verified retained-model reuse
+in demo and compact local smart-search context containing authorized values.
+Dependency/toolchain pins and CI workflows are unchanged; preserve incoming
+serial desktop tests and all contract-baseline sink entries. No product correction
+was identified by the initial integration assessment.
+
+The independent plan reviewer approved one focused integration regression using
+actual browser unlock/inspect/preview/Save, an authenticated MCP SDK session and
+the synthetic TLS model peer. Successive fresh requests on the same SDK session
+must enforce changed maximum, scope, grants and sensitivity in both actual model
+context and returned data. Cover active global/personal same-slug collisions and
+archived-sensitive values behind replacement definitions; prompt context must
+exclude evidence and persisted identity/provenance. Existing hosted definition-only
+coverage and already-admitted operation semantics remain unchanged.
+
+Focused checks cover search/evaluator consumers, local-model/MCP/HTTP, permissions
+and demo browser cases, affected native setup/admission/preparation consumers,
+documentation readers and census against the new base. Review the complete
+integrated diff before freezing. Renew the full local 12-phase gate and FULL
+exact-head CI only on the stable integrated candidate.
+
+This runtime merge supersedes the earlier artifact carry-forward amendment for
+the next candidate. The `256ec09` artifact remains historical, never relabeled.
+Build one fresh Mac package/seal from the final integrated source, then qualify
+that same artifact with installed smoke (unchanged 360-second bound), full demo
+cycle and the incoming assistant-setup smoke using the same-source driver and a
+new durable private synthetic root. Actual Terminal/AppKit/provider login and
+live models remain outside automated acceptance. Preserve user app/state and
+all prior receipts; no pass-only source commit or automatic merge to main.

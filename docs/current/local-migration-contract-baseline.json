@@ -2983,11 +2983,12 @@
           "path": "apps/desktop/native/menu.m",
           "fingerprints": [
             "launchAndReturnError:",
-            "openURL:[NSURL URLWithString:_origin]"
+            "openURL:[NSURL URLWithString:_origin]",
+            "openURLs:@["
           ]
         }
       ],
-      "destination": "Explicit managed installation: fixed own-bundle child executables, anonymous pipes, and validated literal-loopback dashboard URL. The native socket reserves a loopback port; it is not an outbound service connection.",
+      "destination": "Explicit managed installation: fixed own-bundle child executables, anonymous pipes, and validated literal-loopback dashboard URL. The native socket reserves a loopback port; it is not an outbound service connection. Explicit demo actions also open a private retained command document specifically in system Terminal through LaunchServices.",
       "payload": "Bounded role/generation status and commands; separate private FD4 storage admission, FD3 lifetime. Unlock codes are deliberately read/displayed/copied from private files, never browser URLs or process arguments.",
       "defaultRuntime": false,
       "disposition": "RETAIN",
@@ -3241,6 +3242,44 @@
       "disposition": "RETAIN",
       "ownerSteps": [
         "07"
+      ]
+    },
+    {
+      "id": "native-demo-finite-setup",
+      "sources": [
+        {
+          "path": "apps/desktop/native/demo-operation.m",
+          "fingerprints": [
+            "posix_spawn(&_pid,args[0],&actions,&attributes,args,env)",
+            "exec /usr/bin/env -i PATH="
+          ]
+        }
+      ],
+      "destination": "User-invoked sealed packaged inspect/prepare/apply helper in an owned finite process group. Separately consumed retained Terminal document runs the same bound helper and qualified native external client after explicit consent.",
+      "payload": "Exact installation/store/runtime/endpoint arguments; allowlisted environment, no inherited guardian/storage/provider descriptors or credentials. Bounded output, positive group settlement before reap; uncertain guards retained.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
+      "id": "installation-opt-in-assistant-setup",
+      "sources": [
+        {
+          "path": "scripts/local-migration/installation/assistant-setup-smoke.mjs",
+          "fingerprints": [
+            "spawnSync(file,args",
+            "spawn('/usr/bin/sandbox-exec'"
+          ]
+        }
+      ],
+      "destination": "Explicit sealed installed bundle in a new owned durable synthetic root, loopback only network, compiled offline native client and request writer.",
+      "payload": "Synthetic setup configuration/CLI controls and exact digest/backup/refusal evidence; no personal provider, real Terminal, Keychain, model or personal Desktop config. Retained request lifecycle through Quit/reopen/reset.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
       ]
     }
   ],
@@ -5412,6 +5451,12 @@
       }
     },
     {
+      "path": "apps/desktop/native/demo-operation.m",
+      "sinks": {
+        "native-exec": 1
+      }
+    },
+    {
       "path": "apps/desktop/native/demo-ready.m",
       "sinks": {
         "native-connect": 1
@@ -5427,7 +5472,7 @@
       "path": "apps/desktop/native/menu.m",
       "sinks": {
         "native-task-launch": 1,
-        "native-url-open": 1
+        "native-url-open": 2
       }
     },
     {
@@ -5734,6 +5779,12 @@
       "path": "scripts/local-migration/installation/appkit-probe.m",
       "sinks": {
         "native-task-launch": 1
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/assistant-setup-smoke.mjs",
+      "sinks": {
+        "spawn": 2
       }
     },
     {

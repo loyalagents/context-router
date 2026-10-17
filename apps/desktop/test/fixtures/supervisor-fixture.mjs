@@ -66,7 +66,7 @@ else {fs.writeFileSync(path.join(cap.envelope,'demo',cap.storeId,'generation.jso
   await writeFile(path.join(runtime,'demo.mjs'),`import fs from 'node:fs';import {spawnSync} from 'node:child_process';
 const code=\`const fs=require('node:fs');const fds=[];for(let i=20;i<24;i++){try{fs.fstatSync(i);fds.push(i);}catch{}}console.log(JSON.stringify({fds,env:process.env}));\`;
 const child=spawnSync(process.execPath,['-e',code],{env:{PATH:'',CR_DEMO_TOKEN:'synthetic-demo-only'},stdio:['ignore','pipe','pipe'],encoding:'utf8'});
-const fds=[];for(let i=20;i<24;i++){try{fs.fstatSync(i);fds.push(i);}catch{}}console.log(JSON.stringify({wrapper:process.env,fds,child:JSON.parse(child.stdout)}));`);
+const fds=[];for(let i=20;i<24;i++){try{fs.fstatSync(i);fds.push(i);}catch{}}console.log(JSON.stringify({wrapper:process.env,argv:process.argv.slice(2),fds,child:JSON.parse(child.stdout)}));`);
   await writeSignedFixture(bundle);
   const children=[],accepted=[];let retainEvidence=false;
   t.after(async()=>{

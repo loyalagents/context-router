@@ -28,3 +28,39 @@ export function backend(name){if(name==='next')return ()=>({async prepare(){},ge
   });
   const run=f.launch(),ready=await run.event('ready');run.send('model-unavailable',ready.generation);run.send('unlock',ready.generation);await run.event('unlock');assert.equal(await readFile(path.join(f.envelope,'models','invalidated'),'utf8'),'yes');run.send('quit',ready.generation);assert.deepEqual(await ended(run.child),[0,null]);
 });
+
+test('demo model transitions settle each old process and preserve weights while session keys change',async t=>{
+ const f=await editedFixture(t,'normal',async runtime=>{
+  const exe=path.resolve(runtime,'../../model/llama-server');const built=spawnSync('/usr/bin/clang',['-Wall','-Wextra','-Werror','-DMODEL_VARIANT=0','-DMODEL_SESSION_EVIDENCE',path.resolve(import.meta.dirname,'../fixtures/model-process.c'),'-o',exe],{encoding:'utf8',timeout:20000});assert.equal(built.status,0,built.stderr);
+  for(const entry of ['prepare','application'])await replace(path.join(runtime,`${entry}.mjs`),'modelEnabled:false','modelEnabled:true');
+  await replace(path.join(runtime,'prepare.mjs'),"await control.send('prepared'",`fs.writeFileSync(path.join(cap.envelope,'sessions',cap.generation,'api-key.txt'),cap.nonce,{mode:0o600});await control.send('prepared'`);
+  await replace(path.join(runtime,'application.mjs'),"await control.stopped;await control.send('drained');",`await control.stopped;fs.writeFileSync(path.join(cap.envelope,'sessions',cap.generation,'api-key.txt.app-drained'),'yes');await control.send('drained');`);
+ });
+ const run=f.launch();let ready=await run.event('ready');
+ const retained=path.join(f.envelope,'models',name);await writeFile(retained,'owned retained fixture bytes',{mode:0o600});
+ const sessions=[];
+ async function observe(){const key=path.join(f.envelope,'sessions',ready.generation,'api-key.txt'),file=key+'.events';let events;const deadline=performance.now()+5000;while(!(events=await readFile(file,'utf8').catch(()=>''))){assert.ok(performance.now()<deadline);await new Promise(r=>setTimeout(r,10));}assert.match(events,/^fd3-only\npid:\d+\n/);const value={key,file,pid:Number(events.match(/pid:(\d+)/)[1]),secret:await readFile(key,'utf8'),generation:ready.generation};sessions.push(value);return value;}
+ let previous=await observe();
+ for(const command of ['enter-demo','restart','reset-demo','leave-demo']){
+  const after=run.events.length;run.send(command,ready.generation);ready=await run.event('ready',after);
+  assert.equal(ready.modelEnabled,true);assert.throws(()=>process.kill(previous.pid,0),{code:'ESRCH'});
+  const events=await readFile(previous.file,'utf8');assert.match(events,/term-after-drain/);assert.doesNotMatch(events,/before-drain/);
+  const next=await observe();assert.notEqual(next.generation,previous.generation);assert.notEqual(next.secret,previous.secret);previous=next;
+  assert.equal(await readFile(retained,'utf8'),'owned retained fixture bytes');
+ }
+ run.send('quit',ready.generation);assert.deepEqual(await ended(run.child),[0,null]);assert.throws(()=>process.kill(previous.pid,0),{code:'ESRCH'});assert.match(await readFile(previous.file,'utf8'),/term-after-drain/);
+ assert.equal(new Set(sessions.map(s=>s.generation)).size,5);
+});
+
+test('demo model loss invalidates AI while the admitted dashboard can still issue unlocks',async t=>{
+ const f=await editedFixture(t,'normal',async runtime=>{
+  const built=spawnSync('/usr/bin/clang',['-Wall','-Wextra','-Werror','-DMODEL_VARIANT=1','-DMODEL_SESSION_EVIDENCE',path.resolve(import.meta.dirname,'../fixtures/model-process.c'),'-o',path.resolve(runtime,'../../model/llama-server')],{encoding:'utf8',timeout:20000});assert.equal(built.status,0,built.stderr);
+  for(const entry of ['prepare','application'])await replace(path.join(runtime,`${entry}.mjs`),'modelEnabled:false',"modelEnabled:cap.mode==='demo'");
+  await replace(path.join(runtime,'application.mjs'),"if(cap.role==='application'", "if(command==='model-unavailable')fs.writeFileSync(path.join(cap.envelope,'models','invalidated'),'yes');if(command==='unlock')void control.send('unlock',{origin:'http://127.0.0.1:3210',unlockFile});if(cap.role==='application'");
+ });
+ const run=f.launch(),personal=await run.event('ready'),after=run.events.length;run.send('enter-demo',personal.generation);
+ const demo=await run.event('ready',after);assert.equal(demo.modelEnabled,true);assert.equal((await run.event('model-status',after)).state,'unavailable');
+ run.send('unlock',demo.generation);assert.equal((await run.event('unlock',after)).generation,demo.generation);
+ assert.equal(await readFile(path.join(f.envelope,'models','invalidated'),'utf8'),'yes');
+ run.send('quit',demo.generation);assert.deepEqual(await ended(run.child),[0,null]);assert.equal((await journal(f)).outcome,'ok');
+});

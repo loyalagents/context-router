@@ -85,6 +85,10 @@ export default function PreferenceSearch({
             ? 'The local model is busy. Wait for the current operation to finish.'
             : /deadline/i.test(message)
               ? 'Smart search reached its deadline.'
+              : message === 'Local model context limit' || message === 'Local model input limit'
+                ? 'This search exceeds the local model’s context limit. Literal search is still available.'
+                : message === 'Local model invalid response'
+                  ? 'The local model could not return valid search results. You can retry or use literal search.'
               : 'Smart search is unavailable. Check model status.',
         );
       }
