@@ -357,3 +357,29 @@ checkpoint. No merge of PR #187 to main is authorized.
 Ref, merge-preview and focused evidence are retained at
 `/private/tmp/mcp-permissions-main-sync-3tvua6x4`; final results belong in PR evidence
 rather than pass-only commits.
+
+### Integration gate diagnostic and test correction
+
+The first frozen merge candidate, `2ef010dc`, passed independent complete-diff
+review and focused checks. Its full local gate stopped in the local-model suite
+(144/145 passed), after backend unit tests passed (1125/1125). The unchanged
+`deadline includes admission and leaves an unwitnessed dispatch latched` test
+observed zero peer requests: local dispatch had latched unavailable, but its
+50 ms wall-clock deadline could destroy TLS transport before peer receipt. The
+failed run and successful database/container cleanup remain in
+`context-router-lmbg-9eo6Wf`; this is diagnostic evidence, not a passing gate.
+
+The approved correction changes only that test: establish actual TLS receipt
+under an independent captured real-time watchdog, then advance controlled time
+past the unchanged 50 ms logical deadline. Require exactly one request, the
+unwitnessed write observation, no admission progress, the exact deadline error,
+permanent unavailable state and no second-attempt request/control-evidence change.
+Restore time mocks before fixture cleanup. The adjacent readiness-expiry test is
+unchanged. The affected client suite passed 32/32; external fault variants for a
+wrong deadline error and missing unavailable latch both failed as intended.
+Logs are retained in the integration evidence directory above.
+
+Independent affected review precedes the corrected freeze; renew the complete
+local gate and exact-head CI on that freeze. Production, dependency/toolchain,
+packaging and installed/demo harness inputs remain unchanged, so the explicitly
+source-bound `256ec09` artifact carry-forward amendment still applies.

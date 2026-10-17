@@ -199,9 +199,40 @@ test('readiness negative controls require exact unauthorized status on the pinne
 
 test('deadline includes admission and leaves an unwitnessed dispatch latched', async (t) => {
   const { client, state } = await fixture(t, async () => {});
-  await assert.rejects(client.complete('synthetic', { deadline: performance.now() + 50 }), /Local model deadline/);
-  await client.settled(); assert.equal(client.state, 'unavailable');
-  assert.equal(state.completions, 1);
+  const realSetTimeout = setTimeout; const realClearTimeout = clearTimeout;
+  let now = performance.now();
+  const deadline = now + 50;
+  t.mock.method(performance, 'now', () => now);
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let watchdog;
+  try {
+    const progress = []; const writes = [];
+    const call = client.complete('synthetic', { deadline,
+      onProgress: (event) => progress.push(event),
+      onWriteFinished: (event) => writes.push(event) });
+    const rejected = assert.rejects(call, /^Error: Local model deadline$/);
+    // Establish real TLS receipt before expiring the unchanged logical budget.
+    // Captured timers keep this fixture watchdog independent of mocked time.
+    await Promise.race([state.completionReceived, new Promise((_, reject) => {
+      watchdog = realSetTimeout(() => reject(new Error('fixture did not receive its initial request')), 1000);
+    })]);
+    now = deadline + 1;
+    t.mock.timers.tick(51);
+    await rejected;
+    await client.settled();
+    assert.equal(client.state, 'unavailable');
+    assert.equal(state.completions, 1);
+    assert.deepEqual(writes, [{ writeFinished: true, headersObserved: false, admitted: false }]);
+    assert.deepEqual(progress, []);
+    const requests = [...state.requests]; const evidence = client.controlEvidence;
+    await assert.rejects(client.complete('second'), /^Error: Local model unavailable$/);
+    assert.deepEqual(state.requests, requests);
+    assert.deepEqual(client.controlEvidence, evidence);
+  } finally {
+    realClearTimeout(watchdog);
+    t.mock.timers.reset();
+    t.mock.restoreAll();
+  }
 });
 
 test('pre-abort outstanding idle poll cannot count as post-abort settlement', async (t) => {
