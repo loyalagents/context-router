@@ -309,3 +309,51 @@ active/archived catalog membership, definition counts (including slug collisions
 2048-row/2 MiB fail-closed limits and terminal recovery. Rejected suggestions to
 add write-side definition caps, drop archived authority metadata or introduce a
 persistent cache. These would alter authority/contracts unnecessarily.
+
+
+## Main integration checkpoint (2026-10-16)
+
+The user requested refreshing main, integrating its recent merges and checking
+for justified follow-up changes in the existing PR. The sole writer and review
+roles/settings above remain unchanged. Fetch verified `origin/main` at
+`20d1fe7b2767e654bfc764326c547571d8b87062`; local main fast-forwarded from
+`601737a94d5f63f696818026f6694de494f8865c` only after proving ancestry and that no
+worktree had main checked out. The primary demo-assistant checkout was untouched.
+
+The previous permissions head was `256ec09ac4f4322c867b7f4ca0516185b120c86f`, with
+merge base `071b329731103ef3be5113ff79faf12b856aa68e`. Main contributed PRs #185,
+#186, #188 and #189: bounded startup guidance/overview, explicit nonruntime CI
+selection and more precise SQLite/HTTP timing tests. The only shared file was
+`apps/backend/test/local-ui/http.test.mjs`; its independent changes merged cleanly.
+All upstream changes are retained unchanged. No production integration correction
+was identified in the initial assessment; dependency/toolchain pins are unchanged.
+
+Focused integration checks cover the complete local-UI HTTP suite, changed SQLite
+coordination/recovery suites, overview/CI-selection/documentation/contract readers,
+verified latest-base census and whitespace. This runtime feature remains subject
+to full CI qualification under the new selection policy. The default local gate
+is unchanged. The independent plan reviewer approved renewing the frozen merge
+head's full 12-phase local gate and full exact-head CI, with this bounded artifact
+carry-forward amendment:
+
+- The merge changes guidance, documentation, test assertions and CI selection.
+  Product source, dependency/lockfile/toolchain pins, packaging code and both
+  installed qualification harnesses are byte-unchanged from `256ec09`.
+- Retain the existing artifact's package/seal, installed and full-demo evidence
+  under `/private/tmp/mcp-permissions-followup-t4MJAi`. Its source remains
+  `256ec09ac4f4322c867b7f4ca0516185b120c86f`, manifest
+  `c3ed08728ec55d51deb95fae8ca5a87a96caeeb5322882f9066fc32fa2722953`, and archive
+  SHA-256 `3fc3e8d2990f566eb7e389afe216b8c8544c9f58b68220c25c9a339fa21a845a`.
+  This is qualification of that unchanged artifact, not a merge-head artifact.
+- Packaging hashes all copied tracked inputs; a build from the merge head would
+  therefore have a different source/manifest identity even with unchanged runtime
+  content. Any new merge-head build/distribution requires fresh seal/manifest and
+  installed/demo qualification. No rebuild is required solely to rename the old
+  artifact or its valid evidence.
+
+Source stays frozen for independent integration review after the focused
+checkpoint. No merge of PR #187 to main is authorized.
+
+Ref, merge-preview and focused evidence are retained at
+`/private/tmp/mcp-permissions-main-sync-3tvua6x4`; final results belong in PR evidence
+rather than pass-only commits.

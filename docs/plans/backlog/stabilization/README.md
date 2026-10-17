@@ -19,6 +19,7 @@ and **worktree eligible** independently after investigation.
 | Redacted feedback and actionable errors | App/version/OS/client identification, clear unsupported/busy/disconnected states, no tokens or document content in logs | Often a bounded worktree slice after logging contract is agreed |
 | Prominent denied-grant, history and AI-status feedback | [UI usability](../ui-usability/README.md) retains the detailed backlog | Visual slices may be independent; authority/restart logic is not merely visual |
 | Deterministic regression coverage | Tests for an identified defect or untested supported flow, not unrelated hardening | Separate fixtures/ports/build outputs; backend behavior remains tests first |
+| Agent time and token overhead | [Efficiency note](agent-efficiency.md): bounded overview and reading/workflow clarifications implemented; broader experiments deferred | Coordinate script/docs changes with other AGENTS.md/workflow editors |
 
 Not every candidate is an established defect or an automatic pilot blocker.
 Record reproduction, consequence, intended fix, acceptance and owner before

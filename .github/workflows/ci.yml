@@ -122,8 +122,8 @@ jobs:
         with:
           node-version: '24.21.0'
 
-      - name: Test documentation validators
-        run: node --test scripts/check-markdown-links.test.mjs
+      - name: Test documentation validators and repository overview
+        run: node --test scripts/check-markdown-links.test.mjs scripts/print-repo-structure.test.mjs
 
       - name: Check repository Markdown links
         run: node scripts/check-markdown-links.mjs

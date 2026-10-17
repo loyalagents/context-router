@@ -4,8 +4,11 @@ Before starting:
 2. Run `./print-repo-structure.sh`.
 3. Read `docs/README.md` to get a sense of the documents available in this repo.
 4. Read every file in `docs/IMPORTANT/`.
-5. Read `docs/plans/README.md` for priorities, then `docs/current/`, `docs/useful/`,
-   and the relevant active/backlog brief as needed for your task.
+5. Read `docs/plans/README.md` for priorities, then the task-relevant documents in
+   `docs/current/` and `docs/useful/` and the relevant active/backlog brief. Do not
+   read those directories in full by default. Task-specific required reading below,
+   including the linked validation policy for any change, and active-plan reading
+   requirements still apply.
 
 This repo is a `pnpm` workspace monorepo with:
 
