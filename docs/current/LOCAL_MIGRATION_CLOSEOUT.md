@@ -86,9 +86,10 @@ history. Activate a named writer in the linked brief before implementation.
 ## Gates And Reset Validation
 
 `pnpm migration:gate`, its dedicated workflow, contract checker and supported
-reference modes keep their existing names and requirements. Closing the program
-does not retire tests or CI. The [workflow](../useful/AGENT_WORKFLOW.md) now owns
-iteration, independent review, trial handoff and final qualification instructions.
+reference modes retain their commands and coverage. Closing the program does not
+retire tests or CI. The [validation policy](../useful/AGENT_WORKFLOW.md#validation-and-context-discipline)
+owns focused local checks, exceptions for full local runs, independent review, trial
+handoff and final qualification; a full local run is not automatic for every PR.
 
 For this documentation/evidence relocation, run strict Markdown links/whitespace,
 tests/checkers that read edited or moved docs (including root README content

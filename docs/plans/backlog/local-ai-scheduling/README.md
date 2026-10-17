@@ -135,8 +135,11 @@ behavior and affected consumers, batch review corrections, and carry forward
 only evidence whose relevant inputs are unchanged. Rebuild an app when a changed
 artifact needs testing, not after every documentation edit or review comment.
 
-For implementation closeout, freeze one candidate and run all required final
-validation: full local migration gate, applicable installed-artifact qualification,
+At activation, select final checks under the
+[validation matrix](../../../useful/AGENT_WORKFLOW.md#default-and-exceptions) and
+record any specific additional scheduling/cancellation/recovery obligation.
+For implementation closeout, freeze one candidate and run those checks, including
+any required full local gate, applicable installed-artifact qualification,
 independent final review and exact-head CI. A failure returns to targeted fixes,
 then renews affected required final evidence; do not reuse an older pass for
 changed inputs or weaken CI. Explain an expensive broad run before starting it.

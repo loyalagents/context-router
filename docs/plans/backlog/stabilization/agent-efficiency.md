@@ -70,7 +70,9 @@ on 2026-10-15. The exact allowlist, mandatory consumers, failure handling and
 receipt distinction live in the existing
 [contract policy](../../../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#nonruntime-ci-selection).
 No broad documentation/script exemption or individual-test selection is added.
-Standard CI and the default full local gate remain unchanged. Separating
+Standard CI and the full local command remain unchanged; the
+[validation matrix](../../../useful/AGENT_WORKFLOW.md#default-and-exceptions)
+now selects local checks without an automatic full local run for ordinary PRs. Separating
 documentation CI definitions is deferred: that could avoid application-suite
 dispatch for documentation-test definition edits, but leaves the migration
 critical path and adds another workflow boundary. Keeping routing unchanged has
@@ -99,7 +101,8 @@ ineligible because it changed CI and added files. Confirm scheduling and summari
 on the first naturally occurring eligible run; no metrics subsystem is added.
 
 The implementation builds on #185's separate database timing fixes. CI selection
-changes require full qualification. Reverting the cohesive selection change
+changes require full CI qualification and local checks under that matrix.
+Reverting the cohesive selection change
 restores unconditional lanes; receipt meanings never change. Revision-specific
 model settings, review decisions and validation evidence belong in
 [PR #188](https://github.com/loyalagents/context-router/pull/188), rather than

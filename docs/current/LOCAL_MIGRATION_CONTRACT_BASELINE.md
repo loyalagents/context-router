@@ -273,6 +273,9 @@ repository-integrity. Full manifest/schema, exact commands, all six modes and
 retirement rules remain validated before either selection. There is no arbitrary
 phase-skipping option. The default local `pnpm migration:gate` still runs all
 twelve phases sequentially; restart smoke-only behavior is retained.
+This describes command coverage, not a requirement to invoke it locally on every
+PR. The [validation policy](../useful/AGENT_WORKFLOW.md#default-and-exceptions)
+determines when a full local run is needed; required CI remains unchanged.
 
 Both profiles preserve the outer smoke lifecycle validators, bounded settlement,
 caller/generated integrity, owned-resource cleanup and successful finalization.
@@ -345,7 +348,7 @@ permissions unchanged:
 - `print-repo-structure.sh` and `scripts/print-repo-structure.test.mjs`.
 
 All other paths, mixed changes, additions, deletions, renames, type/permission
-changes and empty diffs require full qualification. There is no `docs/**` or
+changes and empty diffs require full CI qualification. There is no `docs/**` or
 `scripts/**` exemption. Root README has backend consumers; operational runbooks,
 contract registries and frozen evidence remain fully qualified. CI, gate/checker,
 dependency and toolchain changes are full. Adding a new consumer of an allowlisted
