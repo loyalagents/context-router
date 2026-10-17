@@ -890,7 +890,7 @@ for (const operation of ['smart-search', 'legacy-logout', 'legacy-deadline'])
             : '{ askVertexAI(message:"Synthetic") }',
       };
       f.peer.state.reply = JSON.stringify({
-        relevantSlugs: ['profile.first_name'],
+        relevantReferences: [],
         queryInterpretation: 'Synthetic',
       });
       const complete = await f.request('/graphql', {

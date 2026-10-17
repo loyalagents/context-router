@@ -71,21 +71,26 @@ The CR menu enters/reopens a separate persistent demo store, returns to personal
 and resets demo through a new store/identity. The sample has 189 active memories
 from 198 historical 2024–2025 records. Reopen preserves presenter edits and grants;
 reset restores original definitions/import history and fresh A/B/C credentials,
-retaining old stores and stable isolated provider profiles. Demo has no model
-startup/download. Existing personal assets remain retained.
+retaining old stores and stable isolated provider profiles. Demo reuses verified
+installed model weights with a fresh owned inference session. Missing or invalid
+weights keep the no-model path; demo downloads remain disabled. Assets are retained.
 
 Demo uses the same dashboard and navigation as personal mode, with historical
 data and an authenticated demo banner. The optional five-step walkthrough is
 collapsed below the dashboard; normal profile, preferences, schema, permissions
-and history views remain available. The read-only
-**Demo setup…** panel supplies generation/endpoint-bound packaged Terminal commands:
-Codex A writes, Claude Code subscription B and Desktop C read with health/finance
-restrictions. Later grants are shown from actual state. External provider sessions
-are explicit user actions; the app does not supervise them. See the
+and history views remain available. **Demo setup…** offers native Sign in/Open,
+qualified executable selection and exact reviewed Desktop apply, with packaged
+Terminal commands as a secondary fallback. Codex A writes; Claude Code
+subscription B and Desktop C read with health/finance restrictions. Later grants
+are shown from actual state. Provider sessions are explicit user actions. The
+menu owns only bounded inspect/prepare/apply helpers; external assistants remain
+independent. See the
 [installed helper workflow](../useful/INSTALLED_MAC_APP.md#historical-demo-mode).
-Manual source UI does not advertise native menu controls. New demo provider/human
-acceptance remains pending; older recorded client observations below do not
-qualify the new helper/artifact pair.
+Manual source UI does not advertise native menu controls. The user confirmed
+Codex/Claude Code/Desktop connectivity, permission restrictions, Quit/reopen
+persistence, reset and return to personal mode for merged PR #183. The separately
+activated [native setup controls](../plans/active/native-demo-assistant-setup/plan.md)
+require their own acceptance; that work does not broaden distribution support.
 
 ## Qualification And Known Limits
 

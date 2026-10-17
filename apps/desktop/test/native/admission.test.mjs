@@ -22,6 +22,8 @@ const backend = path.resolve(import.meta.dirname, '../../../backend/dist');
 let next = 0;
 let ownershipUncertain = false;
 function fixture(variant) {
+  const demo = variant === 'application-demo';
+  if (demo) variant = 'application';
   const parent = path.join(top, String(++next)); mkdirSync(parent, { mode: 0o700 });
   const envelope = path.join(parent, 'managed-v1'); mkdirSync(envelope, { mode: 0o700 });
   const id = 'a'.repeat(32);
@@ -85,7 +87,8 @@ function fixture(variant) {
       installation.pendingRestore = { storeId: id, sourceDigest: createHash('sha256').update(readFileSync(path.join(bundle, 'complete.json'))).digest('hex'), expectedSelection: installation.selectedStore, status: 'reserved' };
     }
   }
-  const journal = { version: 2, mode: 'personal', lifecycle: 'active', outcome: 'pending', generation: id, bootId, installationId: id, storeId: id, role: 'prepare', operation: 'initialize', nonceHash: createHash('sha256').update(cap.nonce).digest('hex') };
+  if (demo) { cap.mode = installation.mode = 'demo'; installation.personalStore = 'd'.repeat(32); installation.demoStore = id; }
+  const journal = { version: 2, mode: cap.mode, lifecycle: 'active', outcome: 'pending', generation: id, bootId, installationId: id, storeId: id, role: 'prepare', operation: 'initialize', nonceHash: createHash('sha256').update(cap.nonce).digest('hex') };
   journal.role = cap.role; journal.operation = cap.operation;
   if (variant === 'nonce') cap.nonce = 'c'.repeat(64);
   if (variant === 'generation') cap.generation = 'c'.repeat(32);
@@ -163,6 +166,13 @@ test('a real PDF child inherits only lifetime authority and proves the original 
 });
 test('storage admission revocation immediately aborts an in-flight real model completion', () => {
   assert.deepEqual(run('application', 'model-revoke'), { admitted: true, denied: true, aborted: true, cancelled: true });
+});
+test('demo model authority requires its current application session and revokes in-flight inference with its owner', () => {
+  assert.deepEqual(run('application-demo', 'model-authority'), { admitted: true, allowed: true, wrongSessionDenied: true });
+  assert.deepEqual(run('verify', 'model-authority'), { admitted: true, allowed: false, wrongSessionDenied: true });
+  assert.deepEqual(run('application-demo', 'model-wrong-store'), { admitted: true, denied: true, aborted: true });
+  assert.deepEqual(run('application-demo', 'model-revoke'), { admitted: true, denied: true, aborted: true, cancelled: true });
+  assert.deepEqual(run('application-demo', 'model-worker-revoke'), { admitted: true, denied: true, aborted: true, cancelled: true });
 });
 test('worker-side authority loss propagates through the shared flag to an active parent completion', () => {
   assert.deepEqual(run('application', 'model-worker-revoke'), { admitted: true, denied: true, aborted: true, cancelled: true });

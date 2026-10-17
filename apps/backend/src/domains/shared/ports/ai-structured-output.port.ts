@@ -8,6 +8,8 @@ export interface AiStructuredOptions extends AiExecutionOptions {
 }
 
 export interface AiStructuredOutputPort extends AiCapabilityProvider {
+  /** Private, explicit on-device search-data boundary; absent/hosted adapters stay definition-only. */
+  readonly localSearchData?: true;
   generateStructured<T>(
     prompt: string,
     schema: z.ZodType<T>,

@@ -383,13 +383,11 @@ export async function runLocalMcpSmoke({
       });
       const material = await createSmokeModelCredentials(modelRoot);
       journal.addCanary(material.apiKey);
+      const { localSearchReply } = await import('../../apps/backend/test/local-model/fixtures/search-reply.mjs');
       const peer = await createSmokeModelPeer(
         material,
         template,
-        JSON.stringify({
-          relevantSlugs: ['synthetic.shared'],
-          queryInterpretation: 'Synthetic',
-        }),
+        prompt => JSON.stringify(localSearchReply(prompt, ['synthetic.shared'])),
       );
       const ownedPeer = { id, peer, closed: false };
       peers.push(ownedPeer);

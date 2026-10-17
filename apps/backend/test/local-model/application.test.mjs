@@ -84,10 +84,12 @@ test('actual SQLite Nest shares one model session across extraction, grants, adv
     f.state.hook = null;
     const clientKey = 'synthetic-model-client';
     await app.get(PermissionGrantRepository).upsert(userId, clientKey, 'profile.last_name', 'READ', 'DENY');
-    f.state.reply = JSON.stringify({ relevantSlugs: ['profile.first_name', 'profile.last_name', 'unknown.fake'], queryInterpretation: 'Synthetic' });
+    const { localSearchReply } = await import('./fixtures/search-reply.mjs');
+    f.state.hook = async (request, _response, body) => { if (request.url === '/completion') f.state.reply = JSON.stringify(localSearchReply(JSON.parse(body).prompt, ['profile.first_name', 'profile.last_name', 'unknown.fake'])); return false; };
     const found = await app.get(PreferenceSearchWorkflow).run({ userId, clientKey, naturalLanguageQuery: 'Synthetic' });
     assert.deepEqual(found.matchedDefinitions.map((d) => d.slug), ['profile.first_name']);
     assert.equal(found.matchedActivePreferences[0].value, 'Ada');
+    f.state.hook = null;
     const definitions = app.get(PreferenceDefinitionRepository);
     for (const slug of ['custom.preference_a', 'custom.preference_b']) await definitions.create({ slug, description: 'Synthetic alias', valueType: 'STRING', scope: 'GLOBAL', ownerUserId: userId });
     f.state.reply = JSON.stringify({ consolidationGroups: [

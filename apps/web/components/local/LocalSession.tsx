@@ -346,7 +346,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
       {capabilities.runtime?.mode === 'demo' ? (
         <aside aria-label="Demo mode" className="mx-10 mt-5 rounded border border-amber-400 bg-amber-50 p-4 text-amber-950">
           <strong>Demo mode — historical 2024–2025 sample</strong>
-          <p className="mt-1">Edits persist. AI is disabled in demo. Use CR → Demo setup for client commands, CR → Reset sample data for a fresh sample, or CR → Return to personal mode.</p>
+          <p className="mt-1">Edits persist. Installed local AI is used when available. Use CR → Demo setup for client commands, CR → Reset sample data for a fresh sample, or CR → Return to personal mode.</p>
           <p className="mt-1 text-sm">Clear memory removes memories; Clear history removes audit history. Neither resets the demo identity or client tokens.</p>
         </aside>
       ) : capabilities.runtime?.launcher === 'native' ? (

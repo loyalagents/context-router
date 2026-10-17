@@ -8,12 +8,14 @@ import { PreferenceSchemaSnapshotService } from '../../../preferences/preference
 import { PreferenceSlugAccessFilter } from '../../../preferences/preference-definition/preference-schema-snapshot.service';
 import { PreferenceService } from '../../../preferences/preference/preference.service';
 import { EnrichedPreference } from '../../../preferences/preference/preference.repository';
-import { RelevanceResponseSchema } from './preference-search.schema';
-import { buildPreferenceSearchPrompt } from './preference-search.prompt';
+import { LocalRelevanceResponseSchema, RelevanceResponseSchema } from './preference-search.schema';
+import { buildLocalPreferenceSearchPrompt, buildPreferenceSearchPrompt } from './preference-search.prompt';
 
 export interface PreferenceSearchWorkflowInput extends WorkflowInput {
   clientKey: string;
   filterAccessibleSlugs?: PreferenceSlugAccessFilter;
+  /** Values need definition-aware authorization in addition to visible slug metadata. */
+  filterReadableValues?: (values: EnrichedPreference[]) => Promise<EnrichedPreference[]>;
   naturalLanguageQuery: string;
   locationId?: string;
   includeSuggestions?: boolean;
@@ -62,20 +64,38 @@ export class PreferenceSearchWorkflow
     execution.check();
 
     const knownSlugs = new Set(snapshot.definitions.map((d) => d.slug));
+    const referenceSlugs = snapshot.definitions.map((d) => d.slug);
+    let allActive: EnrichedPreference[] | undefined;
+    let allSuggested: EnrichedPreference[] | undefined;
 
     // Step 2: AI slug identification
-    const prompt = buildPreferenceSearchPrompt(
-      snapshot.promptJson,
-      input.naturalLanguageQuery,
-    );
+    const aiResult = await recorder.record('aiSlugIdentification', 'ai', async () => {
+      const aiOptions = { ...execution.options, operationName: 'preferenceSearch.slugIdentification' };
+      if (this.aiStructuredPort.localSearchData !== true) return this.aiStructuredPort.generateStructured(
+        buildPreferenceSearchPrompt(snapshot.promptJson, input.naturalLanguageQuery), RelevanceResponseSchema, aiOptions);
 
-    const aiResult = await recorder.record('aiSlugIdentification', 'ai', () =>
-      this.aiStructuredPort.generateStructured(
-        prompt,
-        RelevanceResponseSchema,
-        { ...execution.options, operationName: 'preferenceSearch.slugIdentification' },
-      ),
-    );
+      const readable = async (rows: EnrichedPreference[]) => {
+        const allowed = rows.filter(row => knownSlugs.has(row.slug));
+        const filtered = input.filterReadableValues ? await input.filterReadableValues(allowed) : [];
+        execution.check();
+        return filtered.filter(row => knownSlugs.has(row.slug));
+      };
+      allActive = await this.preferenceService.getActivePreferences(input.userId, input.locationId);
+      execution.check();
+      const activeContext = await readable(allActive);
+      if (input.filterReadableValues) allActive = activeContext;
+      let suggestedContext: EnrichedPreference[] = [];
+      if (input.includeSuggestions) {
+        allSuggested = await this.preferenceService.getSuggestedPreferences(input.userId, input.locationId);
+        execution.check();
+        suggestedContext = await readable(allSuggested);
+        if (input.filterReadableValues) allSuggested = suggestedContext;
+      }
+      const result = await this.aiStructuredPort.generateStructured(buildLocalPreferenceSearchPrompt(
+        snapshot.definitions, activeContext, suggestedContext, input.naturalLanguageQuery), LocalRelevanceResponseSchema, aiOptions);
+      return { relevantSlugs: result.relevantReferences.filter(reference => Number.isSafeInteger(reference) && reference >= 0 && reference < referenceSlugs.length)
+        .map(reference => referenceSlugs[reference]), queryInterpretation: result.queryInterpretation };
+    });
 
     execution.check();
 
@@ -113,7 +133,7 @@ export class PreferenceSearchWorkflow
         }));
 
       // Fetch active preferences and filter to matched slugs
-      const allActive = await this.preferenceService.getActivePreferences(
+      allActive ??= await this.preferenceService.getActivePreferences(
         input.userId,
         input.locationId,
       );
@@ -125,8 +145,7 @@ export class PreferenceSearchWorkflow
       // Fetch suggested preferences if requested
       let matchedSuggestedPreferences: EnrichedPreference[] = [];
       if (input.includeSuggestions) {
-        const allSuggested =
-          await this.preferenceService.getSuggestedPreferences(
+        allSuggested ??= await this.preferenceService.getSuggestedPreferences(
             input.userId,
             input.locationId,
           );

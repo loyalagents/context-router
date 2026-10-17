@@ -27,7 +27,7 @@ export function clientLaunchSpec({ command, root, profileRoot = root, mcpPort, d
   if (!['a', 'b'].includes(agent)) throw safeError('Unsupported client role.');
   if (command === 'claude' ? !['api-key', 'subscription'].includes(auth) : auth !== undefined) throw safeError('Unsupported client authentication mode.');
   const prefix = agent === 'a' && (command === 'codex' || profileRoot !== root) ? `${command}-a` : command;
-  const env = { ...cleanEnvironment(), HOME: path.join(profileRoot, `${prefix}-home`), TMPDIR: path.join(profileRoot, `${prefix}-home`) };
+  const env = { ...cleanEnvironment(), TERM: 'xterm-256color', HOME: path.join(profileRoot, `${prefix}-home`), TMPDIR: path.join(profileRoot, `${prefix}-home`) };
   const cwd = path.join(profileRoot, `${prefix}-workspace`), url = `http://127.0.0.1:${mcpPort}/mcp`;
   const instruction = `This is a Context Router portability rehearsal. Retrieve saved personal context only through context_router_demo MCP tools. The saved context is a historical 2024–2025 snapshot, not a claim of current facts. Use fresh searchPreferences category-prefix reads such as home.${dataset}., family.${dataset}., leisure.${dataset}., tech.${dataset}. and work.${dataset}. A single unfiltered read may truncate. Do not use smartSearchPreferences or consolidateSchema: no local model is running. Save a change only when explicitly requested. Explain missing or denied context honestly.`;
   let args, version;

@@ -10,8 +10,8 @@ const native=path.resolve(import.meta.dirname,'../../native');
 const fixtures=path.resolve(import.meta.dirname,'../fixtures');
 function build(output,marker,entry) {
   const sources=entry
-    ? [entry,...['package','envelope','process','maintenance','model-cleanup'].map(name=>path.join(native,`${name}.m`))]
-    : ['guardian','package','envelope','process','supervisor','demo-ready','maintenance','model-cleanup','menu','diagnostics'].map(name=>path.join(native,`${name}.m`));
+    ? [entry,...['package','envelope','process','maintenance','model-cleanup','demo-operation'].map(name=>path.join(native,`${name}.m`))]
+    : ['guardian','package','envelope','process','supervisor','demo-ready','maintenance','model-cleanup','demo-operation','menu','diagnostics'].map(name=>path.join(native,`${name}.m`));
   const result=spawnSync('/usr/bin/clang',['-Wall','-Wextra','-Werror','-fobjc-arc','-framework','Foundation', '-framework', 'Security','-framework','AppKit',
     '-I',native,'-Dclock_gettime=CRFixtureClockGettime',`-DCR_CLOCK_MARKER=${JSON.stringify(marker)}`,
     ...sources,path.join(fixtures,'sleep-clock.c'),'-o',output],{encoding:'utf8',timeout:20000});

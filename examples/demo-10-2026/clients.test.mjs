@@ -263,3 +263,10 @@ test('installed Codex accepts complete strict A/B launch argv before the nonterm
     await assert.rejects(fs.access(path.join(spec.env.CODEX_HOME, 'auth.json')));
   }
 });
+
+test('qualified interactive clients receive an explicit terminal type through the clean environment',()=>{
+ for(const command of ['claude','codex']){
+  const spec=clientLaunchSpec({command,root:'/owned/demo',dataset:'demo001',mcpPort:3213},{executable:'/owned/native'});
+  assert.equal(spec.env.TERM,'xterm-256color');assert.equal(spec.env.ANTHROPIC_API_KEY,undefined);
+ }
+});

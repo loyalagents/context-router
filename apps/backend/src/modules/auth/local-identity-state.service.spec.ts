@@ -1053,6 +1053,11 @@ describe('LocalIdentityStateService', () => {
     const stageBarrier = new Promise<void>((resolveBarrier) => {
       releaseStageBarrier = resolveBarrier;
     });
+    let operationLinks = 0;
+    let releaseLinkBarrier: () => void;
+    const linkBarrier = new Promise<void>((resolveBarrier) => {
+      releaseLinkBarrier = resolveBarrier;
+    });
     let reportConflict: () => void;
     const conflictObserved = new Promise<void>((resolveConflict) => {
       reportConflict = resolveConflict;
@@ -1083,11 +1088,21 @@ describe('LocalIdentityStateService', () => {
         } satisfies LocalIdentityFileHandle;
       },
       async link(existingPath, newPath) {
+        const operation = basename(newPath) === 'identity.operation.json';
+        if (operation) {
+          // Stage close precedes the asynchronous staged-operation fence. Both
+          // fences must pass before either contender publishes the operation.
+          operationLinks += 1;
+          if (operationLinks === 2) releaseLinkBarrier();
+          await linkBarrier;
+        }
         try {
           await nodeLocalIdentityFileSystem.link(existingPath, newPath);
+          // Keep the publication present until the loser actually gets EEXIST.
+          if (operation) await conflictObserved;
         } catch (error) {
           if (
-            basename(newPath) === 'identity.operation.json' &&
+            operation &&
             (error as NodeJS.ErrnoException).code === 'EEXIST'
           ) {
             reportConflict();
@@ -1097,6 +1112,7 @@ describe('LocalIdentityStateService', () => {
         }
       },
     };
+    let attempts: Array<Promise<OpenLocalIdentityState>> = [];
     try {
       await mkdir(state.root, { mode: 0o700 });
       const first = new LocalIdentityStateService({
@@ -1118,8 +1134,12 @@ describe('LocalIdentityStateService', () => {
         randomBytes: entropy(84, 85, 86),
       });
 
-      const attempts = [first.initialize(), second.initialize()];
-      await conflictObserved;
+      attempts = [first.initialize(), second.initialize()];
+      const prematureFailure = new Promise<never>((_resolve, reject) => {
+        for (const attempt of attempts) void attempt.catch(reject);
+      });
+      await Promise.race([conflictObserved, prematureFailure]);
+      expect(operationLinks).toBe(2);
       const winner = await Promise.race(
         attempts.map((attempt, index) =>
           attempt.then((ready) => ({ index, ready })),
@@ -1148,7 +1168,10 @@ describe('LocalIdentityStateService', () => {
       expect(await readdir(state.root)).toEqual(['identity.json']);
     } finally {
       releaseStageBarrier?.();
+      releaseLinkBarrier?.();
+      reportConflict?.();
       releaseConflict?.();
+      await Promise.allSettled(attempts);
       await state.cleanup();
     }
   });

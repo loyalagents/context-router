@@ -427,7 +427,7 @@ test('desktop changes select native CI plus both shared product owners with exac
     'pnpm --filter desktop test', 'pnpm --filter desktop build:native', 'pnpm --filter desktop test:native',
   ]);
   const manifest = JSON.parse(await readFile(new URL('../../apps/desktop/package.json', import.meta.url), 'utf8'));
-  assert.equal(manifest.scripts.test, 'node --test test/*.test.mjs');
+  assert.equal(manifest.scripts.test, 'node --test --test-concurrency=1 test/*.test.mjs');
   assert.equal(manifest.scripts['test:native'], 'node --test --test-concurrency=1 test/native/*.test.mjs');
   const native = await readFile(new URL('../../apps/desktop/test/native/admission.test.mjs', import.meta.url), 'utf8');
   assert.match(native, /assert.equal\(process.platform, 'darwin'/);

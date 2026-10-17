@@ -60,6 +60,20 @@ const paths = { databaseRoot: path.join(envelope, 'stores', 'a'.repeat(32), 'dat
     await parser.drain();
     return console.log(JSON.stringify({ admitted: true, inherited: result.text === 'verified' }));
   }
+  if (action === 'model-authority') {
+    const root = path.join(envelope, 'sessions', 'a'.repeat(32));
+    let allowed = false, wrongSessionDenied = false;
+    try { managed.managedModelAuthority({ ...paths, root }).assertHeld(); allowed = true; } catch {}
+    try { managed.managedModelAuthority({ ...paths, root: path.join(envelope, 'sessions', 'c'.repeat(32)) }); } catch { wrongSessionDenied = true; }
+    return console.log(JSON.stringify({ admitted: true, allowed, wrongSessionDenied }));
+  }
+  if (action === 'model-wrong-store') {
+    const root = path.join(envelope, 'sessions', 'a'.repeat(32));
+    const authority = managed.managedModelAuthority({ ...paths, root });
+    let denied = false;
+    try { managed.managedModelAuthority({ ...paths, root, databaseRoot: path.join(envelope, 'stores', 'd'.repeat(32), 'data') }); } catch { denied = true; }
+    return console.log(JSON.stringify({ admitted: true, denied, aborted: authority.signal.aborted }));
+  }
   if (action === 'model-revoke' || action.startsWith('model-worker-revoke')) {
     const { fixture } = await import(path.resolve(__dirname, '../../../backend/test/local-model/fixtures/session-fixture.mjs'));
     const cleanup = [];
