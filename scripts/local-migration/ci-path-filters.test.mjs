@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chmod, cp, mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, cp, lstat, mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
@@ -599,9 +599,9 @@ test('nonruntime checks and classification retain complete consumers and always-
   assert.deepEqual(checks.steps.map(s => s.run).filter(Boolean), [
     'node scripts/check-toolchain.mjs', 'pnpm install --frozen-lockfile',
     'node --test scripts/check-markdown-links.test.mjs scripts/print-repo-structure.test.mjs scripts/local-migration/ci-path-filters.test.mjs scripts/local-migration/check-contract-baseline.test.mjs',
-    'pnpm --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts',
+    'pnpm --fail-if-no-match --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts',
     'node --test scripts/local-migration/web-runtime-config.test.mjs',
-    'pnpm --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts',
+    'pnpm --fail-if-no-match --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts',
     'node scripts/check-markdown-links.mjs', 'node scripts/local-migration/check-nonruntime.mjs',
   ]);
   assert.equal(checks.steps.at(-1).env.MIGRATION_GATE_BASE_SHA, "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}");
@@ -610,6 +610,148 @@ test('nonruntime checks and classification retain complete consumers and always-
     assert.equal(job.steps[0].with['fetch-depth'], 0);
     for (const step of job.steps) assert.equal(step['continue-on-error'], undefined);
   }
+});
+
+test('filtered nonruntime commands select their package and reject missing packages', async () => {
+  const workflow = parse(await readFile(dedicatedPath, 'utf8'));
+  const commands = workflow.jobs['nonruntime-checks'].steps
+    .map(step => step.run).filter(command => command?.startsWith('pnpm ') && command.includes('--filter '));
+  assert.equal(commands.length, 2);
+  for (const command of commands) {
+    // Use the actual workflow's package-selection arguments; replace only the
+    // consumer with a cheap probe so removing the flag makes this test fail.
+    const words = command.split(/\s+/);
+    const args = words.slice(1, words.indexOf('exec'));
+    const filterIndex = args.indexOf('--filter') + 1;
+    assert.ok(filterIndex > 0);
+    const packageName = args[filterIndex];
+    const probe = ['exec', 'node', '-e', 'process.stdout.write(JSON.stringify({name:require("./package.json").name,cwd:process.cwd()}))'];
+    const options = { cwd: repositoryRoot, timeout: 30000, encoding: 'utf8' };
+    const selected = await execFileAsync(words[0], [...args, ...probe], options);
+    assert.deepEqual(JSON.parse(selected.stdout), {
+      name: packageName, cwd: path.join(repositoryRoot, 'apps', packageName),
+    });
+    const missing = [...args]; missing[filterIndex] = 'nonexistent-document-consumer-fixture';
+    await assert.rejects(execFileAsync(words[0], [...missing, ...probe], options), error => {
+      assert.equal(error.code, 1);
+      assert.match(error.stdout + error.stderr, /No projects matched the filters/);
+      return true;
+    });
+  }
+});
+
+// This is a review tripwire, not a dependency graph or proof of complete coverage.
+// Computed paths, generic walkers and new reads inside an inventoried file can
+// escape it. README/AGENTS/CLAUDE and other basename matches need context review.
+function findMaintainedDocumentReferences(files, documents) {
+  const basenames = [...new Set(documents.map(file => path.posix.basename(file)))];
+  return [...files].filter(([, source]) =>
+    /docs\/(?:IMPORTANT|current|useful|plans)\/[^\s"'`]*\.md/.test(source) ||
+    basenames.some(name => source.includes(name)) ||
+    (/["']docs["']/.test(source) && /["'](?:IMPORTANT|current|useful|plans)["']/.test(source)),
+  ).map(([file]) => file).sort();
+}
+function requireReviewedDocumentReaders(found, inventory) {
+  assert.deepEqual(found, Object.keys(inventory).sort(), 'Update the reviewed document reader inventory and its lane coverage');
+}
+
+// Each match is either covered by a fixed lane command or has a reviewed reason
+// it does not consume maintained prose. Matching comments/metadata are not readers.
+const documentReaderInventory = {
+  'apps/backend/test/contracts/runtime-composition.spec.ts': {
+    step: 'Test backend launch-topology documentation', target: 'test/contracts/runtime-composition.spec.ts',
+  },
+  'apps/local-orchestrator/test/operator-docs.test.ts': {
+    step: 'Test orchestrator operator documentation', target: 'test/operator-docs.test.ts',
+  },
+  'apps/local-orchestrator/test/readme.test.ts': { reason: 'Reads the app README, outside the exemption.' },
+  'cloudbuild.yaml': { reason: 'Deployment-doc pointer in a comment; no document input.' },
+  'docs/current/local-migration-contract-baseline.json': {
+    step: 'Check contracts against the verified base and whitespace', target: 'scripts/local-migration/check-nonruntime.mjs',
+  },
+  'examples/eval-harbor/scripts/build_dynamicmem_task.py': { reason: 'Writes a generated task README; does not read maintained prose.' },
+  'examples/eval/scripts/direct-open-schema-packet.mjs': { reason: 'Generated evaluation-workspace CLAUDE instructions, outside the exemption.' },
+  'examples/eval/scripts/e2e-mcp-agent.mjs': { reason: 'Generated evaluation-workspace AGENTS/CLAUDE instructions, outside the exemption.' },
+  'examples/eval/scripts/e2e-mcp-packet.mjs': { reason: 'Generated evaluation-workspace AGENTS/CLAUDE instructions, outside the exemption.' },
+  'pnpm-lock.yaml': { reason: 'Upstream README URL in dependency deprecation metadata.' },
+  'scripts/check-markdown-links.test.mjs': {
+    step: 'Test documentation consumers and validation policy', target: 'scripts/check-markdown-links.test.mjs',
+  },
+  'scripts/local-migration/check-contract-baseline.mjs': {
+    step: 'Check contracts against the verified base and whitespace', target: 'scripts/local-migration/check-nonruntime.mjs',
+  },
+  'scripts/local-migration/check-contract-baseline.test.mjs': {
+    step: 'Test documentation consumers and validation policy', target: 'scripts/local-migration/check-contract-baseline.test.mjs',
+  },
+  'scripts/local-migration/ci-path-filters.test.mjs': {
+    step: 'Test documentation consumers and validation policy', target: 'scripts/local-migration/ci-path-filters.test.mjs',
+  },
+  'scripts/local-migration/ci-validation-policy.mjs': { reason: 'Path eligibility metadata; no document content read.' },
+  'scripts/local-migration/gate-phases.test.mjs': { reason: 'Overwrites a fixture README to test integrity, independent of its original prose.' },
+  'scripts/local-migration/installation/bundle-feasibility.mjs': { reason: 'Sandbox-denial probe asserts reading README is forbidden; no prose assertion.' },
+  'scripts/local-migration/installation/demo-smoke.mjs': { reason: 'Sandbox-denial probe asserts reading README is forbidden; no prose assertion.' },
+  'scripts/local-migration/installation/installed-smoke.mjs': { reason: 'Sandbox-denial probe asserts reading README is forbidden; no prose assertion.' },
+  'scripts/local-migration/local-model-pdf-closure-probe.mjs': { reason: 'Sandbox-denial file inventory; README content is not consumed.' },
+  'scripts/local-migration/web-runtime-config.test.mjs': {
+    step: 'Test web runtime documentation', target: 'scripts/local-migration/web-runtime-config.test.mjs',
+  },
+};
+
+test('maintained document reader inventory requires review and actual lane coverage', async () => {
+  const result = await execFileAsync('git', ['ls-files', '--stage', '-z'], {
+    cwd: repositoryRoot, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, timeout: 30000,
+  });
+  const tracked = result.stdout.split('\0').filter(Boolean).flatMap(entry => {
+    const match = /^(100644|100755) [a-f0-9]{40} 0\t(.+)$/.exec(entry);
+    return match ? [match[2]] : [];
+  });
+  const documents = tracked.filter(file => ['README.md', 'AGENTS.md', 'CLAUDE.md', 'docs/README.md'].includes(file) ||
+    /^docs\/(?:IMPORTANT|current|useful|plans)\/.+\.md$/.test(file));
+  // Explicit text-source/config scope avoids media and binary assets. New or
+  // unknown text formats need scope review; this does not scan every file type.
+  const textExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.yaml', '.yml',
+    '.sh', '.bash', '.zsh', '.py', '.c', '.h', '.m', '.sql', '.gql', '.graphql', '.prisma', '.toml', '.html', '.css', '.scss']);
+  const textNames = new Set(['Dockerfile', 'Makefile', '.npmrc', '.gitignore', '.gitattributes']);
+  const files = new Map();
+  for (const file of tracked) {
+    if (file.startsWith('docs/evidence/') ||
+      !(textExtensions.has(path.posix.extname(file)) || textNames.has(path.posix.basename(file)))) continue;
+    const absolute = path.join(repositoryRoot, file);
+    if (!(await lstat(absolute)).isFile()) continue; // Never follow symlink inputs.
+    const bytes = await readFile(absolute);
+    if (bytes.includes(0)) continue;
+    let source;
+    try { source = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+    catch { continue; } // Non-text assets are outside this heuristic.
+    files.set(file, source);
+  }
+  requireReviewedDocumentReaders(findMaintainedDocumentReferences(files, documents), documentReaderInventory);
+  const workflow = parse(await readFile(dedicatedPath, 'utf8'));
+  for (const [file, entry] of Object.entries(documentReaderInventory)) {
+    if (entry.reason) { assert.ok(entry.reason.length > 0, file); continue; }
+    const step = workflow.jobs['nonruntime-checks'].steps.find(step => step.name === entry.step);
+    assert.ok(step?.run?.split(/\s+/).includes(entry.target), `${file}: fixed lane must execute ${entry.target}`);
+  }
+});
+
+test('maintained document reader tripwire catches literal, split, basename and moved readers', () => {
+  const documents = ['README.md', 'docs/useful/LOCAL_UI.md'];
+  const current = 'apps/web/test/existing-reader.test.mjs';
+  const original = new Map([[current, 'read("docs/useful/LOCAL_UI.md")']]);
+  const inventory = { [current]: { reason: 'fixture consumer' } };
+  assert.doesNotThrow(() => requireReviewedDocumentReaders(findMaintainedDocumentReferences(original, documents), inventory));
+  for (const source of ['read("docs/useful/LOCAL_UI.md")',
+    'read(join(root, "docs", "useful", requestedName))', 'read(join(directory, "LOCAL_UI.md"))',
+    'read("docs/current/FUTURE_REFERENCE.md")', 'read("README.md")']) {
+    const added = new Map([...original, ['apps/web/test/new-reader.test.mjs', source]]);
+    assert.throws(() => requireReviewedDocumentReaders(findMaintainedDocumentReferences(added, documents), inventory),
+      /reviewed document reader inventory/);
+  }
+  const moved = new Map([[current, 'assert.equal(1, 1)'],
+    ['apps/web/test/moved-reader.test.mjs', original.get(current)]]);
+  assert.throws(() => requireReviewedDocumentReaders(findMaintainedDocumentReferences(moved, documents), inventory),
+    /reviewed document reader inventory/);
+  assert.throws(() => requireReviewedDocumentReaders([], inventory), /reviewed document reader inventory/);
 });
 
 test('selection CLI explains non-applicability without receipts and rejects failed outcomes', async () => {

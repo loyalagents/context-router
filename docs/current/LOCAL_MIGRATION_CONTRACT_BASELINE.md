@@ -339,7 +339,8 @@ own actual source and does not claim to have tested the PR merge checkout.
 ### Nonruntime CI Selection
 
 Policy v2 permits a separate nonruntime check lane only for a nonempty diff of
-content modifications to maintained Markdown:
+content modifications to maintained Markdown plus the original exact-file
+exemptions listed below:
 
 - root `README.md`, `AGENTS.md`, `CLAUDE.md` and `docs/README.md`;
 - `.md` files under `docs/IMPORTANT/`, `docs/current/`, `docs/useful/` and
@@ -367,6 +368,17 @@ Adding a consumer of an exempt document requires adding its checks to the fixed
 nonruntime lane or excluding the affected document before that consumer ships.
 Guidance prose does not authorize executable gate changes or remove human review.
 
+The routing suite includes a heuristic reader-inventory tripwire in both lanes.
+It scans tracked regular files in an explicit code/configuration text-format set,
+excluding frozen evidence and binary content, for maintained paths, document
+basenames and split quoted root components. Each matching file has a reviewed
+fixed-lane check or a reason it does not consume maintained prose; checked readers
+are tied to actual workflow commands. New or disappearing matches require review.
+This is not complete dependency discovery: computed paths, generic walkers, new
+reads inside an inventoried file and unsupported text formats can escape it.
+Common names such as `README.md` also match generated files, comments and metadata;
+those matches need context review. The consumer-maintenance rule still applies.
+
 The workflow still runs on every PR to main and push to main. Selection requires
 a clean full-history checkout matching the event. PRs compare both the branch
 from its unique merge base and the actual test merge from the event base; an
@@ -388,11 +400,12 @@ Markdown/overview, routing and contract-checker test suites, plus these complete
 existing document-consumer suites:
 
 - backend `test/contracts/runtime-composition.spec.ts`, invoked through
-  `pnpm --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts`
+  `pnpm --fail-if-no-match --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts`
   to avoid the package pretest/build hook;
 - `node --test scripts/local-migration/web-runtime-config.test.mjs`;
-- `pnpm --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts`.
+- `pnpm --fail-if-no-match --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts`.
 
+Both filtered commands fail if their package selection matches nothing.
 Strict Markdown links, whitespace and the actual contract checker with a verified
 base bundle remain required, preserving the maintained-document reference census.
 The fixed lane runs no application build, database, browser or model and produces
