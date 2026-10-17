@@ -338,21 +338,33 @@ own actual source and does not claim to have tested the PR merge checkout.
 
 ### Nonruntime CI Selection
 
-Policy v1 permits a separate nonruntime check lane only for a nonempty diff of
-content modifications to these exact files, with regular-file type and
-permissions unchanged:
+Policy v2 permits a separate nonruntime check lane only for a nonempty diff of
+content modifications to maintained Markdown:
 
-- `AGENTS.md`, `CLAUDE.md`, `docs/README.md`, `docs/plans/README.md`;
-- `docs/plans/backlog/stabilization/README.md` and `agent-efficiency.md` in that directory;
-- `docs/useful/AGENT_WORKFLOW.md`;
-- `print-repo-structure.sh` and `scripts/print-repo-structure.test.mjs`.
+- root `README.md`, `AGENTS.md`, `CLAUDE.md` and `docs/README.md`;
+- `.md` files under `docs/IMPORTANT/`, `docs/current/`, `docs/useful/` and
+  `docs/plans/`, including nested directories.
 
-All other paths, mixed changes, additions, deletions, renames, type/permission
-changes and empty diffs require full CI qualification. There is no `docs/**` or
-`scripts/**` exemption. Root README has backend consumers; operational runbooks,
-contract registries and frozen evidence remain fully qualified. CI, gate/checker,
-dependency and toolchain changes are full. Adding a new consumer of an allowlisted
-file requires covering it in the nonruntime lane or removing that exemption.
+The new category requires unchanged regular non-executable mode `100644`. Paths
+are at most 240 ASCII characters; each component starts with a letter or digit
+and otherwise uses letters, digits, dots, underscores or hyphens. Hidden,
+whitespace/control, non-ASCII and Markdown-syntax names conservatively select
+full qualification. Existing exact exemptions retain their prior unchanged
+regular-file modes (`100644` or `100755`): `AGENTS.md`, `CLAUDE.md`,
+`docs/README.md`, `docs/plans/README.md`,
+`docs/plans/backlog/stabilization/README.md` and `agent-efficiency.md` in that
+directory, `docs/useful/AGENT_WORKFLOW.md`, `print-repo-structure.sh` and
+`scripts/print-repo-structure.test.mjs`. Permission or type changes never qualify.
+The policy version is part of the classification binding so the expanded
+eligibility cannot reuse a v1 selection.
+
+All other paths, mixed changes, additions, deletions, copies, renames and empty
+diffs require full CI qualification. There is no blanket Markdown, `docs/**` or
+`scripts/**` exemption: `docs/evidence/`, examples/evaluation prompts, registries,
+JSON/configuration, source, CI, gate/checker, dependency and toolchain changes
+remain full. The maintained roots contain prose, not runtime or evaluation inputs.
+Adding a consumer of an exempt document requires adding its checks to the fixed
+nonruntime lane or excluding the affected document before that consumer ships.
 Guidance prose does not authorize executable gate changes or remove human review.
 
 The workflow still runs on every PR to main and push to main. Selection requires
@@ -372,17 +384,27 @@ workflow cancellation; the aggregate retains `always()` and rejects cancelled or
 unexpectedly skipped dependencies.
 
 The nonruntime lane requires the pinned toolchain, frozen dependencies, complete
-Markdown/overview, routing and contract-checker test suites, strict links,
-whitespace and the actual contract checker with a verified base bundle. This
-preserves the maintained-document reference census. It runs no application
-build, database, browser or model and produces no qualification receipt.
+Markdown/overview, routing and contract-checker test suites, plus these complete
+existing document-consumer suites:
+
+- backend `test/contracts/runtime-composition.spec.ts`, invoked through
+  `pnpm --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts`
+  to avoid the package pretest/build hook;
+- `node --test scripts/local-migration/web-runtime-config.test.mjs`;
+- `pnpm --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts`.
+
+Strict Markdown links, whitespace and the actual contract checker with a verified
+base bundle remain required, preserving the maintained-document reference census.
+The fixed lane runs no application build, database, browser or model and produces
+no qualification receipt. The orchestrator's app README is outside the exemption;
+its separate README test does not join this lane.
 
 The always-running `local-migration-baseline` job independently recomputes the
 selection and verifies the exported binding and every dependency result. The
 nonruntime branch requires its checks to succeed and both qualification lanes to
 be skipped, then explicitly reports source/package qualification **not applicable**
-with the eligible paths and comparison identities. The full branch requires both
-lanes to succeed and retains the unchanged receipt combiner. Failed, cancelled,
+with up to ten eligible paths, the remaining path count and comparison identities.
+The full branch requires both lanes to succeed and retains the unchanged receipt combiner. Failed, cancelled,
 missing or unexpectedly skipped results fail. A skipped job is not itself proof
 of non-applicability; workflow-level path filters are not used.
 

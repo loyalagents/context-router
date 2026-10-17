@@ -1,8 +1,8 @@
 # Agent workflow efficiency
 
-- Status: overview/workflow clarifications and approved narrow CI selection implemented; eligible-run timing unmeasured
+- Status: overview/workflow clarifications and approved maintained-document CI selection implemented; eligible-run timing unmeasured
 - Owner: the product owner selects the next implementation slice
-- Updated: 2026-10-15
+- Updated: 2026-10-17
 - Policy: [agent workflow](../../../useful/AGENT_WORKFLOW.md)
 
 Reduce repeated orientation and invalidated qualification while preserving
@@ -66,10 +66,19 @@ Output bytes fell about 83%; billed-token and elapsed-task savings remain unprov
 ## Other options
 
 The product owner approved a modification-only, nine-file migration CI exception
-on 2026-10-15. The exact allowlist, mandatory consumers, failure handling and
-receipt distinction live in the existing
+on 2026-10-15 and expanded it to maintained Markdown on 2026-10-17. Policy v2
+includes the named root documents and Markdown under `docs/IMPORTANT`,
+`docs/current`, `docs/useful` and `docs/plans`, with conservative path/type/mode
+constraints. The existing exact exemptions retain their original permissions.
+The fixed lane adds the complete backend launch-topology, web runtime and
+orchestrator operator-document suites; it requires dependencies but no application
+build. New document consumers must join that lane or the affected document must
+be excluded. Maintained prose does not include runtime/evaluation inputs, frozen
+evidence, registries or arbitrary Markdown. Structural, mixed and CI/checker
+changes still select full qualification. The exact boundaries, mandatory
+consumers, failure handling and unchanged receipt distinction live in the existing
 [contract policy](../../../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#nonruntime-ci-selection).
-No broad documentation/script exemption or individual-test selection is added.
+No general dependency graph, caching or runtime-test deduplication is added.
 Standard CI and the full local command remain unchanged; the
 [validation matrix](../../../useful/AGENT_WORKFLOW.md#default-and-exceptions)
 now selects local checks without an automatic full local run for ordinary PRs. Separating
@@ -95,8 +104,9 @@ took 15m54s–17m36s elapsed and 26m38s–34m04s runner occupancy.
 
 Estimate, not measurement: a 1–3 minute lightweight path would save roughly
 13–17 minutes elapsed and 24–33 runner-minutes per eligible run. Actual eligible
-Actions duration remains unmeasured. Standard suites already skip for these
-nine paths, so their #186 cost is not an additional saving. #186 itself remains
+Actions duration remains unmeasured, including the expanded v2 lane and its
+additional consumers. Standard suites already skipped for the original nine
+paths, so their #186 cost was not an additional saving. #186 itself remains
 ineligible because it changed CI and added files. Confirm scheduling and summaries
 on the first naturally occurring eligible run; no metrics subsystem is added.
 

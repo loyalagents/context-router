@@ -340,10 +340,15 @@ workflow jobs and same-attempt receipts must succeed. The narrow approved
 instead requires its documentation/contract consumers and an independently
 verified not-applicable decision. It produces no source/package qualification
 receipt and does not change the full local gate or human-review obligations.
-Adding a consumer of an exempt file requires updating those checks or removing
-the exemption. The nine-file nonruntime selection and receipt semantics are
-unchanged; docs/test-only work outside it still receives full migration CI when
-the migration workflow applies.
+The maintained Markdown category covers content-only edits in the named root
+files and `docs/IMPORTANT`, `docs/current`, `docs/useful` and `docs/plans`, subject
+to the policy's path/type/mode constraints and preserved exact-file exemptions.
+Its fixed lane includes the backend launch-topology, web runtime and orchestrator
+operator-document consumers. A new consumer must join that lane or the affected
+document must lose its exemption before the consumer ships. These roots hold
+prose, not runtime/evaluation inputs. Frozen evidence, registries, other paths,
+structural changes and mixed changes still receive full migration CI. Receipt
+semantics and standard CI routing are unchanged.
 CI/gate changes receive full final CI qualification; their local requirement is
 determined by the matrix above.
 Compare runner identities using the explicit

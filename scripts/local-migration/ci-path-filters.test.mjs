@@ -52,7 +52,7 @@ async function policyFixture(operation) {
   } finally { await rm(cwd, { recursive: true, force: true }); }
 }
 
-test('selection permits exactly the nine regular-file content modifications', async () => {
+test('selection preserves the original exact-path content exemptions', async () => {
   await policyFixture(async f => {
     const policy = await import('./ci-validation-policy.mjs');
     assert.deepEqual([...policy.NONRUNTIME_PATHS], eligiblePaths);
@@ -61,19 +61,103 @@ test('selection permits exactly the nine regular-file content modifications', as
     await f.commit();
     const result = await f.detect();
     assert.equal(result.profile, 'nonruntime'); assert.equal(result.baseSha, f.base);
-    assert.equal(result.policyVersion, 1); assert.match(result.binding, /^[a-f0-9]{64}$/);
+    assert.equal(result.policyVersion, 2); assert.match(result.binding, /^[a-f0-9]{64}$/);
     assert.deepEqual(result.paths, [...eligiblePaths].sort());
     await f.put('apps/backend/source.ts', 'runtime\n'); await f.commit();
     assert.equal((await f.detect()).profile, 'full', 'mixed changes');
   });
 });
 
-test('unknown paths and documentation consumers remain full qualification', async () => {
-  for (const file of ['README.md', 'docs/useful/HOSTED_DEVELOPMENT.md',
-    'docs/useful/local-orchestrator-commands.md', 'docs/evidence/fixture.json',
+const maintainedDocs = [
+  'README.md', 'docs/IMPORTANT/CURRENT_STATE.md', 'docs/current/LOCAL_APPLICATION.md',
+  'docs/current/LOCAL_MIGRATION_CLOSEOUT.md', 'docs/useful/LOCAL_UI.md',
+  'docs/plans/backlog/local-ai-scheduling/README.md',
+  'docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md', 'docs/useful/HOSTED_DEVELOPMENT.md',
+  'docs/useful/local-orchestrator-commands.md', 'docs/plans/active/colleague-pilot/plan.md',
+  'docs/plans/backlog/stabilization/README.md', 'docs/plans/active/new-area/nested/guide.v2_1.md',
+];
+
+test('maintained Markdown content changes include the PR 190 documentation mix', async () => {
+  await policyFixture(async f => {
+    for (const file of maintainedDocs) await f.put(file);
+    f.event.before = await f.commit();
+    const pr190Docs = ['AGENTS.md', 'CLAUDE.md', 'README.md', 'docs/IMPORTANT/CURRENT_STATE.md',
+      'docs/current/LOCAL_MIGRATION_CLOSEOUT.md', 'docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md',
+      'docs/plans/README.md', 'docs/plans/backlog/local-ai-scheduling/README.md',
+      'docs/plans/backlog/stabilization/agent-efficiency.md', 'docs/useful/AGENT_WORKFLOW.md', 'docs/useful/LOCAL_UI.md'];
+    for (const file of pr190Docs) await f.put(file, 'updated prose\n');
+    await f.commit();
+    assert.equal((await f.detect()).profile, 'nonruntime');
+    assert.deepEqual((await f.detect()).paths, pr190Docs.sort());
+    for (const file of [...eligiblePaths, ...maintainedDocs]) await f.put(file, 'updated prose\n');
+    await f.commit();
+    const result = await f.detect();
+    assert.equal(result.profile, 'nonruntime'); assert.equal(result.policyVersion, 2);
+    assert.deepEqual(result.paths, [...new Set([...eligiblePaths, ...maintainedDocs])].sort());
+    await f.put('apps/backend/source.ts', 'runtime change\n'); await f.commit();
+    assert.equal((await f.detect()).profile, 'full');
+  });
+});
+
+test('new maintained Markdown requires non-executable files and rejects structural changes', async () => {
+  const file = 'docs/current/guide.md';
+  for (const kind of ['add', 'delete', 'copy', 'rename', 'symlink', 'mode', 'executable-content']) {
+    await policyFixture(async f => {
+      if (kind !== 'add') {
+        await f.put(file);
+        if (kind === 'executable-content') await chmod(path.join(f.cwd, file), 0o755);
+        f.event.before = await f.commit();
+      }
+      if (kind === 'add' || kind === 'executable-content') await f.put(file, 'changed\n');
+      if (kind === 'delete') await rm(path.join(f.cwd, file));
+      if (kind === 'copy') await cp(path.join(f.cwd, file), path.join(f.cwd, 'docs/current/copied.md'));
+      if (kind === 'rename') await rename(path.join(f.cwd, file), path.join(f.cwd, 'docs/current/moved.md'));
+      if (kind === 'symlink') { await rm(path.join(f.cwd, file)); await symlink('../../README.md', path.join(f.cwd, file)); }
+      if (kind === 'mode') await chmod(path.join(f.cwd, file), 0o755);
+      await f.commit(); assert.equal((await f.detect()).profile, 'full', kind);
+    });
+  }
+  // Existing exact exemptions keep their prior regular/executable mode semantics.
+  await policyFixture(async f => {
+    for (const file of eligiblePaths) await chmod(path.join(f.cwd, file), 0o755);
+    f.event.before = await f.commit();
+    for (const file of eligiblePaths) await f.put(file, 'changed\n');
+    await f.commit(); assert.equal((await f.detect()).profile, 'nonruntime');
+  });
+});
+
+test('maintained path boundaries reject unsafe and lookalike raw Git paths', async () => {
+  await policyFixture(async f => {
+    await f.put('AGENTS.md', 'changed\n'); await f.commit(); await f.detect();
+    const policy = await import('./ci-validation-policy.mjs');
+    for (const file of ['docs/currently/guide.md', 'other/docs/current/guide.md', 'docs/current/guide.md.js',
+      'docs/current/guide.MD', 'docs/current//guide.md', 'docs/current/.hidden.md',
+      'docs/current/guide.md\n', 'docs/current/guide.md\r', 'docs/current/guide name.md', 'docs/current/naïve.md', 'docs/current/[link](evil).md',
+      'docs/current/`command`.md', 'docs/current/guide\n::warning::injected.md',
+      'docs/current/guide\r##[add-mask]injected.md', 'docs/current/guide\t.md',
+      'docs/current/' + 'a'.repeat(240) + '.md']) {
+      const git = args => args.includes('--raw')
+        ? Promise.resolve(':100644 100644 ' + 'a'.repeat(40) + ' ' + 'b'.repeat(40) + ' M\0' + file + '\0')
+        : policy.runGit(f.cwd, args);
+      assert.equal((await policy.selectValidation({ cwd: f.cwd, environment: f.environment, event: f.event, git })).profile, 'full', file);
+    }
+    for (const file of ['/docs/current/guide.md', 'docs/current/../guide.md', 'docs/current/./guide.md']) {
+      const git = args => args.includes('--raw')
+        ? Promise.resolve(':100644 100644 ' + 'a'.repeat(40) + ' ' + 'b'.repeat(40) + ' M\0' + file + '\0')
+        : policy.runGit(f.cwd, args);
+      await assert.rejects(policy.selectValidation({ cwd: f.cwd, environment: f.environment, event: f.event, git }), /diff/);
+    }
+  });
+});
+
+test('excluded content modifications remain full qualification', async () => {
+  for (const file of ['docs/evidence/fixture.md', 'docs/evidence/fixture.json',
+    'examples/eval/prompts/mcp-known-schema.md', 'docs/useful/runtime.json',
+    'apps/local-orchestrator/README.md', 'docs/current/README.mdx',
     'docs/current/local-migration-contract-baseline.json', '.github/workflows/ci.yml',
     'scripts/check-markdown-links.mjs', 'package.json', '.npmrc', 'new-unknown.md']) {
     await policyFixture(async f => {
+      await f.put(file); f.event.before = await f.commit();
       await f.put(file, 'changed\n'); await f.commit();
       assert.equal((await f.detect()).profile, 'full', file);
     });
@@ -515,6 +599,9 @@ test('nonruntime checks and classification retain complete consumers and always-
   assert.deepEqual(checks.steps.map(s => s.run).filter(Boolean), [
     'node scripts/check-toolchain.mjs', 'pnpm install --frozen-lockfile',
     'node --test scripts/check-markdown-links.test.mjs scripts/print-repo-structure.test.mjs scripts/local-migration/ci-path-filters.test.mjs scripts/local-migration/check-contract-baseline.test.mjs',
+    'pnpm --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts',
+    'node --test scripts/local-migration/web-runtime-config.test.mjs',
+    'pnpm --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts',
     'node scripts/check-markdown-links.mjs', 'node scripts/local-migration/check-nonruntime.mjs',
   ]);
   assert.equal(checks.steps.at(-1).env.MIGRATION_GATE_BASE_SHA, "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}");
@@ -551,6 +638,36 @@ test('selection CLI explains non-applicability without receipts and rejects fail
       await assert.rejects(run('--select'), error => error.code === 1 && !error.stderr.includes('malformed'));
       assert.equal(await readFile(output, 'utf8'), previousOutput, 'failures export no routing success');
       // The fixture has no qualification receipts, dependencies or combiner.
+    } finally { await rm(io, { recursive: true, force: true }); }
+  });
+});
+
+test('selection CLI bounds safe Markdown paths and never prints unsafe filenames', async () => {
+  await policyFixture(async f => {
+    const paths = Array.from({ length: 15 }, (_, i) => `docs/current/guide-${String(i).padStart(2, '0')}.md`);
+    const unsafe = 'docs/current/bad\n::warning::injected.md';
+    for (const file of [...paths, unsafe]) await f.put(file);
+    f.event.before = await f.commit();
+    for (const file of paths) await f.put(file, 'changed\n');
+    await f.commit(); await f.detect();
+    const io = await mkdtemp(path.join(os.tmpdir(), 'ci-doc-report-'));
+    try {
+      const eventFile = path.join(io, 'event.json'), summary = path.join(io, 'summary');
+      const run = async () => {
+        await f.detect(); await writeFile(eventFile, JSON.stringify(f.event));
+        return execFileAsync(process.execPath, [path.join(repositoryRoot, 'scripts/local-migration/ci-validation-policy.mjs'), '--select'], {
+          cwd: f.cwd, timeout: 30000, encoding: 'utf8',
+          env: { ...process.env, ...f.environment, GITHUB_EVENT_PATH: eventFile, GITHUB_STEP_SUMMARY: summary },
+        });
+      };
+      const selected = await run();
+      assert.match(selected.stdout, /Selected nonruntime checks: policy v2/);
+      assert.match(selected.stdout, /guide-09.md/); assert.doesNotMatch(selected.stdout, /guide-10.md/);
+      assert.match(selected.stdout, /5 additional paths/); assert.ok(selected.stdout.length < 3000);
+      await f.put(unsafe, 'changed\n'); await f.commit();
+      const full = await run();
+      assert.match(full.stdout, /Full source\/package qualification required/);
+      assert.doesNotMatch(full.stdout + await readFile(summary, 'utf8'), /::warning::|injected|bad/);
     } finally { await rm(io, { recursive: true, force: true }); }
   });
 });
