@@ -1,8 +1,8 @@
 # Agent workflow efficiency
 
-- Status: overview/workflow clarifications and approved maintained-document CI selection implemented; eligible-run timing unmeasured
+- Status: overview/workflow clarifications, maintained-document CI selection, focused test groups and advisory test planner implemented; elapsed-task benefit unmeasured
 - Owner: the product owner selects the next implementation slice
-- Updated: 2026-10-17
+- Updated: 2026-10-23
 - Policy: [agent workflow](../../../useful/AGENT_WORKFLOW.md)
 
 Reduce repeated orientation and invalidated qualification while preserving
@@ -124,6 +124,18 @@ temporary review status or pass-announcement commits in this durable note.
 | Use one planning/implementation owner and risk-specific independent reviews | Fewer handoffs and repeated investigations | Existing plan/final-review obligations remain; no blanket reviewer cap or automatic setting downgrade |
 
 ## Lightweight follow-up
+
+The contributor [testing guide](../../../useful/HOSTED_DEVELOPMENT.md#testing)
+documents the focused helper/browser and SQLite commands and
+`pnpm test:plan --base <ref>` (optional `--json`). The planner prints suggestions
+from committed and local changes, with reasons, prerequisites and unresolved
+impact warnings. It uses small path rules, retains rename/delete paths and
+conservatively widens unknown/shared inputs. It neither executes the suggestions
+nor selects CI lanes. Documentation readers still require discovery; generated
+client/build freshness needs input evidence before using tests-only SQLite.
+Temporary Git fixtures and rule/CLI tests run in the existing always-run CI job;
+full gate coverage, triggers and qualification meanings remain unchanged. No
+elapsed-task or token savings are established by these affordances.
 
 When the product owner designates a comparison task, its coordinator adds a short
 summary to the existing handoff using the workflow's
