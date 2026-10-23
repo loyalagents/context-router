@@ -103,7 +103,9 @@ test('rejects invalid CLI arguments, repeated flags and missing base values', ()
 
 test('known backend test areas select their own supported suite with accurate prerequisites', () => {
   for (const [area, expected] of Object.entries({ integration: 'integration', e2e: 'e2e', 'local-database': 'database', 'local-model': 'model', 'local-mcp': 'mcp', 'local-ui': 'localUi' })) {
-    const result = plan([`apps/backend/test/${area}/example.spec.ts`]);
+    const testFile = area === 'e2e' ? 'nested/example.e2e-spec.ts' :
+      ['integration', 'local-database'].includes(area) ? 'nested/example.spec.ts' : 'example.test.mjs';
+    const result = plan([`apps/backend/test/${area}/${testFile}`]);
     assert.deepEqual(ids(result), [expected]);
     assert.match(result.commands[0].prerequisites, /Prisma|prisma:generate/);
     if (['model', 'mcp', 'localUi'].includes(expected)) assert.match(result.commands[0].prerequisites, /backend build/);
@@ -114,6 +116,23 @@ test('known backend test areas select their own supported suite with accurate pr
   assert.equal(sqlite.commands[0].command, 'pnpm --filter backend test:local-database');
   assert.match(sqlite.alternatives[0].condition, /independently verifying.*current source, dependency and configuration/);
   assert.match(sqlite.alternatives[0].condition, /Existence or mtime is not freshness evidence/);
+});
+
+test('shared backend fixtures and files outside suite discovery broaden beyond their directory', () => {
+  for (const file of [
+    'apps/backend/test/local-model/fixtures/session-fixture.mjs',
+    'apps/backend/test/local-model/fixtures/pdf-fixtures.mjs',
+    'apps/backend/test/local-mcp/fixtures/nested.test.mjs',
+    'apps/backend/test/local-ui/nested/example.test.mjs',
+    'apps/backend/test/integration/fixtures/helper.spec.ts',
+    'apps/backend/test/local-database/support/helper.ts',
+    'apps/backend/test/e2e/helper.spec.ts',
+  ]) {
+    const result = plan([file]);
+    for (const id of ['backend', 'database', 'mcp', 'localUi', 'helpers', 'browser']) assert.ok(ids(result).includes(id), `${file}: ${id}`);
+    assert.deepEqual(result.unresolved, [file]);
+    assert.match(result.warnings.join('\n'), /native, packaging and recovery/);
+  }
 });
 
 test('web helper tests use the existing validated census; helper source also retains browser consumers', () => {

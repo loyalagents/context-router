@@ -119,10 +119,18 @@ export function planChanges(changes, groups) {
     if (/^scripts\/test-plan(?:\.test)?\.mjs$/.test(file)) { add(['planner'], file, 'Planner behavior and Git collection.'); continue; }
     if (/^(?:print-repo-structure\.sh|scripts\/print-repo-structure\.test\.mjs)$/.test(file)) { add(['structure'], file, 'Repository overview renderer.'); continue; }
     if (/^scripts\/check-markdown-links(?:\.test)?\.mjs$/.test(file)) { add(['docsTests', 'docs'], file, 'Markdown validator behavior and current links.'); continue; }
-    if (/^apps\/backend\/test\/(integration|e2e|local-database|local-model|local-mcp|local-ui)\//.test(file)) {
-      const area = file.split('/')[3];
-      add([{ integration: 'integration', e2e: 'e2e', 'local-database': 'database', 'local-model': 'model', 'local-mcp': 'mcp', 'local-ui': 'localUi' }[area]], file, 'Known backend test area.');
-      continue;
+    const backendTest = /^apps\/backend\/test\/(integration|e2e|local-database|local-model|local-mcp|local-ui)\/(.+)$/.exec(file);
+    if (backendTest) {
+      const [, area, relative] = backendTest;
+      const discovered = area === 'e2e' ? /\.e2e-spec\.ts$/.test(relative) :
+        ['integration', 'local-database'].includes(area) ? /\.spec\.ts$/.test(relative) :
+          /^[^/]+\.test\.mjs$/.test(relative);
+      // Area fixtures are shared with other backend, web and installed consumers.
+      // Narrow only actual suite files; shared support needs explicit impact review.
+      if (discovered && !/(?:^|\/)(?:fixtures|support)\//.test(relative)) {
+        add([{ integration: 'integration', e2e: 'e2e', 'local-database': 'database', 'local-model': 'model', 'local-mcp': 'mcp', 'local-ui': 'localUi' }[area]], file, 'Discovered backend test file.');
+        continue;
+      }
     }
     if (/^apps\/backend\/(?:src\/.*\.spec\.ts|test\/contracts\/.*\.spec\.ts)$/.test(file)) {
       add(['backend'], file, 'Backend unit/contract suite.'); continue;
