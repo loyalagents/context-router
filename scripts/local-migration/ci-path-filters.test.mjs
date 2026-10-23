@@ -661,6 +661,8 @@ function requireReviewedDocumentReaders(found, inventory) {
 // Each match is either covered by a fixed lane command or has a reviewed reason
 // it does not consume maintained prose. Matching comments/metadata are not readers.
 const documentReaderInventory = {
+  'scripts/test-plan.mjs': { reason: 'Prints validation guidance and classifies paths; does not read maintained document content.' },
+  'scripts/test-plan.test.mjs': { reason: 'Synthetic path-classification fixtures; does not read maintained document content.' },
   'apps/backend/test/contracts/runtime-composition.spec.ts': {
     step: 'Test backend launch-topology documentation', target: 'test/contracts/runtime-composition.spec.ts',
   },

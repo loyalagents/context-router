@@ -225,6 +225,11 @@ every web/docs edit included in a package as a change to that boundary.
 
 ### Iterative Correction
 
+For an optional starting point, `pnpm test:plan --base <ref>` prints advisory
+focused checks and prerequisites; see the [testing guide](HOSTED_DEVELOPMENT.md#testing).
+It does not execute checks or certify coverage. Review unresolved impacts and
+affected consumers before choosing validation.
+
 Run the smallest sufficient checks for changed behavior and affected consumers.
 Include real integration, browser, native, persistence, or recovery coverage when
 the risk requires it; a small diff is not proof of low risk. Docs-only edits normally
