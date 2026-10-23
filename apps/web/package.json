@@ -11,7 +11,12 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "codegen:watch": "graphql-codegen --config codegen.ts --watch",
     "local-ui": "node --no-global-search-paths local-ui.mjs",
-    "test:local-ui": "node --unhandled-rejections=strict --test --test-concurrency=1 test/*.test.mjs"
+    "test": "pnpm test:local-ui",
+    "test:local-ui": "node --unhandled-rejections=strict --test --test-concurrency=1 test/*.test.mjs",
+    "test:helpers": "node --unhandled-rejections=strict --test --test-concurrency=1 test/client-name-format.test.mjs test/egress.test.mjs test/fixture-timing.test.mjs test/permissions-draft.test.mjs test/test-selection.test.mjs test/transport.test.mjs test/upload.test.mjs",
+    "test:browser": "node --unhandled-rejections=strict --test --test-concurrency=1 test/ai-browser.test.mjs test/browser.test.mjs test/client-names.test.mjs test/demo-browser.test.mjs test/permissions-browser.test.mjs",
+    "pretest:helpers": "node test/check-test-groups.mjs",
+    "pretest:browser": "node test/check-test-groups.mjs"
   },
   "dependencies": {
     "@apollo/client": "^4.0.9",

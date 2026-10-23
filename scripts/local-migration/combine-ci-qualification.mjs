@@ -12,8 +12,8 @@ import {
 } from "./ci-qualification.mjs";
 
 async function combineFromEnvironment(environment = process.env) {
-  const dependencyResults = { source: environment.SOURCE_RESULT, packaging: environment.PACKAGING_RESULT };
-  if (dependencyResults.source !== "success" || dependencyResults.packaging !== "success") {
+  const dependencyResults = { source: environment.SOURCE_RESULT, packaging: environment.PACKAGING_RESULT, ui: environment.UI_RESULT };
+  if (dependencyResults.source !== "success" || dependencyResults.packaging !== "success" || dependencyResults.ui !== "success") {
     throw new QualificationError("dependency-results");
   }
   const repositoryRoot = path.resolve(import.meta.dirname, "../..");
@@ -41,7 +41,7 @@ async function combineFromEnvironment(environment = process.env) {
     const { source } = await copyGateSourceInputs(repositoryRoot, path.join(scratch, "source"));
     const base = await exportBaseContracts(baseSha, scratch);
     const combined = validateLaneReceipts(receipts, { contract, provenance, source, base: { sha: baseSha, manifestSha256: base.manifestSha256 }, dependencyResults });
-    console.log("ci-qualification: passed; both finalized lanes, all approved coverage and source/base bindings verified");
+    console.log("ci-qualification: passed; all three finalized lanes, all approved coverage and source/base bindings verified");
     return combined;
   } finally { await rm(scratch, { recursive: true, force: true }); }
 }

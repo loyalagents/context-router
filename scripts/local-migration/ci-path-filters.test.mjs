@@ -238,9 +238,9 @@ test('valid criss-cross PR history requires full qualification and binds every m
     assert.equal((await withBases([right, left])).binding, selected.binding, 'ordering is not identity');
     assert.notEqual((await withBases([right, f.base])).binding, selected.binding, 'different bases change identity');
     const exported = { profile: selected.profile, binding: selected.binding };
-    const outcomes = { selection: 'success', nonruntime: 'skipped', source: 'success', packaging: 'success' };
+    const outcomes = { selection: 'success', nonruntime: 'skipped', source: 'success', packaging: 'success', ui: 'success' };
     assert.doesNotThrow(() => policy.validateSelectionResults(selected, exported, outcomes));
-    for (const lane of ['source', 'packaging']) assert.throws(() => policy.validateSelectionResults(selected, exported, { ...outcomes, [lane]: 'skipped' }));
+    for (const lane of ['source', 'packaging', 'ui']) assert.throws(() => policy.validateSelectionResults(selected, exported, { ...outcomes, [lane]: 'skipped' }));
   });
 });
 
@@ -319,7 +319,7 @@ test('aggregation requires actual expected outcomes and the identical classifica
   const { validateSelectionResults } = await import('./ci-validation-policy.mjs');
   for (const profile of ['nonruntime', 'full']) {
     const selection = { profile, binding: 'a'.repeat(64) };
-    const outcomes = { selection: 'success', nonruntime: profile === 'nonruntime' ? 'success' : 'skipped', source: profile === 'full' ? 'success' : 'skipped', packaging: profile === 'full' ? 'success' : 'skipped' };
+    const outcomes = { selection: 'success', nonruntime: profile === 'nonruntime' ? 'success' : 'skipped', source: profile === 'full' ? 'success' : 'skipped', packaging: profile === 'full' ? 'success' : 'skipped', ui: profile === 'full' ? 'success' : 'skipped' };
     const exported = { profile, binding: selection.binding };
     assert.doesNotThrow(() => validateSelectionResults(selection, exported, outcomes));
     for (const key of Object.keys(outcomes)) for (const result of ['failure', 'cancelled', 'skipped', 'success', '', undefined, 'neutral']) {
@@ -333,7 +333,7 @@ test('aggregation requires actual expected outcomes and the identical classifica
 
 test("only fresh, explicitly exported database evidence is uploaded with bounded retention", async () => {
   const workflow = parse(await readFile(dedicatedPath, "utf8"));
-  for (const [jobId, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"]]) {
+  for (const [jobId, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"], ["ui-qualification", "ci-ui"]]) {
   const steps = workflow.jobs[jobId].steps;
   const gate = steps.find((step) => step.id === "migration-gate");
   assert.equal(gate.run, "pnpm migration:gate --" + profile);
@@ -449,6 +449,8 @@ test("standard CI discovers the standalone SQLite suite and its compiled-worker 
     manifest.scripts["test:local-database"],
     /--selectProjects local-database/,
   );
+  assert.equal(manifest.scripts["test:local-database:tests-only"], manifest.scripts["test:local-database"]);
+  assert.equal(manifest.scripts["pretest:local-database:tests-only"], undefined);
 });
 
 test("default backend test routes build compiled CLI and workers without dropping projects", async () => {
@@ -481,7 +483,7 @@ test('local UI consumers select both build owners and pinned Chromium coverage',
   const commands = steps.map((s) => s.run);
   assert.ok(commands.indexOf('pnpm --filter backend build') < commands.indexOf('pnpm build'));
   assert.ok(commands.includes('pnpm test:local-ui'));
-  for (const [file, job] of [[ciPath, 'frontend-build'], [dedicatedPath, 'source-qualification'], [dedicatedPath, 'packaging-qualification']]) {
+  for (const [file, job] of [[ciPath, 'frontend-build'], [dedicatedPath, 'source-qualification'], [dedicatedPath, 'packaging-qualification'], [dedicatedPath, 'ui-qualification']]) {
     const browserSteps = parse(await readFile(file, 'utf8')).jobs[job].steps;
     const install = browserSteps.find((s) => s.run === 'pnpm --filter web exec playwright install --with-deps chromium');
     assert.ok(install); assert.equal(install['timeout-minutes'], 10);
@@ -522,9 +524,9 @@ test('desktop changes select native CI plus both shared product owners with exac
 
 test("CI lanes retain prerequisites and run unless successful selection explicitly exempts them", async () => {
   const workflow = parse(await readFile(dedicatedPath, "utf8"));
-  assert.deepEqual(Object.keys(workflow.jobs).sort(), ["local-migration-baseline", "nonruntime-checks", "packaging-qualification", "source-qualification", "validation-selection"]);
+  assert.deepEqual(Object.keys(workflow.jobs).sort(), ["local-migration-baseline", "nonruntime-checks", "packaging-qualification", "source-qualification", "ui-qualification", "validation-selection"]);
   assert.equal(workflow.concurrency, undefined);
-  for (const [jobId, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"]]) {
+  for (const [jobId, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"], ["ui-qualification", "ci-ui"]]) {
     const job = workflow.jobs[jobId];
     assert.equal(job.needs, 'validation-selection');
     assert.equal(job.if, "${{ !cancelled() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime') }}");
@@ -545,7 +547,7 @@ test("CI lanes retain prerequisites and run unless successful selection explicit
     assert.equal(required.with.path, "${{ runner.temp }}/" + profile + ".json");
   }
   const combined = workflow.jobs["local-migration-baseline"];
-  assert.deepEqual(combined.needs, ['validation-selection', 'nonruntime-checks', 'source-qualification', 'packaging-qualification']);
+  assert.deepEqual(combined.needs, ['validation-selection', 'nonruntime-checks', 'source-qualification', 'packaging-qualification', 'ui-qualification']);
   assert.equal(combined.if, "always()");
   const verdict = combined.steps.find(s => s.id === 'validation-result');
   assert.equal(verdict.run, 'node scripts/local-migration/ci-validation-policy.mjs --aggregate');
@@ -557,8 +559,9 @@ test("CI lanes retain prerequisites and run unless successful selection explicit
     NONRUNTIME_RESULT: '${{ needs.nonruntime-checks.result }}',
     SOURCE_RESULT: '${{ needs.source-qualification.result }}',
     PACKAGING_RESULT: '${{ needs.packaging-qualification.result }}',
+    UI_RESULT: '${{ needs.ui-qualification.result }}',
   });
-  assert.equal(combined.steps.filter(s => s.uses?.startsWith("actions/download-artifact@")).length, 2);
+  assert.equal(combined.steps.filter(s => s.uses?.startsWith("actions/download-artifact@")).length, 3);
   for (const step of combined.steps.filter(s => s.uses?.startsWith('actions/download-artifact@') || s.name === 'Verify complete qualification')) {
     assert.equal(step.if, "steps.validation-result.outputs.profile == 'full'");
     assert.ok(combined.steps.indexOf(step) > combined.steps.indexOf(verdict));
@@ -566,9 +569,9 @@ test("CI lanes retain prerequisites and run unless successful selection explicit
   for (const step of combined.steps) assert.equal(step["continue-on-error"], undefined);
 });
 
-test('qualification conditions honor cancellation while detection failures still require both lanes', async () => {
+test('qualification conditions honor cancellation while detection failures still require all three lanes', async () => {
   const workflow = parse(await readFile(dedicatedPath, 'utf8'));
-  for (const lane of ['source-qualification', 'packaging-qualification']) {
+  for (const lane of ['source-qualification', 'packaging-qualification', 'ui-qualification']) {
     const expression = workflow.jobs[lane].if.replace(/^\$\{\{\s*|\s*\}\}$/g, '')
       .replaceAll('needs.validation-selection.result', 'result')
       .replaceAll('needs.validation-selection.outputs.profile', 'profile');
@@ -763,7 +766,7 @@ test('selection CLI explains non-applicability without receipts and rejects fail
       await writeFile(eventFile, JSON.stringify(f.event));
       const env = { ...process.env, ...f.environment, GITHUB_EVENT_PATH: eventFile, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary,
         SELECTION_RESULT: 'success', SELECTION_PROFILE: selected.profile, SELECTION_BINDING: selected.binding,
-        NONRUNTIME_RESULT: 'success', SOURCE_RESULT: 'skipped', PACKAGING_RESULT: 'skipped' };
+        NONRUNTIME_RESULT: 'success', SOURCE_RESULT: 'skipped', PACKAGING_RESULT: 'skipped', UI_RESULT: 'skipped' };
       const run = (mode, extra = {}) => execFileAsync(process.execPath, [path.join(repositoryRoot, 'scripts/local-migration/ci-validation-policy.mjs'), mode], {
         cwd: f.cwd, env: { ...env, ...extra }, timeout: 30000, encoding: 'utf8',
       });
@@ -772,7 +775,7 @@ test('selection CLI explains non-applicability without receipts and rejects fail
       assert.match((await run('--aggregate')).stdout, /qualification not applicable/);
       assert.match(await readFile(summary, 'utf8'), /AGENTS.md/);
       const previousOutput = await readFile(output, 'utf8');
-      for (const extra of [{ NONRUNTIME_RESULT: 'failure' }, { SELECTION_RESULT: 'cancelled' }, { SOURCE_RESULT: 'success' }, { SELECTION_BINDING: '' }]) {
+      for (const extra of [{ NONRUNTIME_RESULT: 'failure' }, { SELECTION_RESULT: 'cancelled' }, { SOURCE_RESULT: 'success' }, { UI_RESULT: 'success' }, { SELECTION_BINDING: '' }]) {
         await assert.rejects(run('--aggregate', extra), error => error.code === 1 && /job outcomes or classification mismatch.*no exemption/.test(error.stderr));
       }
       await assert.rejects(run('--select', { GITHUB_SHA: f.base }), error => error.code === 1 && /selection: checkout.*no exemption/.test(error.stderr));
@@ -808,7 +811,7 @@ test('selection CLI bounds safe Markdown paths and never prints unsafe filenames
       assert.match(selected.stdout, /5 additional paths/); assert.ok(selected.stdout.length < 3000);
       await f.put(unsafe, 'changed\n'); await f.commit();
       const full = await run();
-      assert.match(full.stdout, /Full source\/package qualification required/);
+      assert.match(full.stdout, /Full source\/UI\/package qualification required/);
       assert.doesNotMatch(full.stdout + await readFile(summary, 'utf8'), /::warning::|injected|bad/);
     } finally { await rm(io, { recursive: true, force: true }); }
   });
@@ -904,7 +907,7 @@ test("CI receipt transports and independent provenance use exact matching attemp
   const verify = combined.steps.find(s => s.name === "Verify complete qualification");
   const base = "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}";
   const head = "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}";
-  for (const [job, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"]]) {
+  for (const [job, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"], ["ui-qualification", "ci-ui"]]) {
     const steps = workflow.jobs[job].steps;
     const gate = steps.find(s => s.id === "migration-gate");
     const upload = steps.find(s => s.name === "Upload required qualification receipt");
@@ -932,7 +935,7 @@ test('historical corpus selects shared product lanes and frontend runs the bound
 });
 
 test('all jobs with trusted client fixtures inherit one private pinned Node before qualification',async()=>{
- for(const [file,job] of [[ciPath,'frontend-build'],[ciPath,'desktop-native'],[dedicatedPath,'source-qualification'],[dedicatedPath,'packaging-qualification']]){
+ for(const [file,job] of [[ciPath,'frontend-build'],[ciPath,'desktop-native'],[dedicatedPath,'source-qualification'],[dedicatedPath,'packaging-qualification'],[dedicatedPath,'ui-qualification']]){
   const steps=parse(await readFile(file,'utf8')).jobs[job].steps,setup=steps.findIndex(s=>s.uses==='actions/setup-node@v4'),privateNode=steps.findIndex(s=>s.run?.split('\n').includes('bash scripts/local-migration/ci-private-node.sh')),install=steps.findIndex(s=>s.run==='pnpm install --frozen-lockfile');
   assert.ok(setup<privateNode&&privateNode<install,job);if(file===ciPath){assert.equal(steps[privateNode]['working-directory'],'.');assert.equal(steps[privateNode]['timeout-minutes'],1);}else{assert.equal(steps[privateNode].name,'Verify toolchain and seed offline Corepack runtime');assert.equal(steps[privateNode]['timeout-minutes'],5);}
  }

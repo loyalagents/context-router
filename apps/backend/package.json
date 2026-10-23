@@ -23,6 +23,7 @@
     "test:unit": "jest --selectProjects unit",
     "pretest:local-database": "pnpm prisma:generate && pnpm build",
     "test:local-database": "jest --selectProjects local-database --runInBand",
+    "test:local-database:tests-only": "jest --selectProjects local-database --runInBand",
     "test:integration": "jest --selectProjects integration --runInBand",
     "test:e2e": "npm run test:db:up && npm run test:db:migrate && npm run test:e2e:tests-only",
     "test:e2e:tests-only": "jest --selectProjects e2e --runInBand",

@@ -8,6 +8,7 @@ async function unlock(f, route = "/dashboard/permissions") {
   await f.page.goto(f.ready.origin + route);
   await f.page.getByLabel("Unlock token").fill(f.bootstrap);
   await f.page.getByRole("button", { name: "Unlock local dashboard" }).click();
+  await f.page.getByRole("button", { name: "Lock dashboard", exact: true }).waitFor();
 }
 function clients(f) {
   return JSON.parse(f.cli("local-mcp.js", "list").stdout).result;
@@ -50,6 +51,52 @@ function seed(f, client, suffix = "first") {
     c.close();
   }
 }
+
+test(
+  "client name unlock waits for authentication before session authority is copied",
+  { timeout: 60000 },
+  async (t) => {
+    const f = await browserFixture(t);
+    async function holdResponse(endpoint) {
+      let release;
+      const held = new Promise((resolve) => { release = resolve; });
+      await f.page.route(`**/api/local/${endpoint}`, async (route) => {
+        const response = await route.fetch();
+        await held;
+        await route.fulfill({ response });
+      });
+      return release;
+    }
+    const releaseUnlock = await holdResponse("unlock"),
+      releaseCapabilities = await holdResponse("capabilities"),
+      unlockRequested = f.page.waitForRequest("**/api/local/unlock", { timeout: 10000 });
+    let completed = false;
+    const unlocking = unlock(f).then(() => { completed = true; });
+    void unlocking.catch(() => {});
+    try {
+      await unlockRequested;
+      await f.page.getByRole("button", { name: "Unlocking…", exact: true }).waitFor();
+      assert.equal(await f.page.evaluate(() =>
+        sessionStorage.getItem("context-router.browser-session.v1") === null), true);
+      assert.equal(completed, false, "unlock must await the exchange response");
+      const capabilitiesRequested = f.page.waitForRequest("**/api/local/capabilities", { timeout: 10000 });
+      releaseUnlock();
+      await capabilitiesRequested;
+      assert.equal(await f.page.evaluate(() =>
+        Boolean(sessionStorage.getItem("context-router.browser-session.v1"))), true);
+      assert.equal(completed, false, "unlock must await authenticated capabilities");
+      releaseCapabilities();
+      await unlocking;
+      assert.equal(completed, true);
+      await f.page.getByRole("button", { name: "Lock dashboard", exact: true }).waitFor();
+    } finally {
+      releaseUnlock();
+      releaseCapabilities();
+      await unlocking.catch(() => {});
+      await f.page.unrouteAll({ behavior: "wait" });
+    }
+  },
+);
 
 for (const tab of ["Audit", "MCP Access"])
   for (const selected of [false, true])

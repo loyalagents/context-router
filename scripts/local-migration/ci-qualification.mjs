@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Two reviewed CI projections, not a general phase scheduler.
+// Three reviewed CI projections, not a general phase scheduler.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { constants } from "node:fs";
@@ -8,9 +8,16 @@ import path from "node:path";
 import { validateApprovedPhaseCommands, validatePhaseManifest } from "./gate-runner.mjs";
 
 const PROFILES = Object.freeze({
-  "ci-source": Object.freeze(["contract-baseline", "documentation", "backend-unit-build", "backend-database", "local-orchestrator", "eval-fixtures", "eval-deterministic-scenarios", "web-production-build", "harbor-static", "restart-smoke", "repository-integrity"]),
+  "ci-source": Object.freeze(["contract-baseline", "documentation", "backend-unit-build", "backend-database", "local-orchestrator", "eval-fixtures", "eval-deterministic-scenarios", "harbor-static", "restart-smoke", "repository-integrity"]),
   "ci-packaging": Object.freeze(["packaged-composition-smoke", "repository-integrity"]),
+  "ci-ui": Object.freeze(["web-production-build", "repository-integrity"]),
 });
+// Fixed prerequisites execute inside the existing web phase work budget. They
+// are part of the CI partition/receipt census, never the full local manifest.
+const UI_PREPARATION = Object.freeze([
+  Object.freeze(["pnpm", "--filter", "backend", "prisma:generate"]),
+  Object.freeze(["pnpm", "--filter", "backend", "build"]),
+]);
 const COMPLETION = Object.freeze({ boundedStages: true, preflight: true, childSettlement: true, workspaceRemoved: true, diagnosticsRemoved: true, gateLifecycle: true });
 const MAX_RECEIPT_BYTES = 262144;
 const hash = value => createHash("sha256").update(value).digest("hex");
@@ -57,14 +64,19 @@ function validateManifest(manifest) {
 }
 export function parseQualificationProfile(argv) {
   if (!argv.length) return "full";
-  if (argv.length === 1 && ["--smoke-only", "--ci-source", "--ci-packaging"].includes(argv[0])) return argv[0].slice(2);
-  throw new QualificationError("invocation", "argument profile must be full, --smoke-only, --ci-source or --ci-packaging");
+  if (argv.length === 1 && ["--smoke-only", "--ci-source", "--ci-packaging", "--ci-ui"].includes(argv[0])) return argv[0].slice(2);
+  throw new QualificationError("invocation", "argument profile must be full, --smoke-only, --ci-source, --ci-packaging or --ci-ui");
 }
 export function selectQualificationPhases(manifest, profile) {
   inCategory("contract", () => validateManifest(manifest));
   if (profile === "full") return manifest.phases.filter(p => p.status === "active");
   requireValue(Object.hasOwn(PROFILES, profile), "unknown profile");
-  return PROFILES[profile].map(id => manifest.phases.find(p => p.id === id));
+  return PROFILES[profile].map(id => {
+    const phase = manifest.phases.find(p => p.id === id);
+    return profile === "ci-ui" && id === "web-production-build"
+      ? { ...phase, commands: [...UI_PREPARATION.map(argv => ({ argv: [...argv] })), ...phase.commands] }
+      : phase;
+  });
 }
 export function qualificationContract(manifestText, schemaText) {
   const manifest = JSON.parse(manifestText);
@@ -77,7 +89,7 @@ export function qualificationContract(manifestText, schemaText) {
   ]));
   return {
     manifestSha256: hash(manifestText), schemaSha256: hash(schemaText),
-    partitionVersion: 1, partitionSha256: hash(JSON.stringify({ version: 1, profiles: PROFILES })),
+    partitionVersion: 2, partitionSha256: hash(JSON.stringify({ version: 2, profiles: PROFILES, uiPreparation: UI_PREPARATION })),
     coverage,
   };
 }
@@ -139,7 +151,8 @@ function validateVersions(versions) {
   equal(versions.playwright, "1.63.0", "toolchain Playwright");
 }
 function smokeFor(profile) {
-  return profile === "ci-source" ? { "restart-smoke": true } : { "packaged-composition-smoke": true };
+  return profile === "ci-source" ? { "restart-smoke": true }
+    : profile === "ci-packaging" ? { "packaged-composition-smoke": true } : {};
 }
 function validateReceipt(receipt, contract) {
   keys(receipt, ["schemaVersion", "profile", "status", "provenance", "source", "base", "contract", "versions", "runner", "coverage", "verification", "completion"], "receipt");
@@ -203,8 +216,8 @@ export function createLaneReceipt({ profile, summary, completion, contract, prov
   return structuredClone(validateReceipt(receipt, contract));
 }
 export function validateLaneReceipts(receipts, expected) {
-  inCategory("dependency-results", () => equal(expected.dependencyResults, { source: "success", packaging: "success" }, "dependency results"));
-  requireValue(Array.isArray(receipts) && receipts.length === 2, "receipt pair missing or duplicated");
+  inCategory("dependency-results", () => equal(expected.dependencyResults, { source: "success", packaging: "success", ui: "success" }, "dependency results"));
+  requireValue(Array.isArray(receipts) && receipts.length === 3, "receipt set missing or duplicated");
   equal(receipts.map(r => r?.profile).sort(), Object.keys(PROFILES).sort(), "receipt lanes");
   for (const receipt of receipts) {
     validateReceipt(receipt, expected.contract);
@@ -215,11 +228,13 @@ export function validateLaneReceipts(receipts, expected) {
   // Supported Python/Postgres patches and image releases can roll out between
   // runners. Platform/image family and pinned runtimes/browser must still match.
   inCategory("runner-toolchain", () => {
-    for (const field of ["node", "pnpm", "playwright", "chromium"]) {
-      equal(receipts[0].versions[field], receipts[1].versions[field], "toolchain across lanes " + field);
-    }
-    for (const field of ["os", "arch", "image"]) {
-      equal(receipts[0].runner[field], receipts[1].runner[field], "receipt runner across lanes " + field);
+    for (const receipt of receipts.slice(1)) {
+      for (const field of ["node", "pnpm", "playwright", "chromium"]) {
+        equal(receipts[0].versions[field], receipt.versions[field], "toolchain across lanes " + field);
+      }
+      for (const field of ["os", "arch", "image"]) {
+        equal(receipts[0].runner[field], receipt.runner[field], "receipt runner across lanes " + field);
+      }
     }
   });
   return { status: "passed", source: expected.source, base: expected.base, provenance: expected.provenance };
@@ -253,7 +268,7 @@ export async function publishLaneReceipt(target, receipt, { signal, assertDeadli
 }
 export async function readLaneReceipts(directory) {
   const files = await readdir(directory);
-  inCategory("receipt-files", () => equal(files.sort(), ["ci-packaging.json", "ci-source.json"], "receipt files"));
+  inCategory("receipt-files", () => equal(files.sort(), ["ci-packaging.json", "ci-source.json", "ci-ui.json"], "receipt files"));
   const result = [];
   for (const profile of Object.keys(PROFILES)) {
     const file = path.join(directory, profile + ".json");
