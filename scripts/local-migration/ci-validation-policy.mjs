@@ -128,6 +128,7 @@ export function validateSelectionResults(selection, exported, outcomes) {
       selection: 'success', nonruntime: selection.profile === 'nonruntime' ? 'success' : 'skipped',
       source: selection.profile === 'full' ? 'success' : 'skipped',
       packaging: selection.profile === 'full' ? 'success' : 'skipped',
+      ui: selection.profile === 'full' ? 'success' : 'skipped',
     });
   } catch { fail('job outcomes or classification mismatch'); }
 }
@@ -141,13 +142,13 @@ async function main() {
   if (mode === '--aggregate') validateSelectionResults(selection,
     { profile: process.env.SELECTION_PROFILE, binding: process.env.SELECTION_BINDING }, {
       selection: process.env.SELECTION_RESULT, nonruntime: process.env.NONRUNTIME_RESULT,
-      source: process.env.SOURCE_RESULT, packaging: process.env.PACKAGING_RESULT,
+      source: process.env.SOURCE_RESULT, packaging: process.env.PACKAGING_RESULT, ui: process.env.UI_RESULT,
     });
   const reportedPaths = selection.paths.slice(0, 10).join(', ');
   const additionalPaths = selection.paths.length > 10 ? `; ${selection.paths.length - 10} additional paths` : '';
   const message = selection.profile === 'nonruntime'
-    ? `${mode === '--aggregate' ? 'Nonruntime checks passed; source/package qualification not applicable' : 'Selected nonruntime checks'}: policy v${selection.policyVersion}, verified content-only changes to ${reportedPaths}${additionalPaths}.`
-    : `Full source/package qualification required: ${selection.reason}${mode === '--aggregate' ? '; execution lanes succeeded, receipt verification follows' : ''}.`;
+    ? `${mode === '--aggregate' ? 'Nonruntime checks passed; source/UI/package qualification not applicable' : 'Selected nonruntime checks'}: policy v${selection.policyVersion}, verified content-only changes to ${reportedPaths}${additionalPaths}.`
+    : `Full source/UI/package qualification required: ${selection.reason}${mode === '--aggregate' ? '; execution lanes succeeded, receipt verification follows' : ''}.`;
   // Only finite categories and bounded, ASCII-safe eligible paths enter logs.
   // Full-profile paths are never printed; Actions outputs remain fixed fields.
   console.log(message);

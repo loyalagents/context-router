@@ -204,6 +204,7 @@ pnpm test:backend
 pnpm test:backend:unit
 pnpm test:backend:integration
 pnpm test:backend:e2e
+pnpm test:web
 ```
 
 Backend-specific commands:
@@ -242,6 +243,27 @@ Backend tests live under `apps/backend` and are split into:
 - `pnpm --filter backend test:local-database` for file-backed SQLite contracts, actual application/auth/reset, owned process/recovery and matching-pair backup; its build prerequisite needs no `DATABASE_URL` or PostgreSQL setup
 
 The default `pnpm test:backend` (also reached by workspace `pnpm test`) generates the Prisma client and builds the backend once before running all four Jest projects. The dedicated local command has the same prerequisite; unit-only and hosted integration commands remain independently selectable. Default all-project runs still require the configured PostgreSQL test database.
+
+Choose the smallest complete check for the changed behavior during iteration:
+
+| Command | Scope and prerequisites |
+| --- | --- |
+| `pnpm test:backend:unit` | Unit and contract tests; use Jest `--runTestsByPath` for a known affected file. |
+| `pnpm --filter backend test:local-database` | SQLite/worker/process contracts with fresh Prisma generation and backend build. |
+| `pnpm --filter backend test:local-database:tests-only` | The same SQLite tests when this checkout's generated client and backend build are already current. Rebuild after relevant source, dependency or configuration changes. |
+| `pnpm --filter web test:helpers` | Browser-independent helper tests; no application build or Chromium needed. |
+| `pnpm --filter web test:browser` | All authenticated browser suites, including client names; needs current backend/web builds and pinned Chromium. |
+| `pnpm test:web` or `pnpm --filter web test:local-ui` | The complete web umbrella, with the browser prerequisites above. |
+
+The focused web groups must form an exact, disjoint census of `test/*.test.mjs`.
+Classify a new suite in the `apps/web/package.json` focused scripts; an unclassified, missing or
+duplicate file fails focused selection. The umbrella keeps independent glob
+discovery. For a specific browser case, pass Node's option, for example
+`pnpm --filter web exec node --unhandled-rejections=strict --test --test-concurrency=1 --test-name-pattern='client names' test/client-names.test.mjs`.
+Keep Node test options before the filenames; appending them to the focused package
+script does not filter its explicit file list.
+Focused commands do not replace required final CI or the
+[validation policy](AGENT_WORKFLOW.md#default-and-exceptions).
 
 The migration gate retains a bounded structured report for its `test:local-database`
 command. In the GitHub Actions run, open **Artifacts →

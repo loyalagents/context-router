@@ -2561,22 +2561,23 @@ async function qualificationFixture() {
     callerIntegrity: true, cleanupErrors: [], failure: null,
     cleanup: [{ resource: "database", status: "removed" }, { resource: "administration", status: "clean" }],
     phases: api.selectQualificationPhases(manifest, profile).map(({ id }) => ({ id, status: "passed", elapsedMs: 1 })),
-    smokeLifecycle: profile === "ci-source" ? { "restart-smoke": true } : { "packaged-composition-smoke": true },
+    smokeLifecycle: profile === "ci-source" ? { "restart-smoke": true } : profile === "ci-packaging" ? { "packaged-composition-smoke": true } : {},
   });
   const make = (profile, changes = {}) => api.createLaneReceipt({
     profile, summary: summaryFor(profile), completion, contract, provenance, runner, ...changes,
   });
   return { api, contract, provenance, source, base, versions, runner, completion, summaryFor, make,
-    expected: { contract, provenance, source, base, dependencyResults: { source: "success", packaging: "success" } } };
+    expected: { contract, provenance, source, base, dependencyResults: { source: "success", packaging: "success", ui: "success" } } };
 }
 
 test("CI qualification profiles are exhaustive fixed projections of the validated full gate", async () => {
   const { api } = await qualificationFixture();
   const ids = (profile) => api.selectQualificationPhases(manifest, profile).map(({ id }) => id);
   assert.deepEqual(ids("full"), manifest.phases.map(({ id }) => id));
-  assert.deepEqual(ids("ci-source"), [...manifest.phases.slice(0, 10), manifest.phases[11]].map(({ id }) => id));
+  assert.deepEqual(ids("ci-source"), [...manifest.phases.slice(0, 7), ...manifest.phases.slice(8, 10), manifest.phases[11]].map(({ id }) => id));
+  assert.deepEqual(ids("ci-ui"), ["web-production-build", "repository-integrity"]);
   assert.deepEqual(ids("ci-packaging"), manifest.phases.slice(10).map(({ id }) => id));
-  assert.deepEqual([...new Set([...ids("ci-source"), ...ids("ci-packaging")])], ids("full").filter(id => id !== "packaged-composition-smoke").concat("packaged-composition-smoke"));
+  assert.deepEqual([...new Set([...ids("ci-source"), ...ids("ci-packaging"), ...ids("ci-ui")])].sort(), ids("full").sort());
   for (const profile of ["", "source", "skip-packaging", ["contract-baseline"]]) {
     assert.throws(() => api.selectQualificationPhases(manifest, profile), /profile/);
   }
@@ -2593,7 +2594,7 @@ test("CI qualification profiles are exhaustive fixed projections of the validate
 
 test("CI qualification CLI preserves full and smoke modes and rejects ambiguous or arbitrary selection", async () => {
   const { api } = await qualificationFixture();
-  for (const [argv, expected] of [[[], "full"], [["--smoke-only"], "smoke-only"], [["--ci-source"], "ci-source"], [["--ci-packaging"], "ci-packaging"]]) {
+  for (const [argv, expected] of [[[], "full"], [["--smoke-only"], "smoke-only"], [["--ci-source"], "ci-source"], [["--ci-packaging"], "ci-packaging"], [["--ci-ui"], "ci-ui"]]) {
     assert.equal(api.parseQualificationProfile(argv), expected);
   }
   for (const argv of [["--skip", "1"], ["--ci-source", "--ci-packaging"], ["--ci-source", "--smoke-only"], ["--ci-source", "--ci-source"]]) {
@@ -2601,9 +2602,62 @@ test("CI qualification CLI preserves full and smoke modes and rejects ambiguous 
   }
 });
 
+test("CI UI projection prepares its own backend within the unchanged web phase budget", async () => {
+  const { api, contract } = await qualificationFixture();
+  const before = structuredClone(manifest);
+  const selected = api.selectQualificationPhases(manifest, "ci-ui");
+  const expected = [
+    ["pnpm", "--filter", "backend", "prisma:generate"],
+    ["pnpm", "--filter", "backend", "build"],
+    ["pnpm", "--filter", "web", "build"],
+    ["pnpm", "--filter", "web", "test:local-ui"],
+  ];
+  assert.deepEqual(selected[0].commands.map(command => command.argv), expected);
+  assert.equal(selected[0].timeoutMs, 600_000);
+  assert.equal(contract.partitionVersion, 2);
+  assert.deepEqual(contract.coverage['ci-ui'][0].commands, expected);
+  assert.deepEqual(api.selectQualificationPhases(manifest, "full"), before.phases);
+  assert.deepEqual(manifest, before);
+  const commands = [];
+  await timingGate.runQualificationPhaseSequence(manifest, "ci-ui", {
+    execute: async command => { commands.push(command.argv); },
+  });
+  assert.deepEqual(commands, [...expected, ['node', 'scripts/local-migration/check-generated-integrity.mjs']]);
+  for (const failAt of [0, 1]) {
+    const attempts = [];
+    const failure = new Error(failAt ? 'backend build cancelled' : 'Prisma generation failed');
+    await assert.rejects(timingGate.runQualificationPhaseSequence(manifest, "ci-ui", {
+      execute: async command => {
+        attempts.push(command.argv);
+        if (attempts.length === failAt + 1) throw failure;
+      },
+    }), error => error.cause === failure);
+    assert.deepEqual(attempts, expected.slice(0, failAt + 1), 'failed prerequisites must prevent UI and integrity execution');
+  }
+});
+
+test("CI UI receipt rejects missing or reordered prerequisites and third-lane identity drift", async () => {
+  const f = await qualificationFixture();
+  for (const mutate of [
+    receipt => receipt.coverage[0].commands.shift(),
+    receipt => receipt.coverage[0].commands.reverse(),
+    receipt => receipt.coverage[0].commands[0].push('--skip'),
+    receipt => receipt.verification.smokeLifecycle = { 'packaged-composition-smoke': true },
+    receipt => receipt.verification.baseComparison = 'performed',
+    receipt => receipt.runner.image = 'ubuntu22',
+    receipt => receipt.versions.chromium = '153.0.8010.99',
+    receipt => receipt.provenance.runAttempt = '2',
+    receipt => receipt.completion.gateLifecycle = false,
+  ]) {
+    const receipts = [f.make('ci-source'), f.make('ci-packaging'), f.make('ci-ui')];
+    mutate(receipts[2]);
+    assert.throws(() => f.api.validateLaneReceipts(receipts, f.expected));
+  }
+});
+
 test("CI qualification accepts only complete matching post-finalization receipts", async () => {
   const f = await qualificationFixture();
-  const receipts = [f.make("ci-source"), f.make("ci-packaging")];
+  const receipts = [f.make("ci-source"), f.make("ci-packaging"), f.make("ci-ui")];
   assert.equal(f.api.validateLaneReceipts(receipts, f.expected).status, "passed");
   assert.equal(f.api.validateLaneReceipts(receipts.toReversed(), f.expected).status, "passed");
   assert.deepEqual(receipts[1].coverage[0].commands, manifest.phases[10].commands.map(c => c.argv));
@@ -2613,8 +2667,8 @@ test("CI qualification accepts only complete matching post-finalization receipts
 
 test("CI qualification rejects failed skipped cancelled or unknown upstream job results", async () => {
   const f = await qualificationFixture();
-  for (const lane of ["source", "packaging"]) for (const status of ["failure", "skipped", "cancelled", "", null, undefined]) {
-    assert.throws(() => f.api.validateLaneReceipts([f.make("ci-source"), f.make("ci-packaging")], {
+  for (const lane of ["source", "packaging", "ui"]) for (const status of ["failure", "skipped", "cancelled", "", null, undefined]) {
+    assert.throws(() => f.api.validateLaneReceipts([f.make("ci-source"), f.make("ci-packaging"), f.make("ci-ui")], {
       ...f.expected, dependencyResults: { ...f.expected.dependencyResults, [lane]: status },
     }), /dependency/);
   }
@@ -2622,7 +2676,7 @@ test("CI qualification rejects failed skipped cancelled or unknown upstream job 
 
 test("CI qualification rejects missing duplicate stale mismatched incomplete and tampered receipts", async () => {
   const f = await qualificationFixture();
-  const good = [f.make("ci-source"), f.make("ci-packaging")];
+  const good = [f.make("ci-source"), f.make("ci-packaging"), f.make("ci-ui")];
   for (const receipts of [[], good.slice(0, 1), [...good, good[0]], [good[0], good[0]]]) {
     assert.throws(() => f.api.validateLaneReceipts(receipts, f.expected), /receipt|lane/);
   }
@@ -2699,14 +2753,14 @@ test("CI qualification receipt publication preserves cancellation failure and de
   assert.equal(JSON.parse(await readFile(file, "utf8")).status, "passed");
 });
 
-test("CI qualification reads exactly two bounded regular receipt files", async (t) => {
+test("CI qualification reads exactly three bounded regular receipt files", async (t) => {
   const f = await qualificationFixture();
   const root = await mkdtemp(path.join(os.tmpdir(), "ci-receipt-read-"));
   t.after(() => rm(root, { recursive: true, force: true }));
-  for (const profile of ["ci-source", "ci-packaging"]) {
+  for (const profile of ["ci-source", "ci-packaging", "ci-ui"]) {
     await writeFile(path.join(root, profile + ".json"), JSON.stringify(f.make(profile)));
   }
-  assert.equal((await f.api.readLaneReceipts(root)).length, 2);
+  assert.equal((await f.api.readLaneReceipts(root)).length, 3);
   await writeFile(path.join(root, "unexpected.json"), "{}");
   await assert.rejects(f.api.readLaneReceipts(root), /receipt/);
   await rm(path.join(root, "unexpected.json"));
@@ -2826,7 +2880,7 @@ test("CI qualification combined entrypoint succeeds without installed dependenci
     const source = (await gate.copyGateSourceInputs(checkout, path.join(root, "source-copy-" + census++))).source;
     const provenance = { ...f.provenance, checkoutSha: head, event,
       pullRequestHeadSha: event === "pull_request" ? eventHead : null };
-    for (const profile of ["ci-source", "ci-packaging"]) {
+    for (const profile of ["ci-source", "ci-packaging", "ci-ui"]) {
       const summary = { ...f.summaryFor(profile), source, baseSha: baseHead, baseManifestSha256: base.manifestSha256 };
       await writeFile(path.join(receiptsRoot, profile + ".json"), JSON.stringify(f.make(profile, { summary, provenance })));
     }
@@ -2835,7 +2889,7 @@ test("CI qualification combined entrypoint succeeds without installed dependenci
       GITHUB_EVENT_NAME: provenance.event, GITHUB_WORKFLOW_REF: provenance.workflowRef,
       GITHUB_RUN_ID: provenance.runId, GITHUB_RUN_ATTEMPT: provenance.runAttempt,
       GITHUB_SHA: head, MIGRATION_GATE_PR_HEAD_SHA: provenance.pullRequestHeadSha ?? "",
-      MIGRATION_GATE_BASE_SHA: baseHead, SOURCE_RESULT: "success", PACKAGING_RESULT: "success",
+      MIGRATION_GATE_BASE_SHA: baseHead, SOURCE_RESULT: "success", PACKAGING_RESULT: "success", UI_RESULT: "success",
     };
   };
   let env = await prepare(merge);
@@ -2846,8 +2900,8 @@ test("CI qualification combined entrypoint succeeds without installed dependenci
   assert.notEqual(baseHead, first, "a validated ancestor base need not equal the merge first parent");
   const passed = execute({});
   assert.equal(passed.status, 0, passed.stderr);
-  assert.match(passed.stdout, /both finalized lanes/);
-  for (const change of [{ SOURCE_RESULT: "skipped" }, { PACKAGING_RESULT: "cancelled" }, { GITHUB_RUN_ATTEMPT: "2" }, { GITHUB_SHA: "f".repeat(40) }, { MIGRATION_GATE_BASE_SHA: "f".repeat(40) }]) {
+  assert.match(passed.stdout, /all three finalized lanes/);
+  for (const change of [{ SOURCE_RESULT: "skipped" }, { PACKAGING_RESULT: "cancelled" }, { UI_RESULT: "skipped" }, { GITHUB_RUN_ATTEMPT: "2" }, { GITHUB_SHA: "f".repeat(40) }, { MIGRATION_GATE_BASE_SHA: "f".repeat(40) }]) {
     assert.notEqual(execute(change).status, 0);
   }
   for (const head of [baseHead, first, commit([baseHead, first, prHead])]) {
@@ -2913,7 +2967,7 @@ test("CI packaging prerequisites use only the fixed bounded owned-workspace comm
   const calls = [];
   const options = { workspace: "/owned/workspace", diagnosticsDirectory: "/owned/diagnostics", environment, signal: controller.signal,
     execute: async (argv, commandOptions) => calls.push({ argv, commandOptions }) };
-  for (const profile of ["full", "ci-source", "smoke-only"]) await timingGate.prepareQualificationPrerequisites(profile, options);
+  for (const profile of ["full", "ci-source", "ci-ui", "smoke-only"]) await timingGate.prepareQualificationPrerequisites(profile, options);
   assert.deepEqual(calls, []);
   await assert.rejects(timingGate.prepareQualificationPrerequisites("arbitrary", options), /profile/);
   await timingGate.prepareQualificationPrerequisites("ci-packaging", options);
@@ -2996,7 +3050,7 @@ test("CI runner policy allows only supported patch and image-release variation",
     r => r.versions.python = "3.12.15",
     r => r.versions.postgres = "15.19 (Debian distribution)",
   ]) {
-    const receipts = [f.make("ci-source"), f.make("ci-packaging")];
+    const receipts = [f.make("ci-source"), f.make("ci-packaging"), f.make("ci-ui")];
     mutate(receipts[1]);
     assert.equal(f.api.validateLaneReceipts(receipts, f.expected).status, "passed");
   }
@@ -3009,7 +3063,7 @@ test("CI runner policy allows only supported patch and image-release variation",
     r => delete r.runner.arch, r => r.versions.python = "3.13.1",
     r => r.versions.postgres = "16.1", r => r.versions.chromium = "153.0.8010.99",
   ]) {
-    const receipts = [f.make("ci-source"), f.make("ci-packaging")]; mutate(receipts[1]);
+    const receipts = [f.make("ci-source"), f.make("ci-packaging"), f.make("ci-ui")]; mutate(receipts[1]);
     assert.throws(() => f.api.validateLaneReceipts(receipts, f.expected));
   }
 });
@@ -3057,7 +3111,7 @@ async function ciFinalizationFixture(t, profile = "ci-source") {
 }
 
 test("CI finalizer retains durable pending evidence until required publication completes", async t => {
-  for (const profile of ["ci-source", "ci-packaging"]) {
+  for (const profile of ["ci-source", "ci-packaging", "ci-ui"]) {
     const f = await ciFinalizationFixture(t, profile);
     await f.finalize();
     assert.equal(f.evidence().summary.status, "passed", "internal candidate is finalized");
@@ -3067,9 +3121,9 @@ test("CI finalizer retains durable pending evidence until required publication c
 });
 
 test("CI production orchestration cannot expose pass before its terminal commit", async t => {
-  for (const fault of ["none", "execution-failed", "cleanup-failed", "finalizer-postcheck-cancel", "finalizer-postcheck-deadline", "receipt-write", "receipt-cancel", "receipt-deadline", "summary-prepare", "failure-persist"]) {
-    await t.test(fault, async t => {
-      const f = await ciFinalizationFixture(t);
+  for (const profile of ["ci-source", "ci-packaging", "ci-ui"]) for (const fault of ["none", "execution-failed", "cleanup-failed", "finalizer-postcheck-cancel", "finalizer-postcheck-deadline", "receipt-write", "receipt-cancel", "receipt-deadline", "summary-prepare", "failure-persist"]) {
+    await t.test(profile + " " + fault, async t => {
+      const f = await ciFinalizationFixture(t, profile);
       const events = [];
       assert.equal(typeof timingGate.runCiQualificationAttempt, "function");
       const outcome = await timingGate.runCiQualificationAttempt({

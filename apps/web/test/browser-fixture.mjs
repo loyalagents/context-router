@@ -6,9 +6,14 @@ import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
+import { createFixtureTiming } from './fixture-timing.mjs';
 
 const webRoot = path.resolve(import.meta.dirname, '..');
 export async function browserFixture(t, { model = false, demo = false } = {}) {
+  const timing = createFixtureTiming({
+    enabled: process.env.LOCAL_UI_TEST_TIMING === '1', model, demo,
+    report: row => t.diagnostic(JSON.stringify(row)),
+  });
   const root = fs.realpathSync(
     fs.mkdtempSync(path.join(os.tmpdir(), 'cr-ui-browser-')),
   );
@@ -48,6 +53,7 @@ export async function browserFixture(t, { model = false, demo = false } = {}) {
     errors = [],
     policyViolations = [];
   t.after(async () => {
+    timing.cleanupStarted();
     try {
       await browser?.close();
       if (child && child.exitCode === null && child.signalCode === null) {
@@ -84,7 +90,11 @@ export async function browserFixture(t, { model = false, demo = false } = {}) {
       try {
         await peerCleanup?.();
       } finally {
-        fs.rmSync(root, { recursive: true, force: true });
+        try {
+          fs.rmSync(root, { recursive: true, force: true });
+        } finally {
+          timing.finish();
+        }
       }
     }
   });
@@ -221,6 +231,7 @@ export async function browserFixture(t, { model = false, demo = false } = {}) {
     assert.equal(result.errors, undefined, JSON.stringify(result.errors));
     return result.data;
   }
+  timing.setupComplete();
   return {
     root,
     peer,

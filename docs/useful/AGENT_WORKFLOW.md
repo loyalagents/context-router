@@ -332,13 +332,13 @@ never present an older pass for changed inputs. Do not repeat valid identical
 checks solely for each reviewer. Broaden focused checks/review when impact is
 uncertain; that alone does not select a full local run.
 
-For the two migration CI profiles, a durable passed summary is committed only
+For the three migration CI profiles, a durable passed summary is committed only
 after bounded finalization and required receipt publication. A pending or failed
-summary cannot confer qualification; when full qualification is selected, both
+summary cannot confer qualification; when full qualification is selected, all three
 workflow jobs and same-attempt receipts must succeed. The narrow approved
 [nonruntime CI policy](../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#nonruntime-ci-selection)
 instead requires its documentation/contract consumers and an independently
-verified not-applicable decision. It produces no source/package qualification
+verified not-applicable decision. It produces no source/UI/package qualification
 receipt and does not change the full local gate or human-review obligations.
 The maintained Markdown category covers content-only edits in the named root
 files and `docs/IMPORTANT`, `docs/current`, `docs/useful` and `docs/plans`, subject

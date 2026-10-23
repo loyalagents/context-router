@@ -201,6 +201,131 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  ui-qualification:
+    needs: validation-selection
+    # Override implicit success() after detection failure, but honor run cancellation.
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 188
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 5
+        with:
+          fetch-depth: 0
+
+      - name: Initialize private runner caches
+        timeout-minutes: 1
+        run: |
+          {
+            echo "COREPACK_HOME=$RUNNER_TEMP/corepack"
+            echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store"
+            echo "npm_config_cache=$RUNNER_TEMP/npm-cache"
+            echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache"
+            echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright"
+          } >> "$GITHUB_ENV"
+
+      - uses: pnpm/action-setup@v6.0.8
+        timeout-minutes: 5
+        with:
+          version: 10.25.0
+
+      - uses: actions/setup-node@v4
+        timeout-minutes: 5
+        with:
+          node-version: '24.21.0'
+          cache: pnpm
+
+      - uses: actions/setup-python@v5
+        timeout-minutes: 5
+        with:
+          python-version: '3.12'
+
+      - name: Verify toolchain and seed offline Corepack runtime
+        timeout-minutes: 5
+        run: |
+          bash scripts/local-migration/ci-private-node.sh
+          node scripts/check-toolchain.mjs
+          corepack prepare pnpm@10.25.0 --activate
+
+      - name: Install dependencies
+        timeout-minutes: 15
+        run: pnpm install --frozen-lockfile
+
+      - name: Install pinned Chromium prerequisite
+        timeout-minutes: 10
+        run: pnpm --filter web exec playwright install --with-deps chromium
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+
+      - name: Run the Local Migration Baseline Gate
+        id: migration-gate
+        timeout-minutes: 118
+        run: pnpm migration:gate --ci-ui
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+          MIGRATION_GATE_PR_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+          MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          MIGRATION_TEST_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
+          MIGRATION_GATE_PYTHON_BIN: python3
+          MIGRATION_GATE_CI_SUMMARY_PATH: ${{ runner.temp }}/local-migration-gate-summary.json
+          MIGRATION_GATE_CI_DATABASE_REPORT: '1'
+
+      - name: Persist sanitized gate evidence
+        if: always()
+        timeout-minutes: 5
+        run: |
+          summary="$RUNNER_TEMP/local-migration-gate-summary.json"
+          if [ -f "$summary" ]; then
+            {
+              echo '## Local Migration Baseline Gate evidence'
+              echo '```json'
+              cat "$summary"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Local Migration Baseline Gate did not produce a sanitized summary." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo 'Database test reports omit runtime names, assertion values and stacks. Retrieve the ci-ui-local-database-failure-evidence artifact below when available; report availability is recorded in the summary.' >> "$GITHUB_STEP_SUMMARY"
+
+      # Optional diagnostics only: transport failure must not change the gate verdict.
+      # Every required test/check above retains its original failure behavior.
+      - name: Upload sanitized database failure evidence
+        if: always() && steps.migration-gate.outputs.database_report_ready == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        timeout-minutes: 2
+        continue-on-error: true
+        with:
+          name: ci-ui-local-database-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/local-migration-database-failures.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload required qualification receipt
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        timeout-minutes: 2
+        with:
+          name: ci-ui-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-ui.json
+          if-no-files-found: error
+          retention-days: 7
+
   packaging-qualification:
     needs: validation-selection
     if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime') }}
@@ -330,12 +455,12 @@ jobs:
           retention-days: 7
 
   # Preserve the check name and explicitly distinguish non-applicability from
-  # qualification. Full qualification still requires both current-attempt receipts.
+  # qualification. Full qualification still requires all three current-attempt receipts.
   local-migration-baseline:
-    needs: [validation-selection, nonruntime-checks, source-qualification, packaging-qualification]
+    needs: [validation-selection, nonruntime-checks, source-qualification, packaging-qualification, ui-qualification]
     if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 22
     steps:
       - uses: actions/checkout@v4
         timeout-minutes: 5
@@ -358,6 +483,7 @@ jobs:
           NONRUNTIME_RESULT: ${{ needs.nonruntime-checks.result }}
           SOURCE_RESULT: ${{ needs.source-qualification.result }}
           PACKAGING_RESULT: ${{ needs.packaging-qualification.result }}
+          UI_RESULT: ${{ needs.ui-qualification.result }}
 
       - name: Download source qualification receipt
         if: steps.validation-result.outputs.profile == 'full'
@@ -375,6 +501,14 @@ jobs:
           name: ci-packaging-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/qualification-receipts
 
+      - name: Download UI qualification receipt
+        if: steps.validation-result.outputs.profile == 'full'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        timeout-minutes: 2
+        with:
+          name: ci-ui-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/qualification-receipts
+
       - name: Verify complete qualification
         if: steps.validation-result.outputs.profile == 'full'
         timeout-minutes: 3
@@ -382,5 +516,6 @@ jobs:
         env:
           SOURCE_RESULT: ${{ needs.source-qualification.result }}
           PACKAGING_RESULT: ${{ needs.packaging-qualification.result }}
+          UI_RESULT: ${{ needs.ui-qualification.result }}
           MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           MIGRATION_GATE_PR_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}

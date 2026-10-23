@@ -264,20 +264,28 @@ report `baseComparison=skipped`; aggregate runs report
 
 ### CI Qualification Profiles
 
-When full qualification is selected, the workflow starts two independent jobs with full-history
+When full qualification is selected, the workflow starts three independent jobs with full-history
 checkout, dependencies, writable stores/caches, PostgreSQL service, browser
 prerequisites and disposable gate workspace. The fixed `--ci-source` profile runs
-phases 1–10 in their existing order followed by repository-integrity; the fixed
-`--ci-packaging` profile runs packaged-composition-smoke followed by its own
-repository-integrity. Full manifest/schema, exact commands, all six modes and
-retirement rules remain validated before either selection. There is no arbitrary
+phases 1–7, 9 and 10 in their existing order followed by repository-integrity;
+`--ci-packaging` runs packaged-composition-smoke followed by its own integrity
+check. The fixed `--ci-ui` profile runs web-production-build followed by its own
+integrity check. Its web phase first generates Prisma and builds the backend in
+that lane's copied workspace, then runs the unchanged web production build and
+complete authenticated browser/helper umbrella. All four commands share the
+existing 600-second phase work budget; builds do not run in the three-minute
+preflight. Partition version 2 binds those exact prerequisite commands in the
+receipt census. The source restart smoke retains its independent backend/web
+rebuilds. No writable build outputs are shared between lanes.
+Full manifest/schema, exact commands, all six modes and
+retirement rules remain validated before every selection. There is no arbitrary
 phase-skipping option. The default local `pnpm migration:gate` still runs all
 twelve phases sequentially; restart smoke-only behavior is retained.
 This describes command coverage, not a requirement to invoke it locally on every
 PR. The [validation policy](../useful/AGENT_WORKFLOW.md#default-and-exceptions)
 determines when a full local run is needed; required CI remains unchanged.
 
-Both profiles preserve the outer smoke lifecycle validators, bounded settlement,
+All three profiles preserve the outer smoke lifecycle validators, bounded settlement,
 caller/generated integrity, owned-resource cleanup and successful finalization.
 Required versioned receipts are published only after the finalizer and bounded
 stage runner return successfully. For CI profiles, the external summary remains
@@ -303,7 +311,7 @@ it does not claim hostile-process atomicity. Default full/smoke finalization is 
 
 The stable `local-migration-baseline` combined job always evaluates selection and
 actual dependency results. For full qualification it requires explicit success and
-exactly two current-run/current-attempt receipts, and independently reconstructs
+exactly three current-run/current-attempt receipts, and independently reconstructs
 the clean copied source and verified base bindings. It checks the actual checkout
 SHA (the test-merge SHA on PR runs), separate PR head, source digest, base bundle,
 manifest/partition, commands/modes/evidence coverage, observed toolchain and all
@@ -324,16 +332,16 @@ without accepting a different platform, image family or browser.
 Missing, stale, mismatched, incomplete, failed, cancelled or skipped evidence fails
 closed. Public combiner failures expose only typed, allowlisted categories; unknown,
 parse and filesystem failures use a generic category without echoing receipt values.
-Required upload/download names bind the same run and attempt, and both download
+Required upload/download names bind the same run and attempt, and all three download
 actions are pinned to the reviewed v4.3.0 commit.
 Required artifact transport failure is a gate failure; optional sanitized
 diagnostics and timings do not confer or revoke qualification.
 
 A partial failed-job rerun can leave only one receipt for the new attempt;
-use GitHub's **Re-run all jobs** when both lanes must produce matching evidence.
+use GitHub's **Re-run all jobs** when all three lanes must produce matching evidence.
 No incompatible attempt is silently combined. Neither sibling failure nor a new
 push automatically cancels the other lane's cleanup. The combined job has a
-20-minute bound (19 minutes of step budgets). Local qualification records its
+22-minute bound (21 minutes of step budgets). Local qualification records its
 own actual source and does not claim to have tested the PR merge checkout.
 
 ### Nonruntime CI Selection
@@ -391,7 +399,7 @@ Invalid metadata, unsupported events, missing/shallow history, malformed merge
 bases, non-UTF-8 Git output, failed Git commands or incomplete output fail selection.
 Merge queues and manual dispatch are not supported events. Failed selection
 starts the full lanes unless the workflow is cancelled, but also fails the final
-result; it cannot become an implicit success. Both heavy jobs honor explicit
+result; it cannot become an implicit success. All three heavy jobs honor explicit
 workflow cancellation; the aggregate retains `always()` and rejects cancelled or
 unexpectedly skipped dependencies.
 
@@ -414,10 +422,10 @@ its separate README test does not join this lane.
 
 The always-running `local-migration-baseline` job independently recomputes the
 selection and verifies the exported binding and every dependency result. The
-nonruntime branch requires its checks to succeed and both qualification lanes to
-be skipped, then explicitly reports source/package qualification **not applicable**
+nonruntime branch requires its checks to succeed and all three qualification lanes to
+be skipped, then explicitly reports source/UI/package qualification **not applicable**
 with up to ten eligible paths, the remaining path count and comparison identities.
-The full branch requires both lanes to succeed and retains the unchanged receipt combiner. Failed, cancelled,
+The full branch requires all three lanes to succeed and verifies their complete matching receipt set. Failed, cancelled,
 missing or unexpectedly skipped results fail. A skipped job is not itself proof
 of non-applicability; workflow-level path filters are not used.
 

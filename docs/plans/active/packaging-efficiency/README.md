@@ -1,5 +1,61 @@
 # CI Qualification Turnaround
 
+## Agent Test Efficiency Follow-Up — 2026-10-22
+
+- Status: user-authorized follow-up from clean main
+  `0439d8f79335fcda466927eec1a14a8b9a626a4b`; branch
+  `codex/agent-test-efficiency`. Prior #179 implementation obligations below are
+  historical; this scoped amendment governs the new work.
+- Ownership: `/root/efficiency_writer` is the sole repository writer/integrator;
+  coordinator and independent reviewers are read-only. Requested writer and
+  review settings are GPT-6 Astra / Extra High, accepted by the delegation tool;
+  actual runtime settings are not independently attested.
+- Outcome: discoverable focused commands, optional redacted browser timing and a
+  third isolated UI qualification lane. Product behavior, standard CI, native/demo
+  coverage, workflow triggers, full local twelve-phase manifest, timeouts,
+  teardown, provenance and receipt requirements remain in force. No shared
+  browser, test concurrency increase, live model or personal application work.
+
+Independent plan review approved three checkpoints:
+
+1. Add a build-free SQLite tests-only command while preserving the standalone
+   generation/build hook. Web helpers and browser suites use an exact disjoint
+   file census; the complete umbrella retains independent glob discovery and
+   root `test:web` gains its missing package target. Add optional fixed-category
+   setup/body/cleanup durations without test names, URLs, paths or payloads.
+2. Move only web-production-build out of `ci-source` into fixed `ci-ui`, followed
+   by repository-integrity. The UI projection prepends Prisma generation and
+   backend build within the unchanged web phase's 600-second work budget.
+   Partition version 2 binds all four commands. Each lane owns its prerequisites,
+   PostgreSQL service, workspace, processes and caches. Restart keeps its own
+   backend/web rebuilds; packaging retains all six modes and its outer verifier.
+   All three finalized same-run/attempt receipts and actual job successes are
+   required; nonruntime routing requires all three heavy jobs to be skipped.
+3. Freeze after targeted checks, documentation and blocking review corrections.
+   Push one draft PR promptly, then run full exact-candidate CI, independent
+   complete-diff review and one default full local gate on isolated stable inputs.
+   The local gate is required because shared runner selection/finalization and
+   browser harness inputs changed; it supplies aggregate Mac lifecycle and
+   generated/caller-integrity evidence beyond focused checks and Linux CI.
+   No installed artifact is delivered; artifact/manual acceptance is not claimed.
+
+Tests first cover missing/extra/duplicate suite discovery, direct command/umbrella
+preservation, timing redaction and failure behavior, exact unchanged full coverage,
+UI preparation order/failure, all-lane runner/source binding, missing/stale/changed
+receipts, nonruntime outcomes and durable terminal publication. Affected existing
+gate, routing, toolchain, documentation/contract readers and SQLite tests are
+renewed. Current [validation policy](../../../useful/AGENT_WORKFLOW.md#default-and-exceptions)
+governs the final evidence; subsequent changes renew affected coverage.
+
+The unchanged local web umbrella passed 111 tests in 261.829 seconds. This is one
+warm local observation, not a controlled performance benchmark. Optional fixture
+timing is attribution only. Report actual candidate CI lane and all-checks-ready
+times with setup/runner differences and added runner usage; do not claim a causal
+speedup from one comparison or enlarge the sample count for a favorable result.
+Shared-browser or increased-concurrency work needs separate evidence and review.
+
+## Historical Two-Lane Implementation And Evidence
+
 - Status: authorized PR #179 review corrections in targeted validation,
   2026-10-14; a new frozen candidate requires final qualification. The prior
   `5f686411` candidate passed remote CI, the complete full local gate and

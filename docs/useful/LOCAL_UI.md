@@ -235,6 +235,20 @@ pnpm --filter backend test:local-ui
 pnpm --filter web test:local-ui
 ```
 
+For iteration, `pnpm --filter web test:helpers` runs the browser-independent
+helpers without builds or Chromium. `pnpm --filter web test:browser` runs the
+complete browser group with the prerequisites above. The existing `test:local-ui`
+umbrella and root `pnpm test:web` include both. The focused selector refuses a
+changed file census until every new suite is explicitly classified.
+
+Optional timing uses `LOCAL_UI_TEST_TIMING=1 pnpm --filter web test:browser`.
+Each fixture emits one diagnostic with fixed mode and numeric setup, body and
+cleanup milliseconds. The body interval runs from fixture return to teardown;
+a setup failure has no body interval. Diagnostics contain no test names, paths,
+URLs, credentials or state. They do not change test verdicts, browser/process
+ownership or teardown. These measurements attribute time; they are not a speedup
+claim or qualification evidence.
+
 Run the full local gate only when the
 [validation matrix](AGENT_WORKFLOW.md#default-and-exceptions) or a current scoped
 commitment requires it, with isolated resources and the verified merge base for

@@ -920,7 +920,7 @@ export async function finalizeGateAttemptEvidence({
     return { summary, diagnosticsDirectory, evidenceErrors };
   }
 
-  if (mode === "ci-source" || mode === "ci-packaging") {
+  if (mode === "ci-source" || mode === "ci-packaging" || mode === "ci-ui") {
     // Required receipt publication and bounded-stage postchecks are still ahead.
     // The returned candidate is internal; durable external evidence stays pending.
     refresh("running");
@@ -1944,7 +1944,7 @@ export async function prepareQualificationPrerequisites(
   profile,
   { workspace, diagnosticsDirectory, environment, signal, execute = runCommand },
 ) {
-  if (!["full", "smoke-only", "ci-source", "ci-packaging"].includes(profile)) {
+  if (!["full", "smoke-only", "ci-source", "ci-packaging", "ci-ui"].includes(profile)) {
     throw new Error("unknown qualification prerequisite profile");
   }
   if (profile !== "ci-packaging") return;
@@ -2058,7 +2058,7 @@ async function executeFullGate({
         await readFile(path.join(workspace, "scripts/local-migration/gate-phases.schema.json"), "utf8"),
       );
     }
-    if (profile === "ci-packaging") summary.baseComparison = "not-in-profile";
+    if (profile === "ci-packaging" || profile === "ci-ui") summary.baseComparison = "not-in-profile";
     const phaseTotal = phases.length;
 
     const temporaryHome = path.join(workspace, ".lmbg-home");
@@ -2135,7 +2135,7 @@ async function executeFullGate({
       projectFailureMessage: projectDatabaseCommandFailure,
       onPhaseStart: async (phase) => {
         phaseStart.set(phase.id, timeline.now());
-        console.log(`migration-gate: phase ${phases.indexOf(phase) + 1}/${phaseTotal} ${phase.id} started`);
+        console.log(`migration-gate: phase ${phases.findIndex(row => row.id === phase.id) + 1}/${phaseTotal} ${phase.id} started`);
       },
       execute: async (command, phase) => {
         const commandIndex = phase.commands.indexOf(command) + 1;
@@ -2211,7 +2211,7 @@ async function executeFullGate({
         if (phase.id === "contract-baseline") {
           assertContractBaselineComparisonPerformed(summary.baseComparison);
         }
-        console.log(`migration-gate: phase ${phases.indexOf(phase) + 1}/${phaseTotal} ${phase.id} passed (${result.elapsedMs}ms)`);
+        console.log(`migration-gate: phase ${phases.findIndex(row => row.id === phase.id) + 1}/${phaseTotal} ${phase.id} passed (${result.elapsedMs}ms)`);
       },
       onSummary: async (phasesSummary) => {
         summary.phases = phasesSummary;
