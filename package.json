@@ -25,6 +25,7 @@
     "test:backend:integration": "pnpm --filter backend test:integration",
     "test:backend:e2e": "pnpm --filter backend test:e2e",
     "test:web": "pnpm --filter web test",
+    "test:plan": "node scripts/test-plan.mjs",
     "eval:manifests": "node examples/eval/scripts/generate-field-manifests.mjs",
     "eval:derive-seeds": "node examples/eval/scripts/generate-seed-preferences.mjs",
     "eval:scaffold": "node examples/eval/scripts/scaffold.mjs",

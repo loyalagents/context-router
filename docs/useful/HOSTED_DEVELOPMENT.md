@@ -265,6 +265,40 @@ script does not filter its explicit file list.
 Focused commands do not replace required final CI or the
 [validation policy](AGENT_WORKFLOW.md#default-and-exceptions).
 
+For an advisory starting point, run `pnpm test:plan --base origin/main` (or add
+`--json`; use `pnpm --silent test:plan --base origin/main --json` when piping JSON
+without pnpm's script banner). It prints focused commands, prerequisites and path-specific reasons;
+it does not execute them, fetch refs, build applications or start services.
+The default base is the locally available `origin/main`; fetch explicitly when
+needed. The output records the resolved base, HEAD and unique merge-base and
+unions committed changes since that merge-base, staged, unstaged and untracked
+paths. Deleted files and both rename sides remain visible; repository and global
+ignore rules are honored. Keep inputs stable during collection and rerun after changes.
+
+The output separates directly relevant checks (`commands` in JSON) from wider
+validation candidates (`widerValidation`). The latter are neither derived CI
+routing nor automatic local requirements: resolve impacts under the validation
+policy, including required local evidence. Small rules reuse the web test groups,
+contract registry paths and gate manifest's pre-build Node test list. Registry
+membership is not a complete consumer graph. Existing supported sibling tests
+and same-name backend specs supply focused starting points; shared, unknown and
+boundary inputs still require manual impact review.
+
+Documentation suggestions cover the reviewed CI reader inventory plus further reader
+discovery using old/new paths, basenames and asserted content. They are not a
+complete dependency graph, and component Markdown retains component checks.
+The base-bound contract wrapper needs full history and a 40-character merge-base;
+it compares contract inputs but issues no source/package qualification receipt.
+The plain contract checker covers only current-tree consistency by default.
+Separate committed, staged and unstaged whitespace checks are printed; add intended
+untracked files before the staged check can cover them.
+The SQLite recommendation owns its generation/build;
+the printed tests-only alternative requires independently verified current inputs,
+not file existence or timestamps. Invalid refs, conflicts, ambiguous history or
+invalid web test census fail without a partial plan. The planner never chooses CI
+lanes or declares qualification: apply the validation policy, current scoped plan
+and remaining Mac, artifact and manual acceptance obligations.
+
 The migration gate retains a bounded structured report for its `test:local-database`
 command. In the GitHub Actions run, open **Artifacts →
 local-database-failure-evidence-&lt;run ID&gt;-&lt;attempt&gt;** and download
