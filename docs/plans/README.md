@@ -8,27 +8,25 @@ Use the [current application](../current/LOCAL_APPLICATION.md) and
 [scoped closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md), not the old numbered
 steps, to understand the starting point. Historical plans remain in Git.
 
-The [in-app demo mode](active/in-app-demo-mode/plan.md) shipped in merged
-[PR #183](https://github.com/loyalagents/context-router/pull/183), verified at
-`3bc606ffb9d90ab364d26f6bea5977be30f31b13`. The user activated
-[native demo assistant setup](active/native-demo-assistant-setup/plan.md) on
-`codex/demo-assistant-setup` from that base. `/root/implementation` is the sole
-writer; coordinator/planner/reviewers are read-only. Scope is native Sign in/Open,
-remembered trusted executables and Desktop proposal review/apply. The user also
-activated reuse of verified same-envelope model weights for a targeted demo
-smart-search trial. Deeper assistant supervision and retained-guard recovery
-remain separate unactivated follow-ups. The agreed milestone is an automated trial and draft PR;
-hands-on acceptance is explicitly scheduled later and remains required before merge.
+Current delivery is the [assisted alpha kit](active/colleague-pilot/assisted-alpha.md)
+on `codex/assisted-mac-alpha-kit`, with `/root` as sole main-checkout integrator.
+Its finish line is a reviewed kit, scoped synthetic/artifact rehearsal, validation
+and one draft PR; colleague acceptance and distribution remain later milestones.
 
-The user-approved [MCP client permissions slice](active/mcp-client-permissions/README.md)
-is active in an isolated worktree on `codex/mcp-client-permissions` from
-`071b329731103ef3be5113ff79faf12b856aa68e`. `/root/permissions_implementer` owns
-all edits; coordinator and independent reviewers are read-only. It adds clearer
-cards, server previews and atomic human maximum-policy/grant editing; issuance,
-rotation UI and native lifecycle are outside scope. External review follow-up
-corrects draft reconciliation and bounded catalog responsiveness in the same PR;
-earlier qualifications apply to the earlier candidate. Renewed final qualification
-is pending.
+The [in-app demo mode](active/in-app-demo-mode/plan.md) shipped in
+[PR #183](https://github.com/loyalagents/context-router/pull/183), followed by
+[native demo assistant setup](active/native-demo-assistant-setup/plan.md) in
+[PR #184](https://github.com/loyalagents/context-router/pull/184). Native Sign
+in/Open, reviewed Desktop apply and same-envelope model reuse are implemented.
+Deeper assistant supervision and retained-guard recovery remain separate
+follow-ups. Demo acceptance is not personal-mode Claude onboarding evidence.
+
+The [MCP client permissions slice](active/mcp-client-permissions/README.md)
+shipped in [PR #187](https://github.com/loyalagents/context-router/pull/187):
+clearer cards, server previews, atomic maximum-policy/grant editing and draft
+reconciliation. Final source validation is recorded in the merged PR; it does
+not qualify a newer installed artifact. Those plans' earlier writer assignments
+and pending implementation checkpoints are historical.
 
 ## Three Lanes
 
@@ -76,14 +74,11 @@ to read-only parallel investigation/review until independent boundaries exist.
 Do not launch, reset or change the user's app/state/client configuration as a
 side effect of repository work.
 
-The pilot milestone started from verified main `7d2df85` and integrates reviewed
-main `208e049` (#173/#175) in
-`codex/pilot-interruption-delivery`, with `/root` as read-only coordinator and
-`/root/delivery_review` as sole writer/integrator for the seal-repair checkpoint.
-The [pilot record](active/colleague-pilot/plan.md) reconciles the merged Claude
-bridge and its accepted interruption follow-up with delivery/replacement work.
-Sealed C's evidence remains scoped to its original inputs. D's installed,
-replacement, packaged UI and source validation passed; [current scoped results](active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12)
-retain the open downloaded-menu cleanup and Ready/dashboard limits. The “Fix
-wrong-person attribution” chat owns a separate active synthetic investigation;
-that invitation dependency is neither fixed nor included in this milestone.
+The [historical pilot record](active/colleague-pilot/plan.md) retains the merged
+Claude bridge, interruption and sealed C/D delivery evidence. D's installed,
+replacement, packaged UI and source validation passed; its
+[scoped results](active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12)
+retain downloaded-menu cleanup and Ready/dashboard limits. Those passes remain
+bound to the original artifacts. The current kit plan explicitly reconciles the
+remaining human, acquisition and disk commitments. Attribution/PDF investigation
+and colleague guidance have separate ownership and are not duplicated here.

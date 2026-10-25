@@ -1,12 +1,16 @@
 # Assisted Colleague Pilot
 
-- Status: D installed/replacement/UI and source validation passed; downloaded-menu cleanup remains pending and downloaded Ready/dashboard remains unproved; scoped review follow-up active
+- Status: assisted alpha kit preparation active; [current scope and evidence requirements](assisted-alpha.md)
 - Priority: current primary outcome; [plan and evidence](plan.md)
-- Owner: product owner; read-only coordinator `/root`; seal-repair sole writer/integrator `/root/delivery_review` in `codex/pilot-interruption-delivery`
+- Owner: product owner; `/root` is current delivery integrator on `codex/assisted-mac-alpha-kit`; earlier seal-repair ownership is historical
 - Audience: a few Git-capable colleagues, initially Apple Silicon Macs
 
 Current qualification is limited to the measured M1 Max / 64 GiB / macOS 15.1.1
 Mac, per the user's decision. Other Macs remain later compatibility trials.
+The current PR finishes at a reviewed kit, scoped rehearsal and draft PR; actual
+colleague acceptance remains later. The [older delivery record](plan.md) retains
+source/artifact-bound evidence and outstanding human acceptance, not current
+implementation assignments.
 
 ## Outcome And Agreed Choices
 
