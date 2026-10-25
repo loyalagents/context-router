@@ -2,7 +2,7 @@
 
 - Status: overview/workflow clarifications, maintained-document CI selection, focused test groups and advisory test planner implemented; elapsed-task benefit unmeasured
 - Owner: the product owner selects the next implementation slice
-- Updated: 2026-10-23
+- Updated: 2026-10-25
 - Policy: [agent workflow](../../../useful/AGENT_WORKFLOW.md)
 
 Reduce repeated orientation and invalidated qualification while preserving
@@ -129,9 +129,12 @@ The contributor [testing guide](../../../useful/HOSTED_DEVELOPMENT.md#testing)
 documents the focused helper/browser and SQLite commands and
 `pnpm test:plan --base <ref>` (optional `--json`). The planner prints suggestions
 from committed and local changes, with reasons, prerequisites and unresolved
-impact warnings. It uses small path rules, retains rename/delete paths and
-conservatively widens unknown/shared inputs. It neither executes the suggestions
-nor selects CI lanes. Documentation readers still require discovery; generated
+impact warnings. It separates directly relevant checks from wider candidates,
+honors global ignores, and reuses contract paths and the gate's pre-build test
+inventory. Additive component rules retain readers of nonstandard Markdown;
+command and documentation-reader synchronization tests guard against drift.
+It neither executes suggestions nor derives CI routing. Documentation readers
+still require discovery; generated
 client/build freshness needs input evidence before using tests-only SQLite.
 Temporary Git fixtures and rule/CLI tests run in the existing always-run CI job;
 full gate coverage, triggers and qualification meanings remain unchanged. No

@@ -7,6 +7,7 @@ import test from "node:test";
 import { promisify } from "node:util";
 
 import { parse } from "yaml";
+import { planChanges, webGroups } from '../test-plan.mjs';
 
 const repositoryRoot = path.resolve(import.meta.dirname, "../..");
 const ciPath = path.join(repositoryRoot, ".github/workflows/ci.yml");
@@ -702,6 +703,16 @@ const documentReaderInventory = {
   },
 };
 
+test('focused planner includes every step-backed maintained-document reader', () => {
+  const plan = planChanges({ base: 'fixture', baseCommit: 'a'.repeat(40), head: 'b'.repeat(40),
+    mergeBase: 'a'.repeat(40), paths: ['docs/useful/HOSTED_DEVELOPMENT.md'], sources: {} }, webGroups());
+  for (const { target } of Object.values(documentReaderInventory)) {
+    if (target) assert.ok(plan.commands.some(check => check.command.split(/\s+/).includes(target)), `Planner must cover documented CI reader: ${target}`);
+  }
+  assert.ok(plan.commands.some(check => check.command === `MIGRATION_GATE_BASE_SHA=${'a'.repeat(40)} node scripts/local-migration/check-nonruntime.mjs`));
+  assert.equal(plan.commands.filter(check => check.id.startsWith('whitespace')).length, 3);
+});
+
 test('maintained document reader inventory requires review and actual lane coverage', async () => {
   const result = await execFileAsync('git', ['ls-files', '--stage', '-z'], {
     cwd: repositoryRoot, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, timeout: 30000,
@@ -792,7 +803,10 @@ test('selection CLI explains non-applicability without receipts and rejects fail
 test('selection CLI bounds safe Markdown paths and never prints unsafe filenames', async () => {
   await policyFixture(async f => {
     const paths = Array.from({ length: 15 }, (_, i) => `docs/current/guide-${String(i).padStart(2, '0')}.md`);
-    const unsafe = 'docs/current/bad\n::warning::injected.md';
+    // A non-hex filename marker cannot accidentally match a legitimate Git SHA.
+    const unsafe = 'docs/current/unsafe-filename-marker\n::warning::injected.md';
+    const unsafeOutput = /::warning::|injected|unsafe-filename-marker/;
+    assert.doesNotMatch(`Checkout: ${'bad'.padEnd(40, '0')}`, unsafeOutput);
     for (const file of [...paths, unsafe]) await f.put(file);
     f.event.before = await f.commit();
     for (const file of paths) await f.put(file, 'changed\n');
@@ -814,7 +828,7 @@ test('selection CLI bounds safe Markdown paths and never prints unsafe filenames
       await f.put(unsafe, 'changed\n'); await f.commit();
       const full = await run();
       assert.match(full.stdout, /Full source\/UI\/package qualification required/);
-      assert.doesNotMatch(full.stdout + await readFile(summary, 'utf8'), /::warning::|injected|bad/);
+      assert.doesNotMatch(full.stdout + await readFile(summary, 'utf8'), unsafeOutput);
     } finally { await rm(io, { recursive: true, force: true }); }
   });
 });

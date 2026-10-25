@@ -272,14 +272,27 @@ it does not execute them, fetch refs, build applications or start services.
 The default base is the locally available `origin/main`; fetch explicitly when
 needed. The output records the resolved base, HEAD and unique merge-base and
 unions committed changes since that merge-base, staged, unstaged and untracked
-paths. Deleted files and both rename sides remain visible; ignored files are
-excluded. Keep inputs stable during collection and rerun after changes.
+paths. Deleted files and both rename sides remain visible; repository and global
+ignore rules are honored. Keep inputs stable during collection and rerun after changes.
 
-Small reviewed rules reuse the web helper/browser groups and backend test areas.
-Shared, unknown and boundary inputs widen suggestions and require manual impact
-review. Documentation suggestions include known reader suites plus further reader
+The output separates directly relevant checks (`commands` in JSON) from wider
+validation candidates (`widerValidation`). The latter are neither derived CI
+routing nor automatic local requirements: resolve impacts under the validation
+policy, including required local evidence. Small rules reuse the web test groups,
+contract registry paths and gate manifest's pre-build Node test list. Registry
+membership is not a complete consumer graph. Existing supported sibling tests
+and same-name backend specs supply focused starting points; shared, unknown and
+boundary inputs still require manual impact review.
+
+Documentation suggestions cover the reviewed CI reader inventory plus further reader
 discovery using old/new paths, basenames and asserted content. They are not a
-complete dependency graph. The SQLite recommendation owns its generation/build;
+complete dependency graph, and component Markdown retains component checks.
+The base-bound contract wrapper needs full history and a 40-character merge-base;
+it compares contract inputs but issues no source/package qualification receipt.
+The plain contract checker covers only current-tree consistency by default.
+Separate committed, staged and unstaged whitespace checks are printed; add intended
+untracked files before the staged check can cover them.
+The SQLite recommendation owns its generation/build;
 the printed tests-only alternative requires independently verified current inputs,
 not file existence or timestamps. Invalid refs, conflicts, ambiguous history or
 invalid web test census fail without a partial plan. The planner never chooses CI
