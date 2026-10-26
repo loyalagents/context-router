@@ -55,7 +55,8 @@ test('installed AI guidance uses menu actions without inferring model files or r
   assert.match(await read(), /If you have not downloaded the model, choose CR → Download Qwen3.5 9B model/);
   assert.match(await read(), /or if you already downloaded it, choose CR → Restart local runtime/);
   assert.match(await read(), /Restart interrupts dashboard and MCP connections and signs out browser sessions/);
-  assert.match(await read(), /CR → Open dashboard and CR → New unlock code/);
+  assert.match(await read(), /The current dashboard opens when ready; unlock there with CR → New unlock code/);
+  assert.match(await read(), /If needed, use CR → Open dashboard/);
   assert.match(await read(), /older tab may have an outdated address/);
   assert.doesNotMatch(await read(), /manual session reset|qualified model configuration|sleep|why AI is unavailable/);
   assert.equal(await search.getByRole('button', { name: 'Smart search', exact: true }).isDisabled(), true);
@@ -63,15 +64,18 @@ test('installed AI guidance uses menu actions without inferring model files or r
   mode = 'demo';
   await check();
   await search.getByText('CR → Return to personal mode…', { exact: false }).waitFor();
-  assert.match(await read(), /Return to personal mode….*Download Qwen3.5 9B model… there if needed.*Enter demo mode/);
+  assert.match(await read(), /Return to personal mode….*Download Qwen3.5 9B model… there if needed. Once the model is downloaded, choose CR → Enter demo mode/);
   assert.match(await read(), /Switching modes interrupts dashboard and MCP connections.*unlock again/);
+  assert.doesNotMatch(await read(), /CR → Restart|Restart interrupts|If you have not downloaded/);
 
   configured = true; supported = true;
   for (mode of ['personal', 'demo']) {
     await check();
     await search.getByText('The status does not identify why AI is unavailable.', { exact: false }).waitFor();
     assert.match(await read(), /If the CR menu says AI is loading, wait for loading to finish/);
+    assert.match(await read(), /If the CR menu says AI is loading.*The status does not identify why AI is unavailable/);
     assert.match(await read(), /If the menu says a restart is required, or AI stays unavailable, choose CR → Restart/);
+    assert.match(await read(), /Restart interrupts dashboard and MCP connections/);
     assert.doesNotMatch(await read(), /Download Qwen|Return to personal mode/);
     assert.equal(await search.getByRole('button', { name: 'Smart search', exact: true }).isDisabled(), true, 'configured does not mean ready');
   }
@@ -84,7 +88,7 @@ test('installed AI guidance uses menu actions without inferring model files or r
     ({ state, configured } = observation);
     await check();
     await search.getByRole('status').filter({ hasText: `AI: ${state} (last checked)` }).waitFor();
-    assert.doesNotMatch(await read(), /not enabled|CR → Restart|AI is loading|Download Qwen|Return to personal mode/);
+    assert.doesNotMatch(await read(), /not enabled|CR → Restart|Restart interrupts|AI is loading|Download Qwen|Return to personal mode/);
     if (state === 'busy') assert.match(await read(), /Wait for the current operation to finish, then choose Check model status/);
     if (state === 'unsupported') assert.match(await read(), /does not support AI readiness checks/);
     assert.equal(await search.getByRole('button', { name: 'Smart search', exact: true }).isDisabled(), state !== 'available');
@@ -125,7 +129,7 @@ test('terminal and unknown launchers retain truthful setup and recovery guidance
         : configured ? 'Check your launcher for startup progress' : 'Follow the model setup instructions for your launcher.';
       await f.page.getByText(expected, { exact: false }).waitFor();
       const text = (await f.page.locator('main').innerText()).replace(/\s+/g, ' ');
-      assert.doesNotMatch(text, /CR → Restart|Download Qwen/);
+      assert.doesNotMatch(text, /Restart interrupts|CR →/);
       if (launcher && configured) assert.match(text, /wait for their exits, then create a fresh model session with new credentials.*Manual Local Model Preview runbook/);
       assert.equal(await f.page.locator('#form-file').isDisabled(), true);
     }

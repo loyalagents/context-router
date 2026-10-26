@@ -100,8 +100,8 @@ export function AiControls({
           {installed ? (
             runtime.mode === 'demo' ? (
               <>To set up AI, choose CR → Return to personal mode… in the Mac menu
-                bar. Use CR → Download Qwen3.5 9B model… there if needed. After
-                download, choose CR → Enter demo mode… to use it in demo.
+                bar. Use CR → Download Qwen3.5 9B model… there if needed. Once the
+                model is downloaded, choose CR → Enter demo mode… to use it in demo.
                 Switching modes interrupts dashboard
                 and MCP connections; open the current dashboard and unlock again.</>
             ) : (
@@ -127,7 +127,6 @@ export function AiControls({
       )}
       {unavailable && (
         <p>
-          The status does not identify why AI is unavailable.{' '}
           {installed ? (
             <>If the CR menu says AI is loading, wait for loading to finish, then
               choose Check model status. If the menu says a restart is required,
@@ -139,14 +138,16 @@ export function AiControls({
               Manual Local Model Preview runbook.</>
           ) : (
             <>Check your launcher for startup progress or recovery instructions.</>
-          )}
+          )}{' '}
+          The status does not identify why AI is unavailable.
         </p>
       )}
       {installed && (unavailable || (needsSetup && runtime.mode !== 'demo')) && (
         <p>
           Restart interrupts dashboard and MCP connections and signs out browser
-          sessions. When ready, use CR → Open dashboard and CR → New unlock code…
-          to unlock again. An older tab may have an outdated address.
+          sessions. The current dashboard opens when ready; unlock there with
+          CR → New unlock code…. If needed, use CR → Open dashboard. An older tab
+          may have an outdated address.
         </p>
       )}
       <p>Check model status checks readiness only; it does not download or start a
