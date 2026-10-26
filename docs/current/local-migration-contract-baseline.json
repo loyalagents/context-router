@@ -2886,6 +2886,25 @@
       ]
     },
     {
+      "id": "assisted-alpha-kit-assembly",
+      "sources": [
+        {
+          "path": "scripts/local-migration/installation/assisted-alpha-kit.mjs",
+          "fingerprints": [
+            "execFileSync('git'",
+            "execFileSync(executable, args"
+          ]
+        }
+      ],
+      "destination": "Explicit operator-only clean Git source inspection and fixed /usr/bin/ditto local archive extraction/creation; existing package verifier performs strict local signature verification.",
+      "payload": "Independently pinned build receipt, app archive, public bridge modules, pinned Node archive and sanitized release metadata. No app launch, network acquisition, credentials, private state or client configuration.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
+    },
+    {
       "id": "installation-opt-in-feasibility",
       "sources": [
         {
@@ -5785,6 +5804,12 @@
       "path": "scripts/local-migration/installation/assistant-setup-smoke.mjs",
       "sinks": {
         "spawn": 2
+      }
+    },
+    {
+      "path": "scripts/local-migration/installation/assisted-alpha-kit.mjs",
+      "sinks": {
+        "exec-file": 2
       }
     },
     {
