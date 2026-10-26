@@ -83,7 +83,7 @@ export function AiControls({
   const { capabilities } = operation.session;
   const { status, runtime } = capabilities;
   const installed = runtime?.launcher === 'native';
-  const needsSetup = !status.configured;
+  const needsSetup = !status.configured && status.state === 'unavailable';
   const unavailable = status.configured && status.state === 'unavailable';
   return (
     <div className="space-y-2 text-sm my-3">

@@ -75,10 +75,16 @@ test('installed AI guidance uses menu actions without inferring model files or r
     assert.doesNotMatch(await read(), /Download Qwen|Return to personal mode/);
     assert.equal(await search.getByRole('button', { name: 'Smart search', exact: true }).isDisabled(), true, 'configured does not mean ready');
   }
-  for (state of ['busy', 'unsupported', 'available']) {
+  for (const observation of [
+    { state: 'busy', configured: false },
+    { state: 'busy', configured: true },
+    { state: 'unsupported', configured: true },
+    { state: 'available', configured: true },
+  ]) {
+    ({ state, configured } = observation);
     await check();
     await search.getByRole('status').filter({ hasText: `AI: ${state} (last checked)` }).waitFor();
-    assert.doesNotMatch(await read(), /CR → Restart|AI is loading|Download Qwen/);
+    assert.doesNotMatch(await read(), /not enabled|CR → Restart|AI is loading|Download Qwen|Return to personal mode/);
     if (state === 'busy') assert.match(await read(), /Wait for the current operation to finish, then choose Check model status/);
     if (state === 'unsupported') assert.match(await read(), /does not support AI readiness checks/);
     assert.equal(await search.getByRole('button', { name: 'Smart search', exact: true }).isDisabled(), state !== 'available');
