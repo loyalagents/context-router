@@ -43,6 +43,9 @@ requires the original ZIP hash; the second anchor adds a check, not a bypass.
 
 For an existing installation, start with [Replacement, reconnect and recovery](#replacement-reconnect-and-recovery)
 before following this section. It supplies the old-app backup/retirement order.
+
+### Non-executing checks
+
 Use actual absolute paths. Replace every placeholder before running a block.
 Commands below create new destinations; do not rerun them over existing files.
 Keep the original downloaded archive until acceptance is complete.
@@ -83,6 +86,8 @@ the built app and extracted ZIP before issuing the handoff. The recipient's
 independently pinned ZIP hash binds those bytes; strict seal/native verification
 checks extraction. A manifest hash alone does not pin the executable/resource
 seal. Never change files inside the app or re-sign it to bypass a failure.
+
+### First Finder launch and CLI verification
 
 The steps above do not execute app code. Do not run `router_cli` yet. For an
 upgrade, finish the old-app retirement and variable reassignment below first.
@@ -254,42 +259,60 @@ bridge never launches CR or automatically replays a mutation.
 
 ## Replacement, reconnect and recovery
 
-For replacement, explicitly identify the currently running version before
-changing shell variables. Successfully Quit it, then back up through that version:
+Follow this upgrade checklist in order. Complete each step before continuing:
 
-```sh
-previous_app='/absolute/path/to/previous/Context Router.app'
-previous_cli="$previous_app/Contents/MacOS/context-router"
-"$previous_cli" backup
-# Retain the reported completed backup path privately.
-```
+1. **Quit and back up the old version.** Identify the currently running app,
+   successfully choose **Quit Context Router**, then back up through that version:
 
-Keep the **original verified previous ZIP and its receipts** as evidence. If
-those are missing, stop for the helper before retiring the old app. Follow
-**Verify and place the app** through the non-executing checks, using a new unique
-version directory; stop before opening the new app. Then, in Finder, move only
-the identified previous `.app` to Trash and remove its old Dock shortcut. Do not
-delete the managed envelope, models, support, credentials or backup. This is a
-deliberate manual retirement step; neither the kit nor a background updater does
-it. Do not assume moving a still-launchable `.app` outside Applications prevents
-macOS from selecting it.
+   ```sh
+   previous_app='/absolute/path/to/previous/Context Router.app'
+   previous_cli="$previous_app/Contents/MacOS/context-router"
+   "$previous_cli" backup
+   # Retain the reported completed backup path privately.
+   ```
 
-Explicitly bind every subsequent command to the new verified app:
+2. **Retain recovery evidence.** Keep the **original verified previous ZIP and
+   its receipts** and the completed backup. If any is missing, stop for the helper
+   before retiring the old app.
 
-```sh
-new_app='/absolute/path/to/new/version/Context Router.app'
-app="$new_app"
-router_cli="$app/Contents/MacOS/context-router"
-unset previous_cli
-```
+3. **Stage and verify the new version without launching it.** Complete the
+   [non-executing checks](#non-executing-checks) in a new unique version directory,
+   then return to step 4 here. Stop before the first Finder launch; do not run
+   `router_cli` yet.
 
-Use its exact Finder path, then Ready → successful Quit → `verify-package`, as
-above. Reopen that app against the same default envelope and check facts, grants,
-history and verified model reuse. Replace any retained Dock shortcut with this
-version only after checking its path. Do not use old Terminal variables or
-Spotlight/Launchpad to select a version. Keeping an old ZIP does not authorize
-running older code against newer state; equal security epochs do not establish
-backward compatibility. Do not merge bundles or copy a live SQLite file.
+4. **Retire only the old app.** In Finder, move the identified previous `.app`
+   to Trash and remove its old Dock shortcut. Preserve the managed envelope,
+   models, support, credentials, backup and verified archives. This is a manual
+   step; neither the kit nor a background updater performs it. Moving a still
+   launchable `.app` outside Applications does not reliably prevent its selection.
+
+5. **Select the verified new app for every command.** Use the exact path verified
+   in step 3:
+
+   ```sh
+   new_app='/absolute/path/to/new/version/Context Router.app'
+   app="$new_app"
+   router_cli="$app/Contents/MacOS/context-router"
+   unset previous_cli
+   ```
+
+6. **Launch and verify that exact version.** Follow
+   [first Finder launch and CLI verification](#first-finder-launch-and-cli-verification):
+   exact Finder path → Ready → successful Quit → `"$router_cli" verify-package`.
+   If the new app is refused, fails to start or never reaches Ready, stop for the
+   helper and preserve the exact error and current state; do not restore and launch
+   the old app from Trash, or extract and launch its ZIP, without helper review.
+   A blocked CLI is also a stop-and-record outcome, as described there.
+
+7. **Confirm continuity.** Reopen the same new app against the same default
+   envelope and check facts, grants, history and verified model reuse. Replace any
+   retained Dock shortcut with this version only after checking its path. Record
+   the outcome in the [acceptance record](#acceptance-record).
+
+Do not use old Terminal variables or Spotlight/Launchpad to select a version.
+Keeping an old ZIP does not authorize running older code against newer state;
+equal security epochs do not establish backward compatibility. Do not merge
+bundles or copy a live SQLite file.
 Existing standalone bridge paths do not change with app replacement.
 
 For a bridge/Node update, stage a new verified support version, review the
@@ -358,7 +381,9 @@ node scripts/local-migration/installation/assisted-alpha-kit.mjs \
   --out /absolute/new/kit-output
 ```
 
-The assembler accepts only a package receipt matching the current clean commit;
+The assembler ignores inherited `GIT_*` environment overrides and checks that Git
+resolves the intended checkout at startup and before creating the final archive. It accepts only a
+package receipt matching the current clean commit;
 it reuses the existing strict package/external-byte verifier and verifies the
 extracted app ZIP. Bridge and operator bytes must match committed Git blobs,
 including when Git status hides a working-tree change. It includes only an

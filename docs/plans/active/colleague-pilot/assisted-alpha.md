@@ -187,3 +187,28 @@ Do not require a particular merge method merely to make an artifact source an
 ancestor of main. Keep its exact source commit and archive reachable/retained in
 the handoff; any future rebuild must name its actual source. Human merge and
 distribution decisions remain with the owner.
+
+## Final review polish
+
+The follow-up review of `2bccf7e` found no draft-milestone blockers. Address its
+small useful changes in one batch: a numbered upgrade checklist with an explicit
+pre-Ready failure stop and no unreviewed old-app restoration/launch; Git subprocess
+environment isolation plus canonical checkout checks; and a behavioral test
+linking release metadata to the actual pinned model and downloader free-space
+boundary. The boundary test uses injected space/transport and no model bytes or
+network. Leave the installed smoke's five-second probe unchanged; retain failures
+and run timing-bound artifact checks serially.
+
+`/root/last_review_plan` independently approved this bounded plan before changes,
+requesting Astra Extra High (actual execution settings are not independently
+attested). Check Git's absolute metadata directory in real temporary-repository
+tests as well as its top level; use observably harmful inherited index/config
+values. Test below/at the advertised download floor and assert cleanup.
+
+Keep the same writer, draft PR and finish line. Run focused assembler/downloader
+and documentation/contract checks, freeze once, then obtain fresh complete-diff
+review and applicable exact-candidate CI. Strict source binding still requires a
+fresh app/kit; verify its actual bytes and shipped support, followed serially by
+installed, old-to-new replacement and full demo checks. Carry forward only
+unchanged runtime/source coverage; no additional gap calls for a duplicate full
+local migration gate. Human acceptance and distribution remain pending.

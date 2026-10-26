@@ -78,7 +78,15 @@ export async function copyVerified(from, to, expected) {
   assert.equal(await fileHash(to), expected, 'Copied checksum differs');
 }
 
-async function cleanHead(git) {
+export function repositoryGit(repository, environment = process.env) {
+  // Git routing/config overrides must not redirect inspection away from this checkout.
+  const env = Object.fromEntries(Object.entries(environment).filter(([name]) => !name.startsWith('GIT_')));
+  return args => execFileSync('git', args, { cwd: repository, env, timeout: 30000 });
+}
+
+async function cleanHead(git, repository) {
+  const top = (await git(['rev-parse', '--show-toplevel'])).toString().trim();
+  assert.equal(await realpath(top), await realpath(repository), 'Git worktree differs from the intended repository');
   assert.equal((await git(['status', '--porcelain=v1', '--untracked-files=all'])).toString(), '', 'Commit the candidate before assembly');
   return (await git(['rev-parse', 'HEAD'])).toString().trim();
 }
@@ -86,7 +94,7 @@ async function cleanHead(git) {
 // Only tests inject external effects/pins; the executable below uses these fixed defaults.
 export async function assembleKit(values, {
   repository = path.resolve(import.meta.dirname, '../../..'),
-  git = args => execFileSync('git', args, { cwd: repository, timeout: 30000 }),
+  git = repositoryGit(repository),
   verifyArtifact = verifyPinnedArtifact,
   command = (executable, args) => execFileSync(executable, args, {
     cwd: values.out, env: { PATH: '/usr/bin:/bin', LC_ALL: 'C' }, timeout: 120000, stdio: 'pipe',
@@ -100,7 +108,7 @@ export async function assembleKit(values, {
     assert.ok(typeof value === 'string' && path.isAbsolute(value) && path.resolve(value) === value && !/[\x00-\x1f\x7f]/u.test(value));
     assert.equal(await realpath(path.dirname(value)), path.dirname(value));
   }
-  const head = await cleanHead(git), packageRoot = values['package-dir'];
+  const head = await cleanHead(git, repository), packageRoot = values['package-dir'];
   const receiptPath = path.join(packageRoot, 'build-receipt.json');
   assert.equal(await fileHash(receiptPath), values['build-receipt-sha256']);
   const receipt = JSON.parse(await readFile(receiptPath, 'utf8'));
@@ -150,7 +158,7 @@ export async function assembleKit(values, {
   files.push('release.json');
   const sums = await Promise.all(files.sort().map(async name => `${await fileHash(path.join(kit, name))}  ${name}\n`));
   await writeFile(path.join(kit, 'SHA256SUMS'), sums.join(''), { flag: 'wx', mode: 0o400 });
-  assert.equal(await cleanHead(git), head, 'Source changed during assembly');
+  assert.equal(await cleanHead(git, repository), head, 'Source changed during assembly');
   for (const [name, expected] of committed) assert.equal(await fileHash(path.join(repository, name)), expected,
     'Committed support source changed during assembly');
   const archive = path.join(root, `${metadata.kitId}.zip`);

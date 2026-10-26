@@ -4,7 +4,9 @@ import { mkdtemp, writeFile, readFile, mkdir, rm, symlink, chmod, realpath, lsta
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { validateReceipt, copyVerified, releaseMetadata, assembleKit } from '../../../scripts/local-migration/installation/assisted-alpha-kit.mjs';
+import { validateReceipt, copyVerified, releaseMetadata, assembleKit, repositoryGit } from '../../../scripts/local-migration/installation/assisted-alpha-kit.mjs';
+import { MODEL } from '../runtime/model-assets.mjs';
+import { downloadAsset } from '../runtime/download-engine.mjs';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const source = 'a'.repeat(40);
@@ -56,6 +58,46 @@ async function fixture(t) {
   await writeFile(input, 'synthetic-public-artifact', { mode: 0o600 });
   return { root, input, output: path.join(root, 'copy'), expected: sha('synthetic-public-artifact') };
 }
+test('advertised model size and free-space floor match the actual downloader boundary', async t => {
+  const root = await realpath(await mkdtemp(path.join(os.tmpdir(), 'alpha-download-floor-')));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const model = releaseMetadata(receipt(), '1'.repeat(64)).model;
+  assert.equal(model.bytes, MODEL.bytes);
+  const floor = BigInt(model.downloadMinimumFreeBytes), reachedTransport = new Error('injected transport boundary');
+  let requests = 0;
+  const run = available => downloadAsset({ root, generation: 'a'.repeat(32), asset: MODEL,
+    availableBytes: async () => available,
+    openResponse: async () => { requests++; throw reachedTransport; },
+  });
+  await assert.rejects(run(floor - 1n), /Model download unavailable/);
+  assert.equal(requests, 0);
+  assert.deepEqual(await readdir(root), []);
+  await assert.rejects(run(floor), error => error === reachedTransport);
+  assert.equal(requests, 1);
+  assert.deepEqual(await readdir(root), []);
+});
+test('repository Git ignores inherited routing, index and config overrides', async t => {
+  const f = await fixture(t), intended = path.join(f.root, 'intended'), foreign = path.join(f.root, 'foreign');
+  for (const directory of [intended, foreign]) {
+    await mkdir(directory); repositoryGit(directory)(['init', '--quiet']);
+  }
+  await writeFile(path.join(intended, 'intended-only'), 'synthetic');
+  await writeFile(path.join(foreign, 'foreign-only'), 'synthetic');
+  const invalidIndex = path.join(f.root, 'invalid-index'); await writeFile(invalidIndex, 'not a Git index');
+  for (const overrides of [
+    { GIT_DIR: path.join(foreign, '.git') },
+    { GIT_DIR: path.join(foreign, '.git'), GIT_WORK_TREE: foreign },
+    { GIT_INDEX_FILE: invalidIndex },
+    { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'core.bare', GIT_CONFIG_VALUE_0: 'true' },
+  ]) {
+    const environment = { ...process.env, ...overrides };
+    const git = repositoryGit(intended, environment);
+    assert.equal(git(['rev-parse', '--show-toplevel']).toString().trim(), intended);
+    assert.equal(git(['rev-parse', '--absolute-git-dir']).toString().trim(), path.join(intended, '.git'));
+    assert.equal(git(['status', '--porcelain=v1']).toString(), '?? intended-only\n');
+    for (const [name, value] of Object.entries(overrides)) assert.equal(environment[name], value);
+  }
+});
 test('verified copies retain exact bytes, become read-only, and never replace destinations', async t => {
   const f = await fixture(t);
   await copyVerified(f.input, f.output, f.expected);
@@ -121,12 +163,12 @@ async function assemblyFixture(t) {
     options['build-receipt-sha256'] = sha(bytes);
   };
   await rewriteReceipt();
-  const state = { dirty: false, head: source, artifacts: [], commands: [], committed };
+  const state = { dirty: false, head: source, top: repository, artifacts: [], commands: [], committed };
   const dependencies = {
     repository, nodeArchiveSha256: sha('synthetic node'),
     git: args => {
       if (args[0] === 'status') return state.dirty ? ' M changed\n' : '';
-      if (args[0] === 'rev-parse') return state.head + '\n';
+      if (args[0] === 'rev-parse') return (args[1] === '--show-toplevel' ? state.top : state.head) + '\n';
       assert.equal(args[0], 'show'); assert.ok(args[1].startsWith(source + ':'));
       const bytes = committed.get(args[1].slice(source.length + 1)); assert.ok(bytes); return bytes;
     },
@@ -170,6 +212,7 @@ test('complete assembly refuses mismatches and hidden working-tree substitutions
   const cases = [
     ['receipt digest', async f => { f.options['build-receipt-sha256'] = '0'.repeat(64); }],
     ['source HEAD', async f => { f.state.head = 'f'.repeat(40); }],
+    ['source worktree', async f => { f.state.top = f.root; }],
     ['dirty source', async f => { f.state.dirty = true; }],
     ['dirty build', async f => { f.r.source.dirty = true; await f.rewriteReceipt(); }],
     ['copied inputs', async f => { f.dependencies.verifyArtifact = async () => ({ source: 'f'.repeat(64) }); }],
@@ -194,7 +237,7 @@ test('complete assembly refuses existing destinations and retains their contents
 });
 
 test('extraction, final-source and archive failures never issue a successful handoff', async t => {
-  for (const kind of ['extra extracted file', 'extracted verification', 'final HEAD', 'final dirty', 'final blob', 'archive']) await t.test(kind, async t => {
+  for (const kind of ['extra extracted file', 'extracted verification', 'final HEAD', 'final worktree', 'final dirty', 'final blob', 'archive']) await t.test(kind, async t => {
     const f = await assemblyFixture(t), command = f.dependencies.command, verify = f.dependencies.verifyArtifact;
     f.dependencies.command = async (exe, args) => {
       if (kind === 'archive' && args[0] === '-c') throw Error('archive failed');
@@ -206,6 +249,7 @@ test('extraction, final-source and archive failures never issue a successful han
       if (f.state.artifacts.length === 2) {
         if (kind === 'extracted verification') throw Error('extracted bytes differ');
         if (kind === 'final HEAD') f.state.head = 'f'.repeat(40);
+        if (kind === 'final worktree') f.state.top = f.root;
         if (kind === 'final dirty') f.state.dirty = true;
         if (kind === 'final blob') await writeFile(path.join(f.repository, operator), 'hidden edit during assembly');
       }
