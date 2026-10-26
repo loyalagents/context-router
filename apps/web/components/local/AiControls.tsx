@@ -81,23 +81,76 @@ export function AiControls({
   const [error, setError] = useState('');
   if (!operation.session) return null;
   const { capabilities } = operation.session;
+  const { status, runtime } = capabilities;
+  const installed = runtime?.launcher === 'native';
+  const needsSetup = !status.configured;
+  const unavailable = status.configured && status.state === 'unavailable';
   return (
     <div className="space-y-2 text-sm my-3">
       <p role="status">
         AI: {capabilities.status.state} (last checked).{' '}
         {!operation.supported &&
           'This operation is not supported by the selected runtime. '}
-        {!capabilities.status.configured &&
-          'Start the launcher with a qualified model configuration to enable AI. '}
-        Manual editing and literal search remain available.
+        You can still view and edit saved preferences and use literal search
+        without AI.
       </p>
-      {capabilities.status.configured &&
-        capabilities.status.state === 'unavailable' && (
-          <p>
-            Check model setup. A cancelled model may require the documented
-            stop, idle verification and manual session reset before reuse.
-          </p>
-        )}
+      {needsSetup && (
+        <p>
+          AI is not enabled for this session.{' '}
+          {installed ? (
+            runtime.mode === 'demo' ? (
+              <>To set up AI, choose CR → Return to personal mode… in the Mac menu
+                bar. Use CR → Download Qwen3.5 9B model… there if needed. After
+                download, choose CR → Enter demo mode… to use it in demo.
+                Switching modes interrupts dashboard
+                and MCP connections; open the current dashboard and unlock again.</>
+            ) : (
+              <>If you have not downloaded the model, choose CR → Download
+                Qwen3.5 9B model… in the Mac menu bar. After the download finishes,
+                or if you already downloaded it, choose CR → Restart local runtime…
+                to enable AI.</>
+            )
+          ) : runtime?.launcher === 'terminal' ? (
+            <>Start the terminal launcher with a qualified model configuration;
+              follow docs/useful/LOCAL_UI.md and docs/useful/LOCAL_MODEL.md.</>
+          ) : (
+            <>Follow the model setup instructions for your launcher.</>
+          )}
+        </p>
+      )}
+      {status.state === 'busy' && (
+        <p>AI was busy when last checked. Wait for the current operation to finish,
+          then choose Check model status.</p>
+      )}
+      {status.state === 'unsupported' && (
+        <p>This runtime does not support AI readiness checks.</p>
+      )}
+      {unavailable && (
+        <p>
+          The status does not identify why AI is unavailable.{' '}
+          {installed ? (
+            <>If the CR menu says AI is loading, wait for loading to finish, then
+              choose Check model status. If the menu says a restart is required,
+              or AI stays unavailable, choose CR → Restart local runtime….</>
+          ) : runtime?.launcher === 'terminal' ? (
+            <>Check model setup. If recovery is needed, stop both the backend and
+              inference processes and wait for their exits, then create a fresh
+              model session with new credentials as described in
+              docs/useful/LOCAL_MODEL.md.</>
+          ) : (
+            <>Check your launcher for startup progress or recovery instructions.</>
+          )}
+        </p>
+      )}
+      {installed && (unavailable || (needsSetup && runtime.mode !== 'demo')) && (
+        <p>
+          Restart interrupts dashboard and MCP connections and signs out browser
+          sessions. When ready, use CR → Open dashboard and CR → New unlock code…
+          to unlock again. An older tab may have an outdated address.
+        </p>
+      )}
+      <p>Check model status checks readiness only; it does not download or start a
+        model, restart the runtime or retry your work.</p>
       <button
         type="button"
         disabled={operation.pending}

@@ -16,6 +16,116 @@ async function unlock(f, route = '/dashboard/preferences') {
   await f.page.getByRole('button', { name: 'Lock dashboard' }).waitFor();
 }
 
+test('installed AI guidance uses menu actions without inferring model files or recovery reasons', { timeout: 60000 }, async (t) => {
+  const f = await browserFixture(t);
+  f.page.setDefaultTimeout(5000);
+  let state = 'unavailable', configured = false, mode = 'personal', supported = false, failCheck = false;
+  let checks = 0;
+  const operations = [];
+  f.page.on('request', request => {
+    const path = new URL(request.url()).pathname;
+    if (/\/api\/(preferences\/analysis|form-fill\/pdf)$/.test(path) ||
+      (path === '/graphql' && /smartSearchPreferences|\bmutation\b/.test(request.postData() ?? ''))) operations.push(path);
+  });
+  // Only presentation/status responses are injected. Authentication and manual
+  // data APIs use the real isolated fixture; this is not native restart evidence.
+  await f.page.route('**/api/local/capabilities', async route => {
+    checks++;
+    if (failCheck) return route.fulfill({ status: 503, json: {} });
+    const response = await route.fetch(), body = await response.json();
+    assert.equal(response.status(), 200);
+    body.runtime = { mode, launcher: 'native' };
+    body.status = { state, configured };
+    body.operations.search = supported;
+    await route.fulfill({ response, json: body });
+  });
+  await unlock(f);
+  const search = f.page.getByRole('region', { name: 'Preference search' });
+  const read = async () => (await search.innerText()).replace(/\s+/g, ' ');
+  const check = async () => {
+    const before = checks;
+    const response = f.page.waitForResponse(r => r.url().endsWith('/api/local/capabilities'));
+    await search.getByRole('button', { name: 'Check model status' }).click();
+    await response;
+    assert.equal(checks, before + 1, 'one explicit readiness check');
+  };
+  await search.getByLabel('Search query', { exact: true }).fill('synthetic');
+  assert.match(await read(), /AI: unavailable \(last checked\)/);
+  assert.match(await read(), /view and edit saved preferences and use literal search without AI/);
+  assert.match(await read(), /If you have not downloaded the model, choose CR → Download Qwen3.5 9B model/);
+  assert.match(await read(), /or if you already downloaded it, choose CR → Restart local runtime/);
+  assert.match(await read(), /Restart interrupts dashboard and MCP connections and signs out browser sessions/);
+  assert.match(await read(), /CR → Open dashboard and CR → New unlock code/);
+  assert.match(await read(), /older tab may have an outdated address/);
+  assert.doesNotMatch(await read(), /manual session reset|qualified model configuration|sleep|why AI is unavailable/);
+  assert.equal(await search.getByRole('button', { name: 'Smart search', exact: true }).isDisabled(), true);
+
+  mode = 'demo';
+  await check();
+  await search.getByText('CR → Return to personal mode…', { exact: false }).waitFor();
+  assert.match(await read(), /Return to personal mode….*Download Qwen3.5 9B model… there if needed.*Enter demo mode/);
+  assert.match(await read(), /Switching modes interrupts dashboard and MCP connections.*unlock again/);
+
+  configured = true; supported = true;
+  for (mode of ['personal', 'demo']) {
+    await check();
+    await search.getByText('The status does not identify why AI is unavailable.', { exact: false }).waitFor();
+    assert.match(await read(), /If the CR menu says AI is loading, wait for loading to finish/);
+    assert.match(await read(), /If the menu says a restart is required, or AI stays unavailable, choose CR → Restart/);
+    assert.doesNotMatch(await read(), /Download Qwen|Return to personal mode/);
+    assert.equal(await search.getByRole('button', { name: 'Smart search', exact: true }).isDisabled(), true, 'configured does not mean ready');
+  }
+  for (state of ['busy', 'unsupported', 'available']) {
+    await check();
+    await search.getByRole('status').filter({ hasText: `AI: ${state} (last checked)` }).waitFor();
+    assert.doesNotMatch(await read(), /CR → Restart|AI is loading|Download Qwen/);
+    if (state === 'busy') assert.match(await read(), /Wait for the current operation to finish, then choose Check model status/);
+    if (state === 'unsupported') assert.match(await read(), /does not support AI readiness checks/);
+    assert.equal(await search.getByRole('button', { name: 'Smart search', exact: true }).isDisabled(), state !== 'available');
+  }
+  supported = false;
+  await check();
+  await search.getByText('This operation is not supported', { exact: false }).waitFor();
+  assert.equal(await search.getByRole('button', { name: 'Smart search', exact: true }).isDisabled(), true, 'available does not override operation support');
+  failCheck = true;
+  await check();
+  await search.getByRole('alert').filter({ hasText: 'Model status could not be checked.' }).waitFor();
+  assert.match(await read(), /AI: available \(last checked\)/, 'failed check retains the explicitly stale result');
+  assert.match(await read(), /does not download or start a model, restart the runtime or retry your work/);
+  assert.equal(await search.getByRole('button', { name: /Restart/ }).count(), 0);
+  assert.deepEqual(operations, [], 'guidance and checks never start or replay AI work');
+});
+
+test('terminal and unknown launchers retain truthful setup and recovery guidance', { timeout: 60000 }, async (t) => {
+  const f = await browserFixture(t);
+  f.page.setDefaultTimeout(5000);
+  let launcher = 'terminal', configured = false;
+  await f.page.route('**/api/local/capabilities', async route => {
+    const response = await route.fetch(), body = await response.json();
+    assert.equal(response.status(), 200);
+    if (launcher) body.runtime = { mode: 'personal', launcher };
+    else delete body.runtime;
+    body.status = { state: 'unavailable', configured };
+    await route.fulfill({ response, json: body });
+  });
+  await unlock(f, '/dashboard/form-fill');
+  for (launcher of ['terminal', undefined]) {
+    for (configured of [false, true]) {
+      const response = f.page.waitForResponse(r => r.url().endsWith('/api/local/capabilities'));
+      await f.page.getByRole('button', { name: 'Check model status' }).click();
+      await response;
+      const expected = launcher
+        ? configured ? 'stop both the backend and inference processes' : 'Start the terminal launcher'
+        : configured ? 'Check your launcher for startup progress' : 'Follow the model setup instructions for your launcher.';
+      await f.page.getByText(expected, { exact: false }).waitFor();
+      const text = (await f.page.locator('main').innerText()).replace(/\s+/g, ' ');
+      assert.doesNotMatch(text, /CR → Restart|Download Qwen/);
+      if (launcher && configured) assert.match(text, /wait for their exits, then create a fresh model session with new credentials.*LOCAL_MODEL\.md/);
+      assert.equal(await f.page.locator('#form-file').isDisabled(), true);
+    }
+  }
+});
+
 test('file-picker focus and successive uploads never start competing model status checks', { timeout: 60000 }, async (t) => {
   const f = await browserFixture(t, { model: true });
   await observeSessionEvents(f.page);
