@@ -1,5 +1,10 @@
 # Assisted colleague pilot: interruption and delivery
 
+Current delivery work is the [assisted alpha kit](assisted-alpha.md). The record
+below is historical and retains its exact source/artifact identities and unclosed
+acceptance limits. Its old writer assignments and implementation checkpoints do
+not activate work on current main.
+
 - Status: D installed/replacement/UI and source validation passed; downloaded-menu cleanup remains pending and downloaded Ready/dashboard remains unproved; bounded test/docs review follow-up active
 - Scope: close the accepted Claude interruption follow-up, then rehearse the smallest supported installation/replacement route
 - Base: started at `7d2df8516115661d97287d34647f17e4a2e48701`; integrates verified main `208e0494fec1817c1855b83367c392b67f76a034` (#173/#175); branch `codex/pilot-interruption-delivery`
