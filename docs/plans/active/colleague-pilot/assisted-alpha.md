@@ -1,6 +1,6 @@
 # Assisted Mac alpha kit
 
-- Status: plan reviewed; kit implementation and scoped qualification in progress
+- Status: initial draft qualification complete; external-review corrections in progress
 - Owner: `/root`, sole writer/integrator in the main checkout
 - Branch: `codex/assisted-mac-alpha-kit`
 - Base: verified GitHub main `a2ed2b95` on 2026-10-25
@@ -49,8 +49,11 @@ bytes, including the extracted archive rather than only the adjacent app.
 Copy the unchanged app ZIP, external receipt, sanitized release metadata,
 three bridge modules, pinned Node archive and operator instructions into one
 new output directory. Emit file checksums and a separately hashed kit archive.
-Do not copy build logs, local absolute paths, databases, credentials or private
-evidence into the shareable kit. Preserve detailed build receipts privately.
+Do not add build logs, databases, credentials or private qualification evidence
+to the shareable kit. Keep `release.json` free of local paths and preserve detailed
+build receipts privately. The unchanged app and external full-byte receipt can
+contain build/dependency paths, including the builder's account name; this task
+does not sanitize or re-seal those existing package bytes.
 
 The kit is a transport container, not an installer. Operators manually place the
 app and immutable bridge/Node support in durable private user-owned locations,
@@ -136,3 +139,51 @@ The user's current request explicitly schedules actual colleague acceptance
 after this PR. These commitments remain visible, not silently waived. Any
 necessary live or personal operation requires its own bounded authorization
 after independent kit preparation is complete.
+
+## External review correction round
+
+The user requested disposition and implementation of the supplied Claude Code
+review on `8923fbbb`. Keep the same PR, sole writer and original finish line.
+Sensitive update/trust review requests Astra Extra High; actual runtime settings
+are not independently attested. The coordinator remains on the session settings.
+An independent bounded plan review precedes implementation; fresh complete-diff
+review follows the batched corrections.
+`/root/review_fix_plan` approved the correction plan at SHA-256
+`8f35b7a6acc04432782679a7e6ae8121f0023ca5d3d8d832db3f9270a6514907`.
+The narrow dependency seam keeps real hashing/filesystem/copy behavior and fixed
+production CLI pins; fixtures supply synthetic external effects only.
+
+- **F1:** Rebind the current app/CLI after replacement and retire the old
+  launchable copy only after Quit, backup and retention of its verified ZIP and
+  receipts. Open the new exact Finder path; do not rely on Spotlight/Dock identity
+  or on epoch checks to prevent every same-epoch downgrade.
+- **F2–F3:** Perform only non-app-code integrity checks before Finder approval;
+  after successful Ready and Quit, verify through the new CLI. Preserve the
+  original download ZIP and independently distribute the release-metadata digest
+  as an additional anchor. Safari/quarantine/translocation behavior remains a
+  named human observation, not an inferred pass or a quarantine-removal recipe.
+- **F4–F5:** Narrow the privacy statement to sanitized release metadata and
+  excluded private operational files: unchanged package/dependency paths can
+  identify the build workspace. Restore the native-demo human-acceptance pointer.
+- **F6:** Give generated metadata concrete assembly-only checks and remaining
+  acceptance items, with a real operator checklist. Exercise the complete
+  assembler workflow with synthetic files and narrow injected external effects;
+  the CLI retains fixed pins and no test override flags. Pin operator/bridge
+  copies to committed Git blobs, including assume-unchanged cases.
+
+Checkpoint A is the reviewed correction plan. B batches the guide, metadata and
+assembler tests, then runs affected tooling/docs checks. C freezes one candidate,
+updates the existing draft, obtains complete-diff review, and renews applicable
+exact-candidate CI. The strict current-HEAD package binding requires one fresh
+app/kit build after this batch; do not relax it just to reuse the old package.
+Verify the actual kit and shipped support, then serialize installed, old-to-new
+replacement and full synthetic demo checks to avoid timing-bound test contention.
+The demo check closes a named artifact gap, not human demo/client acceptance.
+Carry forward only explicitly unchanged runtime/source coverage. No extra local
+aggregate lifecycle gap selects a duplicate full migration gate. Keep all old
+receipts and failures; the old kit is superseded for recipient instructions.
+
+Do not require a particular merge method merely to make an artifact source an
+ancestor of main. Keep its exact source commit and archive reachable/retained in
+the handoff; any future rebuild must name its actual source. Human merge and
+distribution decisions remain with the owner.

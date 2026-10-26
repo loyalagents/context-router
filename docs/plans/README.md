@@ -20,6 +20,9 @@ The [in-app demo mode](active/in-app-demo-mode/plan.md) shipped in
 in/Open, reviewed Desktop apply and same-envelope model reuse are implemented.
 Deeper assistant supervision and retained-guard recovery remain separate
 follow-ups. Demo acceptance is not personal-mode Claude onboarding evidence.
+Hands-on acceptance of the native setup controls remains pending in the
+[native setup plan](active/native-demo-assistant-setup/plan.md#review-correction-round);
+merged implementation and automated checks do not close it.
 
 The [MCP client permissions slice](active/mcp-client-permissions/README.md)
 shipped in [PR #187](https://github.com/loyalagents/context-router/pull/187):

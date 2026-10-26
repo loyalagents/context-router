@@ -2,8 +2,9 @@
 
 This kit supports a helper-led personal-mode trial. `release.json` identifies
 the source, app archive, external full-byte receipt and standalone bridge/Node.
-It does not certify a recipient's Mac. The release handoff must list passed
-checks and remaining human acceptance separately. No reset release is designated.
+It does not certify a recipient's Mac. The release handoff must include the
+[acceptance record](#acceptance-record), separating assembly integrity, other
+automated evidence and human acceptance. No reset release is designated.
 
 ## Prerequisites and trust
 
@@ -24,12 +25,24 @@ service. Saved facts can be read over MCP without a local model. Claude may send
 retrieved data to its provider; choose documents and grants accordingly.
 
 Get the kit ZIP **and its exact SHA-256 from the helper through an independently
-trusted channel**. A checksum inside the same download is only integrity evidence.
+trusted channel**. Also receive `releaseMetadataSha256` from the helper's
+`handoff.json`; this independently pins the extracted `release.json` as a second
+anchor. A checksum inside the same download is only integrity evidence.
 Ad-hoc sealing supplies neither publisher authentication nor notarization. Do not
 publish the binary or invite colleagues until the owner approves that milestone.
 
+Preserve the original ZIP. Before downloading in Safari, turn off **Safari →
+Settings → General → Open “safe” files after downloading** (see
+[Apple's General settings](https://support.apple.com/guide/safari/ibrw1072/mac)).
+If the browser already expanded it, recover the exact original ZIP if available
+or download it again without auto-opening. Do not recreate a ZIP from the expanded
+folder or treat its own checksums as a trusted substitute. The route below still
+requires the original ZIP hash; the second anchor adds a check, not a bypass.
+
 ## Verify and place the app
 
+For an existing installation, start with [Replacement, reconnect and recovery](#replacement-reconnect-and-recovery)
+before following this section. It supplies the old-app backup/retirement order.
 Use actual absolute paths. Replace every placeholder before running a block.
 Commands below create new destinations; do not rerun them over existing files.
 Keep the original downloaded archive until acceptance is complete.
@@ -42,6 +55,8 @@ stage="$HOME/Context-Router-alpha-staging-SOURCE12"
 mkdir -m 700 "$stage"
 ditto -x -k "$archive" "$stage"
 kit="$stage/Context-Router-alpha-SOURCE12"
+LC_ALL=C shasum -a 256 "$kit/release.json"
+# Compare exactly with the independently supplied releaseMetadataSha256.
 (cd "$kit" && LC_ALL=C shasum -a 256 -c SHA256SUMS)
 ```
 
@@ -61,7 +76,6 @@ codesign --verify --deep --strict "$app"
 LC_ALL=C shasum -a 256 "$app/Contents/Resources/package-manifest.json"
 # Compare with release.json app.manifestSha256 before executing app code.
 router_cli="$app/Contents/MacOS/context-router"
-"$router_cli" verify-package
 ```
 
 The operator assembler verifies the complete external byte receipt against both
@@ -70,14 +84,30 @@ independently pinned ZIP hash binds those bytes; strict seal/native verification
 checks extraction. A manifest hash alone does not pin the executable/resource
 seal. Never change files inside the app or re-sign it to bypass a failure.
 
-Open this exact app in Finder. If macOS blocks an unidentified/unnotarized app,
+The steps above do not execute app code. Do not run `router_cli` yet. For an
+upgrade, finish the old-app retirement and variable reassignment below first.
+Open this exact app from its version directory in Finder; do not use Spotlight,
+Launchpad or an old Dock shortcut to choose among copies. If macOS blocks an unidentified/unnotarized app,
 follow Apple's per-app **System Settings → Privacy & Security → Open Anyway**
 only after trust and integrity checks. A damaged/malware alert, missing override
 or organization policy refusal is a stop-and-diagnose outcome. Do not disable
 Gatekeeper globally or remove quarantine. See
 [Apple's instructions](https://support.apple.com/en-us/102445).
-Record how it was downloaded, quarantine/prompt observations and prior approval
-history. A local extraction or cached approval is not fresh-Mac launch evidence.
+Wait for the CR menu to reach Ready, then choose **Quit Context Router** and wait
+for successful completion before the first CLI invocation:
+
+```sh
+# app must still name the exact newly approved version.
+router_cli="$app/Contents/MacOS/context-router"
+"$router_cli" verify-package
+```
+
+If this CLI invocation is blocked, preserve the exact error and stop for the
+helper; Finder approval must not be assumed to qualify every executable. Do not
+strip quarantine. Record the download/extraction route, Finder and CLI prompts,
+quarantine/translocation observations and prior approval history. Reopen the
+same exact app in Finder to continue. A local extraction or cached approval is
+not fresh-Mac launch evidence.
 
 ## Unlock, model and document rehearsal
 
@@ -88,7 +118,8 @@ managers can retain copied codes. Closing the browser leaves CR running.
 
 Verify the no-model dashboard first. With the recipient's consent, choose
 **Download Qwen3.5 9B model…**. The pinned Q4_K_M asset is 5,680,522,464 bytes;
-the menu requires at least 6.8 GB free for that operation. Allow separately for
+the menu advises 6.8 GB free for that operation. The downloader enforces model
+bytes plus 1 GiB (6,754,264,288 bytes). Allow separately for
 archives, extracted/staged/retained apps, support, partial downloads, documents,
 state and backups. A practical starting allowance is **10 GB free for a fresh
 trial**, plus existing retained apps/backups; this is a planning allowance, not
@@ -145,7 +176,11 @@ read-only module/receipt files, a regular executable Node without group/other
 write permission, and canonical trusted ancestry. Inspect extracted Node
 directories too. The Node binary digest is
 `e4b5a3af0e05c75de2eae013904145f40fe7fc2a6e6f17510128bf45cca4e79b`.
-Then check `"$node_bin" --version` returns `v24.21.0`. Do not substitute a PATH
+Then check `"$node_bin" --version` returns `v24.21.0`. This separately extracted
+Node may have its own quarantine/approval behavior; record its result and its
+later launch by Claude. If either is blocked, stop for the helper without
+removing quarantine or assuming the app's Finder approval covers Node.
+Do not substitute a PATH
 Node or npm/npx wrapper. Keep the bundled Node license with this separate copy.
 
 After **Quit Context Router** completes successfully, create a new private token
@@ -219,13 +254,43 @@ bridge never launches CR or automatically replays a mutation.
 
 ## Replacement, reconnect and recovery
 
-Before replacing an app, successfully Quit it, run `"$router_cli" backup`, and
-retain the completed backup path privately. Stage and verify the entire new app
-in a new version directory, then open that exact app against the same default
-envelope. Retain the previous app as evidence; do not run an older binary against
-newer state. Do not merge bundles or copy a live SQLite file. Same security epoch
-alone is not backward compatibility. Recheck facts, grants, history and verified
-model reuse. Existing standalone bridge paths do not change with app replacement.
+For replacement, explicitly identify the currently running version before
+changing shell variables. Successfully Quit it, then back up through that version:
+
+```sh
+previous_app='/absolute/path/to/previous/Context Router.app'
+previous_cli="$previous_app/Contents/MacOS/context-router"
+"$previous_cli" backup
+# Retain the reported completed backup path privately.
+```
+
+Keep the **original verified previous ZIP and its receipts** as evidence. If
+those are missing, stop for the helper before retiring the old app. Follow
+**Verify and place the app** through the non-executing checks, using a new unique
+version directory; stop before opening the new app. Then, in Finder, move only
+the identified previous `.app` to Trash and remove its old Dock shortcut. Do not
+delete the managed envelope, models, support, credentials or backup. This is a
+deliberate manual retirement step; neither the kit nor a background updater does
+it. Do not assume moving a still-launchable `.app` outside Applications prevents
+macOS from selecting it.
+
+Explicitly bind every subsequent command to the new verified app:
+
+```sh
+new_app='/absolute/path/to/new/version/Context Router.app'
+app="$new_app"
+router_cli="$app/Contents/MacOS/context-router"
+unset previous_cli
+```
+
+Use its exact Finder path, then Ready → successful Quit → `verify-package`, as
+above. Reopen that app against the same default envelope and check facts, grants,
+history and verified model reuse. Replace any retained Dock shortcut with this
+version only after checking its path. Do not use old Terminal variables or
+Spotlight/Launchpad to select a version. Keeping an old ZIP does not authorize
+running older code against newer state; equal security epochs do not establish
+backward compatibility. Do not merge bundles or copy a live SQLite file.
+Existing standalone bridge paths do not change with app replacement.
 
 For a bridge/Node update, stage a new verified support version, review the
 configuration path changes with Claude closed, preserve the old config/support,
@@ -295,9 +360,16 @@ node scripts/local-migration/installation/assisted-alpha-kit.mjs \
 
 The assembler accepts only a package receipt matching the current clean commit;
 it reuses the existing strict package/external-byte verifier and verifies the
-extracted app ZIP. It includes only an explicit public-file allowlist. Detailed
-build logs/receipts and evidence remain private. `handoff.json` outside the kit
-records the final kit archive digest. Any failure retains its output for diagnosis;
+extracted app ZIP. Bridge and operator bytes must match committed Git blobs,
+including when Git status hides a working-tree change. It includes only an
+explicit public-file allowlist. The sanitized `release.json` excludes local
+paths; separate build logs/receipts, databases, credentials and qualification
+evidence remain private. The unchanged app and full-byte receipt can contain
+build/dependency paths, including the builder's account name. This kit does not
+redact or re-seal the existing package. Inspect that disclosure before sharing.
+`handoff.json` outside the kit records the final kit archive and release-metadata
+digests; provide both to the recipient through the trusted channel.
+Any failure retains its output for diagnosis;
 start a new output after resolving it, never label partial output ready.
 
 Run the selected source checks and actual extracted artifact checks, including
@@ -308,6 +380,38 @@ commands, results, failed attempts, normal process settlement and limitations.
 Move/copy temporary receipts into a durable private evidence folder before they
 can be reclaimed. Do not commit generated binaries, state, private evidence or
 client configuration. A source CI pass does not qualify the artifact.
+
+For the shipped-support proof, retain the runner source and its SHA-256 with the
+evidence. Copy the unchanged bridge CLI/credential/transport tests and observer
+fixture into an isolated tree, point its bridge import directory at the exact
+extracted kit modules, and run those tests with the kit's separately extracted
+and hash-verified Node. The test SDK may come from the verified packaged backend;
+the bridge itself uses Node builtins. Record the runner command, all test/module
+hashes, executable path/digest, SDK version, exit result and log. Use synthetic
+ephemeral endpoints; CLI EOF checks must not initialize against personal 8787.
+
+## Acceptance record
+
+`release.json` and `handoff.json` list only the integrity checks performed by
+assembly under `acceptance.verifiedByAssembly`. They are not runtime, CI or
+recipient acceptance receipts. The helper must accompany the handoff with a
+dated record for the exact kit digest, using **passed**, **failed** or **pending**
+for every row; list commands/receipt references for automated results and the
+named Mac/client/version plus sanitized observations for human results.
+
+| Evidence | Required record |
+| --- | --- |
+| Source qualification | Actual PR head/test-merge, CI runs/attempt and final receipts; input comparison to artifact source |
+| Actual artifact | Installed, replacement, full demo and shipped-support results; retain failed attempts and cleanup outcomes |
+| Downloaded launch | Preserved ZIP and both trusted hashes; extraction route, Finder/Gatekeeper/translocation, AppKit Ready, CLI after approval |
+| Model/document | Consent-bound download/restart, live review/save, and real-weight retention across replacement |
+| Personal Claude | Standalone Node quarantine/launch, exact config/client/account, permitted/denied reads, restart and >35-minute idle |
+| Demo | Native setup controls, external-client behavior, demo/personal separation and return on the exact build |
+| Recipient/release | Fresh-Mac compatibility and owner approval to distribute |
+
+Unperformed checks remain pending. A failed download/launch or test is never
+silently replaced by a later pass. Do not copy private paths, tokens, documents,
+raw configuration or tool-result payloads into the shareable human record.
 
 For disk accounting, include the outer kit ZIP (~app ZIP + Node archive), its
 unpacked payload, separately extracted app/support, downloaded model, retained
