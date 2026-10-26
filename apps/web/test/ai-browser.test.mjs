@@ -126,7 +126,7 @@ test('terminal and unknown launchers retain truthful setup and recovery guidance
       await f.page.getByText(expected, { exact: false }).waitFor();
       const text = (await f.page.locator('main').innerText()).replace(/\s+/g, ' ');
       assert.doesNotMatch(text, /CR → Restart|Download Qwen/);
-      if (launcher && configured) assert.match(text, /wait for their exits, then create a fresh model session with new credentials.*LOCAL_MODEL\.md/);
+      if (launcher && configured) assert.match(text, /wait for their exits, then create a fresh model session with new credentials.*Manual Local Model Preview runbook/);
       assert.equal(await f.page.locator('#form-file').isDisabled(), true);
     }
   }

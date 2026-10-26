@@ -112,7 +112,7 @@ export function AiControls({
             )
           ) : runtime?.launcher === 'terminal' ? (
             <>Start the terminal launcher with a qualified model configuration;
-              follow docs/useful/LOCAL_UI.md and docs/useful/LOCAL_MODEL.md.</>
+              follow the Local Dashboard and Manual Local Model Preview runbooks.</>
           ) : (
             <>Follow the model setup instructions for your launcher.</>
           )}
@@ -135,8 +135,8 @@ export function AiControls({
           ) : runtime?.launcher === 'terminal' ? (
             <>Check model setup. If recovery is needed, stop both the backend and
               inference processes and wait for their exits, then create a fresh
-              model session with new credentials as described in
-              docs/useful/LOCAL_MODEL.md.</>
+              model session with new credentials as described in the
+              Manual Local Model Preview runbook.</>
           ) : (
             <>Check your launcher for startup progress or recovery instructions.</>
           )}
