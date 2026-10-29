@@ -1,6 +1,6 @@
 # Local Application
 
-- Status: implemented foundation; assisted pilot preparation is active
+- Status: implemented foundation and alpha kit; demo setup/connections confirmed, remaining pilot acceptance active
 - Sources: `apps/desktop/`, backend local composition and storage modules,
   `apps/web/`; [migration closeout](LOCAL_MIGRATION_CLOSEOUT.md)
 
@@ -89,9 +89,12 @@ independent. See the
 [installed helper workflow](../useful/INSTALLED_MAC_APP.md#historical-demo-mode).
 Manual source UI does not advertise native menu controls. The user confirmed
 Codex/Claude Code/Desktop connectivity, permission restrictions, Quit/reopen
-persistence, reset and return to personal mode for merged PR #183. The separately
-activated [native setup controls](../plans/active/native-demo-assistant-setup/plan.md)
-require their own acceptance; that work does not broaden distribution support.
+persistence, reset and return to personal mode for merged PR #183. On October 29
+the user also confirmed full demo setup on the delivered `674750a` app, including
+Claude Code 2.1.299, Claude Desktop and Codex connections. See the
+[current acceptance record](../plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29).
+That confirmation does not enumerate a new local-model, permission-denial,
+idle/restart or reset matrix, or qualify personal-mode onboarding/distribution.
 
 ## Qualification And Known Limits
 
@@ -100,14 +103,14 @@ Do not turn merged code or automated checks into a broader support/release claim
 | Area | Current evidence or limitation |
 | --- | --- |
 | Installed platform | Measured MacBookPro18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Apple Silicon configurations need compatibility evidence; Windows/Linux installers are not qualified. |
-| Distribution | D passed strict whole-app ad-hoc verification and exact-byte Safari acquisition with quarantine. The user reported completing Open Anyway; the matching downloaded menu was observed. Normal test-menu Quit/cleanup remains pending; downloaded AppKit Ready/dashboard and model-enabled startup remain unproved. No Developer ID, notarization or publisher authentication; trusted colleague acquisition remains open. See [scoped D results](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12). |
+| Distribution | Integrated `674750a` app/kit passed package/archive/full-byte verification and automated artifact checks. Launch/demo readiness and later demo setup/connections were reported on the user's Mac. This does not establish a fresh download/quarantine route or another Mac. No Developer ID, notarization or publisher authentication; colleague acquisition/approval remains open. See [current acceptance](../plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29); [D's observations](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12) remain historical. |
 | Model | Pinned llama.cpp b11146 and Qwen3.5-9B Q4_K_M. One active operation, no queue. Text and qualified PDF text subset; no image/OCR support. See the exact configuration in the model runbook. |
 | Quality exception E | Known personal-email omission in the frozen adversarial extraction fixture; 18/21 recall (85.71%). The original quality scorer verdict remains FAILED. Not permission for wrong-person facts or other quality failures. |
 | Recovery exception H | A repeat production cancellation failed the five-second settlement requirement and latched AI unavailable. Later recovery observations do not erase that failure. Whole-generation owned-process shutdown and fresh inference credentials are required; retain data and compatible weights. |
 | Lifecycle | Normal restart/Quit and scoped sleep/wake observations exist. Candidate 14 fixes sleep consuming the shutdown budget; real sleep during shutdown, forced owner loss and cross-boot recovery remain unqualified. Fail closed on uncertain ownership. |
 | MCP | Credentials remain until revoked/rotated; sessions expire after 30 minutes idle and have bounded IDs/capacity. Claude Desktop showed the expiry failure and recovered on a separate explicit request after a direct 35-minute final-pair interval. Automatic client replay is not supported; never repeat an uncertain mutation before inspecting state/history. The controlled actual-Claude lost-reply check passed on retained B and its standalone bridge: one mutation/audit event, honest uncertainty, no replay and one explicit recovery read. C/D are not new actual-client observations. |
-| Upload/UI findings | Stale post-apply display was addressed in merged [PR #173](https://github.com/loyalagents/context-router/pull/173). D passed #170 rejection feedback and two response-injected #173 packaged UI journeys. Those #173 checks qualify UI wiring; the final gate separately renewed the real-backend/fake-model source-browser matrix. C's three temporary #170 UI attempts remain failed. Rejected PDF remains for triage. Possible wrong-person attribution is an active separate investigation owned by the “Fix wrong-person attribution” chat; it remains an invitation dependency, not accepted omission E or an included fix. |
-| Replacement/storage | Candidate 14-to-B, B-to-C and B-to-D rehearsals passed with synthetic state, authority continuity and sampled allocation. D passed all eleven installed smoke phases and four replacement phases. Prior personal-transition receipts separately support compatible real-model reuse; no new D model-startup or quality claim follows. Complete disk budgets remain open; see [current results](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12). |
+| Upload/UI findings | Stale post-apply display was addressed in merged [PR #173](https://github.com/loyalagents/context-router/pull/173); D's packaged UI evidence and C's earlier failures retain their scope. [PR #195](https://github.com/loyalagents/context-router/pull/195) adds installed-app AI setup/recovery guidance. The reported model-root and Claude executable-version confusion are tracked in [UI usability](../plans/backlog/ui-usability/README.md). Rejected PDF and remaining attribution disposition stay separate: the bounded [PR #177](https://github.com/loyalagents/context-router/pull/177) correction merged, but the unavailable original incident and broader cases are not diagnosed by it. |
+| Replacement/storage | `674750a` passed 15 installed, 4 prior-artifact replacement and 11 synthetic demo phases, including isolated persistence/authority checks. Same-envelope model reuse remains the contract; weights in an older trial envelope are not automatically used by the default installation. Earlier real-model transition evidence retains its original scope. Current live-model use/retention and complete colleague disk budgets remain separate; see [current acceptance](../plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29). |
 
 Exact receipts and negative evidence remain in the
 [evidence index](../evidence/local-migration/README.md). Candidate 13 live-model

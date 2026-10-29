@@ -1,19 +1,16 @@
 # Installed Mac Pilot
 
-Status: implemented foundation from merged [PR #168](https://github.com/loyalagents/context-router/pull/168).
-Final-head CI passed; see [scoped closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md)
-for evidence and [pilot preparation](../plans/active/colleague-pilot/README.md)
-for the next acceptance work. Original human acceptance was partial; neither merge
-nor this runbook qualifies distribution or every recovery scenario.
-This is a private build without Developer ID signing or notarization. The
-sealed D candidate passed strict ad-hoc whole-bundle verification, installed and
-replacement checks; it supplies no publisher authentication. Safari acquired the
-exact pinned bytes with quarantine. The user reported completing per-app Open
-Anyway, and the matching downloaded menu was observed. Normal test-menu Quit and
-cleanup remain pending; downloaded AppKit Ready/dashboard and model-enabled startup
-remain unproved. See [current results](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12). The declared
-pilot is MacBook Pro 18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Macs and
-native Windows/Linux are not qualified. The source/manual modes remain available.
+Status: foundation and assisted alpha kit implemented. The integrated `674750a`
+app passed automated installed/replacement/demo/support checks. On October 29 the
+user confirmed full demo setup, including Claude Code 2.1.299, Claude Desktop and
+Codex connections. See the [current acceptance record](../plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
+for exact identities and scope, and [migration closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md)
+for historical foundation evidence.
+This private build has no Developer ID signing or notarization. Reported launch
+and demo connections do not qualify personal-mode onboarding, every recovery
+scenario or a fresh download/quarantine route. The declared pilot is MacBook Pro
+18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Macs and native Windows/Linux
+remain unqualified. The source/manual modes remain available.
 
 ## Install And Use
 
@@ -32,10 +29,12 @@ refused as damaged: its executable-only ad-hoc signature does not seal the compl
 app bundle. That archive is not ready to share. Do not
 disable Gatekeeper or strip quarantine to treat this as a distributed release.
 
-The user selected the unsigned-publisher route. D repairs the integrity seal and
-includes the qualified #173 packaged UI wiring. Its local Safari/menu observation
-has the limits above; a trusted colleague acquisition channel and the remaining
-downloaded-app acceptance still need evidence. Keep the source revision,
+The user selected the unsigned-publisher route. The seal repair and D's scoped
+Safari/menu observations are retained in the
+[historical record](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12).
+The current kit uses the [assisted operator instructions](../../scripts/local-migration/installation/ASSISTED_ALPHA_OPERATOR.md).
+A trusted colleague acquisition channel and current downloaded-app acceptance
+still need evidence. Keep the source revision,
 app manifest, archive checksum and acquisition channel with each handoff. A local
 build or extracted temporary copy does not demonstrate downloaded-app Gatekeeper
 behavior. Scope remains the measured Mac above; another Mac is a compatibility trial.
@@ -82,6 +81,21 @@ without AI. Demo does not download models; installed model files remain retained
 slot. Quit/relaunch remembers the last successfully selected mode. Each switch
 closes existing browser/MCP sessions; use the newly opened dashboard and fresh
 client conversations.
+
+Model reuse is scoped to the selected managed envelope. Opening the `.app`
+normally uses the default envelope; a separately supplied `.command` launcher
+may explicitly select an older trial envelope. Check which entry point/root the
+helper configured before assuming that an earlier download is available. The
+October 27 report found retained weights in a different trial envelope, with no
+deletion reported; it did not demonstrate automatic migration between roots.
+Do not move or merge managed directories to make the two entry points agree.
+
+If the selected envelope has no model, the disabled download action in demo is
+intentional. Use **Return to personal mode…**, explicitly download the model in
+that same envelope, then **Enter demo mode…** and unlock the current dashboard.
+Choosing a different envelope can require a separate download; the helper should
+first establish which installation the user intends to use. No reset is needed
+merely to diagnose a missing model.
 
 Demo uses the same dashboard and navigation as personal mode, including Account
 Information, Profile Memory, Edit Profile, Preferences, Form Fill, Audit History,
@@ -167,7 +181,10 @@ approved Codex change → fresh Claude Code read → Audit History sequence; the
 artifact/version was not independently confirmed for those earlier A/B reports.
 The user subsequently confirmed Desktop prepare/apply/connect/read, permission
 restrictions, Quit/reopen persistence, reset and return to personal mode for
-merged PR #183. New native setup controls need separate hands-on acceptance.
+merged PR #183. On October 29 the user confirmed full demo setup with Claude Code
+2.1.299, Claude Desktop and Codex on the current delivered app. The confirmation
+does not enumerate every native control or repeat the historical acceptance
+matrix; see the [current record](../plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29).
 
 Discovery accepts the exact qualified native arm64 foreground CLI, rejecting
 arbitrary shell/Node/npm wrappers. Use **Choose executable…** to select the native
@@ -180,6 +197,15 @@ version/isolation settings with empty temporary profiles before using a stable
 per-role login. Claude uses its dedicated config and workspace; macOS OS-account
 HOME is retained only for Keychain discovery. Background/agent-view tasks are
 disabled and behavior-probed. Only this role's MCP credential enters the client.
+
+If the default Claude Code resolves to a newer version, a refusal does not mean
+the app lost the connection settings. This alpha qualifies **2.1.299**; the
+October 27 default resolved to **2.1.311** and was refused. If a trusted retained
+2.1.299 native executable is available, select it with **Demo setup… → Claude
+Code → Choose executable…**, then use **Sign in/Open**. Selection/inspection
+alone does not prove login or retrieval. The October 29 user report confirms
+the connection on 2.1.299; newer versions remain outside this qualification.
+
 The guard covers the qualified native foreground invocation. Normal owned-client
 exit is its supported completion boundary; observed ownership loss or abnormal
 termination retains refusal. It does not promise arbitrary descendant extinction.

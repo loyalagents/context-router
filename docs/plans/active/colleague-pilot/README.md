@@ -1,16 +1,18 @@
 # Assisted Colleague Pilot
 
-- Status: assisted alpha kit preparation active; [current scope and evidence requirements](assisted-alpha.md)
-- Priority: current primary outcome; [plan and evidence](plan.md)
-- Owner: product owner; `/root` is current delivery integrator on `codex/assisted-mac-alpha-kit`; earlier seal-repair ownership is historical
+- Status: kit implementation merged; integrated artifact checks passed; demo setup/connections user-confirmed; [current acceptance](assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
+- Priority: current primary outcome; [current record](assisted-alpha.md) and [historical evidence](plan.md)
+- Owner: product owner; earlier implementation and seal-repair assignments are historical
 - Audience: a few Git-capable colleagues, initially Apple Silicon Macs
 
 Current qualification is limited to the measured M1 Max / 64 GiB / macOS 15.1.1
 Mac, per the user's decision. Other Macs remain later compatibility trials.
-The current PR finishes at a reviewed kit, scoped rehearsal and draft PR; actual
-colleague acceptance remains later. The [older delivery record](plan.md) retains
-source/artifact-bound evidence and outstanding human acceptance, not current
-implementation assignments.
+PR #194's kit milestone is complete. The delivered `674750a` app also contains
+PR #195's guidance; October 27 artifact checks passed and the user confirmed
+full demo setup with all three assistants on October 29. Personal-mode and
+remaining live-use/distribution acceptance remain separate. The
+[older delivery record](plan.md) retains source/artifact-bound evidence and
+outstanding historical observations, not current implementation assignments.
 
 ## Outcome And Agreed Choices
 
@@ -161,8 +163,10 @@ No automatic merging, releases, resets or broad recovery operations.
 The user selected the assisted unsigned-publisher route, the standalone bridge
 with separately pinned Node, and qualification on the measured Mac. The agreed
 milestone includes seal repair, compatible replacement, downloaded launch and
-required final validation. The [current results](plan.md#d-results-and-review-follow-up-2026-10-12)
-record D's scoped acceptance and remaining manual limits; the
+required final validation. The [current checkpoint](assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
+records the integrated kit and demo confirmation. The
+[historical D results](plan.md#d-results-and-review-follow-up-2026-10-12)
+retain D's scoped acceptance and remaining manual limits; the
 [dated freeze checkpoint](plan.md#integrated-candidate-freeze-2026-10-12) preserves
 the earlier pending state. Subsequent immutable receipts remain in
 [PR #174](https://github.com/loyalagents/context-router/pull/174). Cohort invitation,

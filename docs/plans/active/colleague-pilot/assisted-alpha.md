@@ -1,11 +1,70 @@
 # Assisted Mac alpha kit
 
-- Status: initial draft qualification complete; external-review corrections in progress
-- Owner: `/root`, sole writer/integrator in the main checkout
-- Branch: `codex/assisted-mac-alpha-kit`
-- Base: verified GitHub main `a2ed2b95` on 2026-10-25
-- Finish line: reviewed kit, scoped rehearsal, required validation and one draft PR;
-  colleague acceptance and permission to distribute remain later milestones
+- Status: kit implementation merged in PR #194; integrated artifact checks passed; user confirmed demo setup and three assistant connections on 2026-10-29
+- Delivery owner: product owner; the implementation assignments below are historical
+- Historical implementation branch/base: `codex/assisted-mac-alpha-kit`, verified main `a2ed2b95` on 2026-10-25
+- Next milestone: remaining live-use and personal-mode acceptance, then an approved assisted colleague trial
+
+## Current delivery and demo acceptance: 2026-10-29
+
+The delivered app and kit use clean main
+`674750aa46bca79401eabdb732e726e47742690c`, including
+[PR #194](https://github.com/loyalagents/context-router/pull/194) and
+[PR #195](https://github.com/loyalagents/context-router/pull/195). This replaces
+the earlier kit as the current delivery reference; older artifacts and their
+receipts retain their original scope. No repository source changes were made
+during the reported installation round.
+
+| Identity | Value |
+| --- | --- |
+| Kit | `Context-Router-alpha-674750aa46bc.zip` |
+| Kit SHA-256 | `3dc3cebcb476bf97c90e639c1635cbb89a003df994b44ddeba3d0006d0f70c24` |
+| Copied-input SHA-256 | `6676d72e8e87b3c5bc56f08e5490780696c3b0159cae0ce03ef79b5c3ff3aab5` |
+| Release metadata SHA-256 | `f21f28558c60b730bb52acbe235aa9bc3780fdc7f3aba09bbcb6ac73fe916c34` |
+
+The private automated record is retained under
+`out/assisted-alpha/main-674750a/evidence/qualification.json`. It was recorded
+on October 27 before the later manual observations and is unchanged. Its
+remaining-acceptance fields describe that earlier checkpoint. The operator's
+report and the user's subsequent confirmation supply the separate human
+observations below; no new automated or live-model run is claimed here.
+
+| Evidence | Recorded result and scope |
+| --- | --- |
+| Automated artifact checks, October 27 | Package/archive/full-byte and strict bundle verification passed; exact shipped bridge/Node support passed. Installed suite: 15 phases; prior-artifact replacement: 4 phases; full synthetic demo: 11 phases. The qualification record reports no cleanup failures. These are isolated synthetic checks, not live provider or model acceptance. |
+| Source validation | The delivery report records matching PR #195 tree validation and independent reviews. Current-source [CI](https://github.com/loyalagents/context-router/actions/runs/40460444215) and [migration qualification](https://github.com/loyalagents/context-router/actions/runs/40460444191) passed on `674750a`. |
+| Initial manual use, October 27 | The operator report records launch on the user's Mac and a screenshot showing **Demo ready · model not installed**. This establishes the reported AppKit/demo launch, without proving a fresh downloaded/quarantined launch route. |
+| Demo setup, October 29 | The user confirmed completing the full demo setup, including connections to **Claude Code 2.1.299, Claude Desktop and Codex in demo mode**. This supersedes the earlier unconfirmed demo-connection status. The latest confirmation does not specify the Desktop or Codex versions. |
+
+Two setup problems were observed during the October 27 session:
+
+- Opening the `.app` selected the default managed envelope, which had no model;
+  an existing demo `.command` selected an older trial envelope that retained
+  verified model weights. Nothing was reported deleted. Model reuse is within
+  the selected envelope, not automatic discovery across trial roots. Demo
+  download is disabled; the supported setup path is personal-mode download in
+  that same envelope, followed by return to demo. The later demo-setup
+  confirmation does not identify the final root or a specific local-model run.
+- The default Claude Code resolved to 2.1.311, while this alpha qualifies
+  2.1.299. The retained 2.1.299 executable passed inspection; the user later
+  confirmed connecting on that version. This does not qualify 2.1.311 or
+  authorize relaxing executable checks. See the
+  [runbook](../../../useful/INSTALLED_MAC_APP.md#historical-demo-mode) and
+  [bounded usability follow-ups](../../backlog/ui-usability/README.md).
+
+**Still separate:** a specifically observed local-AI operation/document
+review/save in the chosen envelope; current personal-mode Claude Desktop
+onboarding; current-build permission-denial, idle/reconnect and Quit/reopen/reset
+acceptance details not enumerated in the latest confirmation; downloaded
+Gatekeeper/translocation behavior, another Mac and owner approval to distribute.
+Historical checks retain their own evidence; the general demo-setup confirmation
+does not stand in for that entire matrix. Model E/H limits and the remaining
+PDF/attribution disposition are unchanged. No reset or model relocation is
+authorized by this documentation update.
+
+The following sections preserve the reviewed PR #194 implementation and its
+dated commitments. Their old writer assignments and future-tense checkpoints
+do not reopen completed implementation work or override the current status above.
 
 ## Inventory and scope
 
