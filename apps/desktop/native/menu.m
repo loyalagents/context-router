@@ -42,7 +42,9 @@
   [self add:@"Cancel demo preparation" action:@selector(cancelDemo:) key:@"cancel-demo" menu:menu];
   [self add:@"Return to previous mode" action:@selector(returnPrevious:) key:@"return-previous" menu:menu];
   [self add:@"Retry demo preparation…" action:@selector(retryDemo:) key:@"retry-demo" menu:menu];[menu addItem:[NSMenuItem separatorItem]];
-  [self add:@"Download Qwen3.5 9B model…" action:@selector(downloadModel:) key:@"download" menu:menu];[self add:@"Cancel download" action:@selector(cancelDownload:) key:@"cancel" menu:menu];[menu addItem:[NSMenuItem separatorItem]];
+  [self add:@"Download Qwen3.5 9B model…" action:@selector(downloadModel:) key:@"download" menu:menu];
+  [self add:@"Model setup and location…" action:@selector(modelSetup:) key:@"model-setup" menu:menu];
+  [self add:@"Cancel download" action:@selector(cancelDownload:) key:@"cancel" menu:menu];[menu addItem:[NSMenuItem separatorItem]];
   [self add:@"Restart local runtime…" action:@selector(restart:) key:@"restart" menu:menu];[self add:@"Quit Context Router" action:@selector(quit:) key:@"quit" menu:menu];_status.menu=menu;
   NSNotificationCenter *center=NSWorkspace.sharedWorkspace.notificationCenter;
   [center addObserver:self selector:@selector(sleepWake:) name:NSWorkspaceWillSleepNotification object:nil];[center addObserver:self selector:@selector(sleepWake:) name:NSWorkspaceDidWakeNotification object:nil];
@@ -75,6 +77,9 @@
   _items[@"reset-demo"].enabled=active&&demo&&!_demoOperation;_items[@"setup-demo"].enabled=active&&demo;
   _items[@"cancel-demo"].enabled=_preparingDemo&&!_demoFailed&&!_stopping&&!_broken;
   for(NSString *key in @[@"return-previous",@"retry-demo"])_items[key].enabled=_demoFailed&&!_stopping&&!_broken;
+  _items[@"download"].title=demo?@"Download model — personal mode only":@"Download Qwen3.5 9B model…";
+  _items[@"download"].toolTip=demo?@"Demo reuses verified models in the same data location. Choose Model setup and location… for setup steps.":nil;
+  _items[@"model-setup"].enabled=!_quitting;
   _items[@"download"].enabled=active&&!demo&&!_download;_items[@"cancel"].enabled=active&&_download&&!_cancelPending;_items[@"quit"].enabled=!_quitting;[self updateDemoActions];
   if(!_quitting&&!_broken&&!_stopped){if(_demoOperation.ownershipLost)_label.title=@"Setup ownership uncertain — state retained";else if(_demoQuitPending)_label.title=@"Quit pending — finishing setup shutdown…";}
 }
@@ -112,7 +117,7 @@
   }else if([type isEqual:@"ready"]){
     if(_ready||!CRExact(record,@[@"version",@"generation",@"type",@"origin",@"mcpOrigin",@"unlockFile",@"modelEnabled"])||CFGetTypeID((__bridge CFTypeRef)record[@"modelEnabled"])!=CFBooleanGetTypeID()||!CRPattern(record[@"mcpOrigin"],@"http://127\\.0\\.0\\.1:[1-9][0-9]{0,4}/mcp")||[NSURL URLWithString:record[@"mcpOrigin"]].port.integerValue>65535)CRFail();
     [self origin:record[@"origin"]];[self unlock:record[@"unlockFile"]];_mcpOrigin=record[@"mcpOrigin"];_ready=YES;
-    if(!_stopping&&!_quitting){_label.title=[NSString stringWithFormat:@"%@ · %@",[_mode isEqual:@"demo"]?@"Demo ready":@"Dashboard ready",[record[@"modelEnabled"] boolValue]?@"AI loading":@"model not installed"];if(_sleepInvalidated)[self send:@"model-unavailable"];}
+    if(!_stopping&&!_quitting){_label.title=[NSString stringWithFormat:@"%@ · %@",[_mode isEqual:@"demo"]?@"Demo ready":@"Dashboard ready",[record[@"modelEnabled"] boolValue]?@"AI loading":@"AI not enabled"];if(_sleepInvalidated)[self send:@"model-unavailable"];}
     if(_quitting){_stopping=YES;[self send:@"quit"];}
     else if(!_stopping&&!_broken&&_openOnReady){_openOnReady=NO;[self openDashboard:nil];}
   }else if([type isEqual:@"unlock"]){
@@ -151,6 +156,18 @@
 - (void)openDashboard:(id)sender {(void)sender;if(_ready&&_origin)[NSWorkspace.sharedWorkspace openURL:[NSURL URLWithString:_origin]];}
 - (void)newUnlock:(id)sender {(void)sender;if(_ready)[self send:@"unlock"];}
 - (void)copyUnlock:(id)sender {(void)sender;if(_stopping||_quitting)return;@try{NSString *code=[self code];[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:code forType:NSPasteboardTypeString];}@catch(NSException *e){(void)e;_unlockFile=nil;_label.title=@"Request a new unlock code";}[self update];}
+- (NSAlert *)modelSetupAlert {
+  NSAlert *alert=[NSAlert new];alert.messageText=@"Model setup and location";
+  alert.informativeText=@"Demo reuses verified model files from the same data location. Downloads are available only in personal mode.\n\nTo set up AI for demo, keep this app and data location:\n1. Return to personal mode…\n2. Choose Download Qwen3.5 9B model… if needed and wait for completion.\n3. Choose Restart local runtime…, then Enter demo mode…\n\nDifferent launch entry points, such as Finder and a custom launcher, can select different data locations. Models in another location are not automatically shared. Use the same launch entry point when returning.";
+  NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(0,0,580,110)];scroll.hasVerticalScroller=YES;
+  NSTextView *locations=[[NSTextView alloc] initWithFrame:scroll.contentView.bounds];locations.identifier=@"model-setup-locations";
+  locations.editable=NO;locations.selectable=YES;locations.font=[NSFont systemFontOfSize:12];
+  locations.horizontallyResizable=NO;locations.verticallyResizable=YES;locations.autoresizingMask=NSViewWidthSizable;
+  locations.textContainer.widthTracksTextView=YES;
+  locations.string=[NSString stringWithFormat:@"App: %@\n\nData and models: %@",_bundle,_root];
+  scroll.documentView=locations;alert.accessoryView=scroll;[alert addButtonWithTitle:@"Done"];return alert;
+}
+- (void)modelSetup:(id)sender {(void)sender;[[self modelSetupAlert] runModal];}
 - (void)downloadModel:(id)sender {
   (void)sender;NSAlert *alert=[NSAlert new];alert.messageText=@"Download Qwen3.5 9B?";alert.informativeText=@"Download the pinned Q4_K_M model (5,680,522,464 bytes, about 5.7 GB) from unsloth on Hugging Face for local AI. Allow at least 6.8 GB free space. The dashboard stays available. A runtime restart is required afterward.";[alert addButtonWithTitle:@"Download"];[alert addButtonWithTitle:@"Cancel"];
   if([alert runModal]==NSAlertFirstButtonReturn&&_ready&&!_stopping){_download=YES;[self send:@"download"];}[self update];
@@ -253,7 +270,7 @@
 - (void)completeDemoQuit {[NSApp terminate:nil];}
 - (NSString *)demoFailureMessage:(CRDemoOperation *)operation request:(NSDictionary *)request {
   if(operation.failure.length)return operation.failure;
-  NSString *fallback=[request[@"kind"] isEqual:@"inspect"]?@"Client unavailable. Choose a trusted native Codex 0.160.0 or Claude Code 2.1.299 executable. No assistant started.":[request[@"kind"] isEqual:@"prepare"]?@"Setup could not be prepared. Inspect retained setup state before retrying.":@"Apply is not confirmed. Inspect retained setup state; do not replay an uncertain apply.";
+  NSString *fallback=[request[@"kind"] isEqual:@"inspect"]?@"Client unavailable. Use Choose executable… to select a qualified native executable. Its version and isolation checks must pass before an assistant starts.":[request[@"kind"] isEqual:@"prepare"]?@"Setup could not be prepared. Inspect retained setup state before retrying.":@"Apply is not confirmed. Inspect retained setup state; do not replay an uncertain apply.";
   if(operation.cancelled)return fallback;
   // Raw stderr can contain loader or pre-import diagnostics. Only the complete,
   // explicitly requested helper envelope carries a safe user-facing reason.
