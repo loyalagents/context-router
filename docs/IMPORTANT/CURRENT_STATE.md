@@ -37,22 +37,21 @@ weights, security floor and ownership checks. Do not delete metadata to bypass
 uncertain state. Personal data, downloads, client configuration and live model
 runs need their own bounded authorization.
 
-Do not claim a general release: the app has no Developer ID or notarization; measured installed
-hardware is M1 Max/64 GiB/macOS 15.1.1. Other hardware, signed distribution,
-cross-boot/forced-loss recovery and complete colleague disk budgets need evidence.
-Controlled Candidate 14-to-corrected-app replacement now has scoped synthetic
-state/authority evidence; prior personal-transition receipts support real-asset
-reuse. The Safari-quarantined B archive was refused as damaged; whole-bundle
-sealing is repaired. Integrated D includes #173's saved-preference refresh and
-#175's bounded packaging traversal. D passed installed/replacement and #170/#173
-packaged UI checks; its source passed the full local gate and exact-head CI. The
-user reported completing per-app Open Anyway, and the matching downloaded menu
-was observed. Normal test-menu Quit still needs confirmation and cleanup evidence;
-downloaded AppKit Ready/dashboard and model-enabled startup remain unproved.
-See [current scoped results](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12).
-Model quality/cancellation exceptions E/H, rejected PDF and the separately active
-wrong-person-attribution investigation remain invitation dependencies. No
-attribution implementation is included here.
+The current `674750a` app/kit includes merged #194 delivery tooling and #195 AI
+guidance. October 27 automated checks passed: installed 15 phases, replacement
+4, synthetic demo 11 and shipped bridge/Node support. On October 29 the user
+confirmed full demo setup, including Claude Code 2.1.299, Claude Desktop and Codex
+connections in demo mode. The [current acceptance record](../plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
+separates those observations from personal-mode onboarding, specific local-AI
+operations and the remaining manual acceptance. Earlier artifact receipts and
+negative evidence retain their historical scope.
+
+Do not claim a general release: the app has no Developer ID or notarization;
+measured installed hardware is M1 Max/64 GiB/macOS 15.1.1. Fresh downloaded-launch
+and other-Mac acceptance, cross-boot/forced-loss recovery and complete colleague
+disk budgets remain separate. Model quality/cancellation exceptions E/H and the
+remaining PDF/attribution disposition are unchanged. The bounded attribution
+correction merged in #177; it does not diagnose the unavailable original incident.
 
 Follow [AGENTS.md](../../AGENTS.md) and [the workflow](../useful/AGENT_WORKFLOW.md).
 One writer owns the main playground checkout; independent worktree tasks need

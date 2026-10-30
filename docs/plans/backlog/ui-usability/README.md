@@ -1,22 +1,23 @@
 # Local UI Usability Follow-Up
 
-- Status: item 2 is activated in the [MCP client names plan](../../active/mcp-client-names/README.md); other items remain backlog; item 7 is implemented in merged [PR #173](https://github.com/loyalagents/context-router/pull/173), with two scoped packaged D UI journeys passed in the pilot
+- Status: client names (#181), saved-preference refresh (#173) and dashboard AI guidance (#195) merged; remaining native guidance and presentation items are backlog
 - Outcome owner: product owner and next assigned UI coordinator
 - Trigger: pilot triage; fixes for blocked tasks, false success or privacy outrank polish
 - Source: [Step 08 user-run acceptance](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/08-local-ui/implementation.md#2026-10-04-user-run-browser-and-native-client-acceptance)
-- Last reviewed: 2026-10-12
+- Last reviewed: 2026-10-29
 
 Keep this a focused cleanup of the existing dashboard and packaged menu:
 
 1. Make rejected-grant feedback prominent and close to the attempted action.
    This is the strongest candidate for a small earlier follow-up.
 2. Show configured MCP client labels prominently in history, retaining IDs for
-   disambiguation and as a fallback when labels are missing. The activated
+   disambiguation and as a fallback when labels are missing. The merged
    [client names slice](../../active/mcp-client-names/README.md) also includes shared
    current-name presentation, browser/CLI rename and exact-instance View activity.
 3. Show concise before/after preference values in collapsed history rows, with
    full snapshots available on expansion.
-4. Put recovery guidance beside the dashboard's AI status. Consider a
+4. Dashboard AI setup/recovery guidance shipped in
+   [PR #195](https://github.com/loyalagents/context-router/pull/195). Consider a
    **Restart local runtime** action for the packaged Mac app, requested during
    Step 09 sleep/wake acceptance on 2026-10-10 and explicitly deferred. It must
    require an authenticated browser and confirmation, reuse the native guardian's
@@ -28,13 +29,32 @@ Keep this a focused cleanup of the existing dashboard and packaged menu:
    acceptance; preserve verified-asset checks and explicit download consent.
 6. Distinguish an AI check that can be retried from terminal states requiring
    Restart, and avoid the sleep-related AI label when no model is installed.
-   The Step 09 external review identified both conservative presentation cases;
-   preserve unavailable states and explicit recovery requirements underneath.
+   PR #195 supplies bounded check/loading/restart guidance in the dashboard;
+   native labels remain a separate follow-up. The Step 09 external review
+   identified both conservative presentation cases; preserve unavailable states
+   and explicit recovery requirements underneath.
 
 7. Refresh confirmed applied preferences without requiring a manual page reload.
    Reproduce the Step 09 report and preserve partial/uncertain mutation outcomes;
    display refresh must not retry or duplicate writes. This is prioritized for
    pilot triage by the [stabilization brief](../stabilization/README.md).
+
+8. Explain the disabled model-download action in demo and make the selected
+   installation/model location understandable. The October 27 report used two
+   launch entry points selecting different envelopes; only the older trial root
+   held weights. Start with clear guidance about same-envelope reuse and the
+   personal-mode download path. No automatic model relocation, directory merge,
+   reset or download is implied.
+9. Make a refused assistant version actionable: show the expected version and
+   the existing **Choose executable…** path. Claude Code 2.1.311 was refused;
+   retained 2.1.299 passed inspection and the user confirmed its demo connection
+   on October 29. Automatic discovery of retained versions is a separate option;
+   do not broaden qualified versions or weaken executable validation.
+
+Items 8–9 come from the [current delivery and demo report](../../active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29).
+Successful later setup does not remove the earlier UX friction or activate a
+new implementation. The [installed runbook](../../../useful/INSTALLED_MAC_APP.md#historical-demo-mode)
+records the supported manual paths.
 
 Preserve truthful confirmed/uncertain mutation outcomes, per-instance authority,
 and masking of sensitive or unknown-sensitivity history. Labels are display

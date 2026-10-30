@@ -1,7 +1,12 @@
 # Native demo assistant setup
 
-Status: user activated retained local-model reuse for a targeted smart-search trial; final validation remains pending.
-One cohesive draft PR; do not merge automatically.
+Status: implementation merged in PR #184. On October 29 the user confirmed full
+demo setup, including Claude Code 2.1.299, Claude Desktop and Codex connections
+on the delivered `674750a` app. See the
+[current acceptance record](../colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
+for source/artifact evidence and the remaining live-use/personal-mode limits.
+The sections below retain the historical implementation, review and trial
+checkpoints; their pending statements do not override that later confirmation.
 
 ## Outcome and ownership
 

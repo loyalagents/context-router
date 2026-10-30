@@ -4,16 +4,14 @@ A local-first preference/context application: import documents, review suggested
 preferences, manage scoped access, and share context with MCP clients. The managed
 Apple Silicon Mac candidate runs its database, dashboard and selected model locally.
 
-The migration foundation is delivered. **Assisted pilot qualification is active.**
-Claude Code/Codex CLI have scoped local evidence.
-Claude Desktop's standalone bridge has passed the main client checks; its live
-controlled uncertain-mutation follow-up passed. Whole-app sealing is repaired;
-artifact D passed installed, replacement and packaged UI checks, with scoped
-Safari launch evidence and full validation on its source. Downloaded-menu cleanup
-and Ready/dashboard acceptance remain open; see the
-[current pilot results](docs/plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12).
-ChatGPT desktop follows; this is not a qualified general release.
-See [current support and limitations](docs/current/LOCAL_APPLICATION.md).
+The migration foundation and assisted install kit are delivered.
+**Assisted pilot acceptance is active.** The integrated `674750a` app passed its
+automated artifact checks. On October 29 the user confirmed full demo setup,
+including Claude Code 2.1.299, Claude Desktop and Codex connections in demo mode.
+See the [current delivery and acceptance record](docs/plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29).
+Personal-mode onboarding and remaining live-use/distribution checks are separate;
+this is not a qualified general release. See
+[current support and limitations](docs/current/LOCAL_APPLICATION.md).
 
 ## Use Or Work On The App
 
