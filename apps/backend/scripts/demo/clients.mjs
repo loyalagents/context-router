@@ -114,7 +114,7 @@ export function preflightClient(spec) {
     if (result.status !== 0) throw safeError('Unsupported client or isolation settings. No assistant was started.');
     return result.stdout;
   };
-  if (!run(['--version']).trim().split(/\s+/).includes(spec.version)) throw safeError('Unsupported client version; revalidate isolation controls before using it.');
+  if (!run(['--version']).trim().split(/\s+/).includes(spec.version)) throw safeError(`Unsupported client version. This demo requires ${spec.command === 'claude' ? 'Claude Code' : 'Codex'} ${spec.version}; newer releases are not qualified. Use Choose executable… in Demo setup to select an existing qualified native executable, or install this version. No assistant was started.`);
   const help = run(['--help']);
   const required = spec.command === 'claude' ? [spec.auth === 'subscription' ? '--restricted' : '--bare', '--strict-mcp-config', '--tools', '--setting-sources', '--disable-slash-commands', '--no-chrome'] : ['--no-daemon', '--strict-config', '--sandbox'];
   if (required.some(flag => !help.includes(flag))) throw safeError('Unsupported client isolation controls.');

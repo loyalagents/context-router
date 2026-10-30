@@ -4,6 +4,7 @@
 @interface CRMenu (SetupFixtureVisible)
 - (NSAlert *)demoSetupAlert;
 - (NSPasteboard *)demoSetupPasteboard;
+- (NSAlert *)modelSetupAlert;
 @end
 @interface FixtureGuardian : NSObject
 @property(nonatomic,getter=isRunning) BOOL running;
@@ -39,6 +40,27 @@ int main(int argc,const char *argv[]){@autoreleasepool{@try{
   SetupMenu *menu=[[SetupMenu alloc] initWithBundle:[root stringByAppendingPathComponent:@"Demo App's.app"] root:[root stringByAppendingPathComponent:@"Root's demo"]];
   check([menu respondsToSelector:@selector(demoSetupAlert)],@"Demo setup must expose grouped copy actions without text selection");
   [NSApplication sharedApplication];[NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+  check([menu respondsToSelector:@selector(modelSetupAlert)],@"Model setup must explain the disabled download and selected location");
+  NSAlert *model=[menu modelSetupAlert];
+  for(NSString *phrase in @[@"only in personal mode",@"same data location",@"Return to personal mode…",@"Download Qwen3.5 9B model…",@"Restart local runtime…",@"Enter demo mode…",@"launch entry points",@"not automatically shared"])
+    check([model.informativeText containsString:phrase],[@"Missing model setup guidance: " stringByAppendingString:phrase]);
+  NSTextView *locations=(NSTextView *)find(model.accessoryView,@"model-setup-locations");
+  check([locations isKindOfClass:NSTextView.class]&&!locations.editable&&locations.selectable,@"Known locations must be read-only and selectable");
+  check([locations.string containsString:[root stringByAppendingPathComponent:@"Demo App's.app"]]&&[locations.string containsString:[root stringByAppendingPathComponent:@"Root's demo"]],@"Show the exact selected app and data root, even if those paths do not exist");
+  check(model.buttons.count==1&&[model.buttons[0].title isEqual:@"Done"],@"Guidance must not start downloads or change modes");
+  NSString *longRoot=[root stringByAppendingString:[@"/Long data location with spaces" stringByPaddingToLength:900 withString:@"/Long data location with spaces" startingAtIndex:0]];
+  [menu setValue:longRoot forKey:@"root"];NSAlert *longModel=[menu modelSetupAlert];
+  NSTextView *longLocations=(NSTextView *)find(longModel.accessoryView,@"model-setup-locations");
+  check([longLocations.string containsString:longRoot]&&longLocations.enclosingScrollView.hasVerticalScroller&&longLocations.textContainer.widthTracksTextView,@"Long roots must remain complete, wrapped and scrollable");
+  [menu setValue:[root stringByAppendingPathComponent:@"Root's demo"] forKey:@"root"];
+  NSTimer *modelTimer=[NSTimer timerWithTimeInterval:0.05 repeats:NO block:^(NSTimer *unused){(void)unused;
+    [model.window.contentView layoutSubtreeIfNeeded];NSView *content=model.window.contentView;
+    NSBitmapImageRep *bitmap=[content bitmapImageRepForCachingDisplayInRect:content.bounds];[content cacheDisplayInRect:content.bounds toBitmapImageRep:bitmap];
+    [[bitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}] writeToFile:[image.stringByDeletingLastPathComponent stringByAppendingPathComponent:@"model-setup.png"] atomically:YES];
+    [model.buttons[0] performClick:nil];
+  }];
+  [NSRunLoop.mainRunLoop addTimer:modelTimer forMode:NSModalPanelRunLoopMode];[model runModal];[model.window orderOut:nil];
+  check(menu.sent==0,@"Reading setup/location guidance must not issue lifecycle commands");
   FixtureGuardian *guardian=[FixtureGuardian new];guardian.running=YES;[menu setValue:guardian forKey:@"guardian"];
   [menu setValue:@YES forKey:@"ready"];[menu setValue:@"demo" forKey:@"mode"];[menu setValue:@"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" forKey:@"storeId"];
   [menu setValue:@"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" forKey:@"generation"];[menu setValue:@"http://127.0.0.1:3211/mcp" forKey:@"mcpOrigin"];

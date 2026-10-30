@@ -25,9 +25,11 @@ test('Demo setup buttons copy exact bound commands without selection, remain ope
       refusals: 11, modalCopy: true, privatePasteboard: true, sent: 0,
     });
     assert.ok(existsSync(image));
+    assert.ok(existsSync(path.join(root, 'model-setup.png')));
     if (process.env.CR_MENU_SETUP_EVIDENCE_DIR) {
       mkdirSync(process.env.CR_MENU_SETUP_EVIDENCE_DIR, { recursive: true });
       copyFileSync(image, path.join(process.env.CR_MENU_SETUP_EVIDENCE_DIR, 'demo-setup.png'));
+      copyFileSync(path.join(root, 'model-setup.png'), path.join(process.env.CR_MENU_SETUP_EVIDENCE_DIR, 'model-setup.png'));
     }
   } finally {
     rmSync(root, { recursive: true, force: true });

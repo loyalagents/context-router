@@ -28,6 +28,30 @@ test('client version preflight rejects suffixes and larger versions containing t
     else assert.throws(() => preflightClient(spec), /Unsupported client version/);
   }
 });
+test('version mismatch explains the qualification contract and existing executable choice without exposing probe output', async t => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-version-help-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const executable = path.join(root, 'client'), calls = path.join(root, 'calls');
+  for (const command of ['claude', 'codex']) {
+    const spec = clientLaunchSpec({ command, root, dataset: 'demo001', mcpPort: 1 }, { executable });
+    await fs.mkdir(spec.cwd, { recursive: true });
+    const newer = spec.version.replace(/\d+$/, value => String(Number(value) + 1));
+    await fs.writeFile(executable, `#!${process.execPath}\nimport fs from 'node:fs';\nfs.appendFileSync(${JSON.stringify(calls)}, process.argv.slice(2).join(' ') + '\\n');\nconsole.log(${JSON.stringify(newer + ' private-probe-output')});\n`, { mode: 0o700 });
+    await fs.writeFile(calls, '');
+    assert.throws(() => preflightClient(spec), error => {
+      assert.equal(error.demoSafeMessage, error.message);
+      assert.ok(error.message.includes(spec.version));
+      assert.match(error.message, /newer/i);
+      assert.match(error.message, /Choose executable/);
+      assert.match(error.message, /existing.*native executable/);
+      assert.match(error.message, /No assistant.*started/);
+      assert.doesNotMatch(error.message, /private-probe-output/);
+      assert.ok(Buffer.byteLength(error.message) <= 800);
+      return true;
+    });
+    assert.equal(await fs.readFile(calls, 'utf8'), '--version\n');
+  }
+});
 test('durable profiles stay stable while endpoint and selected-generation credential remain pinned', async t => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-profile-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
