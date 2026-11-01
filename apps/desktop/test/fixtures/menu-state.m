@@ -48,12 +48,12 @@ int main(int argc,const char *argv[]){@autoreleasepool{@try{
     record(modeMenu,generations[i],@"starting",@{@"phase":@"preparing"});[modeMenu update];if(!i)neutral=neutral&&[status.button.toolTip isEqual:@"Context Router"]&&[status.button.accessibilityLabel isEqual:@"Context Router"];
     record(modeMenu,generations[i],@"mode",@{@"mode":modes[i],@"storeId":one});record(modeMenu,generations[i],@"ready",ready(generations[i]));[modeMenu update];
     BOOL demo=[modes[i] isEqual:@"demo"];
+    if(![modeLabel.title isEqual:demo?@"Demo ready · AI not enabled":@"Dashboard ready · AI not enabled"])return 9;
     if([items[@"download"] isEnabled]==demo||![items[@"model-setup"] isEnabled])return 15;
     if(![[items[@"download"] title] isEqual:demo?@"Download model — personal mode only":@"Download Qwen3.5 9B model…"])return 16;
     if(demo&&![[items[@"download"] toolTip] containsString:@"Model setup and location"])return 17;
     if(!demo&&[items[@"download"] toolTip]!=nil)return 18;
     if([modes[i] isEqual:@"demo"]){
-      if(![modeLabel.title isEqual:@"Demo ready · AI not enabled"])return 9;
       NSDictionary *labels=@{@"loading":@"AI loading",@"available":@"AI available",@"busy":@"AI working",@"unavailable":@"restart required for AI"};
       for(NSString *state in labels){record(modeMenu,generations[i],@"model-status",@{@"state":state});if(![modeLabel.title isEqual:[@"Demo ready · " stringByAppendingString:labels[state]]])return 10;}
       [modeMenu sleepWake:nil];if(![modeLabel.title isEqual:@"Demo ready · restart required after sleep"])return 11;

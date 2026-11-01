@@ -69,7 +69,7 @@ export async function inspectInstalledClient(spec,{command='codex',role=command=
     try{
       const probeSpec=clientLaunchSpec({command,root:probe,profileRoot:probe,mcpPort:Number(new URL(spec.endpoint).port),dataset:'demo001',agent:role,auth},{executable:executable.path});
       for(const value of new Set([probeSpec.cwd,probeSpec.env.TMPDIR,probeSpec.env.CODEX_HOME,probeSpec.env.CLAUDE_CONFIG_DIR].filter(Boolean)))await fs.mkdir(value,{mode:0o700});
-      preflightClient(probeSpec);
+      preflightClient(probeSpec,{versionGuidance:'Use Choose executable… in Demo setup to select an existing qualified native executable, or install this version.'});
     }finally{await fs.rm(probe,{recursive:true,force:true});}
     if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed during preflight.');
     await activeDemo(spec);

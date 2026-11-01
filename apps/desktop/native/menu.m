@@ -31,8 +31,7 @@
 - (void)add:(NSString *)title action:(SEL)action key:(NSString *)key menu:(NSMenu *)menu {
   NSMenuItem *item=[[NSMenuItem alloc] initWithTitle:title action:action keyEquivalent:@""];item.target=self;[menu addItem:item];_items[key]=item;
 }
-- (void)applicationDidFinishLaunching:(NSNotification *)notification {
-  (void)notification;_status=[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];_status.button.title=@"CR";_status.button.toolTip=@"Context Router";_status.button.accessibilityLabel=@"Context Router";
+- (NSMenu *)createMenu {
   NSMenu *menu=[NSMenu new];menu.autoenablesItems=NO;_label=[[NSMenuItem alloc] initWithTitle:@"Starting local runtime…" action:nil keyEquivalent:@""];_label.enabled=NO;[menu addItem:_label];[menu addItem:[NSMenuItem separatorItem]];
   [self add:@"Open dashboard" action:@selector(openDashboard:) key:@"open" menu:menu];[self add:@"New unlock code…" action:@selector(newUnlock:) key:@"unlock" menu:menu];[self add:@"Copy unlock code" action:@selector(copyUnlock:) key:@"copy" menu:menu];[menu addItem:[NSMenuItem separatorItem]];
   [self add:@"Enter demo mode…" action:@selector(enterDemo:) key:@"enter-demo" menu:menu];
@@ -45,7 +44,11 @@
   [self add:@"Download Qwen3.5 9B model…" action:@selector(downloadModel:) key:@"download" menu:menu];
   [self add:@"Model setup and location…" action:@selector(modelSetup:) key:@"model-setup" menu:menu];
   [self add:@"Cancel download" action:@selector(cancelDownload:) key:@"cancel" menu:menu];[menu addItem:[NSMenuItem separatorItem]];
-  [self add:@"Restart local runtime…" action:@selector(restart:) key:@"restart" menu:menu];[self add:@"Quit Context Router" action:@selector(quit:) key:@"quit" menu:menu];_status.menu=menu;
+  [self add:@"Restart local runtime…" action:@selector(restart:) key:@"restart" menu:menu];[self add:@"Quit Context Router" action:@selector(quit:) key:@"quit" menu:menu];return menu;
+}
+- (void)applicationDidFinishLaunching:(NSNotification *)notification {
+  (void)notification;_status=[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];_status.button.title=@"CR";_status.button.toolTip=@"Context Router";_status.button.accessibilityLabel=@"Context Router";
+  _status.menu=[self createMenu];
   NSNotificationCenter *center=NSWorkspace.sharedWorkspace.notificationCenter;
   [center addObserver:self selector:@selector(sleepWake:) name:NSWorkspaceWillSleepNotification object:nil];[center addObserver:self selector:@selector(sleepWake:) name:NSWorkspaceDidWakeNotification object:nil];
   @try {
@@ -158,7 +161,7 @@
 - (void)copyUnlock:(id)sender {(void)sender;if(_stopping||_quitting)return;@try{NSString *code=[self code];[NSPasteboard.generalPasteboard clearContents];[NSPasteboard.generalPasteboard setString:code forType:NSPasteboardTypeString];}@catch(NSException *e){(void)e;_unlockFile=nil;_label.title=@"Request a new unlock code";}[self update];}
 - (NSAlert *)modelSetupAlert {
   NSAlert *alert=[NSAlert new];alert.messageText=@"Model setup and location";
-  alert.informativeText=@"Demo reuses verified model files from the same data location. Downloads are available only in personal mode.\n\nTo set up AI for demo, keep this app and data location:\n1. Return to personal mode…\n2. Choose Download Qwen3.5 9B model… if needed and wait for completion.\n3. Choose Restart local runtime…, then Enter demo mode…\n\nDifferent launch entry points, such as Finder and a custom launcher, can select different data locations. Models in another location are not automatically shared. Use the same launch entry point when returning.";
+  alert.informativeText=@"Demo reuses verified model files from the same data location. Downloads are available only in personal mode.\n\nTo set up AI for demo, keep this app and data location:\n1. If you're in demo, choose Return to personal mode…\n2. If you haven't downloaded the model here, choose Download Qwen3.5 9B model… and wait for completion.\n3. Choose Enter demo mode…\n\nDifferent launch entry points, such as Finder and a custom launcher, can select different data locations. Models in another location are not automatically shared. Use the same launch entry point when returning.";
   NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(0,0,580,110)];scroll.hasVerticalScroller=YES;
   NSTextView *locations=[[NSTextView alloc] initWithFrame:scroll.contentView.bounds];locations.identifier=@"model-setup-locations";
   locations.editable=NO;locations.selectable=YES;locations.font=[NSFont systemFontOfSize:12];

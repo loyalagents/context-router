@@ -108,13 +108,13 @@ function checkClaudeSubscriptionStartup(spec) {
   } finally { rmSync(root, { recursive: true, force: true }); }
 }
 
-export function preflightClient(spec) {
+export function preflightClient(spec, { versionGuidance = 'Install this version. The source launcher selects the first executable in this search order: running Node executable directory, ~/.local/bin, /opt/homebrew/bin, /usr/local/bin, /usr/bin, /bin.' } = {}) {
   const run = args => {
     const result = spawnSync(spec.executable, args, { cwd: spec.cwd, env: spec.env, encoding: 'utf8', timeout: 10000, maxBuffer: 1024 * 1024 });
     if (result.status !== 0) throw safeError('Unsupported client or isolation settings. No assistant was started.');
     return result.stdout;
   };
-  if (!run(['--version']).trim().split(/\s+/).includes(spec.version)) throw safeError(`Unsupported client version. This demo requires ${spec.command === 'claude' ? 'Claude Code' : 'Codex'} ${spec.version}; newer releases are not qualified. Use Choose executable… in Demo setup to select an existing qualified native executable, or install this version. No assistant was started.`);
+  if (!run(['--version']).trim().split(/\s+/).includes(spec.version)) throw safeError(`Unsupported client version. This demo requires ${spec.command === 'claude' ? 'Claude Code' : 'Codex'} ${spec.version}. Only this exact version is qualified. ${versionGuidance} No assistant was started.`);
   const help = run(['--help']);
   const required = spec.command === 'claude' ? [spec.auth === 'subscription' ? '--restricted' : '--bare', '--strict-mcp-config', '--tools', '--setting-sources', '--disable-slash-commands', '--no-chrome'] : ['--no-daemon', '--strict-config', '--sandbox'];
   if (required.some(flag => !help.includes(flag))) throw safeError('Unsupported client isolation controls.');
