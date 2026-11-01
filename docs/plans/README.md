@@ -8,10 +8,17 @@ Use the [current application](../current/LOCAL_APPLICATION.md) and
 [scoped closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md), not the old numbered
 steps, to understand the starting point. Historical plans remain in Git.
 
-Current delivery is the [assisted alpha kit](active/colleague-pilot/assisted-alpha.md)
-on `codex/assisted-mac-alpha-kit`, with `/root` as sole main-checkout integrator.
-Its finish line is a reviewed kit, scoped synthetic/artifact rehearsal, validation
-and one draft PR; colleague acceptance and distribution remain later milestones.
+The [assisted alpha kit](active/colleague-pilot/assisted-alpha.md) shipped in
+[PR #194](https://github.com/loyalagents/context-router/pull/194); dashboard AI
+guidance shipped in [PR #195](https://github.com/loyalagents/context-router/pull/195).
+The integrated `674750a` artifact passed automated qualification. The user
+confirmed full demo setup and Claude Code 2.1.299, Claude Desktop and Codex demo
+connections on October 29. The [November 1 checkpoint](active/colleague-pilot/assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01)
+records successful personal synthetic document review/save, narrow Claude reads,
+normal Quit/reopen, idle/explicit recovery and a preview-only attribution
+spot-check on the unchanged app. Next are owner disposition of the PDF/attribution
+dependencies and approval of one helper-led synthetic read-only colleague
+compatibility trial; the kit implementation and this bounded rehearsal are complete.
 
 The [in-app demo mode](active/in-app-demo-mode/plan.md) shipped in
 [PR #183](https://github.com/loyalagents/context-router/pull/183), followed by
@@ -20,9 +27,10 @@ The [in-app demo mode](active/in-app-demo-mode/plan.md) shipped in
 in/Open, reviewed Desktop apply and same-envelope model reuse are implemented.
 Deeper assistant supervision and retained-guard recovery remain separate
 follow-ups. Demo acceptance is not personal-mode Claude onboarding evidence.
-Hands-on acceptance of the native setup controls remains pending in the
-[native setup plan](active/native-demo-assistant-setup/plan.md#review-correction-round);
-merged implementation and automated checks do not close it.
+The latest user report closes the unconfirmed demo setup/connections status.
+It does not enumerate every native control, permission or lifecycle test; the
+[native setup plan](active/native-demo-assistant-setup/plan.md) retains those
+historical requirements and points to the current scoped acceptance.
 
 The [MCP client permissions slice](active/mcp-client-permissions/README.md)
 shipped in [PR #187](https://github.com/loyalagents/context-router/pull/187):

@@ -787,6 +787,54 @@ test('selection CLI explains non-applicability without receipts and rejects fail
   });
 });
 
+function assertSafeSelectionOutput({ stdout, stderr, summary }) {
+  const unsafeFilenameMarkers = /::warning::|injected|bad/;
+  assert.doesNotMatch(stdout, unsafeFilenameMarkers);
+  assert.doesNotMatch(stderr, unsafeFilenameMarkers);
+  // Hashes can contain "bad". Exempt only the complete, typed provenance lines
+  // emitted to the step summary; filename text and command markers remain checked.
+  const withoutSummaryHashes = summary.replace(
+    /^Checkout: [a-f0-9]{40}; base: [a-f0-9]{40}; selection: [a-f0-9]{64}\.$/gm,
+    'Checkout: <hash>; base: <hash>; selection: <hash>.',
+  );
+  assert.doesNotMatch(withoutSummaryHashes, unsafeFilenameMarkers);
+}
+
+// PR #196, run 40833615997 attempt 1: this valid selection hash hit the old regex.
+const selectionHashWithBad = '7dc7a69cf38be0c91bad3741a069ab534f2fae5a1c432be995f40a2f1f1dacc2';
+const selectionOutputWithBadHashes = {
+  stdout: 'Full source/UI/package qualification required: full-required.\n',
+  stderr: '',
+  summary: `Checkout: ${'bad'.padEnd(40, '0')}; base: ${'bad'.padStart(40, '0')}; selection: ${selectionHashWithBad}.\n`,
+};
+
+test('selection output assertion accepts legitimate hashes containing bad in accumulated summaries', () => {
+  assert.doesNotThrow(() => assertSafeSelectionOutput({ ...selectionOutputWithBadHashes,
+    summary: selectionOutputWithBadHashes.summary.repeat(2) }));
+});
+
+test('selection output assertion rejects filename disclosure and command markers in every channel', () => {
+  const leaks = [
+    'docs/current/bad\n::warning::injected.md', 'docs/current/bad', 'bad', 'injected', '::warning::',
+    `selection: ${selectionHashWithBad}`,
+    selectionOutputWithBadHashes.summary.replace('Checkout:', 'Unknown:'),
+    selectionOutputWithBadHashes.summary.replace(selectionHashWithBad, `${selectionHashWithBad}0`),
+    selectionOutputWithBadHashes.summary.replace(selectionHashWithBad, '::warning::injected'),
+    selectionOutputWithBadHashes.summary.trimEnd() + ' bad',
+  ];
+  for (const channel of ['stdout', 'stderr', 'summary']) {
+    for (const leak of leaks) {
+      assert.throws(() => assertSafeSelectionOutput({ ...selectionOutputWithBadHashes,
+        [channel]: selectionOutputWithBadHashes[channel] + leak + '\n' }),
+      { code: 'ERR_ASSERTION' }, `${channel}: ${JSON.stringify(leak)}`);
+    }
+  }
+  for (const channel of ['stdout', 'stderr']) {
+    assert.throws(() => assertSafeSelectionOutput({ ...selectionOutputWithBadHashes,
+      [channel]: selectionOutputWithBadHashes.summary }), { code: 'ERR_ASSERTION' });
+  }
+});
+
 test('selection CLI bounds safe Markdown paths and never prints unsafe filenames', async () => {
   await policyFixture(async f => {
     const paths = Array.from({ length: 15 }, (_, i) => `docs/current/guide-${String(i).padStart(2, '0')}.md`);
@@ -809,10 +857,11 @@ test('selection CLI bounds safe Markdown paths and never prints unsafe filenames
       assert.match(selected.stdout, /Selected nonruntime checks: policy v2/);
       assert.match(selected.stdout, /guide-09.md/); assert.doesNotMatch(selected.stdout, /guide-10.md/);
       assert.match(selected.stdout, /5 additional paths/); assert.ok(selected.stdout.length < 3000);
+      assertSafeSelectionOutput({ ...selected, summary: await readFile(summary, 'utf8') });
       await f.put(unsafe, 'changed\n'); await f.commit();
       const full = await run();
       assert.match(full.stdout, /Full source\/UI\/package qualification required/);
-      assert.doesNotMatch(full.stdout + await readFile(summary, 'utf8'), /::warning::|injected|bad/);
+      assertSafeSelectionOutput({ ...full, summary: await readFile(summary, 'utf8') });
     } finally { await rm(io, { recursive: true, force: true }); }
   });
 });
