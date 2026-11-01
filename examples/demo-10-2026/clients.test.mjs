@@ -35,7 +35,9 @@ test('source version mismatches explain exact qualification and executable searc
   for (const command of ['claude', 'codex']) {
     const spec = clientLaunchSpec({ command, root, dataset: 'demo001', mcpPort: 1 }, { executable });
     await fs.mkdir(spec.cwd, { recursive: true });
-    const older = spec.version.replace(/\d+$/, value => String(Number(value) - 1));
+    const olderParts = spec.version.split('.').map(Number);
+    olderParts[olderParts.findLastIndex(value => value > 0)]--;
+    const older = olderParts.join('.');
     const newer = spec.version.replace(/\d+$/, value => String(Number(value) + 1));
     for (const version of [older, newer, `${spec.version}-beta`, 'garbled-output']) {
       await fs.writeFile(executable, `#!${process.execPath}\nimport fs from 'node:fs';\nfs.appendFileSync(${JSON.stringify(calls)}, process.argv.slice(2).join(' ') + '\\n');\nconsole.log(${JSON.stringify(version + ' private-probe-output')});\n`, { mode: 0o700 });
