@@ -3,12 +3,14 @@
 Status: foundation and assisted alpha kit implemented. The integrated `674750a`
 app passed automated installed/replacement/demo/support checks. On October 29 the
 user confirmed full demo setup, including Claude Code 2.1.299, Claude Desktop and
-Codex connections. See the [current acceptance record](../plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
+Codex connections. On November 1, local synthetic document review/save, separate
+narrow personal Claude reads, normal Quit/reopen and idle/explicit recovery passed
+on that unchanged app. See the [current acceptance record](../plans/active/colleague-pilot/assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01)
 for exact identities and scope, and [migration closeout](../current/LOCAL_MIGRATION_CLOSEOUT.md)
 for historical foundation evidence.
 This private build has no Developer ID signing or notarization. Reported launch
-and demo connections do not qualify personal-mode onboarding, every recovery
-scenario or a fresh download/quarantine route. The declared pilot is MacBook Pro
+and bounded personal acceptance do not qualify every recovery scenario,
+own-document use or a fresh download/quarantine route. The declared pilot is MacBook Pro
 18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Macs and native Windows/Linux
 remain unqualified. The source/manual modes remain available.
 

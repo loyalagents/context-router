@@ -4,7 +4,9 @@ Status: implementation merged in PR #184. On October 29 the user confirmed full
 demo setup, including Claude Code 2.1.299, Claude Desktop and Codex connections
 on the delivered `674750a` app. See the
 [current acceptance record](../colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
-for source/artifact evidence and the remaining live-use/personal-mode limits.
+for source/artifact evidence. The separate
+[November 1 personal rehearsal](../colleague-pilot/assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01)
+passed its synthetic read-only scope; broader use/distribution remains separate.
 The sections below retain the historical implementation, review and trial
 checkpoints; their pending statements do not override that later confirmation.
 

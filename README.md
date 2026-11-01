@@ -8,9 +8,11 @@ The migration foundation and assisted install kit are delivered.
 **Assisted pilot acceptance is active.** The integrated `674750a` app passed its
 automated artifact checks. On October 29 the user confirmed full demo setup,
 including Claude Code 2.1.299, Claude Desktop and Codex connections in demo mode.
-See the [current delivery and acceptance record](docs/plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29).
-Personal-mode onboarding and remaining live-use/distribution checks are separate;
-this is not a qualified general release. See
+On November 1, the bounded personal document/Claude read-only journey passed,
+including normal Quit/reopen and idle/explicit recovery on that unchanged app.
+See the [current acceptance and remaining actions](docs/plans/active/colleague-pilot/assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01).
+An approved colleague compatibility trial is next; this is not a qualified
+general release. See
 [current support and limitations](docs/current/LOCAL_APPLICATION.md).
 
 ## Use Or Work On The App

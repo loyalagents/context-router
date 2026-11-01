@@ -41,10 +41,14 @@ The current `674750a` app/kit includes merged #194 delivery tooling and #195 AI
 guidance. October 27 automated checks passed: installed 15 phases, replacement
 4, synthetic demo 11 and shipped bridge/Node support. On October 29 the user
 confirmed full demo setup, including Claude Code 2.1.299, Claude Desktop and Codex
-connections in demo mode. The [current acceptance record](../plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
-separates those observations from personal-mode onboarding, specific local-AI
-operations and the remaining manual acceptance. Earlier artifact receipts and
-negative evidence retain their historical scope.
+connections in demo mode. On November 1, the unchanged app passed local synthetic
+document extraction/review/save, separate narrow personal Claude access,
+permitted/filtered reads, normal Quit/reopen and 37.17-minute idle/explicit
+recovery. A preview-only labeled mixed-person spot-check also passed. The
+[current acceptance record](../plans/active/colleague-pilot/assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01)
+recommends one owner-approved, helper-led synthetic read-only colleague trial
+after explicit disposition of invitation dependencies. Earlier artifact receipts
+and negative evidence retain their historical scope.
 
 Do not claim a general release: the app has no Developer ID or notarization;
 measured installed hardware is M1 Max/64 GiB/macOS 15.1.1. Fresh downloaded-launch

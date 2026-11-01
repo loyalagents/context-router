@@ -1,6 +1,6 @@
 # Local Application
 
-- Status: implemented foundation and alpha kit; demo setup/connections confirmed, remaining pilot acceptance active
+- Status: foundation and alpha kit implemented; demo setup and bounded personal acceptance passed; colleague compatibility trial awaits owner decisions
 - Sources: `apps/desktop/`, backend local composition and storage modules,
   `apps/web/`; [migration closeout](LOCAL_MIGRATION_CLOSEOUT.md)
 
@@ -57,7 +57,14 @@ not a new command or a waiver of filesystem/process safety.
   This qualifies the recorded retained app/bridge/client pair on the measured Mac;
   D carries unchanged-boundary compatibility evidence, not a new live-client run;
   ChatGPT desktop remains unqualified.
-  See the [pilot evidence](../plans/active/colleague-pilot/plan.md).
+  See the [historical pilot evidence](../plans/active/colleague-pilot/plan.md).
+  On November 1, unchanged `674750a` with Claude Desktop 4.4212.0 Pro ordinary
+  chat passed a separate read-only personal journey: narrow cuisine retrieval,
+  filtering of a known saved seat fact, normal Quit/reopen and 37.17-minute
+  idle/explicit recovery. See the
+  [current acceptance](../plans/active/colleague-pilot/assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01);
+  earlier write/revoke/uncertain-mutation evidence does not transfer as a new
+  observation on this pair.
 - Model download is explicit and verified, about 5.7 GB; compatible assets live
   outside the app bundle for reuse. Menu Restart enables/recovers AI and opens the
   current dashboard with a fresh unlock. Browser close leaves the app running;
@@ -103,14 +110,14 @@ Do not turn merged code or automated checks into a broader support/release claim
 | Area | Current evidence or limitation |
 | --- | --- |
 | Installed platform | Measured MacBookPro18,2, M1 Max, 64 GiB, macOS 15.1.1 (24B91). Other Apple Silicon configurations need compatibility evidence; Windows/Linux installers are not qualified. |
-| Distribution | Integrated `674750a` app/kit passed package/archive/full-byte verification and automated artifact checks. Launch/demo readiness and later demo setup/connections were reported on the user's Mac. This does not establish a fresh download/quarantine route or another Mac. No Developer ID, notarization or publisher authentication; colleague acquisition/approval remains open. See [current acceptance](../plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29); [D's observations](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12) remain historical. |
+| Distribution | Integrated `674750a` app/kit passed package/archive/full-byte verification, automated artifact checks and the bounded personal journey on the user's Mac. This does not establish a fresh download/quarantine route or another Mac. No Developer ID, notarization or publisher authentication; colleague acquisition/approval remains open. See [current acceptance and actions](../plans/active/colleague-pilot/assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01); [D's observations](../plans/active/colleague-pilot/plan.md#d-results-and-review-follow-up-2026-10-12) remain historical. |
 | Model | Pinned llama.cpp b11146 and Qwen3.5-9B Q4_K_M. One active operation, no queue. Text and qualified PDF text subset; no image/OCR support. See the exact configuration in the model runbook. |
 | Quality exception E | Known personal-email omission in the frozen adversarial extraction fixture; 18/21 recall (85.71%). The original quality scorer verdict remains FAILED. Not permission for wrong-person facts or other quality failures. |
 | Recovery exception H | A repeat production cancellation failed the five-second settlement requirement and latched AI unavailable. Later recovery observations do not erase that failure. Whole-generation owned-process shutdown and fresh inference credentials are required; retain data and compatible weights. |
 | Lifecycle | Normal restart/Quit and scoped sleep/wake observations exist. Candidate 14 fixes sleep consuming the shutdown budget; real sleep during shutdown, forced owner loss and cross-boot recovery remain unqualified. Fail closed on uncertain ownership. |
-| MCP | Credentials remain until revoked/rotated; sessions expire after 30 minutes idle and have bounded IDs/capacity. Claude Desktop showed the expiry failure and recovered on a separate explicit request after a direct 35-minute final-pair interval. Automatic client replay is not supported; never repeat an uncertain mutation before inspecting state/history. The controlled actual-Claude lost-reply check passed on retained B and its standalone bridge: one mutation/audit event, honest uncertainty, no replay and one explicit recovery read. C/D are not new actual-client observations. |
-| Upload/UI findings | Stale post-apply display was addressed in merged [PR #173](https://github.com/loyalagents/context-router/pull/173); D's packaged UI evidence and C's earlier failures retain their scope. [PR #195](https://github.com/loyalagents/context-router/pull/195) adds installed-app AI setup/recovery guidance. The reported model-root and Claude executable-version confusion are tracked in [UI usability](../plans/backlog/ui-usability/README.md). Rejected PDF and remaining attribution disposition stay separate: the bounded [PR #177](https://github.com/loyalagents/context-router/pull/177) correction merged, but the unavailable original incident and broader cases are not diagnosed by it. |
-| Replacement/storage | `674750a` passed 15 installed, 4 prior-artifact replacement and 11 synthetic demo phases, including isolated persistence/authority checks. Same-envelope model reuse remains the contract; weights in an older trial envelope are not automatically used by the default installation. Earlier real-model transition evidence retains its original scope. Current live-model use/retention and complete colleague disk budgets remain separate; see [current acceptance](../plans/active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29). |
+| MCP | Credentials remain until revoked/rotated; sessions expire after 30 minutes idle and have bounded IDs/capacity. The November 1 `674750a`/Desktop 4.4212.0 read-only exercise observed expiry after 37.17 minutes, no automatic replay, then one separate explicit recovery read. This is a bounded observation, not general replay proof. Never repeat an uncertain mutation before inspecting state/history. The earlier controlled lost-reply check passed on retained B and its bridge; writes/revoke/rotate/uncertain mutations were not retested on the current pair. |
+| Upload/UI findings | Stale post-apply display was addressed in merged [PR #173](https://github.com/loyalagents/context-router/pull/173); D's packaged UI evidence and C's earlier failures retain their scope. [PR #195](https://github.com/loyalagents/context-router/pull/195) adds installed-app AI setup/recovery guidance. The reported model-root and Claude executable-version confusion are tracked in [UI usability](../plans/backlog/ui-usability/README.md). November 1 synthetic extraction/review/save and a preview-only labeled mixed-person spot-check passed. Rejected PDF and remaining attribution disposition stay separate: neither that spot-check nor the merged bounded [PR #177](https://github.com/loyalagents/context-router/pull/177) correction diagnoses the unavailable original incident or broader cases. |
+| Replacement/storage | `674750a` passed 15 installed, 4 prior-artifact replacement and 11 synthetic demo phases, including isolated persistence/authority checks. November 1 local extraction reused the verified model in the selected default root without downloading; normal Quit/reopen retained facts and access. Same-envelope model reuse remains the contract; weights in an older trial envelope are not automatically used by the default installation. Earlier transition evidence retains its scope; complete colleague disk budgets remain open. See [current acceptance](../plans/active/colleague-pilot/assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01). |
 
 Exact receipts and negative evidence remain in the
 [evidence index](../evidence/local-migration/README.md). Candidate 13 live-model

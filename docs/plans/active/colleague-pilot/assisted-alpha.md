@@ -1,9 +1,9 @@
 # Assisted Mac alpha kit
 
-- Status: kit implementation merged in PR #194; integrated artifact checks passed; user confirmed demo setup and three assistant connections on 2026-10-29
+- Status: kit implementation merged; integrated artifact checks and October 29 demo setup preserved; bounded personal acceptance passed on 2026-11-01
 - Delivery owner: product owner; the implementation assignments below are historical
 - Historical implementation branch/base: `codex/assisted-mac-alpha-kit`, verified main `a2ed2b95` on 2026-10-25
-- Next milestone: remaining live-use and personal-mode acceptance, then an approved assisted colleague trial
+- Next milestone: disposition of invitation dependencies and approval of one helper-led synthetic-text, read-only colleague compatibility trial
 
 ## Current delivery and demo acceptance: 2026-10-29
 
@@ -52,7 +52,7 @@ Two setup problems were observed during the October 27 session:
   [runbook](../../../useful/INSTALLED_MAC_APP.md#historical-demo-mode) and
   [bounded usability follow-ups](../../backlog/ui-usability/README.md).
 
-**Still separate:** a specifically observed local-AI operation/document
+**Pending at the October 29 checkpoint:** a specifically observed local-AI operation/document
 review/save in the chosen envelope; current personal-mode Claude Desktop
 onboarding; current-build permission-denial, idle/reconnect and Quit/reopen/reset
 acceptance details not enumerated in the latest confirmation; downloaded
@@ -61,6 +61,76 @@ Historical checks retain their own evidence; the general demo-setup confirmation
 does not stand in for that entire matrix. Model E/H limits and the remaining
 PDF/attribution disposition are unchanged. No reset or model relocation is
 authorized by this documentation update.
+
+## Personal acceptance and remaining actions: 2026-11-01
+
+**The bounded personal rehearsal passed on the unchanged `674750a` artifact
+identified above.** Installed complete-byte and strict package verification
+passed. The selected root was the default
+`~/Library/Application Support/Context Router/managed-v1`, in personal mode;
+the existing verified model was reused. The October automated record and user
+demo confirmation remain intact. Demo setup was not repeated. No product code,
+app rebuild, reset, model download, publication or invitation was needed.
+
+The user approved the synthetic document, reviewed saves, backed-up separate
+Claude configuration with narrow read access, normal Quit/reopen and idle check.
+Claude Desktop **4.4212.0, Pro, ordinary chat** used the verified standalone bridge
+and Node 24.21.0. Six of eight approved synthetic model requests were used, with
+each tool permission granted once. No demo credential was reused.
+
+| Check | Observed result |
+| --- | --- |
+| Local extraction, review/save and readback | The two-sentence synthetic document produced two correct CREATE proposals. Reviewed Thai cuisine and aisle-seat facts were saved; both were initially absent. Readback and document-analysis history agreed, and existing personal facts were preserved. |
+| Separate personal Claude connection | A new persistent credential and backed-up configuration passed. Existing entries were preserved. Policy was exactly `preferences:read` on `food.cuisine_preferences`, `allowSensitive=false`, with no write capability. |
+| Permitted and denied reads | Cuisine retrieval returned Thai. The exact seat query returned success with zero active preferences despite a known saved aisle fact: policy filtering, not an explicit denial error. |
+| Normal Quit/reopen | Both apps shut down normally and reopened. Both saved facts, policy and earlier history survived; a fresh Claude session repeated the permitted and filtered reads. |
+| Idle expiry and explicit recovery | Before probing, a shared continuous clock measured 2,230.02 seconds (37.17 minutes). Backend, Claude and observed personal bridge process identities persisted; the dedicated lifecycle log was unchanged, access history still held four events, and the user confirmed no connection use. The first read reported “Session expired. This request was not dispatched.” Claude stopped and history remained unchanged. One separate explicit recovery read returned Thai and added exactly one access event. |
+| Supplemental attribution spot-check | One local extraction, completed in 2.9 minutes, proposed only the author's Japanese cuisine/window-seat facts, excluding clearly labeled colleague and fictional-profile values. Nothing was saved; after discarding the preview, Thai/aisle remained unchanged. |
+
+The idle result is expected fail-closed session behavior followed by successful
+explicit recovery, not persistent credential expiry. No automatic replay was
+observed in this single instructed read-only exercise; this is not general
+protocol proof or uncertain-mutation evidence. The original cross-process Python
+monotonic value was unusable; a later native continuous-clock baseline supplied
+the conservative interval above. Independent evidence review approved the
+bounded personal record after those evidence/wording corrections.
+
+Private evidence remains under
+`out/assisted-alpha/main-674750a/evidence/personal-acceptance-2026-10-29/`
+(directory preparation date; observations occurred November 1). No private logs,
+screenshots, credentials, account identifiers or personal documents are committed.
+`ACCEPTANCE.md` SHA-256 is
+`74848e1b8664e1b09cba729dd9f416d4b87dd76136b16ac6f80f1e9b29de049a`;
+the additive `ATTRIBUTION-SPOT-CHECK.md` SHA-256 is
+`8553884a84bd66088f61ab8f49cd00332f79fb6b177a1670e5f5faca995f988e`.
+The approved synthetic facts and narrow personal connection remain installed.
+
+**Recommendation: one helper-led, synthetic-text, read-only colleague
+compatibility trial, after the following owner decisions.** No additional local
+rehearsal is needed to close this bounded checkpoint.
+
+1. Pilot/attribution owners must record the rejected-PDF and original
+   wrong-person-incident disposition, or explicitly approve a narrower trial
+   exception. The merged #177 correction and this labeled synthetic spot-check
+   do not diagnose the unavailable incident or close broader attribution cases.
+2. The product owner must name one participant and helper and approve this exact
+   artifact, synthetic/read-only scope and trusted delivery route. Supply the kit
+   and release-metadata digests through the trusted channel; merging this record
+   does not authorize publication or invitation.
+3. The helper and participant should follow the existing
+   [operator procedure](../../../../scripts/local-migration/installation/ASSISTED_ALPHA_OPERATOR.md),
+   recording Mac/macOS/client versions, prerequisites and disk allowance,
+   downloaded/quarantined acquisition, normal launch/Ready and unlock. Use a new
+   participant-specific credential and backed-up configuration. Review synthetic
+   proposals before saving without replacing personal values; repeat permitted
+   and filtered reads, access-history comparison, normal Quit/reopen and one
+   >35-minute idle/explicit-recovery observation. Stop on wrong attribution,
+   unexpected visibility or uncertain ownership; preserve evidence and data.
+
+Current-pair writes/denied writes, independent revoke/rotate, uncertain-mutation
+handling and reset remain untested. Model E/H limits, the original PDF/attribution
+incident, fresh downloaded launch and another Mac remain separate. This result
+does not qualify own-document use, a general cohort or later code/artifacts.
 
 The following sections preserve the reviewed PR #194 implementation and its
 dated commitments. Their old writer assignments and future-tense checkpoints

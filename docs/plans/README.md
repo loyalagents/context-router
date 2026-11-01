@@ -13,9 +13,12 @@ The [assisted alpha kit](active/colleague-pilot/assisted-alpha.md) shipped in
 guidance shipped in [PR #195](https://github.com/loyalagents/context-router/pull/195).
 The integrated `674750a` artifact passed automated qualification. The user
 confirmed full demo setup and Claude Code 2.1.299, Claude Desktop and Codex demo
-connections on October 29. The [current checkpoint](active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
-records the exact artifact and scope. Remaining live-use/personal-mode acceptance
-and an approved colleague trial are next; the kit implementation is complete.
+connections on October 29. The [November 1 checkpoint](active/colleague-pilot/assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01)
+records successful personal synthetic document review/save, narrow Claude reads,
+normal Quit/reopen, idle/explicit recovery and a preview-only attribution
+spot-check on the unchanged app. Next are owner disposition of the PDF/attribution
+dependencies and approval of one helper-led synthetic read-only colleague
+compatibility trial; the kit implementation and this bounded rehearsal are complete.
 
 The [in-app demo mode](active/in-app-demo-mode/plan.md) shipped in
 [PR #183](https://github.com/loyalagents/context-router/pull/183), followed by

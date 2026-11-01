@@ -1,6 +1,6 @@
 # Assisted Colleague Pilot
 
-- Status: kit implementation merged; integrated artifact checks passed; demo setup/connections user-confirmed; [current acceptance](assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
+- Status: kit implementation merged; artifact checks, demo setup and bounded personal rehearsal passed; [current acceptance and remaining actions](assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01)
 - Priority: current primary outcome; [current record](assisted-alpha.md) and [historical evidence](plan.md)
 - Owner: product owner; earlier implementation and seal-repair assignments are historical
 - Audience: a few Git-capable colleagues, initially Apple Silicon Macs
@@ -9,8 +9,13 @@ Current qualification is limited to the measured M1 Max / 64 GiB / macOS 15.1.1
 Mac, per the user's decision. Other Macs remain later compatibility trials.
 PR #194's kit milestone is complete. The delivered `674750a` app also contains
 PR #195's guidance; October 27 artifact checks passed and the user confirmed
-full demo setup with all three assistants on October 29. Personal-mode and
-remaining live-use/distribution acceptance remain separate. The
+full demo setup with all three assistants on October 29. On November 1, personal
+synthetic document review/save, narrow Claude reads, normal Quit/reopen and
+idle/explicit recovery passed on the unchanged app. A labeled mixed-person
+preview-only spot-check also passed. One helper-led synthetic read-only colleague
+trial is recommended after explicit owner disposition of the existing invitation
+dependencies and approval of participant/helper, exact artifact and delivery.
+Broader own-document use and distribution remain separate. The
 [older delivery record](plan.md) retains source/artifact-bound evidence and
 outstanding historical observations, not current implementation assignments.
 
@@ -163,8 +168,8 @@ No automatic merging, releases, resets or broad recovery operations.
 The user selected the assisted unsigned-publisher route, the standalone bridge
 with separately pinned Node, and qualification on the measured Mac. The agreed
 milestone includes seal repair, compatible replacement, downloaded launch and
-required final validation. The [current checkpoint](assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29)
-records the integrated kit and demo confirmation. The
+required final validation. The [current checkpoint](assisted-alpha.md#personal-acceptance-and-remaining-actions-2026-11-01)
+records the integrated kit, demo confirmation and bounded personal acceptance. The
 [historical D results](plan.md#d-results-and-review-follow-up-2026-10-12)
 retain D's scoped acceptance and remaining manual limits; the
 [dated freeze checkpoint](plan.md#integrated-candidate-freeze-2026-10-12) preserves
