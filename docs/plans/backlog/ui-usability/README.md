@@ -1,10 +1,10 @@
 # Local UI Usability Follow-Up
 
-- Status: client names (#181), saved-preference refresh (#173) and dashboard AI guidance (#195) merged; remaining native guidance and presentation items are backlog
+- Status: client names (#181), saved-preference refresh (#173) and dashboard AI guidance (#195) merged; native demo guidance items 8–9 are implemented in draft [PR #198](https://github.com/loyalagents/context-router/pull/198), with installed-app acceptance pending; other presentation items remain backlog
 - Outcome owner: product owner and next assigned UI coordinator
 - Trigger: pilot triage; fixes for blocked tasks, false success or privacy outrank polish
 - Source: [Step 08 user-run acceptance](https://github.com/loyalagents/context-router/blob/7e8f1c5a90084ba6a5623bf48f3c1186fb64422f/docs/plans/active/local-migration/08-local-ui/implementation.md#2026-10-04-user-run-browser-and-native-client-acceptance)
-- Last reviewed: 2026-10-29
+- Last reviewed: 2026-11-01
 
 Keep this a focused cleanup of the existing dashboard and packaged menu:
 
@@ -52,8 +52,14 @@ Keep this a focused cleanup of the existing dashboard and packaged menu:
    do not broaden qualified versions or weaken executable validation.
 
 Items 8–9 come from the [current delivery and demo report](../../active/colleague-pilot/assisted-alpha.md#current-delivery-and-demo-acceptance-2026-10-29).
-Successful later setup does not remove the earlier UX friction or activate a
-new implementation. The [installed runbook](../../../useful/INSTALLED_MAC_APP.md#historical-demo-mode)
+The user separately activated their bounded presentation follow-up in draft
+[PR #198](https://github.com/loyalagents/context-router/pull/198): native
+same-envelope setup/location guidance and exact-version refusal guidance for
+the installed and source-command paths. Model presence is not inferred from
+session configuration. Discovery, migration, downloads and lifecycle behavior
+are unchanged. The October 29 demo and November 1 personal acceptance remain
+bound to `674750a`; they do not qualify the new guidance in an installed app.
+The [installed runbook](../../../useful/INSTALLED_MAC_APP.md#historical-demo-mode)
 records the supported manual paths.
 
 Preserve truthful confirmed/uncertain mutation outcomes, per-instance authority,

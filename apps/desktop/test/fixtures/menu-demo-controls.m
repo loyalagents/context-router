@@ -61,6 +61,11 @@ static void failSetup(ControlMenu *menu,NSData *output,NSString *failure){menu.o
 static NSData *jsonBytes(id value){return [NSJSONSerialization dataWithJSONObject:value options:0 error:nil];}
 static void desktopFeedback(NSString *root,NSString *domain,NSDictionary *proposal){
  ControlMenu *menu=freshMenu(root,domain);NSAlert *panel=[menu demoSetupAlert];
+ [button(panel,@"demo-open-b") performClick:nil];failSetup(menu,[NSData data],nil);
+ expect([feedback(panel) containsString:@"Choose executable…"]&&menu.handoffs.count==0,@"Unknown inspect failures point to the existing picker without launching an assistant");
+ NSString *versionMessage=@"Unsupported client version. Use Choose executable… in Demo setup to select an existing qualified native executable. No assistant was started.";
+ [button(panel,@"demo-open-b") performClick:nil];failSetup(menu,jsonBytes(failureEnvelope(menu,versionMessage)),nil);
+ expect([feedback(panel) isEqual:versionMessage]&&menu.handoffs.count==0,@"The bound qualification reason reaches the panel unchanged without a Terminal handoff");
  for(NSString *message in @[@"Desktop entry collision; config unchanged.",@"This demo profile has an active or uncertain invocation. Retain its guard; do not delete it or reuse the profile.",@"Desktop config changed; prepare a new proposal."]){
   [button(panel,@"demo-desktop-prepare") performClick:nil];expect([menu.arguments.lastObject containsObject:@"--native-result"],@"Finite helper requests the safe result protocol");
   failSetup(menu,jsonBytes(failureEnvelope(menu,message)),nil);expect([feedback(panel) isEqual:message],@"Safe helper reason is visible");expect(((NSTextField *)findControl(panel.accessoryView,@"demo-copy-feedback")).toolTip==nil,@"Raw stderr never becomes a tooltip");

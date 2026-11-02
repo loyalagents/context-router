@@ -28,6 +28,38 @@ test('client version preflight rejects suffixes and larger versions containing t
     else assert.throws(() => preflightClient(spec), /Unsupported client version/);
   }
 });
+test('source version mismatches explain exact qualification and executable search order without exposing probe output', async t => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-version-help-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const executable = path.join(root, 'client'), calls = path.join(root, 'calls');
+  for (const command of ['claude', 'codex']) {
+    const spec = clientLaunchSpec({ command, root, dataset: 'demo001', mcpPort: 1 }, { executable });
+    await fs.mkdir(spec.cwd, { recursive: true });
+    const olderParts = spec.version.split('.').map(Number);
+    olderParts[olderParts.findLastIndex(value => value > 0)]--;
+    const older = olderParts.join('.');
+    const newer = spec.version.replace(/\d+$/, value => String(Number(value) + 1));
+    for (const version of [older, newer, `${spec.version}-beta`, 'garbled-output']) {
+      await fs.writeFile(executable, `#!${process.execPath}\nimport fs from 'node:fs';\nfs.appendFileSync(${JSON.stringify(calls)}, process.argv.slice(2).join(' ') + '\\n');\nconsole.log(${JSON.stringify(version + ' private-probe-output')});\n`, { mode: 0o700 });
+      await fs.writeFile(calls, '');
+      assert.throws(() => preflightClient(spec), error => {
+        assert.equal(error.demoSafeMessage, error.message);
+        assert.ok(error.message.includes(spec.version));
+        assert.match(error.message, /Only this exact version is qualified/);
+        assert.match(error.message, /Install this version/);
+        assert.match(error.message, /first.*search order/);
+        assert.match(error.message, /Node executable directory, ~\/.local\/bin, \/opt\/homebrew\/bin, \/usr\/local\/bin, \/usr\/bin, \/bin/);
+        assert.doesNotMatch(error.message, /Choose executable|Demo setup|newer/i);
+        assert.match(error.message, /No assistant.*started/);
+        assert.doesNotMatch(error.message, /private-probe-output/);
+        assert.ok(error.message.isWellFormed() && Buffer.byteLength(error.message) <= 800);
+        assert.doesNotMatch(error.message, /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u);
+        return true;
+      });
+      assert.equal(await fs.readFile(calls, 'utf8'), '--version\n');
+    }
+  }
+});
 test('durable profiles stay stable while endpoint and selected-generation credential remain pinned', async t => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-profile-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));

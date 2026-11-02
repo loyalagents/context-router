@@ -5,6 +5,7 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fixture,ended} from '../fixtures/supervisor-fixture.mjs';
 import * as clients from '../../../backend/scripts/demo/installed-clients.mjs';
+import {clientLaunchSpec} from '../../../backend/scripts/demo/clients.mjs';
 
 test('inspect qualifies a native executable without stable profile, credential or login access; saved choices are revalidated',async t=>{
  assert.equal(typeof clients.inspectInstalledClient,'function');
@@ -14,6 +15,14 @@ test('inspect qualifies a native executable without stable profile, credential o
  const spec={root:f.envelope,store:state.demoStore,generation:ready.generation,endpoint:ready.mcpOrigin};
  const result=await clients.inspectInstalledClient(spec,{command:'claude',auth:'api-key',executable});
  assert.deepEqual(Object.keys(result).sort(),['path','sha256','version']);assert.equal(result.path,executable);assert.match(result.sha256,/^[a-f0-9]{64}$/);assert.equal(result.version,'2.1.299');
+ const qualified=clientLaunchSpec({command:'claude',root:dir,dataset:'demo001',mcpPort:1},{executable}).version;
+ const mismatched=path.join(dir,'mismatched'),version=qualified.replace(/\d+$/,value=>String(Number(value)+1))+' private-probe-output';
+ const mismatchBuild=spawnSync('/usr/bin/clang',['-DCLIENT_VERSION='+JSON.stringify(version),path.resolve(import.meta.dirname,'../fixtures/demo-preflight.c'),'-o',mismatched],{encoding:'utf8'});assert.equal(mismatchBuild.status,0,mismatchBuild.stderr);
+ await assert.rejects(clients.inspectInstalledClient(spec,{command:'claude',auth:'api-key',executable:mismatched}),error=>{
+  assert.equal(error.demoSafeMessage,error.message);assert.ok(error.message.includes(qualified));assert.match(error.message,/Only this exact version is qualified/);
+  assert.match(error.message,/Choose executable… in Demo setup/);assert.match(error.message,/existing qualified native executable/);assert.match(error.message,/No assistant was started/);
+  assert.doesNotMatch(error.message,/private-probe-output|search order|newer|[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u);assert.ok(error.message.isWellFormed()&&Buffer.byteLength(error.message)<=800);return true;
+ });
  await assert.rejects(fs.access(path.join(f.envelope,'demo/profiles')));await assert.rejects(fs.access(path.join(dir,'launched')));await assert.rejects(fs.access(path.join(f.envelope,'demo/client-guards')));
  const wrapper=path.join(dir,'wrapper');await fs.writeFile(wrapper,'#!/bin/sh\ntouch "'+path.join(dir,'wrapper-ran')+'"\n',{mode:0o700});
  await assert.rejects(clients.inspectInstalledClient(spec,{command:'claude',auth:'api-key',executable:wrapper}),/native arm64/);await assert.rejects(fs.access(path.join(dir,'wrapper-ran')));

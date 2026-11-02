@@ -4,6 +4,8 @@
 @interface CRMenu (SetupFixtureVisible)
 - (NSAlert *)demoSetupAlert;
 - (NSPasteboard *)demoSetupPasteboard;
+- (NSAlert *)modelSetupAlert;
+- (NSMenu *)createMenu;
 @end
 @interface FixtureGuardian : NSObject
 @property(nonatomic,getter=isRunning) BOOL running;
@@ -22,11 +24,13 @@
 @interface SetupMenu : CRMenu
 @property(nonatomic,strong) id fixturePasteboard;
 @property(nonatomic) NSUInteger sent;
+@property(nonatomic,strong) NSAlert *shownModelAlert;
 @end
 @implementation SetupMenu
 - (NSPasteboard *)demoSetupPasteboard {return self.fixturePasteboard;}
 - (void)send:(NSString *)command {(void)command;self.sent++;}
 - (void)openDashboard:(id)sender {(void)sender;}
+- (NSAlert *)modelSetupAlert {self.shownModelAlert=[super modelSetupAlert];return self.shownModelAlert;}
 @end
 static NSView *find(NSView *view,NSString *identifier) {
   if([view.identifier isEqual:identifier])return view;
@@ -39,6 +43,38 @@ int main(int argc,const char *argv[]){@autoreleasepool{@try{
   SetupMenu *menu=[[SetupMenu alloc] initWithBundle:[root stringByAppendingPathComponent:@"Demo App's.app"] root:[root stringByAppendingPathComponent:@"Root's demo"]];
   check([menu respondsToSelector:@selector(demoSetupAlert)],@"Demo setup must expose grouped copy actions without text selection");
   [NSApplication sharedApplication];[NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+  check([menu respondsToSelector:@selector(modelSetupAlert)],@"Model setup must explain the disabled download and selected location");
+  NSAlert *model=[menu modelSetupAlert];
+  for(NSString *phrase in @[@"only in personal mode",@"same data location",@"If you're in demo",@"Return to personal mode…",@"If you haven't downloaded the model here",@"Download Qwen3.5 9B model…",@"Enter demo mode…",@"launch entry points",@"not automatically shared"])
+    check([model.informativeText containsString:phrase],[@"Missing model setup guidance: " stringByAppendingString:phrase]);
+  check(![model.informativeText containsString:@"Restart local runtime"],@"Entering demo already restarts and rechecks the model");
+  NSTextView *locations=(NSTextView *)find(model.accessoryView,@"model-setup-locations");
+  check([locations isKindOfClass:NSTextView.class]&&!locations.editable&&locations.selectable,@"Known locations must be read-only and selectable");
+  check([locations.string containsString:[root stringByAppendingPathComponent:@"Demo App's.app"]]&&[locations.string containsString:[root stringByAppendingPathComponent:@"Root's demo"]],@"Show the exact selected app and data root, even if those paths do not exist");
+  check(model.buttons.count==1&&[model.buttons[0].title isEqual:@"Done"],@"Guidance must not start downloads or change modes");
+  for(NSString *component in @[@"/Long data location with spaces",@"/LongDataLocationWithoutSpaces"]){
+    NSString *longRoot=[root stringByAppendingString:[component stringByPaddingToLength:900 withString:component startingAtIndex:0]];
+    [menu setValue:longRoot forKey:@"root"];NSAlert *longModel=[menu modelSetupAlert];
+    NSTextView *longLocations=(NSTextView *)find(longModel.accessoryView,@"model-setup-locations");
+    [longModel layout];[longModel.window.contentView layoutSubtreeIfNeeded];[longLocations.layoutManager ensureLayoutForTextContainer:longLocations.textContainer];
+    check([longLocations.string containsString:longRoot]&&longLocations.enclosingScrollView.hasVerticalScroller&&longLocations.textContainer.widthTracksTextView,@"Long roots must remain complete, wrapped and scrollable");
+    check(longLocations.frame.size.height>longLocations.enclosingScrollView.contentView.bounds.size.height,@"Long path layout must grow beyond the visible viewport with and without spaces");
+  }
+  [menu setValue:[root stringByAppendingPathComponent:@"Root's demo"] forKey:@"root"];
+  NSMenu *actualMenu=[menu createMenu];[menu update];NSInteger modelIndex=[actualMenu indexOfItemWithTitle:@"Model setup and location…"];
+  check(modelIndex>=0,@"The actual menu must contain Model setup and location");NSMenuItem *modelItem=[actualMenu itemAtIndex:modelIndex];
+  check(modelItem.target==menu&&modelItem.action==@selector(modelSetup:)&&modelItem.enabled,@"Model setup must be enabled and wired to the real action");
+  menu.shownModelAlert=nil;__block NSString *modelFailure=nil;
+  NSTimer *modelTimer=[NSTimer timerWithTimeInterval:0.05 repeats:NO block:^(NSTimer *unused){(void)unused;@try{
+    NSAlert *model=menu.shownModelAlert;check(model&&NSApp.modalWindow==model.window,@"The real menu action must open its model setup modal");
+    [model.window.contentView layoutSubtreeIfNeeded];NSView *content=model.window.contentView;
+    NSBitmapImageRep *bitmap=[content bitmapImageRepForCachingDisplayInRect:content.bounds];[content cacheDisplayInRect:content.bounds toBitmapImageRep:bitmap];
+    [[bitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}] writeToFile:[image.stringByDeletingLastPathComponent stringByAppendingPathComponent:@"model-setup.png"] atomically:YES];
+    [model.buttons[0] performClick:nil];
+  }@catch(NSException *error){modelFailure=error.reason?:@"Model setup fixture assertion";[NSApp abortModal];}}];
+  [NSRunLoop.mainRunLoop addTimer:modelTimer forMode:NSModalPanelRunLoopMode];[actualMenu performActionForItemAtIndex:modelIndex];
+  check(!modelFailure,modelFailure?:@"");check(menu.shownModelAlert!=nil,@"The menu action must construct model guidance");[menu.shownModelAlert.window orderOut:nil];
+  check(menu.sent==0,@"Reading setup/location guidance must not issue lifecycle commands");
   FixtureGuardian *guardian=[FixtureGuardian new];guardian.running=YES;[menu setValue:guardian forKey:@"guardian"];
   [menu setValue:@YES forKey:@"ready"];[menu setValue:@"demo" forKey:@"mode"];[menu setValue:@"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" forKey:@"storeId"];
   [menu setValue:@"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" forKey:@"generation"];[menu setValue:@"http://127.0.0.1:3211/mcp" forKey:@"mcpOrigin"];
