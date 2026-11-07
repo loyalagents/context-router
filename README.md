@@ -4,6 +4,13 @@ A local-first preference/context application: import documents, review suggested
 preferences, manage scoped access, and share context with MCP clients. The managed
 Apple Silicon Mac candidate runs its database, dashboard and selected model locally.
 
+Context Router is intended to adopt the
+[Human Context Protocol (HCP)](https://github.com/loyalagents/hcp-spec), an open
+interface for person-governed memory and context. Alignment is planned; current
+HCP conformance has not been assessed. See the
+[HCP integration reference](docs/useful/HCP_INTEGRATION.md) for the relationship,
+draft baseline, and questions that implementation can feed back into the spec.
+
 The migration foundation and assisted install kit are delivered.
 **Assisted pilot acceptance is active.** The integrated `674750a` app passed its
 automated artifact checks. On October 29 the user confirmed full demo setup,

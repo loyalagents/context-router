@@ -16,6 +16,15 @@ This repo is a `pnpm` workspace monorepo with:
 - `apps/web`: Next.js dashboard and support routes
 - `apps/desktop`: native Mac menu/guardian and installed-app packaging
 
+When planning HCP alignment or changing an HCP mapping or conformance claim:
+
+- Read [the HCP integration reference](docs/useful/HCP_INTEGRATION.md) and the
+  relevant sections of its pinned specification draft. It separates current
+  application behavior, intended alignment, and questions for the spec.
+- Keep application-specific plans and evidence here; reusable adoption guidance
+  and proposed protocol changes belong in `hcp-spec`. The reference does not
+  activate implementation work or establish conformance.
+
 Validation for all repository changes (backend, web, native, packaging, and docs):
 
 - Follow the [validation policy](docs/useful/AGENT_WORKFLOW.md#validation-and-context-discipline).

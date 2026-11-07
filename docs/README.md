@@ -39,6 +39,8 @@ This file is for doc writers. For agent startup, follow `AGENTS.md`.
   retained hosted environment, commands and testing; not installed-app prerequisites.
 - [Interface evolution](useful/INTERFACE_EVOLUTION.md) — additive transitions,
   consumer inventory, compatibility windows and explicit removal gates.
+- [HCP integration](useful/HCP_INTEGRATION.md) — relationship to the protocol
+  repository, pinned draft, alignment questions, and implementation feedback.
 
 - [Installed Mac pilot](useful/INSTALLED_MAC_APP.md) — menu, model, installed CLI,
   private storage, backup/restore, replacement and removal of the local candidate.
