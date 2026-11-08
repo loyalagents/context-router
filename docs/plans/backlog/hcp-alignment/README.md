@@ -21,6 +21,8 @@ Use this upgrade to evaluate adoption using the **current hcp-spec repository**
 and identify reusable lessons for other teams. Start with its existing specification,
 schemas, guides, and tooling; keep the assessment, questions, and adoption observations
 in Context Router. Improve hcp-spec only when concrete findings justify a focused change.
+Reusable HCP improvements are an explicit outcome of this work alongside application
+alignment, with a review and disposition at every checkpoint.
 
 The proposed end target is **Agent Interop plus Memory Manager**, conditional on
 serving independently operated assistants and accepting model-inferred entries:
@@ -72,12 +74,11 @@ in the local question list requires a spec change. A large CR change is not by
 itself evidence that HCP needs revision. Evaluate adoption usability separately
 from protocol conformance, memory quality, and task outcomes.
 
-At C3, summarize what the existing materials enabled, where interpretation or
-manual work was needed, which questions remain, and which focused upstream
-improvements the evidence supports. Do not build a general adoption framework or
-skill in advance of that evidence. A real blocker can be raised earlier: resolve
-the ambiguity before implementing the affected behavior, continue independent
-work, and never weaken requirements merely to preserve the experiment's schedule.
+Follow the [checkpoint review workflow](#hcp-adoption-reviews-and-upstream-work)
+to turn these observations into improvements. Do not build a general adoption
+framework or skill in advance of demonstrated need. Resolve blocking ambiguities
+before implementing affected behavior, continue independent work, and never weaken
+requirements merely to preserve the experiment's schedule.
 
 This team already has the gap analysis and interpretation notes. Its observations
 establish experienced-team integration friction; they do not establish unaided
@@ -89,6 +90,64 @@ command, source revision, and result without introducing a new measurement syste
 Keep hcp-spec unchanged for this documentation phase, including its already merged
 implementation-directory entry. Future improvements are separate, reviewable
 changes with the smallest concrete example and an explicit target-revision decision.
+
+## HCP Adoption Reviews And Upstream Work
+
+### Review At Every Checkpoint
+
+Every C0–C8 closeout includes an **HCP adoption findings and upstream disposition**
+review. The step owner records what the existing materials made straightforward,
+what required interpretation or a workaround, and what repeated work could help
+other implementers. Classify findings using the categories above and identify the
+smallest useful application, guidance/tooling, or specification change. Explicitly
+record **none** when there is no justified upstream work.
+
+Keep detailed findings, stable question IDs, evidence, and dispositions in the
+[local question record][questions]; keep checkpoint status and links in this brief.
+The coordinator reconciles findings across steps and checks that closeout includes
+a disposition, rather than just a list of observations:
+
+- For a concrete reusable correction or aid within the activated scope, prepare,
+  validate, and open a focused hcp-spec PR as part of closeout. Documentation,
+  examples, tooling, skills, and specification corrections are eligible; logging
+  the need alone is not the normal endpoint. Any nonblocking deferral needs a
+  reason, an owner, and a checkpoint or condition for revisiting it.
+- For unresolved semantics or larger protocol additions, record the concrete case
+  and obtain a separate design decision before changing requirements. A focused
+  issue or proposal can carry that discussion; CR-specific complexity alone does
+  not justify expanding the protocol.
+- Track **submitted**, **merged**, and **adopted by CR** separately, with links and
+  responsible owners. An open nonblocking upstream review need not hold up
+  independent CR work. A blocker stays attached to the dependent capability until
+  the ambiguity and target decision are resolved.
+
+This is the closeout workflow for activated work. Documenting it now does not
+activate implementation or make changes in hcp-spec.
+
+### Deeper Review Checkpoints
+
+| Pause | Required review and output |
+| --- | --- |
+| End of C0 | Check whether the existing materials establish the first experiment's roles, deployment, and required behavior. Resolve blockers for the selected slice, turn understood reusable corrections into focused upstream PRs, and record decisions deferred to later capabilities. |
+| End of C3 | Review the completed synthetic journey and adoption evidence. Produce justified examples, guidance, tooling, or an initial integration skill from the working path. Record the experienced-team limitation and the disposition of each candidate improvement; no skill is required without a demonstrated reusable need. |
+| End of C7 | Review actual binding/client interoperability and what another team needs to reproduce and validate it. Reconcile outstanding upstream findings and resolve issues affecting the selected package before C8 qualification. |
+| C8 closeout | Verify that reusable materials match the selected normative target and demonstrated behavior. Record final upstream statuses and any nonblocking follow-up with owner/revisit condition. A finding that changes the candidate or target renews affected qualification under the existing freeze/evidence rules. |
+
+These pauses deepen the regular review; blockers can be raised at any time.
+An integration skill should guide scope selection, gap analysis, implementation,
+and validation through proven guidance and normative references. Extend it as later
+checkpoints supply evidence, and coordinate validation tooling with HCP's planned
+conformance suite.
+
+### Preserve Evidence When HCP Evolves
+
+Retain the original adoption baseline and observations. Record later guidance,
+tooling, and skill revisions used at each checkpoint so their benefit can be
+distinguished from the initial experience. For a merged normative change, explicitly
+decide whether and when CR adopts it; record the old/new target revisions, affected
+gap/requirement rows, compatibility impact, and tests/reviews to renew. Update the
+current target in this brief and the handoff before dependent work proceeds.
+Neither an upstream merge nor a chat transition silently changes the target.
 
 ## Proposed Architecture
 
@@ -256,6 +315,9 @@ result and remaining evidence; these are internal checkpoints, not a required PR
 count. Prefer one cohesive PR for a bounded outcome, splitting only at independently
 useful, safe landing points. C0 turns the [first experiment](#first-experiment-c0c3)
 into an implementation brief; C4–C8 retain the remaining alignment roadmap.
+Every row also requires the [adoption review and upstream disposition](#hcp-adoption-reviews-and-upstream-work)
+and a [step-chat handoff](#step-chats-and-handoffs). These supplement each row's
+technical exit evidence.
 
 | Checkpoint | Deliverable | Exit evidence and dependencies |
 | --- | --- | --- |
@@ -279,6 +341,57 @@ sharing-report operations or establish control over an external assistant's
 copies. A client that claims to follow directives needs host enforcement; prompt
 text alone is not evidence. Never put management/access/refresh credentials into
 tool content or model prompts.
+
+## Step Chats And Handoffs
+
+Use a coordinator chat for sequencing, cross-cutting decisions, review of results,
+and upstream work. Start with a C0 planning chat when chat setup is requested;
+create later step chats as their inputs and dependencies become ready. The default
+C0–C3 implementation order remains sequential. Independent investigation and review
+can run in parallel without starting dependent implementation early.
+
+| Role | Responsibility |
+| --- | --- |
+| Coordinator chat | Scope step briefs, reconcile decisions and HCP findings, check evidence and dependency readiness, and coordinate integration and upstream follow-through within the authorized scope. |
+| Step chat | Own the assigned checkpoint's detailed work, tests, documentation, adoption review, and handoff. Use subagents for bounded investigation and independent review. |
+| Repository records | This canonical brief and the linked gap/question records hold durable decisions, status, evidence, and open work. Each chat reads them at its starting revision; a previous conversation is not the sole source of an accepted contract. |
+
+Assign one writer per checkout, including its plan/status edits. While the step
+chat owns that checkout, the coordinator and reviewers remain read-only and send
+corrections to its writer; record ownership transfer at handoff. Concurrent writers
+need independently owned worktrees, isolated databases/ports/build outputs, stable
+contracts, and an integration order under the [agent workflow](../../../useful/AGENT_WORKFLOW.md).
+Use the coordination/reporting permissions established by the user at chat setup.
+
+Each starting brief records the checkpoint, exact CR base commit and branch/worktree,
+original HCP baseline and current target, required reading, accepted decisions and
+dependencies, authorized scope/non-goals, owned paths/resources, reviewer roles,
+and acceptance checks. Preserve the current planning-only boundary until runtime
+work is activated. For a continuing experiment PR, use its handed-off commit and
+branch lineage rather than assuming the next chat starts from `main`.
+
+Every step returns a concise handoff to the coordinator with:
+
+- Outcome and status: complete, partial, or blocked, with the scoped deliverable.
+- Exact base/head commits, branch/worktree, changed paths, PR links, and uncommitted
+  state if any; identify the next writer and starting revision.
+- Decisions and updated repository records, including requirement/gap IDs, the
+  HCP target used, and any explicit target-adoption decision.
+- Validation commands/results, reviewed candidate, review findings/dispositions,
+  and remaining platform, artifact, client, or manual evidence.
+- **HCP adoption findings and upstream disposition:** evidence links, proposed
+  improvements or none, PR/design-discussion status, and owners/revisit conditions
+  for deferred work. Do not describe submitted work as merged or adopted.
+- Open questions and blockers, what they prevent, and the next checkpoint's
+  prerequisites and recommended scope.
+
+The coordinator checks this handoff against the technical and adoption exit
+criteria before treating the checkpoint as complete or starting dependent work.
+Chat boundaries do not dictate PR boundaries: C1–C3 may remain one cohesive
+experiment PR, while hcp-spec changes receive their own focused PRs. Keep the
+canonical records current without copying the whole plan into each chat or making
+a new permanent process document for each handoff. Human merge and release
+decisions remain separate.
 
 ## Validation, Ownership, And Finalization
 
@@ -320,11 +433,12 @@ The [local questions][questions] own initial clarifications and adoption finding
 Use the current spec before improving it, following the adoption approach above.
 Keep CR's rollout, compatibility, data mapping, and qualification evidence here.
 
-As concrete evidence reveals reusable needs, propose focused hcp-spec clarifications,
-synthetic scenarios, complete tool descriptors, binding examples, or adoption
-guidance. Coordinate tooling with its forthcoming conformance suite. A later
-skill should route to proven guidance and the normative text. Accepted upstream
-changes trigger reassessment; adopt a new target revision explicitly.
+Use the [checkpoint workflow](#hcp-adoption-reviews-and-upstream-work) for focused
+hcp-spec PRs, larger design questions, and explicit deferrals. Reusable scenarios,
+tool descriptors, binding examples, adoption guidance, and integration skills
+should follow demonstrated needs. The coordinator tracks follow-through and target
+adoption in the existing records; accepted upstream work triggers the affected
+requirement/test reassessment.
 
 When activated, promote this canonical brief through the [portfolio](../../README.md)
 instead of copying it into a second plan. After delivery, distill implemented
