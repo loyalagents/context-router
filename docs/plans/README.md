@@ -45,12 +45,18 @@ and pending implementation checkpoints are historical.
 | --- | --- | --- |
 | Assisted colleague pilot — first priority | Get a few Git-capable colleagues using their own data, with Claude Desktop and tolerable install/update/reconnect friction | [Pilot](active/colleague-pilot/README.md) |
 | Stabilization | Bounded correctness, recovery, diagnostics and usability fixes; eligible slices can run in parallel worktrees | [Stabilization](backlog/stabilization/README.md), [UI usability](backlog/ui-usability/README.md) |
-| Future capabilities | Wanted features, prioritized individually rather than extending a completed migration | [MCP onboarding](backlog/mcp-onboarding/README.md), [agent-assisted onboarding](backlog/agent-assisted-onboarding/README.md), [AI scheduling](backlog/local-ai-scheduling/README.md), [provider choice](backlog/model-provider-selection/README.md), [evaluation](backlog/evaluation/README.md), [platform/network/hosting](backlog/platform-and-hosting/README.md) |
+| Future capabilities | Wanted features, prioritized individually rather than extending a completed migration | [HCP alignment](backlog/hcp-alignment/README.md), [MCP onboarding](backlog/mcp-onboarding/README.md), [agent-assisted onboarding](backlog/agent-assisted-onboarding/README.md), [AI scheduling](backlog/local-ai-scheduling/README.md), [provider choice](backlog/model-provider-selection/README.md), [evaluation](backlog/evaluation/README.md), [platform/network/hosting](backlog/platform-and-hosting/README.md) |
 
 Priority and parallel eligibility are separate attributes. A stabilization item
 can be a pilot blocker; that does not make it safe to implement concurrently.
 Keep one canonical item, link it from the pilot, and assign a named owner and
 landing order. Do not copy tasks between lists or activate every backlog brief.
+
+HCP's source gap analysis, local questions, and proposed alignment checkpoints are
+documented in its backlog brief. The upgrade will test adoption using the current
+spec before proposing evidence-backed improvements upstream. Runtime implementation
+and data migration remain unactivated; the current pilot and MCP-onboarding scope
+are unchanged.
 
 `active/` contains currently coordinated work. `backlog/` holds useful but
 unactivated briefs; promotion requires an explicit scope/owner/acceptance decision.
