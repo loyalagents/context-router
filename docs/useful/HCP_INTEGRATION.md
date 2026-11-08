@@ -14,7 +14,7 @@ implementing that interface and testing the specification's assumptions.
 
 | Repository | Owns |
 | --- | --- |
-| `context-router` | The application, its current behavior and compatibility contracts, its HCP assessment and implementation plans, and evidence for any future conformance claims. |
+| `context-router` | The application, its current behavior and interface contracts, its HCP assessment and implementation plans, and evidence for any future conformance claims. |
 | `hcp-spec` | Normative protocol requirements and schemas; general implementation guides, skills, and tooling as adoption experience makes them useful. |
 
 Application code and tests establish what Context Router does today. The chosen
@@ -52,10 +52,16 @@ in this reference; it is not runtime conformance evidence.
 
 The canonical [backlog alignment brief](../plans/backlog/hcp-alignment/README.md)
 owns the proposed architecture, package/profile scope, historical-data policy,
-activation decisions, and testable checkpoints. It proposes an additive HCP
-interface over shared application/storage semantics, beginning with isolated
-synthetic data. Existing reads and writes need explicit compatibility boundaries.
-Implementation and personal-data migration remain unactivated.
+activation decisions, and testable checkpoints. The accepted direction is to
+redesign directly around HCP without backwards compatibility: APIs, tools, schemas,
+and application consumers may change together, with no required legacy adapters
+or compatibility projections. All existing CR application data and database
+migration history may be deleted; preservation and historical conversion are not
+required. Start with a fresh HCP schema and isolated synthetic stores. Prioritize
+working HCP behavior quickly and concrete adoption findings that lead to reusable
+specification, guidance, or tooling fixes. Deployment/adapter support is a separate
+C0 decision. This phase changes documentation only; it performs no deletion or
+implementation.
 
 [Open Draft 3 questions](../plans/backlog/hcp-alignment/spec-questions.md)
 stay in Context Router while the upgrade tests the current HCP specification,
@@ -72,7 +78,7 @@ establish that evidence.
 
 As alignment proceeds, classify findings by where they belong:
 
-- **Application work:** keep Context Router's mapping, rollout, compatibility
+- **Application work:** keep Context Router's mapping, rollout, contract-change
   decisions, tests, and acceptance evidence in this repo.
 - **Reusable adoption guidance:** contribute implementation-neutral examples,
   guides, skills, and tooling to `hcp-spec` as working integrations reveal useful
@@ -99,10 +105,15 @@ under the [work portfolio](../plans/README.md); promote it when runtime work is
 scoped and activated rather than copying it. Link to this reference for repository
 ownership. These documents do not change pilot priorities or authorize a migration.
 
-Follow [interface evolution](INTERFACE_EVOLUTION.md) for existing consumers and
-[the validation policy](AGENT_WORKFLOW.md#validation-and-context-discipline) for
-changes. Backend behavior changes remain tests first. General HCP guidance must
-not weaken existing credential, compatibility, persistence, or recovery boundaries.
+The plan records an HCP-specific exception to legacy-contract preservation and
+compatibility windows in [interface evolution](INTERFACE_EVOLUTION.md). Coordinate
+producer/consumer changes and test the new contracts under
+[the validation policy](AGENT_WORKFLOW.md#validation-and-context-discipline).
+Backend behavior changes remain tests first. The redesign must preserve credential
+separation, privacy, truthful provenance, persistence, and recovery guarantees.
+The accepted redesign includes discarding old CR data/migrations without another
+preservation decision; the plan scopes reset mechanics and checks. New HCP data
+retains its lifecycle guarantees. Policy for unrelated work is unchanged.
 
 For changes in `hcp-spec`, follow its
 [build instructions](https://github.com/loyalagents/hcp-spec#building-and-checking):

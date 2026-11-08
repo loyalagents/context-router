@@ -3,7 +3,7 @@
 - Status: documented proposal; implementation is not activated
 - Outcome owner: product owner; assign a coordinator and sole writer at activation
 - Priority: future capability; does not change the assisted pilot's priority
-- Risk: authorization, disclosure, persisted history, erasure, and client compatibility
+- Risk: authorization, disclosure, persisted history, erasure, and client interoperability
 - Assessment date: 2026-11-07
 - Evidence: [gap analysis](gap-analysis.md), with the reviewed source revisions
 - Relationship and ownership: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
@@ -11,18 +11,40 @@
 
 ## Outcome And Scope
 
-Align Context Router with a deliberately selected HCP revision while preserving
-the local application's credential, inference, persistence, and supported-client
-boundaries. Add HCP interfaces backed by shared entry, authorization, disclosure,
-and audit services. Existing application views can remain where their behavior
-can be represented faithfully.
+Redesign Context Router directly around a deliberately selected HCP revision,
+with shared entry, authorization, disclosure, and audit services. Preserve the
+local application's credential separation, inference privacy, and persistence
+correctness while replacing interfaces and data structures where useful.
+
+**Accepted direction: backwards compatibility is not required for this HCP
+alignment.** Existing APIs, MCP tools, schemas, preference tables, and data formats
+may be replaced. Update the backend and selected application consumers together;
+do not require legacy adapters, compatibility projections, parallel old/new
+contracts, or deprecation windows. **All existing Context Router application data
+and database migration history may be deleted for this redesign.** Start with a
+fresh HCP schema; preserving, backing up, converting, or upgrading legacy data is
+not a delivery requirement. Reuse components only when they simplify the HCP design.
+This direction does not itself retire PostgreSQL or hosted support; record that
+separate product-scope decision at C0 (D8).
+
+**Optimize for the shortest path to working HCP behavior and useful adoption
+findings.** Compatibility-only code, tests, migration bridges, and rollout machinery
+are out of scope. C0 settles only the contracts and scope needed for C1–C3; defer
+later design decisions until their capabilities need them. Use the smallest
+implementation that meets the selected requirements, focused checks, and cohesive
+PRs. Checkpoints organize testable progress and handoffs, not separate PRs or
+repeated approval of already accepted decisions. Retain authority, privacy, and
+new-store durability checks; speed comes from removing unnecessary scope.
 
 Use this upgrade to evaluate adoption using the **current hcp-spec repository**
 and identify reusable lessons for other teams. Start with its existing specification,
 schemas, guides, and tooling; keep the assessment, questions, and adoption observations
-in Context Router. Improve hcp-spec only when concrete findings justify a focused change.
-Reusable HCP improvements are an explicit outcome of this work alongside application
-alignment, with a review and disposition at every checkpoint.
+in Context Router. Actively look for specification defects, unclear requirements,
+missing examples, and repeated work that tooling or a skill could remove. Turn
+concrete findings into focused hcp-spec fixes through the checkpoint workflow;
+recording issues alone is not the intended outcome. Working HCP behavior and
+reusable adoption improvements are the two outcomes of this effort. No upstream
+change is required when the evidence shows none is needed.
 
 The proposed end target is **Agent Interop plus Memory Manager**, conditional on
 serving independently operated assistants and accepting model-inferred entries:
@@ -44,9 +66,11 @@ It makes **no HCP conformance claim**. A complete HTTP-only Provider Interop
 milestone is possible later, before MCP qualification, only after all requirements
 of that package and any applicable profiles are evidenced.
 
-This plan authorizes no runtime work, personal-data migration, reset, live model
-run, new network exposure, third-party client configuration, or release. It does
-not change the chosen spec revision when an upstream question is resolved.
+This documentation phase does not start implementation or perform deletions,
+resets, live model runs, new network exposure, client configuration, or releases.
+Discarding existing CR data and migrations is an accepted implementation choice,
+not a decision to reopen at each step. An upstream resolution does not silently
+change the chosen spec revision.
 
 ## Test The Current Adoption Experience
 
@@ -145,7 +169,7 @@ Retain the original adoption baseline and observations. Record later guidance,
 tooling, and skill revisions used at each checkpoint so their benefit can be
 distinguished from the initial experience. For a merged normative change, explicitly
 decide whether and when CR adopts it; record the old/new target revisions, affected
-gap/requirement rows, compatibility impact, and tests/reviews to renew. Update the
+gap/requirement rows, contract/client impact, and tests/reviews to renew. Update the
 current target in this brief and the handoff before dependent work proceeds.
 Neither an upstream merge nor a chat transition silently changes the target.
 
@@ -153,31 +177,33 @@ Neither an upstream merge nor a chat transition silently changes the target.
 
 ```mermaid
 flowchart TD
-    UI["Dashboard / GraphQL"] --> Services
-    Legacy["Legacy MCP compatibility adapters"] --> Services
+    UI["Updated dashboard / application API"] --> Services
+    Producers["Document and other selected memory workflows"] --> Services
     HTTP["HCP HTTP: context and management"] --> Services
     MCP["HCP MCP: context tools"] --> Services
     Services["Shared entry, authorization, disclosure and audit services"]
-    Services --> Store["Selected SQLite or PostgreSQL store<br/>HCP records and compatibility projections"]
+    Services --> Store["One transactional store per deployment<br/>Authoritative HCP records; adapters selected at C0"]
 ```
 
-Prefer authoritative HCP entry/version, grant, relationship, disclosure, audit,
-and idempotency records inside the selected existing transactional store. Keep
-preference tables as compatibility projections where useful, updated in the same
-transaction through one mutation authority. HCP governs observable behavior, not
-the literal database layout.
+Make HCP entries/versions, grants, relationships, disclosures, audit, and
+idempotency records authoritative in the selected transactional store. Replace
+the preference-centered model where needed; no compatibility projection or
+dual-write path is required. HCP governs observable behavior, not the literal
+database layout. All retained producers and consumers use the shared services
+and their authority rules.
 
-A thin adapter is useful for the isolated experiment. Independently writable
-metadata beside existing preference rows would drift when another application
-path changed the memory. Replacing the preference model wholesale is another
-option, but has a broader UI and migration impact; choose it only if the reviewed
-mapping shows compatibility projections add more complexity than they remove.
-Do not introduce a separate authoritative database without an explicit cross-store
-commit and recovery design.
+Build the isolated experiment on this model so later checkpoints extend the same
+foundation. Reuse or reshape application-owned storage ports, unit-of-work
+support, and shared contracts where useful. Keep one mutation authority; do not
+introduce a separate authoritative database without an explicit cross-store commit
+and recovery design.
 
-Extend the existing application-owned storage ports and shared contracts. Local
-SQLite schema admission/upgrades and PostgreSQL/Prisma migrations are distinct
-responsibilities. Neither adapter is retired by this plan.
+C0 selects supported deployments and adapters under D8. Until that decision,
+SQLite and PostgreSQL remain the provisional scope; neither is retired here.
+For each selected adapter, require fresh-schema setup and persistence/recovery
+evidence. SQLite schema admission and PostgreSQL/Prisma schema setup remain
+distinct responsibilities. Old database migrations may be removed and replaced
+with a fresh HCP schema baseline; no upgrade chain from legacy CR stores is needed.
 
 ## Decisions Before Runtime Work
 
@@ -185,29 +211,33 @@ responsibilities. Neither adapter is retired by this plan.
 | --- | --- | --- |
 | D1. Draft, roles, and claim | Start from the recorded adoption baseline and select the package/profile list. Identify the person operating the instance, provider, assistant host, bridge, inference component, and requesting party. Investigate operator ambiguities through CR-Q3 in the [local notes][questions]; raise a focused upstream question only where the existing materials do not settle the required behavior. | C0; any grant or public claim |
 | D2. Authorization deployment | Preserve local/offline operation and authority separation. Evaluate a maintained OAuth implementation with the required HCP details; hosted Auth0 is not an implicit local dependency. Select supported flows and local discovery/metadata behavior; CR-Q3/CR-Q4 remain open. | C0/C2 |
-| D3. Entry mapping | Freeze actor/grant identity and provenance contracts before the kernel. Define content wrappers, categories, purposes, location semantics, proposal staging, and legacy representability. | C0/C1 |
-| D4. Shared-data boundary | Inventory old reads and writes. Either adapt each access path for HCP-managed records or exclude those records; preserve supported consumers through reviewed transitions. | Before any shared production-store exposure, not merely C6 |
+| D3. HCP data model | Freeze actor/grant identity and provenance contracts before the kernel. Design entry content, categories, purposes, location semantics, and proposal staging directly for HCP. No legacy-value mapping is required. | C0/C1 |
+| D4. Application access paths | Inventory existing reads and writes. Rebuild selected workflows around the shared HCP services; remove or disable superseded paths, or exclude HCP-managed records from them. Update affected consumers together without preserving old contracts. | Before any shared production-store exposure, not merely C6 |
 | D5. Revocation and copies | Define authorization/commit/disclosure ordering, expiry during sleep, and notification recovery. Use a truthful no-endpoint/short-copy configuration for the first experiment if appropriate; resolve CR-Q1 before the affected concurrency behavior. | C0/C2, before first disclosure |
 | D6. Retention and retries | Settle retention and cleanup for data persisted by the first experiment at C0. Record future erasure/replay boundaries across versions, audit snapshots, idempotency responses, backups, and recovery. Resolve create → erase → retry and changed-authority replay through CR-Q2 before introducing the affected behavior or caches; no silent resurrection. | C0 for experiment retention; before C4 durable idempotency/content caches and affected erasure/replay behavior |
-| D7. Historical adoption | Preserve or refuse incompatibility by default. Faithfully adopt representable records; retain others as legacy or obtain a genuinely new person declaration. A designated reset release needs its own bounded decision and consent. | C0/C6 |
+| D7. Fresh schema and reset mechanics | Deleting all existing CR application data, including personal/demo stores, and old database migrations is accepted. Define the replacement schema baseline, exact CR-owned reset targets, and fresh initialization behavior; no preservation, backup, conversion, or legacy-upgrade path is required. Use isolated synthetic stores for the experiment. | C0/C1 for initialization and reset mechanics; no new decision on whether legacy data may be discarded |
+| D8. Deployment and storage support | Decide whether the HCP implementation retains both local SQLite and hosted PostgreSQL support, or narrows the supported product scope. Record adapters, deployments, and their checkpoint/evidence obligations explicitly; no-backwards-compatibility does not settle this choice. Both adapters remain provisional until C0 decides. | C0, before C1 storage implementation |
 
-These are decisions to settle at activation, not assumed approvals. Record their
-dispositions in this brief and update the gap rows they affect. Keep initial
-questions and adoption evidence in the [local notes][questions]; link any later
-upstream discussion from that single record.
+Breaking contracts and discarding legacy CR data/migrations are already accepted.
+Settle the remaining design and scope decisions at activation; this documentation
+does not start runtime work. Record dispositions in this brief and update affected
+gap rows. Keep questions and adoption evidence in the [local notes][questions];
+link later upstream discussion from that single record.
 
 ## Historical Data And Shared Paths
 
-Existing CR records are not HCP v1 exports. Source labels, numeric confidence,
-acceptance history, or demo format versions do not prove complete HCP provenance.
-Do not invent historical model identifiers, grants, confirmations, or revisions.
-Record any migration/submission performed now with truthful current attribution.
+Implement against a fresh HCP schema. Existing CR data and database migration
+history are disposable; do not build historical conversion, compatibility tables,
+backup/export prerequisites, or legacy-upgrade tests merely to preserve them.
+The reset applies to identified CR application data, not unrelated files or other
+applications. Test reset/initialization with isolated synthetic stores, including
+that old authority and data do not reappear in the new store.
 
-Keep unrepresentable records explicitly outside HCP-managed entries until an
-appropriate adoption path is chosen. A person can deliberately make a fresh
-statement with current provenance. Generic migration approval or confirmation of
-an inference must not relabel its original asserter or declaration type. Preserve
-the distinction between that new assertion and its legacy source.
+HCP-native export/import in C5 remains part of the selected protocol scope.
+Persistence, truthful provenance, erasure, and recovery obligations for the new
+HCP store still apply. If historical adoption is requested later, it is additional
+scope: existing CR records are not HCP v1 exports, and missing grants, model facts,
+confirmations, or assertion history must never be invented.
 
 Keep document proposals in a pre-entry staging area until applied. HCP has no
 `suggested` state; neither automatic activation nor invented conflict is a faithful
@@ -220,14 +250,19 @@ legacy MCP tools, both document-apply versions, identity/profile seed writes,
 definition edits, location cascades, reset/history-clear, and import tools. The
 same inventory covers legacy reads, exports, resources, and AI prompt builders.
 Shared mutation rules alone cannot protect a disclosure through an old read path.
-This is a product security/compatibility decision; HCP's interface contract does
-not by itself describe the guarantees of a separately labeled legacy interface.
+Remove, disable, or rebuild those paths before they can bypass HCP controls.
+An inventory establishes coverage; it does not require keeping every old workflow.
 
-Preserve wire shapes where possible, but do not promise unchanged overwrite,
-delete, or visibility semantics for HCP-managed records. Follow
-[interface evolution](../../../useful/INTERFACE_EVOLUTION.md), with a supported
-consumer inventory, migration window, and recovery plan. Scope refusal or
-exclusion before exposure; do not silently downgrade records for compatibility.
+For this HCP effort, the accepted breaking-change direction supersedes the legacy
+contract-preservation, additive-transition, and compatibility-window requirements
+in [interface evolution](../../../useful/INTERFACE_EVOLUTION.md). The accepted reset
+also supersedes preserve-or-refuse and renewed legacy-data-loss consent requirements
+for this redesign; it is not a general reset policy for later HCP data. Keep the
+consumer inventory, coordinated producer/consumer changes, new-contract tests,
+and filesystem/process ownership checks. No compatibility adapter is required
+for a superseded interface.
+Authority, disclosure, provenance, erasure, and recovery invariants still apply;
+the exception does not change policy for unrelated work.
 
 ## First Experiment: C0–C3
 
@@ -245,10 +280,13 @@ unactivated and no HCP package/profile claim is made.
   authority/provenance, stable IDs and immutable version data. Include category,
   purpose, lifecycle/expiry, and unknown-field fixtures. Real producers, document
   ingestion, and model-inferred entries cannot invoke this incomplete slice.
-- Use a fresh isolated SQLite store and an isolated PostgreSQL database through
-  shared storage contracts. C1 must initialize, admit, reopen, and validate the new
-  SQLite schema, and set up/migrate the fresh PostgreSQL database. Existing personal
-  and demo stores remain untouched; preserve-or-refuse schema behavior stays in force.
+- Use fresh isolated stores for every adapter selected under D8. The provisional
+  scope includes SQLite and PostgreSQL; C0 must explicitly record any narrowing.
+  C1 initializes, admits, reopens, and validates the new SQLite schema where
+  selected, and sets up/migrates a fresh PostgreSQL database where selected,
+  through shared storage contracts. Exercise the selected reset/fresh-start path
+  against synthetic old stores; preserving their contents or migration history
+  is not an acceptance criterion. The first experiment needs no personal data.
 - Exercise the actual local authorization flow selected at C0, including the
   metadata/discovery it needs, explicit consent, temporary grants, and current-grant
   checks. Authentication alone cannot create authority. Provide minimal human
@@ -273,18 +311,19 @@ dispositions to separate early implementation from necessary design:
 | Disposition | Required treatment for this experiment |
 | --- | --- |
 | Build for C3 | Implement and test the included storage, authorization, query/get, human controls, and audit behavior above. Disabled operations must be unavailable or explicitly rejected. |
-| Fix the contract in C0 | Settle actor/grant identity, provenance/version representation, purpose/category semantics, revocation ordering, isolation, and the retention rules for data this experiment persists before dependent implementation. Record the future mutation, erasure/retry, and compatibility boundaries; resolve their open questions before the affected capability or durable content cache is introduced. |
-| Defer while disabled | Keep production create/revise/withdraw and confirmation workflows, document staging, inference/conflict detection, persistent grants, additional OAuth flows, full governance editors, notification delivery, export/import/hard-delete operations, compatibility projections, historical migration, MCP, and real-host qualification in their later checkpoints. Standing-rule/directive enforcement and the included human controls remain required now. |
+| Fix the contract in C0 | Settle actor/grant identity, provenance/version representation, purpose/category semantics, revocation ordering, isolation, selected deployments/adapters, and the retention rules for data this experiment persists before dependent implementation. Record future mutation, erasure/retry, and application-access boundaries; resolve their open questions before the affected capability or durable content cache is introduced. |
+| Defer while disabled | Keep production create/revise/withdraw and confirmation workflows, document staging, inference/conflict detection, persistent grants, additional OAuth flows, full governance editors, notification delivery, HCP export/import/hard-delete operations, application integration, MCP, and real-host qualification in their later checkpoints. Historical conversion and legacy compatibility are out of scope, not deferred work. Standing-rule/directive enforcement and the included human controls remain required now. |
 
 Deferral changes this experiment's delivery scope only. It does not waive any
 requirement of the eventual package or enable an unsupported feature. C0 resolves
-D1–D7 for the slice, records remaining decisions with their dependencies, and obtains
+D1–D8 for the slice, records remaining decisions with their dependencies, and obtains
 independent review before runtime work. Preserve the pinned adoption baseline;
 resolve blocking ambiguities before implementing affected behavior.
 
 ### Exit Evidence
 
-Run the same selected HTTP journey and storage contracts against both adapters:
+Run the same selected HTTP journey and storage contracts against every adapter
+in the C0 support scope:
 
 1. The human explicitly grants temporary access to each client for its selected
    purposes/categories. Client A and B receive independent authority; no grant or
@@ -321,14 +360,14 @@ technical exit evidence.
 
 | Checkpoint | Deliverable | Exit evidence and dependencies |
 | --- | --- | --- |
-| C0. Scope and contracts | Resolve D1–D7 for the first slice against the recorded adoption baseline and role map. Expand gap IDs into a requirement/test matrix with build-for-C3, contract-fixed-now, deferred, and reasoned inapplicability dispositions. Record unanswered questions and manual interpretation locally. | Independently reviewed first-experiment brief covering authority, lifecycle, isolation, compatibility, migration, and failure states. Identify blockers and their affected checkpoints without requiring advance HCP documentation/tooling improvements. |
-| C1. Synthetic entry foundation | Seed stable entries and immutable version data with truthful fixture provenance, lifecycle/expiry handling, unknown-field preservation, and transactional audit under the C0 contracts. | Fresh SQLite initialization/schema admission/reopen and PostgreSQL setup; shared storage contracts, rollback, acknowledged durability, and unknown-field round trips. Real producers remain excluded. Production mutation/confirmation/staging workflows follow later. Begins G06–G11/G14. |
+| C0. Scope and contracts | Resolve D1–D8 for the first slice against the recorded adoption baseline and role map. Expand gap IDs into a requirement/test matrix with build-for-C3, contract-fixed-now, deferred, and reasoned inapplicability dispositions. Record unanswered questions and manual interpretation locally. | Independently reviewed first-experiment brief covering authority, lifecycle, isolation, direct HCP contracts, selected deployments/adapters, fresh-store boundaries, and failure states. Identify blockers and their affected checkpoints without requiring advance HCP documentation/tooling improvements. |
+| C1. Synthetic entry foundation | Establish a fresh HCP schema baseline, replacing old migrations where useful. Seed stable entries and immutable version data with truthful fixture provenance, lifecycle/expiry handling, unknown-field preservation, and transactional audit under the C0 contracts. | Fresh-schema setup/admission/reopen and synthetic reset tests for each selected adapter, including SQLite and PostgreSQL unless D8 narrows scope; shared storage contracts, rollback, acknowledged durability, and unknown-field round trips. No legacy-data retention or migration-chain tests. Real producers remain excluded. Production mutation/confirmation/staging workflows follow later. Begins G06–G11/G14. |
 | C2. Grants and human controls | Explicit consent, temporary grants, the selected OAuth flow, purpose/category/narrowing evaluation, standing-rule/directive enforcement, immediate provider revocation, and minimal human grant/history access. Use the no-endpoint configuration. | Two-client isolation, authentication-versus-consent, management-route rejection of context credentials, own-grant versus all-grant access, and cross-grant revocation denial. Test expiry across sleep/restart and revocation races. Persistence remains disabled; copies are capped at one hour. Begins G01–G05. |
-| C3. Read-only HTTP journey | Query/get with allowlisted disclosures, grant references, lexical relevance, one quantity bound, directives, use-until, and synchronous durable disclosure history. | Complete the first experiment's two-client journey and negative/failure cases on both adapters. Summarize adoption friction with fixtures/revisions/results and the experienced-team limitation. No package/profile claim. Addresses G12–G14 and part of G16. |
+| C3. Read-only HTTP journey | Query/get with allowlisted disclosures, grant references, lexical relevance, one quantity bound, directives, use-until, and synchronous durable disclosure history. | Complete the first experiment's two-client journey and negative/failure cases on every selected adapter. Summarize adoption friction with fixtures/revisions/results and the experienced-team limitation. No package/profile claim. Addresses G12–G14 and part of G16. |
 | C4. Writes and Memory Manager | Create/revise/withdraw, immutable revisions and expected-version checks, confirmations, proposal staging, durable HTTP idempotency, valid inference provenance/confidence, symmetric conflict detection and human resolution. | Stale confirmation, rollback, committed-but-lost reply, restart/retry, changed-body conflict, concurrent revisions, both conflict arrival orders, same dimension without contradiction, and multiple unresolved conflict edges. Do not accept inferred HCP entries before this capability is ready. Addresses G06–G11/G16. |
 | C5. Complete governance and portability | Remaining person-facing controls, persistent grants with separate affirmative election, any additional required OAuth flows, full standing-rule/directive editors, export/import, hard deletion, disclosure summaries, notification outcomes, and retention/recovery semantics. | Retain early governance-denial coverage; test separate persistence election and selected-flow requirements, all retained states visible to the person, import dry run/round trip, no deleted resurrection, erasure across copies/caches, and notification retry/dormancy. Implement sharing reports, including unauthorized reports, even if no sharing permissions are issued. Addresses G03–G05/G11/G14/G15. |
-| C6. Existing consumers and data adoption | Integrate the complete producer/consumer inventory and the chosen historical migration policy. Earlier checkpoints must already enforce D4 before shared-store exposure. | Synthetic migration dry runs, legacy contracts, profile/document/seed/location/reset bypass tests, both storage adapters, schema admission and supported upgrade/recovery. Personal migration requires a separately scoped activation. Addresses G06–G15/G18. |
-| C7. HCP MCP and clients | Modern transport, discovery, HCP tools, output/error schemas, and supported bridge/client migration. | HTTP/MCP semantic parity, old client regression tests, credential isolation, uncertain-write behavior, and real supported-host interoperability. Keep host-side copy use/directive obligations distinct from provider conformance. Addresses G16–G18. |
+| C6. Application integration and cleanup | Rebuild selected dashboard, document, profile, seed, location, and reset workflows around the HCP model; update their APIs and consumers together. Remove or disable superseded interfaces, storage paths, and old database migrations. Earlier checkpoints must already enforce D4 before shared-store exposure. | New application-contract and workflow tests, including read/write bypass checks across the complete inventory; every selected adapter, fresh initialization/reset, persistence and recovery. No legacy-contract, data-preservation, or historical-conversion requirement. Addresses G06–G15/G18. |
+| C7. HCP MCP and clients | Modern transport, discovery, HCP tools, output/error schemas, and setup for selected clients. Replace existing tools or bridges where useful. | HTTP/MCP semantic parity, new client-contract tests, credential isolation, uncertain-write behavior, and real supported-host interoperability. Old-client compatibility is not an exit criterion. Keep host-side copy use/directive obligations distinct from provider conformance. Addresses G16–G18. |
 | C8. Selected-package qualification | Freeze the candidate, close the requirement/evidence matrix, independently review the full diff, and publish only fully supported discovery claims. | Focused local evidence, all applicable exact-candidate CI, and explicitly named Mac, installed-artifact, and manual evidence. No claim for an incomplete Part; no schema-only certification. Addresses all selected requirements. |
 
 For C3, use lexical relevance ordering and synchronous disclosure audit. When C4
@@ -366,8 +405,11 @@ Use the coordination/reporting permissions established by the user at chat setup
 Each starting brief records the checkpoint, exact CR base commit and branch/worktree,
 original HCP baseline and current target, required reading, accepted decisions and
 dependencies, authorized scope/non-goals, owned paths/resources, reviewer roles,
-and acceptance checks. Preserve the current planning-only boundary until runtime
-work is activated. For a continuing experiment PR, use its handed-off commit and
+and acceptance checks. Carry forward the speed/adoption priorities, accepted
+breaking contracts and deletion of old CR data/migrations, and selected
+deployments/adapters so later chats do not reintroduce preservation work or ask
+again about those accepted choices. Preserve the current planning-only boundary
+until runtime work is activated. For a continuing experiment PR, use its handed-off commit and
 branch lineage rather than assuming the next chat starts from `main`.
 
 Every step returns a concise handoff to the coordinator with:
@@ -403,8 +445,13 @@ schema, authority, composition, UI consumers, and lockfiles need one integration
 order. Review the concrete plan before runtime implementation and the complete
 candidate before handoff.
 
-Extend existing local-MCP transport/tool/bridge/lifecycle tests, workflow filtering
-tests, reviewed-apply and storage contracts, and local UI permission/session tests.
+Use existing local-MCP transport/tool/bridge/lifecycle tests, workflow filtering
+tests, reviewed-apply and storage contracts, and local UI permission/session tests
+as starting points. Replace obsolete assertions and contract baselines when the
+accepted HCP requirements change; write meaningful new-contract tests first.
+Retain coverage for unchanged authority, privacy, persistence, and recovery
+invariants, and prove superseded paths cannot bypass them. Intentional breaking
+changes do not justify weakening CI gates or dropping relevant safety coverage.
 Add binding-neutral synthetic scenarios and run them through both HCP interfaces.
 The gap analysis identifies inspected starting evidence; those tests were not run
 as part of that source assessment and do not prove future behavior.
@@ -431,7 +478,8 @@ the application. Implementation remains unactivated after those checks pass.
 
 The [local questions][questions] own initial clarifications and adoption findings.
 Use the current spec before improving it, following the adoption approach above.
-Keep CR's rollout, compatibility, data mapping, and qualification evidence here.
+Keep CR's rollout, contract changes, reset scope, and qualification
+evidence here.
 
 Use the [checkpoint workflow](#hcp-adoption-reviews-and-upstream-work) for focused
 hcp-spec PRs, larger design questions, and explicit deferrals. Reusable scenarios,
