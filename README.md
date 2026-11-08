@@ -7,9 +7,9 @@ Apple Silicon Mac candidate runs its database, dashboard and selected model loca
 Context Router is intended to adopt the
 [Human Context Protocol (HCP)](https://github.com/loyalagents/hcp-spec), an open
 interface for person-governed memory and context. Alignment is planned; current
-HCP conformance has not been assessed. See the
+HCP conformance has not been established. See the
 [HCP integration reference](docs/useful/HCP_INTEGRATION.md) for the relationship,
-draft baseline, and questions that implementation can feed back into the spec.
+draft baseline, source gap analysis, proposed alignment plan, and open spec questions.
 
 The migration foundation and assisted install kit are delivered.
 **Assisted pilot acceptance is active.** The integrated `674750a` app passed its

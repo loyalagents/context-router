@@ -1,6 +1,6 @@
 # HCP Integration
 
-- Status: relationship and design reference; alignment planned, conformance not assessed
+- Status: relationship and design reference; source gaps documented, conformance not established
 - Read when: planning HCP alignment or changing an HCP mapping or conformance claim
 - Last reviewed: 2026-11-07
 
@@ -43,42 +43,30 @@ record later changes rather than silently following the spec's default branch.
 Both repositories can be checked out independently. A sibling `hcp-spec` checkout
 is useful for exploration but is not a build or runtime dependency.
 
-## Current Behavior And Alignment Questions
+## Assessment And Proposed Alignment
 
-This is an initial map, not an exhaustive conformance assessment. The linked app
-references describe current behavior; HCP section numbers below refer to Draft 3.
+The detailed [source gap analysis](../plans/backlog/hcp-alignment/gap-analysis.md)
+records the reviewed revisions, current code/test evidence, HCP requirements,
+gaps and proposed acceptance scenarios. It supersedes the initial six-area map
+in this reference; it is not runtime conformance evidence.
 
-| Area | Current Context Router behavior | HCP assessment needed |
-| --- | --- | --- |
-| Memory model | [Definitions and preferences](../current/PREFERENCE_SCHEMA.md) use slugs, typed values, locations, and active/suggested/rejected states. | Map entries, categories, dimensions, versions, and lifecycle; decide how existing values and identities are represented (§§4–5, 11). |
-| Authorization | [MCP policy and grants](../current/MCP_AUTHORIZATION.md) narrow client capabilities by slug, action, and sensitivity. Local clients use separate instance credentials. | Map approved purposes, grant duration, standing rules, revocation, and client/operator identity (§6, §§12–13). |
-| Retrieval and disclosure | Literal search and [AI-assisted search](../current/WORKFLOWS.md) return permitted preferences through the current MCP tools. | Assess purpose-bound relevance and quantity limits, grant-specific references, redaction, minimization reports, and `useUntil` (§7). |
-| Provenance and conflicts | [Mutation provenance](../current/AUDIT_AND_ACCESS_HISTORY.md) is distinct from value provenance; accepting an inferred suggestion preserves its source type. | Map assertion, submission, confirmation, and revision semantics; assess conflict detection and resolution (§§3–4, 15). |
-| History and governance | Mutation audit and MCP access logs are separate. Human management uses the dashboard and GraphQL. | Assess required audit events, durability, disclosure summaries, export/import, and separation of context from governance operations (§§5, 8–10). |
-| Public interfaces | Existing MCP tools, resources, result contracts, and supported clients have compatibility coverage. | Select HCP HTTP/MCP bindings and discovery behavior while preserving supported consumers (§§9–10, 18–19). |
+The canonical [backlog alignment brief](../plans/backlog/hcp-alignment/README.md)
+owns the proposed architecture, package/profile scope, historical-data policy,
+activation decisions, and testable checkpoints. It proposes an additive HCP
+interface over shared application/storage semantics, beginning with isolated
+synthetic data. Existing reads and writes need explicit compatibility boundaries.
+Implementation and personal-data migration remain unactivated.
 
-HCP governs observable interface behavior rather than internal storage (§1.4).
-An additive adapter may therefore reuse application services and storage
-boundaries. Grants, disclosure, lifecycle, and audit semantics still require
-assessment; changing tool names or serializing existing rows is not sufficient.
+[Open Draft 3 questions](../plans/backlog/hcp-alignment/spec-questions.md)
+stay in Context Router while the upgrade tests the current HCP specification,
+schemas, guides, and tooling. The plan's [adoption approach](../plans/backlog/hcp-alignment/README.md#test-the-current-adoption-experience)
+records what works, unanswered questions, and manual work before proposing focused
+upstream improvements. No hcp-spec changes are part of this documentation phase.
 
-## Decisions Before Implementation
-
-1. **Identify the HCP-facing clients and operators.** Determine how the app,
-   assistants, and any bridges map to HCP's roles. Draft 3 requires Provider
-   Interop (HTTP Binding and OAuth Interop) when accepting HCP clients operated
-   by others; Agent Interop adds MCP over Streamable HTTP (§18). Local deployment
-   alone does not make a client first-party. The fit with current local client
-   credentials is an implementation and possible specification-feedback question.
-2. **Choose the supported entry types and profiles.** Accepting model-inferred
-   entries requires the Memory Manager Profile (§15). Other profiles apply under
-   their stated conditions; adopting HCP does not automatically activate every
-   domain or credential feature.
-3. **Establish evidence for the selected scope.** Track each requirement against
-   current behavior, evidence, gaps, and a decision. HCP's schema/example checks
-   are useful inputs; they are not the behavioral conformance suite described as
-   forthcoming in §20. Partial implementation must be labeled as such, without
-   claiming a whole binding or profile before its requirements are satisfied.
+The notes do not amend the pinned requirements. Local deployment does not establish
+first-party operation; accepting inferred entries requires Memory Manager; whole
+binding/profile claims need full evidence. Schema/example checks alone do not
+establish that evidence.
 
 ## Implementation Feedback And Reusable Guidance
 
@@ -91,11 +79,13 @@ As alignment proceeds, classify findings by where they belong:
   patterns. Build on its existing schemas and guides, and coordinate with the
   planned conformance suite. Skills should route to the guidance and normative
   requirements rather than become a separate protocol definition.
-- **Specification questions:** capture the relevant draft/section, a concrete
-  example, and the observed ambiguity or mismatch in `hcp-spec`. Propose a
-  clarification or change explicitly; do not silently redefine the protocol to
-  match this app. When a change is accepted, reassess its effect on the app's
-  mapping; update the target draft only when that revision is explicitly adopted.
+- **Specification questions:** capture the draft/section, concrete example and
+  observed ambiguity in the local question record first. Use the existing HCP
+  materials; distinguish application adaptation from missing guidance, unclear
+  requirements, or reusable tooling needs. Raise focused hcp-spec questions or
+  changes when evidence warrants, resolving blockers before affected implementation.
+  Do not silently redefine the protocol to match this app. Reassess accepted
+  changes and adopt a new target revision explicitly.
 
 Use synthetic, reproducible examples for shared feedback. The
 [HCP pilot guide](https://github.com/loyalagents/hcp-spec/blob/2e2939c9bebcefb3bed7bb3522231c0e4d65a315/spec/2.0-draft-3/guides.md)
@@ -104,10 +94,10 @@ that distinction when using Context Router's evaluations as evidence.
 
 ## Working Across The Repositories
 
-Keep one canonical implementation brief under the
-[work portfolio](../plans/README.md) when alignment work is scoped and activated;
-link to this reference rather than duplicating it. This documentation establishes
-direction without changing pilot priorities or authorizing a runtime migration.
+Keep the [canonical alignment brief](../plans/backlog/hcp-alignment/README.md)
+under the [work portfolio](../plans/README.md); promote it when runtime work is
+scoped and activated rather than copying it. Link to this reference for repository
+ownership. These documents do not change pilot priorities or authorize a migration.
 
 Follow [interface evolution](INTERFACE_EVOLUTION.md) for existing consumers and
 [the validation policy](AGENT_WORKFLOW.md#validation-and-context-discipline) for
