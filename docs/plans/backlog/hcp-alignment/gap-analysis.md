@@ -29,17 +29,24 @@ behavior are unverified. These groups are planning IDs, not an exhaustive list o
 every normative MUST or a compliance score. C0 expands the selected requirements
 into executable evidence; normative text governs schema differences.
 
+The [alignment plan](README.md#outcome-and-scope) now permits direct HCP redesign
+without backwards compatibility. Current-evidence cells remain observations of
+the assessed revision, not promises to retain those interfaces. Prospective work
+below follows that direction: fresh stores, permission to delete all existing CR
+application data and database migrations, and coordinated replacement of affected
+application consumers. Historical conversion is outside the planned scope.
+
 ## Authorization And Consent
 
 | ID / HCP requirement | Current evidence | Assessment and required change |
 | --- | --- | --- |
 | G01. Actors and packages — [§§3, 18][hcp-3] | Separate human/browser/MCP/inference authorities; [local credential records](../../../../apps/backend/src/mcp/local/local-mcp-credentials.ts) hold instance ID, label, generation, revocation and policy. Hosted clients resolve through the [client registry](../../../../apps/backend/src/mcp/auth/mcp-client-registry.service.ts). | Partial. Add HCP client/operator/requesting-party bindings, per-client subject pseudonyms, and immutable actor snapshots. Product labels, locality, and bridge authorship do not establish first-party operation. Proposed Agent Interop + Memory Manager scope remains conditional on the role map. |
-| G02. Positive grants and purpose — [§6][hcp-6] | [PermissionGrant](../../../../apps/backend/prisma/schema.prisma) stores user/client/target/action/effect. [Authorization](../../../../apps/backend/src/mcp/auth/mcp-authorization.service.ts) intersects capabilities, maxima, slug rules and sensitivity; an unmatched narrowing rule is not an additional restriction. | Missing HCP grant semantics. Record grant ID, actors, category/action/purpose details, narrowing, status and duration. Preserve old restrictions after valid positive HCP authority is established. Free-text query intent is not approved purpose; unknown narrowing must fail closed. |
+| G02. Positive grants and purpose — [§6][hcp-6] | [PermissionGrant](../../../../apps/backend/prisma/schema.prisma) stores user/client/target/action/effect. [Authorization](../../../../apps/backend/src/mcp/auth/mcp-authorization.service.ts) intersects capabilities, maxima, slug rules and sensitivity; an unmatched narrowing rule is not an additional restriction. | Missing HCP grant semantics. Record grant ID, actors, category/action/purpose details, narrowing, status and duration. Establish explicit HCP authority; do not inherit old grants implicitly. If historical records are adopted, account for existing person-imposed restrictions before exposure. Free-text query intent is not approved purpose; unknown narrowing must fail closed. |
 | G03. Consent and token lifetime — [§§6, 13][hcp-13] | [SQLite credentials](../../../../apps/backend/src/infrastructure/storage/sqlite/sqlite-mcp-credentials.ts) persist until rotation/revocation. The [HTTP transport](../../../../apps/backend/src/mcp/local/local-mcp-http.ts) has a session idle timeout. Hosted [JWT guard](../../../../apps/backend/src/mcp/auth/mcp-auth.guard.ts), metadata and DCR supply existing plumbing. | Different semantics. Temporary authorization is the default; persistence is a separate affirmative act. Consent shows purposes, operator, narrowing, expiry and copy ceiling. Separate grant, token, browser and transport lifetimes. Add HCP OAuth authorization details/resource binding/current-grant checks. Hosted AS enforcement is unverified; unbound machine-user client-credentials behavior does not establish a person's HCP grant. |
 | G04. Revocation and copies — [§§6.2, 7.6][hcp-6] | Admission rechecks authority after body ingestion. [Local MCP tests](../../../../apps/backend/test/local-mcp/tools.test.mjs) deliberately permit an already-admitted mutation to commit after revocation; [lifecycle tests](../../../../apps/backend/test/local-mcp/lifecycle.test.mjs) preserve admitted work after rotation. | Partial with a concurrency mismatch to resolve. Define authorization/commit/disclosure ordering; add grant surrender, use-until, registered notification delivery and person-visible outcomes. Sleep/restart matters for local expiry and retries. A grant's expiry does not cap already-disclosed copies; notification of revocation ends their use. No notification endpoint caps copies at one hour. |
 | G05. Standing rules, directives and sharing — [§§3.12, 6.3–6.4][hcp-6] | Current per-client slug permissions have no corresponding operator-wide standing-rule/directive records. Existing assistant setup does not demonstrate host-side HCP obligations. | Missing. Apply standing rules across applicable existing/future grants, return directives on required responses, and provide human controls. Initially issue no onward-sharing permission, but implement required sharing reports, including recording/rejecting unauthorized sharing. Provider conformance does not certify recipient purpose/copy/directive behavior. |
 
-Existing local authority checks and human/MCP separation should be retained.
+Retain fail-closed authority enforcement and human/context-client separation.
 The new OAuth deployment needs an explicit local trust-boundary design; reusing
 hosted Auth0 implicitly would change the installed application's dependency model.
 See [local runtime boundaries](../../../current/LOCAL_APPLICATION.md).
@@ -48,7 +55,7 @@ See [local runtime boundaries](../../../current/LOCAL_APPLICATION.md).
 
 | ID / HCP requirement | Current evidence | Assessment and required change |
 | --- | --- | --- |
-| G06. Content, identity and versions — [§§4, 5, 11][hcp-4] | [Preference storage types](../../../../apps/backend/src/domains/shared/storage/storage-types.ts) and [schema](../../../../apps/backend/prisma/schema.prisma) contain mutable typed values, three statuses and no monotonic version. One row is allowed per user/context/definition/status. [Reviewed revision](../../../../apps/backend/src/modules/preferences/preference/preference-revision.ts) is explicitly a state hash, not a historical/monotonic version. | Different semantics. Stable entries and immutable content/assertion/evidence versions, atomic expected-version checks, prior-version retention, and independent classification/lifecycle transitions. Accept strings and arbitrary General Context objects; explicitly wrap legacy boolean/array values and location context. Preserve unknown nested entry members through supported round trips. |
+| G06. Content, identity and versions — [§§4, 5, 11][hcp-4] | [Preference storage types](../../../../apps/backend/src/domains/shared/storage/storage-types.ts) and [schema](../../../../apps/backend/prisma/schema.prisma) contain mutable typed values, three statuses and no monotonic version. One row is allowed per user/context/definition/status. [Reviewed revision](../../../../apps/backend/src/modules/preferences/preference/preference-revision.ts) is explicitly a state hash, not a historical/monotonic version. | Different semantics. Stable entries and immutable content/assertion/evidence versions, atomic expected-version checks, prior-version retention, and independent classification/lifecycle transitions. Accept strings and arbitrary General Context objects; define HCP content and location semantics directly. If historical adoption is selected, define faithful mappings for legacy boolean/array values and location context. Preserve unknown nested entry members through supported round trips. |
 | G07. Provenance and inference — [§§3.5–3.8, 4.4, 5.2.3][hcp-3] | [Preference service](../../../../apps/backend/src/modules/preferences/preference/preference.service.ts) separates value source from mutation actor. [MCP SET](../../../../apps/backend/src/mcp/tools/preference-mutate.tool.ts) uses INFERRED with optional numeric confidence. Historical source/evidence lacks full HCP model, operator, grant and confirmation records. | Partial. Capture asserter and assertion time, submitting client/operator, authorizing grant, provider and version-bound confirmations; provider assigns authority fields. Inference requires non-null high/medium/low confidence. Define any valid numeric mapping prospectively; never invent missing historical confidence/model identity. IMPORTED/SYSTEM are not direct HCP declaration types. |
 | G08. Confirmation and proposals — [§§3.8, 5.4][hcp-5] | Accept/reject upserts an active/rejected preference and deletes the suggestion. Rejection can suppress later suggestions for a definition/location. [Reviewed apply](../../../../apps/backend/src/modules/preferences/document-analysis/reviewed-suggestion.service.ts) checks exact state and commits per-item writes/audit; legacy apply remains supported. | Different semantics. Confirm/reject the version shown using expectedVersion; retain the original asserter/type on confirmation and clear confirmations on revision. Editing into a new person assertion differs from confirming an inference. Keep unapplied document suggestions outside HCP entries; HCP has no suggested state. Bind new proposal provenance to server-owned facts where claimed. |
 | G09. Categories and sensitivity — [§4.5][hcp-4] | [Definitions](../../../current/PREFERENCE_SCHEMA.md) use slugs and a sensitivity boolean; category is enriched from a slug prefix in the [SQLite repository](../../../../apps/backend/src/infrastructure/storage/sqlite/sqlite-preference.repository.ts). | Missing HCP classification. Define reviewed registered/custom categories separately from slugs/dimensions. Any permitted category can reach an entry, but a standing-rule denial on any category overrides that route. Use the highest category sensitivity and disclose only covered categories. Definition editing must not silently widen HCP exposure. |
@@ -57,9 +64,13 @@ See [local runtime boundaries](../../../current/LOCAL_APPLICATION.md).
 
 ### Historical Adoption And Bypass Inventory
 
-Historical CR data is not an HCP v1 export. Faithful conversion depends on the
-facts available for each record. Preserve unrepresentable legacy records rather
-than manufacturing authorization or assertion history. A deliberate fresh person
+Fresh HCP stores are the target; all existing CR application data and database
+migrations may be discarded during implementation. Preservation, backups, and
+historical conversion are not delivery requirements. This documentation phase
+performs no deletion. Historical CR data is not an HCP v1 export. If conversion is
+requested as later additional scope, faithful adoption depends on the facts
+available for each record. Keep unrepresentable records outside HCP-managed data;
+never manufacture authorization or assertion history. A deliberate fresh person
 declaration is possible; generic migration approval is not that declaration.
 Existing acceptance of an inference does not transform its original asserter.
 
@@ -67,12 +78,14 @@ For shared entries, ordinary GraphQL/profile set/accept/reject/delete, legacy MC
 both document-apply versions, [identity seeding](../../../../apps/backend/src/infrastructure/storage/sqlite/sqlite-identity-storage.ts),
 [location deletion](../../../../apps/backend/src/modules/preferences/location/location.service.ts),
 definition changes, reset/history clear and offline imports must use the same
-invariants or explicitly refuse incompatible actions. The reviewed apply path
+invariants if retained; otherwise remove, disable, or exclude those paths from
+HCP-managed records. The reviewed apply path
 directly uses a storage compare-and-set facet, so wrapping PreferenceService alone
 does not cover it. Location deletion can cascade stored preferences.
 
-Before HCP-managed records enter shared production data, also adapt or exclude
-them from legacy reads, exports, resources and AI prompt builders. This boundary
+Before HCP-managed records enter shared production data, also rebuild or remove
+legacy reads, exports, resources and AI prompt builders, or exclude HCP records
+from them. No old wire contract must be preserved. This boundary
 is necessary for the product's claimed protection; do not assume that a new HCP
 endpoint automatically governs other interfaces.
 
@@ -85,7 +98,7 @@ endpoint automatically governs other interfaces.
 | G14. Durable audit and summaries — [§8][hcp-8] | Mutation/audit commits share the [SQLite unit of work](../../../../apps/backend/src/infrastructure/storage/sqlite/sqlite-unit-of-work.ts). [MCP access logging](../../../../apps/backend/src/mcp/mcp.service.ts) swallows append failures and locally records counts rather than disclosed entry/version/use-until. History can be cleared. | Partial. Add HCP events, roles/operator snapshots, grants, purposes, disclosure records, summaries and retention semantics. Non-read events are durable before acknowledgement; reads can be synchronous or have the explicitly bounded window allowed by §8.4 (at most 10 seconds). Best-effort loss is not a bounded guarantee. Do not record query text. Append-only requirements do not make hash chains universally mandatory. |
 | G15. Governance and portability — [§§5.4, 18.4][hcp-5] | Dashboard/GraphQL supports editing, grants, and history. [Grant-list tool](../../../../apps/backend/src/mcp/tools/permission-grant-list.tool.ts) sees the caller's CR rules. Demo import and evaluation exports have different formats/semantics. | Partial UX foundation. Add complete human entry/conflict/grant/purpose/rule/audit/disclosure controls, hard delete and HCP export/import. Export includes retained lifecycle states; import needs dry-run outcomes, duplicate/conflicting-ID behavior, category mapping and no deleted resurrection. Management HTTP authority is distinct; context-client scope cannot grant governance. |
 | G16. HTTP and retry — [§9][hcp-9] | Existing GraphQL/local administration/MCP routes have no HCP HTTP operation contracts. Session request-ID handling is not durable operation idempotency. | Missing. Implement context and governance routes, HCP-Version on responses, required media/error shapes, discovery, audit cursors, and create/revise idempotency retained at least 24 hours. Bind replay to a reviewed authorization/erasure policy; Q2 is unresolved. Retain truthful uncertain-commit outcomes and no automatic unprotected mutation replay. |
-| G17. MCP transport and tools — [§10][hcp-10] | [Local transport](../../../../apps/backend/src/mcp/local/local-mcp-http.ts) supports 2025-06-18/2025-11-25 with initialized sessions; lockfile SDK is 1.27.1. [Bridge](../../../../apps/backend/scripts/mcp-bridge/bridge.mjs) rejects extra capabilities and requires session IDs. Six [registered tools](../../../../apps/backend/src/mcp/mcp-tool.providers.ts) are CR-specific. Mutation is intentionally text-only in the [contract test](../../../../apps/backend/test/contracts/mcp-contract-baseline.spec.ts). | Different semantics. HCP targets MCP 2026-07-28, per-request state and server/discover. Add HCP tools and exact input/output/error behavior with structuredContent plus JSON text; preserve old contracts through an explicitly migrated edge/bridge. The official SDK supports the new revision, but upgrading a dependency alone does not opt into it. |
+| G17. MCP transport and tools — [§10][hcp-10] | [Local transport](../../../../apps/backend/src/mcp/local/local-mcp-http.ts) supports 2025-06-18/2025-11-25 with initialized sessions; lockfile SDK is 1.27.1. [Bridge](../../../../apps/backend/scripts/mcp-bridge/bridge.mjs) rejects extra capabilities and requires session IDs. Six [registered tools](../../../../apps/backend/src/mcp/mcp-tool.providers.ts) are CR-specific. Mutation is intentionally text-only in the [contract test](../../../../apps/backend/test/contracts/mcp-contract-baseline.spec.ts). | Different semantics. HCP targets MCP 2026-07-28, per-request state and server/discover. Replace existing tools/bridges as needed with HCP tools and exact input/output/error behavior using structuredContent plus JSON text; old contracts need not be preserved. The official SDK supports the new revision, but upgrading a dependency alone does not opt into it. |
 | G18. Discovery, claims and consumers — [§§18–20][hcp-18] | Schema resource is GraphQL SDL; local capabilities resource reports model readiness. Existing local-MCP, browser and storage tests establish CR-specific contracts. | Missing HCP discovery/evidence. Publish actual operator, categories, schemas, bindings, methods and durability, and only complete conformance claims. Inventory supported clients and their copy/directive behavior. HCP's schema checks are not the forthcoming behavioral suite; qualify the selected Parts against runtime scenarios and exact candidates. |
 
 The [official MCP SDK migration guidance](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/migration/support-2026-07-28.md)
@@ -121,8 +134,9 @@ Existing starting points include [local MCP tests](../../../../apps/backend/test
 [reviewed SQLite apply](../../../../apps/backend/test/local-database/reviewed-apply.spec.ts),
 [PostgreSQL apply](../../../../apps/backend/test/integration/reviewed-apply.spec.ts),
 and [shared storage contracts](../../../../apps/backend/test/integration/storage-contracts/storage.contract.ts).
-Implementation acceptance must exercise both selected bindings and affected old
-consumers, not merely validate schemas or mirror new helper functions.
+Implementation acceptance must exercise both selected bindings and rebuilt or
+retained application consumers, and prove superseded paths cannot bypass HCP
+controls. Schema validation or tests mirroring new helper functions are insufficient.
 
 ## Assessment Boundary And Next Use
 
