@@ -17,10 +17,10 @@ boundaries. Add HCP interfaces backed by shared entry, authorization, disclosure
 and audit services. Existing application views can remain where their behavior
 can be represented faithfully.
 
-Use this upgrade to evaluate how well the **current hcp-spec repository** supports
-another team's adoption. Start with its existing specification, schemas, guides,
-and tooling; keep the assessment, questions, and adoption observations in Context
-Router. Improve hcp-spec only when concrete findings justify a focused change.
+Use this upgrade to evaluate adoption using the **current hcp-spec repository**
+and identify reusable lessons for other teams. Start with its existing specification,
+schemas, guides, and tooling; keep the assessment, questions, and adoption observations
+in Context Router. Improve hcp-spec only when concrete findings justify a focused change.
 
 The proposed end target is **Agent Interop plus Memory Manager**, conditional on
 serving independently operated assistants and accepting model-inferred entries:
@@ -79,6 +79,13 @@ skill in advance of that evidence. A real blocker can be raised earlier: resolve
 the ambiguity before implementing the affected behavior, continue independent
 work, and never weaken requirements merely to preserve the experiment's schedule.
 
+This team already has the gap analysis and interpretation notes. Its observations
+establish experienced-team integration friction; they do not establish unaided
+newcomer onboarding. State that limitation in the C3 summary. A fresh reader trying
+one bounded task using the published materials is optional if stronger onboarding
+evidence becomes useful. Connect observations to the relevant fixture/test,
+command, source revision, and result without introducing a new measurement system.
+
 Keep hcp-spec unchanged for this documentation phase, including its already merged
 implementation-directory entry. Future improvements are separate, reviewable
 changes with the smallest concrete example and an explicit target-revision decision.
@@ -122,7 +129,7 @@ responsibilities. Neither adapter is retired by this plan.
 | D3. Entry mapping | Freeze actor/grant identity and provenance contracts before the kernel. Define content wrappers, categories, purposes, location semantics, proposal staging, and legacy representability. | C0/C1 |
 | D4. Shared-data boundary | Inventory old reads and writes. Either adapt each access path for HCP-managed records or exclude those records; preserve supported consumers through reviewed transitions. | Before any shared production-store exposure, not merely C6 |
 | D5. Revocation and copies | Define authorization/commit/disclosure ordering, expiry during sleep, and notification recovery. Use a truthful no-endpoint/short-copy configuration for the first experiment if appropriate; resolve CR-Q1 before the affected concurrency behavior. | C0/C2, before first disclosure |
-| D6. Retention and retries | Design erasure across versions, audit snapshots, idempotency responses, backups, and recovery. Resolve create → erase → retry and changed-authority replay through CR-Q2; no silent resurrection. | C0, before content-bearing durable caches |
+| D6. Retention and retries | Settle retention and cleanup for data persisted by the first experiment at C0. Record future erasure/replay boundaries across versions, audit snapshots, idempotency responses, backups, and recovery. Resolve create → erase → retry and changed-authority replay through CR-Q2 before introducing the affected behavior or caches; no silent resurrection. | C0 for experiment retention; before C4 durable idempotency/content caches and affected erasure/replay behavior |
 | D7. Historical adoption | Preserve or refuse incompatibility by default. Faithfully adopt representable records; retain others as legacy or obtain a genuinely new person declaration. A designated reset release needs its own bounded decision and consent. | C0/C6 |
 
 These are decisions to settle at activation, not assumed approvals. Record their
@@ -163,27 +170,107 @@ delete, or visibility semantics for HCP-managed records. Follow
 consumer inventory, migration window, and recovery plan. Scope refusal or
 exclusion before exposure; do not silently downgrade records for compatibility.
 
+## First Experiment: C0–C3
+
+The first proposed implementation outcome is **consent → read synthetic context →
+inspect disclosure history → revoke**, through HTTP with two controlled test
+clients. This section bounds that future experiment; implementation remains
+unactivated and no HCP package/profile claim is made.
+
+### Scope And Boundaries
+
+- Use two controlled HTTP test drivers with separate client identities and grants,
+  one synthetic subject, and a separate human/management authority. These are test
+  clients, not evidence of interoperability with real assistant hosts.
+- Use seeded, clearly synthetic person-declared entries with truthful fixture
+  authority/provenance, stable IDs and immutable version data. Include category,
+  purpose, lifecycle/expiry, and unknown-field fixtures. Real producers, document
+  ingestion, and model-inferred entries cannot invoke this incomplete slice.
+- Use a fresh isolated SQLite store and an isolated PostgreSQL database through
+  shared storage contracts. C1 must initialize, admit, reopen, and validate the new
+  SQLite schema, and set up/migrate the fresh PostgreSQL database. Existing personal
+  and demo stores remain untouched; preserve-or-refuse schema behavior stays in force.
+- Exercise the actual local authorization flow selected at C0, including the
+  metadata/discovery it needs, explicit consent, temporary grants, and current-grant
+  checks. Authentication alone cannot create authority. Provide minimal human
+  consent, grant-list, disclosure-history, and revoke controls with independent
+  credentials. No implicit hosted authorization dependency is introduced.
+- Implement purpose/category/narrowing checks, lifecycle filtering, standing-rule
+  and directive enforcement using controlled policy fixtures, query/get, own-grant
+  inspection, lexical ordering, quantity limits, allowlisted disclosures, and
+  grant-scoped references. Context-client access remains read-only; consent and
+  revocation are human-authorized management operations.
+  Grant and disclosure audit is synchronous and durable. Use the explicit
+  no-notification-endpoint configuration with the one-hour copy cap; revoking
+  provider access does not erase copies already disclosed.
+
+### C0 Scope Record
+
+C0 produces the concrete implementation brief and requirement/test matrix for this
+experiment. Each selected requirement receives a disposition and a test or later
+checkpoint; document inapplicable requirements with their reason. Use these three
+dispositions to separate early implementation from necessary design:
+
+| Disposition | Required treatment for this experiment |
+| --- | --- |
+| Build for C3 | Implement and test the included storage, authorization, query/get, human controls, and audit behavior above. Disabled operations must be unavailable or explicitly rejected. |
+| Fix the contract in C0 | Settle actor/grant identity, provenance/version representation, purpose/category semantics, revocation ordering, isolation, and the retention rules for data this experiment persists before dependent implementation. Record the future mutation, erasure/retry, and compatibility boundaries; resolve their open questions before the affected capability or durable content cache is introduced. |
+| Defer while disabled | Keep production create/revise/withdraw and confirmation workflows, document staging, inference/conflict detection, persistent grants, additional OAuth flows, full governance editors, notification delivery, export/import/hard-delete operations, compatibility projections, historical migration, MCP, and real-host qualification in their later checkpoints. Standing-rule/directive enforcement and the included human controls remain required now. |
+
+Deferral changes this experiment's delivery scope only. It does not waive any
+requirement of the eventual package or enable an unsupported feature. C0 resolves
+D1–D7 for the slice, records remaining decisions with their dependencies, and obtains
+independent review before runtime work. Preserve the pinned adoption baseline;
+resolve blocking ambiguities before implementing affected behavior.
+
+### Exit Evidence
+
+Run the same selected HTTP journey and storage contracts against both adapters:
+
+1. The human explicitly grants temporary access to each client for its selected
+   purposes/categories. Client A and B receive independent authority; no grant or
+   credential can be substituted for the other's.
+2. Query/get returns only permitted, active context with the required minimization,
+   references, directives, quantity bound, and copy deadline. Test wrong purpose,
+   unknown narrowing, standing-rule denials, expired/non-active entries, absent or
+   foreign references, reference stability, concurrent policy changes, private-field
+   exclusion, sparse results, and the 1/5/20 limits.
+3. The human inspects durable grant/disclosure history. Every exposed management
+   route rejects context-client credentials. Test reading one's own grant versus
+   listing all grants, audit-history denial, and rejection of attempts to revoke
+   another client's grant. These checks begin at C2/C3, not C5.
+4. The human revokes A; further A reads fail and B retains only its own authority.
+   Exercise revocation races under the C0 ordering decision, expiry across
+   sleep/restart, audit-write failures, and fresh-store reopening. A pass requires
+   truthful history and no successful unaudited disclosure.
+
+Record the command, fixture, revision, result, and remaining evidence for these
+scenarios, then summarize adoption findings under the approach above. Completion
+qualifies this bounded experiment only; later capabilities and conformance claims
+retain their own gates.
+
 ## Testable Checkpoints
 
 Backend behavior changes are tests first. Each checkpoint ends with a recorded
 result and remaining evidence; these are internal checkpoints, not a required PR
 count. Prefer one cohesive PR for a bounded outcome, splitting only at independently
-useful, safe landing points. C0 defines the concrete first implementation scope.
+useful, safe landing points. C0 turns the [first experiment](#first-experiment-c0c3)
+into an implementation brief; C4–C8 retain the remaining alignment roadmap.
 
 | Checkpoint | Deliverable | Exit evidence and dependencies |
 | --- | --- | --- |
-| C0. Scope and contracts | Resolve D1–D7 for the first slice against the recorded adoption baseline and role map. Use existing HCP materials to expand the gap IDs into a requirement-to-implementation/test matrix, recording unanswered questions and manual interpretation locally. | Independent plan review of authority, lifecycle, compatibility, migration, and failure states. Identify genuine blockers and their affected checkpoints; raise focused questions when needed, without requiring advance HCP documentation/tooling improvements or unrelated editorial fixes. |
-| C1. Synthetic entry kernel | Stable entries, immutable versions, expected-version checks, truthful provenance, confirmations, staging, lifecycle, and transactional audit. Use valid synthetic actor/grant fixtures under the C0 contract. | Concurrent writers, stale confirmation, rollback, acknowledged durability, and unknown-field round trips on SQLite/PostgreSQL. No real producer can invoke this incomplete kernel; no later backfilling of fictional authorization. Addresses G06–G11/G14. |
-| C2. Grants and human controls | Consent, temporary/persistent grants, OAuth integration, purpose/category evaluation, standing rules/directives, immediate provider revocation, and usable human grant/audit access. Choose notification registration/delivery or the experiment's explicit no-endpoint policy. | Two-client isolation, authentication-versus-consent, separate persistence election, expiry across sleep/restart, wrong purpose/unknown narrowing, and revocation races across slow bodies and running work. No-endpoint copies are capped at one hour; complete applicable notification behavior remains required for the eventual claim. Addresses G01–G05. |
-| C3. Read-only HTTP journey | Query/get with allowlisted disclosures, grant references, relevance, one quantity bound, directives, use-until, and durable disclosure history. Keep all data synthetic and isolated. | Consent → retrieve → inspect history → revoke, with two clients. Test foreign/absent refs, private-field exclusion, categories/purpose, sparse results and 1/5/20 limits, reference stability, expiry and concurrent policy changes. Summarize the existing materials' adoption usability and evidence-backed improvement candidates. No package/profile claim. Addresses G12–G14 and part of G16. |
-| C4. Writes and Memory Manager | Create/revise/withdraw, durable HTTP idempotency, valid inference provenance/confidence, symmetric conflict detection and human resolution. | Committed-but-lost reply, restart/retry, changed-body conflict, concurrent revisions, both conflict arrival orders, same dimension without contradiction, and multiple unresolved conflict edges. Do not accept inferred HCP entries before this capability is ready. Addresses G07–G11/G16. |
-| C5. Complete governance and portability | Person-facing capabilities, export/import, hard deletion, disclosure summaries, notification outcomes, and retention/recovery semantics. | Governance rejected for context clients; all retained states visible to the person; import dry run and round trip; no deleted-entry resurrection; erasure across retained copies/caches; notification retry and dormant-provider recovery. Implement sharing reports, including unauthorized reports, even if no sharing permissions are issued. Addresses G04/G05/G11/G14/G15. |
+| C0. Scope and contracts | Resolve D1–D7 for the first slice against the recorded adoption baseline and role map. Expand gap IDs into a requirement/test matrix with build-for-C3, contract-fixed-now, deferred, and reasoned inapplicability dispositions. Record unanswered questions and manual interpretation locally. | Independently reviewed first-experiment brief covering authority, lifecycle, isolation, compatibility, migration, and failure states. Identify blockers and their affected checkpoints without requiring advance HCP documentation/tooling improvements. |
+| C1. Synthetic entry foundation | Seed stable entries and immutable version data with truthful fixture provenance, lifecycle/expiry handling, unknown-field preservation, and transactional audit under the C0 contracts. | Fresh SQLite initialization/schema admission/reopen and PostgreSQL setup; shared storage contracts, rollback, acknowledged durability, and unknown-field round trips. Real producers remain excluded. Production mutation/confirmation/staging workflows follow later. Begins G06–G11/G14. |
+| C2. Grants and human controls | Explicit consent, temporary grants, the selected OAuth flow, purpose/category/narrowing evaluation, standing-rule/directive enforcement, immediate provider revocation, and minimal human grant/history access. Use the no-endpoint configuration. | Two-client isolation, authentication-versus-consent, management-route rejection of context credentials, own-grant versus all-grant access, and cross-grant revocation denial. Test expiry across sleep/restart and revocation races. Persistence remains disabled; copies are capped at one hour. Begins G01–G05. |
+| C3. Read-only HTTP journey | Query/get with allowlisted disclosures, grant references, lexical relevance, one quantity bound, directives, use-until, and synchronous durable disclosure history. | Complete the first experiment's two-client journey and negative/failure cases on both adapters. Summarize adoption friction with fixtures/revisions/results and the experienced-team limitation. No package/profile claim. Addresses G12–G14 and part of G16. |
+| C4. Writes and Memory Manager | Create/revise/withdraw, immutable revisions and expected-version checks, confirmations, proposal staging, durable HTTP idempotency, valid inference provenance/confidence, symmetric conflict detection and human resolution. | Stale confirmation, rollback, committed-but-lost reply, restart/retry, changed-body conflict, concurrent revisions, both conflict arrival orders, same dimension without contradiction, and multiple unresolved conflict edges. Do not accept inferred HCP entries before this capability is ready. Addresses G06–G11/G16. |
+| C5. Complete governance and portability | Remaining person-facing controls, persistent grants with separate affirmative election, any additional required OAuth flows, full standing-rule/directive editors, export/import, hard deletion, disclosure summaries, notification outcomes, and retention/recovery semantics. | Retain early governance-denial coverage; test separate persistence election and selected-flow requirements, all retained states visible to the person, import dry run/round trip, no deleted resurrection, erasure across copies/caches, and notification retry/dormancy. Implement sharing reports, including unauthorized reports, even if no sharing permissions are issued. Addresses G03–G05/G11/G14/G15. |
 | C6. Existing consumers and data adoption | Integrate the complete producer/consumer inventory and the chosen historical migration policy. Earlier checkpoints must already enforce D4 before shared-store exposure. | Synthetic migration dry runs, legacy contracts, profile/document/seed/location/reset bypass tests, both storage adapters, schema admission and supported upgrade/recovery. Personal migration requires a separately scoped activation. Addresses G06–G15/G18. |
 | C7. HCP MCP and clients | Modern transport, discovery, HCP tools, output/error schemas, and supported bridge/client migration. | HTTP/MCP semantic parity, old client regression tests, credential isolation, uncertain-write behavior, and real supported-host interoperability. Keep host-side copy use/directive obligations distinct from provider conformance. Addresses G16–G18. |
 | C8. Selected-package qualification | Freeze the candidate, close the requirement/evidence matrix, independently review the full diff, and publish only fully supported discovery claims. | Focused local evidence, all applicable exact-candidate CI, and explicitly named Mac, installed-artifact, and manual evidence. No claim for an incomplete Part; no schema-only certification. Addresses all selected requirements. |
 
-For the first implementation, favor lexical relevance ordering, synchronous
-disclosure audit, and a declared structural conflict detector for clear typed
+For C3, use lexical relevance ordering and synchronous disclosure audit. When C4
+adds conflict handling, favor a declared structural detector for clear typed
 contradictions. Protocol correctness, memory quality, and task outcomes require
 separate evidence. No vector database or universal ontology is implied.
 
