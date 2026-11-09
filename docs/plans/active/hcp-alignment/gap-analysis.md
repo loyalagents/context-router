@@ -108,7 +108,7 @@ not qualify the current bridge or any assistant host for HCP.
 
 ## Highest-Value Acceptance Scenarios
 
-These are proposed evidence requirements, not new test results:
+These are acceptance requirements, not test results; C1 is now activated:
 
 - Two clients cannot substitute actors, link subjects through provider identifiers,
   use another grant's refs, read another grant, or gain governance through scope.
@@ -137,6 +137,70 @@ and [shared storage contracts](../../../../apps/backend/test/integration/storage
 Implementation acceptance must exercise both selected bindings and rebuilt or
 retained application consumers, and prove superseded paths cannot bypass HCP
 controls. Schema validation or tests mirroring new helper functions are insufficient.
+
+## C0 Requirement And Test Matrix
+
+C0 adds this prospective matrix at CR base `cb9d3f9fc36a6c90dcc5bcf96dbdd33e9bf70fa2`;
+**the assessed source evidence above is unchanged**. D8 now selects local SQLite
+only. Every row is an acceptance obligation or reasoned exclusion, **not a test
+pass**. The [scope record](README.md#c0-scope-record) fixes the contracts; this
+matrix supplies observable checks. `Build` means build for C3, `Contract` means
+fixed at C0, `Deferred` names the disabled capability/dependency, and `N/A` means
+inapplicable to this bounded slice. CR-Q1's read contract was selected on
+2026-11-08; CR-Q3's deadline discrepancy still separates application experiment
+acceptance from pinned-spec compliance.
+
+| ID / gap / source | Disposition and checkpoint | Observable acceptance or deferral condition |
+| --- | --- | --- |
+| C0-R01 · G01 · §§3.2–3.5, 18 | Contract + Build C1/C2: actors and authority | A/B grants bind their registered client/operator, subject and purpose; subject pseudonyms differ by client and stay stable across restart. Request-supplied subject/operator/requesting-party/management-role substitutions cannot alter authority. Real operator identity is not inferred from product name. Additional A1/A2 grants for one client isolate purpose/category authority; no silent union. Revoking A1 leaves A2 valid, including overlapping permissions; grants alone do not isolate shared-client internal features. |
+| C0-R02 · G02/G03 · §§6.1, 13.3–13.6 | Contract + Build C2: real local consent/OAuth | Actual TLS-verified browser authorization-code/S256-PKCE journey, separate login/consent acts and independent management credential. Wrong resource/issuer/redirect/verifier, code replay and login-only access fail. Both RFC 9396 details and scope-only purpose selection work; granted details match the committed grant and token response. No token becomes usable before grant/audit commit. |
+| C0-R03 · G03 · §§6.1.3–6.1.6, 8.1, 13.4 | Build C2: temporary authority; grant dormancy deferred to C2; C1 entry recovery accepted | Default 4h/max 24h absolute expiry, tokens at most 1h/remaining grant; neither restart nor session activity extends them. Equality/past-expiry denies. Consent shows exact expiry and copy ceiling. No refresh or persistent grant is issued. A 48h stopped-provider scenario cannot satisfy the pinned audit deadline; separately scoped catch-up tests can prove application behavior only, without renewed expiry or backdated audit. Shorter tests do not close the discrepancy. |
+| C0-R04 · G02/G05/G09 · §§4.2.6, 4.5, 6.1.5, 6.3 | Contract + Build C2/C3: purposes/categories/narrowing | Wrong requested purpose or any unauthorized requested category fails the whole query. Omitted categories search only purpose-approved categories. Intersect assertion and management purpose restrictions. `entryIds` narrowing cannot widen category authority; unknown key fails issuance and unknown persisted restriction reaches nothing. Own-grant output substitutes refs for private IDs. |
+| C0-R05 · G05 · §§6.3–6.4 | Build C2/C3: policy enforcement, fixture controls | Existing/future grants obey operator exact/domain/subdomain and `requires` rules; any denied category hides a multi-category entry via all routes. A rule covering all grant categories revokes it. Changes race through the same final-release gate. Matching directives accompany query/get/own-grant, including clients with no directive claim; deny/ask-first/permit precedence cannot widen access. Fixture changes require management authority and durable events. |
+| C0-R06 · G04 · §§6.2, 7.6, 8.4 | Contract selected; Build C2/C3; CR-Q1 clarification remains upstream | Barrier-controlled read before release loses to revoke and returns no context. Audited release before revoke can arrive later; slow recipient cannot delay revoke. Later reads under revoked grant A1 fail; A2 and B remain independently usable within their own grants. Audit/revoke failure and process-loss cases do not create successful unaudited reads or resurrect authority. Check authority at admission and again in the coordinated final check/audit/release boundary; a separate check/send gap is unacceptable. After an audit barrier, advance time past each token/grant/entry/prepared-copy deadline in turn: final time check denies release without renewing deadlines or erasing the committed audit attempt, and history must not claim receipt. No spec PR is a prerequisite for this selected read experiment contract. |
+| C0-R07 · G04/G13 · §§6.2.2–6.2.4, 7.6 | Contract + Build C3: bounded copies | `useUntil` ≤ release time + 1h and earlier explicit validity; a short grant does not shorten existing copies. A revoked-grant denial is notice to that client. Human view reports no notification endpoint and last possible copy deadline, never remote deletion or invented notification success. Notification delivery/retries N/A until endpoints are supported in C5. |
+| C0-R08 · G06/G07 · §§3.5–3.7, 4.2, 5.2.3, 11 | Contract + Build C1: entry/version/provenance | Seeded strings and structured objects retain IDs/subject, v1/v2 immutable content/assertion/evidence/provenance, actual or explicitly simulated fixture authority and timestamps. Provider fields cannot be caller-overridden; person-declared alone remains unverified. No inference, issuer identity or confirmation is manufactured. C3 seed authority is closed before A/B serving. |
+| C0-R09 · G06/G13 · §§4.2, 7.4, A.3 | Build C1/C3: unknown-field round trip | Nested unknown entry/content/assertion/record members survive serialize → commit → reopen → authorized internal/management whole-entry read with values/types intact. Unknowns do not change authorization. Public content/assertion extensions survive disclosure as stored; private record/top-level extensions are withheld. Export/import acceptance remains C5, not implied by storage round trip. |
+| C0-R10 · G11 · §4.2.4, §8.1 | Build C1/C3: lifecycle; C1 overdue application recovery accepted 2026-11-08 | Non-active/expired fixtures never disclose, including still-active rows past validUntil and historical-version get against current lifecycle/policy. Expiry changes status/audit once without new content version; reopening does not revive it. Test exact expiry and rollback; 48h catch-up is accepted C1 application evidence only, with no claim to meet the conflicting deadline. Respect deleted/revoked precedence rather than overwriting it with expired. |
+| C0-R11 · G12 · §§5.2.1–5.2.2, 7.1–7.3 | Build C3: minimized retrieval | Filter before scoring; tokenize only public `content.value` strings/primitive structured-value leaves, then deterministic descending token overlap and tie-break. Vary only private provenance/metadata/withheld categories: no new match or changed ordering among entries with unchanged eligibility. Positive-match sparse/empty results, default 5 and requested 1/5/20, ceiling 20, no padding/pagination, one cap over the whole response. Required query/purpose and malformed limits fail validation. Get returns `method:none`; query `lexical`; no withheld counts. |
+| C0-R12 · G13 · §§5.2.2, 7.4 | Contract + Build C3: disclosure/ref isolation | Same entry has stable A ref over versions/restart and different B ref. Foreign/absent/inaccessible/non-active refs fail identically as not authorized. Disclosures contain only allowlisted fields and covered categories, no stored ID/subject/status/private provenance. Relationships include only targets in that same response, expressed as refs. |
+| C0-R13 · G14 · §§3.9, 8.1–8.4, 8.7 | Contract + Build C1–C3: synchronous audit | Compare successful response with durable retrieval event after restart: exact entries/versions/useUntil, actors/grant, purpose, directives, categories searched and quantity. Empty success is audited. Query text, tokens and full snapshots are absent. Inject append/commit failure: no successful body. Lost delivery after commit remains a logged attempt, not evidence of receipt. State transitions and their events commit/rollback together. |
+| C0-R14 · G15/G02 · §§5.2.6–5.2.7, 5.4, 6.1.5, 6.1.9, 8.3 | Build C2/C3: minimal human control | Human lists active/all grants, inspects disclosure events and revokes. A can read/relinquish only A's presented grant, never enumerate all or revoke B. Every management route rejects a context token even with forged management scope. Human/session credentials cannot be substituted for context bearer tokens. Unimplemented management operations remain unavailable. |
+| C0-R15 · G16 · §§9.2–9.7 | Build C2/C3: selected HTTP contract | Selected query/get/grant/audit/revoke routes obey Core shapes, `HCP-Version:2.0` on successes/errors/bodyless responses, LD+JSON success and problem+JSON mapped errors; unsupported request version rejects. Audit-history pagination has stable opaque cursor/order; it does not add query pagination. Mutation/import/export/sharing endpoints remain unavailable. |
+| C0-R16 · G06/G14/G18 · CR storage contract + D7 | Contract + Build C1: fresh SQLite/recovery | Fresh init → seed → close → reopen and reset → fresh init pass with private root/schema/ownership checks. Wrong/partial schema, symlink/escaped root or live/unproven owner refuses without touching neighbors. Rollback on late failure; kill/reopen after acknowledged commit preserves data/audit. Interrupted init cannot serve. Reset invalidates all old store identities, tokens/grants/refs and touches no original documents/model/client settings. Mac filesystem/process checks are required where used. |
+| C0-R17 · G06–G15/G18 · D4 shared-access boundary | Contract + Build C1/C3; broader integration Deferred C6 | Old GraphQL/MCP/document/model/import/reset/history-clear modules have no HCP-store handle; old routes/credentials cannot read/write experiment records. Test the actual selected composition. Before production exposure, complete producer/consumer inventory and replace/remove every bypass; no compatibility adapter requirement. |
+| C0-R18 · G18 · §§18–19 | Contract + Build C2/C3; full discovery Deferred C8 | TLS AS/resource metadata resolves to local fixture endpoints; unsupported capability absent from experimental manifest. No full-Part identifiers or conformant-discovery assertion. C8 must supply full §19 document including jwks_uri and evidence for every advertised claim. Optional provenance action is disabled until separately selected/tested. |
+| C0-R19 · G06–G11/G16 · §§3.8, 4.7, 5.2.3–5.2.5, 9.6, 15 | Deferred C4 with dependency | Public create/revise/withdraw, confirmations, document staging, inference/conflicts and durable write idempotency remain disabled. CR-Q2 must settle erase/retry and changed authority; CR-Q5 settles affected history semantics. C4 tests expected-version, symmetric conflicts, confidence, lost reply/restart and no resurrection before enabling them. |
+| C0-R20 · G03–G05/G11/G14/G15 · §§5.4, 6, 8.3/8.6 | Deferred C5 with dependency | Persistent grants, extra OAuth flows (CR-Q4), full governance editors/summary/export, HCP-native portability, hard deletion, sharing reports including unauthorized reports, notification registration/retry and full retention are deferred. No sharing permission now does not remove the later sharing-report obligation. Resolve CR-Q2/Q3 before affected erasure/dormancy/recovery. |
+| C0-R21 · G17/G18 · §§10, 18 | Deferred C7/C8 | MCP 2026-07-28 tool/output/error contract (CR-Q7), bridges and actual assistant-host behavior stay disabled. C7 needs HTTP/MCP semantic parity and host credential/copy/directive evidence; C8 exhaustive package/profile qualification, not schema-only certification. |
+| C0-R22 · G01/G07 · §§14, 16–17; D8 | N/A with reason | No credentials/issuer-attested health/education, delegates, operator-blind encryption, model calls, real hosts or hosted/PostgreSQL HCP deployment in this slice. These profiles/features are not activated by ordinary synthetic personal statements. HCP v1 portability is considered in C5 protocol scope; legacy CR conversion/upgrade/compatibility is out of scope, not deferred. |
+
+C1 and C2 write failing behavior tests before backend changes, then run focused
+checks at each increment. C3's suite must exercise the real selected HTTP/SQLite
+composition and barrier-controlled concurrency, process termination/reopen and
+browser consent, not only unit mocks. Record exact commands/fixtures/revision at
+implementation time; no new scripts or speculative CI commands are created by C0.
+No package/profile claim, real-host result, installed artifact qualification, or
+physical host-power-loss result follows from this matrix or the earlier source audit.
+
+## C1 Implementation Evidence (2026-11-08)
+
+C1 is activated only for the portions below. Tests live under
+`apps/backend/test/local-database/hcp-experiment/`; the canonical brief records
+candidate-bound validation/review. The original source audit and C0 matrix above
+remain historical/prospective evidence, not full conformance results.
+
+| Row | C1 implementation and evidence | Still deferred |
+| --- | --- | --- |
+| C0-R08 | Provider-assembled simulated bootstrap provenance, unverified assurance, empty confirmations, stable IDs/subject and retained immutable v1/v2; `entries.spec.ts`. | Real authenticated seed approval/closed authority in C3; production writes/inference C4. |
+| C0-R09 | Nested JSON entry/content/assertion/evidence/classification/private-record values and types survive serialization, SQLite commit/reopen and whole-entry internal inspection. Unknowns are opaque. | Authorized public disclosure allowlist C3, export/import C5. Internal inspection is not an authorization API. |
+| C0-R10 | Atomic current-entry expiry and audit before admission/inspection, exact deadline, simulated 48h outage, batch audit/commit failure, later deadline during commit, repeat reopen, deleted/revoked precedence; `expiry.spec.ts` and process suite. | HTTP nondisclosure C3; grant expiry C2. Pinned-spec deadline conformance remains unresolved under CR-Q3. |
+| C0-R13 | Entry/version initialization and expiry state/audit share the data transaction; append-only guards; process loss before/after commit. | HTTP disclosure attempt audit, response release and authority races C2/C3. |
+| C0-R16 | Real private SQLite init/admission/reopen/reset, durable complete marker, exact manifest/schema/pins, exclusive lease, live/unproven owner refusal, stopped process recovery and new identity after repeated reset; ownership/process suites. | Physical host loss/cross-boot/other platform and installed-artifact evidence. Unproven partial initialization is refused, with harness-only stopped sandbox teardown. Future credentials/grants/refs do not exist in C1. |
+| C0-R17 | Explicit non-listening composition; source consumer check; actual old adapter open/bootstrap rejects experiment root and copied HCP file under old database name. | Real C3 route/credential isolation and complete C6 production read/write bypass inventory. |
+
+C1 changes no old migration, adapter, CI route or application launch path. SQLite
+is the only selected HCP adapter. No C2–C8 capability or claim is activated.
 
 ## Assessment Boundary And Next Use
 

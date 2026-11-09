@@ -41,9 +41,9 @@ This file is for doc writers. For agent startup, follow `AGENTS.md`.
   consumer inventory, compatibility windows and explicit removal gates.
 - [HCP integration](useful/HCP_INTEGRATION.md) — relationship to the protocol
   repository, pinned draft, and implementation feedback; the
-  [backlog alignment brief](plans/backlog/hcp-alignment/README.md) owns the gap
+  [active alignment brief](plans/active/hcp-alignment/README.md) owns the gap
   analysis, proposed checkpoints, and evaluation of the current spec's adoption
-  experience. Initial [spec questions](plans/backlog/hcp-alignment/spec-questions.md)
+  experience. Initial [spec questions](plans/active/hcp-alignment/spec-questions.md)
   stay here until concrete findings warrant focused upstream improvements.
 
 - [Installed Mac pilot](useful/INSTALLED_MAC_APP.md) — menu, model, installed CLI,
