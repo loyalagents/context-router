@@ -14,8 +14,8 @@
 These notes stay in Context Router while we test how well the existing HCP
 specification, schemas, and guides support adoption. They record source-review
 findings, synthetic cases, and possible resolution directions; they are not
-observations from a qualified HCP integration. Bounded C1 is activated on
-2026-11-08; the accepted entry-expiry experiment does not change the spec pin.
+observations from a qualified HCP integration. C1 is merged and bounded C2 is
+activated on 2026-11-08; accepted expiry recovery does not change the spec pin.
 Normative text continues to govern examples and schemas.
 
 Use the [adoption approach][cr-plan] to investigate each question when it affects
@@ -540,10 +540,14 @@ the publication checkpoint, with no resolution or target adoption recorded.
 | [#19 — Newer entry versions and exported history](https://github.com/loyalagents/hcp-spec/issues/19) | The current import rule rejects an already-held ID with changed content, without a higher-version exception. Asks whether this conservative policy is intentional and how optional historical versions participate; a larger number does not prove common ancestry. It does not assume synchronization is required. |
 | [#21 — Subject identity binding across providers](https://github.com/loyalagents/hcp-spec/issues/21) | Asks how a foreign subject URI is associated with the destination person, which checks are required or implementation policy, and how mismatches are handled while retaining subject/provenance and assurance. It does not mandate a universal ID or permit silent subject rewriting. |
 
-The original C1 chat is continuing a separately requested, repository-read-only
-review of the remaining import/export rules and may file additional focused
-issues. The orchestrator should collect its final issue disposition before C5
-planning. This investigation is not a dependency for C1 publication or the
+The original C1 chat completed the separately requested, repository-read-only
+source review with two further issues, verified open by the orchestrator on
+November 8: [#24 — categoryMap and imported policies](https://github.com/loyalagents/hcp-spec/issues/24)
+and [#25 — invalid empty-export example/checker bypass](https://github.com/loyalagents/hcp-spec/issues/25).
+These are source-analysis findings, not C1 runtime evidence. The exported-audit-
+history import question remains a C5 revisit, not an established defect. The
+orchestrator owns follow-through before C5; no resolution or revision adoption is
+recorded. This investigation is not a dependency for C1 publication or the
 selected C2 consent/grant slice. Import/export remains C5; any finding that affects
 an earlier selected contract must be explicitly assessed before that capability
 changes. No fork, issue answer or upstream merge silently changes the normative

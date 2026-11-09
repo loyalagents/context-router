@@ -25,6 +25,36 @@ export const DATA_SCHEMA = [
     sequence INTEGER PRIMARY KEY, event_id TEXT NOT NULL UNIQUE,
     event TEXT NOT NULL CHECK(json_valid(event))
   ) STRICT`,
+  `CREATE TABLE authorization_settings (
+    singleton INTEGER PRIMARY KEY CHECK(singleton=1), configuration TEXT NOT NULL CHECK(json_valid(configuration)),
+    human_verifier TEXT NOT NULL, secrets TEXT NOT NULL CHECK(json_valid(secrets)), policy_revision INTEGER NOT NULL
+  ) STRICT`,
+  `CREATE TABLE client_subjects (client_id TEXT PRIMARY KEY, pseudonym TEXT NOT NULL UNIQUE) STRICT`,
+  `CREATE TABLE grants (
+    id TEXT PRIMARY KEY, client_id TEXT NOT NULL, expires_at INTEGER NOT NULL,
+    status TEXT NOT NULL CHECK(status IN ('active','revoked','expired')), document TEXT NOT NULL CHECK(json_valid(document))
+  ) STRICT`,
+  `CREATE TABLE grant_refs (
+    grant_id TEXT NOT NULL REFERENCES grants(id), entry_id TEXT NOT NULL REFERENCES entries(id),
+    ref TEXT NOT NULL UNIQUE, PRIMARY KEY(grant_id,entry_id)
+  ) STRICT`,
+  `CREATE TABLE consent_reviews (
+    id TEXT PRIMARY KEY, interaction_id TEXT NOT NULL UNIQUE, binding_hash TEXT NOT NULL,
+    csrf_hash TEXT NOT NULL, expires_at INTEGER NOT NULL, consumed INTEGER NOT NULL DEFAULT 0,
+    document TEXT NOT NULL CHECK(json_valid(document))
+  ) STRICT`,
+  `CREATE TABLE policies (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('rules','directives')), document TEXT NOT NULL CHECK(json_valid(document))) STRICT`,
+  `CREATE TABLE audit_cursors (id_hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL, document TEXT NOT NULL CHECK(json_valid(document))) STRICT`,
+  `CREATE TABLE human_sessions (id_hash TEXT PRIMARY KEY, csrf TEXT NOT NULL, expires_at INTEGER NOT NULL, authenticated INTEGER NOT NULL CHECK(authenticated IN (0,1))) STRICT`,
+  `CREATE TABLE protocol_objects (
+    model TEXT NOT NULL, id_hash TEXT NOT NULL, expires_at INTEGER NOT NULL,
+    grant_id TEXT, uid TEXT, consumed INTEGER, document TEXT NOT NULL CHECK(json_valid(document)),
+    PRIMARY KEY(model,id_hash)
+  ) STRICT`,
+  `CREATE TRIGGER grants_no_delete BEFORE DELETE ON grants BEGIN SELECT RAISE(ABORT,'retained grant'); END`,
+  `CREATE TRIGGER grants_immutable BEFORE UPDATE OF id,client_id,expires_at,document ON grants BEGIN SELECT RAISE(ABORT,'immutable grant'); END`,
+  `CREATE TRIGGER refs_no_update BEFORE UPDATE ON grant_refs BEGIN SELECT RAISE(ABORT,'immutable ref'); END`,
+  `CREATE TRIGGER refs_no_delete BEFORE DELETE ON grant_refs BEGIN SELECT RAISE(ABORT,'retained ref'); END`,
   `CREATE TRIGGER versions_no_update BEFORE UPDATE ON entry_versions BEGIN SELECT RAISE(ABORT,'immutable version'); END`,
   `CREATE TRIGGER versions_no_delete BEFORE DELETE ON entry_versions BEGIN SELECT RAISE(ABORT,'retained version'); END`,
   `CREATE TRIGGER subject_no_update BEFORE UPDATE OF id,subject ON entries BEGIN SELECT RAISE(ABORT,'immutable subject'); END`,
