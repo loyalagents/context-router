@@ -3,6 +3,7 @@ import {
   matchesOperator,
   effectiveDirective,
   validateAccess,
+  validatePolicy,
   ACCESS_TYPE,
   PURPOSES,
 } from "../../../src/infrastructure/hcp-experiment/policy";
@@ -27,6 +28,54 @@ const entry: any = {
 };
 
 describe("C2 restrictions are intersected before future C3 disclosure", () => {
+  it.each([
+    "https://[broken",
+    "https://example.test/%ZZ",
+    "https://example.test/%",
+    "https://example.test/path[part]",
+    "https://example.test/#one#two",
+    "https://user@@example.test/purpose",
+    "https:/example.test/purpose",
+    "https://example.test/\\purpose",
+    "urn:example:raw space",
+    "urn:example:rawé",
+    "https://example.test/trailing\n",
+  ])("rejects malformed URI %s in every policy position", (code) => {
+    expect(() =>
+      validateAccess([
+        { ...detail, purposes: [{ code, description: "Synthetic purpose" }] },
+      ]),
+    ).toThrow();
+    for (const rule of [{ requires: [code] }, { operators: [code] }])
+      expect(() => validatePolicy({ rules: [rule], directives: [] })).toThrow();
+    expect(() =>
+      validatePolicy({
+        rules: [],
+        directives: [
+          { action: code, effect: "deny", text: "Synthetic directive" },
+        ],
+      }),
+    ).toThrow();
+  });
+  it.each([
+    "https://example.test/purpose",
+    "https://example.test/encoded%20purpose?q=a/b?c#section",
+    "https://[::1]:4443/purpose",
+    "urn:example:purpose",
+  ])("preserves valid URI identifiers without normalization: %s", (code) => {
+    const access = [
+      { ...detail, purposes: [{ code, description: "Synthetic purpose" }] },
+    ];
+    expect(validateAccess(access)).toEqual(access);
+    const policy = {
+      rules: [{ requires: [code], operators: [code] }],
+      directives: [
+        { action: code, effect: "deny", text: "Synthetic directive" },
+      ],
+    };
+    expect(validatePolicy(policy)).toEqual(policy);
+  });
+
   it("validates supported narrowing and never treats unknown persisted restrictions as unrestricted", () => {
     expect(() =>
       validateAccess([{ ...detail, narrowedTo: { future: [] } }]),

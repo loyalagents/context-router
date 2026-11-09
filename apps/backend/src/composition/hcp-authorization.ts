@@ -19,14 +19,15 @@ export async function createSyntheticAuthorization(
   paths: ExperimentPaths,
   options: AuthorizationExperimentOptions,
 ) {
-  const store = options.reopen
-    ? SyntheticExperiment.open(paths, options)
-    : SyntheticExperiment.create(paths, options);
+  // TLS construction may throw synchronously; acquire no store/lease before it succeeds.
   const server = createServer({
     key: options.tls.key,
     cert: options.tls.cert,
     minVersion: "TLSv1.2",
   });
+  const store = options.reopen
+    ? SyntheticExperiment.open(paths, options)
+    : SyntheticExperiment.create(paths, options);
   server.requestTimeout = 15_000;
   server.headersTimeout = 10_000;
   try {
@@ -43,13 +44,11 @@ export async function createSyntheticAuthorization(
     server.on(
       "request",
       authorizationHandler(authority, () =>
-        store
-          .inspectEntries()
-          .map((e) => ({
-            id: e.id,
-            categories: e.classification.categories,
-            content: e.content,
-          })),
+        store.inspectEntries().map((e) => ({
+          id: e.id,
+          categories: e.classification.categories,
+          content: e.content,
+        })),
       ),
     );
     let closed = false;

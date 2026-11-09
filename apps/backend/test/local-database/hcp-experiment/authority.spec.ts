@@ -93,6 +93,30 @@ describe("C2 durable grant authority (internal boundary; no public disclosure)",
     authority = store.authorization(config, human);
   }
 
+  it.each([
+    "https://[broken",
+    "https://example.test/%ZZ",
+    "https://user@@example.test/operator",
+  ])(
+    "rejects malformed registered operator %s before persisting configuration",
+    (id) => {
+      const fresh = SyntheticExperiment.create(
+        { sandbox, root: path.join(sandbox, "registration") },
+        options(),
+      );
+      try {
+        const malformed = structuredClone(config);
+        malformed.clients[0].operator.id = id;
+        expect(() => fresh.authorization(malformed, human)).toThrow();
+        const valid = structuredClone(config);
+        valid.clients[0].operator.id = "urn:example:operator";
+        expect(fresh.authorization(valid, human).listGrants(human)).toEqual([]);
+      } finally {
+        fresh.close();
+      }
+    },
+  );
+
   it("authentication alone creates no grant; affirmative approval binds server actors and audit", () => {
     expect(authority.isManagement(human)).toBe(true);
     expect(authority.listGrants(human)).toHaveLength(0);
@@ -602,9 +626,33 @@ describe("C2 durable grant authority (internal boundary; no public disclosure)",
     expect(() => authority.ownGrant(grant.grantId, "a")).toThrow();
   });
 
+  it.each(["before-audit", "before-commit"])(
+    "rolls back direct revocation and audit on %s failure, then retries durably once",
+    (point) => {
+      const grant = issue();
+      failAt = point;
+      expect(() => authority.revoke(human, grant.grantId)).toThrow();
+      expect(() => authority.ownGrant(grant.grantId, "a")).toThrow(); // failed handle latches closed
+      failAt = undefined;
+      reopen();
+      expect(authority.ownGrant(grant.grantId, "a").grants).toHaveLength(1);
+      expect(
+        store.inspectAudit().filter((e) => e.eventType === "grant.revoked"),
+      ).toHaveLength(0);
+      authority.revoke(human, grant.grantId);
+      reopen();
+      expect(() => authority.ownGrant(grant.grantId, "a")).toThrow();
+      authority.revoke(human, grant.grantId);
+      expect(authority.listGrants(human, "all")[0].status).toBe("revoked");
+      expect(
+        store.inspectAudit().filter((e) => e.eventType === "grant.revoked"),
+      ).toHaveLength(1);
+    },
+  );
+
   it("rolls back a failed policy replacement together with its grant revocations", () => {
     const grant = issue();
-    failAt = "before-audit";
+    failAt = "before-commit"; // reached after the policy and grant status/audit mutations
     expect(() =>
       authority.replacePolicy(human, {
         rules: [{ operators: ["example.test"] }],

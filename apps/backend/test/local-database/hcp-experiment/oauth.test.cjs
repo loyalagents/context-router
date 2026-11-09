@@ -2,6 +2,45 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { fixture, OAuthDriver } = require("./authorization-fixture.cjs");
 
+test("invalid TLS startup releases the owned store for same-process reopen and reset", async (t) => {
+  const fs = require("node:fs"),
+    os = require("node:os"),
+    path = require("node:path");
+  const {
+    createSyntheticAuthorization,
+  } = require("../../../dist/composition/hcp-authorization.js");
+  const {
+    createSyntheticExperiment,
+    openSyntheticExperiment,
+    resetSyntheticExperiment,
+  } = require("../../../dist/composition/hcp-experiment.js");
+  const sandbox = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), "hcp-c2-tls-failure-")),
+  );
+  fs.chmodSync(sandbox, 0o700);
+  t.after(() => fs.rmSync(sandbox, { recursive: true }));
+  const paths = { sandbox, root: path.join(sandbox, "experiment") };
+  const initial = createSyntheticExperiment(paths),
+    storeId = initial.storeId;
+  initial.close();
+  await assert.rejects(
+    createSyntheticAuthorization(paths, {
+      reopen: true,
+      tls: { key: "invalid PEM", cert: "invalid PEM" },
+      humanCredential: "unused-before-TLS-validation",
+      clients: [],
+    }),
+    { code: "ERR_OSSL_PEM_NO_START_LINE" },
+  );
+  const reopened = openSyntheticExperiment(paths);
+  try {
+    assert.equal(reopened.storeId, storeId);
+  } finally {
+    reopened.close();
+  }
+  resetSyntheticExperiment(paths);
+});
+
 test("real HTTPS RAR and scope-only affirmative consent, actor isolation, own grant, human history and revoke", async (t) => {
   const f = await fixture(t);
   const a = new OAuthDriver(f, "a"),

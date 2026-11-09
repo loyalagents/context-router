@@ -54,10 +54,35 @@ export function strings(value: any, min = 1, max = 100): value is string[] {
     new Set(value).size === value.length
   );
 }
-export const uri = (v: any): boolean =>
-  typeof v === "string" &&
-  v.length <= 512 &&
-  /^[A-Za-z][A-Za-z0-9+.-]*:[^\s]+$/.test(v);
+export function uri(v: any): boolean {
+  if (typeof v !== "string" || v.length > 512 || /%(?![\da-f]{2})/i.test(v))
+    return false;
+  // Validate original RFC 3986 components before URL can repair/normalize them.
+  // The bounded experiment accepts Node-supported URI hosts (not IPvFuture).
+  const parts =
+    /^([A-Za-z][A-Za-z0-9+.-]*):(?:\/\/([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#([^#]*))?$/.exec(
+      v,
+    );
+  if (!parts) return false;
+  const [, scheme, authority, path, query = "", fragment = ""] = parts;
+  if (
+    !/^[A-Za-z0-9._~!$&'()*+,;=:@%/-]*$/.test(path) ||
+    !/^[A-Za-z0-9._~!$&'()*+,;=:@%/?-]*$/.test(query) ||
+    !/^[A-Za-z0-9._~!$&'()*+,;=:@%/?-]*$/.test(fragment) ||
+    (authority !== undefined &&
+      !/^(?:[A-Za-z0-9._~!$&'()*+,;=:%-]*@)?(?:[A-Za-z0-9._~!$&'()*+,;=%-]*|\[[A-Fa-f0-9:.]+\])(?::[0-9]*)?$/.test(
+        authority,
+      )) ||
+    (/^https?$/i.test(scheme) && !authority)
+  )
+    return false;
+  try {
+    new URL(v); // Check host/address/port syntax, retaining the original identifier.
+    return true;
+  } catch {
+    return false;
+  }
+}
 export const privateId = (v: any): boolean =>
   typeof v === "string" &&
   /^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(

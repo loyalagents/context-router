@@ -1293,6 +1293,34 @@ The independent affected recheck closed all four findings, including both
 mid-read expiry mappings. It inspected code/tests and whitespace, without claiming
 to have rerun runtime tests. Complete-diff review remains the frozen-candidate gate.
 
+**Frozen complete-diff review and correction batch:** three independent readers
+reviewed all 25 files at `44b448dfc15044a81f62a31a425987fbed8225ab`, against
+`077d0a13b223d9f450e1464076e7a7a5b3ac4c05`. They requested strict URI admission,
+revocation rollback evidence after the grant status changes, and TLS startup
+cleanup. Failing-first regressions reproduced malformed purpose/operator URI
+admission and a leaked same-process store lease after invalid PEM. One shared
+validator now checks original URI components and percent escapes before Node URL
+parsing; valid HTTPS/URN and IPv6 values retain their original spelling. This
+bounded syntax policy excludes raw non-ASCII and IPvFuture hosts, rather than
+claiming every scheme/host form. TLS material is validated before store acquisition.
+Direct revoke tests now fail at both audit and commit boundaries, reopen, verify
+state/audit rollback, retry and verify exactly one durable revocation; the policy
+rollback test now reaches the post-revocation pre-commit boundary. These evidence
+additions passed without changing revocation behavior. Affected independent
+rechecks and corrected-candidate CI remain final gates.
+
+**Correction validation impact:** the first frozen candidate passed all 380 local
+database tests, 140 contract checks, the actual Chromium test, and supported Mac
+standalone packaging smoke (Darwin arm64, pinned toolchain, staged runtime and
+cleanup/integrity checks). The correction batch changes isolated C2 URI admission,
+TLS construction order, tests and this evidence record. Dependencies, lockfile,
+installed composition roots, packaging scripts and staged application behavior
+are unchanged. Carry forward only that dependency closure and existing-root
+lifecycle evidence, not a claim that the previous staged artifact contains the
+correction. Renew affected Mac authority/policy, actual HTTPS/process recovery,
+browser and documentation checks; run every applicable final-head CI lane and
+receipt. No full local migration gate or delivered/installed artifact is selected.
+
 **Concrete library/browser adoption findings:** v9.13.3 requires RAR types in
 each client registration. Overriding `issueRefreshToken` causes its metadata to
 advertise refresh even if the hook always returns false; the selected configuration

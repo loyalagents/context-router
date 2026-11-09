@@ -20,6 +20,7 @@ import {
   privateId,
   scopeAccess,
   strings,
+  uri,
   validateAccess,
   validatePolicy,
 } from "./policy";
@@ -164,7 +165,7 @@ export class AuthorizationRepository {
         !["a", "b"].includes(client.id) ||
         !client.name?.trim() ||
         !client.operator.name?.trim() ||
-        !/^[A-Za-z][A-Za-z0-9+.-]*:[^\s]+$/.test(client.operator.id)
+        !uri(client.operator.id)
       )
         invalid();
       const callback = new URL(client.redirectUri);
