@@ -127,165 +127,211 @@ async function rejected(context, probe, code) {
   }
 }
 
-test(
-  "C2 browser verifies isolated CA/hostname/expiry and performs real consent, callbacks, history and revoke",
-  { timeout: 120_000 },
-  async (t) => {
-    const f = await fixture(t);
-    const good = await probeServer(t, f, f.tls.cert);
-    const wrong = await probeServer(
-      t,
-      f,
-      await invalidLeaf(f, "wrong", "other.hcp.test", "2"),
-    );
-    const expired = await probeServer(
-      t,
-      f,
-      await invalidLeaf(f, "expired", "as.hcp.test", "0"),
-    );
-    const context = await trustedBrowser(f, (c) =>
-      rejected(c, good, "ERR_CERT_AUTHORITY_INVALID"),
-    );
-    try {
-      const allowed = new Set([
-        f.issuer,
-        ...Object.values(f.redirects).map((u) => new URL(u).origin),
-        good.url,
-        wrong.url,
-        expired.url,
-      ]);
-      const unexpected = [];
-      await context.route("**/*", (route) => {
-        if (allowed.has(new URL(route.request().url()).origin))
-          return route.continue();
-        unexpected.push("unexpected-origin");
-        return route.abort();
-      });
-      const page = await context.newPage();
-      const response = await page.goto(good.url);
-      assert.equal(response.status(), 200);
-      assert.equal(
-        (await response.securityDetails()).issuer,
-        "Owned HCP C2 fixture CA",
+for (const approvedFixtures of [false, true])
+  test(
+    `${approvedFixtures ? "C3 read journey" : "C2 authorization"}: browser verifies isolated TLS, consent, callbacks, history and revoke`,
+    { timeout: 120_000 },
+    async (t) => {
+      const f = await fixture(t, { approveFixtures: approvedFixtures });
+      const good = await probeServer(t, f, f.tls.cert);
+      const wrong = await probeServer(
+        t,
+        f,
+        await invalidLeaf(f, "wrong", "other.hcp.test", "2"),
       );
-      await rejected(context, wrong, "ERR_CERT_COMMON_NAME_INVALID");
-      await rejected(context, expired, "ERR_CERT_DATE_INVALID");
-      async function authorize(client, scopeOnly = false, first = false) {
-        const verifier = secret(),
-          state = secret();
-        const params = {
-          client_id: client,
-          redirect_uri: f.redirects[client],
-          response_type: "code",
-          response_mode: "form_post",
-          resource: f.issuer,
-          state,
-          code_challenge: createHash("sha256")
-            .update(verifier)
-            .digest("base64url"),
-          code_challenge_method: "S256",
-          ...(scopeOnly
-            ? { scope: "hcp:general_preferences:read" }
-            : {
-                authorization_details: JSON.stringify([
-                  {
-                    type: ACCESS_TYPE,
-                    actions: ["read"],
-                    categories: ["general_preferences"],
-                    purposes: [PURPOSES[0]],
-                  },
-                ]),
-              }),
-        };
-        await page.goto(f.issuer + "/auth?" + new URLSearchParams(params));
-        if (first) {
-          await page.waitForSelector('body[data-stage="login"]');
-          await page.getByLabel("Human management credential").fill(f.human);
-          await page
-            .getByRole("button", { name: "Sign in", exact: true })
-            .click();
-        }
-        await page.waitForSelector('body[data-stage="consent"]');
-        const before = (await f.management("/v2/grants")).json.grants.length;
-        if (scopeOnly)
-          await page
-            .getByLabel("Choose a purpose")
-            .selectOption(PURPOSES[0].code);
-        assert.match(await page.locator("body").innerText(), /own use-until/);
-        await page.getByRole("button", { name: "Review exact grant" }).click();
-        await page.waitForSelector('body[data-stage="review"]');
-        assert.equal(
-          (await f.management("/v2/grants")).json.grants.length,
-          before,
-        );
-        await page
-          .getByRole("button", { name: "Approve access", exact: true })
-          .click();
-        await page.waitForURL(f.redirects[client]);
-        assert.equal(
-          new URL(page.url()).search,
-          "",
-          "code stays in the POST body",
-        );
-        const callback = JSON.parse(await page.locator("body").innerText());
-        assert.equal(callback.state, state);
-        assert.equal(callback.iss, f.issuer);
-        assert.equal(typeof callback.code, "string");
-        const exchange = await f.request("/token", {
-          method: "POST",
-          form: {
-            grant_type: "authorization_code",
-            client_id: client,
-            code: callback.code,
-            code_verifier: verifier,
-            redirect_uri: f.redirects[client],
-            resource: f.issuer,
-          },
+      const expired = await probeServer(
+        t,
+        f,
+        await invalidLeaf(f, "expired", "as.hcp.test", "0"),
+      );
+      const context = await trustedBrowser(f, (c) =>
+        rejected(c, good, "ERR_CERT_AUTHORITY_INVALID"),
+      );
+      try {
+        const allowed = new Set([
+          f.issuer,
+          ...Object.values(f.redirects).map((u) => new URL(u).origin),
+          good.url,
+          wrong.url,
+          expired.url,
+        ]);
+        const unexpected = [];
+        await context.route("**/*", (route) => {
+          if (allowed.has(new URL(route.request().url()).origin))
+            return route.continue();
+          unexpected.push("unexpected-origin");
+          return route.abort();
         });
-        assert.equal(exchange.status, 200);
-        assert.ok(exchange.json.expires_in <= 3600);
-        return exchange.json.access_token;
+        const page = await context.newPage();
+        const response = await page.goto(good.url);
+        assert.equal(response.status(), 200);
+        assert.equal(
+          (await response.securityDetails()).issuer,
+          "Owned HCP C2 fixture CA",
+        );
+        await rejected(context, wrong, "ERR_CERT_COMMON_NAME_INVALID");
+        await rejected(context, expired, "ERR_CERT_DATE_INVALID");
+        async function authorize(client, scopeOnly = false, first = false) {
+          const verifier = secret(),
+            state = secret();
+          const params = {
+            client_id: client,
+            redirect_uri: f.redirects[client],
+            response_type: "code",
+            response_mode: "form_post",
+            resource: f.issuer,
+            state,
+            code_challenge: createHash("sha256")
+              .update(verifier)
+              .digest("base64url"),
+            code_challenge_method: "S256",
+            ...(scopeOnly
+              ? { scope: "hcp:general_preferences:read" }
+              : {
+                  authorization_details: JSON.stringify([
+                    {
+                      type: ACCESS_TYPE,
+                      actions: ["read"],
+                      categories: ["general_preferences"],
+                      purposes: [PURPOSES[0]],
+                    },
+                  ]),
+                }),
+          };
+          await page.goto(f.issuer + "/auth?" + new URLSearchParams(params));
+          if (first) {
+            await page.waitForSelector('body[data-stage="login"]');
+            await page.getByLabel("Human management credential").fill(f.human);
+            await page
+              .getByRole("button", { name: "Sign in", exact: true })
+              .click();
+          }
+          await page.waitForSelector('body[data-stage="consent"]');
+          const before = (await f.management("/v2/grants")).json.grants.length;
+          if (scopeOnly)
+            await page
+              .getByLabel("Choose a purpose")
+              .selectOption(PURPOSES[0].code);
+          assert.match(await page.locator("body").innerText(), /own use-until/);
+          await page
+            .getByRole("button", { name: "Review exact grant" })
+            .click();
+          await page.waitForSelector('body[data-stage="review"]');
+          assert.equal(
+            (await f.management("/v2/grants")).json.grants.length,
+            before,
+          );
+          await page
+            .getByRole("button", { name: "Approve access", exact: true })
+            .click();
+          await page.waitForURL(f.redirects[client]);
+          assert.equal(
+            new URL(page.url()).search,
+            "",
+            "code stays in the POST body",
+          );
+          const callback = JSON.parse(await page.locator("body").innerText());
+          assert.equal(callback.state, state);
+          assert.equal(callback.iss, f.issuer);
+          assert.equal(typeof callback.code, "string");
+          const exchange = await f.request("/token", {
+            method: "POST",
+            form: {
+              grant_type: "authorization_code",
+              client_id: client,
+              code: callback.code,
+              code_verifier: verifier,
+              redirect_uri: f.redirects[client],
+              resource: f.issuer,
+            },
+          });
+          assert.equal(exchange.status, 200);
+          assert.ok(exchange.json.expires_in <= 3600);
+          return exchange.json.access_token;
+        }
+        const a1 = await authorize("a", false, true),
+          a2 = await authorize("a", true),
+          b = await authorize("b");
+        assert.equal(f.callbacks.length, 3);
+        assert.ok(f.callbacks.every((c) => !c.cookie));
+        const cookies = await context.cookies(f.issuer);
+        assert.ok(cookies.some((c) => c.name === "__Host-hcp-human"));
+        assert.ok(
+          cookies.every(
+            (c) => c.domain === "as.hcp.test" && c.secure && c.httpOnly,
+          ),
+        );
+        const grantId = (await f.context("/v2/grants", a1)).json.grants[0]
+          .grantId;
+        const read = (token) =>
+          f.context("/v2/entries/query", token, {
+            method: "POST",
+            json: { query: "written notes", purpose: PURPOSES[0].code },
+          });
+        if (approvedFixtures) {
+          const results = await Promise.all([a1, a2, b].map(read));
+          assert.ok(
+            results.every(
+              (r) => r.status === 200 && r.json.entries.length === 1,
+            ),
+          );
+          assert.equal(
+            new Set(results.map((r) => r.json.entries[0].ref)).size,
+            3,
+          );
+          const get = await f.context(
+            `/v2/entries/${results[0].json.entries[0].ref}?purpose=${PURPOSES[0].code}&version=1`,
+            a1,
+          );
+          assert.equal(get.status, 200);
+          assert.equal(get.json.entry.version, 1);
+        }
+        await page.goto(f.issuer + "/manage");
+        assert.equal(await page.locator("article").count(), 3);
+        await page.goto(
+          f.issuer + "/manage?grantId=" + encodeURIComponent(grantId),
+        );
+        assert.match(await page.locator("body").innerText(), /grant\.issued/);
+        const historyText = await page.locator("body").innerText();
+        assert.equal(historyText.includes("context.read"), approvedFixtures);
+        if (approvedFixtures) {
+          assert.ok(historyText.includes("Receipt is unconfirmed"));
+          assert.ok(historyText.includes("Last possible copy use-until"));
+          assert.ok(historyText.includes("No notification endpoint"));
+        }
+        await page
+          .getByRole("button", { name: "Revoke grant", exact: true })
+          .click();
+        await page.waitForURL(f.issuer + "/manage?status=all");
+        assert.equal((await f.context("/v2/grants", a1)).status, 401);
+        assert.equal((await f.context("/v2/grants", a2)).status, 200);
+        assert.equal((await f.context("/v2/grants", b)).status, 200);
+        if (approvedFixtures) {
+          assert.equal((await read(a1)).status, 401);
+          assert.equal((await read(a2)).status, 200);
+          assert.equal((await read(b)).status, 200);
+          await page.goto(
+            f.issuer + "/manage?grantId=" + encodeURIComponent(grantId),
+          );
+          const retained = await page.locator("body").innerText();
+          assert.ok(
+            retained.includes("context.read") &&
+              retained.includes("grant.revoked"),
+          );
+        }
+        const history = (await f.management("/v2/audit")).json.events;
+        assert.ok(
+          history
+            .filter(
+              (e) =>
+                e.eventType === "grant.issued" &&
+                e.data.modality !== "private-fixture-initializer",
+            )
+            .every((e) => e.data.modality === "browser"),
+        );
+        assert.equal(unexpected.length, 0);
+      } finally {
+        await context.close();
       }
-      const a1 = await authorize("a", false, true),
-        a2 = await authorize("a", true),
-        b = await authorize("b");
-      assert.equal(f.callbacks.length, 3);
-      assert.ok(f.callbacks.every((c) => !c.cookie));
-      const cookies = await context.cookies(f.issuer);
-      assert.ok(cookies.some((c) => c.name === "__Host-hcp-human"));
-      assert.ok(
-        cookies.every(
-          (c) => c.domain === "as.hcp.test" && c.secure && c.httpOnly,
-        ),
-      );
-      const grantId = (await f.context("/v2/grants", a1)).json.grants[0]
-        .grantId;
-      await page.goto(f.issuer + "/manage");
-      assert.equal(await page.locator("article").count(), 3);
-      await page.goto(
-        f.issuer + "/manage?grantId=" + encodeURIComponent(grantId),
-      );
-      assert.match(await page.locator("body").innerText(), /grant\.issued/);
-      assert.doesNotMatch(
-        await page.locator("body").innerText(),
-        /context\.read/,
-      );
-      await page
-        .getByRole("button", { name: "Revoke grant", exact: true })
-        .click();
-      await page.waitForURL(f.issuer + "/manage?status=all");
-      assert.equal((await f.context("/v2/grants", a1)).status, 401);
-      assert.equal((await f.context("/v2/grants", a2)).status, 200);
-      assert.equal((await f.context("/v2/grants", b)).status, 200);
-      const history = (await f.management("/v2/audit")).json.events;
-      assert.ok(
-        history
-          .filter((e) => e.eventType === "grant.issued")
-          .every((e) => e.data.modality === "browser"),
-      );
-      assert.equal(unexpected.length, 0);
-    } finally {
-      await context.close();
-    }
-  },
-);
+    },
+  );

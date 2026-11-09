@@ -14,8 +14,8 @@
 These notes stay in Context Router while we test how well the existing HCP
 specification, schemas, and guides support adoption. They record source-review
 findings, synthetic cases, and possible resolution directions; they are not
-observations from a qualified HCP integration. C1 is merged and bounded C2 is
-activated on 2026-11-08; accepted expiry recovery does not change the spec pin.
+observations from a qualified HCP integration. C1/C2 are merged and bounded C3 is
+activated on 2026-11-09; accepted expiry recovery does not change the spec pin.
 Normative text continues to govern examples and schemas.
 
 Use the [adoption approach][cr-plan] to investigate each question when it affects
@@ -552,3 +552,62 @@ selected C2 consent/grant slice. Import/export remains C5; any finding that affe
 an earlier selected contract must be explicitly assessed before that capability
 changes. No fork, issue answer or upstream merge silently changes the normative
 pin, authorizes implementation, or establishes conformance.
+
+## C3 Adoption Review Scope (2026-11-09)
+
+C3 owns the deeper completed-journey adoption review against the unchanged pins.
+The [concrete plan](README.md#c3-concrete-implementation-plan) requires evidence
+for release ordering (#2), dormant expiry limitations (#3), startup/recovery guidance
+(#14), honest authenticated versus simulated fixture provenance, and preservation
+versus allowlisted disclosure. Current instruction: leave hcp-spec unchanged both
+locally and remotely, including issues/comments/PRs. Record concrete proposals here;
+the original orchestrator owns follow-through when upstream work is explicitly
+authorized. Existing issue status is historical unless reverified; neither issue
+resolution nor upstream merge changes CR's target without explicit adoption.
+Portability #19/#21/#24/#25 remains C5, and CR-Q2/Q5 require C4 disposition.
+
+### C3 Experienced-Team Findings And Local Proposals
+
+The normative pin and original adoption baseline remain unchanged. On 2026-11-09
+the writer read connected GitHub issue records and verified #2/#3/#5/#6/#14 open.
+Existing C2 evidence on #3 ([comment](https://github.com/loyalagents/hcp-spec/issues/3#issuecomment-6747676430))
+was written by another authorized chat; C3 made no upstream changes. #5 concerns
+stored-entry/disclosure example labeling; #6 concerns the provenance summary versus
+controlling §7.4. These observations do not adopt any later issue resolution.
+
+A read-only Astra/xhigh adoption reviewer inspected the C3 implementation and the
+pinned G1/G4/G5 guides, clauses and schemas; API acceptance was observed, underlying
+execution unverified. The reviewer did not run tests. Three application defects
+were found and given failing-first regression checks: directive IDs belong in
+`data.directives` (§8.2), stored relationships need provider-recorded actor/time
+(§4.2.3), and get evaluates the entry's categories rather than unrelated categories
+in its grant (§§5.2.2/7.1). These are implementation corrections, not spec defects.
+
+| Demonstrated adoption work | Concrete reusable proposal, retained locally | Owner and revisit |
+| --- | --- | --- |
+| §§3.5–3.7 distinguish authentication/assertion/confirmation, but truthful initialization required exact-bundle review, actual timestamps, traceable initializer authority and permanent closure. | Paired simulated-storage versus newly authenticated-statement example. Show that startup or generic migration approval cannot invent historical consent or confirmation. Use corrected C3 fixtures as evidence. | Original orchestrator; only prepare/publish upstream after explicit authorization. |
+| §§7.4/A.3 answer preservation versus disclosure, but stored-entry, disclosure and audit shapes were easy to conflate. The published generic query-result schema also permits stored entries, while event `data` is unconstrained. | One checked stored-entry → Context Client disclosure → matching audit example: unknown public/private members, relationship provenance stripped to same-response refs, and directive IDs. Add a small role-specific semantic fixture check for withheld fields and event-specific data; coordinate with #5/#6. | Original orchestrator; explicit upstream authorization, with a candidate-bound corrected fixture. |
+| Release ordering needs distinct admission, durable attempted audit, handoff and receipt concepts. Independent deadline and kill/reopen tests made these boundaries observable. | Extend #2/#14 with a provider-neutral timeline/failure matrix: precommit, postcommit/pre-handoff, slow recipient, token/grant/current/selected/copy deadlines, and recovery-before-admission. CR's synchronous SQLite/event-loop method is an example, not a protocol mandate. | Original orchestrator; #2 clarification and #14 guidance, on explicit upstream authorization. |
+| G1's evidence ladder and G4's explicit consent patterns worked; G1/G5 do not give a complete isolated local HTTPS slice. | Small deployment example connecting actor identities, private fixture trust, OAuth/resource URLs and honest experimental capabilities. Reuse C2 material with C3's complete read journey. | Original orchestrator; revisit before C6/C7 or a second implementer's reproduction need. |
+
+No general integration skill is justified yet; bounded examples and semantic checks
+address the demonstrated friction without becoming a second protocol definition.
+The existing prose was sufficient for lexical minimization, whole-request purpose/
+category scope checks, current-plus-selected historical eligibility, category-wide
+standing-rule denial, one-hour copies and no-endpoint limits. CR's shorter immutable
+copy lifetime is a provider choice; it is not a new spec rule. Explicit empty query
+categories search nothing, duplicate categories normalize, and positive maxEntries
+is capped at 20, as recorded in the concrete plan. Omitted query categories select
+the purpose-approved set; a standing rule over that requested set denies the whole
+query. A get instead checks the referenced entry. Informational fixture relationships
+are limited to derivedFrom/duplicates; lifecycle effects and confirmation/rejection
+semantics remain C4. In particular, C4 must derive standing from the latest
+confirmation disposition before accepting confirmation/rejection records.
+
+The 48-hour stopped-provider experiment remains atomic recovery evidence, not
+compliance with the pinned deadline conflict in #3. No recipient-copy compliance,
+unaided newcomer onboarding, installed-artifact qualification or full conformance
+is established. C3 reproducible commands and exact candidate results belong in the
+[canonical brief](README.md#c3-implementation-checkpoints-2026-11-09). CR-Q2/Q5
+remain C4 prerequisites; portability #19/#21/#24/#25 remains C5. The orchestrator
+owns all proposal follow-through; hcp-spec is unchanged locally and remotely.

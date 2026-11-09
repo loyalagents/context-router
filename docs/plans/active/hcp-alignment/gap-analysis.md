@@ -108,7 +108,7 @@ not qualify the current bridge or any assistant host for HCP.
 
 ## Highest-Value Acceptance Scenarios
 
-These are acceptance requirements, not test results; C1 is merged and bounded C2
+These are acceptance requirements, not test results; C1/C2 are merged and bounded C3
 is activated under the canonical concrete plan:
 
 - Two clients cannot substitute actors, link subjects through provider identifiers,
@@ -208,8 +208,8 @@ is the only selected HCP adapter. This is historical C1 evidence, not a C2 pass.
 The [concrete C2 plan](README.md#c2-activation-and-concrete-plan-2026-11-08) is
 activated from merged C1 at `077d0a13b223d9f450e1464076e7a7a5b3ac4c05` and was
 independently reviewed before implementation. The canonical brief records focused
-C2 implementation evidence and corrections; final review/qualification remains
-pending. The table preserves acceptance scope rather than asserting conformance.
+C2 implementation evidence and corrections; final review/qualification passed
+in merged PR #205. Candidate-era pending prose is historical. The table preserves acceptance scope rather than asserting conformance.
 
 | Rows | C2 acceptance | Explicit remaining boundary |
 | --- | --- | --- |
@@ -225,7 +225,31 @@ their prior C3–C8/deferred/inapplicable dispositions. R12 contributes only the
 minimal grant/entry opaque-ref primitive needed by R04's already-selected own-grant
 contract. Token details and own-grant retain the `narrowedTo.entryIds` key with
 grant-local ref values, while internal authority and human inspection retain the
-private entry IDs. No C3 public retrieval is activated.
+private entry IDs. C3 public retrieval is now activated by the November 9 instruction below.
+
+## C3 Requirement Selection (2026-11-09)
+
+Activated from C2 merge `6a7db3f5531557a489e6398945b352952e0220a0`; the
+[concrete plan](README.md#c3-concrete-implementation-plan) maps R04–R15/R17/R18
+and renews affected C1/C2 authority/durability/isolation evidence (R01–R03/R16).
+The checkpoint table is an acceptance plan, not test results. Public writes,
+confirmations, inference and durable mutation replay remain R19/C4; full governance,
+portability, notifications and additional OAuth flows remain R20/C5. R21/R22 keep
+their deferred/inapplicable scope. No normative pin or conformance claim changes.
+
+### C3 Candidate Evidence (Final Review/CI Pending)
+
+| Selected rows | Implemented synthetic evidence | Remaining boundary |
+| --- | --- | --- |
+| R04/R05/R07 | Query purpose/category/narrowing intersection, historical get current+selected eligibility, all-category rules before lexical ranking, positive relevance and 1/5/20 cap; actual HTTPS regression cases | No semantic ranking/model or full governance editor |
+| R08/R09/R11/R12 | Explicit exact-bundle authenticated initializer closure; preserved unknown public JSON versus allowlisted private withholding; per-grant refs, informational relationship provenance and same-response refs; directives recorded as IDs | C4 writes/confirmations/inference and lifecycle relationships; C5 export/import |
+| R06/R10/R13 | Serialized final authority/policy revalidation, durable attempted-read audit, postcommit token/grant/current/selected/copy deadlines; revoke/policy races, slow recipient, injected failure and kill/reap/reopen | Receipt/client compliance and physical host loss not proved; pinned dormant deadline discrepancy unresolved |
+| R14/R15/R17/R18 | Independent human paginated history and conservative copy deadline, governance denial for context credentials, TLS-verified Chromium A1/A2/B journey and legacy route/credential rejection | No installed integration, notifications, canonical discovery or conformance claim |
+
+The [canonical checkpoint record](README.md#c3-implementation-checkpoints-2026-11-09)
+owns exact commands, passed checks, carry-forward and pending final review/CI.
+C1/C2 affected regression evidence was renewed; this is a bounded synthetic
+application candidate, not package/profile or independent-host interoperability.
 
 ## Assessment Boundary And Next Use
 

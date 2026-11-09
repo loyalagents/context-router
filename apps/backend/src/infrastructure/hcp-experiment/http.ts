@@ -210,7 +210,7 @@ export function authorizationHandler(
             "human-audit",
             "human-revoke",
           ],
-          publicEntryRead: false,
+          publicEntryRead: authority.entryReadEnabled(),
           publicEntryWrite: false,
         },
         "application/json",
@@ -400,16 +400,30 @@ export function authorizationHandler(
       const selected = id
         ? authority.listGrants(s.token, "all").filter((g) => g.grantId === id)
         : grants;
-      const events = id
-        ? authority.audit(s.token, { grantId: id, limit: 100 }).events
-        : [];
+      for (const key of url.searchParams.keys())
+        if (url.searchParams.getAll(key).length !== 1) invalid();
+      const history = id
+        ? authority.audit(s.token, {
+            grantId: id,
+            limit: 20,
+            ...(url.searchParams.has("cursor")
+              ? { cursor: url.searchParams.get("cursor")! }
+              : {}),
+          })
+        : { events: [], nextCursor: null };
+      const copies = new Map(
+        selected.map((g) => [
+          g.grantId,
+          authority.lastPossibleCopyUseUntil(s.token, g.grantId),
+        ]),
+      );
       return page(
         res,
         "manage",
         "Human grant controls",
-        `<p><a href="/manage">Active grants</a> · <a href="/manage?status=all">All retained grants</a></p><p>No context content has been disclosed by this C2 experiment.</p>
-        ${selected.map((g) => `<article><h2>${escape(g.client.name)} · ${escape(g.status)}</h2><a href="/manage?grantId=${encodeURIComponent(g.grantId)}">Inspect grant and history</a><pre>${escape(JSON.stringify(g, null, 2))}</pre>${g.status === "active" ? `<form method="post" action="/manage/revoke">${hidden("csrf", s.csrf)}${hidden("grantId", g.grantId)}<button>Revoke grant</button></form>` : ""}</article>`).join("")}
-        ${id ? `<h2>Grant history</h2><pre>${escape(JSON.stringify(events, null, 2))}</pre>` : ""}`,
+        `<p><a href="/manage">Active grants</a> · <a href="/manage?status=all">All retained grants</a></p><p>Read history records attempted disclosures. Receipt is unconfirmed, including when a response is lost or expires before handoff. No notification endpoint is configured; no revocation notification or remote erasure is promised. Revocation ends permitted use.</p>
+        ${selected.map((g) => `<article><h2>${escape(g.client.name)} · ${escape(g.status)}</h2><a href="/manage?grantId=${encodeURIComponent(g.grantId)}">Inspect grant and history</a><p>Last possible copy use-until: ${escape(copies.get(g.grantId) ?? "No recorded copy")}</p><pre>${escape(JSON.stringify(g, null, 2))}</pre>${g.status === "active" ? `<form method="post" action="/manage/revoke">${hidden("csrf", s.csrf)}${hidden("grantId", g.grantId)}<button>Revoke grant</button></form>` : ""}</article>`).join("")}
+        ${id ? `<h2>Grant history</h2><pre>${escape(JSON.stringify(history.events, null, 2))}</pre>${history.nextCursor ? `<a href="/manage?grantId=${encodeURIComponent(id)}&amp;cursor=${encodeURIComponent(history.nextCursor)}">Next history page</a>` : ""}` : ""}`,
       );
     }
     if (route.startsWith("/v2/") || route === "/experiment/policy") {
@@ -423,6 +437,41 @@ export function authorizationHandler(
         ? undefined
         : authority.protocolFind("AccessToken", credential);
       if (!human && !token) throw new AuthorityError("unauthenticated");
+      if (
+        route === "/v2/entries/query" ||
+        /^\/v2\/entries\/[^/]+$/.test(route)
+      ) {
+        if (human) denied();
+        const isQuery = route === "/v2/entries/query";
+        if (
+          req.method !== (isQuery ? "POST" : "GET") ||
+          (isQuery && url.search)
+        )
+          invalid();
+        for (const key of url.searchParams.keys())
+          if (url.searchParams.getAll(key).length !== 1) invalid();
+        const input = isQuery
+          ? await body(req)
+          : Object.fromEntries(url.searchParams);
+        if (!isQuery && input.version !== undefined) {
+          if (!/^[1-9][0-9]*$/.test(input.version)) invalid();
+          input.version = Number(input.version);
+        }
+        const prepared = await authority.prepareRead(
+          credential,
+          isQuery ? "query" : "get",
+          input,
+          isQuery
+            ? undefined
+            : decodeURIComponent(route.slice("/v2/entries/".length)),
+        );
+        res.statusCode = 200;
+        res.setHeader("content-type", "application/ld+json");
+        authority.releaseRead(prepared, (bytes) => {
+          res.end(bytes);
+        });
+        return;
+      }
       const grantMatch = /^\/v2\/grants(?:\/(urn:uuid:[0-9a-f-]+))?$/.exec(
         decodeURI(route),
       );

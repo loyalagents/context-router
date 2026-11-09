@@ -21,6 +21,10 @@ export interface SyntheticVersion {
   evidence: JsonObject[];
   extensions?: JsonObject;
   recordExtensions?: JsonObject;
+  relationships?: {
+    type: "derivedFrom" | "duplicates";
+    targetFixture: number;
+  }[];
 }
 export interface SyntheticFixture {
   status: EntryStatus;
@@ -151,6 +155,7 @@ export function validateFixtures(
               "evidence",
               "extensions",
               "recordExtensions",
+              "relationships",
             ].includes(k),
         ) ||
         !object(v.content) ||
@@ -163,6 +168,20 @@ export function validateFixtures(
         !Array.isArray(v.evidence)
       )
         throw new Error("Unsupported fixture version");
+      if (
+        v.relationships !== undefined &&
+        (!Array.isArray(v.relationships) ||
+          v.relationships.some(
+            (r) =>
+              !object(r) ||
+              Object.keys(r).sort().join() !== "targetFixture,type" ||
+              !["derivedFrom", "duplicates"].includes(r.type) ||
+              !Number.isSafeInteger(r.targetFixture) ||
+              r.targetFixture < 0 ||
+              r.targetFixture >= input.length,
+          ))
+      )
+        throw new Error("Invalid fixture relationship");
       const until = v.assertion.validUntil;
       if (
         until !== undefined &&

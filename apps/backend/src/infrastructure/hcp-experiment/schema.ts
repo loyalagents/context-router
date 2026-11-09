@@ -9,6 +9,11 @@ export const DATA_SCHEMA = [
     store_id TEXT NOT NULL, subject_id TEXT NOT NULL, provider_id TEXT NOT NULL,
     initialization TEXT NOT NULL CHECK(initialization='complete')
   ) STRICT`,
+  `CREATE TABLE fixture_bootstrap (
+    singleton INTEGER PRIMARY KEY CHECK(singleton=1), mode TEXT NOT NULL CHECK(mode IN ('simulated','approved')),
+    state TEXT NOT NULL CHECK(state IN ('pending','closed')), bundle TEXT NOT NULL CHECK(json_valid(bundle)),
+    review_id TEXT, review_digest TEXT, review_expires INTEGER, authority_id TEXT
+  ) STRICT`,
   `CREATE TABLE entries (
     id TEXT PRIMARY KEY, subject TEXT NOT NULL CHECK(json_valid(subject)),
     current_version INTEGER NOT NULL CHECK(current_version>=1),
