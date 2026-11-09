@@ -1,7 +1,7 @@
 # HCP Alignment Plan
 
-- Status: C1 implemented and locally reviewed; C0+C1 draft PR/CI authorized, merge before C2 handoff; C2–C8 unactivated; no conformance claim
-- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; publication chat `01a1be37-9d90-7262-bd11-6fba45636347` is sole checkout writer; original C1 chat continues only the separate import/export issue investigation
+- Status: C1 merged in PR #204; bounded C2 implementation in progress under an independently approved concrete plan; C3–C8 unactivated; no conformance claim
+- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C2 chat `01a1bf1d-92ba-7ae3-9439-6a39e5d9ac58` is sole checkout writer; orchestrator and reviewers are repository-read-only
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
 - Assessment date: 2026-11-07
@@ -67,9 +67,10 @@ It makes **no HCP conformance claim**. A complete HTTP-only Provider Interop
 milestone is possible later, before MCP qualification, only after all requirements
 of that package and any applicable profiles are evidenced.
 
-The November 8 activation authorizes only the isolated C1 implementation and
-owned synthetic reset/recovery tests. It does not authorize personal-state changes,
-live model runs, network exposure, client configuration, or releases.
+The November 8 C2 activation follows the human merge of C1 and authorizes the
+bounded consent/grant experiment below, including isolated loopback HTTPS and
+fixture browser/client trust. Personal-state changes, live model runs, LAN
+exposure, installed-client configuration, and releases remain outside scope.
 Discarding existing CR data and migrations is an accepted implementation choice,
 not a decision to reopen at each step. An upstream resolution does not silently
 change the chosen spec revision.
@@ -227,7 +228,7 @@ is activated; no upgrade chain from legacy CR stores is needed.
 
 The table separates accepted product direction, C0 engineering selections, and
 unresolved protocol decisions. C0 selections below are preserved; the later explicit activation authorizes
-only their C1 portions. No legacy-preservation question remains.
+their C1 portions and the bounded C2 plan below. No legacy-preservation question remains.
 
 | Decision | Disposition and concrete choice | Remaining dependency |
 | --- | --- | --- |
@@ -292,8 +293,8 @@ the exception does not change policy for unrelated work.
 
 The first proposed implementation outcome is **consent → read synthetic context →
 inspect disclosure history → revoke**, through HTTP with two controlled test
-clients. This section bounds the full experiment. Only C1 is activated; C2/C3 remain
-future work and no HCP package/profile claim is made.
+clients. This section bounds the full experiment. C1 is merged and C2 is activated;
+C3 remains future work and no HCP package/profile claim is made.
 
 ### Scope And Boundaries
 
@@ -317,7 +318,7 @@ future work and no HCP package/profile claim is made.
   credentials. No implicit hosted authorization dependency is introduced.
 - Implement purpose/category/narrowing checks, lifecycle filtering, standing-rule
   and directive enforcement using controlled policy fixtures, query/get, own-grant
-  inspection, lexical ordering, quantity limits, allowlisted disclosures, and
+inspection, lexical ordering, quantity limits, allowlisted disclosures, and
   grant-scoped references. Context-client access remains read-only; consent and
   revocation are human-authorized management operations.
   Grant and disclosure audit is synchronous and durable. Use the explicit
@@ -328,8 +329,9 @@ future work and no HCP package/profile claim is made.
 
 **Bounded implementation brief.** C1 builds the isolated durable entry foundation;
 C2 adds real local consent/grants and human controls; C3 completes query/get,
-disclosure history and revocation. One writer integrates these sequentially in a
-cohesive experiment PR when authorized. The selected requirement/test matrix is
+disclosure history and revocation. The product owner selected a standalone C1
+foundation PR, now merged, before the cohesive C2 PR. One writer integrates each
+activated outcome sequentially. The selected requirement/test matrix is
 [the C0 expansion of G01–G18](gap-analysis.md#c0-requirement-and-test-matrix).
 It is a scoped acceptance list, not the exhaustive C8 conformance matrix.
 
@@ -951,7 +953,10 @@ source, target, implementation scope or C2 activation changed.
 
 ## C1 Publication And Merge Before C2 (2026-11-08)
 
-**Latest product-owner direction:** update the handoff, commit the preserved C0+C1
+Historical publication instructions and evidence; the merged C1 baseline and
+current writer are recorded in the C2 activation below.
+
+**Product-owner direction at publication:** update the handoff, commit the preserved C0+C1
 work on a `codex/` branch, open a draft PR, and run CI. Merge this foundation first,
 then return to the original orchestrator for C2. This selects a standalone C1
 foundation PR instead of the earlier optional shared C1–C3 PR. It authorizes
@@ -1000,6 +1005,345 @@ and references; C4 production writes; C5 import/export. The portability question
 do not block the selected C2 slice, while unresolved expiry wording still limits
 affected conformance claims. Physical host loss, cross-boot, other-platform,
 installed-artifact and real-host qualifications remain outside this C1 evidence.
+
+## C2 Activation And Concrete Plan (2026-11-08)
+
+**Activation and baseline.** Lucas reported merging [PR #204](https://github.com/loyalagents/context-router/pull/204)
+and requested return to the orchestrator to start C2. The orchestrator verified
+that human message and assigned this bounded implementation. C2 chat
+`01a1bf1d-92ba-7ae3-9439-6a39e5d9ac58` owns all checkout writes, tests, branch,
+documentation and publication; all investigators/reviewers are read-only. Startup
+verified clean `main` = `origin/main` = `077d0a13b223d9f450e1464076e7a7a5b3ac4c05`.
+Work uses `codex/hcp-c2-grants` in the same checkout. No old C0 patch is recreated.
+The sibling is separately owned, clean at `5fc62a413794b5927f1251968e04381044af92c1`
+on `codex/encryption-design-investigation`; only pinned Git objects are read.
+Normative and adoption pins above remain unchanged.
+
+**Merged C1 evidence (historical).** Final merged tree
+`27a3b0255f578f611a05081546cc489f32efdb7d` equals reviewed head
+`5c30dbb35c7876f80d651602653cf9e4c5a5c50e`. Regular
+[CI](https://github.com/loyalagents/context-router/actions/runs/42554311508) and
+[migration qualification](https://github.com/loyalagents/context-router/actions/runs/42554311477)
+completed successfully on that head; tested merge checkout was
+`75202811d77c7815aa885c7943e2d79818af4f8b`, distinct from final merge. Publication
+verified source/UI/package receipts against the same head/base/checkout and
+cleanup/integrity. Local C1 evidence above remains historical, not a C2 pass.
+
+**Profile and review.** Sensitive/quality-first for credentials, affirmative
+consent, transaction/recovery and race boundaries. This writer and read-only
+OAuth/TLS investigators use configured defaults; underlying model/effort is not
+independently observable, and no override is claimed. A fresh independent
+concrete-plan review must resolve blocking findings before backend implementation.
+Fresh complete-diff reviewers will cover authority/protocol/privacy and
+persistence/recovery/testing/scope at finalization. Approvals bind exact inputs;
+affected rechecks follow corrections.
+
+**Plan review disposition.** Independent review of docs diff
+`5f9cdca3b6fce1b8350297f804a73def1d74921925e32bddb9a77ded79fed53f`
+found two blockers: same-host callbacks could receive human cookies across ports;
+an unqualified custom `entryRefs` key conflicted with the pinned extension rule.
+Both were corrected below. The reviewer independently verified and approved
+`9033a0189f1beb1632a8ca5b1fd7d4d5648d68f989e3610dbb38765fd9d0e3bb`
+before implementation, carrying forward unaffected dimensions. Settings were
+inherited configured defaults, execution unverified. This is plan approval only.
+
+### C2 Contracts And Implementation Seams
+
+1. **Composition and authority.** Add one explicitly selected HTTPS composition
+   beside the existing non-listening C1 entry point. It is never registered in
+   installed/Nest/GraphQL/MCP/model roots. Serve on literal `127.0.0.1` only, with
+   explicit HTTPS issuer/resource and fixed pre-registered controlled A/B client
+   IDs, operator labels and exact callback URLs. Use distinct fixture hosts
+   `as.hcp.test`, `client-a.hcp.test` and `client-b.hcp.test`, each resolved only by
+   fixture browser mappings/Node lookup to loopback and covered by the test CA's
+   leaf SANs. Cookies are host-only, never use a parent Domain; the human session
+   uses a `__Host-` cookie. Ports alone cannot isolate cookies. Assert actual
+   callback request headers contain no AS/human cookies or the other client's
+   cookies. Each listener validates its configured Host. Both clients have the same actual
+   fixture operator; alternate operator/claim cases are labelled simulated tests.
+   Subject/requesting party and authorizing principal come from the owned store,
+   never request fields. Retain the C1 simulated entry provenance unchanged.
+2. **One store.** Extend the fresh entries schema with HCP grants, per-client
+   subject pseudonyms, per-grant opaque refs, rules/directives, consent decisions,
+   management authentication/session state and OAuth library objects. There is
+   one `entries.sqlite` connection and checked lease; `lease.sqlite` remains
+   coordination only. No migration/dual-write/second authoritative grant database.
+   Incompatible earlier synthetic schemas refuse; create fresh fixtures. Preserve
+   exact schema/file admission, DELETE/EXTRA/fullfsync, synchronous durable commits,
+   append-only audit and stopped/reaped reset boundaries. An infrastructure-only
+   authority repository receives the store's synchronous checked transaction
+   closure; no raw connection escapes into HTTP or legacy consumers.
+3. **OAuth candidate.** Qualify and exactly pin `oidc-provider` **9.13.3**, upstream
+   tag commit `7b21c6da77f61fb66adfec72e0d8247dda7248e6`, selected from current
+   [registry](https://registry.npmjs.org/oidc-provider/9.13.3) and pinned
+   [defaults/hooks](https://github.com/panva/node-oidc-provider/blob/7b21c6da77f61fb66adfec72e0d8247dda7248e6/lib/helpers/defaults.js)
+   inspection. Use its documented custom interactions,
+   RAR hooks, resource indicators, opaque access tokens and persistence adapter.
+   Enable Authorization Code, S256 PKCE and `form_post` responses only, so codes
+   as well as tokens stay out of URLs. Controlled clients must verify response
+   issuer and state before exchange. Disable refresh, implicit, password, device,
+   client-credentials, DCR, client metadata documents, request objects/PAR,
+   RP-initiated logout, userinfo and other unused flows. Require PKCE for every
+   client, explicit redirect URI, zero clock tolerance and mandatory exact resource.
+   Reject foreign Host/forwarded headers; do not enable proxy trust or derive the
+   issuer/resource from request headers.
+   Requests for unsupported actions, persistence, sharing, provenance, retention,
+   notification registration, actor substitutions or unknown narrowing fail.
+   Do not implement an OAuth framework. If this candidate fails a requirement,
+   record the concrete failure and independently review the smallest replacement.
+4. **Grant/library binding.** On affirmative consent, atomically consume the
+   request-bound decision and commit the HCP grant, its refs and `grant.issued`.
+   Only then save the library Grant with that exact grant UUID and finish the
+   interaction. Library Grant is credential-processing state, never an independent
+   authority: every Grant/code/token adapter operation rechecks the HCP record,
+   bound client, issuer/resource, status and expiry. Adapter writes share the
+   entries transaction boundary. Native RAR grant/source/token hooks carry the
+   approved details into code/token and token response, including scope-only
+   approvals. Token storage cannot widen them. Atomic code-consumption CAS rejects
+   concurrent/replayed exchanges; library invalidation maps idempotently to
+   retained HCP revocation plus audit, not deletion. Failed issuance may leave a
+   human-visible unused grant; no usable token precedes its durable authority.
+5. **Consent versus login.** Provision an independent random human credential in
+   private fixture memory; persist only its verifier. It authenticates management
+   bearer calls or a Secure/HttpOnly/SameSite browser session, never context access.
+   Human login can establish an OAuth identity session but creates no HCP grant.
+   Every authorization request must reach explicit consent, even after a prior
+   grant to that client; do not load a reusable session grant. The server freezes
+   the request, client/resource and policy revision. CSRF and browser/session
+   binding protect login, review, approve, decline and human revoke. A review step
+   selects purposes for scope-only requests and any category/entry narrowing and
+   duration; no purpose is inferred from login. It displays category definitions,
+   read action, purpose descriptions, client/operator, restrictions/exclusions,
+   exact absolute expiry and one-hour maximum copy use, and says the clients make
+   no directive-following claim. Grant expiry stops retrieval but does not shorten
+   an existing copy's independent use-until (R07/§7.6); revocation ends use.
+   C2 discloses no entry copies. Approval consumes that single review snapshot;
+   policy/request changes or elapsed review expiry require a new review. Record
+   actual approving time, `modality: browser`, and a truthful local-credential
+   `acr`; do not claim MFA, external identity verification or real-person data.
+6. **Duration.** Default temporary lifetime is four hours, maximum 24 hours.
+   The reviewed absolute deadline is never moved forward at approval, token
+   exchange, activity or restart. Token expiry is no later than one hour from
+   token issuance or the grant deadline, with a current-time check after durable
+   adapter writes and before returning authority. No refresh or persistent grants.
+7. **Policy.** Validate each registered category, read action and absolute purpose
+   URI. Entry eligibility is intersection of grant category/action/purpose and
+   narrowing, assertion purposes, management purposes, current lifecycle/validity,
+   and standing rules. Unknown persisted restrictions reach no entry; they are
+   never silently discarded. A deny on any entry category prevents alternate
+   category access. Implement exact operator IDs and domain/subdomain boundaries,
+   `requires` conjunction, existing/future-grant enforcement and revocation when
+   all reached categories become denied. Authenticated fixture management may
+   replace rules/directives with durable set/remove events and grant revocations
+   in one transaction; no unauthenticated control route or full governance editor.
+   Directives only narrow: deliver every applicable directive and compute
+   deny > ask-first > permit for a requested action without enlarging grant access.
+   The evaluator is internal in C2; public entry query/get remains disabled.
+8. **Narrowed own-grant boundary.** The minimal shared ref dependency is necessary
+   for §5.2.6 now. Store unpredictable random refs unique to `(grant, entry)` in
+   the grant transaction, stable across reopen/versions and distinct for A1/A2/B.
+   Internal narrowing uses `entryIds`; the client-facing representation retains
+   that same `narrowedTo.entryIds` key but substitutes same-grant **ref values**,
+   including token authorization details and own-grant output, never private IDs.
+   This satisfies §5.2.6 without inventing an unqualified custom narrowing key
+   (§6.1.5.1/A.3). It is a presentation of the committed restriction, not another
+   authority record. Ref values cannot be used as issuance-time private IDs;
+   unknown issuance keys reject. Management retains private IDs and legible entry
+   descriptions. Test exact restriction preservation, privacy and ref isolation.
+   This does not activate query/get, ranking, public content or disclosure history.
+9. **Controls and framing.** Implement selected `/v2/grants` GET/DELETE and
+   `/v2/audit` GET plus minimal human HTML list/detail/history/revoke screens.
+   Management lists active by default or all retained grants; Context Clients
+   receive/relinquish only the presented grant, without union or fallback. A1
+   revocation leaves A2/B intact. Distinct credential dispatch precedes operation
+   authorization; alleged management scopes confer no capacity. Reject context
+   tokens on every governance route, including unfinished ones; management tokens
+   cannot act as context bearer tokens. Audit has opaque, bounded snapshot cursors
+   valid at least 300 seconds, stable ordering and no credentials/content in the
+   cursor. No invented `context.read` events or disclosure summaries. Selected HCP
+   routes return version 2.0, LD+JSON success and mapped problem+JSON errors,
+   including version rejection and version on 204. Publish actual AS metadata,
+   protected-resource metadata and `/experiment/capabilities`, explicitly incomplete
+   with no Part/profile/package claims. Canonical HCP discovery remains C8.
+10. **Revocation, expiry and release.** All authority changes and events commit
+    synchronously. Recheck current grant/policy/time at each admission; an atomic
+    synchronous final check followed immediately by transport handoff protects
+    own-grant responses without waiting for socket drain. OAuth issuance rechecks
+    after awaits and persistence; a response never makes revoked authority usable.
+    Failure latches store admission closed until successful reopen where outcome
+    is uncertain. Before startup/read admission, reconcile overdue grants and
+    entries with original effective expiry, actual append time, atomic rollback,
+    prior-revoked precedence, repeat-reopen idempotence and no renewal. Test exact
+    deadline, sleep-like jumps and 48-hour dormancy. This is CR recovery evidence,
+    not satisfaction of the contradictory pinned 24-hour audit deadlines. Preserve
+    the C3 contract of admission plus coordinated authority/policy/expiry recheck,
+    durable disclosure audit and handoff, with time checked after audit for token,
+    grant, entry and prepared-copy deadlines. C2 does not claim those end-to-end
+    content-release races are tested.
+
+### C2 Checkpoints, Validation And Finalization
+
+| Checkpoint | Tests written and observed failing before implementation | Rows / exit |
+| --- | --- | --- |
+| C2a. Authority and policy | Real SQLite issue/audit rollback, actor binding and pseudonyms, duration, narrowing, purpose intersection, standing rules/directives, A/B/A1/A2, refs, authenticated management and audit cursors | R01/R03–R06/R13/R14; internal authority boundary only |
+| C2b. OAuth and human controls | Actual HTTPS code/form-post/S256 flow, RAR and scope-only consent, login-only denial, repeated consent, CSRF/request binding, exact redirect, wrong/missing verifier, replay/concurrency, resource/issuer/actor substitution, unsupported flows, token response/storage equivalence, issuance failures | R02/R03/R13–R15/R18; qualify exact library candidate |
+| C2c. Browser and recovery | Isolated browser CA trust with verification enabled; real redirect/login/review/approve/list/history/revoke; invalid CA/hostname controls; SQLite child-process crash/reopen, expiry and audit/commit failure, code/session/token persistence, revocation races and slow recipient | Renew C1 ownership/durability and R06/R13/R16/R17; no installed app or personal profile |
+| C2d. Freeze and publication | Affected consumers/docs, full base-to-candidate independent review, local focused tests, all applicable exact-head CI and same-candidate qualification receipts | One cohesive draft PR; human merge/release separate; handoff yields writer |
+
+Use Node **24.21.0**, pnpm **10.25.0** (preflight passed). Tests extend the existing
+backend local-database project; ESM OAuth/process tests use the compiled actual
+composition in owned child processes. Browser coverage joins the existing web
+browser group where pinned Chromium is already a CI prerequisite; update its
+explicit file census without changing triggers or dropping tests. Browser trust
+must be isolated to a fresh fixture profile and test CA, not system trust or TLS
+ignore flags. The selected mechanism is Chromium 153.0.8010.12's normal
+per-profile `ServerCertificate` database, populated only after creating and
+closing/reaping the owned fresh profile. Its
+[schema](https://chromium.googlesource.com/chromium/src/+/refs/tags/153.0.8010.12/components/server_certificate_database/server_certificate_database.cc)
+and [trust metadata](https://chromium.googlesource.com/chromium/src/+/refs/tags/153.0.8010.12/components/server_certificate_database/server_certificate_database.proto)
+are a pinned internal fixture interface, not a public Playwright API. The normal
+verifier then enforces chain/expiry/hostname constraints. Runtime qualification
+must prove trusted success and untrusted/wrong-SAN/expired failures before relying
+on it; source inspection alone is not a pass.
+Every test owns its sandbox, ports, CA, browser, callbacks and child lifetimes;
+reap children before cleanup. No credentials in argv, URLs, env, traces, logs or
+diagnostic output. Fixture secrets travel only in private memory/IPC/HTTPS.
+
+Apply the runtime, Mac persistence/process/composition, and docs rows of the
+[validation policy](../../../useful/AGENT_WORKFLOW.md#default-and-exceptions).
+Select backend build, C1+C2 SQLite/process suites, affected storage/composition/
+dependency contracts, real TLS/client/browser tests, doc readers, links/anchors
+and whitespace. New dependency closure must pass existing packaging/CI checks.
+No named additional gap currently selects a duplicate full local migration gate.
+For the new production dependency closure, also select the supported standalone
+`pnpm migration:smoke:packaging` on this Mac: it adds target-native staged/offline
+resolution and packaged startup evidence beyond direct fixture execution. This
+does not select the full local migration gate or an installed artifact.
+Existing regular CI and all applicable migration source/UI/package receipts are
+required for the frozen head; record head, base and tested checkout separately.
+No installed artifact, physical power-loss/cross-boot/other-hardware, real-host,
+client directive/copy enforcement or HCP conformance evidence is promised.
+
+**Finalization milestone:** C2a–c meet their scoped acceptance, known corrections
+are resolved and remaining C3/deferred/manual limitations are explicit; then
+freeze code/docs/dependency/test inputs, publish the draft PR and run independent
+complete-diff review and required exact-candidate qualification on stable inputs.
+There is no live-app exploratory acceptance round. Renew affected evidence after
+fixes; carry forward only demonstrably unchanged inputs. Stop at C2, record
+adoption findings/upstream disposition and recommended C3 inputs, and explicitly
+yield ownership to the orchestrator. No automatic C3 activation, merge or release.
+
+### C2 Implementation Checkpoint (2026-11-09)
+
+**Scope:** implemented in `codex/hcp-c2-grants`, from C1 merge
+`077d0a13b223d9f450e1464076e7a7a5b3ac4c05`. Targeted checks passed; final validation
+pending. This is an isolated synthetic experiment, not an installed application
+change, complete HTTP/OAuth profile, real-host integration or conformance claim.
+The sole writer remains this C2 chat until its final handoff. C3–C8 remain inactive.
+
+The explicit [HTTPS composition](../../../../apps/backend/src/composition/hcp-authorization.ts)
+uses [authority and protocol storage](../../../../apps/backend/src/infrastructure/hcp-experiment/authority.ts)
+in the checked C1 `entries.sqlite` transaction, with
+[policy evaluation](../../../../apps/backend/src/infrastructure/hcp-experiment/policy.ts),
+[pinned OAuth integration](../../../../apps/backend/src/infrastructure/hcp-experiment/oauth.ts)
+and [human/HTTP controls](../../../../apps/backend/src/infrastructure/hcp-experiment/http.ts).
+No installed root imports it. Exact schema admission rejects earlier incompatible
+synthetic stores; no migration, legacy authority or second grant database was added.
+Runtime credentials, protocol keys and authority remain inside the owned private
+store/memory; tests send process credentials over private IPC only.
+
+**Focused evidence before final freeze:**
+
+- [Authority tests](../../../../apps/backend/test/local-database/hcp-experiment/authority.spec.ts)
+  and [policy tests](../../../../apps/backend/test/local-database/hcp-experiment/policy.spec.ts)
+  cover affirmative one-use decisions, server actors/pseudonyms, fixed expiry,
+  private-ID/ref isolation, actual persisted unknown narrowing, policy rollback,
+  existing/future-grant rules, directives, durable sessions and opaque audit cursors.
+- [Native HTTPS tests](../../../../apps/backend/test/local-database/hcp-experiment/oauth.test.cjs)
+  exercise RAR and scope-only consent, login without authority, A1/A2/B, strict
+  token requests, exact resource/redirect/PKCE, replay/concurrency, CSRF, context
+  versus management capacity, policy withdrawal, narrowed token/own-grant
+  equivalence, metadata and mapped HCP responses.
+- [Owned process tests](../../../../apps/backend/test/local-database/hcp-experiment/recovery.test.cjs)
+  kill/reap and reopen the same issuer/store after review, code, token and revoke;
+  delayed A1 exchange remains distinct from different-category/purpose A2.
+  Barriers cover grant audit/commit loss, committed token before reply, token/grant
+  time crossing during commit, 48h dormancy, reconciliation failure, revoked
+  precedence and repeat-reopen idempotence. A paused own-grant recipient does not
+  block durable revoke. This is not content-disclosure race evidence.
+- [Actual Chromium test](../../../../apps/web/test/hcp-oauth-browser.test.mjs)
+  proves a fresh profile rejects an untrusted CA, then accepts the owned CA through
+  normal profile trust; wrong hostname and expired leaves still fail before HTTP.
+  It completes login, separate A1/A2/B approvals, scope-only purpose selection,
+  real form-post callbacks, human history and revoke. Callback headers contain no
+  AS/human cookies. Browser **153.0.8010.12/r1243**, Playwright **1.63.0**, TLS
+  verification enabled. Linux/browser CI remains part of final qualification.
+
+**Independent checkpoint findings and corrections:** reviewers used requested
+configured defaults; underlying execution model/effort is unverified. A stale
+code-consumption snapshot could leave a concurrent winner active; duplicate
+consume now commits revoke/audit before rejecting outside the transaction.
+HCP §9.7 errors now carry mapped types, detail and version (invalid evidence 401,
+authenticated capacity denial 403, malformed 422, unsupported version 400).
+Consent copy wording now matches R07/§7.6; grant expiry does not shorten an already
+disclosed copy. Grant events carry §3.9 `retrievalId` as an operation correlation
+UUID without inventing `context.read`; grants also explicitly bind the synthetic
+person as `requestingParty`. New tests preceded these behavioral corrections.
+The independent affected recheck closed all four findings, including both
+mid-read expiry mappings. It inspected code/tests and whitespace, without claiming
+to have rerun runtime tests. Complete-diff review remains the frozen-candidate gate.
+
+**Frozen complete-diff review and correction batch:** three independent readers
+reviewed all 25 files at `44b448dfc15044a81f62a31a425987fbed8225ab`, against
+`077d0a13b223d9f450e1464076e7a7a5b3ac4c05`. They requested strict URI admission,
+revocation rollback evidence after the grant status changes, and TLS startup
+cleanup. Failing-first regressions reproduced malformed purpose/operator URI
+admission and a leaked same-process store lease after invalid PEM. One shared
+validator now checks original URI components and percent escapes before Node URL
+parsing; valid HTTPS/URN and IPv6 values retain their original spelling. This
+bounded syntax policy excludes raw non-ASCII and IPvFuture hosts, rather than
+claiming every scheme/host form. TLS material is validated before store acquisition.
+Direct revoke tests now fail at both audit and commit boundaries, reopen, verify
+state/audit rollback, retry and verify exactly one durable revocation; the policy
+rollback test now reaches the post-revocation pre-commit boundary. These evidence
+additions passed without changing revocation behavior. Affected independent
+rechecks and corrected-candidate CI remain final gates.
+
+**Correction validation impact:** the first frozen candidate passed all 380 local
+database tests, 140 contract checks, the actual Chromium test, and supported Mac
+standalone packaging smoke (Darwin arm64, pinned toolchain, staged runtime and
+cleanup/integrity checks). The correction batch changes isolated C2 URI admission,
+TLS construction order, tests and this evidence record. Dependencies, lockfile,
+installed composition roots, packaging scripts and staged application behavior
+are unchanged. Carry forward only that dependency closure and existing-root
+lifecycle evidence, not a claim that the previous staged artifact contains the
+correction. Renew affected Mac authority/policy, actual HTTPS/process recovery,
+browser and documentation checks; run every applicable final-head CI lane and
+receipt. No full local migration gate or delivered/installed artifact is selected.
+
+**Concrete library/browser adoption findings:** v9.13.3 requires RAR types in
+each client registration. Overriding `issueRefreshToken` causes its metadata to
+advertise refresh even if the hook always returns false; the selected configuration
+retains its native predicate, registers only authorization-code clients, omits
+`offline_access`, and rejects other protocol object kinds/requests. Native resource
+fallback and permissive extra token fields require bounded policy validation
+before token persistence. Chromium form POSTs under `no-referrer` send
+`Origin: null`; `strict-origin` retains the same-origin CSRF check and excludes
+paths/query strings from referrers. These are application integration findings,
+not established HCP defects. Owner: C2; revisit pinned library/browser upgrades
+or C6/C7 integration. No new hcp-spec issue or source change is required by them.
+
+**Remaining boundaries:** the existing CR-Q1/Q3/Q4 and issue-first records remain
+open at the pinned target; no submitted issue is treated as adopted. C3 must add
+public query/get, content allowlists/ranking, final coordinated disclosure
+audit/release, entry/copy deadline races and actual disclosure history. It can
+reuse the grant/ref/policy authority and the isolated consent/process fixtures.
+No client copy/directive compliance, notification delivery, installed artifact,
+physical power-loss/cross-boot/other-hardware or complete profile evidence is
+claimed. Existing regular CI and migration source/UI/packaging receipts, renewed
+focused local consumer/docs checks and complete-diff review are final gates. Their
+exact head/base/tested checkout bindings belong in the PR evidence, avoiding
+commits solely to announce a pass.
 
 ## Feedback And Maintenance
 

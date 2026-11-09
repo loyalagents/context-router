@@ -44,7 +44,7 @@ it("the real old SQLite adapter cannot open/bootstrap the experiment or its data
   }
 });
 
-it("only the explicit non-listening composition can import the HCP store; no legacy module receives its handle", () => {
+it("only explicit synthetic compositions import HCP infrastructure; no legacy module receives its handle", () => {
   const src = path.resolve(__dirname, "../../../src");
   function files(dir: string): string[] {
     return fs
@@ -57,6 +57,7 @@ it("only the explicit non-listening composition can import the HCP store; no leg
   }
   const allowed = [
     "composition/hcp-experiment.ts",
+    "composition/hcp-authorization.ts",
     "infrastructure/hcp-experiment/",
   ];
   for (const file of files(src).filter(
@@ -75,4 +76,12 @@ it("only the explicit non-listening composition can import the HCP store; no leg
   expect(source).not.toMatch(
     /@nestjs|listen\(|createServer|modules\/|mcp\/|local-model/,
   );
+  const authorization = fs.readFileSync(
+    path.join(src, "composition/hcp-authorization.ts"),
+    "utf8",
+  );
+  expect(authorization).not.toMatch(
+    /@nestjs|modules\/|mcp\/|local-model|0\.0\.0\.0/,
+  );
+  expect(authorization).toContain('"127.0.0.1"');
 });

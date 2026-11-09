@@ -53,16 +53,17 @@ Keep one canonical item, link it from the pilot, and assign a named owner and
 landing order. Do not copy tasks between lists or activate every backlog brief.
 
 HCP's canonical brief is promoted to [active](active/hcp-alignment/README.md).
-The product owner activated **C1 only** on November 8: an isolated synthetic
-SQLite entry foundation, including truthful overdue-entry expiry recovery before
-read admission. C1 is implemented and locally reviewed. The product owner now
-requests a C0+C1 draft PR and required CI, with C1 merged before the orchestrator
-resumes C2. Publication chat `01a1be37-9d90-7262-bd11-6fba45636347` is sole writer
-for the existing checkout; the original C1 chat's import/export issue investigation
-is separate and repository-read-only. C2–C8 remain unactivated. This tests
-application recovery, not compliance with the pinned specification's conflicting
-dormant-expiry deadlines. Pilot priority is unchanged. See the
-[publication and next-step handoff](active/hcp-alignment/README.md#c1-publication-and-merge-before-c2-2026-11-08).
+The product owner merged **C1 in PR #204** and activated bounded **C2** on November
+8: real consent, local HTTPS OAuth, grants/policy and minimal human controls over
+isolated synthetic SQLite state. C2 chat `01a1bf1d-92ba-7ae3-9439-6a39e5d9ac58`
+is sole writer in the existing checkout; the orchestrator and reviewers remain
+read-only. Independent concrete-plan review approved implementation; focused
+authority, HTTPS/browser and process-recovery checks are passing. Final candidate
+review and exact-candidate CI remain pending.
+C3–C8 remain unactivated. Dormant expiry tests establish application recovery,
+not compliance with the pinned specification's conflicting deadlines. Pilot
+priority and the installed app are unchanged. See the
+[C2 plan and validation boundary](active/hcp-alignment/README.md#c2-activation-and-concrete-plan-2026-11-08).
 
 `active/` contains currently coordinated work. `backlog/` holds useful but
 unactivated briefs; promotion requires an explicit scope/owner/acceptance decision.

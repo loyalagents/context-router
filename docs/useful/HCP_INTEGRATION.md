@@ -60,15 +60,20 @@ migration history may be deleted; preservation and historical conversion are not
 required. Start with a fresh HCP schema and isolated synthetic stores. Prioritize
 working HCP behavior quickly and concrete adoption findings that lead to reusable
 specification, guidance, or tooling fixes. Deployment/adapter support is a separate
-C0 decision, now settled as SQLite only. The product owner activated bounded C1
-on November 8, including offline entry-expiry recovery in isolated synthetic
-stores. Later checkpoints remain unactivated; see the canonical brief.
+C0 decision, now settled as SQLite only. After merging C1 in PR #204, the product
+owner activated bounded C2 on November 8: real consent, local HTTPS OAuth, grants,
+policy and human controls in isolated synthetic stores. Its concrete plan was
+independently approved before implementation. Focused authority, HTTPS/browser
+and process-recovery checks pass; final review and exact-candidate qualification
+are pending. C3–C8 remain unactivated. See the canonical brief for current scope
+and historical C1 evidence.
 
 [Open Draft 3 questions](../plans/active/hcp-alignment/spec-questions.md)
 stay in Context Router while the upgrade tests the current HCP specification,
 schemas, guides, and tooling. The plan's [adoption approach](../plans/active/hcp-alignment/README.md#test-the-current-adoption-experience)
 records what works, unanswered questions, and manual work before proposing focused
-upstream improvements. No hcp-spec source changes are part of C1.
+upstream improvements. C2 uses issue-first handoffs to separately owned spec work;
+no hcp-spec source changes or target adoption are assigned here.
 
 The notes do not amend the pinned requirements. Local deployment does not establish
 first-party operation; accepting inferred entries requires Memory Manager; whole

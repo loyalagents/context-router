@@ -108,7 +108,8 @@ not qualify the current bridge or any assistant host for HCP.
 
 ## Highest-Value Acceptance Scenarios
 
-These are acceptance requirements, not test results; C1 is now activated:
+These are acceptance requirements, not test results; C1 is merged and bounded C2
+is activated under the canonical concrete plan:
 
 - Two clients cannot substitute actors, link subjects through provider identifiers,
   use another grant's refs, read another grant, or gain governance through scope.
@@ -185,7 +186,7 @@ physical host-power-loss result follows from this matrix or the earlier source a
 
 ## C1 Implementation Evidence (2026-11-08)
 
-C1 is activated only for the portions below. Tests live under
+C1 was activated only for the portions below and merged in PR #204. Tests live under
 `apps/backend/test/local-database/hcp-experiment/`; the canonical brief records
 candidate-bound validation/review. The original source audit and C0 matrix above
 remain historical/prospective evidence, not full conformance results.
@@ -200,7 +201,31 @@ remain historical/prospective evidence, not full conformance results.
 | C0-R17 | Explicit non-listening composition; source consumer check; actual old adapter open/bootstrap rejects experiment root and copied HCP file under old database name. | Real C3 route/credential isolation and complete C6 production read/write bypass inventory. |
 
 C1 changes no old migration, adapter, CI route or application launch path. SQLite
-is the only selected HCP adapter. No C2–C8 capability or claim is activated.
+is the only selected HCP adapter. This is historical C1 evidence, not a C2 pass.
+
+## C2 Requirement Selection (2026-11-08)
+
+The [concrete C2 plan](README.md#c2-activation-and-concrete-plan-2026-11-08) is
+activated from merged C1 at `077d0a13b223d9f450e1464076e7a7a5b3ac4c05` and was
+independently reviewed before implementation. The canonical brief records focused
+C2 implementation evidence and corrections; final review/qualification remains
+pending. The table preserves acceptance scope rather than asserting conformance.
+
+| Rows | C2 acceptance | Explicit remaining boundary |
+| --- | --- | --- |
+| R01–R03 | Registered/server-bound actors, client pseudonyms, real affirmative HTTPS OAuth consent for RAR and scope-only requests, temporary/token bounds and grant expiry/restart | No persistent grant, extra flow, delegate or actual assistant host; dormant deadline claim remains blocked |
+| R04–R05 | Internal entry/category/purpose/narrowing evaluator; authenticated policy changes; standing rules/directives; own-grant restriction presentation through minimal opaque refs | Public query/get and filtering-before-ranking remain C3; full governance editor C5 |
+| R06 | Immediate grant-specific revocation, durable events, current-authority checks, issuance/own-grant races, A1/A2/B and slow-recipient independence | Full content-release/audit/entry/copy deadline races remain C3 |
+| R13–R15 | Grant/policy transitions and truthful audit, independent human controls, own-grant/relinquishment, cursor history and selected HTTP framing | No fabricated disclosure history; content retrieval/audit C3, writes C4, complete governance C5 |
+| R16–R17 | Preserve/renew affected C1 ownership, durability, reset, process recovery and isolated-composition checks as grants/credentials enter the same store | No legacy adapter, shared production-store exposure, personal-state operation or installed artifact; integration C6 |
+| R18 | Actual AS/protected-resource metadata and clearly experimental capability manifest | Canonical claim-bearing discovery and complete Part/profile/package evidence remain C8 |
+
+R07/R09–R12 disclosure work, R19–R22 and all unselected later capabilities retain
+their prior C3–C8/deferred/inapplicable dispositions. R12 contributes only the
+minimal grant/entry opaque-ref primitive needed by R04's already-selected own-grant
+contract. Token details and own-grant retain the `narrowedTo.entryIds` key with
+grant-local ref values, while internal authority and human inspection retain the
+private entry IDs. No C3 public retrieval is activated.
 
 ## Assessment Boundary And Next Use
 

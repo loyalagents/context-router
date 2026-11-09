@@ -30,6 +30,12 @@ import {
   validateFixtures,
   type SyntheticFixture,
 } from "./fixtures";
+import {
+  AuthorizationRepository,
+  expireGrants,
+  type AuthorizationConfiguration,
+} from "./authority";
+import { AuthorityError } from "./policy";
 
 // Internal operator inspection only. No context-client, disclosure or management authorization API.
 export interface StoredEntry {
@@ -329,7 +335,14 @@ export class SyntheticExperiment {
         WHERE v.valid_until<=? AND e.status NOT IN ('expired','deleted','revoked') ORDER BY e.id`,
           )
           .all(Date.parse(at));
-        if (!overdue.length) return;
+        const expiredGrants = Number(
+          this.#db
+            .prepare(
+              "SELECT count(*) n FROM grants WHERE status='active' AND expires_at<=?",
+            )
+            .get(Date.parse(at)).n,
+        );
+        if (!overdue.length && !expiredGrants) return;
         this.#db.exec("BEGIN IMMEDIATE");
         const providerId = String(
           this.#db.prepare("SELECT provider_id FROM store_metadata").get()
@@ -362,6 +375,9 @@ export class SyntheticExperiment {
             this.#fault,
           );
         }
+        expireGrants(this.#db, Date.parse(at), (event) =>
+          append(this.#db, event, this.#fault),
+        );
         this.#fault?.("before-commit");
         this.#assert();
         this.#db.exec("COMMIT");
@@ -406,6 +422,42 @@ export class SyntheticExperiment {
       .prepare("SELECT event FROM audit_events ORDER BY sequence")
       .all()
       .map((r) => JSON.parse(String(r.event)));
+  }
+  authorization(
+    configuration: AuthorizationConfiguration,
+    humanCredential: string,
+  ): AuthorizationRepository {
+    // Method-only infrastructure boundary; no database handle reaches the HTTP composition.
+    return new AuthorizationRepository(
+      {
+        read: (operation) => {
+          this.reconcile();
+          return operation(this.#db);
+        },
+        write: (operation) => {
+          this.reconcile();
+          this.#db.exec("BEGIN IMMEDIATE");
+          try {
+            const result = operation(this.#db);
+            if (result && typeof (result as any).then === "function")
+              throw new Error("Asynchronous HCP transaction refused");
+            this.#fault?.("before-commit");
+            this.#assert();
+            this.#db.exec("COMMIT");
+            this.#fault?.("after-data-commit");
+            return result;
+          } catch (error) {
+            if (!(error instanceof AuthorityError)) this.#failed = true;
+            if (this.#db.isTransaction) this.#db.exec("ROLLBACK");
+            throw error;
+          }
+        },
+        now: () => Date.parse(timestamp(this.#clock)),
+        append: (db, event) => append(db, event, this.#fault),
+      },
+      configuration,
+      humanCredential,
+    );
   }
   settings() {
     this.#assert();
