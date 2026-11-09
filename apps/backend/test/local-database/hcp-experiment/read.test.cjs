@@ -203,6 +203,30 @@ test("C3 whole-request purpose/category denial, input validation and governance 
   );
 });
 
+test("C3 malformed transport input is a validation error, not subject unavailability", async (t) => {
+  const f = await fixture(t, { approveFixtures: true }),
+    token = await authorize(f);
+  for (const raw of ["{", "[", '{"query":"unterminated']) {
+    const r = await f.context("/v2/entries/query", token, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      raw,
+    });
+    assert.equal(r.status, 422);
+    assert.equal(r.json.type, "https://hcp.example/problems/malformed-request");
+  }
+  assert.equal((await query(f, token)).status, 200);
+});
+
+test("C3 malformed encoded get reference is a validation error", async (t) => {
+  const f = await fixture(t, { approveFixtures: true }),
+    token = await authorize(f);
+  const r = await f.context(`/v2/entries/%E0%A4%A?purpose=${purpose}`, token);
+  assert.equal(r.status, 422);
+  assert.equal(r.json.type, "https://hcp.example/problems/malformed-request");
+  assert.equal((await query(f, token)).status, 200);
+});
+
 test("C3 lexical ordering uses only eligible public primitive value leaves and one 1/5/20 cap", async (t) => {
   const base = syntheticFixtures()[0];
   base.versions = [base.versions[0]];
@@ -493,6 +517,11 @@ test("C3 human history pages all attempts and summarizes the conservative copy d
   assert.ok(page.text.includes("Last possible copy use-until"));
   assert.ok(page.text.includes("Receipt is unconfirmed"));
   assert.ok(page.text.includes("No notification endpoint"));
+  assert.ok(
+    page.text.includes(
+      "Clients must stop using copies when notified of revocation, or at use-until.",
+    ),
+  );
   assert.ok(page.text.includes("Next history page"));
   assert.equal(
     page.text.includes("No context content has been disclosed"),

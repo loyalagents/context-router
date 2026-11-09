@@ -95,6 +95,7 @@ function request(url, tls, options = {}) {
   return new Promise((resolve, reject) => {
     const headers = { ...options.headers };
     let body;
+    if (options.raw !== undefined) body = options.raw;
     if (options.json !== undefined) {
       body = JSON.stringify(options.json);
       headers["content-type"] = "application/json";

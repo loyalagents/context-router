@@ -65,7 +65,8 @@ November 9 from `6a7db3f5531557a489e6398945b352952e0220a0`: actual read-only
 HTTPS query/get, disclosure history and revoke in isolated synthetic stores.
 C2 final qualification is complete; its results are historical, not C3 evidence.
 C3's concrete plan was independently approved before implementation; the read
-journey and local adoption record are implemented, with final review/CI pending. C4–C8
+journey and local adoption record are implemented. Final qualification is tracked
+in [draft PR #206](https://github.com/loyalagents/context-router/pull/206). C4–C8
 remain unactivated. See the canonical brief for ownership and exact evidence.
 Keep hcp-spec unchanged locally and remotely during C3; adoption findings/proposals
 stay here for orchestrator follow-through on explicit upstream authorization.

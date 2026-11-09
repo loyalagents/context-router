@@ -1,6 +1,6 @@
 # HCP Alignment Plan
 
-- Status: C1/C2 merged in PRs #204/#205; bounded C3 activated; concrete plan independently approved; C3 implementation complete; final review and exact-candidate CI pending; C4–C8 unactivated; no conformance claim
+- Status: C1/C2 merged in PRs #204/#205; bounded C3 activated; concrete plan independently approved; C3 candidate implemented; final qualification tracked in draft PR #206; C4–C8 unactivated; no conformance claim
 - Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C3 chat `01a1c17c-4931-7492-a9b0-582bcd8ce41e` is sole checkout writer; orchestrator and reviewers are repository-read-only
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
@@ -1569,9 +1569,10 @@ Qualification is in progress; no merge-ready or conformance claim.
 - **C3d in progress:** both isolated Chromium C2 and C3 journeys passed with normal
   profile CA verification, negative CA/hostname/expiry checks, browser consent,
   distinct A1/A2/B reads, historical get, human history and A1-only revocation.
-  Six affected composition/storage contract suites passed (96 tests). All HCP
-  regression suites, deeper adoption review, final complete-diff reviews and
-  exact-candidate CI are pending. The full local migration gate and an installed
+  Six affected composition/storage contract suites passed (96 tests). The full HCP
+  regression run passed (11 suites, 90 Jest tests including nested HTTPS/process
+  suites), and the deeper adoption review is recorded locally. Final complete-diff
+  reviews and exact-candidate CI were pending at that checkpoint. The full local migration gate and an installed
   artifact are not selected; there are no changed installed roots/dependencies.
 
 Independent adoption review then identified three application corrections:
@@ -1605,6 +1606,38 @@ synthetic roots, processes, TLS authorities and browser profiles. No personal ap
 client, source-document/model data or system trust is used. The parent is the sole
 writer; reviewers are read-only. Candidate binding and final results will be recorded
 at the freeze milestone, with affected evidence renewed after corrections.
+
+### C3 F2 Review Corrections And Qualification Record
+
+The frozen F1 candidate is `e6056108874b3c78dd56b283757ddccfe3b8b004`
+(tree `9b7ccb2190efab9050e6ace7292cf95518ee0996`) over merged C2 base
+`6a7db3f5531557a489e6398945b352952e0220a0`. Three fresh reviewers inspected
+all 22 changed files. Protocol/privacy and architecture/scope approved; the
+recovery/test reviewer found malformed query JSON returning 503 instead of the
+pinned 422 malformed-request. That reviewer independently reran all 15 process
+cases successfully. All three requested Astra/xhigh; tool acceptance was observed,
+underlying execution unverified. Reviewers made no repository or upstream writes.
+
+F2 batches the reported malformed-JSON mapping correction with malformed encoded
+get-reference mapping, accurate notification/use-until wording, and the two stale
+plan-status paragraphs. JSON/URI syntax exceptions are mapped only at their input
+boundaries, so storage and other unexpected failures still report unavailability.
+Raw-body JSON, malformed URI and human copy wording tests were observed failing
+against the preceding compiled candidate. No authorization, transaction, deadline,
+projection or persistence code changed after F1. Final correction review and
+candidate-bound CI are tracked on [draft PR #206](https://github.com/loyalagents/context-router/pull/206).
+
+Local evidence is a passing backend build, 35 passing C2 OAuth plus C3 HTTP/process
+tests, both passing isolated Chromium journeys, the earlier affected bootstrap/entry suites, 96 composition/
+storage contract tests and 65 doc/checker tests. F1 ownership/durability/expiry/
+policy/bootstrap evidence carries forward because F2 changes only request parsing,
+UI prose, test transport support and documentation. The final PR record identifies
+its exact head/base/test-merge, review dispositions, required job outcomes and
+same-attempt source/UI/packaging receipts; this section preserves freeze-time
+evidence rather than asserting later CI success. Installed/manual acceptance,
+physical power-loss/cross-boot and recipient-copy compliance are not supplied.
+The working app, personal data and hcp-spec remain untouched. No merge/release or
+C4 activation is authorized by this record.
 
 ## Feedback And Maintenance
 

@@ -59,8 +59,9 @@ disclosure history and revoke behavior. C3 chat
 `01a1c17c-4931-7492-a9b0-582bcd8ce41e` is sole writer in the existing checkout;
 the original orchestrator and reviewers remain read-only. C2 final reviews and CI
 passed at head `71d8433215009e4f2430ac6631a1f5392fb4c7ab`; C3 starts from merge
-`6a7db3f5531557a489e6398945b352952e0220a0`. C3's concrete plan awaits independent
-review before implementation. C4–C8 remain unactivated. Keep hcp-spec unchanged,
+`6a7db3f5531557a489e6398945b352952e0220a0`. C3's concrete plan was independently
+approved before implementation; the scoped read journey is implemented, with final
+qualification tracked in [draft PR #206](https://github.com/loyalagents/context-router/pull/206). C4–C8 remain unactivated. Keep hcp-spec unchanged,
 locally and remotely; record adoption proposals here for the orchestrator.
 Dormant expiry remains application recovery evidence, not conformance to the pinned
 conflicting deadlines. Pilot priority and installed app remain unchanged. See the
