@@ -87,3 +87,41 @@ reset demo. No helper opens live SQLite to discover the current generation; it
 uses immutable connection receipts and native readiness. Retained candidate and
 prior generation files are never automatically reclaimed. See the
 [installed runbook](../useful/INSTALLED_MAC_APP.md#historical-demo-mode).
+
+## Isolated HCP C1 Experiment
+
+The [active HCP brief](../plans/active/hcp-alignment/README.md#c1-activation-and-implementation-plan-2026-11-08)
+tracks a separate, non-listening synthetic composition at
+`apps/backend/src/composition/hcp-experiment.ts`. Existing Nest, GraphQL, MCP,
+document/model and installed-app roots do not receive its store. It has no HTTP,
+OAuth, grant or production mutation API and makes no HCP conformance claim.
+
+Native JSON entry versions and append-only audit share one SQLite transaction.
+Current lifecycle/classification is separate from immutable content/assertion/
+evidence/provenance. Fixture provenance explicitly labels simulated assertion and
+bootstrap authority; it records no authenticated human confirmation or real grant.
+Whole-entry methods are internal operator inspection, not authorized Context Client
+disclosures. Unknown JSON is preserved without interpreting it as authority.
+
+An explicit private synthetic root holds a fixed ownership manifest, a permanent
+SQLite coordination lease (no HCP content or authority), and the entries database.
+The lease retains exclusive ownership across commits and checks prior owners are
+stopped before reuse. Admitted data transactions use DELETE journal, synchronous
+EXTRA and fullfsync with private files. Fullfsync is enabled before the first
+schema-dependent pragma; native replay initially uses FULL plus fullfsync, followed
+by directory sync before admission. Native hot-journal recovery can change bytes
+before logical schema admission; cold negative states are preserved. These engine
+effects never authorize manual journal removal or repair of unknown schemas. An atomic complete-initialization marker gates publication;
+unknown/partial schemas fail closed. Reset removes only the admitted data file
+under a durable reset intent, preserving the lease/manifest; fresh initialization
+creates new store/entry/subject identities. Unproven early initialization is never
+automatically cleaned. This is owned fixture teardown, not the product reset or
+HCP hard-deletion API.
+
+On restart and before internal inspection, overdue entry statuses and expiry
+events commit together. Actual append timestamps retain the original effective
+expiry separately; revoked/deleted precedence, no duplicate transitions and no
+new content versions are enforced. A failed reconciliation closes admission.
+This accepted application recovery handles a simulated 48-hour outage; it does
+not meet or waive the pinned draft's conflicting 24-hour deadlines. Grant expiry
+and disclosure enforcement remain C2/C3. No existing application store is migrated.

@@ -45,12 +45,12 @@ is useful for exploration but is not a build or runtime dependency.
 
 ## Assessment And Proposed Alignment
 
-The detailed [source gap analysis](../plans/backlog/hcp-alignment/gap-analysis.md)
+The detailed [source gap analysis](../plans/active/hcp-alignment/gap-analysis.md)
 records the reviewed revisions, current code/test evidence, HCP requirements,
 gaps and proposed acceptance scenarios. It supersedes the initial six-area map
 in this reference; it is not runtime conformance evidence.
 
-The canonical [backlog alignment brief](../plans/backlog/hcp-alignment/README.md)
+The canonical [active alignment brief](../plans/active/hcp-alignment/README.md)
 owns the proposed architecture, package/profile scope, historical-data policy,
 activation decisions, and testable checkpoints. The accepted direction is to
 redesign directly around HCP without backwards compatibility: APIs, tools, schemas,
@@ -60,14 +60,15 @@ migration history may be deleted; preservation and historical conversion are not
 required. Start with a fresh HCP schema and isolated synthetic stores. Prioritize
 working HCP behavior quickly and concrete adoption findings that lead to reusable
 specification, guidance, or tooling fixes. Deployment/adapter support is a separate
-C0 decision. This phase changes documentation only; it performs no deletion or
-implementation.
+C0 decision, now settled as SQLite only. The product owner activated bounded C1
+on November 8, including offline entry-expiry recovery in isolated synthetic
+stores. Later checkpoints remain unactivated; see the canonical brief.
 
-[Open Draft 3 questions](../plans/backlog/hcp-alignment/spec-questions.md)
+[Open Draft 3 questions](../plans/active/hcp-alignment/spec-questions.md)
 stay in Context Router while the upgrade tests the current HCP specification,
-schemas, guides, and tooling. The plan's [adoption approach](../plans/backlog/hcp-alignment/README.md#test-the-current-adoption-experience)
+schemas, guides, and tooling. The plan's [adoption approach](../plans/active/hcp-alignment/README.md#test-the-current-adoption-experience)
 records what works, unanswered questions, and manual work before proposing focused
-upstream improvements. No hcp-spec changes are part of this documentation phase.
+upstream improvements. No hcp-spec source changes are part of C1.
 
 The notes do not amend the pinned requirements. Local deployment does not establish
 first-party operation; accepting inferred entries requires Memory Manager; whole
@@ -100,7 +101,7 @@ that distinction when using Context Router's evaluations as evidence.
 
 ## Working Across The Repositories
 
-Keep the [canonical alignment brief](../plans/backlog/hcp-alignment/README.md)
+Keep the [canonical alignment brief](../plans/active/hcp-alignment/README.md)
 under the [work portfolio](../plans/README.md); promote it when runtime work is
 scoped and activated rather than copying it. Link to this reference for repository
 ownership. These documents do not change pilot priorities or authorize a migration.
