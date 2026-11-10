@@ -456,6 +456,55 @@ test("C3 get checks the entry's categories when a standing rule denies another g
   );
 });
 
+for (const categories of [["general_preferences", "work_context"], undefined])
+  test(`C3 standing-rule query denial with ${categories ? "explicit" : "omitted"} categories preserves partial grant authority`, async (t) => {
+    const f = await fixture(t, { approveFixtures: true });
+    const token = await authorize(f, "a", [
+      detail(["general_preferences", "work_context"]),
+    ]);
+    const initial = await query(f, token);
+    assert.equal(initial.status, 200);
+    assert.equal(initial.json.entries.length, 2);
+    const originalGrant = (await f.context("/v2/grants", token)).json.grants[0];
+    assert.equal(
+      (
+        await f.management("/experiment/policy", {
+          method: "PUT",
+          json: {
+            rules: [
+              { operators: ["example.test"], categories: ["work_context"] },
+            ],
+            directives: [],
+          },
+        })
+      ).status,
+      200,
+    );
+    const own = await f.context("/v2/grants", token);
+    assert.equal(own.status, 200);
+    assert.equal(own.json.grants[0].status, "active");
+    assert.deepEqual(own.json.grants[0].access, originalGrant.access);
+
+    const denied = await query(f, token, categories ? { categories } : {});
+    assert.equal(denied.status, 403);
+    assert.equal(denied.json.entries, undefined);
+    const reads = (
+      await f.management("/v2/audit?limit=100")
+    ).json.events.filter((e) => e.eventType === "context.read");
+    assert.equal(reads.length, 1);
+    assert.equal(reads[0].participants.retrievalId, initial.json.retrievalId);
+
+    const allowed = await query(f, token, {
+      categories: ["general_preferences"],
+    });
+    assert.equal(allowed.status, 200);
+    assert.deepEqual(allowed.json.categoriesSearched, ["general_preferences"]);
+    assert.equal(allowed.json.entries.length, 1);
+    assert.deepEqual(allowed.json.entries[0].classification.categories, [
+      "general_preferences",
+    ]);
+  });
+
 test("C3 relationships expose only same-response targets as grant refs", async (t) => {
   const fixtures = syntheticFixtures();
   fixtures[0].versions[1].relationships = [

@@ -595,7 +595,7 @@ technical exit evidence.
 | C4. Writes and Memory Manager | Create/revise/withdraw, immutable revisions and expected-version checks, confirmations, proposal staging, durable HTTP idempotency, valid inference provenance/confidence, symmetric conflict detection and human resolution. | Stale confirmation, rollback, committed-but-lost reply, restart/retry, changed-body conflict, concurrent revisions, both conflict arrival orders, same dimension without contradiction, and multiple unresolved conflict edges. Do not accept inferred HCP entries before this capability is ready. Addresses G06–G11/G16. |
 | C5. Complete governance and portability | Remaining person-facing controls, persistent grants with separate affirmative election, any additional required OAuth flows, full standing-rule/directive editors, export/import, hard deletion, disclosure summaries, notification outcomes, and retention/recovery semantics. | Retain early governance-denial coverage; test separate persistence election and selected-flow requirements, all retained states visible to the person, import dry run/round trip, no deleted resurrection, erasure across copies/caches, and notification retry/dormancy. Implement sharing reports, including unauthorized reports, even if no sharing permissions are issued. Addresses G03–G05/G11/G14/G15. |
 | C6. Application integration and cleanup | Rebuild selected dashboard, document, profile, seed, location, and reset workflows around the HCP model; update their APIs and consumers together. Remove or disable superseded interfaces, storage paths, and old database migrations. Earlier checkpoints must already enforce D4 before shared-store exposure. | New application-contract and workflow tests, including read/write bypass checks across the complete inventory; every selected adapter, fresh initialization/reset, persistence and recovery. No legacy-contract, data-preservation, or historical-conversion requirement. Addresses G06–G15/G18. |
-| C7. HCP MCP and clients | Modern transport, discovery, HCP tools, output/error schemas, and setup for selected clients. Replace existing tools or bridges where useful. | HTTP/MCP semantic parity, new client-contract tests, credential isolation, uncertain-write behavior, and real supported-host interoperability. Old-client compatibility is not an exit criterion. Keep host-side copy use/directive obligations distinct from provider conformance. Addresses G16–G18. |
+| C7. HCP MCP and clients | Modern transport, discovery, HCP tools, output/error schemas, and setup for selected clients. Replace existing tools or bridges where useful. | HTTP/MCP semantic parity, new client-contract tests, credential isolation, uncertain-write behavior, and real supported-host interoperability. Resolve [N4 query parsing](spec-questions.md#c7-http-query-parsing-follow-up-n4) before real-client qualification and disposition [CR-Q8](spec-questions.md#cr-q8); [CR-Q9](spec-questions.md#cr-q9) precedes sensitive real-data exposure. Old-client compatibility is not an exit criterion. Keep host-side copy use/directive obligations distinct from provider conformance. Addresses G16–G18. |
 | C8. Selected-package qualification | Freeze the candidate, close the requirement/evidence matrix, independently review the full diff, and publish only fully supported discovery claims. | Focused local evidence, all applicable exact-candidate CI, and explicitly named Mac, installed-artifact, and manual evidence. No claim for an incomplete Part; no schema-only certification. Addresses all selected requirements. |
 
 For C3, use lexical relevance ordering and synchronous disclosure audit. When C4
@@ -1562,8 +1562,10 @@ Qualification is in progress; no merge-ready or conformance claim.
   fixture targets are indices resolved to provider-owned IDs, never caller-supplied
   public authority. Public response construction is an allowlist.
 - **C3c:** fifteen owned-process tests passed: both revoke/policy ordering cases;
-  separate token, grant, current/selected version and copy deadline crossings after
-  audit commit; three kill/reap and three injected-failure boundaries; repeat reopen;
+  token, current/selected version and copy deadline crossings after audit commit,
+  plus a grant-expiry case whose token expires at the same time. Grant expiry is
+  enforced through that token binding; this case does not independently prove the
+  explicit grant-deadline check. Three kill/reap and three injected-failure boundaries; repeat reopen;
   48-hour entry/grant reconciliation; a paused multi-megabyte recipient with prompt
   durable revoke. Immutable attempted-read events remain after uncertain handoff.
 - **C3d in progress:** both isolated Chromium C2 and C3 journeys passed with normal
@@ -1638,6 +1640,42 @@ evidence rather than asserting later CI success. Installed/manual acceptance,
 physical power-loss/cross-boot and recipient-copy compliance are not supplied.
 The working app, personal data and hcp-spec remain untouched. No merge/release or
 C4 activation is authorized by this record.
+
+### C3 Claude Review Follow-Up (2026-11-09)
+
+The product owner returned a read-only Claude review of head
+`41773ad87fc3a8c910f429728755467a9de82af2` against C2 base
+`6a7db3f5531557a489e6398945b352952e0220a0`, then authorized N1–N3 tests/docs,
+recording N4 for C7, and updating PR #206 with affected checks and CI. This C3 chat
+resumes sole-writer ownership for that bounded follow-up; no merge is authorized.
+The review recommended approval with no blocking findings and reported 27 passing
+HTTP/process tests plus isolated probes. Its reported model was Claude Opus 5.5;
+execution settings are not independently verified and effort was unverified.
+
+- **N1:** add two HTTP regressions for explicit/omitted categories under a partial
+  standing rule, unchanged active own-grant access, denial without a read event,
+  and a successful allowed-category control. Record the interpretation and client
+  discoverability limitation as [CR-Q8](spec-questions.md#cr-q8).
+- **N2:** record the directive/withheld-category interaction as
+  [CR-Q9](spec-questions.md#cr-q9), with an owner and a prerequisite before sensitive
+  real-data exposure. Keep the existing synthetic behavior.
+- **N3:** correct the C3c evidence above and the adoption timeline proposal:
+  the grant case also crosses token expiry, so it does not isolate the explicit
+  grant-deadline defense. No deadline code or recovery test is changed.
+- **N4:** record [query parsing acceptance work for C7](spec-questions.md#c7-http-query-parsing-follow-up-n4).
+  Parser changes, minor UI/capability text cleanup and C4 remain outside this batch.
+
+Bootstrap approval remains an authenticated private-initializer action exercised
+by the harness; this evidence does not demonstrate a person reading the bundle.
+The normative/adoption pins, application source, dependencies, CI gates and
+hcp-spec remain unchanged. Prior complete-diff runtime reviews and unaffected
+bootstrap/browser/ownership/recovery/contract evidence carry forward on that
+unchanged implementation. The added tests and documentation receive focused
+validation and independent delta review; finalization freezes that corrected
+delta before exact-candidate CI and renewed qualification receipts. No full local
+migration gate or installed artifact is selected for this tests/docs-only change.
+Final commands, results, candidate identity and review disposition belong in the
+PR record; the previous head's CI does not qualify the new candidate.
 
 ## Feedback And Maintenance
 
