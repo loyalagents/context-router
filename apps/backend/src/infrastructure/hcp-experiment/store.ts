@@ -36,6 +36,7 @@ import {
   type AuthorizationConfiguration,
 } from "./authority";
 import { AuthorityError } from "./policy";
+import { insertFixtures } from "./seed";
 
 // Internal operator inspection only. No context-client, disclosure or management authorization API.
 export interface StoredEntry {
@@ -55,6 +56,7 @@ export interface ExperimentOptions {
   clock?: () => number;
   fault?: Fault;
   fixtures?: SyntheticFixture[];
+  pendingApproval?: boolean;
 }
 const uuid = () => `urn:uuid:${randomUUID()}`;
 const timestamp = (clock: () => number): string => {
@@ -102,98 +104,23 @@ function seed(
   fixtures: SyntheticFixture[],
   clock: () => number,
   fault?: Fault,
+  pendingApproval = false,
 ): void {
-  const subjectId = uuid(),
-    providerId = uuid(),
-    bootstrapId = uuid();
-  const client = {
-    id: uuid(),
-    name: "Simulated C1 fixture initializer",
-    operator: {
-      id: "https://example.test/operators/synthetic",
-      name: "Simulated fixture operator",
-    },
-  };
   db.prepare("INSERT INTO store_metadata VALUES(1,?,?,?,?,'complete')").run(
     rootId,
     storeId,
-    subjectId,
-    providerId,
+    uuid(),
+    uuid(),
   );
-  for (const fixture of fixtures) {
-    const id = uuid(),
-      subject = { id: subjectId, relationship: null };
-    db.prepare("INSERT INTO entries VALUES(?,?,?,?,?)").run(
-      id,
-      JSON.stringify(subject),
-      fixture.versions.length,
-      JSON.stringify(fixture.classification),
-      fixture.status,
-    );
-    for (const [index, v] of fixture.versions.entries()) {
-      const at = timestamp(clock),
-        version = index + 1;
-      const document: StoredEntry = {
-        ...v.extensions,
-        "@context": ["https://hcp.example/contexts/v2"],
-        schema: "https://hcp.example/spec/entry/2.0",
-        type: ["ContextEntry"],
-        id,
-        subject,
-        content: v.content,
-        assertion: v.assertion,
-        evidence: v.evidence,
-        record: {
-          ...v.recordExtensions,
-          version,
-          provenance: {
-            assertedBy: { id: subjectId, assurance: "unverified" },
-            assertedAt: at,
-            source: "simulated-c1-storage-fixture",
-            submittedByClient: client,
-            authorizedUnder: bootstrapId,
-            recordedByProvider: providerId,
-            recordedAt: at,
-            confirmations: [],
-            fixture: {
-              simulated: true,
-              explanation:
-                "Synthetic assertion, operator and bootstrap authority; no authenticated human consent or live grant",
-            },
-          },
-          relationships: [],
-        },
-      };
-      const until = v.assertion.validUntil;
-      db.prepare("INSERT INTO entry_versions VALUES(?,?,?,?)").run(
-        id,
-        version,
-        JSON.stringify(document),
-        typeof until === "string" ? Date.parse(until) : null,
-      );
-      append(
-        db,
-        {
-          eventId: uuid(),
-          eventType: index === 0 ? "context.created" : "context.revised",
-          timestamp: at,
-          participants: {
-            initiator: { role: "hcp-provider", id: providerId },
-            provider: { id: providerId },
-          },
-          entryId: id,
-          relatedEntryId: null,
-          categories: fixture.classification.categories,
-          grantId: null,
-          data: {
-            version,
-            fixture: { simulated: true, bootstrapId, status: fixture.status },
-          },
-        },
-        fault,
-      );
-    }
-  }
+  db.prepare(
+    "INSERT INTO fixture_bootstrap VALUES(1,?,?,?,NULL,NULL,NULL,NULL)",
+  ).run(
+    pendingApproval ? "approved" : "simulated",
+    pendingApproval ? "pending" : "closed",
+    JSON.stringify(fixtures),
+  );
+  if (!pendingApproval)
+    insertFixtures(db, fixtures, clock, (event) => append(db, event, fault));
 }
 
 export class SyntheticExperiment {
@@ -250,6 +177,7 @@ export class SyntheticExperiment {
           fixtures,
           options.clock ?? Date.now,
           options.fault,
+          options.pendingApproval,
         );
         options.fault?.("before-commit");
         lease.assertHeld();

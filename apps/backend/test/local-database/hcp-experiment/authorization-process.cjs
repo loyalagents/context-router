@@ -1,7 +1,7 @@
 // Test-only owned child. Secrets arrive over private IPC, never argv/env/stdout.
 const fs = require("node:fs");
 const realNow = Date.now;
-let fixedTime, armed, phase;
+let fixedTime, armed, phase, resumeRead;
 Date.now = () => fixedTime ?? realNow();
 const {
   AuthorizationRepository,
@@ -14,6 +14,7 @@ for (const name of [
   "protocolConsume",
   "protocolFind",
   "ownGrant",
+  "releaseRead",
 ]) {
   const original = AuthorizationRepository.prototype[name];
   AuthorizationRepository.prototype[name] = function (...args) {
@@ -30,6 +31,18 @@ for (const name of [
     }
   };
 }
+const prepareRead = AuthorizationRepository.prototype.prepareRead;
+AuthorizationRepository.prototype.prepareRead = function (...args) {
+  const ticket = prepareRead.apply(this, args);
+  if (armed?.point === "after-preparation" && armed.action === "yield") {
+    armed = undefined;
+    fs.writeSync(1, JSON.stringify({ boundary: "after-preparation" }) + "\n");
+    return new Promise((resolve) => {
+      resumeRead = () => resolve(ticket);
+    });
+  }
+  return ticket;
+};
 const {
   createSyntheticAuthorization,
 } = require("../../../dist/composition/hcp-authorization.js");
@@ -60,12 +73,36 @@ process.on("message", async ({ id, command, value }) => {
       armed = value.barrier;
       server = await createSyntheticAuthorization(value.paths, {
         ...value.options,
+        ...(value.options.approveFixtures
+          ? {
+              initialize: (bootstrap) => {
+                const reviewed = bootstrap.review(
+                  value.options.humanCredential,
+                );
+                if (
+                  !reviewed.fixtures.length ||
+                  !reviewed.notice.includes("synthetic")
+                )
+                  throw new Error("Unreviewed fixtures");
+                bootstrap.approve(
+                  value.options.humanCredential,
+                  reviewed.reviewId,
+                  reviewed.digest,
+                );
+              },
+            }
+          : {}),
         clock: Date.now,
         fault,
       });
       result = { issuer: server.issuer };
     } else if (command === "arm") armed = value;
-    else if (command === "clock") fixedTime = value;
+    else if (command === "resume") {
+      const resume = resumeRead;
+      resumeRead = undefined;
+      if (!resume) throw new Error("No paused read");
+      resume();
+    } else if (command === "clock") fixedTime = value;
     else if (command === "close") await server.close();
     else throw new Error("Unknown fixture command");
     process.send({ id, ok: true, result }, () => {

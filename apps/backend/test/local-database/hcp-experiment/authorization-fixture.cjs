@@ -95,6 +95,7 @@ function request(url, tls, options = {}) {
   return new Promise((resolve, reject) => {
     const headers = { ...options.headers };
     let body;
+    if (options.raw !== undefined) body = options.raw;
     if (options.json !== undefined) {
       body = JSON.stringify(options.json);
       headers["content-type"] = "application/json";
@@ -190,7 +191,18 @@ async function fixture(t, options = {}) {
     },
     redirectUri: redirects[id],
   }));
-  const { childProcess, ...startup } = options;
+  const { childProcess, approveFixtures, ...startup } = options;
+  if (approveFixtures) {
+    startup.pendingApproval = true;
+    if (childProcess) startup.approveFixtures = true;
+    else
+      startup.initialize = async (bootstrap) => {
+        const review = bootstrap.review(human);
+        assert.ok(Array.isArray(review.fixtures) && review.fixtures.length > 0);
+        assert.match(review.notice, /synthetic/);
+        bootstrap.approve(human, review.reviewId, review.digest);
+      };
+  }
   const create = childProcess
     ? require("./authorization-child.cjs").childServer
     : createSyntheticAuthorization;

@@ -14,6 +14,13 @@ export interface AuthorizationExperimentOptions extends ExperimentOptions {
   clients: ClientRegistration[];
   port?: number;
   reopen?: boolean;
+  copyLifetimeMs?: number;
+  initialize?: (
+    bootstrap: Readonly<{
+      review(credential: string): any;
+      approve(credential: string, reviewId: string, digest: string): void;
+    }>,
+  ) => void | Promise<void>;
 }
 export async function createSyntheticAuthorization(
   paths: ExperimentPaths,
@@ -38,9 +45,29 @@ export async function createSyntheticAuthorization(
     const port = (server.address() as { port: number }).port,
       issuer = `https://as.hcp.test:${port}`;
     const authority = store.authorization(
-      { issuer, resource: issuer, clients: options.clients },
+      {
+        issuer,
+        resource: issuer,
+        clients: options.clients,
+        ...(options.copyLifetimeMs === undefined
+          ? {}
+          : { copyLifetimeMs: options.copyLifetimeMs }),
+      },
       options.humanCredential,
     );
+    if (authority.bootstrapPending()) {
+      if (!options.initialize)
+        throw new Error("Synthetic fixture approval required");
+      await options.initialize(
+        Object.freeze({
+          review: (credential: string) => authority.reviewBootstrap(credential),
+          approve: (credential: string, reviewId: string, digest: string) =>
+            authority.approveBootstrap(credential, reviewId, digest),
+        }),
+      );
+      if (!authority.entryReadEnabled())
+        throw new Error("Synthetic fixture approval incomplete");
+    }
     server.on(
       "request",
       authorizationHandler(authority, () =>

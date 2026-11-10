@@ -107,6 +107,7 @@ async function childServer(paths, options) {
   return {
     issuer,
     arm: (v) => rpc("arm", v),
+    resume: () => rpc("resume"),
     clock: (v) => rpc("clock", v),
     boundary,
     kill,

@@ -6,6 +6,15 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
+import { insertFixtures } from "./seed";
+import {
+  readRequest,
+  selectRead,
+  readDirectives,
+  validity,
+  project,
+  type ReadRequest,
+} from "./disclosure";
 import {
   ACCESS_TYPE,
   PURPOSES,
@@ -37,6 +46,7 @@ export interface AuthorizationConfiguration {
   issuer: string;
   resource: string;
   clients: ClientRegistration[];
+  copyLifetimeMs?: number;
 }
 /** Infrastructure-only synchronous capability. It never leaves the experiment store. */
 export interface AuthorityKernel {
@@ -140,12 +150,30 @@ export function expireGrants(
 }
 
 export class AuthorizationRepository {
+  private readonly reads = new WeakMap<
+    object,
+    {
+      credential: string;
+      request: ReadRequest;
+      revision: number;
+      copyUntil: number;
+      selected: string;
+    }
+  >();
+  private readonly copyLifetimeMs: number;
   constructor(
     private readonly kernel: AuthorityKernel,
     readonly configuration: AuthorizationConfiguration,
     human: string,
   ) {
-    keys(configuration, ["issuer", "resource", "clients"]);
+    keys(configuration, ["issuer", "resource", "clients", "copyLifetimeMs"]);
+    this.copyLifetimeMs = configuration.copyLifetimeMs ?? 3600_000;
+    if (
+      !Number.isSafeInteger(this.copyLifetimeMs) ||
+      this.copyLifetimeMs < 1 ||
+      this.copyLifetimeMs > 3600_000
+    )
+      invalid();
     const issuer = new URL(configuration.issuer);
     if (
       issuer.protocol !== "https:" ||
@@ -233,6 +261,140 @@ export class AuthorizationRepository {
   }
   accountId(): string {
     return this.kernel.read((db) => String(metadata(db).subject_id));
+  }
+  entryReadEnabled(): boolean {
+    return this.kernel.read((db) => {
+      const row = db.prepare("SELECT mode,state FROM fixture_bootstrap").get();
+      return row.mode === "approved" && row.state === "closed";
+    });
+  }
+  bootstrapPending(): boolean {
+    return this.kernel.read(
+      (db) =>
+        db.prepare("SELECT state FROM fixture_bootstrap").get().state ===
+        "pending",
+    );
+  }
+  reviewBootstrap(credential: string): any {
+    return this.kernel.write((db) => {
+      this.management(db, credential);
+      const row = db.prepare("SELECT * FROM fixture_bootstrap").get();
+      if (row.mode !== "approved" || row.state !== "pending") denied();
+      const reviewId = random(),
+        digest = hash(String(row.bundle));
+      db.prepare(
+        "UPDATE fixture_bootstrap SET review_id=?,review_digest=?,review_expires=?",
+      ).run(reviewId, digest, this.kernel.now() + 300_000);
+      return {
+        reviewId,
+        digest,
+        fixtures: parse(row.bundle),
+        notice:
+          "Approve these synthetic persona statements and the explicitly simulated lifecycle/version test setup. This is not Lucas's personal data.",
+      };
+    });
+  }
+  approveBootstrap(credential: string, reviewId: string, digest: string): void {
+    this.kernel.write((db) => {
+      this.management(db, credential);
+      const row = db.prepare("SELECT * FROM fixture_bootstrap").get(),
+        now = this.kernel.now();
+      if (
+        row.mode !== "approved" ||
+        row.state !== "pending" ||
+        !row.review_id ||
+        row.review_id !== reviewId ||
+        row.review_digest !== digest ||
+        Number(row.review_expires) <= now
+      )
+        denied();
+      const fixtures = parse(row.bundle),
+        client = {
+          id: "urn:context-router:synthetic-initializer",
+          name: "Authenticated synthetic fixture initializer",
+          operator: {
+            id: "https://example.test/operators/synthetic",
+            name: "Synthetic fixture operator",
+          },
+        };
+      const pseudonym = { id: uuid() };
+      const grant = {
+        grantId: uuid(),
+        subject: pseudonym,
+        authorizingPrincipal: pseudonym,
+        requestingParty: {
+          type: "person",
+          id: pseudonym.id,
+          name: "Synthetic context subject",
+        },
+        client,
+        access: [
+          {
+            type: ACCESS_TYPE,
+            actions: ["write"],
+            categories: [
+              ...new Set(
+                fixtures.flatMap((f: any) => f.classification.categories),
+              ),
+            ],
+            purposes: [
+              {
+                code: "urn:context-router:purpose:synthetic-bootstrap",
+                description:
+                  "Initialize exactly the reviewed synthetic statements",
+              },
+            ],
+          },
+        ],
+        scopes: [],
+        grantType: "temporary",
+        issuedAt: iso(now),
+        expiresAt: iso(Number(row.review_expires)),
+        status: "active",
+      };
+      db.prepare("INSERT INTO client_subjects VALUES(?,?)").run(
+        client.id,
+        pseudonym.id,
+      );
+      db.prepare("INSERT INTO grants VALUES(?,?,?,'active',?)").run(
+        grant.grantId,
+        client.id,
+        row.review_expires,
+        JSON.stringify(grant),
+      );
+      this.kernel.append(
+        db,
+        event(
+          db,
+          "grant.issued",
+          now,
+          grant,
+          { role: "authorization-service", id: this.configuration.issuer },
+          {
+            access: grant.access,
+            grantType: grant.grantType,
+            expiresAt: grant.expiresAt,
+            modality: "private-fixture-initializer",
+            acr: "urn:context-router:acr:local-credential",
+            fixtureDigest: digest,
+          },
+        ),
+      );
+      insertFixtures(
+        db,
+        fixtures,
+        () => this.kernel.now(),
+        (e) => this.kernel.append(db, e),
+        { grant, at: now },
+      );
+      this.revokeIn(db, grant.grantId, {
+        role: "management-client",
+        id: client.id,
+      });
+      db.prepare(
+        "UPDATE fixture_bootstrap SET state='closed',authority_id=?",
+      ).run(grant.grantId);
+    });
   }
   private newSession(db: DatabaseSync, authenticated: boolean): any {
     const token = random(),
@@ -738,6 +900,172 @@ export class AuthorizationRepository {
       };
     });
   }
+  private readAuthority(
+    db: DatabaseSync,
+    credential: string,
+  ): { grant: any; tokenUntil: number } {
+    const bootstrap = db
+      .prepare("SELECT mode,state FROM fixture_bootstrap")
+      .get();
+    if (bootstrap.mode !== "approved" || bootstrap.state !== "closed") denied();
+    const row: any = db
+      .prepare(
+        "SELECT * FROM protocol_objects WHERE model='AccessToken' AND id_hash=?",
+      )
+      .get(hash(credential));
+    if (!row || row.consumed !== null || row.expires_at <= this.kernel.now())
+      throw new AuthorityError("unauthenticated");
+    const token = parse(row.document);
+    try {
+      this.protocolBinding(db, "AccessToken", token.jti, token);
+    } catch (error) {
+      if (error instanceof AuthorityError)
+        throw new AuthorityError("unauthenticated");
+      throw error;
+    }
+    return {
+      grant: this.active(db, token.grantId, token.clientId),
+      tokenUntil: Math.min(Number(row.expires_at), token.exp * 1000),
+    };
+  }
+  /** Private preparation ticket; HTTP may await here, but never inside releaseRead. */
+  prepareRead(
+    credential: string,
+    kind: "query" | "get",
+    input: any,
+    ref?: string,
+  ): object {
+    const request = readRequest(kind, input, ref);
+    return this.kernel.read((db) => {
+      const { grant } = this.readAuthority(db, credential),
+        now = this.kernel.now();
+      const selected = selectRead(
+        db,
+        grant,
+        request,
+        policies(db, "rules"),
+        now,
+      );
+      const ticket = Object.freeze({});
+      this.reads.set(ticket, {
+        credential,
+        request,
+        revision: Number(settings(db).policy_revision),
+        copyUntil: now + this.copyLifetimeMs,
+        selected: JSON.stringify(
+          selected.entries.map((e) => [e.entry.id, e.entry.record.version]),
+        ),
+      });
+      return ticket;
+    });
+  }
+  /** One owner + synchronous SQLite serializes authority changes through handoff.
+   * Pre-serialize inside the transaction. After commit only clock comparisons and
+   * the transport's synchronous end(bytes) are permitted; never await drain. */
+  releaseRead(ticket: object, handoff: (bytes: string) => void): void {
+    const prepared = this.reads.get(ticket);
+    if (!prepared) denied();
+    this.reads.delete(ticket);
+    const result = this.kernel.write((db) => {
+      const { grant, tokenUntil } = this.readAuthority(db, prepared.credential),
+        now = this.kernel.now();
+      if (
+        Number(settings(db).policy_revision) !== prepared.revision ||
+        prepared.copyUntil <= now
+      )
+        denied();
+      const selected = selectRead(
+        db,
+        grant,
+        prepared.request,
+        policies(db, "rules"),
+        now,
+      );
+      if (
+        JSON.stringify(
+          selected.entries.map((e) => [e.entry.id, e.entry.record.version]),
+        ) !== prepared.selected
+      )
+        denied();
+      const refs = new Map<string, string>();
+      for (const item of selected.entries) {
+        db.prepare(
+          "INSERT INTO grant_refs VALUES(?,?,?) ON CONFLICT(grant_id,entry_id) DO NOTHING",
+        ).run(grant.grantId, item.entry.id, "r_" + random());
+        refs.set(
+          item.entry.id,
+          String(
+            db
+              .prepare(
+                "SELECT ref FROM grant_refs WHERE grant_id=? AND entry_id=?",
+              )
+              .get(grant.grantId, item.entry.id).ref,
+          ),
+        );
+      }
+      const useUntil = selected.entries.map((e) =>
+        Math.min(prepared.copyUntil, validity(e)),
+      );
+      const entries = selected.entries.map((e, i) =>
+        project(e, refs, useUntil[i]),
+      );
+      const directives = readDirectives(
+        grant,
+        selected.entries,
+        policies(db, "directives"),
+      );
+      const audit = event(
+        db,
+        "context.read",
+        now,
+        grant,
+        { role: "context-client", id: grant.client.id },
+        {
+          release: "attempted",
+          receipt: "unconfirmed",
+          directives: directives.map((d) => d.directiveId),
+          ...(prepared.request.kind === "query"
+            ? {
+                categoriesSearched: selected.categories,
+                maxEntries: prepared.request.maxEntries,
+              }
+            : {}),
+        },
+      );
+      audit.purpose = prepared.request.purpose;
+      if (prepared.request.purposeDescription !== undefined)
+        audit.purposeDescription = prepared.request.purposeDescription;
+      audit.disclosed = selected.entries.map((e, i) => ({
+        entryId: e.entry.id,
+        version: e.entry.record.version,
+        useUntil: iso(useUntil[i]),
+      }));
+      const bytes = JSON.stringify({
+        ...(prepared.request.kind === "query"
+          ? { entries, categoriesSearched: selected.categories }
+          : { entry: entries[0] }),
+        retrievalId: audit.participants.retrievalId,
+        timestamp: iso(now),
+        directives,
+        minimization: {
+          method: prepared.request.kind === "query" ? "lexical" : "none",
+        },
+      });
+      this.kernel.append(db, audit);
+      return {
+        bytes,
+        authorityUntil: Math.min(tokenUntil, Date.parse(grant.expiresAt)),
+        copyUntil: Math.min(prepared.copyUntil, ...useUntil),
+      };
+    });
+    // A disk commit may cross a deadline. Its immutable attempted-read event stays
+    // in history even when the successful response is withheld here.
+    const now = this.kernel.now();
+    if (now >= result.authorityUntil)
+      throw new AuthorityError("unauthenticated");
+    if (now >= result.copyUntil) denied();
+    handoff(result.bytes);
+  }
   /** Internal eligibility only. C3 must add its audited transport release boundary. */
   allowsEntry(
     id: string,
@@ -921,6 +1249,19 @@ export class AuthorizationRepository {
         ).run(hash(nextCursor), this.kernel.now() + 600_000, continuation);
       }
       return { events: rows.map((r) => parse(r.event)), nextCursor };
+    });
+  }
+  lastPossibleCopyUseUntil(credential: string, grantId: string): string | null {
+    return this.kernel.read((db) => {
+      this.management(db, credential);
+      const row = db
+        .prepare(
+          `SELECT max(json_extract(d.value,'$.useUntil')) deadline
+        FROM audit_events a, json_each(a.event,'$.disclosed') d
+        WHERE json_extract(a.event,'$.eventType')='context.read' AND json_extract(a.event,'$.grantId')=?`,
+        )
+        .get(grantId);
+      return row.deadline === null ? null : String(row.deadline);
     });
   }
 }

@@ -1,7 +1,7 @@
 # HCP Alignment Plan
 
-- Status: C1 merged in PR #204; bounded C2 implementation in progress under an independently approved concrete plan; C3–C8 unactivated; no conformance claim
-- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C2 chat `01a1bf1d-92ba-7ae3-9439-6a39e5d9ac58` is sole checkout writer; orchestrator and reviewers are repository-read-only
+- Status: C1/C2 merged in PRs #204/#205; bounded C3 activated; concrete plan independently approved; C3 candidate implemented; final qualification tracked in draft PR #206; C4–C8 unactivated; no conformance claim
+- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C3 chat `01a1c17c-4931-7492-a9b0-582bcd8ce41e` is sole checkout writer; orchestrator and reviewers are repository-read-only
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
 - Assessment date: 2026-11-07
@@ -114,8 +114,10 @@ one bounded task using the published materials is optional if stronger onboardin
 evidence becomes useful. Connect observations to the relevant fixture/test,
 command, source revision, and result without introducing a new measurement system.
 
-Keep hcp-spec unchanged for this documentation phase, including its already merged
-implementation-directory entry. Future improvements are separate, reviewable
+Keep hcp-spec unchanged for the activated C3 step, locally and remotely, including its already merged
+implementation-directory entry. The explicit November 9 instruction supersedes the
+general upstream-publication workflow below: record proposals here with orchestrator
+ownership and revisit conditions; publish no issues, comments, PRs or source edits there. Future improvements are separate, reviewable
 changes with the smallest concrete example and an explicit target-revision decision.
 
 ## HCP Adoption Reviews And Upstream Work
@@ -293,8 +295,8 @@ the exception does not change policy for unrelated work.
 
 The first proposed implementation outcome is **consent → read synthetic context →
 inspect disclosure history → revoke**, through HTTP with two controlled test
-clients. This section bounds the full experiment. C1 is merged and C2 is activated;
-C3 remains future work and no HCP package/profile claim is made.
+clients. This section bounds the full experiment. C1/C2 are merged and C3 is activated;
+no HCP package/profile claim is made.
 
 ### Scope And Boundaries
 
@@ -593,7 +595,7 @@ technical exit evidence.
 | C4. Writes and Memory Manager | Create/revise/withdraw, immutable revisions and expected-version checks, confirmations, proposal staging, durable HTTP idempotency, valid inference provenance/confidence, symmetric conflict detection and human resolution. | Stale confirmation, rollback, committed-but-lost reply, restart/retry, changed-body conflict, concurrent revisions, both conflict arrival orders, same dimension without contradiction, and multiple unresolved conflict edges. Do not accept inferred HCP entries before this capability is ready. Addresses G06–G11/G16. |
 | C5. Complete governance and portability | Remaining person-facing controls, persistent grants with separate affirmative election, any additional required OAuth flows, full standing-rule/directive editors, export/import, hard deletion, disclosure summaries, notification outcomes, and retention/recovery semantics. | Retain early governance-denial coverage; test separate persistence election and selected-flow requirements, all retained states visible to the person, import dry run/round trip, no deleted resurrection, erasure across copies/caches, and notification retry/dormancy. Implement sharing reports, including unauthorized reports, even if no sharing permissions are issued. Addresses G03–G05/G11/G14/G15. |
 | C6. Application integration and cleanup | Rebuild selected dashboard, document, profile, seed, location, and reset workflows around the HCP model; update their APIs and consumers together. Remove or disable superseded interfaces, storage paths, and old database migrations. Earlier checkpoints must already enforce D4 before shared-store exposure. | New application-contract and workflow tests, including read/write bypass checks across the complete inventory; every selected adapter, fresh initialization/reset, persistence and recovery. No legacy-contract, data-preservation, or historical-conversion requirement. Addresses G06–G15/G18. |
-| C7. HCP MCP and clients | Modern transport, discovery, HCP tools, output/error schemas, and setup for selected clients. Replace existing tools or bridges where useful. | HTTP/MCP semantic parity, new client-contract tests, credential isolation, uncertain-write behavior, and real supported-host interoperability. Old-client compatibility is not an exit criterion. Keep host-side copy use/directive obligations distinct from provider conformance. Addresses G16–G18. |
+| C7. HCP MCP and clients | Modern transport, discovery, HCP tools, output/error schemas, and setup for selected clients. Replace existing tools or bridges where useful. | HTTP/MCP semantic parity, new client-contract tests, credential isolation, uncertain-write behavior, and real supported-host interoperability. Resolve [N4 query parsing](spec-questions.md#c7-http-query-parsing-follow-up-n4) before real-client qualification and disposition [CR-Q8](spec-questions.md#cr-q8); [CR-Q9](spec-questions.md#cr-q9) precedes sensitive real-data exposure. Old-client compatibility is not an exit criterion. Keep host-side copy use/directive obligations distinct from provider conformance. Addresses G16–G18. |
 | C8. Selected-package qualification | Freeze the candidate, close the requirement/evidence matrix, independently review the full diff, and publish only fully supported discovery claims. | Focused local evidence, all applicable exact-candidate CI, and explicitly named Mac, installed-artifact, and manual evidence. No claim for an incomplete Part; no schema-only certification. Addresses all selected requirements. |
 
 For C3, use lexical relevance ordering and synchronous disclosure audit. When C4
@@ -1344,6 +1346,336 @@ claimed. Existing regular CI and migration source/UI/packaging receipts, renewed
 focused local consumer/docs checks and complete-diff review are final gates. Their
 exact head/base/tested checkout bindings belong in the PR evidence, avoiding
 commits solely to announce a pass.
+
+## C2 Final Qualification And C3 Activation (2026-11-09)
+
+C2's candidate-era pending statements above are historical. The orchestrator
+verified the human merge of [PR #205](https://github.com/loyalagents/context-router/pull/205):
+base `077d0a13b223d9f450e1464076e7a7a5b3ac4c05`, reviewed head
+`71d8433215009e4f2430ac6631a1f5392fb4c7ab`, final merge
+`6a7db3f5531557a489e6398945b352952e0220a0`, tree
+`2788e08779048e359f939079f8a0a7dd3b4043dc` equal to the reviewed head tree.
+[Regular CI](https://github.com/loyalagents/context-router/actions/runs/42585776971)
+and [migration qualification](https://github.com/loyalagents/context-router/actions/runs/42585776883)
+passed, attempt 1; actual CI checkout was
+`a0e86fcbc10dd442d57ff9ac84b2b1b03d6ff218`. All three same-attempt receipts were
+verified by the orchestrator, including provenance, integrity and cleanup. C2
+complete-diff reviews and correction rechecks approved. Corrected Mac build,
+48 focused Jest checks (19 actual HTTPS/process cases), real Chromium journey,
+65 documentation/checker tests and 160-file links passed. Earlier standalone Mac
+packaging evidence carries only unchanged dependency closure/existing-root
+lifecycle coverage, not a corrected installed artifact. These are C2 results,
+not C3 qualification. Nine unrelated stricter local file modes remain untouched.
+
+Lucas explicitly requested starting C3 in its own chat while retaining the
+original chat as orchestrator and leaving hcp-spec unchanged. C2 yielded all
+checkout ownership. Startup verified clean `main = origin/main` at the final merge
+above; C3 uses `codex/hcp-c3-read-journey` in the existing checkout. The C3 chat owns
+all repository writes, including this plan, tests, code, branch and publication;
+orchestrator/reviewers are read-only. No new worktree. Normative target remains
+`2.0-draft-3` at `2e2939c9bebcefb3bed7bb3522231c0e4d65a315`; original adoption
+baseline remains `b764a058eac15a4cd843892e60473089b2e835bb`. Only pinned sibling
+Git objects are read; no sibling checkout or remote mutation is permitted.
+
+### C3 Concrete Implementation Plan
+
+**Outcome/non-goals.** Complete authenticated synthetic seed approval → actual
+HTTPS A1/A2/B consent → permitted query/get → independent human disclosure history
+→ revoke A1, with independent A2/B authority. SQLite only; no compatibility work,
+C4 production writes/confirmations/inference, C5 portability/erasure/notifications,
+C6 installed integration, C7 MCP/real hosts or C8 claims. Preserve the user's app,
+personal stores/browser/client profiles, source documents, models and system trust.
+
+**Profile/roles.** Sensitive/quality-first for disclosure, durable authority and
+concurrency. Writer uses user-configured defaults, actual model/effort unverified.
+Bounded release-boundary investigator and independent plan/security reviewers
+request `gpt-6-astra`/`xhigh` per the workflow; API acceptance is observable,
+underlying execution unverified. Reviewers may read and return findings but never
+edit. Independent concrete-plan approval precedes all backend changes; fresh
+complete-diff reviews cover protocol/privacy, architecture/scope and recovery/tests.
+
+**Independent plan approval (before backend edits).** The read-only
+`c3_plan_review` reviewer approved the concrete plan on 2026-11-09 with no
+blockers, against base `6a7db3f5531557a489e6398945b352952e0220a0` and the
+five-Markdown-file binary diff SHA-256
+`3b96fd3ee2172ded77675718a9839bbd37f9d531060ce0fafcb3fca24db43298`.
+`read_boundary` independently inspected synchronous SQLite/transport ordering.
+Both requested Astra/xhigh; API acceptance was observed, execution unverified.
+Clarifications included capped positive maxEntries, explicit empty categories,
+traceable initializer-only authority, and an immutable shorter copy lifetime for
+an independent expiry test. No runtime or test changes preceded approval.
+
+**Owned seams.** `apps/backend/src/infrastructure/hcp-experiment/`, the selected
+`composition/hcp-authorization.ts`, its local-database/actual-HTTP process fixtures,
+existing isolated browser suite, canonical HCP docs and affected doc readers. Add
+small bootstrap/disclosure modules where needed; preserve current grant/ref/policy
+services and one checked connection. No new dependency or CI trigger/gate change.
+
+1. **Bounded truthful initialization.** Add a fresh-store pending bootstrap mode,
+   distinct from unchanged C1 simulated seeding. A private initializer obtains a
+   review of the exact closed synthetic fixture bundle, authenticates with the
+   independent management credential and explicitly approves that bundle. Persist
+   the challenge/digest, principal/client/operator, actual approval/submission times
+   and bounded bootstrap write authority, then create the selected immutable
+   versions and their audit in one transaction and close authority permanently.
+   Record authenticated person statements only for that actual approval; simulated
+   lifecycle fixture setup stays explicitly labelled. No invented confirmation,
+   historical consent or model. The initializer is an in-process/private-IPC test
+   capability, never an HTTP seed/write route. The HTTPS composition attaches no
+   context handler until closure is durable. No automatic approval from knowing
+   the credential, process startup or an old consent record. Reopen of pending initialization
+   cannot serve; it may complete only through the authenticated bounded initializer.
+   Keep pending bootstrap separate from the schema/lease COMPLETE marker. Only
+   approved/closed mode enables C3 reads; a C1 simulated store cannot acquire that
+   status on reopen. An initializer-only grant and issued/create-or-revise/revoked
+   audit events commit with approval and closure, making authorizedUnder traceable
+   without widening public OAuth validation.
+   Review mismatch, unauthenticated approval, replay, partial commit and retained
+   callback after closure must fail. Existing C1 documents remain simulated.
+2. **Read request and selection.** POST `/v2/entries/query` requires nonblank query
+   and absolute purpose; optional categories, purposeDescription and integer
+   maxEntries (positive safe integer, default 5; cap the response at 20). GET `/v2/entries/{ref}` accepts required purpose,
+   optional description and positive integer version. Reject unknown fields,
+   duplicate parameters, pagination and malformed inputs. Any category/purpose
+   outside read authority denies the whole query; omitted categories are the
+   purpose-approved set. Explicit empty categories search nothing, with an approved
+   purpose still required; duplicate categories normalize to one searched category. Context private IDs/foreign/absent/inaccessible/non-active
+   refs use identical scope-denied errors. Management credentials do not become
+   context credentials; unfinished management entry operations stay unavailable.
+   Filter each candidate by the current grant/action/category/narrowing, current
+   lifecycle/validity, assertion AND management purposes and all-category standing
+   rules before scoring. Historical get checks both current eligibility and the
+   selected immutable version's purposes/validity, using current classification.
+3. **Deterministic minimization.** Normalize query and eligible content.value with
+   Unicode NFKC, lowercase, then Unicode letter/number token runs. Score distinct
+   overlapping tokens; only positive scores qualify. Structured values traverse
+   sorted object keys/array order but tokenize primitive values only (no property
+   names); include string/number/boolean/null leaves deterministically. Descending
+   score, stable private entry-ID lexical tie-break, one total cap, no padding or
+   cursor. Holding eligibility fixed, private metadata/provenance/categories/IDs
+   in text and assertion extensions never contribute to matching or score; tie
+   order stays fixed when private descriptive fields change.
+4. **Projection/copies/directives.** Allowlist ref/version/content/assertion/evidence,
+   permitted classification categories/dimension/purposes, actual version standing,
+   useUntil and same-response relationship type/target refs. Preserve unknown public
+   content/assertion/evidence members; withhold all other stored fields. Reuse
+   unpredictable grant_refs, creating missing mappings in the same read transaction;
+   refs stay stable across versions/restart and differ for A1/A2/B. No provenance or
+   onwardSharing. Matching directives use every category of the actually disclosed
+   entries, including withheld categories, plus category-unscoped directives even
+   for empty success, with operator matching and no claim prerequisite. Copy expiry
+   uses an immutable provider-selected lifetime (positive, at most 1h; default 1h),
+   shortened by selected/current entry validity and applicable
+   §7.6 bounds; never capped by grant expiry or renewed on delay. No credential
+   content or legal-retention registrations are supported in this fixture.
+5. **Precise release boundary.** Prepare a private read ticket after admission,
+   without releasing bytes or exposing mutable entry records. The single process
+   owns the SQLite lease and all authority mutations. One synchronous final method
+   rechecks the presented token/current grant and policy plus selected entries
+   through DB-bound helpers (never nested public methods that reconcile),
+   serializes the allowlisted result, allocates any missing refs and durably appends
+   context.read (private entry IDs in audit) in the same checked transaction. No async work inside this boundary. After
+   commit, recheck the clock against token, grant, current/selected entry and the
+   prepared copy deadlines immediately before invoking the transport handoff of
+   pre-serialized bytes. Revoke/policy cannot interleave on this event loop; no
+   separate check/send await, callback or serialization gap is permitted. Handoff
+   means `res.end(bytes)`, never socket drain, finish or recipient acknowledgement.
+   A changed policy revision denies the prepared response; never release stale
+   directives/eligibility or silently renew its deadline. Test-only gates may pause preparation before the
+   final method, and synchronous audit fault/clock hooks may stop/advance during
+   commit. Test a shorter configured copy lifetime crossing during audit while
+   token/grant/current and selected entry bounds remain valid, so token expiry does
+   not mask the copy check. They confer no HTTP control capability or production alternate path.
+6. **Audit/history.** Synchronous append before every successful query/get, including
+   empty success: retrieval UUID, client/operator/principal/requesting party/provider,
+   grant, purpose/description, exact private entry/version/useUntil, directives,
+   categoriesSearched/maxEntries for query. Never query text/tokens/full snapshots.
+   A committed context.read records an attempted disclosure, not receipt; a fixed
+   application data marker and human wording make that explicit. No audit edits
+   if time crosses after commit or the transport is lost. Append/commit uncertainty
+   closes admission until reopen; failures release no successful body. Extend the
+   independent management history UI with stable opaque pagination and all actual
+   read details. Compute each grant's last possible copy deadline from all committed
+   attempts conservatively; show no endpoint/no notification, no remote-erasure
+   promise. This is minimal inspection, not the C5 disclosure-summary endpoint.
+7. **Isolation/recovery.** Reuse DELETE/EXTRA/fullfsync, immutable versions and
+   append-only audit, checked lease/file pins and stopped/reaped child ownership.
+   Renew real HTTP/SQLite tests for rollback, before/after audit commit process loss,
+   response loss, repeat reopen/ref/history retention and 48h entry/grant catch-up.
+   Original deadlines/actual append times/atomic fail-closed reconciliation remain;
+   no compliance claim for the draft's contradictory 24h deadlines. Actual HTTP
+   negative tests plus dependency/store-admission checks cover old GraphQL/MCP,
+   document/model/import/reset/history paths and credentials. No personal data.
+
+| Checkpoint | Failing-first checks and exit | Requirement rows |
+| --- | --- | --- |
+| C3a Bootstrap | Authenticated exact-bundle approval, truthful provenance, one-use closure before serving, rollback/reopen, unchanged simulated fixtures | R08/R09/R13/R16/R17 |
+| C3b Reads | Required inputs, full request denial, filter-before-ranking and private-field noninterference, sparse/empty/1/5/20, historical get, allowlist/refs/relationships/directives/copy bounds, actual HTTP | R04/R05/R07/R09–R13/R15/R18 |
+| C3c Release/history | Both revoke/policy orders via controlled barriers, slow recipient independent revoke, each deadline crossed during audit, append/commit/lost-reply and kill/reopen/repeat recovery, history pagination/governance denial | R06/R07/R10/R13–R17 |
+| C3d Journey/adoption/freeze | Real Chromium consent plus read/history/revoke on TLS-verified isolated profile, affected C1/C2/consumer/doc checks, deeper adoption review, complete-diff reviews and exact-candidate CI | R04–R18 within selected scope |
+
+**Validation/finalization.** Pinned Node 24.21.0 / pnpm 10.25.0 preflight passed.
+Write tests and observe relevant failures before each behavior change, then run
+focused suites after it. Build backend for actual compiled HTTPS/process/browser
+fixtures; run selected HCP local-database suites and affected storage/composition
+contracts on this Mac. Browser uses C2's isolated CA/profile with TLS verification;
+renew browser/session/callback/cookie checks. Run docs readers, link/anchor and
+whitespace checks. The runtime, Mac persistence/process/composition and docs rows
+apply. No dependency/installed-root/packaging changes are planned and no named gap
+currently needs duplicate full local migration gate or new standalone packaging;
+reassess if implementation inputs change. Full applicable regular CI and migration
+source/UI/package same-attempt receipts remain required for the final head.
+
+The agreed milestone from the activated brief is C3a–c plus the synthetic browser
+journey and adoption record complete, known corrections resolved and limitations
+explicit. No live-app acceptance round or installed artifact is planned. Freeze
+source/test/doc inputs then; promptly commit/push a cohesive draft PR and run
+independent complete-diff review and required CI on stable inputs. Renew affected
+checks/reviews after corrections; identify head/base/tested merge separately.
+No automatic merge/release. Hand back scoped results and explicitly yield writer
+ownership; C4 requires orchestrator activation.
+
+**Adoption review.** Consult pinned guides/examples/schemas alongside the clauses,
+record which worked, concrete interpretations, repeatable fixture commands and
+small reusable example/guidance/tooling/skill candidates (or explicit none).
+Revisit #14 startup/recovery and truthful bootstrap/preservation examples using
+C3 evidence, retaining CR-Q1/#2 and CR-Q3/#3 limitations. CR-Q4 and portability
+#19/#21/#24/#25 remain later dependencies. Under Lucas's current instruction,
+all proposals remain in CR, with orchestrator owner and revisit on explicit
+upstream authorization; no hcp-spec publication. This is experienced-team adoption,
+not unaided newcomer evidence. Issues/merges do not imply CR target adoption.
+
+### C3 Implementation Checkpoints (2026-11-09)
+
+Qualification is in progress; no merge-ready or conformance claim.
+
+- **C3a:** six bootstrap tests first failed for absent pending/approval behavior;
+  all six plus five existing entry tests passed after implementation. Approval
+  creates initializer authority, exact fixture versions/audit and permanent closure
+  atomically. C1 simulated stores retain their original truth and cannot serve C3
+  reads. HTTPS refuses pending initialization without explicit private approval.
+- **C3b:** five actual-HTTPS tests first failed for missing query/get and startup
+  behavior, then passed. Historical constraints, relationships and human history
+  increased this to eight. A later failing regression exposed cross-detail category/
+  narrowing composition; intersecting the requested category with the detail that
+  reaches the entry corrected it. All nine HTTP tests then passed. Relationship
+  fixture targets are indices resolved to provider-owned IDs, never caller-supplied
+  public authority. Public response construction is an allowlist.
+- **C3c:** fifteen owned-process tests passed: both revoke/policy ordering cases;
+  token, current/selected version and copy deadline crossings after audit commit,
+  plus a grant-expiry case whose token expires at the same time. Grant expiry is
+  enforced through that token binding; this case does not independently prove the
+  explicit grant-deadline check. Three kill/reap and three injected-failure boundaries; repeat reopen;
+  48-hour entry/grant reconciliation; a paused multi-megabyte recipient with prompt
+  durable revoke. Immutable attempted-read events remain after uncertain handoff.
+- **C3d in progress:** both isolated Chromium C2 and C3 journeys passed with normal
+  profile CA verification, negative CA/hostname/expiry checks, browser consent,
+  distinct A1/A2/B reads, historical get, human history and A1-only revocation.
+  Six affected composition/storage contract suites passed (96 tests). The full HCP
+  regression run passed (11 suites, 90 Jest tests including nested HTTPS/process
+  suites), and the deeper adoption review is recorded locally. Final complete-diff
+  reviews and exact-candidate CI were pending at that checkpoint. The full local migration gate and an installed
+  artifact are not selected; there are no changed installed roots/dependencies.
+
+Independent adoption review then identified three application corrections:
+`context.read.data.directives` contains directive IDs; stored informational
+relationships carry actual provider-recorded initializer actor/time; get checks
+its entry's categories when another category in the same grant is denied.
+All three received failing-first checks. The corrected bootstrap/entry/read suites
+passed (3 Jest suites/13 tests, including 10 HTTP and 15 process cases), and both
+Chromium journeys were renewed successfully. Earlier C1/C2 ownership, durability,
+expiry, policy, OAuth and composition results carry forward: these corrections
+change only relationship fixture records, read selection/audit, and their tests;
+those other inputs/behaviors are unchanged. Informational relationship fixtures
+accept only derivedFrom/duplicates, leaving lifecycle effects to C4.
+
+**F1 finalization milestone reached.** The scoped implementation, synthetic browser
+journey and local adoption record are complete; known corrections are resolved.
+Freeze the source/test/doc candidate on `codex/hcp-c3-read-journey` for one draft PR.
+The parent remains sole writer. Fresh independent complete-diff reviews request
+Astra/xhigh for protocol/privacy, recovery/tests, and architecture/state boundaries;
+actual execution remains unverified. Required CI, source/UI/packaging receipt
+verification and final review disposition are still pending. No artifact is
+delivered, no installed/manual acceptance claimed, and no automatic merge is
+permitted. Physical host power loss, cross-boot, real assistant clients and client
+copy compliance remain unproved and outside this synthetic C3 handoff. CR-Q1/#2
+and dormant-deadline CR-Q3/#3 limitations remain explicit; C4 is unactivated.
+
+Reproduction uses pinned Node 24.21.0 / pnpm 10.25.0, a backend build, then
+`pnpm --filter backend exec jest --selectProjects local-database --runInBand --testPathPattern=hcp-experiment`
+and `node --test apps/web/test/hcp-oauth-browser.test.mjs`. All fixtures own their
+synthetic roots, processes, TLS authorities and browser profiles. No personal app,
+client, source-document/model data or system trust is used. The parent is the sole
+writer; reviewers are read-only. Candidate binding and final results will be recorded
+at the freeze milestone, with affected evidence renewed after corrections.
+
+### C3 F2 Review Corrections And Qualification Record
+
+The frozen F1 candidate is `e6056108874b3c78dd56b283757ddccfe3b8b004`
+(tree `9b7ccb2190efab9050e6ace7292cf95518ee0996`) over merged C2 base
+`6a7db3f5531557a489e6398945b352952e0220a0`. Three fresh reviewers inspected
+all 22 changed files. Protocol/privacy and architecture/scope approved; the
+recovery/test reviewer found malformed query JSON returning 503 instead of the
+pinned 422 malformed-request. That reviewer independently reran all 15 process
+cases successfully. All three requested Astra/xhigh; tool acceptance was observed,
+underlying execution unverified. Reviewers made no repository or upstream writes.
+
+F2 batches the reported malformed-JSON mapping correction with malformed encoded
+get-reference mapping, accurate notification/use-until wording, and the two stale
+plan-status paragraphs. JSON/URI syntax exceptions are mapped only at their input
+boundaries, so storage and other unexpected failures still report unavailability.
+Raw-body JSON, malformed URI and human copy wording tests were observed failing
+against the preceding compiled candidate. No authorization, transaction, deadline,
+projection or persistence code changed after F1. Final correction review and
+candidate-bound CI are tracked on [draft PR #206](https://github.com/loyalagents/context-router/pull/206).
+
+Local evidence is a passing backend build, 35 passing C2 OAuth plus C3 HTTP/process
+tests, both passing isolated Chromium journeys, the earlier affected bootstrap/entry suites, 96 composition/
+storage contract tests and 65 doc/checker tests. F1 ownership/durability/expiry/
+policy/bootstrap evidence carries forward because F2 changes only request parsing,
+UI prose, test transport support and documentation. The final PR record identifies
+its exact head/base/test-merge, review dispositions, required job outcomes and
+same-attempt source/UI/packaging receipts; this section preserves freeze-time
+evidence rather than asserting later CI success. Installed/manual acceptance,
+physical power-loss/cross-boot and recipient-copy compliance are not supplied.
+The working app, personal data and hcp-spec remain untouched. No merge/release or
+C4 activation is authorized by this record.
+
+### C3 Claude Review Follow-Up (2026-11-09)
+
+The product owner returned a read-only Claude review of head
+`41773ad87fc3a8c910f429728755467a9de82af2` against C2 base
+`6a7db3f5531557a489e6398945b352952e0220a0`, then authorized N1–N3 tests/docs,
+recording N4 for C7, and updating PR #206 with affected checks and CI. This C3 chat
+resumes sole-writer ownership for that bounded follow-up; no merge is authorized.
+The review recommended approval with no blocking findings and reported 27 passing
+HTTP/process tests plus isolated probes. Its reported model was Claude Opus 5.5;
+execution settings are not independently verified and effort was unverified.
+
+- **N1:** add two HTTP regressions for explicit/omitted categories under a partial
+  standing rule, unchanged active own-grant access, denial without a read event,
+  and a successful allowed-category control. Record the interpretation and client
+  discoverability limitation as [CR-Q8](spec-questions.md#cr-q8).
+- **N2:** record the directive/withheld-category interaction as
+  [CR-Q9](spec-questions.md#cr-q9), with an owner and a prerequisite before sensitive
+  real-data exposure. Keep the existing synthetic behavior.
+- **N3:** correct the C3c evidence above and the adoption timeline proposal:
+  the grant case also crosses token expiry, so it does not isolate the explicit
+  grant-deadline defense. No deadline code or recovery test is changed.
+- **N4:** record [query parsing acceptance work for C7](spec-questions.md#c7-http-query-parsing-follow-up-n4).
+  Parser changes, minor UI/capability text cleanup and C4 remain outside this batch.
+
+Bootstrap approval remains an authenticated private-initializer action exercised
+by the harness; this evidence does not demonstrate a person reading the bundle.
+The normative/adoption pins, application source, dependencies, CI gates and
+hcp-spec remain unchanged. Prior complete-diff runtime reviews and unaffected
+bootstrap/browser/ownership/recovery/contract evidence carry forward on that
+unchanged implementation. The added tests and documentation receive focused
+validation and independent delta review; finalization freezes that corrected
+delta before exact-candidate CI and renewed qualification receipts. No full local
+migration gate or installed artifact is selected for this tests/docs-only change.
+Final commands, results, candidate identity and review disposition belong in the
+PR record; the previous head's CI does not qualify the new candidate.
 
 ## Feedback And Maintenance
 

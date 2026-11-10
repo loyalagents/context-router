@@ -60,13 +60,16 @@ migration history may be deleted; preservation and historical conversion are not
 required. Start with a fresh HCP schema and isolated synthetic stores. Prioritize
 working HCP behavior quickly and concrete adoption findings that lead to reusable
 specification, guidance, or tooling fixes. Deployment/adapter support is a separate
-C0 decision, now settled as SQLite only. After merging C1 in PR #204, the product
-owner activated bounded C2 on November 8: real consent, local HTTPS OAuth, grants,
-policy and human controls in isolated synthetic stores. Its concrete plan was
-independently approved before implementation. Focused authority, HTTPS/browser
-and process-recovery checks pass; final review and exact-candidate qualification
-are pending. C3–C8 remain unactivated. See the canonical brief for current scope
-and historical C1 evidence.
+C0 decision, now settled as SQLite only. C1/C2 merged in PRs #204/#205. The product owner activated bounded C3 on
+November 9 from `6a7db3f5531557a489e6398945b352952e0220a0`: actual read-only
+HTTPS query/get, disclosure history and revoke in isolated synthetic stores.
+C2 final qualification is complete; its results are historical, not C3 evidence.
+C3's concrete plan was independently approved before implementation; the read
+journey and local adoption record are implemented. Final qualification is tracked
+in [draft PR #206](https://github.com/loyalagents/context-router/pull/206). C4–C8
+remain unactivated. See the canonical brief for ownership and exact evidence.
+Keep hcp-spec unchanged locally and remotely during C3; adoption findings/proposals
+stay here for orchestrator follow-through on explicit upstream authorization.
 
 [Open Draft 3 questions](../plans/active/hcp-alignment/spec-questions.md)
 stay in Context Router while the upgrade tests the current HCP specification,

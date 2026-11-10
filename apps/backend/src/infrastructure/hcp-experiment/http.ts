@@ -68,8 +68,14 @@ async function body(req: IncomingMessage): Promise<any> {
     chunks.push(b);
   }
   const text = Buffer.concat(chunks).toString();
-  if (req.headers["content-type"] === "application/json")
-    return JSON.parse(text);
+  if (req.headers["content-type"] === "application/json") {
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      if (error instanceof SyntaxError) invalid();
+      throw error;
+    }
+  }
   if (req.headers["content-type"] !== "application/x-www-form-urlencoded")
     invalid();
   const form = new URLSearchParams(text);
@@ -210,7 +216,7 @@ export function authorizationHandler(
             "human-audit",
             "human-revoke",
           ],
-          publicEntryRead: false,
+          publicEntryRead: authority.entryReadEnabled(),
           publicEntryWrite: false,
         },
         "application/json",
@@ -252,7 +258,7 @@ export function authorizationHandler(
           "consent",
           "Review requested access",
           `<p>${escape(client.name)} · ${escape(client.operator.name)} (${escape(client.operator.id)})</p>
-          <p>Read access only. Temporary: four hours by default, up to 24 hours. Client copies have a one-hour maximum use period. Grant expiry stops retrieval; an existing copy follows its own use-until. Revocation ends use. These controlled clients make no directive-following claim.</p>
+          <p>Read access only. Temporary: four hours by default, up to 24 hours. Client copies have a one-hour maximum use period. Grant expiry stops retrieval; an existing copy follows its own use-until. Clients must stop using copies when notified of revocation, or at use-until. These controlled clients make no directive-following claim.</p>
           <pre>${escape(JSON.stringify(requested, null, 2))}</pre><dl>${Object.entries(
             CATEGORIES,
           )
@@ -318,7 +324,7 @@ export function authorizationHandler(
           "review",
           "Approve this exact grant",
           `<p>${escape(reviewed.client.name)} · ${escape(reviewed.client.operator.name)}</p>
-          <p>Expires at <strong>${escape(reviewed.expiresAt)}</strong>. Client copies have a one-hour maximum use period. Grant expiry stops retrieval; an existing copy follows its own use-until. Revocation ends use.</p>
+          <p>Expires at <strong>${escape(reviewed.expiresAt)}</strong>. Client copies have a one-hour maximum use period. Grant expiry stops retrieval; an existing copy follows its own use-until. Clients must stop using copies when notified of revocation, or at use-until.</p>
           <pre>${escape(JSON.stringify({ access: reviewed.access, exclusions: reviewed.exclusions }, null, 2))}</pre>
           <dl>${Object.entries(CATEGORIES)
             .map(([c, d]) => `<dt>${escape(c)}</dt><dd>${escape(d)}</dd>`)
@@ -400,16 +406,30 @@ export function authorizationHandler(
       const selected = id
         ? authority.listGrants(s.token, "all").filter((g) => g.grantId === id)
         : grants;
-      const events = id
-        ? authority.audit(s.token, { grantId: id, limit: 100 }).events
-        : [];
+      for (const key of url.searchParams.keys())
+        if (url.searchParams.getAll(key).length !== 1) invalid();
+      const history = id
+        ? authority.audit(s.token, {
+            grantId: id,
+            limit: 20,
+            ...(url.searchParams.has("cursor")
+              ? { cursor: url.searchParams.get("cursor")! }
+              : {}),
+          })
+        : { events: [], nextCursor: null };
+      const copies = new Map(
+        selected.map((g) => [
+          g.grantId,
+          authority.lastPossibleCopyUseUntil(s.token, g.grantId),
+        ]),
+      );
       return page(
         res,
         "manage",
         "Human grant controls",
-        `<p><a href="/manage">Active grants</a> · <a href="/manage?status=all">All retained grants</a></p><p>No context content has been disclosed by this C2 experiment.</p>
-        ${selected.map((g) => `<article><h2>${escape(g.client.name)} · ${escape(g.status)}</h2><a href="/manage?grantId=${encodeURIComponent(g.grantId)}">Inspect grant and history</a><pre>${escape(JSON.stringify(g, null, 2))}</pre>${g.status === "active" ? `<form method="post" action="/manage/revoke">${hidden("csrf", s.csrf)}${hidden("grantId", g.grantId)}<button>Revoke grant</button></form>` : ""}</article>`).join("")}
-        ${id ? `<h2>Grant history</h2><pre>${escape(JSON.stringify(events, null, 2))}</pre>` : ""}`,
+        `<p><a href="/manage">Active grants</a> · <a href="/manage?status=all">All retained grants</a></p><p>Read history records attempted disclosures. Receipt is unconfirmed, including when a response is lost or expires before handoff. No notification endpoint is configured; no revocation notification or remote erasure is promised. Clients must stop using copies when notified of revocation, or at use-until.</p>
+        ${selected.map((g) => `<article><h2>${escape(g.client.name)} · ${escape(g.status)}</h2><a href="/manage?grantId=${encodeURIComponent(g.grantId)}">Inspect grant and history</a><p>Last possible copy use-until: ${escape(copies.get(g.grantId) ?? "No recorded copy")}</p><pre>${escape(JSON.stringify(g, null, 2))}</pre>${g.status === "active" ? `<form method="post" action="/manage/revoke">${hidden("csrf", s.csrf)}${hidden("grantId", g.grantId)}<button>Revoke grant</button></form>` : ""}</article>`).join("")}
+        ${id ? `<h2>Grant history</h2><pre>${escape(JSON.stringify(history.events, null, 2))}</pre>${history.nextCursor ? `<a href="/manage?grantId=${encodeURIComponent(id)}&amp;cursor=${encodeURIComponent(history.nextCursor)}">Next history page</a>` : ""}` : ""}`,
       );
     }
     if (route.startsWith("/v2/") || route === "/experiment/policy") {
@@ -423,6 +443,48 @@ export function authorizationHandler(
         ? undefined
         : authority.protocolFind("AccessToken", credential);
       if (!human && !token) throw new AuthorityError("unauthenticated");
+      if (
+        route === "/v2/entries/query" ||
+        /^\/v2\/entries\/[^/]+$/.test(route)
+      ) {
+        if (human) denied();
+        const isQuery = route === "/v2/entries/query";
+        if (
+          req.method !== (isQuery ? "POST" : "GET") ||
+          (isQuery && url.search)
+        )
+          invalid();
+        for (const key of url.searchParams.keys())
+          if (url.searchParams.getAll(key).length !== 1) invalid();
+        const input = isQuery
+          ? await body(req)
+          : Object.fromEntries(url.searchParams);
+        if (!isQuery && input.version !== undefined) {
+          if (!/^[1-9][0-9]*$/.test(input.version)) invalid();
+          input.version = Number(input.version);
+        }
+        let ref: string | undefined;
+        if (!isQuery) {
+          try {
+            ref = decodeURIComponent(route.slice("/v2/entries/".length));
+          } catch (error) {
+            if (error instanceof URIError) invalid();
+            throw error;
+          }
+        }
+        const prepared = await authority.prepareRead(
+          credential,
+          isQuery ? "query" : "get",
+          input,
+          ref,
+        );
+        res.statusCode = 200;
+        res.setHeader("content-type", "application/ld+json");
+        authority.releaseRead(prepared, (bytes) => {
+          res.end(bytes);
+        });
+        return;
+      }
       const grantMatch = /^\/v2\/grants(?:\/(urn:uuid:[0-9a-f-]+))?$/.exec(
         decodeURI(route),
       );
