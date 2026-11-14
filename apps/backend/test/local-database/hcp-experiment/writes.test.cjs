@@ -481,10 +481,10 @@ for (const point of [
 test("C4 prepared replay remains invalid after policy narrowing/restoration and restart", async (t) => {
   const f = await fixture(t, { childProcess: true, approveFixtures: true });
   const { token, grant, body } = await setup(f);
-  const post = () =>
+  const post = (json = body) =>
     f.context("/v2/entries", token, {
       method: "POST",
-      json: body,
+      json,
       headers: { "idempotency-key": "policy-race" },
     });
   assert.equal((await post()).status, 201);
@@ -516,6 +516,10 @@ test("C4 prepared replay remains invalid after policy narrowing/restoration and 
   assert.equal((await pending).status, 403);
   await f.restart();
   assert.equal((await post()).status, 403);
+  assert.equal(
+    (await post({ ...body, extension: "changed request" })).status,
+    403,
+  );
   assert.equal(
     (
       await f.management(`/v2/audit?grantId=${grant.grantId}`)

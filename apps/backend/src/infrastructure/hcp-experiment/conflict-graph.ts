@@ -126,7 +126,8 @@ function end(
   emit: Emit,
   before = states(db, relation),
 ) {
-  db.prepare("UPDATE relations SET disposition='ended' WHERE id=?").run(
+  db.prepare("UPDATE relations SET disposition=? WHERE id=?").run(
+    transition === "asserter-superseded" ? "superseded" : "ended",
     relation.id,
   );
   db.prepare("DELETE FROM quarantine_reasons WHERE relation_id=?").run(
@@ -572,7 +573,27 @@ export function assertRelationships(
       ...Object.values(relation),
     );
     if (type === "contradicts") {
-      consequences(db, relation, id, now, actor, emit, "asserted");
+      if (!live(current) || !live(other)) {
+        // Targets were admitted before this atomic write. Earlier detector or
+        // client edges may already have superseded one of them; retain the new
+        // assertion's attribution without exposing an unresolvable open edge.
+        const superseded = db
+          .prepare(
+            `SELECT id FROM relations WHERE type='contradicts'
+          AND left_id=? AND right_id=? AND left_version=? AND right_version=?
+          AND disposition='superseded' LIMIT 1`,
+          )
+          .get(left.id, right.id, left.record.version, right.record.version);
+        audit(db, relation, "conflict.detected", "asserted", now, actor, emit);
+        end(
+          db,
+          relation,
+          superseded ? "asserter-superseded" : "ended",
+          now,
+          actor,
+          emit,
+        );
+      } else consequences(db, relation, id, now, actor, emit, "asserted");
       if (document.proposal)
         audit(
           db,

@@ -1194,15 +1194,7 @@ export class AuthorizationRepository {
         if (existing) {
           if (existing.grant_id !== grant.grantId) denied();
           const binding = parse(existing.binding);
-          if (
-            binding.operation !== operation ||
-            binding.target !== target ||
-            binding.fingerprint !== fingerprint ||
-            (binding.proposalId ?? null) !== (proposalId ?? null)
-          )
-            throw new WriteConflict("idempotency-conflict");
           if (existing.invalidated || !existing.response) denied();
-          const response = parse(existing.response);
           this.writeRepresentation(
             db,
             credential,
@@ -1210,6 +1202,14 @@ export class AuthorizationRepository {
             binding,
             false,
           );
+          if (
+            binding.operation !== operation ||
+            binding.target !== target ||
+            binding.fingerprint !== fingerprint ||
+            (binding.proposalId ?? null) !== (proposalId ?? null)
+          )
+            throw new WriteConflict("idempotency-conflict");
+          const response = parse(existing.response);
           return {
             credential,
             grantId: grant.grantId,
@@ -1219,6 +1219,13 @@ export class AuthorizationRepository {
           };
         }
         if (cap?.consumed) denied();
+        if (
+          cap &&
+          current &&
+          parse(cap.document).snapshot !==
+            this.confirmationSnapshot(db, current.id)
+        )
+          denied();
         if (proposal && proposal.state !== "pending") denied();
         if (
           current &&
@@ -2269,6 +2276,7 @@ export class AuthorizationRepository {
             operation: reviewed.operation,
             target: reviewed.target ?? "collection",
             fingerprint,
+            snapshot: reviewed.snapshot,
           }),
         );
         db.prepare(

@@ -164,6 +164,13 @@ export function mutationDocument(
     return undefined;
   }
   noOwned(input, ["id", "ref", "entryId"]);
+  if (
+    input["@context"] !== undefined &&
+    (!Array.isArray(input["@context"]) ||
+      input["@context"].length !== 1 ||
+      input["@context"][0] !== "https://hcp.example/contexts/v2")
+  )
+    invalid();
   if (operation === "create") {
     if (
       input.schema !== "https://hcp.example/spec/entry/2.0" ||
@@ -291,11 +298,15 @@ export function mutationDocument(
   const { expectedVersion: _expected, reason: _reason, ...extensions } = input;
   return {
     ...structuredClone(extensions),
-    "@context": input["@context"] ?? ["https://hcp.example/contexts/v2"],
+    "@context": ["https://hcp.example/contexts/v2"],
     schema: "https://hcp.example/spec/entry/2.0",
     type: ["ContextEntry"],
     id: current?.id ?? `urn:uuid:${randomUUID()}`,
-    subject: { id: meta.subject_id, relationship: null },
+    subject: {
+      ...structuredClone(current?.subject ?? input.subject),
+      id: meta.subject_id,
+      relationship: null,
+    },
     content: structuredClone(input.content),
     assertion,
     evidence: structuredClone(evidence),
@@ -308,6 +319,7 @@ export function mutationDocument(
       provenance: {
         ...structuredClone(provenance),
         assertedBy: {
+          ...structuredClone(provenance.assertedBy ?? {}),
           id: model ? provenance.assertedBy.id : meta.subject_id,
           assurance: management ? "authenticated" : "unverified",
         },

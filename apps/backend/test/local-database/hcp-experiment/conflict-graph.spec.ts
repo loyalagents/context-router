@@ -145,6 +145,76 @@ describe("C4 persistent conflict graph", () => {
     expect(get("a-new").record.status).toBe("deprecated");
   });
 
+  it.each(["same-model", "explicit-supersedes"])(
+    "closes a client contradiction whose peer was superseded in the same write (%s)",
+    (kind) => {
+      const model = kind === "same-model";
+      write(
+        entry(
+          "old",
+          "email",
+          model ? "model-inferred" : "person-declared",
+          "unverified",
+          "urn:model:same",
+        ),
+      );
+      write(
+        entry(
+          "new",
+          "phone",
+          model ? "model-inferred" : "person-declared",
+          "unverified",
+          "urn:model:same",
+        ),
+      );
+      const client = { role: "context-client", id: "urn:client:a" };
+      graph.assertRelationships(
+        db,
+        "new",
+        [
+          ...(model
+            ? []
+            : [
+                {
+                  target: "old",
+                  type: "supersedes",
+                  maySupersede: true,
+                  assertedBy: client,
+                  recordedAt: new Date(now).toISOString(),
+                },
+              ]),
+          {
+            target: "old",
+            type: "contradicts",
+            assertedBy: client,
+            recordedAt: new Date(now).toISOString(),
+            extension: "retained",
+          },
+        ],
+        now,
+        client,
+        emit,
+      );
+      expect(get("old").record.status).toBe("deprecated");
+      expect(get("new").record.status).toBe("active");
+      expect(graph.snapshot(db, "new")).toEqual([]);
+      const row: any = db
+        .prepare(
+          "SELECT * FROM relations WHERE type='contradicts' AND origin='client'",
+        )
+        .get();
+      expect(row.disposition).toBe(model ? "superseded" : "ended");
+      expect(JSON.parse(row.document)).toMatchObject({
+        assertedBy: client,
+        extension: "retained",
+      });
+      expect(
+        events.filter((e) => e.eventType === "conflict.resolved").at(-1).data
+          .transition,
+      ).toBe(model ? "asserter-superseded" : "ended");
+    },
+  );
+
   it("retains quarantine after authoritative withdrawal and preserves expired precedence", () => {
     const person = write(
       entry("person", "email", "person-declared", "authenticated"),

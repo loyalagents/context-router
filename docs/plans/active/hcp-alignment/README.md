@@ -1,7 +1,7 @@
 # HCP Alignment Plan
 
-- Status: C1–C3 merged in PRs #204–#206; bounded C4 activated; permission-change cache reset selected and affected review passed November 11; commit/reply decision pending; no backend changes; C5–C8 unactivated; no conformance claim
-- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C4 chat `01a1c422-3178-75b0-a39c-9f621ac7458c` owns the requested November 11 decision-document update only; runtime writing remains paused; reviewers are repository-read-only
+- Status: C1–C3 merged in PRs #204–#206; bounded C4 implemented under the November 13 completion/cache decisions; draft PR #207 in final review and qualification; C5–C8 unactivated; no conformance claim
+- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C4 chat `01a1c422-3178-75b0-a39c-9f621ac7458c` resumed sole-writer ownership November 13; reviewers are repository-read-only
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
 - Assessment date: 2026-11-07
@@ -116,8 +116,10 @@ command, source revision, and result without introducing a new measurement syste
 
 Keep hcp-spec sources and its separately owned checkout unchanged for C4, including
 its merged implementation-directory entry. The November 9 instruction restricted
-upstream publication; Lucas's November 11 instruction adds one explicit exception:
-update the existing issue #34 with the selected permission-cache decision. Other
+upstream publication; Lucas's November 11 instruction authorized updating existing
+issue #34 with the selected permission-cache decision. His November 13 instruction
+also authorized focused issue #36 with the completion contract and research evidence,
+excluding slow commits. Both are published and read back. Other
 proposals stay here with orchestrator ownership and revisit conditions; no spec
 source edits, PRs or target changes are authorized. Future improvements remain
 separate, reviewable changes with a concrete example and explicit adoption decision.
@@ -2224,6 +2226,45 @@ These findings support bounded local adoption only. CR-Q8/N1, CR-Q9/N2 and N3 ca
 forward; C7's remaining HTTP parsing work, physical power loss/cross-boot/other
 hardware, installed artifacts, real clients, recipient-copy compliance and full
 conformance remain unqualified. No C5–C8 implementation is activated.
+
+### C4 Final Review Corrections
+
+[Draft PR #207](https://github.com/loyalagents/context-router/pull/207) first froze
+`d4670624388e07e8daaa5d4c1a3eb042bb9863ec` against base
+`a1ad0c6c248af74f8353c26c7a86f2f43f1ee2ec`. Three fresh read-only reviewers inspected
+the complete 31-file diff, requesting Astra/xhigh with execution unverified. They
+identified five runtime corrections, now covered by focused regressions:
+
+- Reusable person-write capabilities bind the reviewed entry/conflict snapshot.
+  After a failed content transaction and reopen, same-version confirmation or peer
+  changes require a fresh review. Unchanged-state recovery and committed receipt
+  replay remain allowed under their existing authority checks.
+- Supplied JSON-LD context must equal the fixed protocol constant. Incompatible
+  create/revise inputs fail before consuming a key; output always uses the constant.
+- Subject and asserter unknown members are retained while known identity/assurance
+  fields remain validated and provider-assigned.
+- Sticky invalidation and current authority for the original result are checked
+  before reporting an idempotency conflict. Changing a request to a still-authorized
+  category cannot expose an inaccessible historical receipt; authorized mismatches
+  still return 409. This also covers lifecycle denial and restored permissions.
+- An explicit contradiction whose endpoint was superseded earlier in the same
+  atomic write is immediately resolved, with client attribution retained. Exact
+  same-version supersession applies to provider and repeated client assertions;
+  other non-live endpoint pairs end without inventing automatic endorsement.
+
+The current status/publication header was also reconciled with November 13
+authorization. Failing-first cases reproduced the gaps before correction; all 66
+write/graph/rule tests pass afterward, including transaction-level repeated client
+contradictions with and without detector participation. All three affected rechecks
+approved the corrections (authority/persistence diff SHA-256 `25b20781851f0534b2e2e7bb5bc6e39b1f7d1d3e75075c213da26bfb5b0d5896`;
+graph review `3ef3b0780ab5da5ed988e5e4e34fab6a5f1b525191a804f3ab05d402dd718cde`
+also includes this correction narrative). Only evidence bookkeeping follows those
+reviews. The backend rebuild passed; renewed HTTPS/browser evidence binds the corrected candidate. Final links/results and
+exact CI identities will be kept in the PR. Earlier 97 contract, 125 documentation
+checker and operator-document passes retain their scope: no imports, dependency
+graph, package closure, validator code or asserted operator instructions changed.
+Links and whitespace are renewed. No installed-artifact claim, new scope activation,
+spec edit or automatic merge is introduced by this correction batch.
 
 ## Feedback And Maintenance
 

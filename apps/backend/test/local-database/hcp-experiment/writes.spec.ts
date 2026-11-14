@@ -245,6 +245,51 @@ describe("C4 durable person writes and original completion", () => {
     ).toEqual([]);
   });
 
+  it.each([false, true])(
+    "settles repeated same-model client contradictions in the write transaction (detector=%s)",
+    (detected) => {
+      const a = issue(),
+        old = modelInput(a.grant, "email"),
+        next = modelInput(a.grant, "phone");
+      if (!detected) {
+        old.content.value = "Opaque email claim" as any;
+        next.content.value = "Opaque phone claim" as any;
+      }
+      const first = release(commit(a.token, old));
+      const relationships = [
+        { type: "contradicts", target: first.body.ref },
+        {
+          type: "contradicts",
+          target: first.body.ref,
+          extension: "second independent assertion",
+        },
+      ];
+      release(
+        commit(a.token, { ...next, record: { ...next.record, relationships } }),
+      );
+      const entries = store
+        .inspectEntries()
+        .filter((e) => e.assertion.declarationType === "model-inferred");
+      expect(entries.map((e) => e.record.status).sort()).toEqual([
+        "active",
+        "deprecated",
+      ]);
+      for (const entry of entries)
+        expect(authority.managementEntry(human, entry.id).conflicts).toEqual(
+          [],
+        );
+      expect(
+        store
+          .inspectAudit()
+          .filter(
+            (e) =>
+              e.eventType === "conflict.resolved" &&
+              e.data.transition === "asserter-superseded",
+          ),
+      ).toHaveLength(detected ? 3 : 2);
+    },
+  );
+
   it("discloses an immediate own-quarantined result only while the exact causal state remains unchanged", () => {
     const a = issue();
     const person = input(
@@ -957,6 +1002,53 @@ describe("C4 durable person writes and original completion", () => {
     expect(release(commit(b.token, otherBody, "policy"))).toEqual(unaffected);
   });
 
+  it("authorizes the original receipt before revealing a changed-body key conflict", () => {
+    const a = issue("a", [
+      detail(["read", "write"], {
+        categories: ["general_preferences", "work_context"],
+      }),
+    ]);
+    const body = input(a.grant),
+      changed = input(a.grant, {
+        classification: { categories: ["work_context"] },
+      });
+    release(commit(a.token, body, "receipt"));
+    expect(() => commit(a.token, changed, "receipt")).toThrow(
+      "idempotency-conflict",
+    );
+    authority.replacePolicy(human, {
+      rules: [
+        {
+          operators: [config.clients[0].operator.id],
+          categories: ["general_preferences"],
+        },
+      ],
+      directives: [],
+    });
+    expect(() => commit(a.token, changed, "receipt")).toThrow(
+      new AuthorityError("denied"),
+    );
+    authority.replacePolicy(human, { rules: [], directives: [] });
+    reopen();
+    expect(() => commit(a.token, changed, "receipt")).toThrow(
+      new AuthorityError("denied"),
+    );
+    // Lifecycle denial is independent of sticky permission invalidation.
+    const fresh = release(commit(a.token, body, "lifecycle"));
+    release(
+      commit(
+        a.token,
+        { expectedVersion: 1, reason: "withdraw" },
+        undefined,
+        "withdraw",
+        fresh.body.ref,
+      ),
+    );
+    expect(() => commit(a.token, changed, "lifecycle")).toThrow(
+      new AuthorityError("denied"),
+    );
+  });
+
   it("token expiry after commit yields minimal success; a fresh token on unchanged grant can recover candidate", () => {
     const { grant } = issue();
     const token = tokenFor(grant, 1),
@@ -1108,10 +1200,18 @@ describe("C4 durable person writes and original completion", () => {
     const good = {
       ...base,
       extension,
+      subject: { ...base.subject, extension },
       content: { ...base.content, extension },
       assertion: { ...base.assertion, extension },
       evidence: [{ type: "urn:example:opaque", extension }],
-      record: { ...base.record, extension },
+      record: {
+        ...base.record,
+        extension,
+        provenance: {
+          ...base.record.provenance,
+          assertedBy: { id: base.subject.id, extension },
+        },
+      },
     };
     const result = release(commit(token, good, "invalid"));
     expect(result.body.content.extension).toEqual(extension);
@@ -1120,6 +1220,8 @@ describe("C4 durable person writes and original completion", () => {
       .find((e) => e.record.provenance.authorizedUnder === grant.grantId)!;
     expect(entry.extension).toEqual(extension);
     expect(entry.record.extension).toEqual(extension);
+    expect(entry.subject.extension).toEqual(extension);
+    expect(entry.record.provenance.assertedBy.extension).toEqual(extension);
     const narrowed = issue("a", [
       detail(["read", "write"], { narrowedTo: { entryIds: [entry.id] } }),
     ]);
@@ -1597,6 +1699,133 @@ describe("C4 durable person writes and original completion", () => {
       store.inspectAudit().filter((e) => e.eventType === "grant.issued"),
     ).toHaveLength(before);
   });
+
+  it("rejects a supplied noncanonical context without reserving the write key", () => {
+    const a = issue(),
+      body = input(a.grant);
+    for (const context of [
+      "bogus",
+      ["https://invalid.example/context"],
+      [],
+      null,
+    ])
+      expect(() =>
+        commit(a.token, { ...body, "@context": context }, "context"),
+      ).toThrow(AuthorityError);
+    const created = release(
+      commit(
+        a.token,
+        { ...body, "@context": ["https://hcp.example/contexts/v2"] },
+        "context",
+      ),
+    );
+    const revised = {
+      expectedVersion: 1,
+      reason: "context correction",
+      content: body.content,
+      assertion: body.assertion,
+      record: body.record,
+    };
+    expect(() =>
+      commit(
+        a.token,
+        { ...revised, "@context": ["https://invalid.example/context"] },
+        "context-revision",
+        "revise",
+        created.body.ref,
+      ),
+    ).toThrow(AuthorityError);
+    release(
+      commit(
+        a.token,
+        { ...revised, "@context": ["https://hcp.example/contexts/v2"] },
+        "context-revision",
+        "revise",
+        created.body.ref,
+      ),
+    );
+    expect(
+      store
+        .inspectEntries()
+        .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)![
+        "@context"
+      ],
+    ).toEqual(["https://hcp.example/contexts/v2"]);
+  });
+
+  it.each(["unchanged", "confirmation", "peer"])(
+    "reuses a failed person approval only while its reviewed state is unchanged (%s)",
+    (change) => {
+      const a = issue();
+      const body = input(a.grant, {
+        content: modelInput(a.grant, "email").content,
+      });
+      release(commit(a.token, body));
+      const entry = store
+        .inspectEntries()
+        .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
+      const request = {
+        expectedVersion: 1,
+        reason: "My reviewed edit",
+        content: { ...body.content, value: "My new statement" },
+        assertion: { declarationType: "person-declared" },
+        record: { provenance: { source: "person-input" } },
+      };
+      const review = authority.reviewPersonWrite(
+        human,
+        "revise",
+        request,
+        entry.id,
+        "browser",
+      );
+      authority.approvePersonWrite(
+        human,
+        review.reviewId,
+        review.csrf,
+        "browser",
+      );
+      failAt = "before-commit";
+      expect(() =>
+        authority.commitReviewedPersonWrite(
+          human,
+          review.reviewId,
+          review.csrf,
+          "browser",
+          "reviewed-edit",
+        ),
+      ).toThrow();
+      failAt = undefined;
+      reopen();
+      if (change === "confirmation")
+        authority.confirmEntry(human, entry.id, {
+          expectedVersion: 1,
+          disposition: "confirmed",
+        });
+      if (change === "peer")
+        release(
+          commit(
+            a.token,
+            input(a.grant, { content: modelInput(a.grant, "phone").content }),
+          ),
+        );
+      const retry = () =>
+        authority.commitReviewedPersonWrite(
+          human,
+          review.reviewId,
+          review.csrf,
+          "browser",
+          "reviewed-edit",
+        );
+      if (change === "unchanged") {
+        const result = release(retry());
+        expect(release(retry())).toEqual(result);
+        expect(store.inspectEntry(entry.id)!.record.version).toBe(2);
+      } else {
+        expect(retry).toThrow(AuthorityError);
+        expect(store.inspectEntry(entry.id)!.record.version).toBe(1);
+      }
+    },
+  );
 
   it("guards confirmation review/session deadlines before commit and withholds representation after known commit expiry", () => {
     const { grant, token } = issue();
