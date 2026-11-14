@@ -14,8 +14,9 @@
 These notes stay in Context Router while we test how well the existing HCP
 specification, schemas, and guides support adoption. They record source-review
 findings, synthetic cases, and possible resolution directions; they are not
-observations from a qualified HCP integration. C1/C2 are merged and bounded C3 is
-activated on 2026-11-09; accepted expiry recovery does not change the spec pin.
+observations from a qualified HCP integration. C1–C3 are merged and bounded C4 is
+activated on 2026-11-09, beginning with CR-Q2/CR-Q5 decisions; accepted expiry
+recovery does not change the spec pin. C4 activation does not resolve those questions.
 Normative text continues to govern examples and schemas.
 
 Use the [adoption approach][cr-plan] to investigate each question when it affects
@@ -105,6 +106,220 @@ in this draft, and an HTTP header does not automatically cover MCP retries.
 This answer is needed before designing durable response caches and erasure;
 providers should not silently choose between resurrecting content and violating
 the retry contract.
+
+### C4 Investigation And Proposed Disposition (2026-11-09)
+
+**Decision status (updated 2026-11-13): Lucas selected permission-change cache
+invalidation and a minimal successful acknowledgement of a known committed write,
+with separate current authorization of response data.** The remaining
+hard-erasure proposal belongs to C5 and is not adopted by the permission decision.
+Pinned source inspection confirms the erasure counterexample is a real requirement
+interaction, not a missing implementation trick. Section 9.6 unconditionally requires
+the original response for at least 24 hours; §§5.4.1–5.4.2 require erased entries to
+be unrecoverable and never returned. Revocation (§6.2.2), standing rules (§6.3),
+withdrawal (§5.2.5) and content expiry (§4.2.4) also constrain later responses.
+Neither the pinned schemas nor the adoption-baseline guides provide precedence.
+The `create-result` schema correctly permits a disclosure; §9.6's `id`/
+`record.version` wording does not override Context Client `ref`/`version` privacy.
+
+**Selected permission rule (2026-11-11).** Lucas directed: reset the cache when
+permissions change; someone who loses access cannot see the previous response.
+This is denial of access to a result, not a replacement result or a reversal of the
+original operation. Invalidate the affected authorization context's replay payload
+when its effective permissions change, including revocation or policy/narrowing
+changes. Do not reset unrelated grants/clients. A refreshed token for unchanged
+authority is not itself a permission change.
+
+“Reset” drops the cached response payload but preserves the durable record that
+the operation already committed, its key and original authority/operation/target
+binding. Preserve only the non-response metadata needed for duplicate suppression
+and authorized conflict handling; the keyed body fingerprint remains subject to
+the separate C5 erasure inventory. Removing the whole record would permit duplicate
+execution. Permission-change acknowledgement must not precede durable invalidation
+of affected replay eligibility; recovery must not resurrect discarded payloads.
+Coordinate invalidation with the same serialized authority/store boundary. Later
+restoration or widening does not restore the discarded response or make its key
+fresh. A separate, currently authorized read or management inspection may inspect
+retained entry/history data; it cannot regenerate the old retry response.
+A prepared cached replay must recheck durable invalidation before handoff, even
+when permissions were narrowed and then restored before it resumes. This is
+logical cache invalidation, not physical SQLite page/journal erasure.
+
+Check authentication and current operation/result authority before exposing a
+ledger match, conflict or result. Unauthorized callers receive no key/result-existence
+details. Denial bodies never echo old content or assert committed/rolled-back state;
+this does not promise that an otherwise-authorized caller cannot infer anything
+from duplicate-suppression behavior. This rule separates
+duplicate suppression from response access. §9.6's unconditional response-retention/
+replay wording still needs upstream clarification; the selected CR rule is not a
+conformance claim. Lucas explicitly authorized an issue update for this decision;
+the existing [hcp-spec #34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594)
+now records this feedback in a posted, verified comment. No specification source
+or pin change is authorized.
+For an authenticated, otherwise-authorized identical retry whose response was
+invalidated, select generic 403 `scope-denied` as the CR experiment mapping: current
+permission does not authorize the discarded historical response. Do not invent a
+410 outcome, classify an identical body as a 409 conflict, or use a transient 503
+that suggests waiting can restore it. Upstream error semantics remain open in #34.
+
+**Separate erasure recommendation:** erasure wins over cached content release,
+and an erased operation never reexecutes through its old key. A content-free
+consumed-key marker remains a **proposal** under
+[hcp-spec #23](https://github.com/loyalagents/hcp-spec/issues/23), not an accepted
+upstream answer or permission to implement C5 erasure now. Ordinary permission
+invalidation is not hard deletion of all provider-held entry/history content.
+
+| Case | Proposed observable behavior | Durable state and evidence |
+| --- | --- | --- |
+| First execution with new key | Validate current authority/input; atomically commit mutation, all required transition events, refs and candidate status/body; respond 201 for create/revise, 200 for withdraw, using the original-request completion-only fallback below when representation release is denied | One operation and one set of required events, never a separate uncommitted response cache; response receipt is not promised |
+| Concurrent identical retry | Serialize on the owned store; winner commits once, follower returns the original eligible response | No second version, mutation or replay audit; intentional concurrent fixture demonstrates both orders |
+| Same namespace/key, different body | 409 `idempotency-conflict` after authentication/current operation authority checks | Change nothing; no body echo and no mutation event |
+| Same client/key, different operation or target | 409 `idempotency-conflict` after current authority checks, even when the JSON is identical | Operation and target are bound to the original receipt; changed routes do not create another operation |
+| Committed mutation, lost reply | Retry the same key/body under the same authority; return the original eligible response | Commit remains true even if no bytes were received; original event never claims receipt |
+| Restart before/after commit | SQLite rollback or committed operation/result recovery; retry performs first execution only when no operation committed | Owned process kill/reap/reopen and repeated-reopen proof; never infer rollback from a missing network reply |
+| Revoked/expired grant or expired token | Current invalid evidence fails with 401 `invalid-token`; never return cached content or transfer the request to another grant | Permission loss invalidates the affected replay payload; preserve committed state/audit and duplicate suppression. Token expiry alone does not change an otherwise valid grant; a fresh token for that unchanged grant may retry |
+| Effective permissions changed, including policy/purpose/reach narrowing or later restoration/widening | Reset affected response caches; insufficient current authority receives 403 `scope-denied` without revealing existence or the cached result. An otherwise-authorized retry whose payload was invalidated also receives a generic denial, never reconstructed success | Durable invalidation survives restart; keep consumed key/binding and permitted conflict metadata, never reexecute. Unaffected grants/clients keep their eligible responses. Selected CR behavior, not a resolved §9.6 requirement |
+| Later non-active lifecycle (including conflict/deprecation/withdrawal/content expiry) | Proposed context rule remains 403 `scope-denied` without revealing existence or the cached result | No replay/recreation; original mutation and its immutable event remain. Context content replay requires current active lifecycle; lifecycle/erasure treatment is distinct from permission-cache invalidation |
+| Response `useUntil` passed, but authority/content remain eligible | Return the exact original response and original past deadline; the copy is unusable. A separately requested authorized GET may issue a fresh copy and its own read event | Do not refresh the deadline, regenerate standing or silently issue a fresh read on retry. §7.6 constrains client use; it does not expressly forbid this expired original response |
+| Future C5 hard deletion within retry retention | Destroy response and body-derived fingerprint along with other erased content; retain only a consumed-key marker sufficient to refuse that retry with a generic denial | Proposed C5 prerequisite: atomic purge/marker and recovery prevent the key becoming a fresh create. No content, version document or reconstructable body survives in the marker. No hard-delete API or physical erasure claim in C4 |
+| Unkeyed create/revise | One attempt only; a lost response is uncertain | No automatic client/MCP replay. The header is accepted, not made universally mandatory; exact retry safety applies only when supplied |
+
+**Key/equivalence choice for review.** Partition by store/subject, credential
+capacity, authenticated client and key. Bind the original grant (or explicit
+management write authorization), operation and target (`create` collection versus
+exact revise/withdraw target) immutably to that receipt. A fresh token for the same
+valid grant can retry; another grant cannot retrieve or automatically reexecute
+the old operation. It receives a generic authority denial, not a fresh namespace.
+No grant union, body-selected actor, or cache lookup before credential validation.
+Bind the key to the exact decoded route target and
+exact UTF-8 request-body octets; whitespace/key-order differences count as different
+bodies. This is a conservative literal interpretation of “identical body”, not a
+claim that the draft mandates JSON canonicalization. Preserve original request
+semantics; do not compare provider-normalized/defaulted content. Store a keyed
+fingerprint, never a second raw request body. Reject malformed/duplicate key headers.
+Uncommitted validation/authority errors reserve no key. A committed result survives
+transport failure, and a retry checks its ledger before applying expectedVersion
+again, so its own successful revision is not mistaken for somebody else's write.
+
+Retain successful keys and permitted keyed fingerprints for the isolated
+experiment's lifetime (therefore at least 24 hours), without background pruning or
+backups. Retain exact response status/body only while replay eligibility has not
+been invalidated by a permission change; discard affected payloads on invalidation.
+This explicitly departs from unconditional content-response retention in §9.6.
+Store no bearer tokens or cookies in these records. The cached
+body is sensitive content in the authoritative store, included in C5's erasure
+inventory. The replay source is the durable candidate status/body, independent of
+which variant reached the original channel. A minimal original acknowledgement
+never overwrites or reconstructs that candidate. A fresh token for the unchanged
+grant may replay a still-eligible candidate after the first request's token expired;
+an eligible expired-copy replay retains its past useUntil even if the original
+handoff used the minimal fallback. This is an additional explicit departure from
+§9.6 exact-original-wire-response replay. Test both cases across restart. Permission
+invalidation still permanently removes the candidate; no fallback-triggered second
+durable transaction is added. Response snapshots preserve original standing, refs,
+version and deadline even after a later revision. Current authorization must still
+cover that result's categories/purposes and immutable version, with any current
+management narrowing. Context content replay requires both current active lifecycle
+and current/selected-version authority, purposes and validity, including later
+conflicted/deprecated states. Never silently reproject it into a different successful body.
+Future hard-deletion markers must not retain the body fingerprint; a new key under
+a fresh affirmative authorization is a new operation, not resurrection by retry.
+This is not a claim to prevent a person deliberately making the same statement anew.
+
+**Selected original-request completion contract (2026-11-13).** An authorized
+write includes the limited entitlement to learn that this operation committed on
+its original request channel. Once durable success is known, preserve the successful
+status even if revocation, expiry or narrowing prevents release of the representation.
+The C4 fallback is exactly `{"outcome":"committed","representation":"not-included"}`,
+with 201 for create/revise and 200 for withdraw. It contains no generated ID/ref,
+version, timestamps, target state, content, standing, provenance or policy details;
+omit resource-specific Location/ETag headers too. It says the operation committed,
+not that its result remains active or accessible. Do not expose this entitlement
+as a reusable credential, lookup endpoint or authority on a subsequent request.
+No success is promised when commit is uncertain or the channel has been lost.
+
+Authorize representation release separately under the same original grant and
+approved purpose, current read reach/policy/narrowing and token/grant/version/copy
+deadlines. Do not re-require write permission after commit when read authority still
+exists. Never switch to another grant. Read authorization and sticky candidate
+eligibility are conjunctive gates: an effective write-permission change still
+invalidates an already-prepared candidate even if read authority remains. Test the
+read-only disclosure predicate separately from this permission-change race. The
+original prepared representation obeys sticky invalidation: narrow then restore
+must not revive it.
+Permission changes invalidate the affected ledger payloads and prepared responses;
+the minimal acknowledgement remains available on the original request. A later
+retry follows the current-authentication/operation/result checks and generic denial
+rules above; it never repeats the mutation or manufactures a replacement response.
+The scoped C4 management history is the authorized recovery path for a missing
+create ref. No public operation-status endpoint is added.
+
+Admission remains provisional: recheck current mutation authority, policy,
+expectedVersion and applicable new-version validity at the last cancellable
+boundary, and recheck deadlines before synchronous COMMIT. State, audit and candidate
+result commit under one owner with no async/revocation interleaving. A prior ordered
+revocation prevents mutation; a later one cannot undo it. If time crosses during
+COMMIT but durable success becomes known, the original minimal acknowledgement
+still describes that fact. This is not proof that physical COMMIT finished before
+expiry. Whether admitted work may commit after authority expires is the separate
+**slow-commit question**, left unresolved as a normative claim; no new admission
+grandfathering policy is selected. Exercise and label this limitation explicitly.
+Final data authorization and handoff do not wait for socket drain. Lost replies
+never trigger automatic unkeyed retries.
+
+This completion-only variant departs from the pinned required disclosure result
+and strict success-after-revocation wording. It is an explicit CR experiment, not
+an HCP conformance claim. Lucas authorized resuming C4 with this approach and filing
+the focused proposal [hcp-spec #36](https://github.com/loyalagents/hcp-spec/issues/36),
+which was published and read back on November 13. It covers already-committed
+operations only and excludes slow-commit/admission cutoff changes. Specification
+sources and pins remain unchanged; #34 still owns later retry authorization.
+
+The supplied [research report](../../../../hcp_committed_write_authorization_research.md)
+compares FHIR/SMART's separate write/read capabilities, a pinned HAPI PATCH fix
+that returns success without the unreadable resource, Kubernetes's earlier write
+authorization, HTTP minimal-return preferences and retry protocols. These support
+separating completion from representation, but do not establish a universal
+post-commit revocation rule. The HAPI source/tests were inspected, not executed;
+its per-request rule caching is not evidence of live revocation handling. The issue
+links the primary sources and proposes observable Core/binding behavior while
+leaving invalidation/storage mechanisms to implementors.
+
+**Result scope and purpose.** Sections 5.2.3/5.2.4 require the written entry as a
+disclosure; §4.7.2's quarantine restriction explicitly names query/get. Proposed
+narrow interpretation: an immediate write result may echo only the version just
+written even when conflict processing quarantines it, while ordinary reads and
+later content replays remain active-only. This is a one-time immediate result rule:
+a lost quarantined reply needs explicit management inspection, not cached context
+content replay. Name this additional §9.6 exception in the experiment record.
+Do not reuse C3's whole `selectRead` predicate as write authorization.
+Return no peer entry, withheld category, internal status, provenance or conflict
+count. Current withdrawal/expired validity and later quarantine/deprecation still
+forbid context content replay. Test both later-conflicted and later-deprecated
+cases separately from the immediate quarantine acknowledgement.
+This is a scoped interpretation to review, not a general non-active read permission.
+
+For the controlled C4 composition, issue paired read/write authority in the same
+detail with one explicitly approved purpose. Freeze that purpose as the operation
+context; validate permitted-purpose intersections on both old target and new
+version. The write request shapes do not define a purpose field, while §§6–7
+constrain disclosure purpose. This scope avoids write-only/multiple-purpose cases
+without claiming HCP requires the pairing or inventing a new Core request field.
+Existing read-only grants remain valid for reads, never writes. Relationship targets
+need independent current read reach under that same grant and purpose.
+
+**Withdraw and MCP.** Implement §9.6's recommended key support for withdraw using
+the same atomic ledger, with the original content-free deleted result on an
+authorized identical retry; the deleted lifecycle itself must not prevent that
+acknowledgement. A later authority denial still wins. Unkeyed repeated withdraw may
+append another required withdraw event; it never restores content. C7 owns MCP
+retry semantics because an HTTP header on another endpoint does not create a
+binding-neutral tool key. No automatic replay of uncertain MCP mutations is added.
+
+**Adoption disposition:** keep a minimal create→erase→retry timeline, the table,
+and the write-disclosure/purpose interpretation here. Orchestrator owns any later
+upstream proposal on explicit authorization. Submitted/merged/adopted remain
+separate; none is claimed by this investigation.
 
 <a id="cr-q3"></a>
 
@@ -215,6 +430,71 @@ transition history. Correct the reference if it means content history, or state
 the additional observable history requirement if lifecycle history is intended.
 Leave storage representation unconstrained. This question does not assume an
 undo or restore operation is already required.
+
+### C4 Application Decision (2026-11-09)
+
+**Selected ordinary application design, pending independent concrete-plan review:**
+keep content versions and lifecycle history separate. Sections 4.2.1 and 3.8
+explicitly settle the version rule; §4.7.3's “through version history” is imprecise
+surface wording, not authority to create an extra content version on confirmation.
+No additional user decision is needed for this bounded history presentation.
+
+| Change | Content version | Observable retained history |
+| --- | --- | --- |
+| Content/assertion/evidence revision | Increment exactly once; prior version immutable | Old content and original version provenance remain inspectable; new version starts without endorsements |
+| Confirm or reject | Unchanged; expectedVersion must match | Append disposition, principal and actual time to that version; audit `context.confirmed` names version/disposition |
+| Status/conflict transition | Unchanged | Existing append-only audit records before/after status and the affected version pair, action and actor, in a namespaced application detail |
+| Categories/purpose narrowing | Unchanged | When C5 enables editors, `context.recategorized`/`context.restricted` retain required from/to; C4 history representation can display these without enabling those editors |
+| Relationship detection/re-evaluation/resolution | Unchanged unless accompanied by revision | Retain edge identity, endpoints/version pair, disposition and transition reason; required detected/resolved events remain truthful |
+
+The small isolated management entry detail/history view shows retained entries in
+every state, immutable selected content versions, their own confirmation sequence,
+current lifecycle/classification, and a separately labelled chronological transition
+history from the existing paginated management audit. A historical content-version
+read must not pretend current status/classification was the old lifecycle snapshot.
+Record compact before/after lifecycle fields rather than content snapshots in audit;
+link them to retained versions. The current row remains the authoritative state;
+the implementation need not replay its log to reconstruct it. No event-sourcing
+framework, undo, restore operation, new public history protocol or content-version
+increment per lifecycle change is required. C5 later owns export/retention/erasure
+of all these surfaces; history is not an excuse to retain erased content.
+
+Minimal counterexample: v1 is an unconfirmed model inference, then the person
+confirms v1 and later rejects it. Content remains v1, asserter remains the same
+model, both confirmation records remain, and `standing.confirmed` becomes false.
+The management timeline distinguishes the three states. C3's current
+`disclosure.ts` uses `confirmations.length > 0`; C4 must replace that assumption
+before accepting real confirmation/rejection transitions. A content edit then
+creates v2 under its actual writer authority, with empty confirmations, without
+rewriting v1's provenance or endorsement history.
+
+**Lifecycle/resolution guardrails.** Confirmation cannot restore a deleted,
+expired or deprecated entry contrary to §4.2.4's allowed exits. An endorsement
+may be recorded without changing that terminal/restricted status. Rejection of a
+conflicted entry follows §4.7.3. For rejection outside a conflict, the minimal human
+action is explicitly **Reject and withdraw**: atomically append the rejection and
+perform authorized withdrawal, with both required event types. This avoids claiming
+that the draft universally defines rejection alone as deletion. Context Clients
+cannot revise a currently rejected version, and management cannot undo deletion
+by generic revision/confirmation. Editing while confirming uses a new authenticated
+person assertion, not a provenance rewrite of the model's assertion.
+
+Acceptance is entry-level in the pinned HTTP shape. The human review must show
+all directly affected conflicts and bind to their displayed version/state snapshot;
+apply every applicable edge transition atomically, preserving unrelated edges and
+lifecycle precedence. Never infer “no open edge means active”: §4.7.3 deliberately
+leaves an inference quarantined when its authoritative opponent is withdrawn.
+Likewise, `conflict.resolved` describes its specified transition; it does not prove
+every peer or edge was globally settled. A keep-both dismissal retains the
+relationship as history and is reconsidered on revision. No automated resolution
+is added beyond the pinned same-asserter rule.
+
+**Adoption disposition:** local guidance/wording proposal to distinguish content
+versions from lifecycle history, with the v1 confirm→reject example. Pinned
+schemas model confirmation arrays but do not specify a lifecycle-history surface;
+existing audit and management requirements supply one without a new protocol.
+No upstream change or resolution is claimed. Orchestrator owns later publication
+on authorization; review C5 export/history treatment before its implementation.
 
 <a id="cr-q6"></a>
 

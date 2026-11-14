@@ -30,6 +30,27 @@ export const DATA_SCHEMA = [
     sequence INTEGER PRIMARY KEY, event_id TEXT NOT NULL UNIQUE,
     event TEXT NOT NULL CHECK(json_valid(event))
   ) STRICT`,
+  `CREATE TABLE confirmations (
+    sequence INTEGER PRIMARY KEY, entry_id TEXT NOT NULL, version INTEGER NOT NULL,
+    document TEXT NOT NULL CHECK(json_valid(document)),
+    FOREIGN KEY(entry_id,version) REFERENCES entry_versions(entry_id,version)
+  ) STRICT`,
+  `CREATE TABLE relations (
+    id TEXT PRIMARY KEY, left_id TEXT NOT NULL REFERENCES entries(id), right_id TEXT NOT NULL REFERENCES entries(id),
+    left_version INTEGER NOT NULL, right_version INTEGER NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('contradicts','derivedFrom','supersedes','duplicates')),
+    origin TEXT NOT NULL CHECK(origin IN ('provider','client','management')), owner_id TEXT NOT NULL REFERENCES entries(id),
+    disposition TEXT NOT NULL CHECK(disposition IN ('open','dismissed','ended','superseded','held')),
+    document TEXT NOT NULL CHECK(json_valid(document)), CHECK(left_id<>right_id),
+    FOREIGN KEY(left_id,left_version) REFERENCES entry_versions(entry_id,version),
+    FOREIGN KEY(right_id,right_version) REFERENCES entry_versions(entry_id,version)
+  ) STRICT`,
+  `CREATE TABLE quarantine_reasons (
+    entry_id TEXT NOT NULL REFERENCES entries(id), relation_id TEXT NOT NULL REFERENCES relations(id),
+    PRIMARY KEY(entry_id,relation_id)
+  ) STRICT`,
+  `CREATE TRIGGER confirmations_no_update BEFORE UPDATE ON confirmations BEGIN SELECT RAISE(ABORT,'append-only confirmation'); END`,
+  `CREATE TRIGGER confirmations_no_delete BEFORE DELETE ON confirmations BEGIN SELECT RAISE(ABORT,'retained confirmation'); END`,
   `CREATE TABLE authorization_settings (
     singleton INTEGER PRIMARY KEY CHECK(singleton=1), configuration TEXT NOT NULL CHECK(json_valid(configuration)),
     human_verifier TEXT NOT NULL, secrets TEXT NOT NULL CHECK(json_valid(secrets)), policy_revision INTEGER NOT NULL
@@ -43,11 +64,39 @@ export const DATA_SCHEMA = [
     grant_id TEXT NOT NULL REFERENCES grants(id), entry_id TEXT NOT NULL REFERENCES entries(id),
     ref TEXT NOT NULL UNIQUE, PRIMARY KEY(grant_id,entry_id)
   ) STRICT`,
+  `CREATE TABLE grant_permissions (
+    grant_id TEXT PRIMARY KEY REFERENCES grants(id), revision INTEGER NOT NULL CHECK(revision>=1)
+  ) STRICT`,
+  `CREATE TABLE mutation_receipts (
+    key_hash TEXT PRIMARY KEY, client_id TEXT NOT NULL, grant_id TEXT NOT NULL REFERENCES grants(id),
+    binding TEXT NOT NULL CHECK(json_valid(binding)), response TEXT CHECK(response IS NULL OR json_valid(response)),
+    invalidated INTEGER NOT NULL DEFAULT 0 CHECK(invalidated IN (0,1)),
+    CHECK(invalidated=0 OR response IS NULL)
+  ) STRICT`,
+  `CREATE TRIGGER receipt_binding_immutable BEFORE UPDATE OF key_hash,client_id,grant_id,binding ON mutation_receipts BEGIN SELECT RAISE(ABORT,'immutable receipt binding'); END`,
+  `CREATE TRIGGER receipt_no_restore BEFORE UPDATE ON mutation_receipts WHEN OLD.invalidated=1 BEGIN SELECT RAISE(ABORT,'invalidated receipt'); END`,
+  `CREATE TRIGGER receipt_no_delete BEFORE DELETE ON mutation_receipts BEGIN SELECT RAISE(ABORT,'consumed operation'); END`,
   `CREATE TABLE consent_reviews (
     id TEXT PRIMARY KEY, interaction_id TEXT NOT NULL UNIQUE, binding_hash TEXT NOT NULL,
     csrf_hash TEXT NOT NULL, expires_at INTEGER NOT NULL, consumed INTEGER NOT NULL DEFAULT 0,
     document TEXT NOT NULL CHECK(json_valid(document))
   ) STRICT`,
+  `CREATE TABLE management_reviews (
+    id TEXT PRIMARY KEY, binding_hash TEXT NOT NULL, csrf_hash TEXT NOT NULL, expires_at INTEGER NOT NULL,
+    document TEXT NOT NULL CHECK(json_valid(document)), consumed INTEGER NOT NULL DEFAULT 0 CHECK(consumed IN (0,1)),
+    approved_capability TEXT REFERENCES person_write_capabilities(id_hash)
+  ) STRICT`,
+  `CREATE TABLE person_write_capabilities (
+    id_hash TEXT PRIMARY KEY, grant_id TEXT NOT NULL REFERENCES grants(id),
+    document TEXT NOT NULL CHECK(json_valid(document)), consumed INTEGER NOT NULL DEFAULT 0 CHECK(consumed IN (0,1))
+  ) STRICT`,
+  `CREATE TABLE staged_proposals (
+    id TEXT PRIMARY KEY, client_id TEXT NOT NULL, document TEXT NOT NULL CHECK(json_valid(document)),
+    state TEXT NOT NULL CHECK(state IN ('pending','applied','declined')), grant_id TEXT REFERENCES grants(id),
+    CHECK((state='applied')=(grant_id IS NOT NULL))
+  ) STRICT`,
+  `CREATE TRIGGER staged_proposal_immutable BEFORE UPDATE OF id,client_id,document ON staged_proposals BEGIN SELECT RAISE(ABORT,'immutable proposal'); END`,
+  `CREATE TRIGGER staged_proposal_consumed BEFORE UPDATE ON staged_proposals WHEN OLD.state<>'pending' BEGIN SELECT RAISE(ABORT,'consumed proposal'); END`,
   `CREATE TABLE policies (id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('rules','directives')), document TEXT NOT NULL CHECK(json_valid(document))) STRICT`,
   `CREATE TABLE audit_cursors (id_hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL, document TEXT NOT NULL CHECK(json_valid(document))) STRICT`,
   `CREATE TABLE human_sessions (id_hash TEXT PRIMARY KEY, csrf TEXT NOT NULL, expires_at INTEGER NOT NULL, authenticated INTEGER NOT NULL CHECK(authenticated IN (0,1))) STRICT`,

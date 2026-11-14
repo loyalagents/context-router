@@ -1,5 +1,6 @@
 /** Pure, bounded read selection and public projection. No transport or authority issuance. */
 import type { DatabaseSync } from "node:sqlite";
+import { withConfirmations, confirmed } from "./entry-state";
 import {
   denied,
   deniedCategories,
@@ -131,11 +132,11 @@ export function selectRead(
       ),
     );
     const classification = JSON.parse(row.classification);
-    const currentEntry = {
+    const currentEntry = withConfirmations(db, {
       ...current,
       classification,
       record: { ...current.record, status: row.status },
-    };
+    });
     if (!evaluateEntry(grant, currentEntry, request.purpose, rules, now))
       continue;
     if (
@@ -150,11 +151,11 @@ export function selectRead(
       .get(row.id, request.version ?? row.current_version);
     if (!version) continue;
     const document = JSON.parse(version.document);
-    const entry = {
+    const entry = withConfirmations(db, {
       ...document,
       classification,
       record: { ...document.record, status: row.status },
-    };
+    });
     if (!evaluateEntry(grant, entry, request.purpose, rules, now)) continue;
     // Category disclosure requires a detail that actually reaches this entry.
     const covered = new Set<string>(
@@ -241,7 +242,7 @@ export function project(
     classification,
     standing: {
       assurance: e.record.provenance.assertedBy.assurance,
-      confirmed: e.record.provenance.confirmations.length > 0,
+      confirmed: confirmed(e),
     },
     useUntil: new Date(useUntil).toISOString(),
     relationships: e.record.relationships

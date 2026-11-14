@@ -1,4 +1,4 @@
-/** C2's bounded policy vocabulary. No public query/get or inferred authority. */
+/** Bounded experiment policy vocabulary; authority is never inferred from login. */
 export const ACCESS_TYPE =
   "https://hcp.example/spec/authorization/context-access";
 export const CATEGORIES = {
@@ -15,6 +15,9 @@ export const PURPOSES = [
     description: "Plan the synthetic person's work",
   },
 ];
+export const CONTEXT_SCOPES = Object.keys(CATEGORIES).flatMap((category) =>
+  ["read", "write"].map((action) => `hcp:${category}:${action}`),
+);
 export class AuthorityError extends Error {
   constructor(
     readonly kind: "invalid" | "unauthenticated" | "denied" = "denied",
@@ -100,13 +103,14 @@ export function validateAccess(
   allowMissingPurposes = false,
 ): any[] {
   if (!Array.isArray(input) || !input.length || input.length > 20) invalid();
+  const writePurposes = new Set<string>();
   for (const d of input) {
     keys(d, ["type", "actions", "categories", "purposes", "narrowedTo"]);
     if (
       d.type !== ACCESS_TYPE ||
       !strings(d.actions) ||
-      d.actions.length !== 1 ||
-      d.actions[0] !== "read"
+      !d.actions.includes("read") ||
+      d.actions.some((action: string) => !["read", "write"].includes(action))
     )
       invalid();
     categories(d.categories);
@@ -129,6 +133,10 @@ export function validateAccess(
       }
       if (new Set(d.purposes.map((p) => p.code)).size !== d.purposes.length)
         invalid();
+      if (d.actions.includes("write")) {
+        if (d.purposes.length !== 1) invalid();
+        writePurposes.add(d.purposes[0].code);
+      }
     }
     if (d.narrowedTo !== undefined) {
       keys(d.narrowedTo, ["entryIds"]);
@@ -139,6 +147,7 @@ export function validateAccess(
         invalid();
     }
   }
+  if (writePurposes.size > 1) invalid();
   return structuredClone(input);
 }
 export function scopeAccess(scope: any): any[] {
@@ -146,12 +155,23 @@ export function scopeAccess(scope: any): any[] {
     invalid();
   const values = scope.split(" ");
   if (!strings(values)) invalid();
-  return values.map((s) => {
-    const match = /^hcp:([^:]+):read$/.exec(s);
+  const byCategory = new Map<string, Set<string>>();
+  for (const s of values) {
+    const match = /^hcp:([^:]+):(read|write)$/.exec(s);
     if (!match) invalid();
     categories([match[1]]);
-    return { type: ACCESS_TYPE, actions: ["read"], categories: [match[1]] };
-  });
+    const actions = byCategory.get(match[1]) ?? new Set<string>();
+    actions.add(match[2]);
+    byCategory.set(match[1], actions);
+  }
+  return validateAccess(
+    [...byCategory].map(([category, actions]) => ({
+      type: ACCESS_TYPE,
+      actions: ["read", "write"].filter((action) => actions.has(action)),
+      categories: [category],
+    })),
+    true,
+  );
 }
 export function matchesOperator(id: string, operators?: string[]): boolean {
   if (operators === undefined) return true;

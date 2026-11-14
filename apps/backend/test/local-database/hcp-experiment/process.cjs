@@ -11,6 +11,18 @@ const paths = { sandbox, root };
 const clock = () => Number(nowText);
 const say = (value) =>
   require("node:fs").writeSync(1, JSON.stringify(value) + "\n");
+if (boundary === "admission-reader") {
+  const { DatabaseSync } = require("node:sqlite");
+  const exec = DatabaseSync.prototype.exec;
+  let reported = false;
+  DatabaseSync.prototype.exec = function (sql) {
+    if (!reported && sql.includes("BEGIN EXCLUSIVE")) {
+      reported = true;
+      say({ ready: true });
+    }
+    return exec.call(this, sql);
+  };
+}
 if (boundary === "hot-before-commit") {
   // Force real SQLite page spill, not just a kill with all changes in memory.
   const { DatabaseSync } = require("node:sqlite");

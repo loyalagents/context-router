@@ -335,3 +335,233 @@ for (const approvedFixtures of [false, true])
       }
     },
   );
+
+test(
+  "C4 browser reviews write consent, person edits, model confirmation and revocation",
+  { timeout: 120_000 },
+  async (t) => {
+    const f = await fixture(t, { approveFixtures: true });
+    const good = await probeServer(t, f, f.tls.cert);
+    const context = await trustedBrowser(f, (c) =>
+      rejected(c, good, "ERR_CERT_AUTHORITY_INVALID"),
+    );
+    try {
+      const allowed = new Set([
+          f.issuer,
+          good.url,
+          new URL(f.redirects.a).origin,
+        ]),
+        unexpected = [];
+      await context.route("**/*", (route) => {
+        if (allowed.has(new URL(route.request().url()).origin))
+          return route.continue();
+        unexpected.push("unexpected-origin");
+        return route.abort();
+      });
+      const page = await context.newPage(),
+        verifier = secret(),
+        state = secret();
+      const access = [
+        {
+          type: ACCESS_TYPE,
+          actions: ["read", "write"],
+          categories: ["general_preferences"],
+          purposes: [PURPOSES[0]],
+        },
+      ];
+      await page.goto(
+        f.issuer +
+          "/auth?" +
+          new URLSearchParams({
+            client_id: "a",
+            redirect_uri: f.redirects.a,
+            response_type: "code",
+            response_mode: "form_post",
+            resource: f.issuer,
+            state,
+            code_challenge: createHash("sha256")
+              .update(verifier)
+              .digest("base64url"),
+            code_challenge_method: "S256",
+            authorization_details: JSON.stringify(access),
+          }),
+      );
+      await page.waitForSelector('body[data-stage="login"]');
+      await page.getByLabel("Human management credential").fill(f.human);
+      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await page.waitForSelector('body[data-stage="consent"]');
+      assert.match(await page.locator("body").innerText(), /write/);
+      await page.getByRole("button", { name: "Review exact grant" }).click();
+      await page.waitForSelector('body[data-stage="review"]');
+      await page
+        .getByRole("button", { name: "Approve access", exact: true })
+        .click();
+      await page.waitForURL(f.redirects.a);
+      const callback = JSON.parse(await page.locator("body").innerText());
+      assert.equal(callback.state, state);
+      const exchange = await f.request("/token", {
+        method: "POST",
+        form: {
+          grant_type: "authorization_code",
+          client_id: "a",
+          code: callback.code,
+          code_verifier: verifier,
+          redirect_uri: f.redirects.a,
+          resource: f.issuer,
+        },
+      });
+      assert.equal(exchange.status, 200);
+      const token = exchange.json.access_token,
+        grant = (await f.context("/v2/grants", token)).json.grants[0];
+      assert.deepEqual(grant.access[0].actions, ["read", "write"]);
+
+      await page.goto(f.issuer + "/manage/person/new");
+      await page.getByLabel("Your statement").fill("I prefer a short summary");
+      await page.getByRole("button", { name: "Review my statement" }).click();
+      await page.waitForSelector('body[data-stage="person-review"]');
+      assert.match(
+        await page.locator("body").innerText(),
+        /I prefer a short summary/,
+      );
+      await page
+        .getByRole("button", { name: "Approve and save my statement" })
+        .click();
+      await page.waitForSelector('body[data-stage="person-saved"]');
+      await page
+        .getByRole("link", { name: "Inspect the entry and history" })
+        .click();
+      await page.waitForSelector('body[data-stage="entry"]');
+      assert.equal(
+        JSON.parse(await page.locator("pre").first().innerText()).record
+          .provenance.assertedBy.assurance,
+        "authenticated",
+      );
+      await page
+        .getByRole("link", { name: "Edit as your own statement" })
+        .click();
+      await page
+        .getByLabel("Your statement")
+        .fill("I prefer a compact email summary");
+      await page.getByRole("button", { name: "Review my statement" }).click();
+      await page.waitForSelector('body[data-stage="person-review"]');
+      await page
+        .getByRole("button", { name: "Approve and save my statement" })
+        .click();
+      await page.waitForSelector('body[data-stage="person-saved"]');
+      await page
+        .getByRole("link", { name: "Inspect the entry and history" })
+        .click();
+      await page.waitForSelector('body[data-stage="entry"]');
+      assert.equal(
+        JSON.parse(await page.locator("pre").first().innerText()).record
+          .version,
+        2,
+      );
+      await page.getByRole("link", { name: "1", exact: true }).click();
+      assert.equal(
+        JSON.parse(await page.locator("pre").first().innerText()).content.value,
+        "I prefer a short summary",
+      );
+
+      const fact = (value) => ({
+        profile: "https://hcp.example/spec/profiles/general-context/2.0",
+        value: {
+          type: "urn:context-router:exclusive-fact:v1",
+          slot: "contact",
+          setting: "work",
+          value,
+        },
+      });
+      const body = {
+        schema: "https://hcp.example/spec/entry/2.0",
+        subject: grant.subject,
+        content: fact("email"),
+        classification: { categories: ["general_preferences"] },
+        assertion: { declarationType: "person-declared" },
+        record: { provenance: { source: "person-input" } },
+      };
+      assert.equal(
+        (await f.context("/v2/entries", token, { method: "POST", json: body }))
+          .status,
+        201,
+      );
+      const modelBody = {
+        ...body,
+        content: fact("phone"),
+        assertion: { declarationType: "model-inferred", confidence: "medium" },
+        record: {
+          provenance: {
+            assertedBy: {
+              id: "https://example.test/models/browser-fixture/v1",
+            },
+            source: "Controlled browser test; no model invocation",
+          },
+        },
+      };
+      const model = await f.context("/v2/entries", token, {
+        method: "POST",
+        json: modelBody,
+        headers: { "idempotency-key": "browser-model" },
+      });
+      assert.equal(model.status, 201);
+      const events = (await f.management(`/v2/audit?grantId=${grant.grantId}`))
+        .json.events;
+      const id = events.find(
+        (e) => e.eventType === "context.created" && e.participants.model,
+      ).entryId;
+      await page.goto(f.issuer + "/manage/entries/" + encodeURIComponent(id));
+      assert.equal(
+        JSON.parse(await page.locator("pre").first().innerText()).record.status,
+        "conflicted",
+      );
+      await page
+        .getByRole("button", { name: "Review confirmation", exact: true })
+        .click();
+      await page.waitForSelector('body[data-stage="entry-review"]');
+      const reviewed = await page.locator("body").innerText();
+      assert.ok(reviewed.includes("phone") && reviewed.includes("email"));
+      await page
+        .getByRole("button", { name: "Confirm this version", exact: true })
+        .click();
+      await page.waitForSelector('body[data-stage="entry"]');
+      const confirmed = JSON.parse(
+        await page.locator("pre").first().innerText(),
+      );
+      assert.equal(confirmed.record.status, "active");
+      assert.equal(confirmed.record.version, 1);
+      assert.equal(confirmed.assertion.declarationType, "model-inferred");
+      assert.equal(
+        confirmed.record.provenance.assertedBy.id,
+        "https://example.test/models/browser-fixture/v1",
+      );
+      assert.equal(
+        confirmed.record.provenance.confirmations.at(-1).disposition,
+        "confirmed",
+      );
+      assert.match(
+        await page.locator("body").innerText(),
+        /conflict\.resolved/,
+      );
+      await page.goto(
+        f.issuer + "/manage?grantId=" + encodeURIComponent(grant.grantId),
+      );
+      await page
+        .getByRole("button", { name: "Revoke grant", exact: true })
+        .click();
+      await page.waitForURL(f.issuer + "/manage?status=all");
+      assert.equal(
+        (
+          await f.context("/v2/entries", token, {
+            method: "POST",
+            json: modelBody,
+            headers: { "idempotency-key": "browser-model" },
+          })
+        ).status,
+        401,
+      );
+      assert.equal(unexpected.length, 0);
+    } finally {
+      await context.close();
+    }
+  },
+);
