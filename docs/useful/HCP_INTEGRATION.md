@@ -2,7 +2,7 @@
 
 - Status: relationship and design reference; source gaps documented, conformance not established
 - Read when: planning HCP alignment or changing an HCP mapping or conformance claim
-- Last reviewed: 2026-11-07
+- Last reviewed: 2026-11-13
 
 ## Relationship And Ownership
 
@@ -60,16 +60,32 @@ migration history may be deleted; preservation and historical conversion are not
 required. Start with a fresh HCP schema and isolated synthetic stores. Prioritize
 working HCP behavior quickly and concrete adoption findings that lead to reusable
 specification, guidance, or tooling fixes. Deployment/adapter support is a separate
-C0 decision, now settled as SQLite only. C1/C2 merged in PRs #204/#205. The product owner activated bounded C3 on
-November 9 from `6a7db3f5531557a489e6398945b352952e0220a0`: actual read-only
-HTTPS query/get, disclosure history and revoke in isolated synthetic stores.
-C2 final qualification is complete; its results are historical, not C3 evidence.
-C3's concrete plan was independently approved before implementation; the read
-journey and local adoption record are implemented. Final qualification is tracked
-in [draft PR #206](https://github.com/loyalagents/context-router/pull/206). C4–C8
-remain unactivated. See the canonical brief for ownership and exact evidence.
-Keep hcp-spec unchanged locally and remotely during C3; adoption findings/proposals
-stay here for orchestrator follow-through on explicit upstream authorization.
+C0 decision, now settled as SQLite only. C1–C3 merged in PRs #204–#206;
+[PR #206](https://github.com/loyalagents/context-router/pull/206) completed the
+isolated synthetic read-only HTTPS journey and its final qualification. The product
+owner activated bounded C4 on November 9 from
+`a1ad0c6c248af74f8353c26c7a86f2f43f1ee2ec`: writes and Memory Manager, beginning
+with retry/erasure and lifecycle-history decisions, then independent concrete-plan
+review before dependent tests-first implementation. The corrected C4 plan has
+conditional independent approval for its earlier contract. On November 11 Lucas
+selected invalidation of affected cached responses when permissions change,
+preserving duplicate suppression; the changed plan passed affected review.
+On November 13 Lucas selected original-request completion-only success after known
+commit, with separately authorized response data, and resumed C4. The changed plan
+passed affected review before dependent backend edits. Isolated person/model writes,
+typed conflicts, private proposal staging, retry and management history are implemented;
+focused tests and three TLS-verified browser journeys pass. Complete C4 review and
+exact-candidate CI remain pending. C3 results are historical,
+not C4 evidence. C5–C8 remain unactivated. See the canonical brief for ownership,
+decision dependencies and exact evidence.
+Lucas explicitly authorized an update to existing hcp-spec
+[#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594) for this permission decision; the comment is posted and verified.
+The focused committed-write proposal is published in
+[#36](https://github.com/loyalagents/hcp-spec/issues/36), with research evidence and
+the slow-commit question explicitly excluded. This is a selected application
+experiment, not conformance to the pin.
+Keep specification sources, the sibling checkout and the target revision unchanged;
+other adoption proposals remain local until authorized.
 
 [Open Draft 3 questions](../plans/active/hcp-alignment/spec-questions.md)
 stay in Context Router while the upgrade tests the current HCP specification,

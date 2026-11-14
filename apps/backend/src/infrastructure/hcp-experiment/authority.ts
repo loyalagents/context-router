@@ -7,6 +7,22 @@ import {
 } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { insertFixtures } from "./seed";
+import * as conflicts from "./conflict-graph";
+import { relationships } from "./relationships";
+import { controlledProposal } from "./producer";
+import {
+  applyMutation,
+  assertNewPurpose,
+  canDiscloseMutation,
+  COMPLETION_ONLY,
+  invalidateResponses,
+  mutationDocument,
+  mutationPurpose,
+  permissionRevision,
+  storedEntry,
+  WriteConflict,
+  type WriteOperation,
+} from "./writes";
 import {
   readRequest,
   selectRead,
@@ -51,7 +67,7 @@ export interface AuthorizationConfiguration {
 /** Infrastructure-only synchronous capability. It never leaves the experiment store. */
 export interface AuthorityKernel {
   read<T>(operation: (db: DatabaseSync) => T): T;
-  write<T>(operation: (db: DatabaseSync) => T): T;
+  write<T>(operation: (db: DatabaseSync) => T, beforeCommit?: () => void): T;
   now(): number;
   append(db: DatabaseSync, event: any): void;
 }
@@ -72,6 +88,17 @@ function assembled(row: any): any {
 }
 function grantRow(db: DatabaseSync, id: string): any {
   return db.prepare("SELECT * FROM grants WHERE id=?").get(id);
+}
+function entrySequence(db: DatabaseSync, id: string): number {
+  return Number(
+    db
+      .prepare(
+        `SELECT coalesce(max(sequence),0) n FROM audit_events
+    WHERE json_extract(event,'$.entryId')=? OR json_extract(event,'$.relatedEntryId')=?
+      OR EXISTS (SELECT 1 FROM json_each(audit_events.event,'$.data.relatedTransitions') t WHERE json_extract(t.value,'$.id')=?)`,
+      )
+      .get(id, id, id).n,
+  );
 }
 function policies(db: DatabaseSync, kind: string): any[] {
   return db
@@ -136,6 +163,7 @@ export function expireGrants(
     .all(now)) {
     const grant = assembled(row);
     db.prepare("UPDATE grants SET status='expired' WHERE id=?").run(row.id);
+    invalidateResponses(db, String(row.id));
     append(
       event(
         db,
@@ -150,6 +178,16 @@ export function expireGrants(
 }
 
 export class AuthorizationRepository {
+  private readonly writes = new WeakMap<
+    object,
+    {
+      credential: string;
+      grantId: string;
+      original: boolean;
+      binding: any;
+      response: { status: number; bytes: string };
+    }
+  >();
   private readonly reads = new WeakMap<
     object,
     {
@@ -235,10 +273,11 @@ export class AuthorizationRepository {
           );
       });
   }
-  private management(db: DatabaseSync, credential: string): void {
+  private management(db: DatabaseSync, credential: string): number {
     if (typeof credential !== "string")
       throw new AuthorityError("unauthenticated");
-    if (equal(String(settings(db).human_verifier), hash(credential))) return;
+    if (equal(String(settings(db).human_verifier), hash(credential)))
+      return Infinity;
     const session = db
       .prepare("SELECT * FROM human_sessions WHERE id_hash=?")
       .get(hash(credential));
@@ -247,6 +286,7 @@ export class AuthorizationRepository {
       Number(session.expires_at) <= this.kernel.now()
     )
       throw new AuthorityError("unauthenticated");
+    return Number(session.expires_at);
   }
   isManagement(credential: string): boolean {
     return this.kernel.read((db) => {
@@ -833,7 +873,9 @@ export class AuthorizationRepository {
         scopes: [
           ...new Set(
             reviewed.access.flatMap((d: any) =>
-              d.categories.map((c: string) => `hcp:${c}:read`),
+              d.categories.flatMap((c: string) =>
+                d.actions.map((action: string) => `hcp:${c}:${action}`),
+              ),
             ),
           ),
         ],
@@ -927,6 +969,626 @@ export class AuthorizationRepository {
       grant: this.active(db, token.grantId, token.clientId),
       tokenUntil: Math.min(Number(row.expires_at), token.exp * 1000),
     };
+  }
+  /** Commit before returning this private, one-use original-channel capability. */
+  stageSyntheticProposal(
+    credential: string,
+    clientId: string,
+    input: any,
+  ): any {
+    let until = Infinity;
+    return this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        if (!this.configuration.clients.some((c) => c.id === clientId))
+          denied();
+        const document = controlledProposal(input, this.kernel.now()),
+          id = uuid();
+        db.prepare(
+          "INSERT INTO staged_proposals VALUES(?,?,?,'pending',NULL)",
+        ).run(id, clientId, JSON.stringify(document));
+        return { id, clientId, state: "pending", ...document };
+      },
+      () => {
+        if (this.kernel.now() >= until) denied();
+      },
+    );
+  }
+  stagedProposals(credential: string): any[] {
+    return this.kernel.read((db) => {
+      this.management(db, credential);
+      return db
+        .prepare("SELECT * FROM staged_proposals ORDER BY id")
+        .all()
+        .map((row) => ({
+          id: row.id,
+          clientId: row.client_id,
+          state: row.state,
+          ...parse(row.document),
+        }));
+    });
+  }
+  declineSyntheticProposal(credential: string, id: string): void {
+    let until = Infinity;
+    this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        if (
+          !privateId(id) ||
+          !db
+            .prepare(
+              "SELECT id FROM staged_proposals WHERE id=? AND state='pending'",
+            )
+            .get(id)
+        )
+          denied();
+        db.prepare(
+          "UPDATE staged_proposals SET state='declined' WHERE id=?",
+        ).run(id);
+      },
+      () => {
+        if (this.kernel.now() >= until) denied();
+      },
+    );
+  }
+  applySyntheticProposal(credential: string, id: string, key: string): object {
+    if (!privateId(id) || typeof key !== "string" || !key) invalid();
+    const input = this.kernel.read((db) => {
+      const { grant } = this.readAuthority(db, credential);
+      const proposal = db
+        .prepare("SELECT * FROM staged_proposals WHERE id=?")
+        .get(id);
+      if (
+        !proposal ||
+        proposal.client_id !== grant.client.id ||
+        proposal.state === "declined"
+      )
+        denied();
+      return { ...parse(proposal.document).request, subject: grant.subject };
+    });
+    return this.commitMutation(
+      credential,
+      "create",
+      input,
+      JSON.stringify(input),
+      key,
+      undefined,
+      undefined,
+      id,
+    );
+  }
+  commitWrite(
+    credential: string,
+    operation: WriteOperation,
+    input: any,
+    raw: string,
+    key?: string,
+    ref?: string,
+  ): object {
+    return this.commitMutation(credential, operation, input, raw, key, ref);
+  }
+  commitPersonWrite(
+    credential: string,
+    capability: string,
+    operation: WriteOperation,
+    input: any,
+    raw: string,
+    key?: string,
+    entryId?: string,
+  ): object {
+    return this.commitMutation(
+      credential,
+      operation,
+      input,
+      raw,
+      key,
+      entryId,
+      { idHash: hash(capability) },
+    );
+  }
+  private commitMutation(
+    credential: string,
+    operation: WriteOperation,
+    input: any,
+    raw: string,
+    key?: string,
+    ref?: string,
+    capability?: { idHash: string },
+    proposalId?: string,
+  ): object {
+    if (
+      !["create", "revise", "withdraw"].includes(operation) ||
+      typeof raw !== "string" ||
+      (key !== undefined &&
+        (typeof key !== "string" || !/^[\x21-\x7e]{1,200}$/.test(key)))
+    )
+      invalid();
+    try {
+      const decoded = JSON.parse(raw);
+      if (JSON.stringify(decoded) !== JSON.stringify(input)) invalid();
+      input = decoded;
+    } catch (error) {
+      if (error instanceof SyntaxError) invalid();
+      throw error;
+    }
+    let commitUntil = Infinity;
+    const committed = this.kernel.write(
+      (db) => {
+        const now = this.kernel.now();
+        let grant: any, tokenUntil: number, cap: any;
+        const capacity = capability === undefined ? "context" : "management";
+        if (capability === undefined)
+          ({ grant, tokenUntil } = this.readAuthority(db, credential));
+        else {
+          tokenUntil = this.management(db, credential);
+          cap = db
+            .prepare("SELECT * FROM person_write_capabilities WHERE id_hash=?")
+            .get(capability.idHash);
+          if (!cap) denied();
+          grant = this.active(db, cap.grant_id);
+        }
+        const proposal: any =
+          proposalId &&
+          db
+            .prepare("SELECT * FROM staged_proposals WHERE id=?")
+            .get(proposalId);
+        if (
+          proposalId &&
+          (!proposal ||
+            proposal.client_id !== grant.client.id ||
+            proposal.state === "declined" ||
+            operation !== "create" ||
+            JSON.stringify({
+              ...parse(proposal.document).request,
+              subject: grant.subject,
+            }) !== raw)
+        )
+          denied();
+        let current: any;
+        if (operation !== "create") {
+          const row =
+            capacity === "management"
+              ? { entry_id: ref }
+              : db
+                  .prepare(
+                    "SELECT entry_id FROM grant_refs WHERE grant_id=? AND ref=?",
+                  )
+                  .get(grant.grantId, ref ?? "");
+          if (!row) denied();
+          current = storedEntry(db, String(row.entry_id));
+          if (!current) denied();
+        }
+        const purpose = mutationPurpose(
+          grant,
+          current?.classification ?? input?.classification,
+          capacity === "management" ? [] : policies(db, "rules"),
+          current,
+        );
+        const fingerprint = createHmac(
+          "sha256",
+          parse(settings(db).secrets).cursorKey,
+        )
+          .update(raw)
+          .digest("hex");
+        const keyHash =
+          key === undefined
+            ? undefined
+            : createHmac("sha256", parse(settings(db).secrets).cursorKey)
+                .update(JSON.stringify([capacity, grant.client.id, key]))
+                .digest("hex");
+        const target = operation === "create" ? "collection" : ref;
+        if (cap) {
+          const permitted = parse(cap.document);
+          if (
+            permitted.operation !== operation ||
+            permitted.target !== target ||
+            permitted.fingerprint !== fingerprint
+          )
+            denied();
+        }
+        const existing: any =
+          keyHash &&
+          db
+            .prepare("SELECT * FROM mutation_receipts WHERE key_hash=?")
+            .get(keyHash);
+        if (existing) {
+          if (existing.grant_id !== grant.grantId) denied();
+          const binding = parse(existing.binding);
+          if (existing.invalidated || !existing.response) denied();
+          this.writeRepresentation(
+            db,
+            credential,
+            grant.grantId,
+            binding,
+            false,
+          );
+          if (
+            binding.operation !== operation ||
+            binding.target !== target ||
+            binding.fingerprint !== fingerprint ||
+            (binding.proposalId ?? null) !== (proposalId ?? null)
+          )
+            throw new WriteConflict("idempotency-conflict");
+          const response = parse(existing.response);
+          return {
+            credential,
+            grantId: grant.grantId,
+            original: false,
+            binding,
+            response,
+          };
+        }
+        if (cap?.consumed) denied();
+        if (
+          cap &&
+          current &&
+          parse(cap.document).snapshot !==
+            this.confirmationSnapshot(db, current.id)
+        )
+          denied();
+        if (proposal && proposal.state !== "pending") denied();
+        if (
+          current &&
+          operation !== "withdraw" &&
+          !["active", "conflicted", "expired", "deprecated"].includes(
+            current.record.status,
+          )
+        )
+          denied();
+        if (
+          capacity === "context" &&
+          current &&
+          operation === "revise" &&
+          current.record.provenance.confirmations.at(-1)?.disposition ===
+            "rejected"
+        )
+          denied();
+        const document = mutationDocument(
+          db,
+          grant,
+          operation,
+          input,
+          now,
+          current,
+          capacity === "management",
+        );
+        assertNewPurpose(document, purpose);
+        if (
+          operation === "revise" &&
+          input.expectedVersion !== current.record.version
+        )
+          throw new WriteConflict("version-conflict");
+        const assertions =
+          operation === "withdraw"
+            ? []
+            : relationships(
+                db,
+                grant,
+                document,
+                input,
+                purpose,
+                capacity === "management" ? [] : policies(db, "rules"),
+                now,
+                capacity === "management",
+              );
+        const relationshipTargetsBefore = [
+          ...new Set<string>(
+            [...assertions, ...(current?.record.relationships ?? [])].map(
+              (r) => r.target,
+            ),
+          ),
+        ].map((id) => ({
+          id,
+          before: storedEntry(db, id)?.record.status ?? null,
+        }));
+        applyMutation(db, operation, document, current);
+        const graphActor = {
+          role: "hcp-provider",
+          id: metadata(db).provider_id,
+        };
+        const graphChanges: any[] = [];
+        const graphEmit = (change: any) => {
+          if (change.eventType)
+            this.appendConflict(db, change, now, graphActor, grant);
+          else graphChanges.push(change);
+        };
+        conflicts.evaluateWrite(
+          db,
+          (document ?? current).id,
+          current,
+          now,
+          graphActor,
+          graphEmit,
+        );
+        const assertionActor = {
+          role:
+            capacity === "management" ? "management-client" : "context-client",
+          id: grant.client.id,
+        };
+        conflicts.assertRelationships(
+          db,
+          (document ?? current).id,
+          assertions,
+          now,
+          assertionActor,
+          (change) => {
+            if (change.eventType)
+              this.appendConflict(db, change, now, assertionActor, grant);
+            else graphChanges.push(change);
+          },
+        );
+        const written = storedEntry(db, (document ?? current).id);
+        db.prepare(
+          "INSERT INTO grant_refs VALUES(?,?,?) ON CONFLICT(grant_id,entry_id) DO NOTHING",
+        ).run(grant.grantId, written.id, "r_" + random());
+        const resultRef = String(
+          db
+            .prepare(
+              "SELECT ref FROM grant_refs WHERE grant_id=? AND entry_id=?",
+            )
+            .get(grant.grantId, written.id).ref,
+        );
+        const copyUntil = Math.min(
+          now + this.copyLifetimeMs,
+          written.assertion.validUntil == null
+            ? Infinity
+            : Date.parse(written.assertion.validUntil),
+        );
+        const response = {
+          status: operation === "withdraw" ? 200 : 201,
+          bytes: JSON.stringify(
+            operation === "withdraw"
+              ? { ref: resultRef, status: "deleted", timestamp: iso(now) }
+              : capacity === "management"
+                ? written
+                : project(
+                    {
+                      entry: written,
+                      current: written,
+                      categories: written.classification.categories,
+                    },
+                    new Map([[written.id, resultRef]]),
+                    copyUntil,
+                  ),
+          ),
+        };
+        const binding = {
+          operation,
+          capacity,
+          target,
+          fingerprint,
+          entryId: written.id,
+          version: written.record.version,
+          purpose,
+          copyUntil,
+          permissionRevision: permissionRevision(db, grant.grantId),
+          resultStatus: written.record.status,
+          causalSequence: 0,
+          proposalId: proposalId ?? null,
+        };
+        const audit = event(
+          db,
+          operation === "create"
+            ? "context.created"
+            : operation === "revise"
+              ? "context.revised"
+              : "context.withdrawn",
+          now,
+          grant,
+          {
+            role:
+              capacity === "management"
+                ? "management-client"
+                : "context-client",
+            id: grant.client.id,
+          },
+          {
+            version: written.record.version,
+            ...(input.reason === undefined ? {} : { reason: input.reason }),
+            previousStatus: current?.record.status ?? null,
+            status:
+              operation === "withdraw" ? "deleted" : written.record.status,
+            release: "attempted",
+            receipt: "unconfirmed",
+            relationships: {
+              before: current?.record.relationships ?? [],
+              after: written.record.relationships,
+            },
+            relatedTransitions: [
+              ...relationshipTargetsBefore.map((t) => ({
+                ...t,
+                after: storedEntry(db, t.id)?.record.status ?? null,
+              })),
+              ...conflicts.causalTransitions(graphChanges),
+            ],
+            graphChanges,
+            ...(proposalId ? { stagedProposal: proposalId } : {}),
+          },
+        );
+        audit.entryId = written.id;
+        audit.categories = written.classification.categories;
+        audit.purpose = purpose;
+        if (
+          operation !== "withdraw" &&
+          written.assertion.declarationType === "model-inferred"
+        )
+          audit.participants.model = {
+            id: written.record.provenance.assertedBy.id,
+          };
+        if (operation !== "withdraw" && capacity === "context")
+          audit.disclosed = [
+            {
+              entryId: written.id,
+              version: written.record.version,
+              useUntil: iso(copyUntil),
+            },
+          ];
+        this.kernel.append(db, audit);
+        binding.causalSequence = entrySequence(db, written.id);
+        if (proposalId)
+          db.prepare(
+            "UPDATE staged_proposals SET state='applied',grant_id=? WHERE id=?",
+          ).run(grant.grantId, proposalId);
+        if (cap)
+          db.prepare(
+            "UPDATE person_write_capabilities SET consumed=1 WHERE id_hash=?",
+          ).run(capability!.idHash);
+        if (keyHash)
+          db.prepare("INSERT INTO mutation_receipts VALUES(?,?,?,?,?,0)").run(
+            keyHash,
+            grant.client.id,
+            grant.grantId,
+            JSON.stringify(binding),
+            JSON.stringify(response),
+          );
+        if (
+          this.kernel.now() >= Math.min(tokenUntil, Date.parse(grant.expiresAt))
+        )
+          throw new AuthorityError("unauthenticated");
+        if (
+          operation !== "withdraw" &&
+          document.assertion.validUntil != null &&
+          this.kernel.now() >= Date.parse(document.assertion.validUntil)
+        )
+          denied();
+        commitUntil = Math.min(
+          tokenUntil,
+          Date.parse(grant.expiresAt),
+          operation !== "withdraw" && document.assertion.validUntil != null
+            ? Date.parse(document.assertion.validUntil)
+            : Infinity,
+        );
+        return {
+          credential,
+          grantId: grant.grantId,
+          original: true,
+          binding,
+          response,
+        };
+      },
+      () => {
+        if (this.kernel.now() >= commitUntil)
+          throw new AuthorityError("unauthenticated");
+      },
+    );
+    const ticket = Object.freeze({});
+    this.writes.set(ticket, committed);
+    return ticket;
+  }
+  private writeRepresentation(
+    db: DatabaseSync,
+    credential: string,
+    grantId: string,
+    binding: any,
+    original: boolean,
+  ): number {
+    const managed = binding.capacity === "management";
+    const { grant, tokenUntil } = managed
+      ? {
+          tokenUntil: this.management(db, credential),
+          grant: this.active(db, grantId),
+        }
+      : this.readAuthority(db, credential);
+    const now = this.kernel.now();
+    if (
+      grant.grantId !== grantId ||
+      permissionRevision(db, grantId) !== binding.permissionRevision
+    )
+      denied();
+    const current = storedEntry(db, binding.entryId),
+      selected = storedEntry(db, binding.entryId, binding.version);
+    if (!current || !selected) denied();
+    if (managed) return Math.min(tokenUntil, Date.parse(grant.expiresAt));
+    if (binding.operation !== "withdraw") {
+      // Only this transaction's immediate result may survive its own quarantine.
+      const ownQuarantine =
+        original &&
+        binding.resultStatus === "conflicted" &&
+        current.record.version === binding.version &&
+        current.record.status === "conflicted" &&
+        entrySequence(db, binding.entryId) === binding.causalSequence;
+      for (const entry of [current, selected])
+        if (
+          !canDiscloseMutation(
+            grant,
+            entry,
+            binding.purpose,
+            policies(db, "rules"),
+            now,
+            binding.operation,
+            ownQuarantine,
+          )
+        )
+          denied();
+      if (original && binding.copyUntil <= now) denied();
+      const covered = grant.access
+        .filter(
+          (d: any) =>
+            d.actions.includes("read") &&
+            d.purposes.some((p: any) => p.code === binding.purpose) &&
+            (!d.narrowedTo || d.narrowedTo.entryIds.includes(binding.entryId)),
+        )
+        .flatMap((d: any) => d.categories);
+      if (
+        selected.classification.categories.some(
+          (c: string) => !covered.includes(c),
+        )
+      )
+        denied();
+    } else {
+      // The withdrawal acknowledgement describes a historical operation, not a context read.
+      if (
+        !canDiscloseMutation(
+          grant,
+          current,
+          binding.purpose,
+          policies(db, "rules"),
+          now,
+          "withdraw",
+        )
+      )
+        denied();
+    }
+    return Math.min(
+      tokenUntil,
+      Date.parse(grant.expiresAt),
+      ...(binding.operation === "withdraw"
+        ? []
+        : [current, selected].map((e) =>
+            e.assertion.validUntil == null
+              ? Infinity
+              : Date.parse(e.assertion.validUntil),
+          )),
+      original && binding.operation !== "withdraw"
+        ? binding.copyUntil
+        : Infinity,
+    );
+  }
+  releaseWrite(
+    ticket: object,
+    handoff: (status: number, bytes: string) => void,
+  ): void {
+    const committed = this.writes.get(ticket);
+    if (!committed) denied();
+    this.writes.delete(ticket);
+    let bytes = committed.response.bytes;
+    try {
+      const until = this.kernel.read((db) =>
+        this.writeRepresentation(
+          db,
+          committed.credential,
+          committed.grantId,
+          committed.binding,
+          committed.original,
+        ),
+      );
+      if (this.kernel.now() >= until)
+        throw new AuthorityError("unauthenticated");
+    } catch (error) {
+      if (!committed.original) throw error;
+      bytes = COMPLETION_ONLY;
+    }
+    handoff(committed.response.status, bytes);
   }
   /** Private preparation ticket; HTTP may await here, but never inside releaseRead. */
   prepareRead(
@@ -1107,6 +1769,7 @@ export class AuthorizationRepository {
     if (!row) denied();
     if (row.status !== "active") return;
     db.prepare("UPDATE grants SET status='revoked' WHERE id=?").run(id);
+    invalidateResponses(db, id);
     this.kernel.append(
       db,
       event(db, "grant.revoked", this.kernel.now(), assembled(row), initiator),
@@ -1137,6 +1800,8 @@ export class AuthorizationRepository {
           role: "management-client",
           id: "urn:context-router:synthetic-management",
         };
+      const previousRules = policies(db, "rules");
+      const previousDirectives = policies(db, "directives");
       for (const kind of ["rules", "directives"]) {
         for (const p of policies(db, kind))
           this.kernel.append(
@@ -1186,10 +1851,25 @@ export class AuthorizationRepository {
       for (const row of db
         .prepare("SELECT * FROM grants WHERE status='active'")
         .all()) {
-        const grant = assembled(row),
-          reached = [
-            ...new Set<string>(grant.access.flatMap((d: any) => d.categories)),
-          ];
+        const grant = assembled(row);
+        // Standing rules govern Context Clients, not the person's own governance capacity.
+        if (grant.client.id === "urn:context-router:synthetic-management")
+          continue;
+        const reached = [
+          ...new Set<string>(grant.access.flatMap((d: any) => d.categories)),
+        ];
+        const signature = (rules: any[], directives: any[]) =>
+          JSON.stringify({
+            denied: deniedCategories(grant.client, reached, rules).sort(),
+            directives: matchingDirectives(grant, directives).map(
+              ({ directiveId, createdAt, setBy, ...d }: any) => d,
+            ),
+          });
+        if (
+          signature(previousRules, previousDirectives) !==
+          signature(rules, policies(db, "directives"))
+        )
+          invalidateResponses(db, grant.grantId);
         if (
           deniedCategories(grant.client, reached, rules).length ===
           reached.length
@@ -1199,11 +1879,637 @@ export class AuthorizationRepository {
       return { rules, directives: policies(db, "directives") };
     });
   }
+  private appendConflict(
+    db: DatabaseSync,
+    change: any,
+    now: number,
+    actor: any,
+    grant: any = null,
+  ): void {
+    const audit = event(db, change.eventType, now, grant, actor, change.data);
+    audit.entryId = change.entryId;
+    audit.relatedEntryId = change.relatedEntryId;
+    audit.categories = [
+      ...new Set(
+        [change.entryId, change.relatedEntryId].flatMap(
+          (id) => storedEntry(db, id)?.classification.categories ?? [],
+        ),
+      ),
+    ];
+    this.kernel.append(db, audit);
+  }
+  managementEntries(credential: string): any[] {
+    return this.kernel.read((db) => {
+      this.management(db, credential);
+      return db
+        .prepare("SELECT id FROM entries ORDER BY id")
+        .all()
+        .map((row) => storedEntry(db, String(row.id)));
+    });
+  }
+  managementEntry(credential: string, id: string, version?: number): any {
+    if (
+      !privateId(id) ||
+      (version !== undefined && (!Number.isSafeInteger(version) || version < 1))
+    )
+      invalid();
+    return this.kernel.read((db) => {
+      this.management(db, credential);
+      const entry = storedEntry(db, id, version),
+        current = storedEntry(db, id);
+      if (!entry || !current) denied();
+      return {
+        entry,
+        currentVersion: current.record.version,
+        conflicts: conflicts.snapshot(db, id),
+        versions: db
+          .prepare(
+            "SELECT version FROM entry_versions WHERE entry_id=? ORDER BY version",
+          )
+          .all(id)
+          .map((row) => Number(row.version)),
+        historyLabel:
+          "Selected content version with current lifecycle and classification",
+      };
+    });
+  }
+  confirmEntry(credential: string, id: string, input: any): any {
+    let authorityUntil = Infinity,
+      entryUntil = Infinity;
+    const committed = this.kernel.write(
+      (db) => {
+        authorityUntil = this.management(db, credential);
+        entryUntil = this.confirmationDeadline(db, id);
+        const result = this.confirmEntryIn(db, id, input);
+        return result;
+      },
+      () => {
+        if (this.kernel.now() >= authorityUntil)
+          throw new AuthorityError("unauthenticated");
+        if (this.kernel.now() >= entryUntil) denied();
+      },
+    );
+    return this.kernel.now() >= authorityUntil
+      ? JSON.parse(COMPLETION_ONLY)
+      : committed;
+  }
+  private confirmationInput(id: string, input: any): void {
+    keys(input, ["expectedVersion", "disposition"]);
+    if (
+      !privateId(id) ||
+      !Number.isSafeInteger(input.expectedVersion) ||
+      input.expectedVersion < 1 ||
+      !["confirmed", "rejected"].includes(input.disposition)
+    )
+      invalid();
+  }
+  private confirmEntryIn(db: DatabaseSync, id: string, input: any): any {
+    this.confirmationInput(id, input);
+    const current = storedEntry(db, id);
+    if (!current) denied();
+    if (current.record.version !== input.expectedVersion)
+      throw new WriteConflict("version-conflict");
+    if (!["active", "conflicted"].includes(current.record.status)) denied();
+    const relatedBefore = current.record.relationships.map((r: any) => ({
+      id: r.target,
+      before: storedEntry(db, r.target)?.record.status ?? null,
+    }));
+    const now = this.kernel.now(),
+      confirmation = {
+        disposition: input.disposition,
+        confirmedBy: { id: metadata(db).subject_id },
+        confirmedAt: iso(now),
+      };
+    db.prepare(
+      "INSERT INTO confirmations(entry_id,version,document) VALUES(?,?,?)",
+    ).run(id, current.record.version, JSON.stringify(confirmation));
+    const initiator = {
+      role: "management-client",
+      id: "urn:context-router:synthetic-management",
+    };
+    const graphChanges: any[] = [];
+    conflicts.resolveEntry(
+      db,
+      id,
+      input.disposition,
+      now,
+      initiator,
+      (change) => {
+        if (change.eventType) this.appendConflict(db, change, now, initiator);
+        else graphChanges.push(change);
+      },
+      current,
+    );
+    const audit = event(db, "context.confirmed", now, null, initiator, {
+      version: current.record.version,
+      ...confirmation,
+      previousStatus: current.record.status,
+      status: storedEntry(db, id).record.status,
+      relationships: {
+        before: current.record.relationships,
+        after: storedEntry(db, id).record.relationships,
+      },
+      relatedTransitions: [
+        ...relatedBefore.map((t: any) => ({
+          ...t,
+          after: storedEntry(db, t.id)?.record.status ?? null,
+        })),
+        ...conflicts.causalTransitions(graphChanges),
+      ],
+      graphChanges,
+    });
+    audit.entryId = id;
+    audit.categories = current.classification.categories;
+    this.kernel.append(db, audit);
+    if (input.disposition === "rejected") {
+      db.prepare("UPDATE entries SET status='deleted' WHERE id=?").run(id);
+      if (current.record.status !== "conflicted") {
+        const withdrawal = event(
+          db,
+          "context.withdrawn",
+          now,
+          null,
+          initiator,
+          {
+            version: current.record.version,
+            reason: "Person chose Reject and withdraw",
+            previousStatus: current.record.status,
+            status: "deleted",
+          },
+        );
+        withdrawal.entryId = id;
+        withdrawal.categories = current.classification.categories;
+        this.kernel.append(db, withdrawal);
+      }
+    }
+    return storedEntry(db, id);
+  }
+  private confirmationSnapshot(db: DatabaseSync, id: string): string {
+    const current = storedEntry(db, id);
+    if (!current) denied();
+    return hash(
+      JSON.stringify({ entry: current, conflicts: conflicts.snapshot(db, id) }),
+    );
+  }
+  private confirmationDeadline(db: DatabaseSync, id: string): number {
+    const current = storedEntry(db, id);
+    if (!current) denied();
+    // A live peer expiring changes the reviewed graph. Already-expired retained
+    // causes remain resolvable after reconciliation and must not block forever.
+    return Math.min(
+      Infinity,
+      ...[current, ...conflicts.snapshot(db, id).map((r) => r.peer)]
+        .filter((e) => ["active", "conflicted"].includes(e.record.status))
+        .map((e) =>
+          e.assertion.validUntil == null
+            ? Infinity
+            : Date.parse(e.assertion.validUntil),
+        ),
+    );
+  }
+  private personGrant(
+    db: DatabaseSync,
+    input: any,
+    target: any,
+    expiresAt: number,
+  ): any {
+    const subject = { id: metadata(db).subject_id };
+    const categories =
+      target?.classification.categories ?? input.classification?.categories;
+    return {
+      grantId: uuid(),
+      subject,
+      authorizingPrincipal: subject,
+      requestingParty: {
+        type: "person",
+        id: subject.id,
+        name: "Synthetic context subject",
+      },
+      client: {
+        id: "urn:context-router:synthetic-management",
+        name: "Synthetic person editor",
+        operator: {
+          id: "https://example.test/operators/synthetic",
+          name: "Synthetic fixture operator",
+        },
+      },
+      access: [
+        {
+          type: ACCESS_TYPE,
+          actions: ["read", "write"],
+          categories,
+          purposes: [PURPOSES[0]],
+          ...(target ? { narrowedTo: { entryIds: [target.id] } } : {}),
+        },
+      ],
+      scopes: (categories ?? []).flatMap((c: string) =>
+        ["read", "write"].map((action) => `hcp:${c}:${action}`),
+      ),
+      grantType: "temporary",
+      issuedAt: iso(this.kernel.now()),
+      expiresAt: iso(expiresAt),
+      status: "active",
+    };
+  }
+  reviewPersonWrite(
+    credential: string,
+    operation: "create" | "revise",
+    input: any,
+    target: string | undefined,
+    binding: string,
+  ): any {
+    if (
+      !["create", "revise"].includes(operation) ||
+      typeof binding !== "string" ||
+      !binding ||
+      (operation === "create" ? target !== undefined : !privateId(target))
+    )
+      invalid();
+    return this.kernel.write((db) => {
+      this.management(db, credential);
+      const current = target ? storedEntry(db, target) : undefined;
+      if (target && !current) denied();
+      if (
+        current &&
+        (!["active", "conflicted", "expired", "deprecated"].includes(
+          current.record.status,
+        ) ||
+          input.expectedVersion !== current.record.version)
+      )
+        denied();
+      const expiresAt = this.kernel.now() + 600_000,
+        grant = this.personGrant(db, input, current, expiresAt);
+      const document = mutationDocument(
+        db,
+        grant,
+        operation,
+        input,
+        this.kernel.now(),
+        current,
+        true,
+      );
+      assertNewPurpose(
+        document,
+        mutationPurpose(grant, document.classification, [], current),
+      );
+      const reviewId = random(),
+        csrf = random(),
+        reviewed = {
+          kind: "person-write",
+          operation,
+          input,
+          target: target ?? null,
+          snapshot: target ? this.confirmationSnapshot(db, target) : null,
+        };
+      db.prepare(
+        "INSERT INTO management_reviews(id,binding_hash,csrf_hash,expires_at,document,consumed) VALUES(?,?,?,?,?,0)",
+      ).run(
+        reviewId,
+        hash(binding),
+        hash(csrf),
+        expiresAt,
+        JSON.stringify(reviewed),
+      );
+      return {
+        reviewId,
+        csrf,
+        request: structuredClone(input),
+        operation,
+        target,
+        expiresAt: iso(expiresAt),
+      };
+    });
+  }
+  approvePersonWrite(
+    credential: string,
+    reviewId: string,
+    csrf: string,
+    binding: string,
+  ): string {
+    let authorityUntil = Infinity,
+      commitUntil = Infinity;
+    return this.kernel.write(
+      (db) => {
+        authorityUntil = this.management(db, credential);
+        const row: any = db
+          .prepare("SELECT * FROM management_reviews WHERE id=?")
+          .get(reviewId);
+        if (
+          !row ||
+          row.consumed ||
+          row.expires_at <= this.kernel.now() ||
+          !equal(row.csrf_hash, hash(csrf)) ||
+          !equal(row.binding_hash, hash(binding))
+        )
+          denied();
+        const reviewed = parse(row.document);
+        if (
+          reviewed.kind !== "person-write" ||
+          (reviewed.target &&
+            reviewed.snapshot !==
+              this.confirmationSnapshot(db, reviewed.target))
+        )
+          denied();
+        const current = reviewed.target
+          ? storedEntry(db, reviewed.target)
+          : undefined;
+        const grant = this.personGrant(
+          db,
+          reviewed.input,
+          current,
+          Number(row.expires_at),
+        );
+        const document = mutationDocument(
+          db,
+          grant,
+          reviewed.operation,
+          reviewed.input,
+          this.kernel.now(),
+          current,
+          true,
+        );
+        commitUntil = Math.min(
+          authorityUntil,
+          Number(row.expires_at),
+          document.assertion.validUntil == null
+            ? Infinity
+            : Date.parse(document.assertion.validUntil),
+        );
+        assertNewPurpose(
+          document,
+          mutationPurpose(grant, document.classification, [], current),
+        );
+        db.prepare("INSERT INTO grants VALUES(?,?,?,'active',?)").run(
+          grant.grantId,
+          grant.client.id,
+          row.expires_at,
+          JSON.stringify(grant),
+        );
+        this.kernel.append(
+          db,
+          event(
+            db,
+            "grant.issued",
+            this.kernel.now(),
+            grant,
+            { role: "management-client", id: grant.client.id },
+            {
+              access: grant.access,
+              grantType: grant.grantType,
+              expiresAt: grant.expiresAt,
+              modality: "explicit-person-write-review",
+              acr: "urn:context-router:acr:local-credential",
+            },
+          ),
+        );
+        const capability = random();
+        const fingerprint = createHmac(
+          "sha256",
+          parse(settings(db).secrets).cursorKey,
+        )
+          .update(JSON.stringify(reviewed.input))
+          .digest("hex");
+        db.prepare("INSERT INTO person_write_capabilities VALUES(?,?,?,0)").run(
+          hash(capability),
+          grant.grantId,
+          JSON.stringify({
+            operation: reviewed.operation,
+            target: reviewed.target ?? "collection",
+            fingerprint,
+            snapshot: reviewed.snapshot,
+          }),
+        );
+        db.prepare(
+          "UPDATE management_reviews SET consumed=1,approved_capability=? WHERE id=?",
+        ).run(hash(capability), reviewId);
+        return capability;
+      },
+      () => {
+        if (this.kernel.now() >= authorityUntil)
+          throw new AuthorityError("unauthenticated");
+        if (this.kernel.now() >= commitUntil) denied();
+      },
+    );
+  }
+  commitReviewedPersonWrite(
+    credential: string,
+    reviewId: string,
+    csrf: string,
+    binding: string,
+    key: string,
+  ): object {
+    const reviewed = this.kernel.read((db) => {
+      this.management(db, credential);
+      const row = db
+        .prepare("SELECT * FROM management_reviews WHERE id=?")
+        .get(reviewId);
+      if (
+        !row ||
+        Number(row.expires_at) <= this.kernel.now() ||
+        !equal(String(row.csrf_hash), hash(csrf)) ||
+        !equal(String(row.binding_hash), hash(binding))
+      )
+        denied();
+      const document = parse(row.document);
+      if (document.kind !== "person-write") denied();
+      return { ...document, approvedCapability: row.approved_capability };
+    });
+    const idHash =
+      reviewed.approvedCapability ??
+      hash(this.approvePersonWrite(credential, reviewId, csrf, binding));
+    return this.commitMutation(
+      credential,
+      reviewed.operation,
+      reviewed.input,
+      JSON.stringify(reviewed.input),
+      key,
+      reviewed.target ?? undefined,
+      { idHash },
+    );
+  }
+  reviewConfirmation(
+    credential: string,
+    id: string,
+    input: any,
+    binding: string,
+  ): any {
+    this.confirmationInput(id, input);
+    if (typeof binding !== "string" || !binding) invalid();
+    return this.kernel.write((db) => {
+      this.management(db, credential);
+      const entry = storedEntry(db, id);
+      if (!entry) denied();
+      if (entry.record.version !== input.expectedVersion)
+        throw new WriteConflict("version-conflict");
+      if (!["active", "conflicted"].includes(entry.record.status)) denied();
+      const reviewId = random(),
+        csrf = random(),
+        expiresAt = this.kernel.now() + 600_000;
+      const document = {
+        kind: "confirmation",
+        id,
+        input,
+        snapshot: this.confirmationSnapshot(db, id),
+      };
+      db.prepare(
+        "INSERT INTO management_reviews(id,binding_hash,csrf_hash,expires_at,document,consumed) VALUES(?,?,?,?,?,0)",
+      ).run(
+        reviewId,
+        hash(binding),
+        hash(csrf),
+        expiresAt,
+        JSON.stringify(document),
+      );
+      return {
+        reviewId,
+        csrf,
+        entry,
+        conflicts: conflicts.snapshot(db, id),
+        disposition: input.disposition,
+        expiresAt: iso(expiresAt),
+      };
+    });
+  }
+  reviewKeepBoth(credential: string, relationId: string, binding: string): any {
+    if (!privateId(relationId) || typeof binding !== "string" || !binding)
+      invalid();
+    return this.kernel.write((db) => {
+      this.management(db, credential);
+      const snapshot = conflicts.keepBothSnapshot(db, relationId);
+      const reviewId = random(),
+        csrf = random(),
+        expiresAt = this.kernel.now() + 600_000;
+      const document = {
+        kind: "keep-both",
+        relationId,
+        snapshot: hash(JSON.stringify(snapshot)),
+      };
+      db.prepare(
+        "INSERT INTO management_reviews(id,binding_hash,csrf_hash,expires_at,document,consumed) VALUES(?,?,?,?,?,0)",
+      ).run(
+        reviewId,
+        hash(binding),
+        hash(csrf),
+        expiresAt,
+        JSON.stringify(document),
+      );
+      return { reviewId, csrf, ...snapshot, expiresAt: iso(expiresAt) };
+    });
+  }
+  approveKeepBoth(
+    credential: string,
+    reviewId: string,
+    csrf: string,
+    binding: string,
+  ): any {
+    let authorityUntil = Infinity,
+      commitUntil = Infinity;
+    const result = this.kernel.write(
+      (db) => {
+        authorityUntil = this.management(db, credential);
+        const row: any = db
+          .prepare("SELECT * FROM management_reviews WHERE id=?")
+          .get(reviewId);
+        if (
+          !row ||
+          row.consumed ||
+          row.expires_at <= this.kernel.now() ||
+          !equal(row.csrf_hash, hash(csrf)) ||
+          !equal(row.binding_hash, hash(binding))
+        )
+          denied();
+        const reviewed = parse(row.document);
+        if (reviewed.kind !== "keep-both") denied();
+        const snapshot = conflicts.keepBothSnapshot(db, reviewed.relationId);
+        if (reviewed.snapshot !== hash(JSON.stringify(snapshot))) denied();
+        const now = this.kernel.now(),
+          actor = {
+            role: "management-client",
+            id: "urn:context-router:synthetic-management",
+          };
+        conflicts.dismiss(db, reviewed.relationId, now, actor, (change) =>
+          this.appendConflict(db, change, now, actor),
+        );
+        db.prepare("UPDATE management_reviews SET consumed=1 WHERE id=?").run(
+          reviewId,
+        );
+        commitUntil = Math.min(
+          authorityUntil,
+          Number(row.expires_at),
+          ...[snapshot.entry, snapshot.conflict.peer].map((e) =>
+            e.assertion.validUntil == null
+              ? Infinity
+              : Date.parse(e.assertion.validUntil),
+          ),
+        );
+        return { id: snapshot.entry.id };
+      },
+      () => {
+        if (this.kernel.now() >= commitUntil) denied();
+      },
+    );
+    return this.kernel.now() >= authorityUntil
+      ? JSON.parse(COMPLETION_ONLY)
+      : result;
+  }
+  approveConfirmation(
+    credential: string,
+    reviewId: string,
+    csrf: string,
+    binding: string,
+  ): any {
+    let authorityUntil = Infinity,
+      reviewUntil = Infinity,
+      entryUntil = Infinity;
+    const committed = this.kernel.write(
+      (db) => {
+        authorityUntil = this.management(db, credential);
+        const row: any = db
+          .prepare("SELECT * FROM management_reviews WHERE id=?")
+          .get(reviewId);
+        if (
+          !row ||
+          row.consumed ||
+          row.expires_at <= this.kernel.now() ||
+          !equal(row.csrf_hash, hash(csrf)) ||
+          !equal(row.binding_hash, hash(binding))
+        )
+          denied();
+        const reviewed = parse(row.document);
+        if (
+          reviewed.kind !== "confirmation" ||
+          reviewed.snapshot !== this.confirmationSnapshot(db, reviewed.id)
+        )
+          denied();
+        entryUntil = this.confirmationDeadline(db, reviewed.id);
+        const result = this.confirmEntryIn(db, reviewed.id, reviewed.input);
+        reviewUntil = Number(row.expires_at);
+        db.prepare("UPDATE management_reviews SET consumed=1 WHERE id=?").run(
+          reviewId,
+        );
+        return result;
+      },
+      () => {
+        if (this.kernel.now() >= authorityUntil)
+          throw new AuthorityError("unauthenticated");
+        if (this.kernel.now() >= Math.min(reviewUntil, entryUntil)) denied();
+      },
+    );
+    return this.kernel.now() >= authorityUntil
+      ? JSON.parse(COMPLETION_ONLY)
+      : committed;
+  }
   audit(
     credential: string,
-    options: { limit?: number; cursor?: string; grantId?: string } = {},
+    options: {
+      limit?: number;
+      cursor?: string;
+      grantId?: string;
+      entryId?: string;
+    } = {},
   ): any {
-    keys(options, ["limit", "cursor", "grantId"]);
+    keys(options, ["limit", "cursor", "grantId", "entryId"]);
+    if (options.entryId !== undefined && !privateId(options.entryId)) invalid();
     const limit = options.limit ?? 50;
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) invalid();
     return this.kernel.write((db) => {
@@ -1214,7 +2520,8 @@ export class AuthorizationRepository {
             .prepare("SELECT coalesce(max(sequence),0) n FROM audit_events")
             .get().n,
         ),
-        grantId = options.grantId;
+        grantId = options.grantId,
+        entryId = options.entryId;
       if (options.cursor) {
         const row = db
           .prepare(
@@ -1225,13 +2532,25 @@ export class AuthorizationRepository {
         const cursor = parse(row.document);
         if (options.grantId !== undefined && options.grantId !== cursor.grantId)
           invalid();
-        ({ after, maximum, grantId } = cursor);
+        if (options.entryId !== undefined && options.entryId !== cursor.entryId)
+          invalid();
+        ({ after, maximum, grantId, entryId } = cursor);
       }
       const rows = db
         .prepare(
-          "SELECT sequence,event FROM audit_events WHERE sequence>? AND sequence<=? AND (? IS NULL OR json_extract(event,'$.grantId')=?) ORDER BY sequence LIMIT ?",
+          "SELECT sequence,event FROM audit_events WHERE sequence>? AND sequence<=? AND (? IS NULL OR json_extract(event,'$.grantId')=?) AND (? IS NULL OR json_extract(event,'$.entryId')=? OR json_extract(event,'$.relatedEntryId')=? OR EXISTS (SELECT 1 FROM json_each(audit_events.event,'$.data.relatedTransitions') t WHERE json_extract(t.value,'$.id')=?)) ORDER BY sequence LIMIT ?",
         )
-        .all(after, maximum, grantId ?? null, grantId ?? null, limit + 1);
+        .all(
+          after,
+          maximum,
+          grantId ?? null,
+          grantId ?? null,
+          entryId ?? null,
+          entryId ?? null,
+          entryId ?? null,
+          entryId ?? null,
+          limit + 1,
+        );
       let nextCursor: string | null = null;
       if (rows.length > limit) {
         rows.pop();
@@ -1239,6 +2558,7 @@ export class AuthorizationRepository {
           after: rows[rows.length - 1].sequence,
           maximum,
           grantId,
+          entryId,
         });
         // A keyed digest reveals neither the sequence nor the size of the snapshot.
         nextCursor = createHmac("sha256", parse(settings(db).secrets).cursorKey)
@@ -1258,7 +2578,7 @@ export class AuthorizationRepository {
         .prepare(
           `SELECT max(json_extract(d.value,'$.useUntil')) deadline
         FROM audit_events a, json_each(a.event,'$.disclosed') d
-        WHERE json_extract(a.event,'$.eventType')='context.read' AND json_extract(a.event,'$.grantId')=?`,
+        WHERE json_extract(a.event,'$.eventType') IN ('context.read','context.created','context.revised') AND json_extract(a.event,'$.grantId')=?`,
         )
         .get(grantId);
       return row.deadline === null ? null : String(row.deadline);
