@@ -1926,8 +1926,8 @@ vocabulary in the experimental capabilities/management explanation; no universal
 ontology, vector system or new normative HCP field is introduced.
 
 Collect the full candidate pair set before changing any statuses, so the first
-quarantine cannot hide the second edge. For each write, compare its new active
-candidate against other current active candidates, then re-evaluate all preexisting
+quarantine cannot hide the second edge. As corrected on November 14, compare each
+new live candidate against other active **and conflicted** candidates, then re-evaluate all preexisting
 incident conflicts even if an endpoint was quarantined. Apply in one transaction:
 
 - Inference versus authoritative person/confirmed version: quarantine only the
@@ -2265,6 +2265,92 @@ checker and operator-document passes retain their scope: no imports, dependency
 graph, package closure, validator code or asserted operator instructions changed.
 Links and whitespace are renewed. No installed-artifact claim, new scope activation,
 spec edit or automatic merge is introduced by this correction batch.
+
+### C4 Claude Follow-Up (2026-11-14)
+
+Lucas authorized helpful corrections and focused hcp-spec issues after Claude's
+review of `ec6eb0275b3f175b43aafdb78414142097bc2b7f`. This chat resumes sole-writer
+ownership of the existing branch/checkout for one correction batch in PR #207.
+The prior candidate's successful reviews and CI remain historical evidence;
+they do not qualify these changes. Specification sources and pins remain unchanged.
+
+The sensitive-work checkpoints are:
+
+1. Independently review the affected plan; add failing regressions for truthful
+   consent, quarantined conflict candidates, purpose-bound person edits and
+   provenance presentation. Reviewers are read-only, using inherited configured
+   model/effort (actual execution settings unverified).
+2. Compare each content write with all active and conflicted candidates before
+   applying status changes. Existing human dismissals, retained holds and original
+   write ordering remain authoritative. This establishes the pair set before human
+   review instead of recursively treating reactivation as a new assertion. Refuse
+   older experimental store formats, whose graphs may lack pairs; never migrate,
+   reset or repair them silently. Confirm/reject and restart regressions must prove
+   no contradictory unreviewed inference becomes readable.
+3. Describe requested/reviewed actions and category/reach restrictions on both
+   consent pages. Select and freeze a supported purpose allowed by old and new
+   statements for an explicitly reviewed person write; retain denial when none
+   exists. Separate recorded standing from unverified submitted document members
+   in management presentation without dropping extensions.
+4. Reconcile current status references, publish focused protocol questions and
+   renew affected independent reviews. Freeze after corrections and regressions
+   pass, then renew build, HCP SQLite/process tests, isolated browser journeys,
+   affected doc checks and all applicable exact-candidate CI/receipts. Existing
+   unrelated contract coverage may carry forward only after input assessment.
+
+The finalization milestone remains the completed correction batch with no open
+blocking findings and qualified candidate evidence. No installed app, real clients,
+C5 activation, automatic merge or full-conformance claim is introduced. Local
+Chromium journeys are local evidence; current CI does not execute that test file.
+
+Both affected plan reviews approved this approach. The candidate expansion closes
+the live pair set before resolution: content create/revise introduces live assertions,
+while later reactivation does not introduce new content or reset recorded ordering.
+Schema admission version 2 refuses previous experimental graphs and their pending
+reviews before application admission. No migration or silent reset is provided.
+The clean-store regression verifies byte-preserving refusal. Normal SQLite journal
+recovery can occur before schema validation; byte preservation of an old crashed
+store's recovery files is not claimed.
+
+The old/new purpose intersection is intentionally conservative. Unsupported,
+empty or disjoint purpose sets still deny a content edit; management inspection
+remains available. The selected purpose, target/category scope and expiry are
+shown before approval and persisted in the review, then rechecked for issuance
+and execution. The content-write grant remains separate from management login.
+
+Protocol questions were published and verified as conflict-lifecycle
+[#37](https://github.com/loyalagents/hcp-spec/issues/37) and mutation-purpose
+[#38](https://github.com/loyalagents/hcp-spec/issues/38). Extension/provenance
+presentation evidence extends [#29](https://github.com/loyalagents/hcp-spec/issues/29#issuecomment-6885856155).
+Consent wording is an application correction under existing §6.1.6. Slow COMMIT
+and the completion-only contract stay separate and unchanged.
+
+The correction batch passed 85 focused write/graph/admission tests, the backend
+build, all 173 HCP tests in 17 suites (including the wrapper executing 21 actual
+write HTTPS/process cases), and all three isolated Chromium journeys. Two new
+HTTPS consent/presentation regressions demonstrated failure before correction and
+passed afterward. The final client-as-grantee wording and collapsed-document test
+selector received affected review and renewed HTTP/browser checks. The existing
+read, OAuth, authority, recovery and lifecycle regressions remain green. All 65
+selected doc/checker tests and the 161-file Markdown link check passed.
+
+Graph/admission and persistence reviewers approved the runtime delta SHA-256
+`814fa74c89e63f741996b007203bf3a07df6b31c8ff341993c93ec663b96ff12`;
+authority/UI approved the same delta and rechecked its final wording/selector
+changes (selected-path SHA-256
+`782368b45aad256e704e57d1589ec6cb01937634d86fade819ffcc9ceff73b18`).
+Only schema-comment and documentation precision changed outside that UI recheck;
+graph/persistence logic is unchanged. Final runtime/test delta SHA-256 is
+`c03700b7f8840cc51998595697bf0d9632c0bf8a5ddd17970f9a759dbac8909c`.
+All reviews were read-only; actual inherited model/effort remains unverified.
+
+The earlier 97 composition/storage-dependency/package contract tests and operator
+document test retain their scoped evidence: no package graph, import boundary,
+installed composition, asserted operator-doc input or protected contract changed.
+New admission/graph/authority behavior has fresh local coverage above. No named
+additional aggregate gap selects a full local migration gate. The candidate is
+ready for publication and exact-candidate CI/receipt validation; final identities
+and results belong in PR #207 rather than a pass-only follow-up commit.
 
 ## Feedback And Maintenance
 

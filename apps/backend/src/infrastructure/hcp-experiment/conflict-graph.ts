@@ -206,8 +206,9 @@ function consequences(
   }
 }
 
-/** Called inside the content/lifecycle transaction. Collect peers before any
- * quarantine so the first edge cannot hide the rest of this write's candidates. */
+/** Called inside the content/lifecycle transaction. Capture all live peers before
+ * effects: quarantine must not hide a later assertion or its reviewed conflicts.
+ * Reactivation is not a new write and must not change same-asserter ordering. */
 export function evaluateWrite(
   db: DatabaseSync,
   id: string,
@@ -226,7 +227,7 @@ export function evaluateWrite(
   const candidates = new Set<string>(
     db
       .prepare(
-        "SELECT id FROM entries WHERE status='active' AND id<>? ORDER BY id",
+        "SELECT id FROM entries WHERE status IN ('active','conflicted') AND id<>? ORDER BY id",
       )
       .all(id)
       .map((r) => String(r.id)),

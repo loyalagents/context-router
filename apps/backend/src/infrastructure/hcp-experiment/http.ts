@@ -26,13 +26,38 @@ const escape = (s: any) =>
   );
 const hidden = (name: string, value: string) =>
   `<input type="hidden" name="${escape(name)}" value="${escape(value)}">`;
+function accessSummary(access: any[]): string {
+  return `<section data-access-summary><ul>${access
+    .map((detail) => {
+      const write = detail.actions.includes("write"),
+        narrowed = detail.narrowedTo;
+      const actions = write
+        ? narrowed
+          ? "This client may read, revise and withdraw the selected existing entries"
+          : "This client may read, create, revise and withdraw entries"
+        : "Read access only";
+      return `<li>${actions} in ${escape(detail.categories.join(", "))}.${narrowed ? ` Restricted to ${detail.narrowedTo.entryIds.length} selected existing entries.${write ? " Creating new entries is not permitted." : ""}` : ""}
+      ${detail.purposes ? `Purposes: ${detail.purposes.map((p: any) => escape(p.description)).join("; ")}.` : "Choose a purpose before reviewing the exact grant."}</li>`;
+    })
+    .join(
+      "",
+    )}</ul>${access.length ? "" : "<p>No access remains available for approval.</p>"}</section>`;
+}
+function entryFacts(entry: any): string {
+  const provenance = entry.record.provenance;
+  return `<section data-entry-facts><h2>Recorded provenance and current state</h2>
+    <p>Version ${entry.record.version} · ${escape(entry.record.status)} · ${escape(entry.assertion.declarationType)}</p>
+    <p>Asserter identifier: ${escape(provenance.assertedBy.id)}. Assurance: ${escape(provenance.assertedBy.assurance)}.
+    Latest confirmation: ${escape(provenance.confirmations.at(-1)?.disposition ?? "none")}.</p>
+    <p>Assertion content, reported source and additional document members may be submitted claims. The recorded assurance and confirmations determine their standing.</p></section>`;
+}
 function reviewEntry(entry: any): string {
   const provenance = entry.record.provenance;
   return `<article><pre>${escape(typeof entry.content.value === "string" ? entry.content.value : JSON.stringify(entry.content.value, null, 2))}</pre>
     <p>Version ${entry.record.version} · ${escape(entry.record.status)} · ${escape(entry.assertion.declarationType)}</p>
     <p>Asserter: ${escape(provenance.assertedBy.id)}. Assurance: ${escape(provenance.assertedBy.assurance)}.
     Latest confirmation: ${escape(provenance.confirmations.at(-1)?.disposition ?? "none")}.</p>
-    <p>Basis: ${escape(JSON.stringify(entry.assertion.basis ?? "not recorded"))}. Source: ${escape(provenance.source)}.</p>
+    <p>Reported basis: ${escape(JSON.stringify(entry.assertion.basis ?? "not recorded"))}. Reported source: ${escape(provenance.source)}.</p>
     <p>Permitted purposes: ${escape(JSON.stringify({ assertion: entry.assertion.permittedPurposes ?? "not restricted", principal: entry.classification.permittedPurposes ?? "not restricted" }))}.</p></article>`;
 }
 const cookie = (req: IncomingMessage) =>
@@ -275,7 +300,8 @@ export function authorizationHandler(
           "consent",
           "Review requested access",
           `<p>${escape(client.name)} · ${escape(client.operator.name)} (${escape(client.operator.id)})</p>
-          <p>Read access only. Temporary: four hours by default, up to 24 hours. Client copies have a one-hour maximum use period. Grant expiry stops retrieval; an existing copy follows its own use-until. Clients must stop using copies when notified of revocation, or at use-until. These controlled clients make no directive-following claim.</p>
+          ${accessSummary(requested)}
+          <p>Temporary: four hours by default, up to 24 hours. Client copies have a one-hour maximum use period. Grant expiry stops retrieval; an existing copy follows its own use-until. Clients must stop using copies when notified of revocation, or at use-until. These controlled clients make no directive-following claim.</p>
           <pre>${escape(JSON.stringify(requested, null, 2))}</pre><dl>${Object.entries(
             CATEGORIES,
           )
@@ -341,6 +367,7 @@ export function authorizationHandler(
           "review",
           "Approve this exact grant",
           `<p>${escape(reviewed.client.name)} · ${escape(reviewed.client.operator.name)}</p>
+          ${accessSummary(reviewed.access)}
           <p>Expires at <strong>${escape(reviewed.expiresAt)}</strong>. Client copies have a one-hour maximum use period. Grant expiry stops retrieval; an existing copy follows its own use-until. Clients must stop using copies when notified of revocation, or at use-until.</p>
           <pre>${escape(JSON.stringify({ access: reviewed.access, exclusions: reviewed.exclusions }, null, 2))}</pre>
           <dl>${Object.entries(CATEGORIES)
@@ -528,7 +555,9 @@ export function authorizationHandler(
           res,
           "person-review",
           "Review your statement",
-          `<p>Approving records this wording as your own authenticated statement. A revised version starts without prior confirmations.</p><pre>${escape(JSON.stringify(review.request, null, 2))}</pre>
+          `<p>Approving records this wording as your own authenticated statement. A revised version starts without prior confirmations.</p>
+          <section data-person-authority><p>This authorizes the Synthetic person editor to ${review.operation === "create" ? "create this statement" : "revise this selected statement"} in ${escape(review.access[0].categories.join(", "))} for: ${escape(review.purpose.description)} (${escape(review.purpose.code)}). This permission expires at ${escape(review.expiresAt)}.</p></section>
+          <pre>${escape(JSON.stringify(review.request, null, 2))}</pre>
           <form method="post" action="/manage/person/approve">${hidden("csrf", s.csrf)}${hidden("reviewId", review.reviewId)}${hidden("reviewCsrf", review.csrf)}${hidden("operationKey", random())}<button>Approve and save my statement</button></form>`,
         );
       }
@@ -647,7 +676,11 @@ export function authorizationHandler(
           "Retained entry and history",
           `<p><a href="/manage/entries">All retained entries</a> · <a href="/manage">Grant controls</a></p>
           <p>${escape(result.historyLabel)}. Current version: ${result.currentVersion}.</p>
-          <p>Content versions: ${result.versions.map((v: number) => `<a href="${base}?version=${v}">${v}</a>`).join(" · ")}</p><pre>${escape(JSON.stringify(result.entry, null, 2))}</pre><p><a href="/manage/person/${encodeURIComponent(id!)}">Edit as your own statement</a></p>
+          <p>Content versions: ${result.versions.map((v: number) => `<a href="${base}?version=${v}">${v}</a>`).join(" · ")}</p>
+          ${entryFacts(result.entry)}
+          <pre>${escape(typeof result.entry.content.value === "string" ? result.entry.content.value : JSON.stringify(result.entry.content.value, null, 2))}</pre>
+          <details data-raw-entry><summary>Full stored document (includes submitted claims)</summary><p>This document combines submitted content and extensions with provider-maintained records. Additional fields, including standing or fixture claims, do not establish assurance or confirmation.</p><pre data-entry-document>${escape(JSON.stringify(result.entry, null, 2))}</pre></details>
+          <p><a href="/manage/person/${encodeURIComponent(id!)}">Edit as your own statement</a></p>
           ${result.entry.record.version === result.currentVersion && ["active", "conflicted"].includes(result.entry.record.status) ? ["confirmed", "rejected"].map((disposition) => `<form method="post" action="${base}/review">${hidden("csrf", s.csrf)}${hidden("expectedVersion", String(result.currentVersion))}${hidden("disposition", disposition)}<button>${disposition === "confirmed" ? "Review confirmation" : "Review rejection and withdrawal"}</button></form>`).join("") : ""}
           ${result.conflicts.length ? `<h2>Conflicts needing review</h2>${result.conflicts.map((c: any) => `<section>${reviewEntry(c.peer)}<p>${c.quarantined.length ? "This conflict still has a quarantined statement needing review." : "This conflict changed neither statement’s status."}</p>${c.canKeepBoth ? `<form method="post" action="/manage/conflicts/${encodeURIComponent(c.id)}/review">${hidden("csrf", s.csrf)}<button>Review keeping both</button></form>` : ""}</section>`).join("")}` : ""}
           <h2>Lifecycle and assertion history</h2><pre>${escape(JSON.stringify(history.events, null, 2))}</pre>${history.nextCursor ? `<a href="${base}?cursor=${encodeURIComponent(history.nextCursor)}">Next history page</a>` : ""}`,

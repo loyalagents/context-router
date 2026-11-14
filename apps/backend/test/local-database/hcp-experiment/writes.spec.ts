@@ -182,6 +182,226 @@ describe("C4 durable person writes and original completion", () => {
     });
   }
 
+  it.each(["confirmed", "rejected"])(
+    "records hidden conflict candidates before human %s and keeps contradictory inferences unreadable after reopen",
+    (disposition) => {
+      const a = issue();
+      const personBody = modelInput(a.grant, "email");
+      personBody.assertion = { declarationType: "person-declared" };
+      personBody.record = { provenance: { source: "person-input" } };
+      release(commit(a.token, personBody));
+      const person = store
+        .inspectEntries()
+        .find((e) => e.content.value?.value === "email")!;
+      release(commit(a.token, modelInput(a.grant, "phone", "one")));
+      const review = authority.reviewConfirmation(
+        human,
+        person.id,
+        { expectedVersion: 1, disposition },
+        "browser",
+      );
+      release(commit(a.token, modelInput(a.grant, "fax", "two")));
+      expect(() =>
+        authority.approveConfirmation(
+          human,
+          review.reviewId,
+          review.csrf,
+          "browser",
+        ),
+      ).toThrow(AuthorityError);
+      const fax = store
+        .inspectEntries()
+        .find((e) => e.content.value?.value === "fax")!;
+      expect(fax.record.status).toBe("conflicted");
+      expect(authority.managementEntry(human, fax.id).conflicts).toHaveLength(
+        2,
+      );
+      reopen();
+      const fresh = authority.reviewConfirmation(
+        human,
+        person.id,
+        { expectedVersion: 1, disposition },
+        "browser",
+      );
+      expect(fresh.conflicts).toHaveLength(2);
+      authority.approveConfirmation(
+        human,
+        fresh.reviewId,
+        fresh.csrf,
+        "browser",
+      );
+      reopen();
+      expect(store.inspectEntry(person.id)!.record.status).toBe(
+        disposition === "confirmed" ? "active" : "deleted",
+      );
+      for (const value of ["phone", "fax"]) {
+        const entry = store
+          .inspectEntries()
+          .find((e) => e.content.value?.value === value)!;
+        expect(entry.record.status).toBe("conflicted");
+        const read = authority.prepareRead(a.token, "query", {
+          query: value,
+          purpose: PURPOSES[0].code,
+        });
+        authority.releaseRead(read, (bytes: string) =>
+          expect(JSON.parse(bytes).entries).toEqual([]),
+        );
+      }
+    },
+  );
+
+  it("rolls back new quarantined-candidate edges with their mutation and audit", () => {
+    const a = issue();
+    const personBody = modelInput(a.grant, "email");
+    personBody.assertion = { declarationType: "person-declared" };
+    personBody.record = { provenance: { source: "person-input" } };
+    release(commit(a.token, personBody));
+    release(commit(a.token, modelInput(a.grant, "phone", "one")));
+    const before = store.inspectEntries(),
+      events = store.inspectAudit();
+    failAt = "before-audit";
+    expect(() =>
+      commit(a.token, modelInput(a.grant, "fax", "two"), "third"),
+    ).toThrow("synthetic failure");
+    failAt = undefined;
+    reopen();
+    expect(store.inspectEntries()).toEqual(before);
+    expect(store.inspectAudit()).toEqual(events);
+    release(commit(a.token, modelInput(a.grant, "fax", "two"), "third"));
+    expect(
+      store.inspectEntries().find((e) => e.content.value?.value === "fax")!
+        .record.status,
+    ).toBe("conflicted");
+  });
+
+  it("supersedes the same model's quarantined earlier inference without hiding its new conflict", () => {
+    const a = issue();
+    const personBody = modelInput(a.grant, "email");
+    personBody.assertion = { declarationType: "person-declared" };
+    personBody.record = { provenance: { source: "person-input" } };
+    release(commit(a.token, personBody));
+    release(commit(a.token, modelInput(a.grant, "phone", "same")));
+    release(commit(a.token, modelInput(a.grant, "fax", "same")));
+    const old = store
+      .inspectEntries()
+      .find((e) => e.content.value?.value === "phone")!;
+    const fresh = store
+      .inspectEntries()
+      .find((e) => e.content.value?.value === "fax")!;
+    expect(old.record.status).toBe("deprecated");
+    expect(fresh.record.status).toBe("conflicted");
+    reopen();
+    expect(store.inspectEntry(old.id)!.record.status).toBe("deprecated");
+    expect(store.inspectEntry(fresh.id)!.record.status).toBe("conflicted");
+  });
+
+  it.each(["create", "revise"])(
+    "freezes a supported permitted purpose in a reviewed person %s",
+    (operation) => {
+      const a = issue("a", [
+        detail(["read", "write"], { purposes: [PURPOSES[1]] }),
+      ]);
+      const body = input(a.grant, {
+        assertion: {
+          declarationType: "person-declared",
+          permittedPurposes: [PURPOSES[1].code],
+        },
+      });
+      let target: string | undefined;
+      if (operation === "revise") {
+        release(commit(a.token, body));
+        target = store
+          .inspectEntries()
+          .find(
+            (e) => e.record.provenance.authorizedUnder === a.grant.grantId,
+          )!.id;
+      }
+      const request =
+        operation === "create"
+          ? { ...body, subject: { id: authority.accountId() } }
+          : {
+              expectedVersion: 1,
+              reason: "Person correction",
+              content: { ...body.content, value: "Updated work statement" },
+              assertion: body.assertion,
+              record: body.record,
+            };
+      const review = authority.reviewPersonWrite(
+        human,
+        operation,
+        request,
+        target,
+        "browser",
+      );
+      expect(review.purpose).toEqual(PURPOSES[1]);
+      reopen();
+      const capability = authority.approvePersonWrite(
+        human,
+        review.reviewId,
+        review.csrf,
+        "browser",
+      );
+      const result = release(
+        authority.commitPersonWrite(
+          human,
+          capability,
+          operation,
+          request,
+          JSON.stringify(request),
+          "purpose-edit",
+          target,
+        ),
+      );
+      expect(result.status).toBe(201);
+      const written = store.inspectEntry(result.body.id)!;
+      const grant = authority.ownGrant(
+        written.record.provenance.authorizedUnder,
+        "urn:context-router:synthetic-management",
+      ).grants[0];
+      expect(grant.access[0].purposes).toEqual([PURPOSES[1]]);
+      expect(written.assertion.permittedPurposes).toEqual([PURPOSES[1].code]);
+    },
+  );
+
+  it("does not bypass purpose restrictions for person edits with no supported intersection", () => {
+    const a = issue("a", [
+      detail(["read", "write"], { purposes: [PURPOSES[1]] }),
+    ]);
+    const body = input(a.grant, {
+      assertion: {
+        declarationType: "person-declared",
+        permittedPurposes: [PURPOSES[1].code],
+      },
+    });
+    release(commit(a.token, body));
+    const entry = store
+      .inspectEntries()
+      .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
+    for (const permittedPurposes of [
+      [],
+      [PURPOSES[0].code],
+      ["urn:example:unsupported-purpose"],
+    ]) {
+      const request = {
+        expectedVersion: 1,
+        reason: "Person correction",
+        content: body.content,
+        assertion: { declarationType: "person-declared", permittedPurposes },
+        record: body.record,
+      };
+      expect(() =>
+        authority.reviewPersonWrite(
+          human,
+          "revise",
+          request,
+          entry.id,
+          "browser",
+        ),
+      ).toThrow(AuthorityError);
+      expect(authority.managementEntry(human, entry.id).currentVersion).toBe(1);
+    }
+  });
+
   it("records unverified model provenance and confidence, then edits it only through an approved person assertion", () => {
     const a = issue(),
       body = modelInput(a.grant, "email");

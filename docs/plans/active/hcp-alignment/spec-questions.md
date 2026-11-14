@@ -953,7 +953,58 @@ and explicit adoption before sensitive real-data exposure in C6/C7. No general
 claim that category withholding prevents inference through directives is made.
 Keep the question local until upstream work is explicitly authorized.
 
-### C7 HTTP Query Parsing Follow-Up (N4)
+## CR-Q10: Conflict Candidates Across Quarantine And Reactivation
+
+The pinned §§15.2–15.3 require detection on writes between active candidates but
+do not clearly govern new statements arriving while earlier candidates are
+quarantined, or later reactivation. C4 review reproduced an unverified person
+email statement and model-one phone statement becoming quarantined, then model-two
+fax remaining active without those edges. Confirming email left fax readable;
+rejecting email left phone and fax readable. A newer same-model inference also
+failed to supersede its quarantined predecessor.
+
+Lucas authorized correction and publication on November 14. The application now
+compares new content with active and conflicted candidates before status effects;
+this records all relevant pairs before human review. It retains dismissed/held
+relationships, original write ordering and terminal precedence. Reactivation is
+not treated as a fresh assertion. Older experimental store formats are refused
+before application admission because they may lack these edges; no content migration
+or automatic reset is provided. This broader candidate set is an
+explicit application choice, not settled normative interpretation.
+
+[hcp-spec #37](https://github.com/loyalagents/hcp-spec/issues/37) asks for observable
+candidate/activation, same-asserter ordering, human-resolution and recovery rules,
+leaving eager detection versus activation-time reconciliation to implementors.
+It is separate from committed acknowledgements, replay and inactive management reads.
+
+## CR-Q11: Mutation Purpose And Person Corrections
+
+The pinned §1.6/§5.1 classify create/revise/withdraw as context operations, including
+when performed by a Management Client. §6.1.5.2 requires grant purposes, but
+§§5.2.3–5.2.5 supply no selected mutation purpose. §4.2.6 states entry-purpose
+restrictions as use/disclosure rules, while §18.4 requires person-facing correction.
+The interplay for old versus new assertions and multi-purpose grants is unclear.
+
+C4's hardcoded first purpose incorrectly denied editing a work-planning-only
+entry. The November 14 correction selects and persists a supported purpose allowed
+by the target's assertion/classification and the new assertion; approval shows and
+rechecks that same purpose. No supported intersection still denies the edit without
+removing management inspection. There is no login-based write bypass. This retains
+the experiment's conservative single-purpose contract pending clarification.
+
+[hcp-spec #38](https://github.com/loyalagents/hcp-spec/issues/38) distinguishes
+mutation authority from response disclosure, and asks how the subject can correct
+a purpose-restricted assertion under fresh authorization. Empty/disjoint lists,
+multi-purpose selection, audit and principal versus asserter restrictions need
+explicit outcomes. It does not change #36's completion-only proposal.
+
+An additional [comment on #29](https://github.com/loyalagents/hcp-spec/issues/29#issuecomment-6885856155)
+requests adversarial extension examples: preserve submitted standing/fixture claims
+without treating them as provider-established assurance or confirmation. This is
+guidance under existing preservation/provenance rules. C4 separates recorded facts
+from clearly labeled raw document claims in management presentation.
+
+## C7 HTTP Query Parsing Follow-Up (N4)
 
 **Application interoperability limitation:** the shared request parser matches
 content types exactly. C3 rejects `application/json; charset=utf-8` with 422,

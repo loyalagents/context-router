@@ -19,6 +19,7 @@ import {
   mutationDocument,
   mutationPurpose,
   permissionRevision,
+  permitsPurpose,
   storedEntry,
   WriteConflict,
   type WriteOperation,
@@ -2072,10 +2073,18 @@ export class AuthorizationRepository {
     input: any,
     target: any,
     expiresAt: number,
+    reviewedPurpose?: (typeof PURPOSES)[number],
   ): any {
     const subject = { id: metadata(db).subject_id };
     const categories =
       target?.classification.categories ?? input.classification?.categories;
+    const permitted = (purpose: (typeof PURPOSES)[number]) =>
+      (!target || permitsPurpose(target, purpose.code)) &&
+      permitsPurpose(input, purpose.code);
+    const purpose = reviewedPurpose
+      ? PURPOSES.find((p) => p.code === reviewedPurpose.code && permitted(p))
+      : PURPOSES.find(permitted);
+    if (!purpose) denied();
     return {
       grantId: uuid(),
       subject,
@@ -2098,7 +2107,7 @@ export class AuthorizationRepository {
           type: ACCESS_TYPE,
           actions: ["read", "write"],
           categories,
-          purposes: [PURPOSES[0]],
+          purposes: [purpose],
           ...(target ? { narrowedTo: { entryIds: [target.id] } } : {}),
         },
       ],
@@ -2156,6 +2165,7 @@ export class AuthorizationRepository {
         csrf = random(),
         reviewed = {
           kind: "person-write",
+          purpose: grant.access[0].purposes[0],
           operation,
           input,
           target: target ?? null,
@@ -2177,6 +2187,8 @@ export class AuthorizationRepository {
         operation,
         target,
         expiresAt: iso(expiresAt),
+        purpose: structuredClone(grant.access[0].purposes[0]),
+        access: structuredClone(grant.access),
       };
     });
   }
@@ -2218,6 +2230,7 @@ export class AuthorizationRepository {
           reviewed.input,
           current,
           Number(row.expires_at),
+          reviewed.purpose,
         );
         const document = mutationDocument(
           db,

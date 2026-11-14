@@ -207,6 +207,14 @@ for (const approvedFixtures of [false, true])
               .click();
           }
           await page.waitForSelector('body[data-stage="consent"]');
+          assert.match(
+            await page.locator("[data-access-summary]").innerText(),
+            /Read access only/,
+          );
+          assert.doesNotMatch(
+            await page.locator("[data-access-summary]").innerText(),
+            /create, revise and withdraw/,
+          );
           const before = (await f.management("/v2/grants")).json.grants.length;
           if (scopeOnly)
             await page
@@ -217,6 +225,10 @@ for (const approvedFixtures of [false, true])
             .getByRole("button", { name: "Review exact grant" })
             .click();
           await page.waitForSelector('body[data-stage="review"]');
+          assert.match(
+            await page.locator("[data-access-summary]").innerText(),
+            /Read access only/,
+          );
           assert.equal(
             (await f.management("/v2/grants")).json.grants.length,
             before,
@@ -390,9 +402,24 @@ test(
       await page.getByLabel("Human management credential").fill(f.human);
       await page.getByRole("button", { name: "Sign in", exact: true }).click();
       await page.waitForSelector('body[data-stage="consent"]');
-      assert.match(await page.locator("body").innerText(), /write/);
+      assert.match(
+        await page.locator("[data-access-summary]").innerText(),
+        /read, create, revise and withdraw/,
+      );
+      assert.doesNotMatch(
+        await page.locator("body").innerText(),
+        /Read access only/,
+      );
       await page.getByRole("button", { name: "Review exact grant" }).click();
       await page.waitForSelector('body[data-stage="review"]');
+      assert.match(
+        await page.locator("[data-access-summary]").innerText(),
+        /read, create, revise and withdraw/,
+      );
+      assert.doesNotMatch(
+        await page.locator("body").innerText(),
+        /Read access only/,
+      );
       await page
         .getByRole("button", { name: "Approve access", exact: true })
         .click();
@@ -420,6 +447,10 @@ test(
       await page.getByRole("button", { name: "Review my statement" }).click();
       await page.waitForSelector('body[data-stage="person-review"]');
       assert.match(
+        await page.locator("[data-person-authority]").innerText(),
+        /Review the synthetic person's preferences/,
+      );
+      assert.match(
         await page.locator("body").innerText(),
         /I prefer a short summary/,
       );
@@ -432,8 +463,8 @@ test(
         .click();
       await page.waitForSelector('body[data-stage="entry"]');
       assert.equal(
-        JSON.parse(await page.locator("pre").first().innerText()).record
-          .provenance.assertedBy.assurance,
+        JSON.parse(await page.locator("pre[data-entry-document]").textContent())
+          .record.provenance.assertedBy.assurance,
         "authenticated",
       );
       await page
@@ -453,13 +484,14 @@ test(
         .click();
       await page.waitForSelector('body[data-stage="entry"]');
       assert.equal(
-        JSON.parse(await page.locator("pre").first().innerText()).record
-          .version,
+        JSON.parse(await page.locator("pre[data-entry-document]").textContent())
+          .record.version,
         2,
       );
       await page.getByRole("link", { name: "1", exact: true }).click();
       assert.equal(
-        JSON.parse(await page.locator("pre").first().innerText()).content.value,
+        JSON.parse(await page.locator("pre[data-entry-document]").textContent())
+          .content.value,
         "I prefer a short summary",
       );
 
@@ -487,14 +519,17 @@ test(
       );
       const modelBody = {
         ...body,
+        standing: { assurance: "authenticated", confirmed: true },
         content: fact("phone"),
         assertion: { declarationType: "model-inferred", confidence: "medium" },
         record: {
           provenance: {
             assertedBy: {
               id: "https://example.test/models/browser-fixture/v1",
+              extension: { assurance: "cryptographically-verified" },
             },
             source: "Controlled browser test; no model invocation",
+            fixture: { simulated: true, modelExecuted: false },
           },
         },
       };
@@ -510,8 +545,33 @@ test(
         (e) => e.eventType === "context.created" && e.participants.model,
       ).entryId;
       await page.goto(f.issuer + "/manage/entries/" + encodeURIComponent(id));
+      const facts = await page.locator("[data-entry-facts]").innerText();
+      assert.match(facts, /Assurance: unverified/);
+      assert.match(facts, /Latest confirmation: none/);
+      assert.doesNotMatch(
+        facts,
+        /authenticated|cryptographically-verified|modelExecuted/,
+      );
+      await page
+        .getByText("Full stored document (includes submitted claims)", {
+          exact: true,
+        })
+        .click();
+      assert.match(
+        await page.locator("[data-raw-entry]").innerText(),
+        /do not establish assurance or confirmation/,
+      );
+      const raw = JSON.parse(
+        await page.locator("pre[data-entry-document]").textContent(),
+      );
+      assert.deepEqual(raw.standing, modelBody.standing);
+      assert.deepEqual(
+        raw.record.provenance.fixture,
+        modelBody.record.provenance.fixture,
+      );
       assert.equal(
-        JSON.parse(await page.locator("pre").first().innerText()).record.status,
+        JSON.parse(await page.locator("pre[data-entry-document]").textContent())
+          .record.status,
         "conflicted",
       );
       await page
@@ -525,7 +585,7 @@ test(
         .click();
       await page.waitForSelector('body[data-stage="entry"]');
       const confirmed = JSON.parse(
-        await page.locator("pre").first().innerText(),
+        await page.locator("pre[data-entry-document]").textContent(),
       );
       assert.equal(confirmed.record.status, "active");
       assert.equal(confirmed.record.version, 1);

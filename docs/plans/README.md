@@ -68,12 +68,20 @@ approved for its earlier contract. Lucas selected permission-change response-cac
 invalidation on November 11; that delta passed review. The November 13 completion
 contract passed affected plan review before dependent backend implementation. Person
 write, replay, staging, conflict and management-history slices now have focused
-evidence, including three isolated browser journeys. Complete C4 review and
-exact-candidate CI remain pending. C5–C8 remain
+evidence, including three isolated browser journeys. Candidate `ec6eb027` completed
+independent review and exact-candidate CI in [PR #207](https://github.com/loyalagents/context-router/pull/207).
+On November 14 Lucas authorized corrections from Claude's follow-up review and
+focused spec issues. This C4 chat resumes sole-writer ownership for that batch;
+its affected reviews and renewed candidate evidence are tracked in the PR and
+[follow-up record](active/hcp-alignment/README.md#c4-claude-follow-up-2026-11-14).
+C5–C8 remain
 unactivated. Lucas authorized updating the existing hcp-spec issue
 [#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594) for the permission decision; that comment is posted and verified.
 The focused committed-write proposal is published as [#36](https://github.com/loyalagents/hcp-spec/issues/36), with research evidence and slow commits excluded.
 Specification sources, the sibling checkout and the target pin remain unchanged.
+The follow-up publishes conflict-lifecycle [#37](https://github.com/loyalagents/hcp-spec/issues/37),
+mutation-purpose [#38](https://github.com/loyalagents/hcp-spec/issues/38), and
+extension-presentation evidence on [#29](https://github.com/loyalagents/hcp-spec/issues/29#issuecomment-6885856155).
 Dormant expiry remains application recovery evidence, not conformance to the pinned
 conflicting deadlines. Pilot priority and installed app remain unchanged. See the
 [C4 plan and validation boundary](active/hcp-alignment/README.md#c4-activation-and-concrete-plan-2026-11-09).

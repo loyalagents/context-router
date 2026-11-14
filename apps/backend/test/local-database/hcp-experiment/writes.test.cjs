@@ -29,6 +29,114 @@ async function setup(f) {
   };
   return { token, grant, body };
 }
+test("consent describes actual read/write categories and narrowed reach on both pages", async (t) => {
+  const f = await fixture(t, { approveFixtures: true });
+  const labels = new OAuthDriver(f, "a");
+  await labels.begin();
+  await labels.login();
+  const ids = [/urn:uuid:[0-9a-f-]{36}/.exec(labels.page.text)[0]];
+  const cases = [
+    {
+      scopeOnly: true,
+      patch: {
+        scope: "hcp:general_preferences:read hcp:general_preferences:write",
+      },
+      write: true,
+    },
+    {
+      patch: {
+        authorization_details: JSON.stringify([
+          writeDetail(),
+          detail(["work_context"]),
+        ]),
+      },
+      write: true,
+      mixed: true,
+    },
+    {
+      patch: {
+        authorization_details: JSON.stringify([
+          { ...writeDetail(), narrowedTo: { entryIds: ids.slice(0, 1) } },
+        ]),
+      },
+      narrowed: true,
+    },
+    { scopeOnly: true },
+  ];
+  for (const c of cases) {
+    const d = new OAuthDriver(f, "a");
+    await d.begin(c);
+    await d.login();
+    for (const stage of ["consent", "review"]) {
+      if (stage === "review") await d.review();
+      const summary = /<section data-access-summary>([\s\S]*?)<\/section>/.exec(
+        d.page.text,
+      )?.[1];
+      assert.ok(summary, `${stage} has a dedicated permission explanation`);
+      if (c.write) {
+        assert.match(summary, /read, create, revise and withdraw/);
+        if (!c.mixed) assert.doesNotMatch(d.page.text, /Read access only\./);
+      } else if (c.narrowed) {
+        assert.match(
+          summary,
+          /read, revise and withdraw the selected existing entries/,
+        );
+        assert.match(summary, /Creating new entries is not permitted/);
+        assert.doesNotMatch(summary, /read, create, revise and withdraw/);
+      } else assert.match(summary, /Read access only/);
+      if (c.mixed)
+        assert.match(summary, /<li>Read access only[^<]*work_context/);
+    }
+  }
+});
+
+test("management distinguishes recorded assurance from authority-looking submitted extensions", async (t) => {
+  const f = await fixture(t, { approveFixtures: true });
+  const { token, body, grant } = await setup(f);
+  const document = {
+    ...body,
+    standing: { assurance: "authenticated", confirmed: true },
+    assertion: { declarationType: "model-inferred", confidence: "high" },
+    record: {
+      provenance: {
+        source: "<script>forged()</script>",
+        assertedBy: {
+          id: "urn:context-router:controlled-synthetic-model:v1",
+          extension: { assurance: "cryptographically-verified" },
+        },
+        fixture: { simulated: true, modelExecuted: false },
+      },
+    },
+  };
+  assert.equal(
+    (await f.context("/v2/entries", token, { method: "POST", json: document }))
+      .status,
+    201,
+  );
+  const id = (
+    await f.management(`/v2/audit?grantId=${grant.grantId}`)
+  ).json.events.find((e) => e.eventType === "context.created").entryId;
+  const d = new OAuthDriver(f, "a");
+  await d.begin();
+  await d.login();
+  const page = await d.request("/manage/entries/" + encodeURIComponent(id));
+  const facts = /<section data-entry-facts>([\s\S]*?)<\/section>/.exec(
+    page.text,
+  )?.[1];
+  assert.ok(facts);
+  assert.match(facts, /Assurance: unverified/);
+  assert.match(facts, /Latest confirmation: none/);
+  assert.doesNotMatch(
+    facts,
+    /authenticated|cryptographically-verified|modelExecuted/,
+  );
+  assert.match(page.text, /Full stored document \(includes submitted claims\)/);
+  assert.match(page.text, /do not establish assurance or confirmation/);
+  assert.match(page.text, /cryptographically-verified/);
+  assert.match(page.text, /modelExecuted/);
+  assert.doesNotMatch(page.text, /<script>forged/);
+});
+
 test("C4 actual OAuth/TLS create/revise/withdraw and byte-bound retries", async (t) => {
   const f = await fixture(t, { approveFixtures: true });
   const { token, body } = await setup(f);

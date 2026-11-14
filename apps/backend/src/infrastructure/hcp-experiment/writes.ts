@@ -81,7 +81,7 @@ export function storedEntry(
     record: { ...document.record, status: row.status },
   });
 }
-const permitsPurpose = (entry: any, purpose: string): boolean =>
+export const permitsPurpose = (entry: any, purpose: string): boolean =>
   [
     entry?.assertion?.permittedPurposes,
     entry?.classification?.permittedPurposes,

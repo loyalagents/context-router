@@ -2,7 +2,7 @@
 
 - Status: relationship and design reference; source gaps documented, conformance not established
 - Read when: planning HCP alignment or changing an HCP mapping or conformance claim
-- Last reviewed: 2026-11-13
+- Last reviewed: 2026-11-14
 
 ## Relationship And Ownership
 
@@ -74,8 +74,13 @@ On November 13 Lucas selected original-request completion-only success after kno
 commit, with separately authorized response data, and resumed C4. The changed plan
 passed affected review before dependent backend edits. Isolated person/model writes,
 typed conflicts, private proposal staging, retry and management history are implemented;
-focused tests and three TLS-verified browser journeys pass. Complete C4 review and
-exact-candidate CI remain pending. C3 results are historical,
+focused tests and three TLS-verified browser journeys pass. Candidate `ec6eb027`
+completed independent review and exact-candidate CI in
+[PR #207](https://github.com/loyalagents/context-router/pull/207). Lucas authorized
+the November 14 Claude-review correction batch; affected review and renewed
+candidate evidence are tracked in that PR and the
+[follow-up record](../plans/active/hcp-alignment/README.md#c4-claude-follow-up-2026-11-14).
+C3 results are historical,
 not C4 evidence. C5–C8 remain unactivated. See the canonical brief for ownership,
 decision dependencies and exact evidence.
 Lucas explicitly authorized an update to existing hcp-spec
@@ -84,8 +89,15 @@ The focused committed-write proposal is published in
 [#36](https://github.com/loyalagents/hcp-spec/issues/36), with research evidence and
 the slow-commit question explicitly excluded. This is a selected application
 experiment, not conformance to the pin.
-Keep specification sources, the sibling checkout and the target revision unchanged;
-other adoption proposals remain local until authorized.
+The November 14 authorization also published conflict-lifecycle
+[#37](https://github.com/loyalagents/hcp-spec/issues/37), mutation-purpose
+[#38](https://github.com/loyalagents/hcp-spec/issues/38), and extension-presentation
+evidence on [#29](https://github.com/loyalagents/hcp-spec/issues/29#issuecomment-6885856155).
+The corrected experiment considers active and conflicted candidates, selects a
+supported purpose allowed by the old/new assertion for person writes, and refuses
+previous experimental store formats without migrating or resetting their content. These are bounded
+application choices, not adoption of new normative rules. Specification sources,
+the sibling checkout and the target revision remain unchanged.
 
 [Open Draft 3 questions](../plans/active/hcp-alignment/spec-questions.md)
 stay in Context Router while the upgrade tests the current HCP specification,

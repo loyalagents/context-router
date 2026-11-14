@@ -124,27 +124,30 @@ describe("HCP C1 owned synthetic store", () => {
     expect(() => store!.inspectEntries()).toThrow();
   });
 
-  it("refuses foreign data admission without writing even the ownership record", () => {
-    store = createSyntheticExperiment(options());
-    store.close();
-    const file = path.join(root, "entries.sqlite");
-    const db = new DatabaseSync(file);
-    db.exec("PRAGMA user_version=999");
-    db.close();
-    const snapshot = () =>
-      fs
-        .readdirSync(root)
-        .sort()
-        .map((name) => [
-          name,
-          fs.readFileSync(path.join(root, name)).toString("base64"),
-        ]);
-    const before = snapshot();
-    expect(() => openSyntheticExperiment(options())).toThrow();
-    expect(snapshot()).toEqual(before);
-    expect(() => resetSyntheticExperiment(options())).toThrow();
-    expect(snapshot()).toEqual(before);
-  });
+  it.each([1, 999])(
+    "refuses obsolete or foreign format %s without writing even the ownership record",
+    (version) => {
+      store = createSyntheticExperiment(options());
+      store.close();
+      const file = path.join(root, "entries.sqlite");
+      const db = new DatabaseSync(file);
+      db.exec(`PRAGMA user_version=${version}`);
+      db.close();
+      const snapshot = () =>
+        fs
+          .readdirSync(root)
+          .sort()
+          .map((name) => [
+            name,
+            fs.readFileSync(path.join(root, name)).toString("base64"),
+          ]);
+      const before = snapshot();
+      expect(() => openSyntheticExperiment(options())).toThrow();
+      expect(snapshot()).toEqual(before);
+      expect(() => resetSyntheticExperiment(options())).toThrow();
+      expect(snapshot()).toEqual(before);
+    },
+  );
 
   it.each(["wrong-version", "partial-schema", "foreign-owner"])(
     "refuses %s without altering database bytes",

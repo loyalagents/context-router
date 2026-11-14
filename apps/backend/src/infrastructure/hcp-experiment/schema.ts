@@ -2,7 +2,9 @@ import { DatabaseSync } from "node:sqlite";
 
 export const DATA_APPLICATION_ID = 0x48435031;
 export const LEASE_APPLICATION_ID = 0x48434c31;
-export const SCHEMA_VERSION = 1;
+// Version 1 graphs may omit quarantined candidates. Refuse application admission;
+// the isolated experiment has no in-place migration or automatic reset.
+export const SCHEMA_VERSION = 2;
 export const DATA_SCHEMA = [
   `CREATE TABLE store_metadata (
     singleton INTEGER PRIMARY KEY CHECK(singleton=1), root_id TEXT NOT NULL,

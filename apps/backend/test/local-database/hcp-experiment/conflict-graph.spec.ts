@@ -131,6 +131,28 @@ describe("C4 persistent conflict graph", () => {
     ).toHaveLength(2);
   });
 
+  it.each([
+    ["a-old", "z-new"],
+    ["z-old", "a-new"],
+  ])(
+    "keeps original write ordering when a quarantined %s is superseded by %s",
+    (oldId, newId) => {
+      write(entry("person", "email", "person-declared"));
+      write(
+        entry(oldId, "phone", "model-inferred", "unverified", "urn:model:same"),
+      );
+      write(
+        entry(newId, "fax", "model-inferred", "unverified", "urn:model:same"),
+      );
+      expect(get(oldId).record.status).toBe("deprecated");
+      expect(get(newId).record.status).toBe("conflicted");
+      expect(get("person").record.status).toBe("conflicted");
+      expect(
+        graph.snapshot(db, newId).some((r) => r.peer.id === "person"),
+      ).toBe(true);
+    },
+  );
+
   it("orders same-asserter supersession by write transaction even with equal timestamps", () => {
     write(
       entry("z-old", "email", "model-inferred", "unverified", "urn:model:same"),
