@@ -8,6 +8,7 @@ import {
 import type { ExperimentPaths } from "../infrastructure/hcp-experiment/ownership";
 import type { ClientRegistration } from "../infrastructure/hcp-experiment/authority";
 import { authorizationHandler } from "../infrastructure/hcp-experiment/http";
+import { startNotifications } from "../infrastructure/hcp-experiment/notifications";
 export interface AuthorizationExperimentOptions extends ExperimentOptions {
   tls: Pick<ServerOptions, "key" | "cert">;
   humanCredential: string;
@@ -15,6 +16,7 @@ export interface AuthorizationExperimentOptions extends ExperimentOptions {
   port?: number;
   reopen?: boolean;
   copyLifetimeMs?: number;
+  notificationCa?: Buffer;
   initialize?: (
     bootstrap: Readonly<{
       review(credential: string): any;
@@ -32,6 +34,11 @@ export async function createSyntheticAuthorization(
     cert: options.tls.cert,
     minVersion: "TLSv1.2",
   });
+  if (
+    options.clients.some((c) => c.notificationEndpoint) &&
+    !Buffer.isBuffer(options.notificationCa)
+  )
+    throw new Error("Owned notification CA required");
   const store = options.reopen
     ? SyntheticExperiment.open(paths, options)
     : SyntheticExperiment.create(paths, options);
@@ -78,12 +85,16 @@ export async function createSyntheticAuthorization(
         })),
       ),
     );
+    const notifications = options.notificationCa
+      ? startNotifications(authority, options.notificationCa)
+      : undefined;
     let closed = false;
     return Object.freeze({
       issuer,
       async close() {
         if (closed) return;
         closed = true;
+        await notifications?.close();
         server.closeAllConnections();
         await new Promise<void>((resolve) => server.close(() => resolve()));
         store.close();

@@ -43,10 +43,13 @@ export function authorizationProvider(authority: AuthorizationRepository): any {
   const projected = (id: string, clientId: string) =>
     authority.ownGrant(id, clientId).grants[0];
   const remaining = (grant: any, max: number) => {
+    const deadline =
+      grant.expiresAt === null
+        ? Date.parse(grant.issuedAt) + 30 * 86400_000
+        : Date.parse(grant.expiresAt);
     const seconds = Math.min(
       max,
-      Math.floor(Date.parse(grant.expiresAt) / 1000) -
-        Math.floor(Date.now() / 1000),
+      Math.floor(deadline / 1000) - Math.floor(Date.now() / 1000),
     );
     if (seconds <= 0) denied();
     return seconds;
@@ -84,7 +87,7 @@ export function authorizationProvider(authority: AuthorizationRepository): any {
       client_name: c.name,
       redirect_uris: [c.redirectUri],
       response_types: ["code"],
-      grant_types: ["authorization_code"],
+      grant_types: ["authorization_code", "refresh_token"],
       token_endpoint_auth_method: "none",
       authorization_details_types: [ACCESS_TYPE],
     })),
@@ -94,8 +97,9 @@ export function authorizationProvider(authority: AuthorizationRepository): any {
     clockTolerance: 0,
     allowOmittingSingleRegisteredRedirectUri: false,
     enableHttpPostMethods: false,
-    // The native refresh predicate is false: no refresh grant registration or offline_access.
-    // Overriding that predicate makes v9 advertise a refresh grant even when it always returns false.
+    issueRefreshToken: (_ctx: any, _client: any, source: any) =>
+      projected(source.grantId, source.clientId).grantType === "persistent",
+    rotateRefreshToken: true,
     pkce: { required: () => true },
     expiresWithSession: () => false,
     cookies: {
@@ -117,7 +121,9 @@ export function authorizationProvider(authority: AuthorizationRepository): any {
         : undefined,
     ttl: {
       Grant: (_ctx: any, token: any) =>
-        remaining(projected(token.jti, token.clientId), 86400),
+        remaining(projected(token.jti, token.clientId), 30 * 86400),
+      RefreshToken: (_ctx: any, token: any) =>
+        remaining(projected(token.grantId, token.clientId), 30 * 86400),
       AuthorizationCode: 60,
       AccessToken: 3600,
       Session: 12 * 3600,
@@ -178,6 +184,7 @@ export function authorizationProvider(authority: AuthorizationRepository): any {
             "code_verifier",
             "redirect_uri",
             "resource",
+            "refresh_token",
           ];
           if (
             Object.keys(ctx.oidc.body).some(
@@ -185,7 +192,9 @@ export function authorizationProvider(authority: AuthorizationRepository): any {
                 !allowed.includes(k) || typeof ctx.oidc.body[k] !== "string",
             ) ||
             ctx.oidc.body.resource !== resource ||
-            ctx.oidc.body.grant_type !== "authorization_code"
+            !["authorization_code", "refresh_token"].includes(
+              ctx.oidc.body.grant_type,
+            )
           )
             throw new errors.InvalidRequest();
           const grant = projected(token.grantId, token.clientId);

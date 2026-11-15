@@ -3300,6 +3300,26 @@
       "ownerSteps": [
         "09"
       ]
+    },
+    {
+      "id": "isolated-hcp-synthetic-revocation",
+      "sources": [
+        {
+          "path": "apps/backend/src/infrastructure/hcp-experiment/notifications.ts",
+          "fingerprints": [
+            "import { request } from \"node:https\"",
+            "active = request(",
+            "address: \"127.0.0.1\""
+          ]
+        }
+      ],
+      "destination": "Explicit isolated HCP C5 experiment only: immutable client-a.hcp.test or client-b.hcp.test HTTPS /revocations endpoint on its registered fixture origin, connection pinned to 127.0.0.1 with owned CA and hostname verification; no redirects or installed-app composition.",
+      "payload": "One persisted signed Security Event Token naming only the synthetic revoked grant, client audience and revocation time. No entry content or credentials. Sequential bounded requests, exact bytes on retry, at most five completed attempts with actual-attempt backoff. Controlled test-only registration; default application remains unchanged.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
     }
   ],
   "externalClients": [
@@ -5405,6 +5425,12 @@
       "path": "apps/backend/scripts/mcp-bridge/bridge.mjs",
       "sinks": {
         "http-client": 1,
+        "node-http-import": 1
+      }
+    },
+    {
+      "path": "apps/backend/src/infrastructure/hcp-experiment/notifications.ts",
+      "sinks": {
         "node-http-import": 1
       }
     },

@@ -1,13 +1,17 @@
 # HCP Alignment Plan
 
-- Status: C1–C3 merged in PRs #204–#206; bounded C4 implemented under the November 13 completion/cache decisions; draft PR #207 in final review and qualification; C5–C8 unactivated; no conformance claim
-- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C4 chat `01a1c422-3178-75b0-a39c-9f621ac7458c` resumed sole-writer ownership November 13; reviewers are repository-read-only
+- Status: C1–C4 merged; bounded C5 implementation authorized after plan review; hard deletion deferred; C6–C8 unactivated; no conformance claim
+- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C5 chat `01a1dcfd-96ec-7590-8682-b40ea62e0d5f` owns planning/implementation integration; orchestrator and reviewers are repository-read-only
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
 - Assessment date: 2026-11-07
 - Evidence: [gap analysis](gap-analysis.md), with the reviewed source revisions
 - Relationship and ownership: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
 - Protocol questions: [local Draft 3 adoption notes][questions]
+
+Current work: [C5 activated plan and decisions](#c5-planning-and-decisions-2026-11-14).
+Earlier activation, writer, pending/draft and freeze-time passages below are
+historical records, superseded by the [C4 merge record](#c4-merge-and-c5-planning-ownership-2026-11-14).
 
 ## Outcome And Scope
 
@@ -2351,6 +2355,624 @@ New admission/graph/authority behavior has fresh local coverage above. No named
 additional aggregate gap selects a full local migration gate. The candidate is
 ready for publication and exact-candidate CI/receipt validation; final identities
 and results belong in PR #207 rather than a pass-only follow-up commit.
+
+## C4 Merge And C5 Planning Ownership (2026-11-14)
+
+Lucas requested merging C4 and planning C5, then directed coordination through the
+original orchestrator and a new step chat. C4 yielded. C5 verified a clean existing
+checkout on `codex/hcp-c5-governance-plan`, HEAD and local `origin/main` both
+`666f9d1b5ff3dde322ad4c368b44d2f4399f203e`. There are no C5 runtime commits.
+The planning owner remains this C5 chat until an explicit handoff; no cross-chat
+message, publication, implementation, merge or release is authorized here.
+
+[PR #207](https://github.com/loyalagents/context-router/pull/207) is merged. Its
+base is `a1ad0c6c248af74f8353c26c7a86f2f43f1ee2ec`, reviewed head
+`aaf67fcd4ed74f4d9c328277f9e43b08187b3f55`, and CI test merge
+`702a46bb742d9f2ad5f4ec38c410640088571c72`. All three candidate/merge trees are
+`7aef9f06d33d5316adaaeb3b7e175d16c55793ee`; C5 independently checked local
+merge/head equality and the empty direct diff. The orchestrator verified successful
+[regular CI](https://github.com/loyalagents/context-router/actions/runs/43653623611)
+and [migration CI attempt 1](https://github.com/loyalagents/context-router/actions/runs/43653623630),
+including source/UI/package receipts and input/base bindings. C5 read the matching
+qualification/binding records; it did not rerun C4 tests or download/verify receipts.
+Source inputs: `c07f9383aa2d43bd9179a28a3c197772799f025feda5c62d73c2583b1f2cca23`;
+base manifest: `2a83072912846ec02c0047c3fe6314fc9802b400cbc08d46b914285dea7347d7`.
+The preceding follow-up's 173 HCP tests/17 suites, 3 Chromium journeys, 85 focused
+tests, build, 65 doc/checker tests, links and affected review results remain
+historical C4 evidence. Its former pending/publication/writer text is superseded
+by this record, without relabelling those results as C5 validation.
+
+## C5 Planning And Decisions (2026-11-14)
+
+**Scope:** Lucas now authorizes the revised C5 implementation after independent
+plan approval, iterative implementation review, and relevant hcp-spec issue updates.
+Hard deletion is explicitly deferred until its protocol contract is clarified;
+the other selected decisions remain. Keep the existing SQLite experiment and isolated synthetic HTTPS/browser
+boundaries. C6 owns installed/application integration and bypass cleanup, C7 MCP
+and real clients, C8 package/profile qualification. No legacy compatibility,
+conversion/migration chain, PostgreSQL HCP, personal-state operation, model run,
+client configuration, OS trust change or external endpoint setup is added.
+The normative/adoption pins remain exactly those in the reference baseline;
+the clean sibling HEAD `5fc62a413794b5927f1251968e04381044af92c1` is not the target.
+Specification source edits, revision adoption, merge, release and personal-state
+operations remain outside this assignment. Relevant upstream issue creation and
+updates are now explicitly authorized; the sibling checkout remains read-only.
+
+**Ownership and risk:** the C5 coordinator is the sole plan writer/integrator;
+runtime writing is assigned to one writer at a time after plan approval. All other
+agents remain read-only. Sensitive/quality-first review covers authority, import
+identity, durable recovery and the erasure deferral boundary.
+This chat uses Lucas's configured defaults; actual execution settings are not
+independently observable. Three read-only investigators were requested as
+`gpt-6-astra`/`xhigh`: grants/governance, erasure/portability, and summaries/sharing/
+notifications. Spawn acceptance is observable; underlying execution is unverified.
+A fresh independent reviewer inspected the complete planning diff and approved
+the corrected plan as recorded below; these investigations and the orchestrator's
+handoff audit alone were not plan approval.
+
+### Required Behavior And Proposed Product Decisions
+
+The pinned §§4.2.1/4.2.6, 5.4, 6, 7.6, 8, 9.4/9.6/9.9, 13 and 18.4 are controlling.
+Existing schemas and G4 clarify shapes/consent examples but do not resolve the
+question record's contradictions. Required behavior is not presented for approval:
+independent management authority; explicit content-write grants; separate affirmative
+persistence election; current authority; immutable content versions; no silent
+provenance upgrade; durable audit; no erased resurrection; and truthful outcomes.
+
+**Lucas selected all six directions; D3 is A, defer hard deletion.** He authorizes
+implementation of this revised scope after subagent plan approval and repeated
+review until findings are resolved. These choices do not adopt a new spec revision
+or resolve protocol questions. This bounded experiment implements the explicit
+application dispositions below and reports the remaining capability/conformance gaps.
+
+| Decision | Selected direction or pending proposal | Concrete consequence / dependency |
+| --- | --- | --- |
+| C5-D1 · OAuth breadth | **Selected A:** persistent grants with Authorization Code + PKCE and rotating public-client refresh tokens. Defer Device Authorization and Client Credentials unless a deployment needs them or a resolved §13.2 requires them. | The selected flow follows §13.2, but code-only support does not establish full OAuth-profile conformance. CR-Q4 remains a claim blocker until minimum/conditional support is resolved; all flow security requirements remain. |
+| C5-D2 · Person corrections | **Selected B, design direction:** allow a person's separately reviewed new assertion under fresh, exact write authority even when the old asserter's purposes exclude it. Preserve principal restrictions and independently authorize response disclosure. | Current edits work when purposes intersect; this choice removes the old-asserter veto, not all authorization checks. No login bypass or rewriting another issuer's attestation. #38 remains a normative clarification; the reviewed local exception below is the selected experiment contract, not a full capability/conformance claim. |
+| C5-D3 · Erasure contract | **Selected A:** defer hard-delete runtime until the audit-retention and post-deletion replay contract is clarified. Continue independent C5 work; add no purge schema, erased-ID machinery, encryption subsystem or generic erasure framework now. | §5.4.2/§18.4 capability and full Core remain incomplete. Withdrawal retains data and is not erasure. #23 tracks actual response replay; #39/CR-Q12 distinguish copied payloads from independently authored audit text. Revisit before qualifying Core or extending this experimental scope to personal data, or when the spec resolution is adopted. |
+| C5-D4 · Cross-provider subject association | **Selected B:** one explicit local user attestation for the exact reviewed export, foreign subject and destination. Preserve original subject/provenance and record limited assurance separately; stronger evidence can be added later. | Different URIs may identify the same person; attestation proves neither source control nor factual truth. Every distinct subject URI must be covered by the exact import attestation; reject uncovered subjects. No silent subject rewrite, confirmation of every assertion, or blanket trust in future files. The local #21 disposition below preserves source identifiers on re-export. |
+| C5-D5 · Portability policy collisions | **Selected A:** manual v2 transfer supports unambiguous category/policy cases and rejects ambiguous mappings or colliding nonidentical policy IDs. Keep interpretation separate from apply so reviewed translation can be added later when justified. | Preserve restrictions and source history; never silently discard policies or collapse categories. Show precise blockers and effects on existing data/grants. #24 still gates ambiguous mapped-policy cases; default export and unambiguous imports remain independently useful. Higher entry version alone never authorizes overwriting a held ID. |
+| C5-D6 · Expired cached copies | **Selected B:** deny content replay after the original copy deadline, preserve duplicate suppression, and require a separate authorized read for a fresh copy. | This applies even while current grant and entry eligibility remain valid. Actual authority loss already denies content under both options. C4 explicitly tests exact expired-copy replay; selected C5 behavior is a substantive delta requiring affected review and explicit disposition of §9.6's original-response requirement, not a settled spec rule. Original write stays committed and is never rerun. |
+
+D4/D5 prioritize a simple, useful initial scope without speculative identity or
+translation frameworks. Import review records association evidence separately
+from original assertions. Category/policy interpretation produces explicit outcomes
+before atomic apply; future verification or translation must preserve these review,
+provenance and authorization boundaries. Selection of these bounded cases does not
+resolve the separate history, conflict-admission and chronology dependencies below.
+
+Proposed engineering defaults: temporary grants still default to four hours (24h
+maximum); no temporary refresh initially; persistent access tokens one hour and
+rotated refresh tokens 30 days. HCP persistent grants have `expiresAt: null` and
+last until revoked; finite refresh/OAuth-object/session expiry does not turn them
+into temporary grants. Reauthorization after credential loss must not silently
+reuse or widen authority. Keep no onward-sharing permission and the existing
+one-hour provider copy cap even with endpoints. v1 import is optional and omitted;
+manual transfer is not synchronization. Keep retained entry/history/audit until
+explicit deletion; separately expire transient reviews, credentials, cursors and
+delivery state only under the retention contract below. None of these defaults
+waives required sharing reports, notification support or full governance.
+
+### Retained Copies, Erasure And Recovery Design
+
+This is a source inventory at the C4 merge, not an erasure test result. The owning
+files are under `apps/backend/src/infrastructure/hcp-experiment/`. Keep the inventory
+current as C5 adds copies; a table deletion alone cannot close it.
+
+| Copy or binding | Current source / dependency | Proposed erasure treatment and acceptance |
+| --- | --- | --- |
+| Bootstrap bundle and content digests | `schema.ts` `fixture_bootstrap.bundle/review_digest`; `authority.ts` approval and `grant.issued.data.fixtureDigest` | Remove erased content and body-derived digests, including mixed-entry bootstrap material; retain only justified authority/completion metadata. Seed replay must never restore it. |
+| Current entry, every version and confirmation | `entries`, `entry_versions.document`, `confirmations.document`; `store.ts`, `entry-state.ts` | Remove current/private/classification content and every historical version/extension/confirmation copy. Preserve no hidden historical export path. Current immutability/delete triggers need a narrow reviewed erasure transition, never a generic bypass. |
+| Relationships and quarantine | `relations.document`, `quarantine_reasons`; `relationships.ts`, `conflict-graph.ts` | Remove incident content/proposals and preserve a content-free reason for any still-required peer hold. Deletion cannot implicitly endorse a quarantined peer or reorder original assertions. Test a shared graph with other unresolved edges. |
+| Staging, human reviews and capabilities | `staged_proposals.document.request`; `management_reviews.document.input` and snapshot hashes; `person_write_capabilities.document` | Purge associated bodies/fingerprints/snapshots; invalidate pending/consumed review capabilities and staged apply. Review/apply already prepared before deletion cannot recreate the entry. Independent unlinked statements are not automatically inferred duplicates. |
+| Retry candidates and in-memory results | `mutation_receipts.response/binding`, `writes.ts`, `authority.ts` prepared tickets | Destroy candidate and content-derived fingerprint; preserve only namespace/key consumed state sufficient to deny reuse. Erased operation never becomes a fresh create after restart, another grant or changed body. Invalidate already prepared releases at the serialized boundary. |
+| Audit and content-bearing copies inside other records | `audit_events.event`: free-text reasons, graph/relationship/proposal snapshots, unknown extensions, bootstrap digest; policy text can independently repeat content | Inventory each causal copy, including multi-entry events. Proposed auditable redaction of associated payloads needs CR-Q12 disposition; preserve unrelated history and truthful redaction evidence. Do not assume §8.5 controller-log permission overrides §8.7 personal-log rules. Unlinked repeated prose is an explicit limit, not proof of universal semantic erasure. |
+| Refs, narrowed grants, cursors and OAuth objects | `grant_refs`, grant/review/protocol documents, `audit_cursors.document`; schema foreign keys/immutability | Keep minimal non-content denial/attribution metadata only where justified; no dangling relation that restores access, unredacted content in cursor snapshots, or replay from stored credential objects. Preserve cursor opacity and 300s validity without replaying erased payloads. |
+| SQLite and process/file copies | `schema.ts`, `store.ts`, `ownership.ts`; DELETE journal, EXTRA sync/fullfsync, memory buffers and owned files | Cover database/free pages, overflow pages, rollback journals, temporary files, crash/reopen and already prepared buffers. Never remove a hot journal manually. Enumerate exact ownership; source documents, models and personal roots remain outside the operation. |
+| C5 additions | export buffers/files, import previews/staged bundles/history, notification queues/results, summary snapshots | Prefer on-demand export and bounded previews; every retained content-bearing copy needs entry dependency indexing and the same invalidation/purge owner before the feature ships. Already handed-off user/client exports cannot be recalled; disclose that boundary. No automatic provider backup is proposed. |
+
+**Deferred design, not active architecture.** The inventory above remains a list
+of concrete retained copies for the future hard-delete decision. It does not
+activate per-entry indexes, purge exceptions, erased-ID tables, crypto keys,
+background cleanup or a durable erasure state machine. Retain current immutability
+and duplicate-suppression protections. Expiry makes transient credentials/reviews
+unusable under current rules; no new retention janitor is part of this round.
+
+When #23/#39 are resolved and erasure is activated, first evaluate one concrete
+SQLite transaction under the existing admission boundary. Add durable pending
+state only for a demonstrated non-atomic cleanup boundary. Keep required audit
+facts distinct from optional copied payloads and independently authored repetitions;
+never assume a universal semantic eraser. The future contract must preserve
+unrelated records and prevent stale retries/imports restoring erased entries.
+No hard-delete success endpoint, whole-store-reset substitute, or forensic claim
+is delivered by the current C5 scope.
+
+### Implementation Contracts And Dependencies
+
+**Governance.** Use the isolated `/manage` surface plus the pinned HTTP governance
+routes, not the installed dashboard. Add category/purpose editing and full rule/
+directive list/set/remove controls. `expectedVersion` is required for category/
+purpose changes, but does not serialize same-version policy changes: browser review
+also binds classification, principal restrictions, policy revision, relevant graph,
+peer versions/status and exact action. Every entry classification/principal-purpose and relevant graph/governance change
+must advance the monotonic generation bound by reviews (the existing global policy
+revision can suffice), or invalidate those reviews permanently. Test P → [] → P
+and category restoration: unchanged final values must not revive an old review. Recheck before commit. Removing a principal
+restriction (`null`) does not remove assertion restrictions; empty means no allowed
+purpose. No content version is created. Append required from/to events, update
+policy, invalidate affected candidates and re-evaluate relevant conflicts in one
+transaction. Category changes may introduce a contradictory pair but must not
+pretend the edited entry was newly authored; use original version/write ordering.
+Individual rule/directive operations preserve unchanged IDs and provider-owned
+creation/setBy facts; do not reuse fixture-wide replacement as an editor. Rule
+removal never revives a revoked grant or invalidated receipt. Directive editor
+shows that recipients receive its text, with deny/ask-first/permit behavior and
+custom URI actions. CR-Q9 remains a sensitive-real-data C6/C7 blocker.
+
+**Grants.** `oauth.ts`/`authority.ts`/`schema.ts` currently assume finite temporary
+expiry; replace those assumptions explicitly, including SQL admission/recovery,
+token issuance, current status, revocation and person display. Keep HCP grant
+identity separate from `oidc-provider` Grant/refresh-family records and their TTLs.
+Use a default-off persistence act bound to the exact authorization interaction,
+separate from ordinary approval; forged POST values, login and prior consent cannot
+stand in for that act. Token release follows durable grant/election audit. Rotate
+refresh on every public-client use and handle consumed-token reuse, concurrent
+refresh, crash/restart, failed token persistence and lost refresh replies without
+duplicating authority. Any reuse-family invalidation must have a selected recovery
+policy; it cannot silently revoke unrelated HCP grants. Revocation invalidates all
+access/refresh evidence immediately, independent of notification. Device/client-
+credentials remain an explicit deferred/claim dependency under D1/CR-Q4; implicit
+and password grants are prohibited, not optional alternatives.
+
+**Disclosure summaries and sharing.** Derive §8.6 from durable events, not current
+entry classification or UI counters. Add exact offered-category/copy/directive
+snapshots for query/get and content-bearing write responses before C5 category edits
+can make history ambiguous. Preserve attempted delivery versus confirmed receipt;
+completion-only writes and lost sockets must not falsely claim reception. Summaries
+include write copies in possible entry/copy exposure; `retrievals` should count
+query/get events, including empty queries, with CR-Q15 tracking the pin ambiguity.
+Snapshot named client/operator facts in grant audit too, so aggregation is actually
+audit-derived. Complete §8.3 client/category/event-type/date filters and JSON-LD
+audit export. Controlled registration must support and label a client's declared
+legal retention (record/obligation/period), show it at consent and revocation, and
+include it in summaries; a declaration is not verification of a legal obligation.
+This adds no real institution or legal advice. Compute per-copy cutoff under its
+own grant, then the maximum across the client's
+copies: notifying A1 cannot shorten an independently usable A2 copy. No-copy cases
+must not invent dates. Person-visible pending/not-attempted details may supplement
+the pinned notification enum without falsely calling them delivered/abandoned.
+
+Implement `POST /v2/shares` even while onward permission is disabled. A valid,
+attributable report commits `context.shared(permitted:false)` before returning 403;
+an exception wrapper must not roll back that event. Bind reported refs to the
+presented grant and actual prior disclosure, not IDs or another grant. Invalid
+credentials are not enough to attribute an arbitrary report. After revocation the
+ordinary token gate denies and protocol objects may be gone: CR-Q14 needs a separate
+authenticated historical-report path or a specified limited reporting credential,
+not an exception granting context access to revoked tokens. That path remains
+blocked pending a reviewed disposition; valid-grant unauthorized reports can proceed.
+Reports are client claims, not provider observation that sharing occurred. Duplicate
+report retry handling must not silently contradict the requirement to record each
+report; do not infer identity from a body hash alone.
+
+**Notifications.** Registration/delivery use explicitly configured synthetic HTTPS
+fixture endpoints and disposable trust. Validate endpoint ownership/recipient,
+exact destination and address at connect time; no redirects, arbitrary URL fetches,
+DNS-to-private-network escape, unbounded body/time or concurrency. Limits may bound
+registration/delivery but never revocation. Commit revocation and outbox intent
+atomically without network work; signing failure or queue pressure cannot delay or
+reverse revocation. Persist one signed SET's exact bytes/jti before the first send;
+retry that same token. Retain its verification key while delivery can recur.
+After actual recorded attempts use delays of 5/10/20/40 minutes, setting next-due
+from the actual attempt time; uninterrupted attempts fall at 0/5/15/35/75 minutes.
+A missed wall-clock slot is never an attempt and restart never drains old slots
+in a burst. Keep bounded timeout and durable attempt-count/next-due state. 202 terminates delivered; 400 terminates
+abandoned with client error; other responses/connections retry. Offline time is not
+fictional attempts; resume due work without resetting counts or renewing token/copy
+deadlines. Outcome/audit durability failures must recover without inventing success.
+Bind a job to the endpoint registration version it was created for; the immutable fixture registration below prevents endpoint replacement while
+pending jobs exist. No endpoint removal/editor is part of this scope; do not
+fabricate exhausted retries. Delivery uncertainty after a lost 202 remains uncertainty and the client deduplicates
+the same jti. Immediate provider revocation never waits for this work.
+
+§9.9 also says clients SHOULD reject `iat` more than 300s old: a strict fixture may
+return 400 at minute 15, ending the retry sequence early under its explicit 400 rule.
+Do not refresh the token on retry or call SHOULD a MUST. Test both strict-age and
+documented receiver-exception fixtures; CR-Q13 requests a coherent freshness/retry/
+dormancy contract. Failed/abandoned delivery and last possible copy deadline remain
+visible to the person; no recipient-erasure claim follows from 202.
+
+**Export.** Defaults include current versions in every retained state, including
+soft-deleted, plus rules/directives; prior versions/audit are opt-in, and hard-deleted
+entries never return. Treat `exclude=deleted` literally, not as active-only. Declare
+only supported v2 entry schema; do not copy the invalid `{}` import example (#25).
+Use a consistent snapshot and durable `context.exported` event with actual options
+before release. Export release rechecks current management authority and the reviewed store state;
+hard-delete races become acceptance work only when that capability is activated. Export preserves unknown
+members, original declarations/confirmations/provenance, historical-versus-current
+classification labeling and non-active states. Audit-only JSON-LD export/filtering
+is also required by §8.3. Do not export OAuth credentials or make grants portable
+authority; delegations, if encountered, are records only, never established grants.
+
+**Import.** Implement validation/preview before apply, with exact export bytes,
+subject association, category/policy impact, held IDs/versions and
+store/policy revision bound to the review. `dryRun` changes no domain/audit state.
+Apply revalidates in the same transaction; any change invalidating preview requires
+a fresh preview, not silent different outcomes. Commit accepted per-entry outcomes,
+required recategorization and one import audit together; storage failure rolls back
+all. Preview lists rejected/skipped/imported cases and complete policy effects,
+including zero imported entries with policy changes. A lost reply gets exact
+operation recovery, never blind repeated policy application.
+
+Preserve declaration/provenance/confirmations/unknowns and keep foreign assurance
+labeled as the source provider's record. Same held ID with changed content is rejected
+even at a higher version; metadata/assertion/evidence/history collisions also need
+an explicit duplicate rule under #19. Imported `deleted` never becomes active.
+Versions require validation and provenance separation from locally performed
+events; do not manufacture local actions or silently discard requested history.
+The bounded contracts below reject unsupported source audit and ambiguous history
+explicitly; cross-provider ID authority is not solved by taking the largest number. Rule/directive collisions and category mapping
+follow D5/#24; unsupported credential content/profile input is rejected honestly.
+No granted access, refresh credentials, confirmations attributed to this provider,
+or active delegation may be invented by import.
+
+Import is also a **Memory Manager admission path**, not raw storage insertion.
+Preview all accepted current entries against destination active/conflicted entries
+and each other, including the resulting local expiry, relationships, quarantine
+and peer effects. Reuse the shared detector/standing/lifecycle rules in an import-
+aware transaction, with the complete accepted candidate set fixed before effects.
+Commit local conflict/lifecycle events and import outcomes atomically before any
+entry can be disclosed. Source provenance and imported history remain attributed
+to their source; import is not a new assertion, person confirmation or local
+management relationship act. Preserve imported non-active states and local expiry
+precedence; never activate deleted or already-expired content. Do not treat foreign
+relationship provenance, timestamps or source graph dispositions as local authority
+to supersede/confirm a destination entry. Absent, rejected or erased relationship
+targets cannot become live entries through an edge. Define retained unresolved
+references separately from locally effective graph edges; reject/gate cases whose
+semantics cannot be preserved safely.
+
+For example, importing an active model inference Y that contradicts an existing
+authoritative person statement X must evaluate and quarantine/surface the conflict;
+its syntactically valid export is not authority to disclose Y as active. The reverse
+arrival direction and two contradictory entries in one bundle require the same
+standing outcome, independent of array order. Cross-provider same-asserter chronology
+and foreign graph-history effects remain a concrete #19/#37 dependency: import
+arrival time, array order or an untrusted source clock cannot invent which assertion
+is newer. Before accepting those cases, select/review the chronology and relationship
+admission policy with observable preview outcomes. Reject them explicitly while
+unresolved; do not claim all-model/all-history import completion. Tests must cover
+ambiguous ordering, missing/rejected/erased targets, expired/non-active records,
+reordered batches, audit failure and kill/reopen with no partial graph exposure.
+
+### Activated Bounded Application Contracts
+
+The following concrete choices implement the selected decisions without waiting
+for unrelated protocol work or silently presenting experiment policy as normative.
+The user activated implementation and relevant issue publication after plan review.
+Remaining blocked cases are named; they do not authorize broad redesign.
+
+- **D2 correction:** only the existing exact-reviewed, one-use person-declared
+  revision capability may ignore the old asserter's purpose list. The selected
+  purpose must satisfy the new assertion and current principal restriction.
+  Preserve category/action/target/version/body/deadline and current-graph checks;
+  reject issuer-attested/credential targets. Context Client writes keep the old/new
+  intersection. Original versions/provenance remain immutable and the new person
+  version has no inherited confirmations. Response disclosure remains independent.
+  This is the local #38 experiment disposition selected by Lucas.
+- **D6 replay:** apply the original `copyUntil` to lookup and final release of
+  Context Client create/revise retries. Keep existing receipt suppression and
+  original-channel completion-only behavior; no new erasure marker is needed.
+  Denial is not rollback. A fresh authorized read may return a new copy. This is
+  an explicit local departure from literal §9.6, tracked with #34.
+- **Persistence:** use a separate server-recorded election tied to the exact
+  authorization interaction, then ordinary affirmative approval. Temporary remains
+  default, with no refresh. Persistent HCP grants have null expiry. Configure the
+  installed OAuth library to rotate every public refresh, with one-hour access and
+  a fixed 30-day credential family; rotated tokens keep the family's remaining
+  lifetime. The OAuth grant lives through that family while HCP authority persists
+  until revoked. Lost refresh replies/partial persistence fail closed and may
+  require fresh consent. Consumed-token reuse invalidates that HCP grant and its
+  credential family only; unrelated grants survive. No refresh-response recovery
+  framework or silent reauthorization is added.
+- **Governance/reviews:** use existing transactions and a monotonic semantic
+  generation (the existing global policy revision can serve) for exact human
+  reviews. Advance it for semantic entry/policy/lifecycle/graph changes, not every
+  credential save; restored values cannot revive old approvals. Individual policy
+  CRUD preserves unchanged IDs. Classification edits preserve immutable assertion
+  ordering; reuse local create/revise audit order where sufficient.
+- **Summary/audit:** add small immutable disclosure facts to existing events before
+  category editing, then compute summaries on demand. Include attempted read/write
+  representations as possible exposure, query/get events in `retrievals`, null
+  `usableUntil` for no copies, and each copy's own grant notification cutoff before
+  the client maximum. No receipt claim or summary table. Filters are strict,
+  inclusive RFC3339 from/to plus client/category/event type; bind normalized filters
+  to existing snapshot cursors and authenticate each page. These are explicit
+  CR-Q15 application interpretations pending the upstream aggregation answer.
+- **Sharing:** all onward permission remains disabled. A still-valid client's
+  attributable report is durably recorded as not permitted before returning 403;
+  require refs tied to that grant and prior disclosure. Each submitted report is
+  recorded; body equality is not proof of the same real share. Revoked/expired or
+  unverifiable credentials remain denied; the CR-Q14 historical reporting path is
+  explicitly incomplete, with no bypass or invented reporting authority.
+- **Notifications:** optional endpoint/legal-retention fields belong to immutable
+  synthetic client registration. Support exact fixture HTTPS endpoints with pinned
+  CA, hostname and loopback connection address; no endpoint-edit API this round.
+  Create at most one job when a human/policy/security revocation concerns a grant
+  with a registered endpoint and prior possible disclosed copies. Context Client
+  self-relinquishment and ordinary expiry enqueue no notification. Repeated revoke
+  creates no second job. Snapshot the endpoint; reuse stored signing material,
+  one sequential bounded worker, and one directly owned outbox table. Persist exact
+  signed SET bytes before send; no database transaction spans HTTP. Use increasing 5/10/20/40-minute delays from actual recorded delivery attempts
+  (0/5/15/35/75 only when uninterrupted), immediate terminal 202/400, and the same
+  bytes after restart/uncertain acknowledgement. A crashed unrecorded attempt is
+  uncertain, not a fabricated completed attempt; missed wall slots never cause
+  catch-up bursts. Test outage before first send and between retries. Strict-age receiver fixtures
+  may reject old tokens; a justified exception fixture covers continued retries.
+  Neither outcome claims recipient erasure. Revoking expired grants remains useful
+  for previously disclosed copies; revoke expired as well as active, never revive
+  authority. Signing/worker failure never undoes or delays local revocation.
+- **D4 association:** the reviewed import shows every distinct subject URI in the
+  export envelope/current entries/versions and the destination. One explicit act
+  attests that this exact displayed set refers to the person. All input URIs must
+  be covered, with exact bytes and destination-state binding; there is no reusable
+  alias registry. Preserve original identifiers and assurance. This permits a
+  subsequent export containing previously associated source URIs without silently
+  asserting new identity proof or rewriting provenance. Mixed-person input is
+  refused when not attested; attestation is not source authentication.
+- **D5/import boundaries:** support v2 General Context person/model records and
+  unambiguous categories/policies. Reject nonidentical held-ID collisions, including
+  higher versions, and nonidentical policy-ID collisions; identical records can be
+  skipped. A current version may be imported without optional history; never
+  fabricate missing versions. Supplied history must be complete, same-ID/subject,
+  nondivergent and well formed. Initially reject nonempty source audit, foreign
+  graph relationships and unrepresentable conflicted source states with explicit
+  reasons; no hidden archive or silent dropping. Merge supported rules/directives
+  preserving IDs, and evaluate existing destination effects before approval.
+  Preview and apply evaluate local plus intra-batch conflict/expiry admission.
+  Reject contradictory unconfirmed same-asserter model cases whose cross-provider
+  ordering is ambiguous; array order and source timestamps do not settle it.
+- **Dry run and recovery:** use a side-effect-free snapshot path that does not run
+  expiry/audit reconciliation; authenticate without triggering domain writes.
+  Apply revalidates the exact reviewed input/outcomes and current state in one
+  transaction, including expiry changes. Accepted entries, policy effects, graph
+  effects and local audit commit together. Use existing reviewed-operation recovery
+  patterns; unsupported cases are reported precisely. Hard-delete-specific IDs,
+  fences, purge triggers and recovery states are deferred with D3.
+
+### Testable Checkpoints And Finalization
+
+Order is driven by data dependencies. Record the hard-deletion deferral first;
+add durable disclosure facts before mutable classification editors. Implement
+the selected bounded contracts below; unresolved branches stay explicitly refused.
+Completion of this implementation round is not full C5/Core conformance.
+
+| Checkpoint | Deliverable and affected seams | Required acceptance/failure evidence |
+| --- | --- | --- |
+| C5a · decisions and storage contracts | This plan/question/matrix; source-copy inventory; choices and blockers; independent plan review | Named actors, pre/postcommit/receipt boundaries, event facts and erasure deferral reviewed; no dependent runtime before genuine conflict decisions; docs consumers/links/whitespace |
+| C5b · governance and durable disclosure facts | `schema.ts`, `authority.ts`, `entry-state.ts`, `conflict-graph.ts`, `http.ts`, `/manage` | Failing-first same-version category/purpose/policy/peer race; expectedVersion mismatch no effects; rule precedence/revoke/current+future grants; null/empty restrictions; original authored ordering; changed classification cannot rewrite past summaries; sticky candidate invalidation; CSRF/context-token denial; isolated browser review |
+| C5c · persistent grants | `oauth.ts`, `policy.ts`, `authority.ts`, protocol-object storage and consent UI | Temporary default; distinct persistence act/forgery/back-navigation; null HCP expiry versus finite token/OAuth expiry; rotation reuse/concurrency; durable issuance/lost reply; revoke/refresh race; reopen and 48h dormancy; A1/A2/B unaffected authority; N3 grant-deadline evidence assessed honestly |
+| C5d · summaries, reports, notifications | Shared audit projections, HTTP `/v2/disclosures`/`shares`, outbox and fixture endpoint registration | No unaudited summary facts; empty/lost-response/completion-only reads/writes; per-grant copy deadlines; unauthorized-report event survives403 and audit failure gives no false durable acceptance; foreign refs/invalid credentials; same-token 202/400/retry, strict-age and exception fixtures, no self-relinquishment/ordinary-expiry jobs, no duplicate revoke jobs, outage before/between attempts without catch-up bursts, sleep/restart/count/lastUseUntil, failure audit and immediate unthrottled revoke |
+| C5e · export | Shared snapshot/audit plus `/v2/export` and management UI | All seven retained lifecycle states with synthetic fixtures; include/exclude combinations; prior versions/confirmations/extensions; deleted versus hard-deleted; concurrent category/revise; audit failure no successful export; JSON-LD audit export/filters; no credential or portable-authority leakage |
+| C5f · import preview/apply | Shared import validation/outcome transaction, reviewed preview UI | v2 round trip; exact duplicate versus changed/higher/lower same ID; subject mismatch/association; mapped-policy consequences; preserved assurance/unknowns/history; imported-versus-local and intra-batch person/model conflicts in both arrival orders, reordered bundles, ambiguous same-asserter chronology, missing/rejected/erased relationship targets and expiry precedence; no active deleted import; stale preview/concurrent policy; dryRun no audit/domain changes; fail/kill/reopen and lost reply with atomic outcomes |
+| C5g · hard deletion deferred | No erasure implementation, purge schema or speculative recovery framework | Verify unsupported hard-delete requests cannot claim success or fall back to withdrawal/reset; preserve current retained-history protections; track #23/#39 as missing mandatory capability |
+| C5h · integrated closure | Management synthetic journey and complete requirement/adoption disposition | Consent → persistent refresh → governance → disclosure/report → export/preview/apply → restart/retry; hard-delete refusal remains explicit; early authorization denials throughout; fresh complete-diff review, scoped local evidence and exact-candidate CI after separate publication authorization |
+
+Use backend tests first and targeted tests after each behavior change. Select real
+SQLite transaction/process/recovery, native HTTPS and TLS-verified Chromium coverage
+using existing `test/local-database/hcp-experiment/` and
+`apps/web/test/hcp-oauth-browser.test.mjs` seams. Future new test filenames/commands
+are not claimed to exist yet. Existing focused Jest `--runTestsByPath` and native
+`node --test` wrappers remain starting points; build only when affected fixtures
+need it. Run on the pinned Node 24.21.0/pnpm 10.25.0; actual C5 execution will need
+fresh evidence for every changed runtime input.
+
+End-of-round milestone for the authorized implementation: bounded C5b–f and the
+C5h synthetic journey complete, C5g explicitly deferred, all selected contracts
+covered by focused tests, review findings resolved, protocol limitations and
+remaining CI/platform/manual evidence named. Freeze the candidate at that boundary. One cohesive C5 PR,
+not one per checkpoint/reviewer. The activated implementation and repository workflow
+cover the reviewable draft PR and exact-candidate CI; the coordinator publishes after
+writer handback. Merge, release and personal-state actions remain outside scope. Final
+review and all applicable exact-candidate CI follow the unchanged validation matrix.
+Mac SQLite/filesystem/process evidence is required for affected behavior; a full
+local migration gate needs a named aggregate gap, not habit. No installed artifact,
+cross-boot/power-loss, other hardware, real client or recipient compliance evidence
+is supplied by this plan. C6–C8 retain those dependencies.
+
+**Planning review and validation, November 14.** A fresh read-only reviewer
+requested Astra/xhigh (underlying execution unverified) reviewed the complete
+five-document diff at `2e5f594a74b07f1c13610478f279f3e30016db5bcad8e458c6f22eed927fc381`.
+It required explicit import Memory Manager admission, graph/lifecycle effects,
+foreign relationship/chronology gates and failure tests; all are incorporated in
+C5f and the question/matrix records. Two clarifications also landed: D2 retains
+the mandatory capability blocker, and review generations prevent restored-value
+races. The affected recheck **approved** corrected diff
+`c613cc1258ed501666c3f67b58cafa20bf954e5c93d19056f382066ae99f75fa`, carrying forward
+unaffected complete-diff coverage. Approval is for planning with its named
+dependencies, not selection of D1–D6 or permission to implement. This status/evidence
+paragraph is subsequent bookkeeping, with no contract change.
+
+Pinned Node 24.21.0/pnpm 10.25.0 preflight passed. Local results:
+
+- `node --test scripts/check-markdown-links.test.mjs scripts/print-repo-structure.test.mjs scripts/local-migration/ci-path-filters.test.mjs scripts/local-migration/check-contract-baseline.test.mjs`: **120 passed**.
+- Backend `jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts`: **8 passed**; web runtime documentation checker: **5 passed**; orchestrator `node --import tsx --test test/operator-docs.test.ts`: **1 passed**. These are document/contract consumers, not a C5 runtime suite.
+- `node scripts/check-markdown-links.mjs`: **161 Markdown files passed**;
+  `git diff --check` and `scripts/local-migration/check-nonruntime.mjs` with verified
+  base `666f9d1b5ff3dde322ad4c368b44d2f4399f203e` **passed**, with
+  `baseComparison=performed`.
+
+The corrected plan renewed links/whitespace and the exact-base contract comparison.
+The 134 test passes carry forward only unchanged checker code, fixtures and asserted
+document inputs; the delta changes HCP planning prose, not those consumers. No
+runtime build/suite, C5 CI, PR, upstream publication or artifact qualification was
+performed. Five planning/reference Markdown files remain uncommitted on the C5
+branch at the C4 merge. The sibling spec checkout is unchanged; this chat retains
+planning ownership. At that review, decisions remained proposed; the subsequent
+product selections are recorded in the decision table above. Adoption findings, owners and
+revisit conditions are in the [C5 question disposition](spec-questions.md#c5-planning-adoption-disposition-2026-11-14).
+
+**Product-selection follow-up.** The independent reviewer approved the three-document
+selection delta `72ebfc85827254c815e55aa2d51960ccc38e2d8528e6d55b98be9239d2cfa35a`
+with no findings, explicitly carrying forward unaffected complete-diff coverage
+from the corrected plan above. Requested Astra/xhigh execution remains unverified.
+Pinned-toolchain preflight, the same 120 checker tests, 161-file Markdown link check,
+working-tree whitespace and exact-base nonruntime contract comparison passed again.
+The earlier 14 document-consumer passes retain only their unchanged-input scope;
+no new runtime/CI/artifact evidence is claimed. This subsequent evidence paragraph
+changes no contract; D3 and the named protocol dependencies remain unresolved.
+
+**Activated implementation plan review.** The independent reviewer requested two
+notification corrections on `cc73f57039320cebc0396101465edba8d4b1752f0761e10bd38a734616256e4d`:
+exclude self-relinquishment/ordinary expiry and schedule retry backoff from actual
+attempts after restart. Both are fixed. The affected recheck approved complete
+plan diff `90bd538adf1453cf034e2d495a1f4e08e0b5f5937e28f58b5da151018fd5698d`, carrying
+forward unchanged full-plan coverage, with no remaining blockers. Node/pnpm
+preflight, 120 checker tests, 161-file links, whitespace and exact-base nonruntime
+comparison passed for the activated plan; these remain planning evidence only.
+
+**Writer handoff:** `c5_implementation` is the sole repository writer for the
+approved runtime checkpoints, including tests and evidence/status updates. The
+coordinator and all reviewers stay repository-read-only until explicit handback.
+The coordinator owns authorized upstream issue publication. Requested writer and
+reviewer model/effort is Astra/xhigh; actual execution remains unverified. No
+commit, push, merge, installed-app operation or personal-state change is delegated.
+
+**Authorized upstream questions:** published [#39](https://github.com/loyalagents/hcp-spec/issues/39)
+(audit retention), [#40](https://github.com/loyalagents/hcp-spec/issues/40) (OAuth
+support), [#41](https://github.com/loyalagents/hcp-spec/issues/41) (SET age/retry),
+[#42](https://github.com/loyalagents/hcp-spec/issues/42) (historical sharing reports),
+and [#43](https://github.com/loyalagents/hcp-spec/issues/43) (summary aggregation).
+The [#23 update](https://github.com/loyalagents/hcp-spec/issues/23#issuecomment-6888869878)
+records hard-delete deferral. These are questions and scope evidence, not adopted
+spec changes. Later implementation findings will update existing issues where apt.
+
+## C5 Implementation Checkpoint (2026-11-15 UTC)
+
+The bounded C5b–f and C5h implementation is present in this candidate. **Targeted
+checks passed; final validation pending.** C5g hard deletion remains explicitly
+unavailable. This is an isolated synthetic SQLite/HTTPS experiment, not installed
+application integration or a Core, HTTP, OAuth or package conformance claim.
+
+The implementation adds individual rule/directive controls, same-version category
+and principal-purpose edits, exact reviewed person corrections, durable disclosure
+facts and summaries, attributable forbidden-sharing reports, persistent OAuth
+consent with rotating refresh, a directly owned revocation outbox, and reviewed v2
+export/import. All new native suites are reached by the existing local-database
+Jest wrapper; no CI routing or gate requirement changed. Schema version 3 refuses
+older experiment stores; there is no automatic reset or migration.
+
+- Persistent grants use two affirmative acts, null HCP expiry, one-hour access
+  credentials and a fixed 30-day OAuth family. Replaying a consumed refresh atomically
+  revokes its own grant/family, including the library's destroy-before-revoke crash
+  boundary. Other grants survive. Lost replies/partial saves can require fresh consent.
+- D2 bypasses only the old assertion-purpose veto for an exact reviewed person
+  correction. Principal restrictions, issuer/credential exclusion and representation
+  authorization remain. D6 denies retry representation after the original copy
+  deadline while retaining duplicate suppression and committed-write semantics.
+- Audit category filters use immutable offered/search categories. Grant lifecycle
+  events use issuance scope; policies without categories are global, while an explicit
+  empty list is distinct. Sharing filters use `possibleCategories` from prior possible
+  disclosures of those refs under the reporting grant, not current classification or
+  an untrusted shared-at clock. These are local interpretations tracked in #42/#43.
+- Notifications are limited to immutable fixture endpoints, a pinned owned CA,
+  hostname verification and a loopback connection. Signing and delivery happen after
+  local revocation commits. Exact SET bytes survive retries/restart. Actual completed
+  attempts govern 5/10/20/40-minute delays; crashed unrecorded attempts are uncertain.
+  Observed 202/400 remains terminal even if its body fails. Pending jobs are separate
+  from the summary's delivered/abandoned/none enum. Legal retention is a client
+  declaration; acknowledgement is not proof of erasure. Expired grants remain revocable.
+- Export includes all seven retained lifecycle states, current principal restrictions
+  on historical representations, rules/directives, and optional versions/audit. It
+  exports neither OAuth credentials nor portable authority. Import preserves source
+  subject/provenance/assurance/extensions and requires the exact displayed subject set
+  to be attested for the exact reviewed input and destination generation. The browser
+  retains exact source JSON text; object-form HTTP input is bound as parsed JSON.
+- Import supports unambiguous General Context person/model cases and policy mappings.
+  It refuses changed held IDs, duplicate current IDs, cross-kind/nonidentical policy
+  collisions, ambiguous same-asserter chronology, foreign relationships, nonempty source
+  audit/delegations and unrepresentable conflicted/revoked/suspended current states.
+  Missing optional arrays are preserved and compared with their empty equivalent.
+  Pure dry runs, including denied authentication, perform no reconciliation writes;
+  elapsed validity is projected in memory. Reviewed apply reconciles/revalidates and
+  commits all accepted entries, graph/policy effects, audit and the recoverable result
+  in one transaction. A current record without optional history invents no old versions.
+
+Independent interim reviews covered governance/D2/D6, persistence, audit/reporting and
+portability; their accepted findings were reproduced and corrected with focused tests.
+Corrections include authored-contradiction retention, session/live-participant commit
+bounds, malformed-request admission, consumed-refresh crash atomicity, immutable
+history/mapping duplicate comparisons, dry-run time projection, and checked response
+handoff after serialization. Notification review found no further worker/outbox defect;
+its bounded failure evidence was then completed. Fresh complete-diff review remains
+required for final handoff. Requested model/effort was Astra/xhigh; actual execution
+settings remain unverified.
+
+Focused checkpoint evidence on pinned Node 24.21.0 / pnpm 10.25.0:
+
+- Six C5 source/write suites: 96 passed before the final extra regression additions;
+  later focused portability: 21 passed; governance: 20 passed; notifications: 9 passed.
+- Native persistent OAuth includes real concurrent refresh, revoke interleaving,
+  consumed-token destruction SIGKILL, partial-save/lost-response failures, independent
+  A1/A2/B, reopen/48-hour dormancy, fixed-family expiry and response suppression.
+- Native governance/report/history and portability checks: 19 passed, covering
+  before-audit/before-commit/after-commit failures, SIGKILL/reopen, recovered outcomes,
+  snapshot/filter binding and failed exports with no successful audit claim.
+- Native notification checks: 13 passed, including uncertain acknowledgement with
+  identical bytes/no invented attempts, token-persist and terminal-audit crash points,
+  a stalled receiver with prompt local revocation, untrusted CA/hostname/redirect
+  refusal, 202/400 oversized/stalled bodies, strict-age rejection and an explicit
+  receiver exception after 48 hours. Terminal `lastUseUntil` matches durable copies.
+- C5 Chromium journey passed using an owned profile and ordinary per-profile synthetic
+  CA trust: separate persistence election, stale-form rejection using that browser
+  session, refresh, governance, disclosure/report, exact-subject preview/apply and
+  restart/re-export. No OS trust or personal browser changes. An initial browser-only
+  test attempted a CSP-disallowed fetch; the final test uses ordinary UI actions and
+  a verified synthetic TLS stale-form request, without changing the CSP.
+- Backend builds passed at checkpoints. The outbound contract inventory additively
+  classifies the new isolated HTTPS sink; contract baseline passed with base comparison
+  skipped in that focused run. The final exact-base comparison below was performed.
+
+Formatted-candidate affected validation:
+
+- `pnpm --filter backend exec jest --runInBand test/local-database/hcp-experiment`
+  ran all 23 C1–C5 suites: 240 of 241 Jest tests passed initially. The sole failure
+  was the unchanged C3 no-notification-endpoint message assertion. Restoring the
+  conditional message required no test change. After rebuilding, the focused
+  `read.spec.ts` wrapper passed all 29 native C3 HTTP/recovery cases. Coverage from
+  the other 22 suites carries forward because the correction changes only that
+  management-page sentence.
+- A final source-only D2 regression inserts controlled retained issuer-attested and
+  credential-profile fixtures, then refuses otherwise valid reviewed corrections
+  without entry/version/audit/grant changes. The same request is reviewable for a
+  General Context person record. This does not add public admission of those fixtures.
+  The writes and portability suites passed 74 tests after this addition; the old
+  missing-target assertion was removed and import rejection remains covered.
+- The aggregate includes four C5 native wrappers: governance 15, persistent OAuth 9,
+  notifications 13 and portability 4 native HTTPS cases. These 41 cases are nested
+  within the Jest wrapper counts; source-only/direct-adapter checks are not process
+  evidence. Actual child-process kill/reopen cases are identified in their test names.
+- `node --test apps/web/test/hcp-oauth-browser.test.mjs`: all four C2–C5 journeys
+  passed after that text correction. The earlier C3 failure was the same unchanged
+  message assertion; the other browser journeys had passed.
+- Backend build passed. The unit runtime-composition contract suite passed 8 tests.
+  Markdown/structure/CI-path/baseline checker tests passed 120 tests; links passed for
+  161 Markdown files. `check-nonruntime.mjs` with
+  `MIGRATION_GATE_BASE_SHA=666f9d1b5ff3dde322ad4c368b44d2f4399f203e` passed with
+  `baseComparison=performed`; the additive outbound sink inventory remains checked.
+  Changed runtime/test files pass the repository formatter and `git diff --check`.
+
+These local checks support the bounded candidate. Fresh complete-diff independent
+review and all applicable exact-candidate CI are still pending; there is no merge-ready
+or installed-artifact qualification claim.
+
+No full local migration gate was run: the baseline runtime, Mac persistence/process,
+browser and documentation rows are addressed by affected checks, with exact-candidate
+CI still required. No installed artifact, cross-boot/power-loss, other hardware, real
+client, recipient compliance, human product acceptance or full-profile evidence is
+claimed. C6–C8, hard deletion, post-revocation reporting, broader import cases and
+protocol resolutions remain explicitly outstanding. The coordinator owns authorized
+upstream issue updates and draft-PR/CI publication after sole-writer handback.
 
 ## Feedback And Maintenance
 

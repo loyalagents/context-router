@@ -76,38 +76,45 @@ function json(
   status: number,
   value: any,
   type = "application/ld+json",
+  beforeHandoff?: () => void,
 ): void {
+  const bytes = status === 204 ? undefined : JSON.stringify(value);
+  beforeHandoff?.();
   res.statusCode = status;
   res.setHeader("content-type", type);
-  res.end(status === 204 ? undefined : JSON.stringify(value));
+  res.end(bytes);
 }
 function page(
   res: ServerResponse,
   stage: string,
   title: string,
   body: string,
+  beforeHandoff?: () => void,
 ): void {
+  const bytes = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escape(title)}</title><style>body{font:16px system-ui;max-width:800px;margin:3rem auto;padding:0 1rem;line-height:1.5}label{display:block;margin:1rem 0}input,select,button{font:inherit}pre{white-space:pre-wrap;overflow-wrap:anywhere}button{margin:1rem 1rem 1rem 0}small{display:block}</style></head><body data-stage="${stage}"><p>Context Router · Synthetic HCP experiment</p><h1>${escape(title)}</h1>${body}</body></html>`;
+  beforeHandoff?.();
   res.setHeader("content-type", "text/html; charset=utf-8");
   res.setHeader(
     "content-security-policy",
     "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
   );
-  res.end(
-    `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escape(title)}</title><style>body{font:16px system-ui;max-width:800px;margin:3rem auto;padding:0 1rem;line-height:1.5}label{display:block;margin:1rem 0}input,select,button{font:inherit}pre{white-space:pre-wrap;overflow-wrap:anywhere}button{margin:1rem 1rem 1rem 0}small{display:block}</style></head><body data-stage="${stage}"><p>Context Router · Synthetic C2 experiment</p><h1>${escape(title)}</h1>${body}</body></html>`,
-  );
+  res.end(bytes);
 }
-async function requestBytes(req: IncomingMessage): Promise<Buffer> {
+async function requestBytes(
+  req: IncomingMessage,
+  maximum = 32768,
+): Promise<Buffer> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const b of req) {
     size += b.length;
-    if (size > 32768) invalid();
+    if (size > maximum) invalid();
     chunks.push(b);
   }
   return Buffer.concat(chunks);
 }
-async function body(req: IncomingMessage): Promise<any> {
-  const text = (await requestBytes(req)).toString();
+async function body(req: IncomingMessage, maximum = 32768): Promise<any> {
+  const text = (await requestBytes(req, maximum)).toString();
   if (req.headers["content-type"] === "application/json") {
     try {
       return JSON.parse(text);
@@ -139,6 +146,24 @@ export function authorizationHandler(
     oauth = provider.callback();
   const issuer = authority.configuration.issuer,
     host = new URL(issuer).host;
+  const currentHuman = (credential: string) => {
+    if (!authority.isManagement(credential))
+      throw new AuthorityError("unauthenticated");
+  };
+  const managementJson = (
+    credential: string,
+    res: ServerResponse,
+    status: number,
+    value: any,
+    type = "application/ld+json",
+  ) => json(res, status, value, type, () => currentHuman(credential));
+  const managementPage = (
+    credential: string,
+    res: ServerResponse,
+    stage: string,
+    title: string,
+    body: string,
+  ) => page(res, stage, title, body, () => currentHuman(credential));
   const contextOperation = <T>(credential: string, operation: () => T): T => {
     try {
       return operation();
@@ -265,7 +290,7 @@ export function authorizationHandler(
       );
     }
     const interactionMatch =
-      /^\/interaction\/([A-Za-z0-9_-]+)(?:\/(login|review|approve|decline))?$/.exec(
+      /^\/interaction\/([A-Za-z0-9_-]+)(?:\/(login|review|persist|approve|decline))?$/.exec(
         route,
       );
     if (interactionMatch) {
@@ -346,34 +371,43 @@ export function authorizationHandler(
       }
       if (!authority.isManagement(cookie(req))) denied();
       if (req.headers.origin !== issuer) denied();
-      if (action === "review") {
-        csrf(req, form.csrf);
+      if (action === "review" || action === "persist") {
+        if (action === "review") csrf(req, form.csrf);
+        else keys(form, ["reviewId", "csrf"]);
         const params = interaction.params;
-        const reviewed = authority.review(
-          cookie(req),
-          {
-            interactionId: interaction.uid,
-            clientId: params.client_id,
-            resource: params.resource,
-            ...(params.authorization_details
-              ? { access: JSON.parse(params.authorization_details) }
-              : { scope: params.scope }),
-          },
-          selection(form),
-          cookie(req) + ":" + interaction.uid,
-        );
+        const reviewed =
+          action === "persist"
+            ? authority.electPersistence(
+                cookie(req),
+                form.reviewId,
+                form.csrf,
+                cookie(req) + ":" + interaction.uid,
+              )
+            : authority.review(
+                cookie(req),
+                {
+                  interactionId: interaction.uid,
+                  clientId: params.client_id,
+                  resource: params.resource,
+                  ...(params.authorization_details
+                    ? { access: JSON.parse(params.authorization_details) }
+                    : { scope: params.scope }),
+                },
+                selection(form),
+                cookie(req) + ":" + interaction.uid,
+              );
         return page(
           res,
           "review",
           "Approve this exact grant",
           `<p>${escape(reviewed.client.name)} · ${escape(reviewed.client.operator.name)}</p>
-          ${accessSummary(reviewed.access)}
-          <p>Expires at <strong>${escape(reviewed.expiresAt)}</strong>. Client copies have a one-hour maximum use period. Grant expiry stops retrieval; an existing copy follows its own use-until. Clients must stop using copies when notified of revocation, or at use-until.</p>
+          ${accessSummary(reviewed.access)}${reviewed.client.legalRetention ? `<p>Declared legal retention: ${escape(reviewed.client.legalRetention.record)}, under ${escape(reviewed.client.legalRetention.obligation)}, for ${escape(reviewed.client.legalRetention.period)}. Revocation does not remove copies held in that record under the declared obligation.</p>` : ""}
+          <p>${reviewed.grantType === "persistent" ? "Persistent access: remains in effect across interactions until you revoke it. Access credentials expire after one hour; rotating refresh credentials last at most 30 days from this approval." : `Temporary access expires at <strong>${escape(reviewed.expiresAt)}</strong>.`} Client copies have a one-hour maximum use period. Grant expiry stops retrieval; an existing copy follows its own use-until. Clients must stop using copies when notified of revocation, or at use-until.</p>
           <pre>${escape(JSON.stringify({ access: reviewed.access, exclusions: reviewed.exclusions }, null, 2))}</pre>
           <dl>${Object.entries(CATEGORIES)
             .map(([c, d]) => `<dt>${escape(c)}</dt><dd>${escape(d)}</dd>`)
             .join("")}</dl>
-          <form method="post" action="${base}/approve">${hidden("reviewId", reviewed.reviewId)}${hidden("csrf", reviewed.csrf)}<button${reviewed.access.length ? "" : " disabled"}>Approve access</button></form>`,
+          <form method="post" action="${base}/approve">${hidden("reviewId", reviewed.reviewId)}${hidden("csrf", reviewed.csrf)}<button${reviewed.access.length ? "" : " disabled"}>Approve access</button></form>${reviewed.grantType === "temporary" ? `<p>Optional persistent access survives this interaction and remains in effect until you revoke it. Electing it here does not approve access; you must still approve the exact grant.</p><form method="post" action="${base}/persist">${hidden("reviewId", reviewed.reviewId)}${hidden("csrf", reviewed.csrf)}<button>Elect persistent access</button></form>` : ""}`,
         );
       }
       if (action === "decline") {
@@ -416,6 +450,30 @@ export function authorizationHandler(
     }
     if (route.startsWith("/manage")) {
       if (req.headers.authorization) denied();
+      const importForm =
+        route === "/manage/import" && req.method === "POST"
+          ? await body(req, 4_194_304)
+          : undefined;
+      if (importForm?.action === "preview") {
+        keys(importForm, ["csrf", "source", "mapping", "action"]);
+        const token = cookie(req),
+          session = authority.browserSession(token, importForm.csrf);
+        if (!session.authenticated || req.headers.origin !== issuer) denied();
+        let categoryMap: any;
+        try {
+          categoryMap = JSON.parse(importForm.mapping || "{}");
+        } catch {
+          invalid();
+        }
+        if (typeof importForm.source !== "string") invalid();
+        return managementPage(
+          token,
+          res,
+          "import-preview",
+          "Dry run results",
+          `<pre>${escape(JSON.stringify(authority.previewImport(token, { export: importForm.source, categoryMap }), null, 2))}</pre><p><a href="/manage/import">Back</a></p>`,
+        );
+      }
       const s = browser(req, res);
       if (route === "/manage/login" && req.method === "POST") {
         const form = await body(req);
@@ -433,6 +491,237 @@ export function authorizationHandler(
       }
       if (!s.authenticated) return loginPage(res, "/manage/login", s);
       if (
+        ["/manage/disclosures", "/manage/audit"].includes(route) &&
+        req.method === "GET"
+      ) {
+        for (const key of url.searchParams.keys())
+          if (url.searchParams.getAll(key).length !== 1) invalid();
+        const query: any = Object.fromEntries(
+          [...url.searchParams].filter(([, value]) => value !== ""),
+        );
+        if (query.limit !== undefined) query.limit = Number(query.limit);
+        const result = route.endsWith("disclosures")
+          ? authority.disclosures(s.token, query)
+          : authority.audit(s.token, query);
+        return managementPage(
+          s.token,
+          res,
+          "history",
+          "Disclosure and audit history",
+          `<p><a href="/manage">Manage context</a></p><form method="get"><label>Client ID <input name="client"></label><label>Category <input name="category"></label><label>From (RFC3339) <input name="from"></label><label>To (RFC3339) <input name="to"></label><button>Filter</button></form><pre>${escape(JSON.stringify(result, null, 2))}</pre>`,
+        );
+      }
+      if (route === "/manage/export" && req.method === "GET") {
+        if (url.search) {
+          for (const key of url.searchParams.keys())
+            if (url.searchParams.getAll(key).length !== 1) invalid();
+          return managementJson(
+            s.token,
+            res,
+            200,
+            authority.exportContext(
+              s.token,
+              Object.fromEntries(url.searchParams),
+            ),
+            "application/ld+json",
+          );
+        }
+        return managementPage(
+          s.token,
+          res,
+          "export",
+          "Export retained context",
+          `<p>This transfer contains private retained statements, including deleted records unless excluded. Grants and credentials are not portable.</p><form method="get"><label>Include <select name="include"><option value="versions">Versions</option><option value="audit">Audit</option><option value="versions,audit">Versions and audit</option></select></label><button>Export JSON-LD</button></form><p><a href="/manage/export?exclude=deleted">Export current records excluding deleted entries</a></p>`,
+        );
+      }
+      if (route === "/manage/import" && !url.search) {
+        if (req.method === "GET")
+          return managementPage(
+            s.token,
+            res,
+            "import",
+            "Review a v2 context transfer",
+            `<p>Foreign relationships, source audit, delegations and ambiguous histories are unsupported. Each represented subject must refer to you.</p><form method="post">${hidden("csrf", s.csrf)}<label>Exact export JSON <textarea name="source" rows="16" cols="80" required></textarea></label><label>Category mapping JSON <textarea name="mapping">{}</textarea></label><button name="action" value="preview">Dry run</button><button name="action" value="review">Review import</button></form>`,
+          );
+        if (req.method !== "POST") invalid();
+        const form = importForm;
+        keys(form, ["csrf", "source", "mapping", "action"]);
+        csrf(req, form.csrf);
+        let categoryMap: any;
+        try {
+          categoryMap = JSON.parse(form.mapping || "{}");
+        } catch {
+          invalid();
+        }
+        const input = { export: form.source, categoryMap };
+        if (typeof form.source !== "string") invalid();
+        if (form.action === "preview")
+          return managementPage(
+            s.token,
+            res,
+            "import-preview",
+            "Dry run results",
+            `<pre>${escape(JSON.stringify(authority.previewImport(s.token, input), null, 2))}</pre><p><a href="/manage/import">Back</a></p>`,
+          );
+        if (form.action !== "review") invalid();
+        const review = authority.reviewImport(s.token, input, s.token);
+        return managementPage(
+          s.token,
+          res,
+          "import-review",
+          "Review the exact transfer",
+          `<pre>${escape(JSON.stringify(review, null, 2))}</pre><form method="post" action="/manage/import/approve">${hidden("csrf", s.csrf)}${hidden("reviewId", review.reviewId)}${hidden("reviewCsrf", review.csrf)}${hidden("subjects", JSON.stringify(review.subjects))}<label><input type="checkbox" name="attest" value="yes" required> Every displayed subject URI refers to me. I approve these exact outcomes and effects.</label><button>Apply reviewed import</button></form>`,
+        );
+      }
+      if (
+        route === "/manage/import/approve" &&
+        req.method === "POST" &&
+        !url.search
+      ) {
+        const form = await body(req);
+        keys(form, ["csrf", "reviewId", "reviewCsrf", "subjects", "attest"]);
+        csrf(req, form.csrf);
+        if (form.attest !== "yes") denied();
+        let subjects: any;
+        try {
+          subjects = JSON.parse(form.subjects);
+        } catch {
+          invalid();
+        }
+        return managementPage(
+          s.token,
+          res,
+          "import-result",
+          "Import recorded",
+          `<pre>${escape(JSON.stringify(authority.applyImport(s.token, form.reviewId, form.reviewCsrf, s.token, subjects), null, 2))}</pre><p><a href="/manage/entries">Inspect retained entries</a></p>`,
+        );
+      }
+      if (route === "/manage/policy" && !url.search) {
+        if (req.method === "POST") {
+          const form = await body(req);
+          keys(form, [
+            "csrf",
+            "kind",
+            "id",
+            "action",
+            "effect",
+            "text",
+            "categories",
+            "operators",
+            "requires",
+          ]);
+          csrf(req, form.csrf);
+          if (form.id) authority.removePolicy(s.token, form.kind, form.id);
+          else {
+            const input: any = {};
+            for (const key of ["categories", "operators", "requires"])
+              if (form[key]?.trim())
+                input[key] = form[key].split(",").map((v: string) => v.trim());
+            if (form.kind === "directives")
+              for (const key of ["action", "effect", "text"])
+                input[key] = form[key];
+            authority.setPolicy(s.token, form.kind, input);
+          }
+          res.writeHead(303, { location: "/manage/policy" }).end();
+          return;
+        }
+        if (req.method !== "GET") invalid();
+        return managementPage(
+          s.token,
+          res,
+          "policy",
+          "Standing rules and directives",
+          `<p><a href="/manage">Grant controls</a></p><p>Rules deny access immediately for current and future grants. Removing a rule does not restore a revoked grant. Clients receive applicable directive text; their declared compliance is not verified.</p>${[
+            "rules",
+            "directives",
+          ]
+            .map(
+              (kind) =>
+                `<h2>${escape(kind)}</h2>${authority
+                  .listPolicy(s.token, kind)
+                  .map(
+                    (p) =>
+                      `<pre>${escape(JSON.stringify(p, null, 2))}</pre><form method="post">${hidden("csrf", s.csrf)}${hidden("kind", kind)}${hidden("id", p.ruleId ?? p.directiveId)}<button>Remove</button></form>`,
+                  )
+                  .join(
+                    "",
+                  )}<form method="post">${hidden("csrf", s.csrf)}${hidden("kind", kind)}<label>Operators, separated by commas <input name="operators"></label><label>Categories, separated by commas (blank means all) <input name="categories"></label>${kind === "rules" ? '<label>Required client claim URIs, separated by commas <input name="requires"></label>' : '<label>Action (share, sign, transact or URI) <input name="action" required></label><label>Effect <select name="effect"><option>deny</option><option>ask-first</option><option>permit</option></select></label><label>Text that clients will receive <textarea name="text" required></textarea></label>'}<button>Set ${kind === "rules" ? "rule" : "directive"}</button></form>`,
+            )
+            .join("")}`,
+        );
+      }
+      if (
+        route === "/manage/classification/approve" &&
+        req.method === "POST" &&
+        !url.search
+      ) {
+        const form = await body(req);
+        keys(form, ["csrf", "reviewId", "reviewCsrf"]);
+        csrf(req, form.csrf);
+        const result = authority.approveClassification(
+          s.token,
+          form.reviewId,
+          form.reviewCsrf,
+          s.token,
+        );
+        if (!result.id)
+          return page(
+            res,
+            "classification-saved",
+            "Change recorded",
+            "<p>Your approved change was committed. Sign in again to inspect the entry.</p>",
+          );
+        res
+          .writeHead(303, {
+            location: `/manage/entries/${encodeURIComponent(result.id)}`,
+          })
+          .end();
+        return;
+      }
+      const classificationEditor =
+        /^\/manage\/entries\/([^/]+)\/classification$/.exec(route);
+      if (classificationEditor && !url.search) {
+        const id = decodeURIComponent(classificationEditor[1]);
+        if (req.method === "POST") {
+          const form = await body(req);
+          keys(form, ["csrf", "kind", "expectedVersion", "values", "remove"]);
+          csrf(req, form.csrf);
+          const input: any = { expectedVersion: Number(form.expectedVersion) };
+          input[
+            form.kind === "categories" ? "categories" : "permittedPurposes"
+          ] =
+            form.remove === "yes"
+              ? null
+              : form.values
+                  .split(",")
+                  .map((v: string) => v.trim())
+                  .filter(Boolean);
+          const review = authority.reviewClassification(
+            s.token,
+            id,
+            form.kind,
+            input,
+            s.token,
+          );
+          return managementPage(
+            s.token,
+            res,
+            "classification-review",
+            "Review classification change",
+            `${reviewEntry(review.entry)}<p>Current content version is unchanged. This affects which clients and purposes can reach all versions of the entry.</p><pre>${escape(JSON.stringify(review.input, null, 2))}</pre><form method="post" action="/manage/classification/approve">${hidden("csrf", s.csrf)}${hidden("reviewId", review.reviewId)}${hidden("reviewCsrf", review.csrf)}<button>Approve classification change</button></form>`,
+          );
+        }
+        if (req.method !== "GET") invalid();
+        const entry = authority.managementEntry(s.token, id).entry;
+        return managementPage(
+          s.token,
+          res,
+          "classification-editor",
+          "Categories and permitted purposes",
+          `${reviewEntry(entry)}${["categories", "purposes"].map((kind) => `<form method="post">${hidden("csrf", s.csrf)}${hidden("kind", kind)}${hidden("expectedVersion", String(entry.record.version))}<label>${kind === "categories" ? "Categories" : "Principal purpose URI restrictions (blank denies every purpose)"}, comma-separated <input name="values" value="${escape((kind === "categories" ? entry.classification.categories : (entry.classification.permittedPurposes ?? [])).join(","))}"></label>${kind === "purposes" ? '<label><input type="checkbox" name="remove" value="yes">Remove principal restriction; assertion restrictions still apply</label>' : ""}<button>Review ${kind}</button></form>`).join("")}`,
+        );
+      }
+      if (
         route === "/manage/conflicts/approve" &&
         req.method === "POST" &&
         !url.search
@@ -447,7 +736,8 @@ export function authorizationHandler(
           s.token,
         );
         if (!result.id)
-          return page(
+          return managementPage(
+            s.token,
             res,
             "conflict-saved",
             "Action recorded",
@@ -474,7 +764,8 @@ export function authorizationHandler(
           invalid();
         }
         const review = authority.reviewKeepBoth(s.token, relationId!, s.token);
-        return page(
+        return managementPage(
+          s.token,
           res,
           "conflict-review",
           "Review keeping both statements",
@@ -551,7 +842,8 @@ export function authorizationHandler(
           target,
           s.token,
         );
-        return page(
+        return managementPage(
+          s.token,
           res,
           "person-review",
           "Review your statement",
@@ -570,7 +862,8 @@ export function authorizationHandler(
         const current = id
           ? authority.managementEntry(s.token, id).entry
           : undefined;
-        return page(
+        return managementPage(
+          s.token,
           res,
           "person-editor",
           current ? "Edit as your own statement" : "Add your own statement",
@@ -603,7 +896,8 @@ export function authorizationHandler(
           s.token,
         );
         if (!entry.id)
-          return page(
+          return managementPage(
+            s.token,
             res,
             "confirmation-saved",
             "Action recorded",
@@ -637,7 +931,8 @@ export function authorizationHandler(
             },
             s.token,
           );
-          return page(
+          return managementPage(
+            s.token,
             res,
             "entry-review",
             review.disposition === "confirmed"
@@ -670,7 +965,8 @@ export function authorizationHandler(
             : {}),
         });
         const base = `/manage/entries/${encodeURIComponent(id!)}`;
-        return page(
+        return managementPage(
+          s.token,
           res,
           "entry",
           "Retained entry and history",
@@ -680,14 +976,15 @@ export function authorizationHandler(
           ${entryFacts(result.entry)}
           <pre>${escape(typeof result.entry.content.value === "string" ? result.entry.content.value : JSON.stringify(result.entry.content.value, null, 2))}</pre>
           <details data-raw-entry><summary>Full stored document (includes submitted claims)</summary><p>This document combines submitted content and extensions with provider-maintained records. Additional fields, including standing or fixture claims, do not establish assurance or confirmation.</p><pre data-entry-document>${escape(JSON.stringify(result.entry, null, 2))}</pre></details>
-          <p><a href="/manage/person/${encodeURIComponent(id!)}">Edit as your own statement</a></p>
+          <p><a href="/manage/person/${encodeURIComponent(id!)}">Edit as your own statement</a> · <a href="${base}/classification">Edit categories and purposes</a></p>
           ${result.entry.record.version === result.currentVersion && ["active", "conflicted"].includes(result.entry.record.status) ? ["confirmed", "rejected"].map((disposition) => `<form method="post" action="${base}/review">${hidden("csrf", s.csrf)}${hidden("expectedVersion", String(result.currentVersion))}${hidden("disposition", disposition)}<button>${disposition === "confirmed" ? "Review confirmation" : "Review rejection and withdrawal"}</button></form>`).join("") : ""}
           ${result.conflicts.length ? `<h2>Conflicts needing review</h2>${result.conflicts.map((c: any) => `<section>${reviewEntry(c.peer)}<p>${c.quarantined.length ? "This conflict still has a quarantined statement needing review." : "This conflict changed neither statement’s status."}</p>${c.canKeepBoth ? `<form method="post" action="/manage/conflicts/${encodeURIComponent(c.id)}/review">${hidden("csrf", s.csrf)}<button>Review keeping both</button></form>` : ""}</section>`).join("")}` : ""}
           <h2>Lifecycle and assertion history</h2><pre>${escape(JSON.stringify(history.events, null, 2))}</pre>${history.nextCursor ? `<a href="${base}?cursor=${encodeURIComponent(history.nextCursor)}">Next history page</a>` : ""}`,
         );
       }
       if (route === "/manage/entries" && req.method === "GET" && !url.search) {
-        return page(
+        return managementPage(
+          s.token,
           res,
           "entries",
           "Retained entries",
@@ -735,27 +1032,37 @@ export function authorizationHandler(
           authority.lastPossibleCopyUseUntil(s.token, g.grantId),
         ]),
       );
-      return page(
+      return managementPage(
+        s.token,
         res,
         "manage",
         "Human grant controls",
-        `<p><a href="/manage/entries">Retained entries and history</a> · <a href="/manage">Active grants</a> · <a href="/manage?status=all">All retained grants</a></p><p>Automatic conflict checks cover controlled facts with matching category, slot and setting. Authorized clients can also assert a contradiction. Conflicted statements remain available here for your review.</p><p>Disclosure history records attempted releases, including write representations. Receipt is unconfirmed, including when a response is lost or expires before handoff. No notification endpoint is configured; no revocation notification or remote erasure is promised. Clients must stop using copies when notified of revocation, or at use-until.</p>
-        ${selected.map((g) => `<article><h2>${escape(g.client.name)} · ${escape(g.status)}</h2><a href="/manage?grantId=${encodeURIComponent(g.grantId)}">Inspect grant and history</a><p>Last possible copy use-until: ${escape(copies.get(g.grantId) ?? "No recorded copy")}</p><pre>${escape(JSON.stringify(g, null, 2))}</pre>${g.status === "active" ? `<form method="post" action="/manage/revoke">${hidden("csrf", s.csrf)}${hidden("grantId", g.grantId)}<button>Revoke grant</button></form>` : ""}</article>`).join("")}
+        `<p><a href="/manage/entries">Retained entries and history</a> · <a href="/manage/policy">Rules and directives</a> · <a href="/manage/disclosures">Possible disclosures</a> · <a href="/manage/audit">Audit</a> · <a href="/manage/export">Export</a> · <a href="/manage/import">Import</a> · <a href="/manage">Active grants</a> · <a href="/manage?status=all">All retained grants</a></p><p>Automatic conflict checks cover controlled facts with matching category, slot and setting. Authorized clients can also assert a contradiction. Conflicted statements remain available here for your review.</p><p>Disclosure history records attempted releases, including write representations. Receipt is unconfirmed, including when a response is lost or expires before handoff. ${selected.some((g) => g.client.notificationEndpoint) ? "Registered synthetic endpoints receive revocation notices for previously disclosed copies. Pending, delivered and abandoned delivery outcomes are shown in possible disclosures and audit history." : "No notification endpoint is configured for these clients; no revocation notification or remote erasure is promised."} An acknowledgement is not evidence of erasure. Clients must stop using copies when notified of revocation, or at use-until.</p>
+        ${selected.map((g) => `<article><h2>${escape(g.client.name)} · ${escape(g.status)}</h2><a href="/manage?grantId=${encodeURIComponent(g.grantId)}">Inspect grant and history</a><p>Last possible copy use-until: ${escape(copies.get(g.grantId) ?? "No recorded copy")}</p><pre>${escape(JSON.stringify(g, null, 2))}</pre>${g.status !== "revoked" ? `<form method="post" action="/manage/revoke">${hidden("csrf", s.csrf)}${hidden("grantId", g.grantId)}<button>Revoke grant</button></form>` : ""}</article>`).join("")}
         ${id ? `<h2>Grant history</h2><pre>${escape(JSON.stringify(history.events, null, 2))}</pre>${history.nextCursor ? `<a href="/manage?grantId=${encodeURIComponent(id)}&amp;cursor=${encodeURIComponent(history.nextCursor)}">Next history page</a>` : ""}` : ""}`,
       );
     }
-    if (route.startsWith("/v2/") || route === "/experiment/policy") {
+    if (
+      route.startsWith("/v2/") ||
+      ["/experiment/policy", "/experiment/import/review"].includes(route)
+    ) {
       if (req.headers.cookie || url.searchParams.has("access_token")) denied();
       const credential = /^Bearer ([A-Za-z0-9_-]+)$/.exec(
         String(req.headers.authorization ?? ""),
       )?.[1];
       if (!credential) throw new AuthorityError("unauthenticated");
       const human = authority.isManagement(credential);
+      if (!human && route === "/v2/import") denied();
       const token = human
         ? undefined
         : authority.protocolFind("AccessToken", credential);
       if (!human && !token) throw new AuthorityError("unauthenticated");
       const revisionRoute = /^\/v2\/entries\/([^/]+)\/revisions$/.exec(route);
+      if (route === "/v2/shares" && req.method === "POST" && !url.search) {
+        if (human) denied();
+        authority.reportSharing(credential, await body(req));
+        return;
+      }
       if (
         route === "/v2/entries" ||
         revisionRoute ||
@@ -892,6 +1199,120 @@ export function authorizationHandler(
         invalid();
       }
       if (!human) denied();
+      if (
+        ["/v2/export", "/v2/audit/export"].includes(route) &&
+        req.method === "GET"
+      ) {
+        for (const key of url.searchParams.keys())
+          if (url.searchParams.getAll(key).length !== 1) invalid();
+        const input = Object.fromEntries(url.searchParams);
+        return managementJson(
+          credential,
+          res,
+          200,
+          route === "/v2/export"
+            ? authority.exportContext(credential, input)
+            : authority.exportAudit(credential, input),
+          "application/ld+json",
+        );
+      }
+      if (
+        ["/v2/import", "/experiment/import/review"].includes(route) &&
+        req.method === "POST"
+      ) {
+        const input = await body(req, 4_194_304);
+        if (route === "/experiment/import/review" && !url.search)
+          return managementJson(
+            credential,
+            res,
+            200,
+            authority.reviewImport(credential, input, credential),
+          );
+        if (input.dryRun !== undefined && typeof input.dryRun !== "boolean")
+          invalid();
+        if (url.search === "?dryRun=true" || input.dryRun === true) {
+          if (
+            (url.search && url.search !== "?dryRun=true") ||
+            input.dryRun === false
+          )
+            invalid();
+          const { dryRun: _dryRun, ...request } = input;
+          return managementJson(
+            credential,
+            res,
+            200,
+            authority.previewImport(credential, request),
+          );
+        }
+        if (url.search) invalid();
+        keys(input, ["reviewId", "csrf", "subjects"]);
+        return managementJson(
+          credential,
+          res,
+          200,
+          authority.applyImport(
+            credential,
+            input.reviewId,
+            input.csrf,
+            credential,
+            input.subjects,
+          ),
+        );
+      }
+      if (route === "/v2/disclosures" && req.method === "GET") {
+        for (const key of url.searchParams.keys())
+          if (url.searchParams.getAll(key).length !== 1) invalid();
+        return managementJson(
+          credential,
+          res,
+          200,
+          authority.disclosures(
+            credential,
+            Object.fromEntries(url.searchParams),
+          ),
+        );
+      }
+      const classificationRoute =
+        /^\/v2\/entries\/([^/]+)\/(categories|purposes)$/.exec(route);
+      if (classificationRoute && req.method === "PUT" && !url.search) {
+        let id: string;
+        try {
+          id = decodeURIComponent(classificationRoute[1]);
+        } catch {
+          invalid();
+        }
+        return json(
+          res,
+          200,
+          authority.editClassification(
+            credential,
+            id!,
+            classificationRoute[2],
+            await body(req),
+          ),
+        );
+      }
+      const policyRoute = /^\/v2\/(rules|directives)(?:\/([^/]+))?$/.exec(
+        route,
+      );
+      if (policyRoute && !url.search) {
+        const [, kind, id] = policyRoute;
+        if (req.method === "GET" && !id)
+          return json(res, 200, {
+            [kind]: authority.listPolicy(credential, kind),
+          });
+        if (req.method === "POST" && !id)
+          return json(
+            res,
+            201,
+            authority.setPolicy(credential, kind, await body(req)),
+          );
+        if (req.method === "DELETE" && id) {
+          authority.removePolicy(credential, kind, decodeURIComponent(id));
+          return json(res, 204, undefined);
+        }
+        invalid();
+      }
       const confirmationRoute = /^\/v2\/entries\/([^/]+)\/confirmation$/.exec(
         route,
       );
@@ -909,9 +1330,16 @@ export function authorizationHandler(
         );
       }
       if (route === "/v2/audit" && req.method === "GET") {
+        for (const key of url.searchParams.keys())
+          if (url.searchParams.getAll(key).length !== 1) invalid();
         const query: any = Object.fromEntries(url.searchParams);
         if (query.limit !== undefined) query.limit = Number(query.limit);
-        return json(res, 200, authority.audit(credential, query));
+        return managementJson(
+          credential,
+          res,
+          200,
+          authority.audit(credential, query),
+        );
       }
       if (route === "/experiment/policy" && req.method === "PUT")
         return json(

@@ -99,6 +99,15 @@ function append(db: DatabaseSync, event: AuditEvent, fault?: Fault): void {
     event.eventId,
     JSON.stringify(event),
   );
+  // Credential saves do not change semantic state; restored values cannot revive reviews.
+  if (
+    /^(context\.(created|revised|recategorized|restricted|withdrawn|confirmed|expired|imported)|conflict\.|rule\.|directive\.)/.test(
+      event.eventType,
+    )
+  )
+    db.exec(
+      "UPDATE authorization_settings SET policy_revision=policy_revision+1",
+    );
 }
 function seed(
   db: DatabaseSync,
@@ -421,6 +430,10 @@ export class SyntheticExperiment {
     // Method-only infrastructure boundary; no database handle reaches the HTTP composition.
     return new AuthorizationRepository(
       {
+        snapshot: (operation) => {
+          this.#assert();
+          return operation(this.#db);
+        },
         read: (operation) => {
           this.reconcile();
           return operation(this.#db);

@@ -52,39 +52,26 @@ can be a pilot blocker; that does not make it safe to implement concurrently.
 Keep one canonical item, link it from the pilot, and assign a named owner and
 landing order. Do not copy tasks between lists or activate every backlog brief.
 
-HCP's canonical brief is promoted to [active](active/hcp-alignment/README.md).
-The product owner merged **C1–C3 in PRs #204–#206** and activated bounded **C4**
-on November 9: writes and Memory Manager, beginning with retry/erasure and
-lifecycle-history decisions. C4 chat `01a1c422-3178-75b0-a39c-9f621ac7458c`
-resumes sole-writer ownership of the existing checkout on November 13 at Lucas's
-request, after selecting original-request completion-only success with separately
-authorized response data. C4 starts from clean merge
-`a1ad0c6c248af74f8353c26c7a86f2f43f1ee2ec` on
-`codex/hcp-c4-writes-memory-manager`. C3 final reviews and exact-candidate CI passed
-at head `babd602ce6a22f558e5fe09ae7f205ac0bc51945` in
-[merged PR #206](https://github.com/loyalagents/context-router/pull/206); that is
-historical evidence, not C4 validation. The C4 plan is conditionally independently
-approved for its earlier contract. Lucas selected permission-change response-cache
-invalidation on November 11; that delta passed review. The November 13 completion
-contract passed affected plan review before dependent backend implementation. Person
-write, replay, staging, conflict and management-history slices now have focused
-evidence, including three isolated browser journeys. Candidate `ec6eb027` completed
-independent review and exact-candidate CI in [PR #207](https://github.com/loyalagents/context-router/pull/207).
-On November 14 Lucas authorized corrections from Claude's follow-up review and
-focused spec issues. This C4 chat resumes sole-writer ownership for that batch;
-its affected reviews and renewed candidate evidence are tracked in the PR and
-[follow-up record](active/hcp-alignment/README.md#c4-claude-follow-up-2026-11-14).
-C5–C8 remain
-unactivated. Lucas authorized updating the existing hcp-spec issue
-[#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594) for the permission decision; that comment is posted and verified.
-The focused committed-write proposal is published as [#36](https://github.com/loyalagents/hcp-spec/issues/36), with research evidence and slow commits excluded.
-Specification sources, the sibling checkout and the target pin remain unchanged.
-The follow-up publishes conflict-lifecycle [#37](https://github.com/loyalagents/hcp-spec/issues/37),
-mutation-purpose [#38](https://github.com/loyalagents/hcp-spec/issues/38), and
-extension-presentation evidence on [#29](https://github.com/loyalagents/hcp-spec/issues/29#issuecomment-6885856155).
-Dormant expiry remains application recovery evidence, not conformance to the pinned
-conflicting deadlines. Pilot priority and installed app remain unchanged. See the
-[C4 plan and validation boundary](active/hcp-alignment/README.md#c4-activation-and-concrete-plan-2026-11-09).
+HCP's canonical brief is [active](active/hcp-alignment/README.md). C1–C4 are
+human-merged in PRs #204–#207. C4 merged at
+`666f9d1b5ff3dde322ad4c368b44d2f4399f203e`, with successful final review and CI;
+its [merge record](active/hcp-alignment/README.md#c4-merge-and-c5-planning-ownership-2026-11-14)
+preserves the exact evidence and bounded limitations. C5 chat
+`01a1dcfd-96ec-7590-8682-b40ea62e0d5f` now owns **C5 planning, implementation and review** in
+the existing checkout on `codex/hcp-c5-governance-plan`. The orchestrator and
+reviewers stay read-only. [C5's proposed plan](active/hcp-alignment/README.md#c5-planning-and-decisions-2026-11-14)
+covers governance, persistent grants, summaries/sharing/notifications, portability,
+and erasure/recovery. The user authorized bounded C5 runtime after subagent plan approval, iterative
+implementation review, and relevant hcp-spec issues. D3 hard deletion is deferred
+until clarification; no speculative erasure architecture is added. C6–C8, merge,
+release, installed-app work and full conformance remain outside this activation.
+The [implementation checkpoint](active/hcp-alignment/README.md#c5-implementation-checkpoint-2026-11-15-utc)
+records the bounded candidate; targeted checks passed, final review/CI pending.
+
+C4's authorized hcp-spec submissions are #34, #36, #37, #38 and evidence on #29;
+these are proposals, not adopted normative resolutions. C5 now has explicit authority to create/update relevant upstream issues. Specification sources, the sibling checkout and the pinned
+target remain unchanged. The assisted pilot's priority and installed app are
+unchanged.
 
 `active/` contains currently coordinated work. `backlog/` holds useful but
 unactivated briefs; promotion requires an explicit scope/owner/acceptance decision.

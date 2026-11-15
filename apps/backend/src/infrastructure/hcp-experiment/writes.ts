@@ -94,6 +94,7 @@ export function mutationPurpose(
   classification: any,
   rules: any[],
   target?: any,
+  personCorrection = false,
 ): string {
   const requested = classification?.categories;
   if (
@@ -119,7 +120,14 @@ export function mutationPurpose(
     requested.some((c: string) => !write.some((d) => d.categories.includes(c)))
   )
     denied();
-  if (target && !permitsPurpose(target, purpose)) denied();
+  if (
+    target &&
+    !permitsPurpose(
+      personCorrection ? { classification: target.classification } : target,
+      purpose,
+    )
+  )
+    denied();
   return purpose;
 }
 function reason(input: any): void {
@@ -302,11 +310,13 @@ export function mutationDocument(
     schema: "https://hcp.example/spec/entry/2.0",
     type: ["ContextEntry"],
     id: current?.id ?? `urn:uuid:${randomUUID()}`,
-    subject: {
-      ...structuredClone(current?.subject ?? input.subject),
-      id: meta.subject_id,
-      relationship: null,
-    },
+    subject: current
+      ? structuredClone(current.subject)
+      : {
+          ...structuredClone(input.subject),
+          id: meta.subject_id,
+          relationship: null,
+        },
     content: structuredClone(input.content),
     assertion,
     evidence: structuredClone(evidence),

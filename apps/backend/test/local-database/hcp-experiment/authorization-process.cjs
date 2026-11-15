@@ -12,19 +12,66 @@ for (const name of [
   "replacePolicy",
   "protocolUpsert",
   "protocolConsume",
+  "protocolDestroy",
   "protocolFind",
   "ownGrant",
   "releaseRead",
   "commitWrite",
+  "audit",
+  "disclosures",
+  "exportContext",
+  "exportAudit",
+  "previewImport",
+  "applyImport",
+  "reportSharing",
+  "prepareNotification",
+  "finishNotification",
 ]) {
   const original = AuthorizationRepository.prototype[name];
   AuthorizationRepository.prototype[name] = function (...args) {
     const previous = phase;
     phase =
       name +
-      (["protocolUpsert", "protocolFind"].includes(name) ? ":" + args[0] : "");
+      (["protocolUpsert", "protocolFind", "protocolDestroy"].includes(name)
+        ? ":" + args[0]
+        : "");
     try {
       const result = original.apply(this, args);
+      if (
+        armed?.point === "during-management-serialization" &&
+        armed.operation === name &&
+        result &&
+        typeof result === "object"
+      )
+        Object.defineProperty(result, "toJSON", {
+          value: () => {
+            const previous = phase;
+            phase = name;
+            try {
+              fault("during-management-serialization");
+              return { ...result };
+            } finally {
+              phase = previous;
+            }
+          },
+        });
+      if (
+        armed?.point === "during-management-serialization" &&
+        armed.operation === name &&
+        Array.isArray(result?.events)
+      )
+        Object.defineProperty(result.events, "toJSON", {
+          value: () => {
+            const previous = phase;
+            phase = name;
+            try {
+              fault("during-management-serialization");
+              return [...result.events];
+            } finally {
+              phase = previous;
+            }
+          },
+        });
       fault("after-operation");
       return result;
     } finally {

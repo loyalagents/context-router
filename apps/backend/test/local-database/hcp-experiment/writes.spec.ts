@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { SyntheticExperiment } from "../../../src/infrastructure/hcp-experiment/store";
 import {
@@ -363,7 +363,7 @@ describe("C4 durable person writes and original completion", () => {
     },
   );
 
-  it("does not bypass purpose restrictions for person edits with no supported intersection", () => {
+  it("does not bypass a new assertion with no supported purpose", () => {
     const a = issue("a", [
       detail(["read", "write"], { purposes: [PURPOSES[1]] }),
     ]);
@@ -377,11 +377,7 @@ describe("C4 durable person writes and original completion", () => {
     const entry = store
       .inspectEntries()
       .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
-    for (const permittedPurposes of [
-      [],
-      [PURPOSES[0].code],
-      ["urn:example:unsupported-purpose"],
-    ]) {
+    for (const permittedPurposes of [[], ["urn:example:unsupported-purpose"]]) {
       const request = {
         expectedVersion: 1,
         reason: "Person correction",
@@ -401,6 +397,181 @@ describe("C4 durable person writes and original completion", () => {
       expect(authority.managementEntry(human, entry.id).currentVersion).toBe(1);
     }
   });
+
+  it("allows an exact reviewed person correction under a new purpose while context writes retain the old restriction", () => {
+    const a = issue("a", [
+      detail(["read", "write"], { purposes: [PURPOSES[1]] }),
+    ]);
+    const body = input(a.grant, {
+      assertion: {
+        declarationType: "person-declared",
+        permittedPurposes: [PURPOSES[1].code],
+      },
+    });
+    const result = release(commit(a.token, body));
+    const entry = store
+      .inspectEntries()
+      .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
+    const request = {
+      expectedVersion: 1,
+      reason: "Person correction",
+      content: body.content,
+      assertion: {
+        declarationType: "person-declared",
+        permittedPurposes: [PURPOSES[0].code],
+      },
+      record: body.record,
+    };
+    expect(() =>
+      commit(a.token, request, "context-correction", "revise", result.body.ref),
+    ).toThrow();
+    const review = authority.reviewPersonWrite(
+      human,
+      "revise",
+      request,
+      entry.id,
+      "browser",
+    );
+    expect(review.purpose).toEqual(PURPOSES[0]);
+    const ticket = authority.commitReviewedPersonWrite(
+      human,
+      review.reviewId,
+      review.csrf,
+      "browser",
+      "person-correction",
+    );
+    expect(release(ticket).body.assertion.permittedPurposes).toEqual([
+      PURPOSES[0].code,
+    ]);
+    expect(
+      store.inspectEntry(entry.id, 1)!.assertion.permittedPurposes,
+    ).toEqual([PURPOSES[1].code]);
+  });
+  it("does not let a person correction bypass the current principal purpose restriction", () => {
+    const a = issue(),
+      body = input(a.grant),
+      result = release(commit(a.token, body));
+    const e = store
+      .inspectEntries()
+      .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
+    authority.editClassification(human, e.id, "purposes", {
+      expectedVersion: 1,
+      permittedPurposes: [PURPOSES[1].code],
+    });
+    const request = {
+      expectedVersion: 1,
+      reason: "Correction",
+      content: body.content,
+      assertion: {
+        declarationType: "person-declared",
+        permittedPurposes: [PURPOSES[0].code],
+      },
+      record: body.record,
+    };
+    expect(() =>
+      authority.reviewPersonWrite(human, "revise", request, e.id, "browser"),
+    ).toThrow(AuthorityError);
+    expect(store.inspectEntry(e.id)!.record.version).toBe(1);
+  });
+
+  it.each(["issuer-attested", "credential-profile"])(
+    "refuses an otherwise valid person correction of retained %s content",
+    (kind) => {
+      const a = issue("a", [
+        detail(["read", "write"], { purposes: [PURPOSES[1]] }),
+      ]);
+      const body = input(a.grant, {
+        assertion: {
+          declarationType: "person-declared",
+          permittedPurposes: [PURPOSES[1].code],
+        },
+      });
+      release(commit(a.token, body));
+      const original = store
+        .inspectEntries()
+        .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
+      const request = {
+        expectedVersion: 1,
+        reason: "Exact person correction under a new purpose",
+        content: { ...body.content, value: "Corrected person statement" },
+        assertion: {
+          declarationType: "person-declared",
+          permittedPurposes: [PURPOSES[0].code],
+        },
+        record: body.record,
+      };
+      // The same request is reviewable for a retained General Context person entry.
+      expect(
+        authority.reviewPersonWrite(
+          human,
+          "revise",
+          request,
+          original.id,
+          "browser",
+        ).reviewId,
+      ).toEqual(expect.any(String));
+      const retained: any = structuredClone(original);
+      retained.id = `urn:uuid:${randomUUID()}`;
+      if (kind === "issuer-attested") {
+        retained.assertion.declarationType = "issuer-attested";
+        retained.record.provenance.assertedBy = {
+          id: "https://issuer.example.test",
+          assurance: "cryptographically-verified",
+        };
+      } else {
+        retained.content = {
+          profile: "https://hcp.example/spec/profiles/credential/2.0",
+          value: { type: "SyntheticCredential", credential: "fixture-only" },
+        };
+      }
+      // Public admission deliberately excludes these records. Insert a controlled
+      // retained fixture to exercise the person-editor guard, without changing any
+      // existing immutable assertion, schema trigger, or production admission path.
+      store.close();
+      const fixtureDb = new DatabaseSync(
+        path.join(paths().root, "entries.sqlite"),
+      );
+      try {
+        fixtureDb.exec("PRAGMA foreign_keys=ON; BEGIN");
+        fixtureDb
+          .prepare(
+            "INSERT INTO entries(id,subject,current_version,classification,status) VALUES(?,?,?,?,?)",
+          )
+          .run(
+            retained.id,
+            JSON.stringify(retained.subject),
+            1,
+            JSON.stringify(retained.classification),
+            retained.record.status,
+          );
+        fixtureDb
+          .prepare(
+            "INSERT INTO entry_versions(entry_id,version,document,valid_until) VALUES(?,?,?,?)",
+          )
+          .run(retained.id, 1, JSON.stringify(retained), null);
+        fixtureDb.exec("COMMIT");
+      } finally {
+        fixtureDb.close();
+      }
+      reopen();
+      const entries = store.inspectEntries(),
+        audit = store.inspectAudit();
+      const grants = authority.listGrants(human, "all");
+      expect(() =>
+        authority.reviewPersonWrite(
+          human,
+          "revise",
+          request,
+          retained.id,
+          "browser",
+        ),
+      ).toThrow(AuthorityError);
+      expect(store.inspectEntries()).toEqual(entries);
+      expect(store.inspectEntry(retained.id, 2)).toBeUndefined();
+      expect(store.inspectAudit()).toEqual(audit);
+      expect(authority.listGrants(human, "all")).toEqual(grants);
+    },
+  );
 
   it("records unverified model provenance and confidence, then edits it only through an approved person assertion", () => {
     const a = issue(),
@@ -1269,7 +1440,7 @@ describe("C4 durable person writes and original completion", () => {
     );
   });
 
-  it("token expiry after commit yields minimal success; a fresh token on unchanged grant can recover candidate", () => {
+  it("token and copy expiry yield minimal success; a fresh token cannot extend the original copy", () => {
     const { grant } = issue();
     const token = tokenFor(grant, 1),
       body = input(grant);
@@ -1281,9 +1452,7 @@ describe("C4 durable person writes and original completion", () => {
     });
     reopen();
     const fresh = tokenFor(grant);
-    expect(release(commit(fresh, body, "expired-token")).body.content).toEqual(
-      body.content,
-    );
+    expect(() => commit(fresh, body, "expired-token")).toThrow(AuthorityError);
   });
 
   it.each(["before-commit", "after-data-commit"])(
@@ -1324,7 +1493,7 @@ describe("C4 durable person writes and original completion", () => {
     expect(store.inspectEntries()).toHaveLength(before + 1);
   });
 
-  it("expired original copies use minimal first replies and remain exact expired candidates on eligible retry", () => {
+  it("expired original copies use minimal first replies and deny retry without repeating the write", () => {
     const { grant, token } = issue();
     const body = input(grant);
     // Copy deadline is shorter than the still-valid token/grant; isolate this release gate.
@@ -1335,9 +1504,20 @@ describe("C4 durable person writes and original completion", () => {
       representation: "not-included",
     });
     reopen();
-    const response = release(commit(tokenFor(grant), body, "copy"));
-    expect(Date.parse(response.body.useUntil)).toBe(now);
-    expect(response.body.content).toEqual(body.content);
+    const events = store.inspectAudit();
+    expect(() => commit(tokenFor(grant), body, "copy")).toThrow(AuthorityError);
+    expect(store.inspectAudit()).toEqual(events);
+  });
+  it("checks the original copy deadline again when releasing an already prepared retry", () => {
+    const { grant, token } = issue(),
+      body = input(grant);
+    release(commit(token, body, "retry-copy"));
+    now += 500;
+    const prepared = commit(token, body, "retry-copy"),
+      events = store.inspectAudit();
+    now += 500;
+    expect(() => release(prepared)).toThrow(AuthorityError);
+    expect(store.inspectAudit()).toEqual(events);
   });
 
   it("valid revision of expired content is allowed while deleted content cannot revive", () => {

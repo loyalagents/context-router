@@ -14,9 +14,11 @@
 These notes stay in Context Router while we test how well the existing HCP
 specification, schemas, and guides support adoption. They record source-review
 findings, synthetic cases, and possible resolution directions; they are not
-observations from a qualified HCP integration. C1–C3 are merged and bounded C4 is
-activated on 2026-11-09, beginning with CR-Q2/CR-Q5 decisions; accepted expiry
-recovery does not change the spec pin. C4 activation does not resolve those questions.
+observations from a qualified HCP integration. C1–C4 are merged in PRs #204–#207.
+C5 bounded implementation is now authorized after independent plan approval;
+hard deletion is deferred and relevant upstream issue publication is authorized. Accepted expiry,
+permission invalidation and completion behavior do not change the spec pin or
+resolve the remaining erasure/correction questions.
 Normative text continues to govern examples and schemas.
 
 Use the [adoption approach][cr-plan] to investigate each question when it affects
@@ -38,6 +40,12 @@ affected behavior, without holding up independent work.
 | [CR-Q7](#cr-q7) | Binding artifact clarification | Complete MCP outputs and no-result success |
 | [CR-Q8](#cr-q8) | Request-scope interpretation | Omitted query categories after a partial standing-rule denial |
 | [CR-Q9](#cr-q9) | Requirement interaction | Directive delivery can reveal withheld categories |
+| [CR-Q10](#cr-q10-conflict-candidates-across-quarantine-and-reactivation) | Lifecycle interpretation | Conflict candidates across quarantine and reactivation |
+| [CR-Q11](#cr-q11-mutation-purpose-and-person-corrections) | Mutation authority | Purpose-restricted person corrections |
+| [CR-Q12](#cr-q12-erasure-and-append-only-personal-audit) | Requirement interaction | Content-bearing audit versus hard deletion |
+| [CR-Q13](#cr-q13-notification-retry-age-and-dormancy) | Delivery interaction | Same-token retry versus token-age recommendation |
+| [CR-Q14](#cr-q14-sharing-reports-after-authority-loss) | Attribution/authority gap | Reporting an already-completed share after revocation |
+| [CR-Q15](#cr-q15-disclosure-summary-history-and-multiple-grants) | Summary interpretation | Attempted delivery, write results and multiple grants |
 
 <a id="cr-q1"></a>
 
@@ -1004,6 +1012,199 @@ without treating them as provider-established assurance or confirmation. This is
 guidance under existing preservation/provenance rules. C4 separates recorded facts
 from clearly labeled raw document claims in management presentation.
 
+## CR-Q12: Erasure And Append-Only Personal Audit
+
+**Support is mandatory, contract choice pending.** Pinned §5.4.2 says implementations
+MUST support hard deletion at the Context Subject's request, through a Management
+Client acting for the Authorizing Principal; Context Clients can only withdraw.
+§18.4 requires the person-facing capability, and §18.1 requires Core for every
+provider conformance claim. Key destruction is permitted only if every key copy,
+including backups, and the entry's unencrypted members are removed. §5.4.1 forbids
+returning hard-deleted entries under any export option. Thus deferring hard delete
+leaves required capability incomplete; the outstanding decision is how to reconcile
+erasure with personal audit/replay, not whether hard deletion is optional.
+Lucas selected D3=A: defer hard deletion until the contract is clarified. §8.5 explicitly permits a separate content-free
+controller-side log to survive deletion, but does not waive §8.7 for the personal log.
+
+**Pinned sources:** §§5.2.4–5.2.5 require revision/withdrawal reasons in audit;
+§5.4.2 requires unrecoverable hard deletion; §§8/8.7 prohibit changing or removing
+personal audit events through HCP operations. The separate controller-log rule in
+§8.5 does not waive those personal-log constraints.
+
+**Cases requiring a boundary:** optional audit data can contain an actual copied
+entry payload, which remains reconstructible after deleting the entry tables.
+A required revision reason can independently repeat the same fact; repetition
+alone does not prove it is the same entry or a reconstructible copy. The draft
+must distinguish copied payloads, required event facts and independently authored
+text. Shared events also require treatment that preserves unrelated history.
+
+C4 retains optional graph/proposal snapshots and content-derived bootstrap/review
+fingerprints. Its [copy inventory](README.md#retained-copies-erasure-and-recovery-design)
+is an inventory only, not authority to add a generic erasure system.
+
+**Selected disposition:** defer runtime erasure and keep the missing mandatory
+capability explicit. [hcp-spec #39](https://github.com/loyalagents/hcp-spec/issues/39)
+now requests the precise personal-audit boundary; #23 separately owns replay of
+actual erased entry responses. No audit redaction exception has been implemented
+or adopted. First evaluate a concrete SQLite transaction when the contract is
+resolved; add extra recovery state only for a demonstrated non-atomic boundary.
+No semantic duplicate scanner, key subsystem or purge machinery is activated.
+
+## CR-Q13: Notification Retry Age And Dormancy
+
+Published as [hcp-spec #41](https://github.com/loyalagents/hcp-spec/issues/41) under the user's C5 issue authorization.
+
+**Pinned sources:** §§6.2.3–6.2.4 and 9.9 require independently effective revocation,
+durable delivered/abandoned outcomes, and retries with the same SET for at least
+five attempts across at least one hour on retryable failures. Receiving clients
+SHOULD reject `iat` more than 300 seconds from their local time; 400 terminates
+delivery immediately, unlike other failures.
+
+**Counterexample:** first attempt at t0 fails to connect; the first reachable retry
+at t15m contains the identical token, now older than 300s. A strict receiver returns
+400; the provider must abandon rather than replace its token or continue retries.
+A provider stopped for 48h has the same tension on restart. Sleep is not an attempt,
+and the provider must not backdate attempts or renew grant/copy deadlines.
+
+**Recommendation:** preserve the same-token MUST and explicit 400 terminal rule.
+Use real fixture receivers with (a) strict age rejection and (b) a documented,
+bounded exception to the age SHOULD with signature/audience checks and jti replay
+deduplication. Keep generic receiver interoperability unqualified. Propose an upstream
+freshness/retry contract specifying original event time, acceptable token age,
+deduplication retention and unavailable intervals, with a restart example. Do not
+silently reissue tokens on retry or call SHOULD mandatory. #3 concerns expiry
+deadlines and explicitly excludes this notification question; this proposal remains
+local. Endpoint replacement/removal and signing-key retention across pending jobs
+also require an explicit lifecycle contract before delivery implementation.
+
+## CR-Q14: Sharing Reports After Authority Loss
+
+Published as [hcp-spec #42](https://github.com/loyalagents/hcp-spec/issues/42) under the user's C5 issue authorization.
+
+**Pinned sources:** §5.2.8 requires reports when the client next reaches the provider
+and durable recording even when not permitted; §9.4.16 requires the token for the
+grant under which sharing occurred; §6.2.2 immediately invalidates that evidence
+on revocation. Sections 8.2/8.4 govern attribution and durable acknowledgement.
+
+**Counterexample:** A shares at t0, the person revokes A at t1 while A is offline,
+and A reports at t2. C4's ordinary HTTP gate rejects revoked credentials and OAuth
+revocation can remove their stored binding. Treating the token as active again
+would contradict revocation. An unauthenticated body naming A is not enough to
+attribute an event to A either.
+
+**Options:** retain current denial and call post-revocation reporting incomplete;
+or define fresh, limited reporting authority bound to the historical client/grant,
+with no context access. A third possible design records a report on a verified
+historical-credential denial path; it too needs explicit retention, replay/forgery
+and authentication rules and must never restore ordinary authority. Recommend
+designing the fresh reporting-authority path upstream; do not implement it as an
+undocumented exception. Dependent post-revocation report behavior is blocked;
+valid-grant attributable unauthorized reports can be implemented independently.
+
+Two additional cases need disposition: the report's untrusted `sharedAt` predates
+a newly restrictive rule, and mixed refs include a never-disclosed or erased entry.
+Define what `permitted` evaluates (provable historical permission versus current
+permission), retain reported time separately from receipt time, and never fabricate
+an entry ID or disclose a foreign ref's existence. Under C5's proposed no-sharing
+policy, every attributable share is unpermitted; the broader historical-permission
+case stays an explicit prerequisite to issuing sharing authority. Minimal linkage
+after deletion depends on C5-D3. §9.6 does not prescribe sharing-report idempotency;
+identical bodies can describe different actual shares. Recommend recording each
+report and labeling possible retry duplicates, pending any explicit report-ID design.
+
+## CR-Q15: Disclosure Summary History And Multiple Grants
+
+Published as [hcp-spec #43](https://github.com/loyalagents/hcp-spec/issues/43) under the user's C5 issue authorization.
+
+**Pinned sources:** §§7.6, 8.2/8.4/8.6 and 9.4.12. The summary must derive from
+the person's audit, but the pin leaves empty-copy and multi-grant aggregation cases
+unclear. C4 durably audits attempted release before socket handoff; later authority
+or deadline changes can withhold it. A write can return completion-only success.
+Neither event proves the client received the proposed representation.
+
+**Concrete cases and recommended application interpretation:**
+
+- A1 and A2 belong to one client. A1 receives revocation notice at t10; A2 still
+  holds a usable copy through t20. Aggregate `usableUntil` must not become t10.
+  Apply delivered notice to the relevant grant's copies, capped by their original
+  deadlines, then take the maximum. A late notice cannot extend an expired copy.
+- A query succeeds with no entries. Count a retrieval, but do not invent a copy
+  deadline. The schema permits null `usableUntil`; the normative table calls it a
+  date-time. Define nullable no-copy behavior explicitly, rather than claiming the
+  schema settles it. Filtered summaries use selected disclosure facts but later
+  revocation outcomes still constrain those copies.
+- A query searched two categories but disclosed only one; later management
+  recategorizes the entry without a version. Current state, searched categories and
+  private whole-entry categories cannot reconstruct what the client was offered.
+  Record minimal exact category snapshots and named client/operator facts in audit
+  prospectively before enabling editors. Do not fabricate missing historical facts.
+- Create/revise can disclose content too. Include possible write copies in entry,
+  category, purpose and copy-deadline accounting; recommend counting only query/get
+  events as `retrievals`, with write attempts explained separately. Do not fabricate
+  a second `context.read` merely to make aggregation easy. Preserve uncertainty
+  after lost replies and completion-only responses; a person-facing label should
+  say these are possible disclosures, not verified receipt.
+- Pending notification has no exact pinned enum value. Present pending details
+  truthfully as an application supplement; do not claim delivered or exhausted
+  retries. Most-recent-revocation outcome and all-grant copy cutoff are distinct.
+
+Recommend one checked audit→summary fixture set and a short wording/schema
+clarification. These application interpretations need plan disposition before
+dependent implementation; any exact conformance claim retains the unresolved
+pin interaction. Source inspection, not new runtime evidence, established these gaps.
+
+## C5 Planning Adoption Disposition (2026-11-14)
+
+The original planning review changed documents only; the subsequent user
+activation now permits the bounded implementation and relevant issues. Normative target stays
+`2e2939c9bebcefb3bed7bb3522231c0e4d65a315`; original adoption materials stay
+`b764a058eac15a4cd843892e60473089b2e835bb`. Pinned §§5.4/6/7.6/8/9/13/18.4,
+G4, and export/import/grant/report/summary schemas were consulted; schemas are
+structural aids and normative prose governs conflicts. Read-only source specialists
+also inspected G5 and the actual C4 copy/authority paths.
+
+Connected GitHub reads on November 14 verified **#3/#19/#21/#23/#24/#25/#34/#38
+open**. #19/#21/#23/#24/#25/#38 had zero comments; #3 had three C1–C3 evidence
+comments and #34 had the selected cache-invalidation comment. Those comments do
+not resolve the normative questions. That original read-only review wrote no issue/comment/PR or source and adopted
+no revision. The later authorized publication created #39 (personal audit erasure)
+and #40 (OAuth support); further issue evidence is recorded at implementation closeout. C4's #36/#37/#29 publication record remains
+historical; this check is not a claim to have refreshed every issue.
+
+| Finding / existing material | Disposition and smallest useful improvement | Owner / revisit condition |
+| --- | --- | --- |
+| Persistent election and security properties: §6.1.4/§13.6 and G4 are clear | Application implementation; use two review-bound acts and rotating refresh. No new consent protocol or generic skill needed. | C5 owner at C5c; D1 selects code/PKCE plus refresh; #40/CR-Q4 still blocks full OAuth-profile claim |
+| §13.2 lacks minimum/conditional flow support | Published #40 requests a support/trigger/metadata matrix preserving all security requirements. | Orchestrator assigns spec follow-through when authorized; resolve before profile qualification |
+| Category/purpose edits and unchanged content version are clear; conflict reevaluation can alter standing | Application stale-review/causal-order tests; extend #37 example locally with recategorizing an older assertion. D2 selects fresh exact person-correction authority as the design direction; #38 remains a contract dependency, with principal restrictions and response disclosure separate. | C5 owner C5b; orchestrator owns authorized upstream follow-through |
+| #23 replay/erasure and CR-Q12 personal audit | Prepare create→erase→retry plus required reason containing the erased content, minimal markers and shared-event cases. Hard-delete runtime deferred until the contract is clarified; no speculative erasure architecture. | D3=A selected; C5g deferred pending #23/#39; orchestrator owns future spec assignment |
+| #19/#21/#24 portability | D4 selects exact-import user attestation with separate limited-assurance evidence; D5 selects unambiguous imports and rejection of ambiguous category/policy cases. Preserve source records and explicit interpretation before apply so stronger verification/translation can be added later. No silent synchronization, trust upgrade or dropped policies. | C5 owner at C5f; review #21 application disposition; #19/#24 and chronology subcases remain blocked with no general round-trip claim |
+| #25 empty import example | Use a complete valid export and semantic validation; existing defect need not block exports. Proposed checked worked example stays local. | Orchestrator on future publication authorization; C5 owner verifies its own fixtures |
+| CR-Q13 notification token-age/retry tension | Same-token strict-age and bounded-exception receiver timelines, sleep/restart and terminal-audit cases. | C5 owner before C5d delivery; orchestrator assigns upstream resolution on authorization |
+| CR-Q14 post-revocation reporting | Attribution/authentication and historical-policy timeline; valid-grant forbidden reports remain independent. | C5 owner for limited-reporting design; product/protocol decision before dependent route; orchestrator upstream owner |
+| CR-Q15 summary gaps | Checked audit→summary examples, exact disclosure snapshots, empty/multiple grants and attempted writes; no invented receipt. | C5 owner C5b/d, before mutating classification; orchestrator upstream follow-through when authorized |
+| C4 expired-copy replay versus C5 handoff | D6 selects denial after original `useUntil`, retaining duplicate suppression and separate authorized fresh reads. C4 code/tests and CR-Q2 historically allow exact expired-response replay; preserve that evidence. This disputed case has valid current authority, unlike already-denied authority loss. | C5 owner before changing requirements/tests: review the selected delta and explicitly disposition §9.6's original-response requirement; no new normative resolution is implied |
+
+**C5f import admission dependency, from independent plan review:** §§4.7/15.1–15.3
+apply to accepting imported model inferences too. Existing local and accepted
+intra-batch statements must participate in conflict/expiry evaluation before
+exposure, with actual local effects audited atomically. An active imported inference
+contradicting an authoritative local person statement cannot bypass quarantine
+through import. Do not replay a foreign graph event as a local management act or
+make an absent/rejected/erased relationship target live. Preserve source provenance
+without assigning it new local authority. #19/#37 need a concrete cross-provider
+same-asserter chronology and relationship-history disposition: import time, array
+order and source timestamps alone do not establish which assertion should supersede
+another. C5 owns these cases and their preview/reordered-batch/rollback tests; they
+remain blocked until reviewed, independently of unambiguous import paths.
+
+CR-Q8 remains provisional fail-closed omitted-category behavior; CR-Q9 must be
+resolved before sensitive real-data C6/C7. N3's coincident grant/token expiry does
+not independently isolate the grant deadline; persistent/null-expiry work renews
+affected tests without overstating that evidence. N4 remains C7. Broad model
+identity assurance and slow physical COMMIT remain separate from C5 permission/
+erasure decisions. A proposed smaller implementation slice never closes the full
+C5 governance/portability roadmap or permits a conformance claim.
+
 ## C7 HTTP Query Parsing Follow-Up (N4)
 
 **Application interoperability limitation:** the shared request parser matches
@@ -1019,3 +1220,17 @@ query-specific JSON path while retaining form parsing for OAuth/human routes;
 verify compatibility with the then-selected binding. This record neither changes
 the parser nor activates C7. C3's selected-client evidence does not establish
 general HTTP interoperability.
+
+## C5 Implementation Evidence (2026-11-15 UTC)
+
+The [implementation checkpoint](README.md#c5-implementation-checkpoint-2026-11-15-utc)
+records the selected D1/D2/D4/D5/D6 contracts, focused failure/restart/browser
+evidence and remaining review/CI. Same-token strict-age rejection and an explicit
+exception receiver are both exercised (#41); attributable forbidden reports are
+durable but expired/revoked credentials remain denied (#42). Summary/filter
+interpretations (#43), exact subject-set association (#21), conservative
+chronology/foreign-graph refusal (#19/#37), principal-preserving person correction
+(#38), and expired-copy replay denial (#34) remain local experiment choices.
+The coordinator owns the authorized upstream evidence updates. None of these
+results adopts a new normative pin or closes hard deletion (#23/#39), broader
+OAuth profile support (#40), source-audit/history translation or real-client claims.
