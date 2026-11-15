@@ -15,6 +15,7 @@ for (const name of [
   "protocolFind",
   "ownGrant",
   "releaseRead",
+  "commitWrite",
 ]) {
   const original = AuthorizationRepository.prototype[name];
   AuthorizationRepository.prototype[name] = function (...args) {
@@ -37,6 +38,21 @@ AuthorizationRepository.prototype.prepareRead = function (...args) {
   if (armed?.point === "after-preparation" && armed.action === "yield") {
     armed = undefined;
     fs.writeSync(1, JSON.stringify({ boundary: "after-preparation" }) + "\n");
+    return new Promise((resolve) => {
+      resumeRead = () => resolve(ticket);
+    });
+  }
+  return ticket;
+};
+const commitWrite = AuthorizationRepository.prototype.commitWrite;
+AuthorizationRepository.prototype.commitWrite = function (...args) {
+  const ticket = commitWrite.apply(this, args);
+  if (armed?.point === "after-write-preparation" && armed.action === "yield") {
+    armed = undefined;
+    fs.writeSync(
+      1,
+      JSON.stringify({ boundary: "after-write-preparation" }) + "\n",
+    );
     return new Promise((resolve) => {
       resumeRead = () => resolve(ticket);
     });

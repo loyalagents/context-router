@@ -2,6 +2,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+import { withConfirmations } from "./entry-state";
+import { evaluateWrite, causalTransitions } from "./conflict-graph";
+import { storedEntry } from "./writes";
 import {
   regular,
   pin,
@@ -277,9 +280,55 @@ export class SyntheticExperiment {
             .provider_id,
         );
         for (const row of overdue) {
+          const previous = storedEntry(this.#db, String(row.id));
+          const relatedBefore = previous.record.relationships.map((r: any) => ({
+            id: r.target,
+            before: storedEntry(this.#db, r.target)?.record.status ?? null,
+          }));
           this.#db
             .prepare("UPDATE entries SET status='expired' WHERE id=?")
             .run(row.id);
+          const actor = { role: "hcp-provider", id: providerId };
+          const graphChanges: any[] = [];
+          evaluateWrite(
+            this.#db,
+            String(row.id),
+            previous,
+            Date.parse(at),
+            actor,
+            (change) => {
+              if (!change.eventType) {
+                graphChanges.push(change);
+                return;
+              }
+              append(
+                this.#db,
+                {
+                  eventId: uuid(),
+                  eventType: change.eventType,
+                  timestamp: at,
+                  participants: {
+                    initiator: actor,
+                    provider: { id: providerId },
+                  },
+                  entryId: change.entryId,
+                  relatedEntryId: change.relatedEntryId,
+                  categories: [
+                    ...new Set(
+                      [change.entryId, change.relatedEntryId].flatMap(
+                        (id) =>
+                          storedEntry(this.#db, id)?.classification
+                            .categories ?? [],
+                      ),
+                    ),
+                  ],
+                  grantId: null,
+                  data: change.data,
+                },
+                this.#fault,
+              );
+            },
+          );
           append(
             this.#db,
             {
@@ -298,6 +347,20 @@ export class SyntheticExperiment {
                 version: row.current_version,
                 effectiveAt: new Date(Number(row.valid_until)).toISOString(),
                 previousStatus: row.status,
+                status: "expired",
+                relationships: {
+                  before: previous.record.relationships,
+                  after: storedEntry(this.#db, String(row.id)).record
+                    .relationships,
+                },
+                relatedTransitions: [
+                  ...relatedBefore.map((t: any) => ({
+                    ...t,
+                    after: storedEntry(this.#db, t.id)?.record.status ?? null,
+                  })),
+                  ...causalTransitions(graphChanges),
+                ],
+                graphChanges,
               },
             },
             this.#fault,
@@ -337,12 +400,12 @@ export class SyntheticExperiment {
   }
   private assemble(row: Record<string, any>): StoredEntry {
     const doc = JSON.parse(row.document);
-    return {
+    return withConfirmations(this.#db, {
       ...doc,
       subject: JSON.parse(row.subject),
       classification: JSON.parse(row.classification),
       record: { ...doc.record, status: row.status },
-    };
+    });
   }
   inspectAudit(): AuditEvent[] {
     this.reconcile();
@@ -362,7 +425,7 @@ export class SyntheticExperiment {
           this.reconcile();
           return operation(this.#db);
         },
-        write: (operation) => {
+        write: (operation, beforeCommit) => {
           this.reconcile();
           this.#db.exec("BEGIN IMMEDIATE");
           try {
@@ -371,6 +434,8 @@ export class SyntheticExperiment {
               throw new Error("Asynchronous HCP transaction refused");
             this.#fault?.("before-commit");
             this.#assert();
+            if (beforeCommit) this.#fault?.("before-authorized-commit");
+            beforeCommit?.();
             this.#db.exec("COMMIT");
             this.#fault?.("after-data-commit");
             return result;

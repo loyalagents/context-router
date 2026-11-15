@@ -108,8 +108,8 @@ not qualify the current bridge or any assistant host for HCP.
 
 ## Highest-Value Acceptance Scenarios
 
-These are acceptance requirements, not test results; C1/C2 are merged and bounded C3
-is activated under the canonical concrete plan:
+These are acceptance requirements, not test results; C1–C3 are merged and bounded
+C4 is activated under the canonical plan, with its decision/review dependencies:
 
 - Two clients cannot substitute actors, link subjects through provider identifiers,
   use another grant's refs, read another grant, or gain governance through scope.
@@ -171,7 +171,7 @@ acceptance from pinned-spec compliance.
 | C0-R16 · G06/G14/G18 · CR storage contract + D7 | Contract + Build C1: fresh SQLite/recovery | Fresh init → seed → close → reopen and reset → fresh init pass with private root/schema/ownership checks. Wrong/partial schema, symlink/escaped root or live/unproven owner refuses without touching neighbors. Rollback on late failure; kill/reopen after acknowledged commit preserves data/audit. Interrupted init cannot serve. Reset invalidates all old store identities, tokens/grants/refs and touches no original documents/model/client settings. Mac filesystem/process checks are required where used. |
 | C0-R17 · G06–G15/G18 · D4 shared-access boundary | Contract + Build C1/C3; broader integration Deferred C6 | Old GraphQL/MCP/document/model/import/reset/history-clear modules have no HCP-store handle; old routes/credentials cannot read/write experiment records. Test the actual selected composition. Before production exposure, complete producer/consumer inventory and replace/remove every bypass; no compatibility adapter requirement. |
 | C0-R18 · G18 · §§18–19 | Contract + Build C2/C3; full discovery Deferred C8 | TLS AS/resource metadata resolves to local fixture endpoints; unsupported capability absent from experimental manifest. No full-Part identifiers or conformant-discovery assertion. C8 must supply full §19 document including jwks_uri and evidence for every advertised claim. Optional provenance action is disabled until separately selected/tested. |
-| C0-R19 · G06–G11/G16 · §§3.8, 4.7, 5.2.3–5.2.5, 9.6, 15 | Deferred C4 with dependency | Public create/revise/withdraw, confirmations, document staging, inference/conflicts and durable write idempotency remain disabled. CR-Q2 must settle erase/retry and changed authority; CR-Q5 settles affected history semantics. C4 tests expected-version, symmetric conflicts, confidence, lost reply/restart and no resurrection before enabling them. |
+| C0-R19 · G06–G11/G16 · §§3.8, 4.7, 5.2.3–5.2.5, 9.6, 15 | C4 activated 2026-11-09; decisions and plan review first | Originally disabled pending C4 dependencies; the November 13 implementation and evidence record below supersedes that state. C4 tests expected-version, symmetric conflicts, confidence, lost reply/restart and no resurrection before enabling them in the isolated experiment. |
 | C0-R20 · G03–G05/G11/G14/G15 · §§5.4, 6, 8.3/8.6 | Deferred C5 with dependency | Persistent grants, extra OAuth flows (CR-Q4), full governance editors/summary/export, HCP-native portability, hard deletion, sharing reports including unauthorized reports, notification registration/retry and full retention are deferred. No sharing permission now does not remove the later sharing-report obligation. Resolve CR-Q2/Q3 before affected erasure/dormancy/recovery. |
 | C0-R21 · G17/G18 · §§10, 18 | Deferred C7/C8 | MCP 2026-07-28 tool/output/error contract (CR-Q7), bridges and actual assistant-host behavior stay disabled. C7 needs HTTP/MCP semantic parity and host credential/copy/directive evidence; C8 exhaustive package/profile qualification, not schema-only certification. |
 | C0-R22 · G01/G07 · §§14, 16–17; D8 | N/A with reason | No credentials/issuer-attested health/education, delegates, operator-blind encryption, model calls, real hosts or hosted/PostgreSQL HCP deployment in this slice. These profiles/features are not activated by ordinary synthetic personal statements. HCP v1 portability is considered in C5 protocol scope; legacy CR conversion/upgrade/compatibility is out of scope, not deferred. |
@@ -237,7 +237,7 @@ confirmations, inference and durable mutation replay remain R19/C4; full governa
 portability, notifications and additional OAuth flows remain R20/C5. R21/R22 keep
 their deferred/inapplicable scope. No normative pin or conformance claim changes.
 
-### C3 Candidate Evidence (Final Review/CI Pending)
+### C3 Candidate Evidence (Now Merged)
 
 | Selected rows | Implemented synthetic evidence | Remaining boundary |
 | --- | --- | --- |
@@ -247,9 +247,52 @@ their deferred/inapplicable scope. No normative pin or conformance claim changes
 | R14/R15/R17/R18 | Independent human paginated history and conservative copy deadline, governance denial for context credentials, TLS-verified Chromium A1/A2/B journey and legacy route/credential rejection | No installed integration, notifications, canonical discovery or conformance claim |
 
 The [canonical checkpoint record](README.md#c3-implementation-checkpoints-2026-11-09)
-owns exact commands, passed checks, carry-forward and pending final review/CI.
+owns freeze-time commands, passed checks and carry-forward. Final review/CI and
+the human merge of PR #206 are recorded in the C4 activation; older pending
+statements retain their historical scope.
 C1/C2 affected regression evidence was renewed; this is a bounded synthetic
 application candidate, not package/profile or independent-host interoperability.
+
+## C4 Requirement Selection (2026-11-09)
+
+Activated from C3 merge `a1ad0c6c248af74f8353c26c7a86f2f43f1ee2ec` under
+the [concrete C4 plan](README.md#c4-activation-and-concrete-plan-2026-11-09).
+This expands C0-R19 and affected shared contracts, not a claim that they pass.
+Lucas selected CR-Q2 permission-change response-cache invalidation on November 11;
+on November 13 he selected original-request completion-only success with separately
+authorized data and requested C4 resume. The changed release contract passed
+affected plan review before dependent backend edits. The earlier concrete plan received
+conditional independent approval; the changed cache contract passed affected review.
+No dependent backend changes precede those gates; C5–C8 remain unactivated.
+
+| C4 row / source gap | Acceptance and planned evidence | Boundary |
+| --- | --- | --- |
+| C4-R01 · G02–G05/G09; C0-R01–R06 | Fresh affirmative read/write consent; old reads/bootstrap deny writes; same-detail category/action/purpose/narrowing; A1/A2/B isolation; policy/revoke/deadline ordering via actual HTTPS and browser | Paired read/write, single approved write purpose; no persistent/extra OAuth flows or implied asserter assurance |
+| C4-R02 · G06/G07; C0-R08/R09/R13/R16 | Stable ID/ref, immutable +1 versions, provider-owned provenance, arbitrary supported JSON/unknown preservation, expectedVersion race and full rollback; valid expired/deprecated revision versus deleted-state refusal; SQLite reopen | Fresh SQLite only; no legacy conversion or issuer/credential-content authority |
+| C4-R03 · G08/G11; C0-R10/R14 | Latest confirmation disposition, same-version history, stale review refusal, fresh version without endorsements, edit-as-person authority; management UI and context credential denial | CR-Q5 selected application history; no undo, resurrection or full C5 governance/export |
+| C4-R04 · G07/G08 | Unapplied proposals produce no HCP entry/ref/context audit; exact apply under current grant; registered controlled model/source and required high/medium/low confidence | Synthetic producer seams only; no real model/doc ingestion or installed workflow integration |
+| C4-R05 · G10 | Declared typed contradiction plus same dimension without contradiction; both arrival orders, complete pair collection, same/different asserters and authoritative/unverified/confirmed standing | Structural fixture vocabulary, not semantic quality/universal ontology |
+| C4-R06 · G10/G11 | Multiple edges, client/provider re-evaluation, fresh human acceptance/rejection/dismissal and peer effects, authoritative withdrawal quarantine, expiry precedence, transactional audit and restart | No automatic resolution beyond the pinned same-asserter rule; no issuer profile |
+| C4-R07 · G16; C0-R06/R07/R13/R15 | CR-Q2 table: exact-body key replay, different body/operation/target, concurrent retry, lost response, restart, revoked/expired/narrowed authority, later conflicted/deprecated denial, original expired copy deadline; durable permission-change payload invalidation without duplicate execution, no resurrection after restored permissions/restart, unaffected grant/client isolation; management consumed-operation versus still-valid grant; known-commit original completion-only success without protected data/headers; loss of write with retained read authority; uncertain commit never falsely acknowledged; actual status/body/audit checks | Permission reset reviewed November 11; completion contract selected November 13 and proposed in hcp-spec #36; slow-commit normative cutoff remains separate; no MCP retry or erase conformance claim |
+| C4-R08 · G11/G14/G16 | Every content-bearing result/ledger/history dependency inventoried for later erasure; same operation never retried after known durable result; no test-only deletion bypass offered | C5 owns actual hard-delete/purge/retention/recovery proof; content-free marker is proposed, not an upstream resolution |
+| C4-R09 · G14/G18; C0-R16–R18 | Affected ownership/durability, isolated HTTP/composition/legacy denial, C1–C3 regression and docs consumers; independent full diff and exact-candidate CI/receipts | No installed artifact, real host, client-copy compliance, physical power-loss or full conformance evidence |
+
+### C4 Implementation Evidence (2026-11-13)
+
+The [local implementation/adoption record](README.md#c4-local-implementation-and-adoption-record-2026-11-13)
+maps the selected rows to person/model writes, exact human review and retained
+history, private controlled staging, per-edge conflict handling, durable retry
+receipts and original-channel minimal completion. The 57 focused write/graph tests,
+backend build, three real Chromium journeys and 97 selected composition/dependency/
+document contract tests pass locally. Combined regressions and final review/CI are
+tracked in that canonical record; these are not conformance results. No installed
+root, real producer/client, legacy adapter, spec source or pin changes.
+
+Reusable findings remain local except the authorized issues #34/#36. In particular,
+unverified model-ID equality across submitting clients, pair-local human resolution,
+the coupled grant/token deadline evidence and the complete C5 erasure inventory
+remain explicit adoption boundaries. The supplied research motivates the selected
+completion behavior but does not alter the pinned normative target.
 
 ## Assessment Boundary And Next Use
 

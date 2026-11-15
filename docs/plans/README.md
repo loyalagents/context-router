@@ -53,19 +53,38 @@ Keep one canonical item, link it from the pilot, and assign a named owner and
 landing order. Do not copy tasks between lists or activate every backlog brief.
 
 HCP's canonical brief is promoted to [active](active/hcp-alignment/README.md).
-The product owner merged **C1/C2 in PRs #204/#205** and activated bounded **C3**
-on November 9: complete the isolated synthetic read-only HTTPS journey, durable
-disclosure history and revoke behavior. C3 chat
-`01a1c17c-4931-7492-a9b0-582bcd8ce41e` is sole writer in the existing checkout;
-the original orchestrator and reviewers remain read-only. C2 final reviews and CI
-passed at head `71d8433215009e4f2430ac6631a1f5392fb4c7ab`; C3 starts from merge
-`6a7db3f5531557a489e6398945b352952e0220a0`. C3's concrete plan was independently
-approved before implementation; the scoped read journey is implemented, with final
-qualification tracked in [draft PR #206](https://github.com/loyalagents/context-router/pull/206). C4–C8 remain unactivated. Keep hcp-spec unchanged,
-locally and remotely; record adoption proposals here for the orchestrator.
+The product owner merged **C1–C3 in PRs #204–#206** and activated bounded **C4**
+on November 9: writes and Memory Manager, beginning with retry/erasure and
+lifecycle-history decisions. C4 chat `01a1c422-3178-75b0-a39c-9f621ac7458c`
+resumes sole-writer ownership of the existing checkout on November 13 at Lucas's
+request, after selecting original-request completion-only success with separately
+authorized response data. C4 starts from clean merge
+`a1ad0c6c248af74f8353c26c7a86f2f43f1ee2ec` on
+`codex/hcp-c4-writes-memory-manager`. C3 final reviews and exact-candidate CI passed
+at head `babd602ce6a22f558e5fe09ae7f205ac0bc51945` in
+[merged PR #206](https://github.com/loyalagents/context-router/pull/206); that is
+historical evidence, not C4 validation. The C4 plan is conditionally independently
+approved for its earlier contract. Lucas selected permission-change response-cache
+invalidation on November 11; that delta passed review. The November 13 completion
+contract passed affected plan review before dependent backend implementation. Person
+write, replay, staging, conflict and management-history slices now have focused
+evidence, including three isolated browser journeys. Candidate `ec6eb027` completed
+independent review and exact-candidate CI in [PR #207](https://github.com/loyalagents/context-router/pull/207).
+On November 14 Lucas authorized corrections from Claude's follow-up review and
+focused spec issues. This C4 chat resumes sole-writer ownership for that batch;
+its affected reviews and renewed candidate evidence are tracked in the PR and
+[follow-up record](active/hcp-alignment/README.md#c4-claude-follow-up-2026-11-14).
+C5–C8 remain
+unactivated. Lucas authorized updating the existing hcp-spec issue
+[#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594) for the permission decision; that comment is posted and verified.
+The focused committed-write proposal is published as [#36](https://github.com/loyalagents/hcp-spec/issues/36), with research evidence and slow commits excluded.
+Specification sources, the sibling checkout and the target pin remain unchanged.
+The follow-up publishes conflict-lifecycle [#37](https://github.com/loyalagents/hcp-spec/issues/37),
+mutation-purpose [#38](https://github.com/loyalagents/hcp-spec/issues/38), and
+extension-presentation evidence on [#29](https://github.com/loyalagents/hcp-spec/issues/29#issuecomment-6885856155).
 Dormant expiry remains application recovery evidence, not conformance to the pinned
 conflicting deadlines. Pilot priority and installed app remain unchanged. See the
-[C3 plan and validation boundary](active/hcp-alignment/README.md#c3-concrete-implementation-plan).
+[C4 plan and validation boundary](active/hcp-alignment/README.md#c4-activation-and-concrete-plan-2026-11-09).
 
 `active/` contains currently coordinated work. `backlog/` holds useful but
 unactivated briefs; promotion requires an explicit scope/owner/acceptance decision.

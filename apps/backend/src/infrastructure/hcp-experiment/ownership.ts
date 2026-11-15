@@ -31,6 +31,7 @@ export type FaultPoint =
   | "after-data-file"
   | "before-audit"
   | "before-commit"
+  | "before-authorized-commit"
   | "after-data-commit"
   | "after-reset-intent"
   | "after-reset-unlink";
@@ -215,7 +216,12 @@ export class ExperimentLease {
       inspectJournal(file + "-journal");
       db = driver(file);
       // BEGIN EXCLUSIVE plus EXCLUSIVE mode holds the lock across all later commits.
-      db.exec("PRAGMA locking_mode=EXCLUSIVE; BEGIN EXCLUSIVE");
+      // Other openers can briefly hold schema-read locks before lease admission.
+      // Wait only here; all owned-store operations retain their zero busy timeout.
+      db.exec(
+        "PRAGMA busy_timeout=1000; PRAGMA locking_mode=EXCLUSIVE; BEGIN EXCLUSIVE",
+      );
+      db.exec("PRAGMA busy_timeout=0");
       validateSchema(db, LEASE_APPLICATION_ID, LEASE_SCHEMA);
       const rows = db.prepare("SELECT * FROM lease").all();
       if (rows.length !== 1 || rows[0].root_id !== m.rootId) refused();

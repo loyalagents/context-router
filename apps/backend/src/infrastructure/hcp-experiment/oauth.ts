@@ -2,7 +2,7 @@ import { generateKeyPairSync } from "node:crypto";
 import { AuthorizationRepository, random } from "./authority";
 import {
   ACCESS_TYPE,
-  CATEGORIES,
+  CONTEXT_SCOPES,
   denied,
   scopeAccess,
   validateAccess,
@@ -12,7 +12,7 @@ const { Provider, interactionPolicy, errors } = require("oidc-provider");
 
 export function authorizationProvider(authority: AuthorizationRepository): any {
   const { issuer, resource, clients } = authority.configuration;
-  const scopes = Object.keys(CATEGORIES).map((c) => `hcp:${c}:read`);
+  const scopes = CONTEXT_SCOPES;
   const material = authority.protocolSecrets(() => {
     const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
     return {

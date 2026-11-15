@@ -29,7 +29,12 @@ describe("HCP C1 owned process loss and recovery", () => {
     children.length = 0;
     fs.rmSync(sandbox, { recursive: true });
   });
-  function start(action: string, boundary = "none", now = deadline - 1) {
+  function start(
+    action: string,
+    boundary = "none",
+    now = deadline - 1,
+    onReady?: () => void,
+  ) {
     const child = spawn(
       process.execPath,
       [
@@ -57,9 +62,16 @@ describe("HCP C1 owned process loss and recovery", () => {
       child.stderr!.on("data", (b) => (errors += b));
       child.stdout!.on("data", (b) => {
         text += b;
-        if (text.includes("\n")) {
+        while (text.includes("\n")) {
+          const end = text.indexOf("\n"),
+            value = JSON.parse(text.slice(0, end));
+          text = text.slice(end + 1);
+          if (value.ready) {
+            onReady?.();
+            continue;
+          }
           clearTimeout(timer);
-          resolve(JSON.parse(text.split("\n")[0]));
+          resolve(value);
         }
       });
       child.once("error", (e) => {
@@ -113,6 +125,32 @@ describe("HCP C1 owned process loss and recovery", () => {
     const results = await Promise.all([a.message, b.message]);
     expect(results.filter((x) => x.admitted)).toHaveLength(1);
     expect(results.filter((x) => x.refused)).toHaveLength(1);
+  });
+
+  it("waits out a short admission reader without weakening the exclusive lease", async () => {
+    createSyntheticExperiment(paths()).close();
+    // A second opener can briefly read the lease schema before either opener
+    // acquires its exclusive lease. It is not an admitted store owner.
+    const reader = new DatabaseSync(path.join(paths().root, "lease.sqlite"));
+    reader.exec("BEGIN");
+    reader.prepare("SELECT * FROM lease").all();
+    let release: ReturnType<typeof setTimeout> | undefined,
+      ready = false;
+    const contender = start("open", "admission-reader", deadline - 1, () => {
+      ready = true;
+      release = setTimeout(() => reader.exec("COMMIT"), 400);
+    });
+    try {
+      expect((await contender.message).admitted).toBe(true);
+      expect(ready).toBe(true);
+      const second = start("open");
+      expect((await second.message).refused).toBe(true);
+      await second.exited;
+    } finally {
+      clearTimeout(release);
+      if (reader.isTransaction) reader.exec("ROLLBACK");
+      reader.close();
+    }
   });
 
   it.each(["after-data-file", "before-commit"])(
