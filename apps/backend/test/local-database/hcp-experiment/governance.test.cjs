@@ -13,7 +13,7 @@ for (const point of ["before-audit", "before-commit", "after-data-commit"])
     const report = {
       recipient: { domain: "recipient.example", name: "Synthetic recipient" },
       refs: [result.json.entries[0].ref],
-      purpose: PURPOSES[0].code,
+      purpose: "urn:purpose:outside-grant",
       sharedAt: new Date().toISOString(),
     };
     await f.arm({ operation: "reportSharing", point, action: "throw" });
@@ -58,6 +58,7 @@ test("C5 audit cursor binds filters and its snapshot across restart and concurre
 });
 for (const [path, operation, browser] of [
   ["/v2/audit", "audit", false],
+  ["/v2/grants", "listGrants", false],
   ["/v2/disclosures", "disclosures", false],
   ["/v2/rules", "listPolicy", false],
   ["/v2/directives", "listPolicy", false],
@@ -81,6 +82,7 @@ for (const [path, operation, browser] of [
           text: "private directive text",
         },
       });
+    if (path === "/v2/grants") await authorize(f);
     let route = path;
     if (path === "entry")
       route = `/manage/entries/${encodeURIComponent((await f.management("/v2/export")).json.entries[0].id)}`;
@@ -103,7 +105,14 @@ for (const [path, operation, browser] of [
       /written notes|context.created|clientOperator|private directive text/,
     );
   });
-for (const field of ["categories", "purposes", "rules", "directives"])
+for (const field of [
+  "categories",
+  "purposes",
+  "rules",
+  "directives",
+  "confirmation",
+  "policy",
+])
   for (const point of ["during-management-serialization", "after-data-commit"])
     test(`C5 ${field} returns completion only when human authority expires ${point}`, async (t) => {
       const f = await fixture(t, { approveFixtures: true, childProcess: true }),
@@ -116,7 +125,11 @@ for (const field of ["categories", "purposes", "rules", "directives"])
       const classification = ["categories", "purposes"].includes(field),
         route = classification
           ? `/v2/entries/${encodeURIComponent(entry.id)}/${field}`
-          : `/v2/${field}`,
+          : field === "confirmation"
+            ? `/v2/entries/${encodeURIComponent(entry.id)}/confirmation`
+            : field === "policy"
+              ? "/experiment/policy"
+              : `/v2/${field}`,
         input = classification
           ? {
               expectedVersion: entry.record.version,
@@ -124,32 +137,55 @@ for (const field of ["categories", "purposes", "rules", "directives"])
                 ? { categories: ["work_context"] }
                 : { permittedPurposes: [] }),
             }
-          : field === "rules"
-            ? { operators: ["private-policy.example"] }
-            : {
-                action: "share",
-                effect: "deny",
-                text: "private directive text",
-              },
+          : field === "confirmation"
+            ? {
+                expectedVersion: entry.record.version,
+                disposition: "confirmed",
+              }
+            : field === "policy"
+              ? {
+                  rules: [{ operators: ["private-policy.example"] }],
+                  directives: [],
+                }
+              : field === "rules"
+                ? { operators: ["private-policy.example"] }
+                : {
+                    action: "share",
+                    effect: "deny",
+                    text: "private directive text",
+                  },
         eventType = {
           categories: "context.recategorized",
           purposes: "context.restricted",
           rules: "rule.set",
           directives: "directive.set",
+          confirmation: "context.confirmed",
+          policy: "rule.set",
         }[field],
         auditRoute = `/v2/audit?eventType=${eventType}`,
         before = (await f.management(auditRoute)).json.events.length;
       await f.arm({
-        operation: classification ? "editClassification" : "setPolicy",
+        operation: classification
+          ? "editClassification"
+          : field === "confirmation"
+            ? "confirmEntry"
+            : field === "policy"
+              ? "replacePolicy"
+              : "setPolicy",
         point,
         action: "advance",
         now: Date.now() + 12 * 3600_000 + 1000,
       });
       const result = await f.context(route, d.jar.get("__Host-hcp-human"), {
-        method: classification ? "PUT" : "POST",
+        method: classification || field === "policy" ? "PUT" : "POST",
         json: input,
       });
-      assert.equal(result.status, classification ? 200 : 201);
+      assert.equal(
+        result.status,
+        classification || ["confirmation", "policy"].includes(field)
+          ? 200
+          : 201,
+      );
       assert.deepEqual(result.json, {
         outcome: "committed",
         representation: "not-included",
@@ -174,6 +210,16 @@ for (const field of ["categories", "purposes", "rules", "directives"])
           ],
           input[field === "purposes" ? "permittedPurposes" : field],
         );
+      } else if (field === "confirmation") {
+        const held = (await f.management("/v2/export")).json.entries.find(
+          (e) => e.id === entry.id,
+        );
+        assert.equal(
+          held.record.provenance.confirmations.length,
+          entry.record.provenance.confirmations.length + 1,
+        );
+      } else if (field === "policy") {
+        assert.equal((await f.management("/v2/rules")).json.rules.length, 1);
       } else {
         const policies = (await f.management(`/v2/${field}`)).json[field];
         assert.equal(policies.length, 1);
@@ -377,13 +423,186 @@ test("C5 management routes preserve versions and deny context authority includin
     204,
   );
   assert.equal((await f.context("/v2/rules", token)).status, 403);
+  const beforeEntries = (await f.management("/v2/export")).json.entries;
+  const beforeAudit = (await f.management("/v2/audit")).json.events;
+  for (const management of [true, false]) {
+    const route = `/v2/entries/${encodeURIComponent(id)}?hardDelete=true`;
+    const result = management
+      ? await f.management(route, { method: "DELETE", json: {} })
+      : await f.context(route, token, { method: "DELETE", json: {} });
+    assert.equal(result.status, management ? 404 : 403);
+    if (management) assert.match(result.text, /outside the experiment/);
+  }
+  assert.deepEqual((await f.management("/v2/audit")).json.events, beforeAudit);
+  assert.deepEqual(
+    (await f.management("/v2/export")).json.entries,
+    beforeEntries,
+  );
+});
+for (const kind of ["confirmation", "keep-both"])
+  for (const point of ["before-commit", "after-data-commit"])
+    test(`C5 browser ${kind} ${point} expiry preserves content-free committed acknowledgement`, async (t) => {
+      const f = await fixture(t, { approveFixtures: true, childProcess: true }),
+        d = new OAuthDriver(f, "a");
+      let entry,
+        ids = [];
+      if (kind === "keep-both") {
+        const token = await authorize(f, "a", [
+            detail(["general_preferences"], undefined, {
+              actions: ["read", "write"],
+            }),
+          ]),
+          grant = (await f.context("/v2/grants", token)).json.grants[0];
+        for (const value of ["email", "phone"]) {
+          const created = await f.context("/v2/entries", token, {
+            method: "POST",
+            json: {
+              schema: "https://hcp.example/spec/entry/2.0",
+              subject: grant.subject,
+              content: {
+                profile:
+                  "https://hcp.example/spec/profiles/general-context/2.0",
+                value: {
+                  type: "urn:context-router:exclusive-fact:v1",
+                  slot: "contact",
+                  setting: "work",
+                  value,
+                },
+              },
+              classification: { categories: ["general_preferences"] },
+              assertion: { declarationType: "person-declared" },
+              record: { provenance: { source: "person-input" } },
+            },
+          });
+          assert.equal(created.status, 201);
+        }
+        ids = (
+          await f.management(
+            `/v2/audit?grantId=${grant.grantId}&eventType=context.created`,
+          )
+        ).json.events.map((e) => e.entryId);
+        entry = (await f.management("/v2/export")).json.entries.find(
+          (e) => e.id === ids[0],
+        );
+      } else
+        entry = (await f.management("/v2/export")).json.entries.find(
+          (e) => e.record.status === "active",
+        );
+      await d.begin();
+      await d.login();
+      const page = await d.request(
+          `/manage/entries/${encodeURIComponent(entry.id)}`,
+        ),
+        route =
+          kind === "confirmation"
+            ? `/manage/entries/${encodeURIComponent(entry.id)}/review`
+            : /action="(\/manage\/conflicts\/[^\"]+\/review)"/.exec(
+                page.text,
+              )?.[1];
+      assert.ok(route);
+      const review = await d.request(route, {
+        method: "POST",
+        headers: { origin: f.issuer },
+        form: {
+          csrf: inputs(page.text).csrf,
+          ...(kind === "confirmation"
+            ? {
+                expectedVersion: String(entry.record.version),
+                disposition: "confirmed",
+              }
+            : {}),
+        },
+      });
+      assert.equal(review.status, 200);
+      const eventType =
+          kind === "confirmation" ? "context.confirmed" : "conflict.resolved",
+        auditRoute = `/v2/audit?eventType=${eventType}`,
+        before = (await f.management(auditRoute)).json.events.length;
+      await f.arm({
+        operation:
+          kind === "confirmation" ? "approveConfirmation" : "approveKeepBoth",
+        point,
+        action: "advance",
+        now: Date.now() + 12 * 3600_000 + 1000,
+      });
+      const result = await d.request(
+        kind === "confirmation"
+          ? "/manage/entries/approve"
+          : "/manage/conflicts/approve",
+        {
+          method: "POST",
+          headers: { origin: f.issuer },
+          form: inputs(review.text),
+        },
+      );
+      assert.equal(result.status, point === "before-commit" ? 401 : 200);
+      if (point !== "before-commit")
+        assert.match(result.text, /Action recorded/);
+      assert.doesNotMatch(
+        result.text,
+        /urn:uuid|written notes|contact|email|phone/,
+      );
+      await f.restart();
+      assert.equal(
+        (await f.management(auditRoute)).json.events.length,
+        before + (point === "before-commit" ? 0 : 1),
+      );
+      const held = (await f.management("/v2/export")).json.entries.find(
+        (e) => e.id === entry.id,
+      );
+      if (kind === "confirmation")
+        assert.equal(
+          held.record.provenance.confirmations.length,
+          entry.record.provenance.confirmations.length +
+            (point === "before-commit" ? 0 : 1),
+        );
+      else if (point === "before-commit") assert.deepEqual(held, entry);
+      else assert.equal(held.record.status, "active");
+    });
+test("C5 forbidden outside-grant purpose is recorded, while malformed or unattributable reports are not", async (t) => {
+  const f = await fixture(t, { approveFixtures: true, childProcess: true }),
+    token = await authorize(f),
+    found = await query(f, token),
+    other = await authorize(f, "b"),
+    report = {
+      recipient: { domain: "recipient.example", name: "Synthetic" },
+      refs: [found.json.entries[0].ref],
+      purpose: "urn:purpose:outside-grant",
+      sharedAt: new Date().toISOString(),
+    };
   assert.equal(
-    (
-      await f.management(`/v2/entries/${encodeURIComponent(id)}?hard=true`, {
-        method: "DELETE",
-        json: {},
-      })
-    ).status,
+    (await f.context("/v2/shares", "invalid", { method: "POST", json: report }))
+      .status,
+    401,
+  );
+  assert.equal(
+    (await f.context("/v2/shares", other, { method: "POST", json: report }))
+      .status,
     403,
   );
+  assert.equal(
+    (
+      await f.context("/v2/shares", token, {
+        method: "POST",
+        json: { ...report, purpose: "malformed purpose" },
+      })
+    ).status,
+    422,
+  );
+  assert.equal(
+    (await f.management("/v2/audit?eventType=context.shared")).json.events
+      .length,
+    0,
+  );
+  assert.equal(
+    (await f.context("/v2/shares", token, { method: "POST", json: report }))
+      .status,
+    403,
+  );
+  await f.restart();
+  const events = (await f.management("/v2/audit?eventType=context.shared")).json
+    .events;
+  assert.equal(events.length, 1);
+  assert.equal(events[0].data.permitted, false);
+  assert.equal(events[0].data.purpose, report.purpose);
 });

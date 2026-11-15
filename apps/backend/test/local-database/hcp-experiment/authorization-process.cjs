@@ -8,6 +8,10 @@ const {
 } = require("../../../dist/infrastructure/hcp-experiment/authority.js");
 for (const name of [
   "approve",
+  "approveConfirmation",
+  "approveKeepBoth",
+  "confirmEntry",
+  "listGrants",
   "revoke",
   "replacePolicy",
   "protocolUpsert",
@@ -82,6 +86,24 @@ for (const name of [
     }
   };
 }
+// Exercise the final HTML render boundary separately from result JSON serialization.
+const replace = String.prototype.replace;
+String.prototype.replace = function (...args) {
+  const result = replace.apply(this, args);
+  if (
+    armed?.point === "during-management-page-render" &&
+    String(this) === "Import recorded"
+  ) {
+    const previous = phase;
+    phase = armed.operation;
+    try {
+      fault("during-management-page-render");
+    } finally {
+      phase = previous;
+    }
+  }
+  return result;
+};
 const prepareRead = AuthorizationRepository.prototype.prepareRead;
 AuthorizationRepository.prototype.prepareRead = function (...args) {
   const ticket = prepareRead.apply(this, args);

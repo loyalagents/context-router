@@ -107,7 +107,9 @@ export function matchesAudit(
       e.disclosed?.some((d: any) => d.entryId === filter.entryId) ||
       e.data.relatedTransitions?.some((t: any) => t.id === filter.entryId) ||
       (e.eventType === "context.shared" &&
-        e.data.entries?.some((t: any) => t.id === filter.entryId))) &&
+        e.data.entries?.some((t: any) => t.id === filter.entryId)) ||
+      (e.eventType === "context.imported" &&
+        e.data.outcomes?.some((t: any) => t.id === filter.entryId))) &&
     (!filter.eventType || e.eventType === filter.eventType) &&
     (!filter.from || e.timestamp >= filter.from) &&
     (!filter.to || e.timestamp <= filter.to) &&

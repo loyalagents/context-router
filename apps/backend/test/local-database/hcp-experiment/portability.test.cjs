@@ -192,3 +192,186 @@ test("C5 exact raw history retries and re-exported history remain duplicates aft
     "skipped",
   );
 });
+for (const browser of [false, true])
+  for (const point of [
+    "before-commit",
+    "after-data-commit",
+    "during-management-serialization",
+    ...(browser ? ["during-management-page-render"] : []),
+  ])
+    test(`C5 ${browser ? "browser" : "API"} import expiry ${point} preserves truthful completion`, async (t) => {
+      const { OAuthDriver, inputs } = require("./authorization-fixture.cjs");
+      const f = await fixture(t, { approveFixtures: true, childProcess: true }),
+        d = new OAuthDriver(f, "a");
+      await d.begin();
+      await d.login();
+      const session = d.jar.get("__Host-hcp-human"),
+        { entry } = await transfer(f),
+        bundle = (await f.management("/v2/export")).json;
+      bundle.entries = [entry];
+      let decision;
+      if (browser) {
+        const page = await d.request("/manage/import");
+        const reviewed = await d.request("/manage/import", {
+          method: "POST",
+          headers: { origin: f.issuer },
+          form: {
+            csrf: inputs(page.text).csrf,
+            action: "review",
+            source: JSON.stringify(bundle),
+            mapping: "{}",
+          },
+        });
+        assert.equal(reviewed.status, 200);
+        decision = { ...inputs(reviewed.text), attest: "yes" };
+      } else {
+        const r = (
+          await f.context("/experiment/import/review", session, {
+            method: "POST",
+            json: { export: JSON.stringify(bundle) },
+          })
+        ).json;
+        decision = { reviewId: r.reviewId, csrf: r.csrf, subjects: r.subjects };
+      }
+      await f.arm({
+        operation: "applyImport",
+        point,
+        action: "advance",
+        now: Date.now() + 12 * 3600_000 + 1000,
+      });
+      const result = browser
+        ? await d.request("/manage/import/approve", {
+            method: "POST",
+            headers: { origin: f.issuer },
+            form: decision,
+          })
+        : await f.context("/v2/import", session, {
+            method: "POST",
+            json: decision,
+          });
+      assert.equal(result.status, point === "before-commit" ? 401 : 200);
+      if (point !== "before-commit") {
+        if (browser) assert.match(result.text, /Import recorded/);
+        else
+          assert.deepEqual(result.json, {
+            outcome: "committed",
+            representation: "not-included",
+          });
+      }
+      assert.doesNotMatch(
+        result.text,
+        /urn:uuid|written notes|foreign:|association|outcomes/,
+      );
+      await f.restart();
+      const events = (
+        await f.management("/v2/audit?eventType=context.imported")
+      ).json.events;
+      assert.equal(events.length, point === "before-commit" ? 0 : 1);
+      assert.equal(
+        (await f.management("/v2/export")).json.entries.filter(
+          (e) => e.id === entry.id,
+        ).length,
+        point === "before-commit" ? 0 : 1,
+      );
+    });
+for (const [route, operation] of [
+  ["/v2/export", "exportContext"],
+  ["/v2/audit/export", "exportAudit"],
+])
+  for (const point of [
+    "before-commit",
+    "after-data-commit",
+    "during-management-serialization",
+  ])
+    test(`C5 ${operation} ${point} expiry records only attempted release`, async (t) => {
+      const { OAuthDriver } = require("./authorization-fixture.cjs");
+      const f = await fixture(t, { approveFixtures: true, childProcess: true }),
+        d = new OAuthDriver(f, "a");
+      await d.begin();
+      await d.login();
+      await f.arm({
+        operation,
+        point,
+        action: "advance",
+        now: Date.now() + 12 * 3600_000 + 1000,
+      });
+      const result = await f.context(route, d.jar.get("__Host-hcp-human"));
+      assert.equal(result.status, 401);
+      assert.doesNotMatch(
+        result.text,
+        /written notes|urn:uuid|context.created/,
+      );
+      await f.restart();
+      const events = (
+        await f.management("/v2/audit?eventType=context.exported")
+      ).json.events;
+      assert.equal(events.length, point === "before-commit" ? 0 : 1);
+      for (const event of events) assert.equal(event.data.release, "attempted");
+    });
+for (const browser of [false, true])
+  test(`C5 ${browser ? "browser" : "API"} uncertain import error does not claim completion`, async (t) => {
+    const { OAuthDriver, inputs } = require("./authorization-fixture.cjs");
+    const f = await fixture(t, { approveFixtures: true, childProcess: true }),
+      d = new OAuthDriver(f, "a");
+    await d.begin();
+    await d.login();
+    const session = d.jar.get("__Host-hcp-human"),
+      { entry } = await transfer(f),
+      bundle = (await f.management("/v2/export")).json;
+    bundle.entries = [entry];
+    let decision;
+    if (browser) {
+      const page = await d.request("/manage/import");
+      const review = await d.request("/manage/import", {
+        method: "POST",
+        headers: { origin: f.issuer },
+        form: {
+          csrf: inputs(page.text).csrf,
+          action: "review",
+          source: JSON.stringify(bundle),
+          mapping: "{}",
+        },
+      });
+      decision = { ...inputs(review.text), attest: "yes" };
+    } else {
+      const r = (
+        await f.context("/experiment/import/review", session, {
+          method: "POST",
+          json: { export: JSON.stringify(bundle) },
+        })
+      ).json;
+      decision = { reviewId: r.reviewId, csrf: r.csrf, subjects: r.subjects };
+    }
+    await f.arm({
+      operation: "applyImport",
+      point: "after-data-commit",
+      action: "throw",
+    });
+    const result = browser
+      ? await d.request("/manage/import/approve", {
+          method: "POST",
+          headers: { origin: f.issuer },
+          form: decision,
+        })
+      : await f.context("/v2/import", session, {
+          method: "POST",
+          json: decision,
+        });
+    assert.notEqual(result.status, 200);
+    assert.doesNotMatch(
+      result.text,
+      /Import recorded|committed|urn:uuid|outcomes/,
+    );
+    await f.restart();
+    assert.equal(
+      (await f.management("/v2/audit?eventType=context.imported")).json.events
+        .length,
+      1,
+    );
+    assert.equal(
+      (await f.management("/v2/export")).json.entries.filter(
+        (e) => e.id === entry.id,
+      ).length,
+      1,
+    );
+  });

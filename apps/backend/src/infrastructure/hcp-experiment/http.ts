@@ -89,16 +89,18 @@ function page(
   stage: string,
   title: string,
   body: string,
-  beforeHandoff?: () => void,
+  beforeHandoff?: () => string | void,
 ): void {
-  const bytes = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escape(title)}</title><style>body{font:16px system-ui;max-width:800px;margin:3rem auto;padding:0 1rem;line-height:1.5}label{display:block;margin:1rem 0}input,select,button{font:inherit}pre{white-space:pre-wrap;overflow-wrap:anywhere}button{margin:1rem 1rem 1rem 0}small{display:block}</style></head><body data-stage="${stage}"><p>Context Router · Synthetic HCP experiment</p><h1>${escape(title)}</h1>${body}</body></html>`;
-  beforeHandoff?.();
+  const render = (content: string) =>
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escape(title)}</title><style>body{font:16px system-ui;max-width:800px;margin:3rem auto;padding:0 1rem;line-height:1.5}label{display:block;margin:1rem 0}input,select,button{font:inherit}pre{white-space:pre-wrap;overflow-wrap:anywhere}button{margin:1rem 1rem 1rem 0}small{display:block}</style></head><body data-stage="${stage}"><p>Context Router · Synthetic HCP experiment</p><h1>${escape(title)}</h1>${content}</body></html>`;
+  const bytes = render(body);
+  const replacement = beforeHandoff?.();
   res.setHeader("content-type", "text/html; charset=utf-8");
   res.setHeader(
     "content-security-policy",
     "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
   );
-  res.end(bytes);
+  res.end(typeof replacement === "string" ? render(replacement) : bytes);
 }
 async function requestBytes(
   req: IncomingMessage,
@@ -564,14 +566,6 @@ export function authorizationHandler(
         }
         const input = { export: form.source, categoryMap };
         if (typeof form.source !== "string") invalid();
-        if (form.action === "preview")
-          return managementPage(
-            s.token,
-            res,
-            "import-preview",
-            "Dry run results",
-            `<pre>${escape(JSON.stringify(authority.previewImport(s.token, input), null, 2))}</pre><p><a href="/manage/import">Back</a></p>`,
-          );
         if (form.action !== "review") invalid();
         const review = authority.reviewImport(s.token, input, s.token);
         return managementPage(
@@ -597,12 +591,20 @@ export function authorizationHandler(
         } catch {
           invalid();
         }
-        return managementPage(
+        const result = authority.applyImport(
           s.token,
-          res,
-          "import-result",
-          "Import recorded",
-          `<pre>${escape(JSON.stringify(authority.applyImport(s.token, form.reviewId, form.reviewCsrf, s.token, subjects), null, 2))}</pre><p><a href="/manage/entries">Inspect retained entries</a></p>`,
+          form.reviewId,
+          form.reviewCsrf,
+          s.token,
+          subjects,
+        );
+        const details = `<pre>${escape(JSON.stringify(result, null, 2))}</pre><p><a href="/manage/entries">Inspect retained entries</a></p>`;
+        // Apply returned a known committed result. Authorize its representation
+        // after serialization, but retain a content-free completion acknowledgement.
+        return page(res, "import-result", "Import recorded", details, () =>
+          authority.isManagement(s.token)
+            ? undefined
+            : "<p>Your import was committed. Sign in again to inspect retained history.</p>",
         );
       }
       if (route === "/manage/policy" && !url.search) {
@@ -745,8 +747,7 @@ export function authorizationHandler(
           s.token,
         );
         if (!result.id)
-          return managementPage(
-            s.token,
+          return page(
             res,
             "conflict-saved",
             "Action recorded",
@@ -905,8 +906,7 @@ export function authorizationHandler(
           s.token,
         );
         if (!entry.id)
-          return managementPage(
-            s.token,
+          return page(
             res,
             "confirmation-saved",
             "Action recorded",
@@ -1073,6 +1073,24 @@ export function authorizationHandler(
         return;
       }
       if (
+        /^\/v2\/entries\/[^/]+$/.test(route) &&
+        req.method === "DELETE" &&
+        url.search === "?hardDelete=true"
+      ) {
+        if (!human) denied();
+        return json(
+          res,
+          404,
+          {
+            type: "about:blank",
+            title: "Not implemented",
+            status: 404,
+            detail: "Hard deletion is outside the experiment.",
+          },
+          "application/problem+json",
+        );
+      }
+      if (
         route === "/v2/entries" ||
         revisionRoute ||
         (/^\/v2\/entries\/[^/]+$/.test(route) && req.method === "DELETE")
@@ -1191,7 +1209,9 @@ export function authorizationHandler(
           if (!human && !authority.protocolFind("AccessToken", credential))
             throw new AuthorityError("unauthenticated");
           if (!human && url.search) denied();
-          return json(res, 200, result);
+          return human
+            ? managementJson(credential, res, 200, result)
+            : json(res, 200, result);
         }
         if (req.method === "DELETE" && grantMatch[1] && !url.search) {
           if (human) authority.revoke(credential, grantMatch[1]);
@@ -1255,7 +1275,7 @@ export function authorizationHandler(
         }
         if (url.search) invalid();
         keys(input, ["reviewId", "csrf", "subjects"]);
-        return managementJson(
+        return managementMutationJson(
           credential,
           res,
           200,
@@ -1334,7 +1354,8 @@ export function authorizationHandler(
         } catch {
           invalid();
         }
-        return json(
+        return managementMutationJson(
+          credential,
           res,
           200,
           authority.confirmEntry(credential, id!, await body(req)),
@@ -1353,7 +1374,8 @@ export function authorizationHandler(
         );
       }
       if (route === "/experiment/policy" && req.method === "PUT")
-        return json(
+        return managementMutationJson(
+          credential,
           res,
           200,
           authority.replacePolicy(credential, await body(req)),

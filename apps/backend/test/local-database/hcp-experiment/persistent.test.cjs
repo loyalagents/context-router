@@ -175,3 +175,68 @@ test("C5 actual OAuth persistent election rotates every refresh and limits reuse
     401,
   );
 });
+for (const kind of ["temporary", "persistent"])
+  test(`C5 ${kind} OAuth consent survives client B writes and conflict events without widened access`, async (t) => {
+    const { authorize, detail } = require("./read-helpers.cjs"),
+      f = await fixture(t, { approveFixtures: true, childProcess: true }),
+      token = await authorize(f, "b", [
+        detail(["general_preferences"], undefined, {
+          actions: ["read", "write"],
+        }),
+      ]),
+      grant = (await f.context("/v2/grants", token)).json.grants[0],
+      d = new OAuthDriver(f, "a");
+    await d.begin();
+    await d.login();
+    await d.review();
+    async function write(value) {
+      assert.equal(
+        (
+          await f.context("/v2/entries", token, {
+            method: "POST",
+            json: {
+              schema: "https://hcp.example/spec/entry/2.0",
+              subject: grant.subject,
+              content: {
+                profile:
+                  "https://hcp.example/spec/profiles/general-context/2.0",
+                value: {
+                  type: "urn:context-router:exclusive-fact:v1",
+                  slot: "contact",
+                  setting: "work",
+                  value,
+                },
+              },
+              classification: { categories: ["general_preferences"] },
+              assertion: { declarationType: "person-declared" },
+              record: { provenance: { source: "person-input" } },
+            },
+          })
+        ).status,
+        201,
+      );
+    }
+    await write("email");
+    if (kind === "persistent") {
+      const elected = await d.request(d.interactionPath + "/persist", {
+        method: "POST",
+        headers: { origin: f.issuer },
+        form: d.reviewed,
+      });
+      assert.equal(elected.status, 200);
+      d.reviewed = inputs(elected.text);
+    }
+    await write("phone");
+    assert.equal(
+      (await f.management("/v2/audit?eventType=conflict.detected")).json.events
+        .length,
+      1,
+    );
+    await d.capture(await d.approve());
+    const tokens = await d.exchange();
+    assert.equal(tokens.status, 200);
+    const approved = (await f.context("/v2/grants", tokens.json.access_token))
+      .json.grants[0];
+    assert.equal(approved.grantType, kind);
+    assert.deepEqual(approved.access, [detail(["general_preferences"])]);
+  });

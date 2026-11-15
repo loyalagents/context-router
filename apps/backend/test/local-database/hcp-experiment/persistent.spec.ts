@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { randomBytes } from "node:crypto";
 import { SyntheticExperiment } from "../../../src/infrastructure/hcp-experiment/store";
 import {
@@ -74,6 +75,98 @@ describe("C5 distinct persistence and fixed credential families", () => {
     const r = review();
     return approve(a.electPersistence(human, r.reviewId, r.csrf, "browser"));
   };
+  it.each(["temporary", "persistent"])(
+    "keeps %s consent through unrelated entry changes and expiry reconciliation",
+    (kind) => {
+      const entry = store
+        .inspectEntries()
+        .find((e) => e.record.status === "active")!;
+      let r = review();
+      a.editClassification(human, entry.id, "categories", {
+        expectedVersion: entry.record.version,
+        categories: ["work_context"],
+      });
+      if (kind === "persistent")
+        r = a.electPersistence(human, r.reviewId, r.csrf, "browser");
+      a.editClassification(human, entry.id, "purposes", {
+        expectedVersion: entry.record.version,
+        permittedPurposes: [],
+      });
+      expect(approve(r).grantType).toBe(kind);
+      // A newly imported short-lived entry expires while a fresh review is open.
+      const bundle = a.exportContext(human);
+      const expiring = structuredClone(entry);
+      expiring.id = "urn:uuid:024a3b1a-c602-4b35-bb32-558be3780d59";
+      expiring.record.version = 1;
+      expiring.record.relationships = [];
+      expiring.assertion.validUntil = new Date(now + 60_000).toISOString();
+      bundle.entries = [expiring];
+      const transfer = a.reviewImport(human, { export: bundle }, "browser");
+      a.applyImport(
+        human,
+        transfer.reviewId,
+        transfer.csrf,
+        "browser",
+        transfer.subjects,
+      );
+      r = review();
+      now += 60_000;
+      if (kind === "persistent")
+        r = a.electPersistence(human, r.reviewId, r.csrf, "browser");
+      expect(approve(r).grantType).toBe(kind);
+      expect(
+        store
+          .inspectAudit()
+          .some(
+            (e) =>
+              e.eventType === "context.expired" && e.entryId === expiring.id,
+          ),
+      ).toBe(true);
+    },
+  );
+  it.each(["rules", "directives"])(
+    "does not revive election or approval after %s change and restoration",
+    (kind) => {
+      const election = review(),
+        temporary = review();
+      const persistentReview = review();
+      const persistent = a.electPersistence(
+        human,
+        persistentReview.reviewId,
+        persistentReview.csrf,
+        "browser",
+      );
+      const policy = a.setPolicy(
+        human,
+        kind,
+        kind === "rules"
+          ? { operators: ["unrelated.example"] }
+          : { action: "share", effect: "deny", text: "Do not share." },
+      );
+      a.removePolicy(human, kind, policy.ruleId ?? policy.directiveId);
+      expect(() =>
+        a.electPersistence(human, election.reviewId, election.csrf, "browser"),
+      ).toThrow();
+      expect(() => approve(temporary)).toThrow();
+      expect(() => approve(persistent)).toThrow();
+      expect(a.listGrants(human, "all")).toEqual([]);
+    },
+  );
+  it("fails closed for an older pending consent document without a policy sequence", () => {
+    const r = review();
+    store.close();
+    const db = new DatabaseSync(path.join(paths().root, "entries.sqlite"));
+    db.exec(
+      "UPDATE consent_reviews SET document=json_remove(document,'$.policySequence')",
+    );
+    db.close();
+    store = SyntheticExperiment.open(paths(), { clock: () => now });
+    a = store.authorization(config, human);
+    expect(() =>
+      a.electPersistence(human, r.reviewId, r.csrf, "browser"),
+    ).toThrow();
+    expect(() => approve(r)).toThrow();
+  });
   it.each(["elect", "approve"])(
     "refuses %s when the exact consent review expires before commit",
     (operation) => {

@@ -52,6 +52,7 @@ import {
 } from "./disclosure";
 import {
   ACCESS_TYPE,
+  CREDENTIAL_FAMILY_SECONDS,
   PURPOSES,
   AuthorityError,
   categories,
@@ -103,12 +104,25 @@ const grantExpiry = (grant: any): number =>
   grant.expiresAt === null ? Infinity : Date.parse(grant.expiresAt);
 const credentialExpiry = (grant: any): number =>
   grant.expiresAt === null
-    ? Date.parse(grant.issuedAt) + 30 * 86400_000
+    ? Date.parse(grant.issuedAt) + CREDENTIAL_FAMILY_SECONDS * 1000
     : Date.parse(grant.expiresAt);
 const equal = (a: string, b: string) =>
   timingSafeEqual(Buffer.from(hash(a)), Buffer.from(hash(b)));
 const settings = (db: DatabaseSync): any =>
   db.prepare("SELECT * FROM authorization_settings").get();
+// Consent depends on standing rules and directives, not the broader management
+// review generation. Append-only events also detect a change later restored.
+function consentPolicySequence(db: DatabaseSync): number {
+  return Number(
+    db
+      .prepare(
+        `SELECT coalesce(max(sequence),0) n FROM audit_events
+    WHERE json_extract(event,'$.eventType') IN
+      ('rule.set','rule.removed','directive.set','directive.removed')`,
+      )
+      .get().n,
+  );
+}
 const metadata = (db: DatabaseSync): any =>
   db.prepare("SELECT * FROM store_metadata").get();
 function assembled(row: any): any {
@@ -900,7 +914,7 @@ export class AuthorizationRepository {
         exclusions: [...new Set(exclusions)],
         expiresAt: iso(now + duration * 1000),
         grantType: "temporary",
-        policyRevision: settings(db).policy_revision,
+        policySequence: consentPolicySequence(db),
         request: structuredClone(request),
       };
       db.prepare(
@@ -943,7 +957,7 @@ export class AuthorizationRepository {
         until = Math.min(until, row.expires_at);
         const document = parse(row.document);
         if (
-          document.policyRevision !== settings(db).policy_revision ||
+          document.policySequence !== consentPolicySequence(db) ||
           document.grantType !== "temporary"
         )
           denied();
@@ -986,7 +1000,7 @@ export class AuthorizationRepository {
           denied();
         until = Math.min(until, row.expires_at);
         const reviewed = parse(row.document);
-        if (reviewed.policyRevision !== settings(db).policy_revision) denied();
+        if (reviewed.policySequence !== consentPolicySequence(db)) denied();
         validateAccess(reviewed.access);
         const subject = {
           id: db
@@ -2308,6 +2322,8 @@ export class AuthorizationRepository {
         return this.classificationIn(db, id, kind, input);
       },
       () => {
+        if (this.kernel.now() >= authorityUntil)
+          throw new AuthorityError("unauthenticated");
         if (this.kernel.now() >= until) denied();
       },
     );
@@ -2941,7 +2957,6 @@ export class AuthorizationRepository {
               access: grant.access,
               grantType: grant.grantType,
               expiresAt: grant.expiresAt,
-              client: grant.client,
               modality: "explicit-person-write-review",
               acr: "urn:context-router:acr:local-credential",
             },
@@ -3136,6 +3151,8 @@ export class AuthorizationRepository {
         return { id: snapshot.entry.id };
       },
       () => {
+        if (this.kernel.now() >= authorityUntil)
+          throw new AuthorityError("unauthenticated");
         if (this.kernel.now() >= commitUntil) denied();
       },
     );
@@ -3208,16 +3225,17 @@ export class AuthorizationRepository {
               role: "management-client",
               id: "urn:context-router:synthetic-management",
             },
-            { options, parameters: input },
+            { options, parameters: input, release: "attempted" },
           ),
         );
         return document;
       },
       () => {
-        if (this.kernel.now() >= until) denied();
+        if (this.kernel.now() >= until)
+          throw new AuthorityError("unauthenticated");
       },
     );
-    if (this.kernel.now() >= until) denied();
+    if (this.kernel.now() >= until) throw new AuthorityError("unauthenticated");
     return result;
   }
   exportAudit(credential: string, input: any = {}): any {
@@ -3240,7 +3258,10 @@ export class AuthorizationRepository {
               role: "management-client",
               id: "urn:context-router:synthetic-management",
             },
-            { options: { auditOnly: true, filters: filter } },
+            {
+              options: { auditOnly: true, filters: filter },
+              release: "attempted",
+            },
           ),
         );
         return {
@@ -3250,10 +3271,11 @@ export class AuthorizationRepository {
         };
       },
       () => {
-        if (this.kernel.now() >= until) denied();
+        if (this.kernel.now() >= until)
+          throw new AuthorityError("unauthenticated");
       },
     );
-    if (this.kernel.now() >= until) denied();
+    if (this.kernel.now() >= until) throw new AuthorityError("unauthenticated");
     return result;
   }
   previewImport(credential: string, input: any): any {
@@ -3302,10 +3324,11 @@ export class AuthorizationRepository {
     binding: string,
     subjects: any,
   ): any {
-    let until = Infinity;
+    let until = Infinity,
+      authorityUntil = Infinity;
     return this.kernel.write(
       (db) => {
-        until = this.management(db, credential);
+        authorityUntil = until = this.management(db, credential);
         const row: any = db
           .prepare("SELECT * FROM management_reviews WHERE id=?")
           .get(reviewId);
@@ -3450,19 +3473,27 @@ export class AuthorizationRepository {
             },
           );
         const result = { outcomes: interpreted.outcomes, dryRun: false };
-        this.kernel.append(
-          db,
-          event(db, "context.imported", now, null, actor, {
-            ...result,
-            association: {
-              subjects,
-              destination: interpreted.destination,
-              assurance: "person-attested-for-this-bundle",
-              digest: interpreted.digest,
-            },
-            graphChanges,
-          }),
-        );
+        const imported = event(db, "context.imported", now, null, actor, {
+          ...result,
+          association: {
+            subjects,
+            destination: interpreted.destination,
+            assurance: "person-attested-for-this-bundle",
+            digest: interpreted.digest,
+          },
+          graphChanges,
+        });
+        // Event-level union of accepted destination categories; outcomes retain
+        // skipped/rejected IDs without claiming that those records were admitted.
+        imported.categories = [
+          ...new Set(
+            interpreted.accepted.flatMap(
+              (item) =>
+                storedEntry(db, item.entry.id).classification.categories,
+            ),
+          ),
+        ].sort();
+        this.kernel.append(db, imported);
         db.prepare(
           "UPDATE management_reviews SET consumed=1,document=? WHERE id=?",
         ).run(JSON.stringify({ ...reviewed, result }), reviewId);
@@ -3479,6 +3510,8 @@ export class AuthorizationRepository {
         return result;
       },
       () => {
+        if (this.kernel.now() >= authorityUntil)
+          throw new AuthorityError("unauthenticated");
         if (this.kernel.now() >= until) denied();
       },
     );
@@ -3529,12 +3562,6 @@ export class AuthorizationRepository {
       (db) => {
         const { grant, tokenUntil } = this.readAuthority(db, credential);
         until = Math.min(tokenUntil, grantExpiry(grant));
-        if (
-          !grant.access.some((d: any) =>
-            d.purposes.some((p: any) => p.code === input.purpose),
-          )
-        )
-          denied();
         const events = this.auditEvents(db),
           entries = input.refs.map((ref: string) => {
             const row = db

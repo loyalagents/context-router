@@ -455,6 +455,21 @@ describe("C5 exact governance and immutable disclosure facts", () => {
       expect(a.listPolicy(human, "rules")).toEqual(before);
     },
   );
+  it("refuses classification with unauthenticated status and no mutation when the session expires before commit", () => {
+    const e = entry(),
+      begun = a.beginBrowserSession(),
+      session = a.loginBrowser(begun.token, begun.csrf, human),
+      before = store.inspectAudit();
+    clockAtCommit = now + 12 * 3600_000;
+    expect(() =>
+      a.editClassification(session.token, e.id, "categories", {
+        expectedVersion: e.record.version,
+        categories: ["work_context"],
+      }),
+    ).toThrow(expect.objectContaining({ kind: "unauthenticated" }));
+    expect(store.inspectEntry(e.id)).toEqual(e);
+    expect(store.inspectAudit()).toEqual(before);
+  });
   it("returns completion only when classification commits across the human session deadline", () => {
     const e = entry(),
       begun = a.beginBrowserSession(),

@@ -2,6 +2,7 @@ import { generateKeyPairSync } from "node:crypto";
 import { AuthorizationRepository, random } from "./authority";
 import {
   ACCESS_TYPE,
+  CREDENTIAL_FAMILY_SECONDS,
   CONTEXT_SCOPES,
   denied,
   scopeAccess,
@@ -45,7 +46,7 @@ export function authorizationProvider(authority: AuthorizationRepository): any {
   const remaining = (grant: any, max: number) => {
     const deadline =
       grant.expiresAt === null
-        ? Date.parse(grant.issuedAt) + 30 * 86400_000
+        ? Date.parse(grant.issuedAt) + CREDENTIAL_FAMILY_SECONDS * 1000
         : Date.parse(grant.expiresAt);
     const seconds = Math.min(
       max,
@@ -121,9 +122,15 @@ export function authorizationProvider(authority: AuthorizationRepository): any {
         : undefined,
     ttl: {
       Grant: (_ctx: any, token: any) =>
-        remaining(projected(token.jti, token.clientId), 30 * 86400),
+        remaining(
+          projected(token.jti, token.clientId),
+          CREDENTIAL_FAMILY_SECONDS,
+        ),
       RefreshToken: (_ctx: any, token: any) =>
-        remaining(projected(token.grantId, token.clientId), 30 * 86400),
+        remaining(
+          projected(token.grantId, token.clientId),
+          CREDENTIAL_FAMILY_SECONDS,
+        ),
       AuthorizationCode: 60,
       AccessToken: 3600,
       Session: 12 * 3600,

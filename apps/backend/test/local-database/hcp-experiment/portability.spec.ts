@@ -58,6 +58,82 @@ describe("C5 bounded v2 portability", () => {
       review.subjects,
     );
   };
+  it("indexes every import outcome and snapshots only accepted mapped categories", () => {
+    const bundle = foreign(),
+      accepted = bundle.entries[0];
+    accepted.classification.categories = ["urn:foreign:category"];
+    const skipped = a
+      .exportContext(human)
+      .entries.find((e: any) => e.record.status === "active");
+    const rejected = structuredClone(accepted);
+    rejected.id = `urn:uuid:${randomUUID()}`;
+    rejected.classification.categories = ["general_preferences"];
+    rejected.record.status = "conflicted";
+    bundle.entries = [accepted, skipped, rejected];
+    const input = {
+      export: bundle,
+      categoryMap: { "urn:foreign:category": "work_context" },
+    };
+    const review = a.reviewImport(human, input, "browser");
+    const result = a.applyImport(
+      human,
+      review.reviewId,
+      review.csrf,
+      "browser",
+      review.subjects,
+    );
+    expect(result.outcomes.map((o: any) => o.outcome)).toEqual([
+      "imported",
+      "skipped",
+      "rejected",
+    ]);
+    const event = store
+      .inspectAudit()
+      .find((e) => e.eventType === "context.imported")!;
+    expect(event.data.outcomes).toEqual(result.outcomes);
+    expect(event.data.outcomes[2].reason).toBeDefined();
+    for (const entry of bundle.entries)
+      expect(
+        a.audit(human, { entryId: entry.id, eventType: "context.imported" })
+          .events,
+      ).toEqual([event]);
+    expect(event.categories).toEqual(["work_context"]);
+    expect(
+      a.audit(human, {
+        category: "work_context",
+        eventType: "context.imported",
+      }).events,
+    ).toEqual([event]);
+    expect(
+      a.audit(human, {
+        category: "general_preferences",
+        eventType: "context.imported",
+      }).events,
+    ).toEqual([]);
+    const bytes = JSON.stringify(event);
+    a.editClassification(human, accepted.id, "categories", {
+      expectedVersion: 1,
+      categories: ["general_preferences"],
+    });
+    store.close();
+    store = SyntheticExperiment.open(
+      { sandbox, root: path.join(sandbox, "experiment") },
+      { clock: () => now },
+    );
+    a = store.authorization(config, human);
+    expect(
+      JSON.stringify(
+        a.audit(human, { entryId: accepted.id, eventType: "context.imported" })
+          .events[0],
+      ),
+    ).toBe(bytes);
+    expect(
+      a.audit(human, {
+        category: "general_preferences",
+        eventType: "context.imported",
+      }).events,
+    ).toEqual([]);
+  });
   it("exports retained lifecycle states and immutable historical versions without credentials", () => {
     const result = a.exportContext(human, { include: "versions,audit" });
     expect(result.entries).toHaveLength(7);

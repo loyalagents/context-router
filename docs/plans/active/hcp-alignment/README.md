@@ -2736,8 +2736,11 @@ Remaining blocked cases are named; they do not authorize broad redesign.
   expiry/audit reconciliation; authenticate without triggering domain writes.
   Apply revalidates the exact reviewed input/outcomes and current state in one
   transaction, including expiry changes. Accepted entries, policy effects, graph
-  effects and local audit commit together. Use existing reviewed-operation recovery
-  patterns; unsupported cases are reported precisely. Hard-delete-specific IDs,
+  effects and local audit commit together. A consumed import review returns its
+  recorded result only with active management authority, its original binding and
+  CSRF, the exact attested subjects and an unexpired review. This is bounded
+  original-review recovery, not cross-session recovery; unsupported cases are
+  reported precisely. Hard-delete-specific IDs,
   fences, purge triggers and recovery states are deferred with D3.
 
 ### Testable Checkpoints And Finalization
@@ -2979,6 +2982,80 @@ rejected-import query/get non-disclosure, raw retry/re-export after restart and 
 crash recovery. Changed code/tests pass formatting; affected Markdown checks and
 whitespace passed. Targeted checks passed; final validation pending. The coordinator
 owns affected reviewer rechecks and corrected-candidate CI in the existing PR.
+
+**Claude review follow-up.** The coordinator's two read-only assessments approved
+this bounded correction plan. One writer owns implementation/tests/builds; the
+coordinator owns issue updates, publication and CI. Requested model/effort remains
+Astra/xhigh; underlying execution settings are unverified.
+
+- Known committed browser confirmation/keep-both and import actions retain generic,
+  content-free completion when session authority expires. Detailed import results
+  are checked after JSON serialization and final HTML rendering; API import,
+  confirmation and legacy policy replacement use the existing mutation handoff.
+  Human grant listings use the guarded read handoff. An uncertain thrown error
+  does not become success; precommit management expiry is 401 on the touched
+  classification/import/keep-both/export paths, with review/entry bounds still 403.
+- Consent tracks the latest immutable `rule.set`, `rule.removed`, `directive.set`
+  or `directive.removed` audit sequence. Both persistence election and approval
+  compare it; old pending documents without that field fail closed. Unrelated
+  entry/conflict/expiry activity no longer stales consent, while changed-then-restored
+  policy still does. The broad management-review generation remains unchanged.
+  No new counter/schema or imported-standing behavior is introduced.
+- Import history matches every explicit outcome ID, including skipped/rejected
+  outcomes with their reasons intact. The event snapshots the union of accepted
+  entries' final mapped categories. This is an event-level category filter, not
+  a claim that every matched outcome was admitted or has the filtered category.
+  Later classification changes cannot rewrite that snapshot. Recovery remains
+  bound to the original active credential/binding/CSRF/subjects and review deadline.
+- Valid-token reports with previously disclosed refs under that same grant record
+  `permitted:false` before 403 even for a valid URI outside the grant's purposes.
+  Malformed purposes, invalid credentials and foreign refs create no report event.
+  Export events say `release: attempted`, including a late-withheld response;
+  they do not claim receipt. The exact `?hardDelete=true` request is tested for
+  Management and Context Clients: 404 outside the experiment versus 403 respectively,
+  with no withdrawal, removal or audit mutation. Hard deletion stays deferred.
+- Removed the unreachable import-preview branch and duplicate person-write client
+  assignment; one existing-module constant now supplies the unchanged 30-day
+  credential family. Notification boundary checks remain. Policy-effect duplication
+  is retained because legacy replacement strips directive identity/time/setter for
+  comparison while individual CRUD compares full directives. Broad-revision regex
+  and empty-replacement increments are deferred as unrelated cleanup.
+- The coordinator submitted bounded clarification evidence for
+  [imported standing on #21](https://github.com/loyalagents/hcp-spec/issues/21#issuecomment-6890355867)
+  and [outside-grant report purposes on #42](https://github.com/loyalagents/hcp-spec/issues/42#issuecomment-6890356681).
+  These are proposals; the pinned draft and sibling sources are unchanged.
+
+Failing-first source and native HTTPS regressions reproduced the accepted defects,
+including final HTML rendering expiry and cross-client OAuth consent. Focused
+source checks passed 68 tests before the additional classification-status assertion.
+New-fixture assumptions and a TypeScript narrowing error were corrected separately;
+those diagnostic failures are not counted as additional application defects.
+
+Frozen-input validation and handback:
+
+- Pinned Node 24.21.0/pnpm 10.25.0 and the clean backend build passed. Changed
+  runtime/test files pass Prettier and whitespace checks.
+- All four `hcp-oauth-browser.test.mjs` Chromium journeys passed with Playwright
+  1.63.0/Chromium 153.0.8010.12, owned profiles and profile-local synthetic CA trust.
+- The complete 23-suite HCP aggregate passed its first nine suites: governance
+  source, governance HTTP (all four C5 native wrappers), reads, writes, write HTTP,
+  OAuth, portability, authority and persistent grants. Then the Jest process exited
+  with SIGSEGV before reporting the next suite, with no assertion failure or stack.
+  The original log is retained. An unchanged-input aggregate retry is running at
+  this source handback; the interrupted run is not a complete pass. The native
+  process interruption is unexplained, and a successful retry would not diagnose it.
+- Markdown/structure/CI-path/baseline checker tests passed 120 tests; links passed
+  for 161 Markdown files. `check-nonruntime.mjs` with
+  `MIGRATION_GATE_BASE_SHA=666f9d1b5ff3dde322ad4c368b44d2f4399f203e` passed with
+  `baseComparison=performed`.
+- Both independent reviewers approved the frozen runtime/test delta, conditional
+  on validation and final documentation verification. Sole-writer handback freezes
+  all repository/build inputs; the writer only monitors the existing isolated retry.
+
+[PR #208](https://github.com/loyalagents/context-router/pull/208) owns the final
+local retry result, reviewer rechecks and exact-candidate CI status. Pending-at-freeze
+statements here are not the final PR result. Targeted checks passed; final validation
+pending.
 
 These local checks support the bounded candidate. Fresh complete-diff independent
 review and all applicable exact-candidate CI are still pending; there is no merge-ready
