@@ -19,6 +19,9 @@ for (const name of [
   "commitWrite",
   "audit",
   "disclosures",
+  "editClassification",
+  "listPolicy",
+  "setPolicy",
   "exportContext",
   "exportAudit",
   "previewImport",
@@ -49,7 +52,7 @@ for (const name of [
             phase = name;
             try {
               fault("during-management-serialization");
-              return { ...result };
+              return Array.isArray(result) ? [...result] : { ...result };
             } finally {
               phase = previous;
             }

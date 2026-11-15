@@ -12,7 +12,7 @@ import {
   validateAccess,
 } from "./policy";
 import { authorizationProvider, validateAuthorization } from "./oauth";
-import { WriteConflict } from "./writes";
+import { COMPLETION_ONLY, WriteConflict } from "./writes";
 import { CONFLICT_DETECTION } from "./conflicts";
 const COOKIE = "__Host-hcp-human";
 class UnsupportedVersion extends Error {}
@@ -76,13 +76,13 @@ function json(
   status: number,
   value: any,
   type = "application/ld+json",
-  beforeHandoff?: () => void,
+  beforeHandoff?: () => string | void,
 ): void {
   const bytes = status === 204 ? undefined : JSON.stringify(value);
-  beforeHandoff?.();
+  const replacement = beforeHandoff?.();
   res.statusCode = status;
   res.setHeader("content-type", type);
-  res.end(bytes);
+  res.end(replacement ?? bytes);
 }
 function page(
   res: ServerResponse,
@@ -157,6 +157,15 @@ export function authorizationHandler(
     value: any,
     type = "application/ld+json",
   ) => json(res, status, value, type, () => currentHuman(credential));
+  const managementMutationJson = (
+    credential: string,
+    res: ServerResponse,
+    status: number,
+    value: any,
+  ) =>
+    json(res, status, value, "application/ld+json", () =>
+      authority.isManagement(credential) ? undefined : COMPLETION_ONLY,
+    );
   const managementPage = (
     credential: string,
     res: ServerResponse,
@@ -1281,7 +1290,8 @@ export function authorizationHandler(
         } catch {
           invalid();
         }
-        return json(
+        return managementMutationJson(
+          credential,
           res,
           200,
           authority.editClassification(
@@ -1298,11 +1308,12 @@ export function authorizationHandler(
       if (policyRoute && !url.search) {
         const [, kind, id] = policyRoute;
         if (req.method === "GET" && !id)
-          return json(res, 200, {
+          return managementJson(credential, res, 200, {
             [kind]: authority.listPolicy(credential, kind),
           });
         if (req.method === "POST" && !id)
-          return json(
+          return managementMutationJson(
+            credential,
             res,
             201,
             authority.setPolicy(credential, kind, await body(req)),

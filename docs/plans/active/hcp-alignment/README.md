@@ -2962,6 +2962,24 @@ Formatted-candidate affected validation:
   `baseComparison=performed`; the additive outbound sink inventory remains checked.
   Changed runtime/test files pass the repository formatter and `git diff --check`.
 
+**Final-review corrections.** Failing-first regressions reproduced three accepted
+findings. Policy reads now check management authority after serialization;
+classification and policy writes preserve committed success but return the existing
+completion-only body if management authority expires before response handoff.
+Import rejects current rejection/non-deleted lifecycle inconsistencies without
+rewriting source records, while retaining valid deleted and version-bound historical
+rejections. Duplicate history accepts either the retained raw source or its current
+export projection; changed content, provenance, categories and purposes still fail.
+No new persistence or hard-deletion behavior is added.
+
+On pinned Node/pnpm, governance source checks passed 20 tests and corrected portability
+checks passed 28. The backend build and all 31 affected native governance/portability
+HTTPS cases passed, including serialization/postcommit expiry, one durable mutation,
+rejected-import query/get non-disclosure, raw retry/re-export after restart and existing
+crash recovery. Changed code/tests pass formatting; affected Markdown checks and
+whitespace passed. Targeted checks passed; final validation pending. The coordinator
+owns affected reviewer rechecks and corrected-candidate CI in the existing PR.
+
 These local checks support the bounded candidate. Fresh complete-diff independent
 review and all applicable exact-candidate CI are still pending; there is no merge-ready
 or installed-artifact qualification claim.

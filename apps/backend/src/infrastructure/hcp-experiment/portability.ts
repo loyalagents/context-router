@@ -351,6 +351,12 @@ export function interpretImport(
     const id = source?.id;
     try {
       validateEntry(source);
+      if (
+        source.record.provenance.confirmations?.at(-1)?.disposition ===
+          "rejected" &&
+        source.record.status !== "deleted"
+      )
+        throw new Error("current rejection requires deleted lifecycle state");
       if (sourceIds.has(id)) throw new Error("duplicate entry ID in bundle");
       sourceIds.add(id);
       if (["conflicted", "revoked", "suspended"].includes(source.record.status))
@@ -389,11 +395,32 @@ export function interpretImport(
               "SELECT document FROM entry_versions WHERE entry_id=? AND version=?",
             )
             .get(id, prior.record.version);
+          const withCurrentStatus = (value: any) => ({
+            ...value,
+            record: {
+              ...value.record,
+              status: effectiveEntry(held, now).record.status,
+            },
+          });
+          // Retained source history may have a different classification from
+          // today's export overlay, including unmapped historical categories.
+          if (
+            row &&
+            entryCanonical(withCurrentStatus(parse(row.document))) ===
+              entryCanonical(withCurrentStatus(prior))
+          )
+            continue;
+          let priorCategories: string[];
+          try {
+            priorCategories = mapCategories(prior.classification.categories);
+          } catch {
+            throw new Error("nonidentical held history");
+          }
           const comparable = {
             ...prior,
             classification: {
               ...prior.classification,
-              categories: mapCategories(prior.classification.categories),
+              categories: priorCategories,
             },
             record: {
               ...prior.record,
@@ -401,15 +428,11 @@ export function interpretImport(
             },
           };
           const retained = row && storedEntry(db, id, prior.record.version);
+          // A re-export uses the current classification for every version.
           if (
             !retained ||
-            entryCanonical({
-              ...retained,
-              record: {
-                ...retained.record,
-                status: effectiveEntry(held, now).record.status,
-              },
-            }) !== entryCanonical(comparable)
+            entryCanonical(withCurrentStatus(retained)) !==
+              entryCanonical(comparable)
           )
             throw new Error("nonidentical held history");
         }

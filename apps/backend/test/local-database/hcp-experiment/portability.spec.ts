@@ -524,6 +524,135 @@ describe("C5 bounded v2 portability", () => {
     );
     expect(a.previewImport(human, input).outcomes[0].outcome).toBe("skipped");
   });
+  it.each(["active", "deprecated", "expired"])(
+    "rejects a current %s source whose latest confirmation is rejection without changing the source",
+    (status) => {
+      const bundle = foreign(),
+        e = bundle.entries[0];
+      e.record.status = status;
+      e.record.provenance.confirmations = [
+        {
+          disposition: "rejected",
+          confirmedBy: { id: e.subject.id },
+          confirmedAt: new Date(now).toISOString(),
+        },
+      ];
+      const source = structuredClone(bundle);
+      const preview = a.previewImport(human, { export: bundle });
+      expect(preview.outcomes[0]).toMatchObject({ outcome: "rejected" });
+      expect(preview.outcomes[0].reason).toMatch(/rejection.*deleted/);
+      expect(apply(bundle).outcomes).toEqual(preview.outcomes);
+      expect(store.inspectEntry(e.id)).toBeUndefined();
+      expect(bundle).toEqual(source);
+    },
+  );
+  it("preserves deleted rejected sources and version-bound historical rejections", () => {
+    const bundle = foreign(),
+      e = bundle.entries[0];
+    e.record.status = "deleted";
+    e.record.provenance.confirmations = [
+      {
+        disposition: "rejected",
+        confirmedBy: { id: e.subject.id },
+        confirmedAt: new Date(now).toISOString(),
+      },
+    ];
+    expect(apply(bundle).outcomes[0].outcome).toBe("imported");
+    expect(store.inspectEntry(e.id)).toMatchObject(e);
+    const next = foreign(),
+      current = next.entries[0];
+    current.record.version = 2;
+    current.record.provenance.confirmations = [];
+    const previous = structuredClone(current);
+    previous.record.version = 1;
+    // An export projects the current lifecycle on earlier immutable versions.
+    previous.record.provenance.confirmations =
+      e.record.provenance.confirmations;
+    next.versions = [previous];
+    expect(apply(next).outcomes[0].outcome).toBe("imported");
+    expect(
+      store.inspectEntry(current.id)!.record.provenance.confirmations,
+    ).toEqual([]);
+    expect(
+      store.inspectEntry(current.id, 1)!.record.provenance.confirmations,
+    ).toEqual(previous.record.provenance.confirmations);
+  });
+  it.each(["none", "current-and-history", "history-only"])(
+    "recognizes exact raw and exported history with distinct classification and purposes (mapped=%s)",
+    (mapping) => {
+      const bundle = foreign(),
+        e = bundle.entries[0];
+      const previous = structuredClone(e);
+      previous.content.value = "previous private wording";
+      previous.classification.categories =
+        mapping !== "none" ? ["urn:foreign:previous"] : ["general_preferences"];
+      previous.classification.permittedPurposes = ["urn:purpose:previous"];
+      e.record.version = 2;
+      e.classification.categories =
+        mapping === "current-and-history"
+          ? ["urn:foreign:current"]
+          : ["work_context"];
+      e.classification.permittedPurposes = ["urn:purpose:current"];
+      bundle.versions = [previous];
+      const input = {
+        export: bundle,
+        ...(mapping === "current-and-history"
+          ? {
+              categoryMap: {
+                "urn:foreign:previous": "general_preferences",
+                "urn:foreign:current": "work_context",
+              },
+            }
+          : {}),
+      };
+      const perform = (request: any) => {
+        const review = a.reviewImport(human, request, "browser");
+        return a.applyImport(
+          human,
+          review.reviewId,
+          review.csrf,
+          "browser",
+          review.subjects,
+        );
+      };
+      expect(perform(input).outcomes[0].outcome).toBe("imported");
+      expect(a.previewImport(human, input).outcomes[0].outcome).toBe("skipped");
+      expect(perform(input).outcomes[0].outcome).toBe("skipped");
+      const exported = a.exportContext(human, { include: "versions" });
+      exported.entries = exported.entries.filter((v: any) => v.id === e.id);
+      exported.versions = exported.versions.filter((v: any) => v.id === e.id);
+      expect(exported.versions[0].classification).toEqual(
+        exported.entries[0].classification,
+      );
+      expect(
+        a.previewImport(human, { export: exported }).outcomes[0].outcome,
+      ).toBe("skipped");
+      expect(perform({ export: exported }).outcomes[0].outcome).toBe("skipped");
+      for (const alter of [
+        (v: any) => {
+          v.content.value = "altered";
+        },
+        (v: any) => {
+          v.record.provenance.source = "altered";
+        },
+        (v: any) => {
+          v.classification.categories = ["general_preferences", "work_context"];
+        },
+        (v: any) => {
+          v.classification.permittedPurposes = [];
+        },
+      ]) {
+        for (const request of [input, { export: exported }]) {
+          const changed = structuredClone(request);
+          alter(changed.export.versions[0]);
+          expect(a.previewImport(human, changed).outcomes[0]).toMatchObject({
+            outcome: "rejected",
+            reason: "nonidentical held history",
+          });
+        }
+      }
+    },
+  );
   it("agrees on elapsed held duplicates before and after reconciliation", () => {
     const bundle = foreign();
     bundle.entries[0].assertion.validUntil = new Date(now + 1000).toISOString();

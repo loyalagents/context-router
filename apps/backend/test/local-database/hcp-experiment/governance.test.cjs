@@ -59,6 +59,8 @@ test("C5 audit cursor binds filters and its snapshot across restart and concurre
 for (const [path, operation, browser] of [
   ["/v2/audit", "audit", false],
   ["/v2/disclosures", "disclosures", false],
+  ["/v2/rules", "listPolicy", false],
+  ["/v2/directives", "listPolicy", false],
   ["/manage/audit", "audit", true],
   ["/manage/disclosures", "disclosures", true],
   ["/v2/export", "exportContext", false],
@@ -70,6 +72,15 @@ for (const [path, operation, browser] of [
       d = new OAuthDriver(f, "a");
     await d.begin();
     await d.login();
+    if (operation === "listPolicy")
+      await f.management("/v2/directives", {
+        method: "POST",
+        json: {
+          action: "share",
+          effect: "deny",
+          text: "private directive text",
+        },
+      });
     let route = path;
     if (path === "entry")
       route = `/manage/entries/${encodeURIComponent((await f.management("/v2/export")).json.entries[0].id)}`;
@@ -89,9 +100,87 @@ for (const [path, operation, browser] of [
     assert.equal(result.status, 401);
     assert.doesNotMatch(
       result.text,
-      /written notes|context.created|clientOperator/,
+      /written notes|context.created|clientOperator|private directive text/,
     );
   });
+for (const field of ["categories", "purposes", "rules", "directives"])
+  for (const point of ["during-management-serialization", "after-data-commit"])
+    test(`C5 ${field} returns completion only when human authority expires ${point}`, async (t) => {
+      const f = await fixture(t, { approveFixtures: true, childProcess: true }),
+        d = new OAuthDriver(f, "a");
+      await d.begin();
+      await d.login();
+      const entry = (await f.management("/v2/export")).json.entries.find(
+        (e) => e.record.status === "active",
+      );
+      const classification = ["categories", "purposes"].includes(field),
+        route = classification
+          ? `/v2/entries/${encodeURIComponent(entry.id)}/${field}`
+          : `/v2/${field}`,
+        input = classification
+          ? {
+              expectedVersion: entry.record.version,
+              ...(field === "categories"
+                ? { categories: ["work_context"] }
+                : { permittedPurposes: [] }),
+            }
+          : field === "rules"
+            ? { operators: ["private-policy.example"] }
+            : {
+                action: "share",
+                effect: "deny",
+                text: "private directive text",
+              },
+        eventType = {
+          categories: "context.recategorized",
+          purposes: "context.restricted",
+          rules: "rule.set",
+          directives: "directive.set",
+        }[field],
+        auditRoute = `/v2/audit?eventType=${eventType}`,
+        before = (await f.management(auditRoute)).json.events.length;
+      await f.arm({
+        operation: classification ? "editClassification" : "setPolicy",
+        point,
+        action: "advance",
+        now: Date.now() + 12 * 3600_000 + 1000,
+      });
+      const result = await f.context(route, d.jar.get("__Host-hcp-human"), {
+        method: classification ? "PUT" : "POST",
+        json: input,
+      });
+      assert.equal(result.status, classification ? 200 : 201);
+      assert.deepEqual(result.json, {
+        outcome: "committed",
+        representation: "not-included",
+      });
+      assert.doesNotMatch(
+        result.text,
+        /written notes|private directive text|private-policy|urn:uuid/,
+      );
+      await f.restart();
+      assert.equal(
+        (await f.management(auditRoute)).json.events.length,
+        before + 1,
+      );
+      if (classification) {
+        const held = (await f.management("/v2/export")).json.entries.find(
+          (e) => e.id === entry.id,
+        );
+        assert.equal(held.record.version, entry.record.version);
+        assert.deepEqual(
+          held.classification[
+            field === "purposes" ? "permittedPurposes" : field
+          ],
+          input[field === "purposes" ? "permittedPurposes" : field],
+        );
+      } else {
+        const policies = (await f.management(`/v2/${field}`)).json[field];
+        assert.equal(policies.length, 1);
+        for (const [key, value] of Object.entries(input))
+          assert.deepEqual(policies[0][key], value);
+      }
+    });
 test("C5 denied dry runs do not reconcile overdue authority or create replacement browser sessions", async (t) => {
   const fs = require("node:fs"),
     path = require("node:path");
