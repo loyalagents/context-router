@@ -1,6 +1,8 @@
 import {
   createHash,
   createHmac,
+  createPrivateKey,
+  sign,
   randomBytes,
   randomUUID,
   timingSafeEqual,
@@ -8,8 +10,24 @@ import {
 import type { DatabaseSync } from "node:sqlite";
 import { insertFixtures } from "./seed";
 import * as conflicts from "./conflict-graph";
+import { contradicts } from "./conflicts";
 import { relationships } from "./relationships";
 import { controlledProposal } from "./producer";
+import {
+  auditFilters,
+  dateTime,
+  disclosureSummary,
+  grantFacts,
+  matchesAudit,
+} from "./audit";
+import {
+  canonical,
+  digest,
+  exportDocument,
+  exportOptions,
+  importPreview,
+  interpretImport,
+} from "./portability";
 import {
   applyMutation,
   assertNewPurpose,
@@ -34,6 +52,7 @@ import {
 } from "./disclosure";
 import {
   ACCESS_TYPE,
+  CREDENTIAL_FAMILY_SECONDS,
   PURPOSES,
   AuthorityError,
   categories,
@@ -58,6 +77,8 @@ export interface ClientRegistration {
   operator: { id: string; name: string };
   redirectUri: string;
   claims?: string[];
+  notificationEndpoint?: string;
+  legalRetention?: { record: string; obligation: string; period: string };
 }
 export interface AuthorizationConfiguration {
   issuer: string;
@@ -67,6 +88,7 @@ export interface AuthorizationConfiguration {
 }
 /** Infrastructure-only synchronous capability. It never leaves the experiment store. */
 export interface AuthorityKernel {
+  snapshot<T>(operation: (db: DatabaseSync) => T): T;
   read<T>(operation: (db: DatabaseSync) => T): T;
   write<T>(operation: (db: DatabaseSync) => T, beforeCommit?: () => void): T;
   now(): number;
@@ -78,10 +100,29 @@ export const random = () => randomBytes(24).toString("base64url");
 const uuid = () => `urn:uuid:${randomUUID()}`;
 const iso = (n: number) => new Date(n).toISOString();
 const parse = (value: any) => JSON.parse(String(value));
+const grantExpiry = (grant: any): number =>
+  grant.expiresAt === null ? Infinity : Date.parse(grant.expiresAt);
+const credentialExpiry = (grant: any): number =>
+  grant.expiresAt === null
+    ? Date.parse(grant.issuedAt) + CREDENTIAL_FAMILY_SECONDS * 1000
+    : Date.parse(grant.expiresAt);
 const equal = (a: string, b: string) =>
   timingSafeEqual(Buffer.from(hash(a)), Buffer.from(hash(b)));
 const settings = (db: DatabaseSync): any =>
   db.prepare("SELECT * FROM authorization_settings").get();
+// Consent depends on standing rules and directives, not the broader management
+// review generation. Append-only events also detect a change later restored.
+function consentPolicySequence(db: DatabaseSync): number {
+  return Number(
+    db
+      .prepare(
+        `SELECT coalesce(max(sequence),0) n FROM audit_events
+    WHERE json_extract(event,'$.eventType') IN
+      ('rule.set','rule.removed','directive.set','directive.removed')`,
+      )
+      .get().n,
+  );
+}
 const metadata = (db: DatabaseSync): any =>
   db.prepare("SELECT * FROM store_metadata").get();
 function assembled(row: any): any {
@@ -113,6 +154,10 @@ function clientDocument(client: ClientRegistration) {
     name: client.name,
     operator: client.operator,
     ...(client.claims ? { claims: client.claims } : {}),
+    ...(client.notificationEndpoint
+      ? { notificationEndpoint: client.notificationEndpoint }
+      : {}),
+    ...(client.legalRetention ? { legalRetention: client.legalRetention } : {}),
   };
 }
 function event(
@@ -149,7 +194,8 @@ function event(
     entryId: null,
     relatedEntryId: null,
     grantId: grant?.grantId ?? null,
-    data,
+    data:
+      eventType === "grant.issued" ? { ...data, client: grant.client } : data,
   };
 }
 export function expireGrants(
@@ -226,7 +272,15 @@ export class AuthorizationRepository {
     )
       invalid();
     for (const client of configuration.clients) {
-      keys(client, ["id", "name", "operator", "redirectUri", "claims"]);
+      keys(client, [
+        "id",
+        "name",
+        "operator",
+        "redirectUri",
+        "claims",
+        "notificationEndpoint",
+        "legalRetention",
+      ]);
       keys(client.operator, ["id", "name"]);
       if (
         !["a", "b"].includes(client.id) ||
@@ -250,6 +304,21 @@ export class AuthorizationRepository {
         (!strings(client.claims, 0) || client.claims.length)
       )
         invalid(); // no directive-following claims in this experiment
+      if (
+        client.notificationEndpoint !== undefined &&
+        client.notificationEndpoint !== `${callback.origin}/revocations`
+      )
+        invalid();
+      if (client.legalRetention !== undefined) {
+        keys(client.legalRetention, ["record", "obligation", "period"]);
+        for (const key of ["record", "obligation", "period"])
+          if (
+            typeof client.legalRetention[key] !== "string" ||
+            !client.legalRetention[key].trim() ||
+            client.legalRetention[key].length > 2048
+          )
+            invalid();
+      }
     }
     if (new Set(configuration.clients.map((c) => c.id)).size !== 2) invalid();
     this.configuration = structuredClone(configuration);
@@ -290,7 +359,7 @@ export class AuthorizationRepository {
     return Number(session.expires_at);
   }
   isManagement(credential: string): boolean {
-    return this.kernel.read((db) => {
+    return this.kernel.snapshot((db) => {
       try {
         this.management(db, credential);
         return true;
@@ -452,7 +521,7 @@ export class AuthorizationRepository {
     return this.kernel.write((db) => this.newSession(db, false));
   }
   browserSession(token: string, csrf?: string): any {
-    return this.kernel.read((db) => {
+    return this.kernel.snapshot((db) => {
       const s: any =
         typeof token === "string" &&
         db
@@ -509,6 +578,7 @@ export class AuthorizationRepository {
         "Grant",
         "AuthorizationCode",
         "AccessToken",
+        "RefreshToken",
         "Session",
         "Interaction",
       ].includes(model) ||
@@ -516,13 +586,18 @@ export class AuthorizationRepository {
       p.jti !== id
     )
       invalid();
-    if (!["Grant", "AuthorizationCode", "AccessToken"].includes(model)) return;
+    if (
+      !["Grant", "AuthorizationCode", "AccessToken", "RefreshToken"].includes(
+        model,
+      )
+    )
+      return;
     const g = this.active(db, model === "Grant" ? id : p.grantId, p.clientId);
     if (
       p.accountId !== metadata(db).subject_id ||
       p.clientId !== g.client.id ||
       !Number.isSafeInteger(p.exp) ||
-      p.exp * 1000 > Date.parse(g.expiresAt)
+      p.exp * 1000 > credentialExpiry(g)
     )
       denied();
     const details = this.publicGrant(db, g).access;
@@ -550,6 +625,16 @@ export class AuthorizationRepository {
           p.codeChallengeMethod !== "S256" ||
           typeof p.codeChallenge !== "string" ||
           !/^[A-Za-z0-9_-]{43}$/.test(p.codeChallenge)
+        )
+          denied();
+      } else if (model === "RefreshToken") {
+        const resource =
+          Array.isArray(p.resource) && p.resource.length === 1
+            ? p.resource[0]
+            : p.resource;
+        if (
+          g.grantType !== "persistent" ||
+          resource !== this.configuration.resource
         )
           denied();
       } else if (
@@ -645,11 +730,27 @@ export class AuthorizationRepository {
       this.protocolRevoke(id);
       return;
     }
-    this.kernel.write((db) =>
-      db
-        .prepare("DELETE FROM protocol_objects WHERE model=? AND id_hash=?")
-        .run(model, hash(id)),
-    );
+    this.kernel.write((db) => {
+      const row = db
+        .prepare(
+          "SELECT consumed,grant_id FROM protocol_objects WHERE model=? AND id_hash=?",
+        )
+        .get(model, hash(id));
+      // oidc-provider destroys a replayed refresh before its separate revoke call.
+      // Deleting that evidence must therefore commit with the family revocation.
+      if (model === "RefreshToken" && row?.consumed != null) {
+        this.revokeIn(db, String(row.grant_id), {
+          role: "authorization-service",
+          id: this.configuration.issuer,
+        });
+        db.prepare("DELETE FROM protocol_objects WHERE grant_id=?").run(
+          row.grant_id,
+        );
+      } else
+        db.prepare(
+          "DELETE FROM protocol_objects WHERE model=? AND id_hash=?",
+        ).run(model, hash(id));
+    });
   }
   protocolRevoke(id: string): void {
     this.kernel.write((db) => {
@@ -666,7 +767,7 @@ export class AuthorizationRepository {
     if (
       !row ||
       row.status !== "active" ||
-      row.expires_at <= this.kernel.now() ||
+      (row.expires_at !== null && row.expires_at <= this.kernel.now()) ||
       (clientId !== undefined && row.client_id !== clientId)
     )
       denied();
@@ -812,7 +913,8 @@ export class AuthorizationRepository {
         access: granted,
         exclusions: [...new Set(exclusions)],
         expiresAt: iso(now + duration * 1000),
-        policyRevision: settings(db).policy_revision,
+        grantType: "temporary",
+        policySequence: consentPolicySequence(db),
         request: structuredClone(request),
       };
       db.prepare(
@@ -831,6 +933,48 @@ export class AuthorizationRepository {
       return { reviewId, csrf, ...document };
     });
   }
+  electPersistence(
+    credential: string,
+    reviewId: string,
+    csrf: string,
+    binding: string,
+  ): any {
+    let until = Infinity;
+    return this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        const row: any = db
+          .prepare("SELECT * FROM consent_reviews WHERE id=?")
+          .get(reviewId);
+        if (
+          !row ||
+          row.consumed ||
+          row.expires_at <= this.kernel.now() ||
+          !equal(row.csrf_hash, hash(csrf)) ||
+          !equal(row.binding_hash, hash(binding))
+        )
+          denied();
+        until = Math.min(until, row.expires_at);
+        const document = parse(row.document);
+        if (
+          document.policySequence !== consentPolicySequence(db) ||
+          document.grantType !== "temporary"
+        )
+          denied();
+        document.grantType = "persistent";
+        document.expiresAt = null;
+        document.persistenceElection = "separate-affirmative-act";
+        const nextCsrf = random();
+        db.prepare(
+          "UPDATE consent_reviews SET csrf_hash=?,document=? WHERE id=?",
+        ).run(hash(nextCsrf), JSON.stringify(document), reviewId);
+        return { reviewId, csrf: nextCsrf, ...document };
+      },
+      () => {
+        if (this.kernel.now() >= until) denied();
+      },
+    );
+  }
   approve(
     credential: string,
     reviewId: string,
@@ -838,89 +982,99 @@ export class AuthorizationRepository {
     binding: string,
     modality: "browser" | "synthetic-test-driver",
   ): any {
-    return this.kernel.write((db) => {
-      this.management(db, credential);
-      const row: any = db
-          .prepare("SELECT * FROM consent_reviews WHERE id=?")
-          .get(reviewId),
-        now = this.kernel.now();
-      if (
-        !row ||
-        row.consumed ||
-        row.expires_at <= now ||
-        !equal(row.binding_hash, hash(binding)) ||
-        !equal(row.csrf_hash, hash(csrf))
-      )
-        denied();
-      const reviewed = parse(row.document);
-      if (reviewed.policyRevision !== settings(db).policy_revision) denied();
-      validateAccess(reviewed.access);
-      const subject = {
-        id: db
-          .prepare("SELECT pseudonym FROM client_subjects WHERE client_id=?")
-          .get(reviewed.client.id).pseudonym,
-      };
-      const grant = {
-        grantId: uuid(),
-        subject,
-        authorizingPrincipal: subject,
-        client: reviewed.client,
-        requestingParty: {
-          type: "person",
-          id: subject.id,
-          name: "Synthetic context subject",
-        },
-        access: reviewed.access,
-        scopes: [
-          ...new Set(
-            reviewed.access.flatMap((d: any) =>
-              d.categories.flatMap((c: string) =>
-                d.actions.map((action: string) => `hcp:${c}:${action}`),
+    let until = Infinity;
+    return this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        const row: any = db
+            .prepare("SELECT * FROM consent_reviews WHERE id=?")
+            .get(reviewId),
+          now = this.kernel.now();
+        if (
+          !row ||
+          row.consumed ||
+          row.expires_at <= now ||
+          !equal(row.binding_hash, hash(binding)) ||
+          !equal(row.csrf_hash, hash(csrf))
+        )
+          denied();
+        until = Math.min(until, row.expires_at);
+        const reviewed = parse(row.document);
+        if (reviewed.policySequence !== consentPolicySequence(db)) denied();
+        validateAccess(reviewed.access);
+        const subject = {
+          id: db
+            .prepare("SELECT pseudonym FROM client_subjects WHERE client_id=?")
+            .get(reviewed.client.id).pseudonym,
+        };
+        const grant = {
+          grantId: uuid(),
+          subject,
+          authorizingPrincipal: subject,
+          client: reviewed.client,
+          requestingParty: {
+            type: "person",
+            id: subject.id,
+            name: "Synthetic context subject",
+          },
+          access: reviewed.access,
+          scopes: [
+            ...new Set(
+              reviewed.access.flatMap((d: any) =>
+                d.categories.flatMap((c: string) =>
+                  d.actions.map((action: string) => `hcp:${c}:${action}`),
+                ),
               ),
             ),
-          ),
-        ],
-        grantType: "temporary",
-        issuedAt: iso(now),
-        expiresAt: reviewed.expiresAt,
-        status: "active",
-      };
-      db.prepare("INSERT INTO grants VALUES(?,?,?,'active',?)").run(
-        grant.grantId,
-        grant.client.id,
-        Date.parse(grant.expiresAt),
-        JSON.stringify(grant),
-      );
-      for (const id of new Set<string>(
-        grant.access.flatMap((d: any) => d.narrowedTo?.entryIds ?? []),
-      ))
-        db.prepare("INSERT INTO grant_refs VALUES(?,?,?)").run(
+          ],
+          grantType: reviewed.grantType,
+          issuedAt: iso(now),
+          expiresAt: reviewed.expiresAt,
+          status: "active",
+        };
+        db.prepare("INSERT INTO grants VALUES(?,?,?,'active',?)").run(
           grant.grantId,
-          id,
-          "r_" + random(),
+          grant.client.id,
+          grant.expiresAt === null ? null : Date.parse(grant.expiresAt),
+          JSON.stringify(grant),
         );
-      db.prepare("UPDATE consent_reviews SET consumed=1 WHERE id=?").run(
-        reviewId,
-      );
-      this.kernel.append(
-        db,
-        event(
+        for (const id of new Set<string>(
+          grant.access.flatMap((d: any) => d.narrowedTo?.entryIds ?? []),
+        ))
+          db.prepare("INSERT INTO grant_refs VALUES(?,?,?)").run(
+            grant.grantId,
+            id,
+            "r_" + random(),
+          );
+        db.prepare("UPDATE consent_reviews SET consumed=1 WHERE id=?").run(
+          reviewId,
+        );
+        this.kernel.append(
           db,
-          "grant.issued",
-          now,
-          grant,
-          { role: "authorization-service", id: this.configuration.issuer },
-          {
-            access: grant.access,
-            grantType: grant.grantType,
-            expiresAt: grant.expiresAt,
-            modality,
-            acr: "urn:context-router:acr:local-credential",
-          },
-        ),
-      );
-      return grant;
-    });
+          event(
+            db,
+            "grant.issued",
+            now,
+            grant,
+            { role: "authorization-service", id: this.configuration.issuer },
+            {
+              access: grant.access,
+              grantType: grant.grantType,
+              expiresAt: grant.expiresAt,
+              modality,
+              ...(reviewed.persistenceElection
+                ? { persistenceElection: reviewed.persistenceElection }
+                : {}),
+              acr: "urn:context-router:acr:local-credential",
+            },
+          ),
+        );
+        return grant;
+      },
+      () => {
+        if (this.kernel.now() >= until) denied();
+      },
+    );
   }
   listGrants(credential: string, status = "active"): any[] {
     if (!["all", "active", "expired", "revoked"].includes(status)) invalid();
@@ -1164,6 +1318,7 @@ export class AuthorizationRepository {
           current?.classification ?? input?.classification,
           capacity === "management" ? [] : policies(db, "rules"),
           current,
+          capacity === "management" && operation === "revise",
         );
         const fingerprint = createHmac(
           "sha256",
@@ -1220,6 +1375,11 @@ export class AuthorizationRepository {
           };
         }
         if (cap?.consumed) denied();
+        if (
+          cap &&
+          parse(cap.document).generation !== settings(db).policy_revision
+        )
+          denied();
         if (
           cap &&
           current &&
@@ -1422,6 +1582,7 @@ export class AuthorizationRepository {
               entryId: written.id,
               version: written.record.version,
               useUntil: iso(copyUntil),
+              categories: written.classification.categories,
             },
           ];
         this.kernel.append(db, audit);
@@ -1442,9 +1603,7 @@ export class AuthorizationRepository {
             JSON.stringify(binding),
             JSON.stringify(response),
           );
-        if (
-          this.kernel.now() >= Math.min(tokenUntil, Date.parse(grant.expiresAt))
-        )
+        if (this.kernel.now() >= Math.min(tokenUntil, grantExpiry(grant)))
           throw new AuthorityError("unauthenticated");
         if (
           operation !== "withdraw" &&
@@ -1454,7 +1613,7 @@ export class AuthorizationRepository {
           denied();
         commitUntil = Math.min(
           tokenUntil,
-          Date.parse(grant.expiresAt),
+          grantExpiry(grant),
           operation !== "withdraw" && document.assertion.validUntil != null
             ? Date.parse(document.assertion.validUntil)
             : Infinity,
@@ -1499,7 +1658,7 @@ export class AuthorizationRepository {
     const current = storedEntry(db, binding.entryId),
       selected = storedEntry(db, binding.entryId, binding.version);
     if (!current || !selected) denied();
-    if (managed) return Math.min(tokenUntil, Date.parse(grant.expiresAt));
+    if (managed) return Math.min(tokenUntil, grantExpiry(grant));
     if (binding.operation !== "withdraw") {
       // Only this transaction's immediate result may survive its own quarantine.
       const ownQuarantine =
@@ -1521,7 +1680,7 @@ export class AuthorizationRepository {
           )
         )
           denied();
-      if (original && binding.copyUntil <= now) denied();
+      if (binding.copyUntil <= now) denied();
       const covered = grant.access
         .filter(
           (d: any) =>
@@ -1552,7 +1711,7 @@ export class AuthorizationRepository {
     }
     return Math.min(
       tokenUntil,
-      Date.parse(grant.expiresAt),
+      grantExpiry(grant),
       ...(binding.operation === "withdraw"
         ? []
         : [current, selected].map((e) =>
@@ -1560,9 +1719,7 @@ export class AuthorizationRepository {
               ? Infinity
               : Date.parse(e.assertion.validUntil),
           )),
-      original && binding.operation !== "withdraw"
-        ? binding.copyUntil
-        : Infinity,
+      binding.operation !== "withdraw" ? binding.copyUntil : Infinity,
     );
   }
   releaseWrite(
@@ -1687,6 +1844,7 @@ export class AuthorizationRepository {
           release: "attempted",
           receipt: "unconfirmed",
           directives: directives.map((d) => d.directiveId),
+          directiveDocuments: directives,
           ...(prepared.request.kind === "query"
             ? {
                 categoriesSearched: selected.categories,
@@ -1702,6 +1860,7 @@ export class AuthorizationRepository {
         entryId: e.entry.id,
         version: e.entry.record.version,
         useUntil: iso(useUntil[i]),
+        categories: entries[i].classification.categories,
       }));
       const bytes = JSON.stringify({
         ...(prepared.request.kind === "query"
@@ -1717,7 +1876,7 @@ export class AuthorizationRepository {
       this.kernel.append(db, audit);
       return {
         bytes,
-        authorityUntil: Math.min(tokenUntil, Date.parse(grant.expiresAt)),
+        authorityUntil: Math.min(tokenUntil, grantExpiry(grant)),
         copyUntil: Math.min(prepared.copyUntil, ...useUntil),
       };
     });
@@ -1768,22 +1927,143 @@ export class AuthorizationRepository {
   private revokeIn(db: DatabaseSync, id: string, initiator: any): void {
     const row = grantRow(db, id);
     if (!row) denied();
-    if (row.status !== "active") return;
+    if (row.status === "revoked") return;
     db.prepare("UPDATE grants SET status='revoked' WHERE id=?").run(id);
     invalidateResponses(db, id);
     this.kernel.append(
       db,
       event(db, "grant.revoked", this.kernel.now(), assembled(row), initiator),
     );
+    const grant = assembled(row);
+    if (
+      initiator.role !== "context-client" &&
+      grant.client.notificationEndpoint
+    ) {
+      const copies = db
+        .prepare(
+          `SELECT max(json_extract(d.value,'$.useUntil')) deadline FROM audit_events a,json_each(a.event,'$.disclosed') d WHERE json_extract(a.event,'$.grantId')=?`,
+        )
+        .get(id);
+      if (typeof copies.deadline === "string")
+        db.prepare(
+          "INSERT OR IGNORE INTO revocation_outbox(grant_id,client_id,endpoint,revoked_at,last_use_until,next_attempt) VALUES(?,?,?,?,?,?)",
+        ).run(
+          id,
+          grant.client.id,
+          grant.client.notificationEndpoint,
+          iso(this.kernel.now()),
+          copies.deadline,
+          this.kernel.now(),
+        );
+    }
+  }
+  /** The sole sequential worker persists signed bytes before any network operation. */
+  prepareNotification(): any {
+    const candidate = this.kernel.snapshot((db) => {
+      const row = db
+        .prepare(
+          "SELECT * FROM revocation_outbox WHERE state='pending' AND next_attempt<=? ORDER BY next_attempt,grant_id LIMIT 1",
+        )
+        .get(this.kernel.now());
+      return row
+        ? {
+            row,
+            key: parse(settings(db).secrets).protocol?.jwks?.keys?.find(
+              (k: any) => k.alg === "RS256" && k.d,
+            ),
+          }
+        : undefined;
+    });
+    if (!candidate) return undefined;
+    const { row, key } = candidate;
+    let token = row.token;
+    // Signing occurs outside the transaction: a signing failure cannot close local revocation.
+    if (token === null) {
+      if (!key) denied();
+      const header = Buffer.from(
+        JSON.stringify({ alg: "RS256", typ: "secevent+jwt", kid: key.kid }),
+      ).toString("base64url");
+      const payload = Buffer.from(
+        JSON.stringify({
+          iss: this.configuration.issuer,
+          aud: row.client_id,
+          jti: uuid(),
+          iat: Math.floor(this.kernel.now() / 1000),
+          events: {
+            "https://hcp.example/spec/events/grant-revoked": {
+              grantId: row.grant_id,
+              revokedAt: row.revoked_at,
+            },
+          },
+        }),
+      ).toString("base64url");
+      const input = `${header}.${payload}`;
+      token = `${input}.${sign("RSA-SHA256", Buffer.from(input), createPrivateKey({ key, format: "jwk" })).toString("base64url")}`;
+      this.kernel.write((db) => {
+        db.prepare(
+          "UPDATE revocation_outbox SET token=? WHERE grant_id=? AND token IS NULL",
+        ).run(token, row.grant_id);
+      });
+    }
+    return { grantId: row.grant_id, endpoint: row.endpoint, token };
+  }
+  finishNotification(grantId: string, status: number, error?: string): void {
+    this.kernel.write((db) => {
+      const row = db
+        .prepare(
+          "SELECT * FROM revocation_outbox WHERE grant_id=? AND state='pending' AND token IS NOT NULL",
+        )
+        .get(grantId);
+      if (!row) return;
+      const attempts = Number(row.attempts) + 1,
+        outcome =
+          status === 202
+            ? "delivered"
+            : status === 400 || attempts >= 5
+              ? "abandoned"
+              : "pending";
+      db.prepare(
+        "UPDATE revocation_outbox SET attempts=?,state=?,next_attempt=? WHERE grant_id=?",
+      ).run(
+        attempts,
+        outcome,
+        this.kernel.now() + 5 * 2 ** (attempts - 1) * 60_000,
+        grantId,
+      );
+      if (outcome !== "pending")
+        this.kernel.append(
+          db,
+          event(
+            db,
+            "revocation.notified",
+            this.kernel.now(),
+            assembled(grantRow(db, grantId)),
+            { role: "hcp-provider", id: metadata(db).provider_id },
+            {
+              outcome,
+              attempts,
+              lastUseUntil: row.last_use_until,
+              ...(status === 400 && error ? { error } : {}),
+            },
+          ),
+        );
+    });
   }
   revoke(credential: string, id: string): void {
-    this.kernel.write((db) => {
-      this.management(db, credential);
-      this.revokeIn(db, id, {
-        role: "management-client",
-        id: "urn:context-router:synthetic-management",
-      });
-    });
+    let until = Infinity;
+    this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        this.revokeIn(db, id, {
+          role: "management-client",
+          id: "urn:context-router:synthetic-management",
+        });
+      },
+      () => {
+        if (this.kernel.now() >= until)
+          throw new AuthorityError("unauthenticated");
+      },
+    );
   }
   relinquish(presentedId: string, clientId: string, requestedId: string): void {
     this.kernel.write((db) => {
@@ -1794,91 +2074,98 @@ export class AuthorizationRepository {
   }
   replacePolicy(credential: string, input: any): any {
     const next = validatePolicy(input);
-    return this.kernel.write((db) => {
-      this.management(db, credential);
-      const now = this.kernel.now(),
-        initiator = {
-          role: "management-client",
-          id: "urn:context-router:synthetic-management",
-        };
-      const previousRules = policies(db, "rules");
-      const previousDirectives = policies(db, "directives");
-      for (const kind of ["rules", "directives"]) {
-        for (const p of policies(db, kind))
-          this.kernel.append(
-            db,
-            event(
+    let until = Infinity;
+    return this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        const now = this.kernel.now(),
+          initiator = {
+            role: "management-client",
+            id: "urn:context-router:synthetic-management",
+          };
+        const previousRules = policies(db, "rules");
+        const previousDirectives = policies(db, "directives");
+        for (const kind of ["rules", "directives"]) {
+          for (const p of policies(db, kind))
+            this.kernel.append(
               db,
-              kind === "rules" ? "rule.removed" : "directive.removed",
-              now,
-              null,
-              initiator,
-              p,
-            ),
-          );
-        db.prepare("DELETE FROM policies WHERE kind=?").run(kind);
-        for (const p of next[kind]) {
-          const id = uuid(),
-            item = {
-              ...p,
-              ...(kind === "rules"
-                ? { ruleId: id, effect: "deny" }
-                : { directiveId: id }),
-              setBy: "context-subject",
-              createdAt: iso(now),
-            };
-          db.prepare("INSERT INTO policies VALUES(?,?,?)").run(
-            id,
-            kind,
-            JSON.stringify(item),
-          );
-          this.kernel.append(
-            db,
-            event(
+              event(
+                db,
+                kind === "rules" ? "rule.removed" : "directive.removed",
+                now,
+                null,
+                initiator,
+                p,
+              ),
+            );
+          db.prepare("DELETE FROM policies WHERE kind=?").run(kind);
+          for (const p of next[kind]) {
+            const id = uuid(),
+              item = {
+                ...p,
+                ...(kind === "rules"
+                  ? { ruleId: id, effect: "deny" }
+                  : { directiveId: id }),
+                setBy: "context-subject",
+                createdAt: iso(now),
+              };
+            db.prepare("INSERT INTO policies VALUES(?,?,?)").run(
+              id,
+              kind,
+              JSON.stringify(item),
+            );
+            this.kernel.append(
               db,
-              kind === "rules" ? "rule.set" : "directive.set",
-              now,
-              null,
-              initiator,
-              item,
-            ),
-          );
+              event(
+                db,
+                kind === "rules" ? "rule.set" : "directive.set",
+                now,
+                null,
+                initiator,
+                item,
+              ),
+            );
+          }
         }
-      }
-      db.exec(
-        "UPDATE authorization_settings SET policy_revision=policy_revision+1",
-      );
-      const rules = policies(db, "rules");
-      for (const row of db
-        .prepare("SELECT * FROM grants WHERE status='active'")
-        .all()) {
-        const grant = assembled(row);
-        // Standing rules govern Context Clients, not the person's own governance capacity.
-        if (grant.client.id === "urn:context-router:synthetic-management")
-          continue;
-        const reached = [
-          ...new Set<string>(grant.access.flatMap((d: any) => d.categories)),
-        ];
-        const signature = (rules: any[], directives: any[]) =>
-          JSON.stringify({
-            denied: deniedCategories(grant.client, reached, rules).sort(),
-            directives: matchingDirectives(grant, directives).map(
-              ({ directiveId, createdAt, setBy, ...d }: any) => d,
-            ),
-          });
-        if (
-          signature(previousRules, previousDirectives) !==
-          signature(rules, policies(db, "directives"))
-        )
-          invalidateResponses(db, grant.grantId);
-        if (
-          deniedCategories(grant.client, reached, rules).length ===
-          reached.length
-        )
-          this.revokeIn(db, grant.grantId, initiator);
-      }
-      return { rules, directives: policies(db, "directives") };
-    });
+        db.exec(
+          "UPDATE authorization_settings SET policy_revision=policy_revision+1",
+        );
+        const rules = policies(db, "rules");
+        for (const row of db
+          .prepare("SELECT * FROM grants WHERE status='active'")
+          .all()) {
+          const grant = assembled(row);
+          // Standing rules govern Context Clients, not the person's own governance capacity.
+          if (grant.client.id === "urn:context-router:synthetic-management")
+            continue;
+          const reached = [
+            ...new Set<string>(grant.access.flatMap((d: any) => d.categories)),
+          ];
+          const signature = (rules: any[], directives: any[]) =>
+            JSON.stringify({
+              denied: deniedCategories(grant.client, reached, rules).sort(),
+              directives: matchingDirectives(grant, directives).map(
+                ({ directiveId, createdAt, setBy, ...d }: any) => d,
+              ),
+            });
+          if (
+            signature(previousRules, previousDirectives) !==
+            signature(rules, policies(db, "directives"))
+          )
+            invalidateResponses(db, grant.grantId);
+          if (
+            deniedCategories(grant.client, reached, rules).length ===
+            reached.length
+          )
+            this.revokeIn(db, grant.grantId, initiator);
+        }
+        return { rules, directives: policies(db, "directives") };
+      },
+      () => {
+        if (this.kernel.now() >= until)
+          throw new AuthorityError("unauthenticated");
+      },
+    );
   }
   private appendConflict(
     db: DatabaseSync,
@@ -1898,6 +2185,377 @@ export class AuthorizationRepository {
       ),
     ];
     this.kernel.append(db, audit);
+  }
+  private classificationInput(id: string, kind: string, input: any): void {
+    if (!privateId(id) || !["categories", "purposes"].includes(kind)) invalid();
+    keys(input, [
+      "expectedVersion",
+      kind === "categories" ? "categories" : "permittedPurposes",
+    ]);
+    if (
+      !Number.isSafeInteger(input.expectedVersion) ||
+      input.expectedVersion < 1
+    )
+      invalid();
+    if (kind === "categories") categories(input.categories);
+    else if (
+      input.permittedPurposes !== null &&
+      (!strings(input.permittedPurposes, 0) ||
+        !input.permittedPurposes.every(uri))
+    )
+      invalid();
+  }
+  private classificationIn(
+    db: DatabaseSync,
+    id: string,
+    kind: string,
+    input: any,
+  ): any {
+    this.classificationInput(id, kind, input);
+    const current = storedEntry(db, id);
+    if (!current) denied();
+    if (current.record.version !== input.expectedVersion)
+      throw new WriteConflict("version-conflict");
+    const field = kind === "categories" ? "categories" : "permittedPurposes";
+    const from = current.classification[field] ?? null,
+      to = input[field];
+    const classification = { ...current.classification };
+    if (to === null) delete classification[field];
+    else classification[field] = to;
+    db.prepare("UPDATE entries SET classification=? WHERE id=?").run(
+      JSON.stringify(classification),
+      id,
+    );
+    const now = this.kernel.now(),
+      actor = {
+        role: "management-client",
+        id: "urn:context-router:synthetic-management",
+      };
+    const graphChanges: any[] = [];
+    if (kind === "categories")
+      conflicts.evaluateWrite(
+        db,
+        id,
+        current,
+        now,
+        actor,
+        (change) => {
+          if (change.eventType) this.appendConflict(db, change, now, actor);
+          else graphChanges.push(change);
+        },
+        true,
+      );
+    // Classification governs historical representations too. Invalidate each affected
+    // grant once; restoration must never restore its old response candidate.
+    for (const row of db
+      .prepare("SELECT DISTINCT grant_id FROM grant_refs WHERE entry_id=?")
+      .all(id))
+      invalidateResponses(db, String(row.grant_id));
+    const audit = event(
+      db,
+      kind === "categories" ? "context.recategorized" : "context.restricted",
+      now,
+      null,
+      actor,
+      {
+        from,
+        to,
+        graphChanges,
+        relatedTransitions: conflicts.causalTransitions(graphChanges),
+      },
+    );
+    audit.entryId = id;
+    audit.categories = [
+      ...new Set([
+        ...current.classification.categories,
+        ...classification.categories,
+      ]),
+    ];
+    this.kernel.append(db, audit);
+    return storedEntry(db, id);
+  }
+  private classificationDeadline(
+    db: DatabaseSync,
+    id: string,
+    kind: string,
+    input: any,
+  ): number {
+    if (kind !== "categories") return Infinity;
+    const entry = storedEntry(db, id);
+    if (!entry) denied();
+    const changed = {
+      ...entry,
+      classification: { ...entry.classification, categories: input.categories },
+    };
+    const peers = db
+      .prepare("SELECT id FROM entries WHERE status IN ('active','conflicted')")
+      .all()
+      .map((row) => storedEntry(db, String(row.id)))
+      .filter((other) => other.id === id || contradicts(changed, other));
+    return Math.min(
+      Infinity,
+      ...[...peers, ...conflicts.snapshot(db, id).map((r) => r.peer)]
+        .filter((e) => ["active", "conflicted"].includes(e.record.status))
+        .map((e) =>
+          e.assertion.validUntil == null
+            ? Infinity
+            : Date.parse(e.assertion.validUntil),
+        ),
+    );
+  }
+  editClassification(
+    credential: string,
+    id: string,
+    kind: string,
+    input: any,
+  ): any {
+    let until = Infinity,
+      authorityUntil = Infinity;
+    const committed = this.kernel.write(
+      (db) => {
+        authorityUntil = this.management(db, credential);
+        this.classificationInput(id, kind, input);
+        until = Math.min(
+          authorityUntil,
+          this.classificationDeadline(db, id, kind, input),
+        );
+        return this.classificationIn(db, id, kind, input);
+      },
+      () => {
+        if (this.kernel.now() >= authorityUntil)
+          throw new AuthorityError("unauthenticated");
+        if (this.kernel.now() >= until) denied();
+      },
+    );
+    return this.kernel.now() >= authorityUntil
+      ? JSON.parse(COMPLETION_ONLY)
+      : committed;
+  }
+  reviewClassification(
+    credential: string,
+    id: string,
+    kind: string,
+    input: any,
+    binding: string,
+  ): any {
+    this.classificationInput(id, kind, input);
+    if (typeof binding !== "string" || !binding) invalid();
+    return this.kernel.write((db) => {
+      this.management(db, credential);
+      const entry = storedEntry(db, id);
+      if (!entry) denied();
+      if (entry.record.version !== input.expectedVersion)
+        throw new WriteConflict("version-conflict");
+      const reviewId = random(),
+        csrf = random(),
+        expiresAt = this.kernel.now() + 600_000;
+      db.prepare(
+        "INSERT INTO management_reviews(id,binding_hash,csrf_hash,expires_at,document) VALUES(?,?,?,?,?)",
+      ).run(
+        reviewId,
+        hash(binding),
+        hash(csrf),
+        expiresAt,
+        JSON.stringify({
+          kind: "classification",
+          id,
+          operation: kind,
+          input,
+          snapshot: this.confirmationSnapshot(db, id),
+        }),
+      );
+      return {
+        reviewId,
+        csrf,
+        entry,
+        operation: kind,
+        input,
+        expiresAt: iso(expiresAt),
+      };
+    });
+  }
+  approveClassification(
+    credential: string,
+    reviewId: string,
+    csrf: string,
+    binding: string,
+  ): any {
+    let until = Infinity,
+      authorityUntil = Infinity;
+    const committed = this.kernel.write(
+      (db) => {
+        authorityUntil = until = this.management(db, credential);
+        const row: any = db
+          .prepare("SELECT * FROM management_reviews WHERE id=?")
+          .get(reviewId);
+        if (
+          !row ||
+          row.consumed ||
+          row.expires_at <= this.kernel.now() ||
+          !equal(row.csrf_hash, hash(csrf)) ||
+          !equal(row.binding_hash, hash(binding))
+        )
+          denied();
+        const reviewed = parse(row.document);
+        if (
+          reviewed.kind !== "classification" ||
+          reviewed.snapshot !== this.confirmationSnapshot(db, reviewed.id)
+        )
+          denied();
+        until = Math.min(
+          until,
+          Number(row.expires_at),
+          this.classificationDeadline(
+            db,
+            reviewed.id,
+            reviewed.operation,
+            reviewed.input,
+          ),
+        );
+        const result = this.classificationIn(
+          db,
+          reviewed.id,
+          reviewed.operation,
+          reviewed.input,
+        );
+        db.prepare("UPDATE management_reviews SET consumed=1 WHERE id=?").run(
+          reviewId,
+        );
+        return result;
+      },
+      () => {
+        if (this.kernel.now() >= until) denied();
+      },
+    );
+    return this.kernel.now() >= authorityUntil
+      ? JSON.parse(COMPLETION_ONLY)
+      : committed;
+  }
+  listPolicy(credential: string, kind: string): any[] {
+    if (!["rules", "directives"].includes(kind)) invalid();
+    return this.kernel.read((db) => {
+      this.management(db, credential);
+      return policies(db, kind);
+    });
+  }
+  private policyEffects(
+    db: DatabaseSync,
+    previousRules: any[],
+    previousDirectives: any[],
+  ): void {
+    const rules = policies(db, "rules"),
+      directives = policies(db, "directives");
+    for (const row of db
+      .prepare("SELECT * FROM grants WHERE status='active'")
+      .all()) {
+      const grant = assembled(row);
+      if (grant.client.id === "urn:context-router:synthetic-management")
+        continue;
+      const reached = [
+        ...new Set<string>(grant.access.flatMap((d: any) => d.categories)),
+      ];
+      const signature = (r: any[], d: any[]) =>
+        JSON.stringify({
+          denied: deniedCategories(grant.client, reached, r).sort(),
+          directives: matchingDirectives(grant, d),
+        });
+      if (
+        signature(previousRules, previousDirectives) !==
+        signature(rules, directives)
+      )
+        invalidateResponses(db, grant.grantId);
+      if (
+        deniedCategories(grant.client, reached, rules).length === reached.length
+      )
+        this.revokeIn(db, grant.grantId, {
+          role: "management-client",
+          id: "urn:context-router:synthetic-management",
+        });
+    }
+  }
+  setPolicy(credential: string, kind: string, input: any): any {
+    if (!["rules", "directives"].includes(kind)) invalid();
+    validatePolicy({
+      rules: kind === "rules" ? [input] : [],
+      directives: kind === "directives" ? [input] : [],
+    });
+    let until = Infinity;
+    return this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        const previousRules = policies(db, "rules"),
+          previousDirectives = policies(db, "directives");
+        const id = uuid(),
+          item = {
+            ...input,
+            ...(kind === "rules"
+              ? { ruleId: id, effect: "deny" }
+              : { directiveId: id }),
+            setBy: "context-subject",
+            createdAt: iso(this.kernel.now()),
+          };
+        db.prepare("INSERT INTO policies VALUES(?,?,?)").run(
+          id,
+          kind,
+          JSON.stringify(item),
+        );
+        this.kernel.append(
+          db,
+          event(
+            db,
+            kind === "rules" ? "rule.set" : "directive.set",
+            this.kernel.now(),
+            null,
+            {
+              role: "management-client",
+              id: "urn:context-router:synthetic-management",
+            },
+            item,
+          ),
+        );
+        this.policyEffects(db, previousRules, previousDirectives);
+        return item;
+      },
+      () => {
+        if (this.kernel.now() >= until)
+          throw new AuthorityError("unauthenticated");
+      },
+    );
+  }
+  removePolicy(credential: string, kind: string, id: string): void {
+    if (!["rules", "directives"].includes(kind) || !privateId(id)) invalid();
+    let until = Infinity;
+    this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        const row = db
+          .prepare("SELECT document FROM policies WHERE id=? AND kind=?")
+          .get(id, kind);
+        if (!row) denied();
+        const previousRules = policies(db, "rules"),
+          previousDirectives = policies(db, "directives");
+        db.prepare("DELETE FROM policies WHERE id=?").run(id);
+        this.kernel.append(
+          db,
+          event(
+            db,
+            kind === "rules" ? "rule.removed" : "directive.removed",
+            this.kernel.now(),
+            null,
+            {
+              role: "management-client",
+              id: "urn:context-router:synthetic-management",
+            },
+            parse(row.document),
+          ),
+        );
+        this.policyEffects(db, previousRules, previousDirectives);
+      },
+      () => {
+        if (this.kernel.now() >= until)
+          throw new AuthorityError("unauthenticated");
+      },
+    );
   }
   managementEntries(credential: string): any[] {
     return this.kernel.read((db) => {
@@ -2049,7 +2707,11 @@ export class AuthorizationRepository {
     const current = storedEntry(db, id);
     if (!current) denied();
     return hash(
-      JSON.stringify({ entry: current, conflicts: conflicts.snapshot(db, id) }),
+      JSON.stringify({
+        entry: current,
+        conflicts: conflicts.snapshot(db, id),
+        generation: settings(db).policy_revision,
+      }),
     );
   }
   private confirmationDeadline(db: DatabaseSync, id: string): number {
@@ -2078,8 +2740,19 @@ export class AuthorizationRepository {
     const subject = { id: metadata(db).subject_id };
     const categories =
       target?.classification.categories ?? input.classification?.categories;
+    if (
+      target &&
+      (target.assertion.declarationType === "issuer-attested" ||
+        target.content.profile !==
+          "https://hcp.example/spec/profiles/general-context/2.0")
+    )
+      denied();
     const permitted = (purpose: (typeof PURPOSES)[number]) =>
-      (!target || permitsPurpose(target, purpose.code)) &&
+      (!target ||
+        permitsPurpose(
+          { classification: target.classification },
+          purpose.code,
+        )) &&
       permitsPurpose(input, purpose.code);
     const purpose = reviewedPurpose
       ? PURPOSES.find((p) => p.code === reviewedPurpose.code && permitted(p))
@@ -2159,12 +2832,19 @@ export class AuthorizationRepository {
       );
       assertNewPurpose(
         document,
-        mutationPurpose(grant, document.classification, [], current),
+        mutationPurpose(
+          grant,
+          document.classification,
+          [],
+          current,
+          operation === "revise",
+        ),
       );
       const reviewId = random(),
         csrf = random(),
         reviewed = {
           kind: "person-write",
+          generation: settings(db).policy_revision,
           purpose: grant.access[0].purposes[0],
           operation,
           input,
@@ -2217,6 +2897,7 @@ export class AuthorizationRepository {
         const reviewed = parse(row.document);
         if (
           reviewed.kind !== "person-write" ||
+          reviewed.generation !== settings(db).policy_revision ||
           (reviewed.target &&
             reviewed.snapshot !==
               this.confirmationSnapshot(db, reviewed.target))
@@ -2250,7 +2931,13 @@ export class AuthorizationRepository {
         );
         assertNewPurpose(
           document,
-          mutationPurpose(grant, document.classification, [], current),
+          mutationPurpose(
+            grant,
+            document.classification,
+            [],
+            current,
+            reviewed.operation === "revise",
+          ),
         );
         db.prepare("INSERT INTO grants VALUES(?,?,?,'active',?)").run(
           grant.grantId,
@@ -2290,6 +2977,7 @@ export class AuthorizationRepository {
             target: reviewed.target ?? "collection",
             fingerprint,
             snapshot: reviewed.snapshot,
+            generation: settings(db).policy_revision,
           }),
         );
         db.prepare(
@@ -2394,6 +3082,7 @@ export class AuthorizationRepository {
         expiresAt = this.kernel.now() + 600_000;
       const document = {
         kind: "keep-both",
+        generation: settings(db).policy_revision,
         relationId,
         snapshot: hash(JSON.stringify(snapshot)),
       };
@@ -2432,7 +3121,11 @@ export class AuthorizationRepository {
         )
           denied();
         const reviewed = parse(row.document);
-        if (reviewed.kind !== "keep-both") denied();
+        if (
+          reviewed.kind !== "keep-both" ||
+          reviewed.generation !== settings(db).policy_revision
+        )
+          denied();
         const snapshot = conflicts.keepBothSnapshot(db, reviewed.relationId);
         if (reviewed.snapshot !== hash(JSON.stringify(snapshot))) denied();
         const now = this.kernel.now(),
@@ -2458,6 +3151,8 @@ export class AuthorizationRepository {
         return { id: snapshot.entry.id };
       },
       () => {
+        if (this.kernel.now() >= authorityUntil)
+          throw new AuthorityError("unauthenticated");
         if (this.kernel.now() >= commitUntil) denied();
       },
     );
@@ -2512,77 +3207,499 @@ export class AuthorizationRepository {
       ? JSON.parse(COMPLETION_ONLY)
       : committed;
   }
-  audit(
-    credential: string,
-    options: {
-      limit?: number;
-      cursor?: string;
-      grantId?: string;
-      entryId?: string;
-    } = {},
-  ): any {
-    keys(options, ["limit", "cursor", "grantId", "entryId"]);
-    if (options.entryId !== undefined && !privateId(options.entryId)) invalid();
-    const limit = options.limit ?? 50;
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) invalid();
-    return this.kernel.write((db) => {
-      this.management(db, credential);
-      let after = 0,
-        maximum = Number(
-          db
-            .prepare("SELECT coalesce(max(sequence),0) n FROM audit_events")
-            .get().n,
-        ),
-        grantId = options.grantId,
-        entryId = options.entryId;
-      if (options.cursor) {
-        const row = db
-          .prepare(
-            "SELECT * FROM audit_cursors WHERE id_hash=? AND expires_at>?",
-          )
-          .get(hash(options.cursor), this.kernel.now());
-        if (!row) invalid();
-        const cursor = parse(row.document);
-        if (options.grantId !== undefined && options.grantId !== cursor.grantId)
-          invalid();
-        if (options.entryId !== undefined && options.entryId !== cursor.entryId)
-          invalid();
-        ({ after, maximum, grantId, entryId } = cursor);
-      }
-      const rows = db
-        .prepare(
-          "SELECT sequence,event FROM audit_events WHERE sequence>? AND sequence<=? AND (? IS NULL OR json_extract(event,'$.grantId')=?) AND (? IS NULL OR json_extract(event,'$.entryId')=? OR json_extract(event,'$.relatedEntryId')=? OR EXISTS (SELECT 1 FROM json_each(audit_events.event,'$.data.relatedTransitions') t WHERE json_extract(t.value,'$.id')=?)) ORDER BY sequence LIMIT ?",
-        )
-        .all(
-          after,
-          maximum,
-          grantId ?? null,
-          grantId ?? null,
-          entryId ?? null,
-          entryId ?? null,
-          entryId ?? null,
-          entryId ?? null,
-          limit + 1,
+  exportContext(credential: string, input: any = {}): any {
+    const options = exportOptions(input);
+    let until = Infinity;
+    const result = this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        const document = exportDocument(db, options, this.kernel.now());
+        this.kernel.append(
+          db,
+          event(
+            db,
+            "context.exported",
+            this.kernel.now(),
+            null,
+            {
+              role: "management-client",
+              id: "urn:context-router:synthetic-management",
+            },
+            { options, parameters: input, release: "attempted" },
+          ),
         );
-      let nextCursor: string | null = null;
-      if (rows.length > limit) {
-        rows.pop();
-        const continuation = JSON.stringify({
-          after: rows[rows.length - 1].sequence,
-          maximum,
-          grantId,
-          entryId,
-        });
-        // A keyed digest reveals neither the sequence nor the size of the snapshot.
-        nextCursor = createHmac("sha256", parse(settings(db).secrets).cursorKey)
-          .update(continuation)
-          .digest("base64url");
-        db.prepare(
-          "INSERT INTO audit_cursors VALUES(?,?,?) ON CONFLICT(id_hash) DO UPDATE SET expires_at=excluded.expires_at",
-        ).run(hash(nextCursor), this.kernel.now() + 600_000, continuation);
-      }
-      return { events: rows.map((r) => parse(r.event)), nextCursor };
+        return document;
+      },
+      () => {
+        if (this.kernel.now() >= until)
+          throw new AuthorityError("unauthenticated");
+      },
+    );
+    if (this.kernel.now() >= until) throw new AuthorityError("unauthenticated");
+    return result;
+  }
+  exportAudit(credential: string, input: any = {}): any {
+    const filter = auditFilters(input);
+    let until = Infinity;
+    const result = this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        const events = this.auditEvents(db),
+          grants = grantFacts(events);
+        const selected = events.filter((e) => matchesAudit(e, filter, grants));
+        this.kernel.append(
+          db,
+          event(
+            db,
+            "context.exported",
+            this.kernel.now(),
+            null,
+            {
+              role: "management-client",
+              id: "urn:context-router:synthetic-management",
+            },
+            {
+              options: { auditOnly: true, filters: filter },
+              release: "attempted",
+            },
+          ),
+        );
+        return {
+          "@context": ["https://hcp.example/contexts/v2"],
+          type: "AuditLog",
+          events: selected,
+        };
+      },
+      () => {
+        if (this.kernel.now() >= until)
+          throw new AuthorityError("unauthenticated");
+      },
+    );
+    if (this.kernel.now() >= until) throw new AuthorityError("unauthenticated");
+    return result;
+  }
+  previewImport(credential: string, input: any): any {
+    let until = Infinity;
+    const result = this.kernel.snapshot((db) => {
+      until = this.management(db, credential);
+      return importPreview(interpretImport(db, input, this.kernel.now()));
     });
+    if (this.kernel.now() >= until) denied();
+    return result;
+  }
+  reviewImport(credential: string, input: any, binding: string): any {
+    if (typeof binding !== "string" || !binding) invalid();
+    let until = Infinity;
+    const result = this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        const preview = importPreview(
+          interpretImport(db, input, this.kernel.now()),
+        );
+        const reviewId = random(),
+          csrf = random(),
+          expiresAt = this.kernel.now() + 600_000;
+        db.prepare(
+          "INSERT INTO management_reviews(id,binding_hash,csrf_hash,expires_at,document) VALUES(?,?,?,?,?)",
+        ).run(
+          reviewId,
+          hash(binding),
+          hash(csrf),
+          expiresAt,
+          JSON.stringify({ kind: "import", input, preview }),
+        );
+        return { reviewId, csrf, expiresAt: iso(expiresAt), ...preview };
+      },
+      () => {
+        if (this.kernel.now() >= until) denied();
+      },
+    );
+    if (this.kernel.now() >= until) denied();
+    return result;
+  }
+  applyImport(
+    credential: string,
+    reviewId: string,
+    csrf: string,
+    binding: string,
+    subjects: any,
+  ): any {
+    let until = Infinity,
+      authorityUntil = Infinity;
+    return this.kernel.write(
+      (db) => {
+        authorityUntil = until = this.management(db, credential);
+        const row: any = db
+          .prepare("SELECT * FROM management_reviews WHERE id=?")
+          .get(reviewId);
+        if (
+          !row ||
+          row.expires_at <= this.kernel.now() ||
+          !equal(row.csrf_hash, hash(csrf)) ||
+          !equal(row.binding_hash, hash(binding))
+        )
+          denied();
+        const reviewed = parse(row.document);
+        if (
+          reviewed.kind !== "import" ||
+          !strings(subjects) ||
+          canonical([...subjects].sort()) !==
+            canonical(reviewed.preview.subjects)
+        )
+          denied();
+        until = Math.min(until, Number(row.expires_at));
+        if (row.consumed) return reviewed.result;
+        const now = this.kernel.now(),
+          interpreted = interpretImport(db, reviewed.input, now);
+        if (
+          interpreted.blockers.length ||
+          canonical(importPreview(interpreted)) !== canonical(reviewed.preview)
+        )
+          denied();
+        const participants = [
+          ...interpreted.accepted.map((a) => a.current),
+          ...interpreted.effects
+            .flatMap((e) => e.entries)
+            .map((id) => storedEntry(db, id))
+            .filter(Boolean),
+        ];
+        until = Math.min(
+          until,
+          ...participants
+            .filter(
+              (e) =>
+                ["active", "conflicted"].includes(e.record.status) &&
+                e.assertion.validUntil != null,
+            )
+            .map((e) => Date.parse(e.assertion.validUntil)),
+        );
+        const previousRules = policies(db, "rules"),
+          previousDirectives = policies(db, "directives"),
+          actor = {
+            role: "management-client",
+            id: "urn:context-router:synthetic-management",
+          };
+        for (const p of interpreted.policyAdditions) {
+          db.prepare("INSERT INTO policies VALUES(?,?,?)").run(
+            p.id,
+            p.kind,
+            JSON.stringify(p.item),
+          );
+          this.kernel.append(
+            db,
+            event(
+              db,
+              p.kind === "rules" ? "rule.set" : "directive.set",
+              now,
+              null,
+              actor,
+              { ...p.item, importedFrom: interpreted.sourceProvider },
+            ),
+          );
+        }
+        this.policyEffects(db, previousRules, previousDirectives);
+        for (const item of interpreted.accepted) {
+          const e = item.entry;
+          db.prepare("INSERT INTO entries VALUES(?,?,?,?,?)").run(
+            e.id,
+            JSON.stringify(e.subject),
+            e.record.version,
+            JSON.stringify(e.classification),
+            item.current.record.status,
+          );
+          for (const version of [...item.history, item.source])
+            db.prepare("INSERT INTO entry_versions VALUES(?,?,?,?)").run(
+              e.id,
+              version.record.version,
+              JSON.stringify(version),
+              version.assertion.validUntil == null
+                ? null
+                : Date.parse(version.assertion.validUntil),
+            );
+          if (
+            canonical(item.source.classification.categories) !==
+            canonical(e.classification.categories)
+          ) {
+            const change = event(
+              db,
+              "context.recategorized",
+              now,
+              null,
+              actor,
+              {
+                from: item.source.classification.categories,
+                to: e.classification.categories,
+                importedFrom: interpreted.sourceProvider,
+              },
+            );
+            change.entryId = e.id;
+            change.categories = e.classification.categories;
+            this.kernel.append(db, change);
+          }
+          if (item.current.record.status !== e.record.status) {
+            const change = event(
+              db,
+              "context.expired",
+              now,
+              null,
+              { role: "hcp-provider", id: metadata(db).provider_id },
+              {
+                version: e.record.version,
+                previousStatus: e.record.status,
+                status: item.current.record.status,
+                effectiveAt: e.assertion.validUntil,
+              },
+            );
+            change.entryId = e.id;
+            change.categories = e.classification.categories;
+            this.kernel.append(db, change);
+          }
+        }
+        const graphChanges: any[] = [],
+          provider = { role: "hcp-provider", id: metadata(db).provider_id };
+        for (const item of [...interpreted.accepted].sort((a, b) =>
+          a.entry.id.localeCompare(b.entry.id),
+        ))
+          conflicts.evaluateWrite(
+            db,
+            item.entry.id,
+            undefined,
+            now,
+            provider,
+            (change) => {
+              if (change.eventType)
+                this.appendConflict(db, change, now, provider);
+              else graphChanges.push(change);
+            },
+          );
+        const result = { outcomes: interpreted.outcomes, dryRun: false };
+        const imported = event(db, "context.imported", now, null, actor, {
+          ...result,
+          association: {
+            subjects,
+            destination: interpreted.destination,
+            assurance: "person-attested-for-this-bundle",
+            digest: interpreted.digest,
+          },
+          graphChanges,
+        });
+        // Event-level union of accepted destination categories; outcomes retain
+        // skipped/rejected IDs without claiming that those records were admitted.
+        imported.categories = [
+          ...new Set(
+            interpreted.accepted.flatMap(
+              (item) =>
+                storedEntry(db, item.entry.id).classification.categories,
+            ),
+          ),
+        ].sort();
+        this.kernel.append(db, imported);
+        db.prepare(
+          "UPDATE management_reviews SET consumed=1,document=? WHERE id=?",
+        ).run(JSON.stringify({ ...reviewed, result }), reviewId);
+        until = Math.min(
+          until,
+          ...interpreted.accepted
+            .filter(
+              (a) =>
+                ["active", "conflicted"].includes(a.current.record.status) &&
+                a.current.assertion.validUntil != null,
+            )
+            .map((a) => Date.parse(a.current.assertion.validUntil)),
+        );
+        return result;
+      },
+      () => {
+        if (this.kernel.now() >= authorityUntil)
+          throw new AuthorityError("unauthenticated");
+        if (this.kernel.now() >= until) denied();
+      },
+    );
+  }
+  private auditEvents(db: DatabaseSync): any[] {
+    return db
+      .prepare("SELECT event FROM audit_events ORDER BY sequence")
+      .all()
+      .map((row) => parse(row.event));
+  }
+  disclosures(credential: string, input: any = {}): any {
+    keys(input, ["client", "category", "from", "to"]);
+    const filter = auditFilters(input);
+    let until = Infinity;
+    const result = this.kernel.read((db) => {
+      until = this.management(db, credential);
+      const result = disclosureSummary(this.auditEvents(db), filter);
+      const pending = db
+        .prepare("SELECT grant_id FROM revocation_outbox WHERE state='pending'")
+        .all();
+      for (const client of result.clients)
+        client.pendingNotifications = pending
+          .filter((p) => client.grants.some((g) => g.grantId === p.grant_id))
+          .map((p) => p.grant_id);
+      return result;
+    });
+    if (this.kernel.now() >= until) throw new AuthorityError("unauthenticated");
+    return result;
+  }
+  reportSharing(credential: string, input: any): void {
+    keys(input, ["recipient", "refs", "purpose", "sharedAt"]);
+    keys(input.recipient, ["domain", "name"]);
+    if (
+      !strings(input.refs) ||
+      !uri(input.purpose) ||
+      typeof input.recipient.name !== "string" ||
+      !input.recipient.name.trim() ||
+      input.recipient.name.length > 512 ||
+      typeof input.recipient.domain !== "string" ||
+      !/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z][a-z0-9-]*$/i.test(
+        input.recipient.domain,
+      )
+    )
+      invalid();
+    const sharedAt = dateTime(input.sharedAt);
+    let until = Infinity;
+    this.kernel.write(
+      (db) => {
+        const { grant, tokenUntil } = this.readAuthority(db, credential);
+        until = Math.min(tokenUntil, grantExpiry(grant));
+        const events = this.auditEvents(db),
+          entries = input.refs.map((ref: string) => {
+            const row = db
+              .prepare(
+                "SELECT entry_id FROM grant_refs WHERE grant_id=? AND ref=?",
+              )
+              .get(grant.grantId, ref);
+            if (
+              !row ||
+              !events.some(
+                (e) =>
+                  e.grantId === grant.grantId &&
+                  e.disclosed?.some((d: any) => d.entryId === row.entry_id),
+              )
+            )
+              denied();
+            return { id: row.entry_id };
+          });
+        const possibleCategories = [
+          ...new Set(
+            events
+              .filter((e) => e.grantId === grant.grantId)
+              .flatMap((e) =>
+                (e.disclosed ?? [])
+                  .filter((d: any) =>
+                    entries.some((entry: any) => entry.id === d.entryId),
+                  )
+                  .flatMap((d: any) => d.categories ?? []),
+              ),
+          ),
+        ].sort();
+        this.kernel.append(
+          db,
+          event(
+            db,
+            "context.shared",
+            this.kernel.now(),
+            grant,
+            { role: "context-client", id: grant.client.id },
+            {
+              recipient: input.recipient,
+              entries,
+              possibleCategories,
+              purpose: input.purpose,
+              sharedAt,
+              permitted: false,
+              report: "client-claimed",
+            },
+          ),
+        );
+      },
+      () => {
+        if (this.kernel.now() >= until) denied();
+      },
+    );
+    // The prohibited report is durable. Throwing inside the transaction would erase it.
+    denied();
+  }
+  audit(credential: string, options: any = {}): any {
+    keys(options, [
+      "limit",
+      "cursor",
+      "grantId",
+      "entryId",
+      "client",
+      "category",
+      "eventType",
+      "from",
+      "to",
+    ]);
+    const { limit = 50, cursor: cursorToken, ...rawFilter } = options;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) invalid();
+    const supplied = auditFilters(rawFilter);
+    let until = Infinity;
+    const result = this.kernel.write(
+      (db) => {
+        until = this.management(db, credential);
+        let after = 0,
+          maximum = Number(
+            db
+              .prepare("SELECT coalesce(max(sequence),0) n FROM audit_events")
+              .get().n,
+          ),
+          filter = supplied;
+        if (cursorToken) {
+          const row = db
+            .prepare(
+              "SELECT * FROM audit_cursors WHERE id_hash=? AND expires_at>?",
+            )
+            .get(hash(cursorToken), this.kernel.now());
+          if (!row) invalid();
+          const cursor = parse(row.document);
+          for (const key of Object.keys(supplied))
+            if (supplied[key] !== cursor.filter[key]) invalid();
+          ({ after, maximum, filter } = cursor);
+        }
+        const snapshot = db
+          .prepare(
+            "SELECT sequence,event FROM audit_events WHERE sequence<=? ORDER BY sequence",
+          )
+          .all(maximum)
+          .map((row) => ({
+            sequence: Number(row.sequence),
+            event: parse(row.event),
+          }));
+        const grants = grantFacts(snapshot.map((r) => r.event));
+        const rows = snapshot
+          .filter(
+            (r) => r.sequence > after && matchesAudit(r.event, filter, grants),
+          )
+          .slice(0, limit + 1);
+        let nextCursor: string | null = null;
+        if (rows.length > limit) {
+          rows.pop();
+          const continuation = JSON.stringify({
+            after: rows.at(-1)!.sequence,
+            maximum,
+            filter,
+          });
+          nextCursor = createHmac(
+            "sha256",
+            parse(settings(db).secrets).cursorKey,
+          )
+            .update(continuation)
+            .digest("base64url");
+          db.prepare(
+            "INSERT INTO audit_cursors VALUES(?,?,?) ON CONFLICT(id_hash) DO UPDATE SET expires_at=excluded.expires_at",
+          ).run(hash(nextCursor), this.kernel.now() + 600_000, continuation);
+        }
+        return { events: rows.map((r) => r.event), nextCursor };
+      },
+      () => {
+        if (this.kernel.now() >= until)
+          throw new AuthorityError("unauthenticated");
+      },
+    );
+    if (this.kernel.now() >= until) throw new AuthorityError("unauthenticated");
+    return result;
   }
   lastPossibleCopyUseUntil(credential: string, grantId: string): string | null {
     return this.kernel.read((db) => {

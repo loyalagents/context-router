@@ -207,7 +207,10 @@ test("rejects bad OAuth binding, unsupported flows and credential capacity subst
   );
   const metadata = await f.request("/.well-known/oauth-authorization-server");
   assert.equal(metadata.json.issuer, f.issuer);
-  assert.deepEqual(metadata.json.grant_types_supported, ["authorization_code"]);
+  assert.deepEqual(metadata.json.grant_types_supported, [
+    "authorization_code",
+    "refresh_token",
+  ]);
   assert.equal(
     (await f.request("/.well-known/oauth-protected-resource")).json.resource,
     f.issuer,

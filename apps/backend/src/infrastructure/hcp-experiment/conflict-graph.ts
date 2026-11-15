@@ -216,8 +216,35 @@ export function evaluateWrite(
   now: number,
   actor: any,
   emit: Emit,
+  preserveAuthoredOrder = false,
 ): void {
   const current = storedEntry(db, id);
+  const newest = (other: any) => {
+    if (!preserveAuthoredOrder) return id;
+    const order = (entry: any) =>
+      Number(
+        db
+          .prepare(
+            `SELECT coalesce(max(sequence),0) n FROM audit_events
+      WHERE json_extract(event,'$.eventType') IN ('context.created','context.revised')
+      AND json_extract(event,'$.entryId')=? AND json_extract(event,'$.data.version')=?`,
+          )
+          .get(entry.id, entry.record.version).n,
+      );
+    const currentOrder = order(current),
+      otherOrder = order(other);
+    if (
+      [current, other].every(
+        (e) =>
+          e.assertion.declarationType === "model-inferred" && !authoritative(e),
+      ) &&
+      current.record.provenance.assertedBy.id ===
+        other.record.provenance.assertedBy.id &&
+      (!currentOrder || !otherOrder || currentOrder === otherOrder)
+    )
+      denied();
+    return currentOrder > otherOrder ? id : other.id;
+  };
   const old: any[] = db
     .prepare(
       `SELECT * FROM relations WHERE (left_id=? OR right_id=?)
@@ -245,6 +272,11 @@ export function evaluateWrite(
         db.prepare("UPDATE relations SET disposition='ended' WHERE id=?").run(
           relation.id,
         );
+      continue;
+    }
+    // Classification changes do not retract an explicit contradiction.
+    if (preserveAuthoredOrder && relation.origin !== "provider" && !revised) {
+      retained.add(other.id);
       continue;
     }
     if (!live(current) || !live(other)) {
@@ -384,7 +416,7 @@ export function evaluateWrite(
     consequences(
       db,
       relation,
-      id,
+      newest(other),
       now,
       actor,
       emit,
@@ -418,7 +450,7 @@ export function evaluateWrite(
     db.prepare("INSERT INTO relations VALUES(?,?,?,?,?,?,?,?,?,?)").run(
       ...Object.values(relation),
     );
-    consequences(db, relation, id, now, actor, emit, "detected");
+    consequences(db, relation, newest(other), now, actor, emit, "detected");
   }
 }
 

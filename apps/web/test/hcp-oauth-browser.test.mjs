@@ -12,6 +12,7 @@ import { localUiBrowserPrerequisite } from "../../../scripts/local-migration/loc
 const require = createRequire(import.meta.url);
 const {
   fixture,
+  inputs,
 } = require("../../backend/test/local-database/hcp-experiment/authorization-fixture.cjs");
 const {
   ACCESS_TYPE,
@@ -19,6 +20,223 @@ const {
 } = require("../../backend/dist/infrastructure/hcp-experiment/policy.js");
 const root = path.resolve(import.meta.dirname, "../../..");
 const secret = () => randomBytes(32).toString("base64url");
+
+test(
+  "C5 browser separately elects persistence and reviews governance and exact-subject portability",
+  { timeout: 120_000 },
+  async (t) => {
+    const f = await fixture(t, {
+        approveFixtures: true,
+        notifications: true,
+        childProcess: true,
+      }),
+      good = await probeServer(t, f, f.tls.cert);
+    const context = await trustedBrowser(f, (c) =>
+      rejected(c, good, "ERR_CERT_AUTHORITY_INVALID"),
+    );
+    try {
+      const allowed = new Set([
+          f.issuer,
+          good.url,
+          new URL(f.redirects.a).origin,
+        ]),
+        unexpected = [];
+      await context.route("**/*", (route) => {
+        if (allowed.has(new URL(route.request().url()).origin))
+          return route.continue();
+        unexpected.push(route.request().url());
+        return route.abort();
+      });
+      const page = await context.newPage(),
+        verifier = secret(),
+        state = secret();
+      await page.goto(
+        f.issuer +
+          "/auth?" +
+          new URLSearchParams({
+            client_id: "a",
+            redirect_uri: f.redirects.a,
+            response_type: "code",
+            response_mode: "form_post",
+            resource: f.issuer,
+            state,
+            code_challenge: createHash("sha256")
+              .update(verifier)
+              .digest("base64url"),
+            code_challenge_method: "S256",
+            authorization_details: JSON.stringify([
+              {
+                type: ACCESS_TYPE,
+                actions: ["read"],
+                categories: ["general_preferences"],
+                purposes: [PURPOSES[0]],
+              },
+            ]),
+          }),
+      );
+      await page.getByLabel("Human management credential").fill(f.human);
+      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await page.getByRole("button", { name: "Review exact grant" }).click();
+      await page.waitForSelector('body[data-stage="review"]');
+      assert.match(
+        await page.locator("body").innerText(),
+        /Temporary access expires/,
+      );
+      assert.match(
+        await page.locator("body").innerText(),
+        /Revocation does not remove copies/,
+      );
+      const oldForm = inputs(await page.content()),
+        approvePath = await page
+          .locator('form[action$="/approve"]')
+          .getAttribute("action"),
+        count = (await f.management("/v2/grants")).json.grants.length;
+      await page
+        .getByRole("button", { name: "Elect persistent access" })
+        .click();
+      await page.waitForSelector('body[data-stage="review"]');
+      assert.match(
+        await page.locator("body").innerText(),
+        /Persistent access: remains/,
+      );
+      assert.equal(
+        (await f.management("/v2/grants")).json.grants.length,
+        count,
+      );
+      const browserCookies = await context.cookies(f.issuer);
+      const staleResponse = await f.request(approvePath, {
+        method: "POST",
+        headers: {
+          origin: f.issuer,
+          cookie: browserCookies.map((c) => `${c.name}=${c.value}`).join("; "),
+        },
+        form: { reviewId: oldForm.reviewId, csrf: oldForm.csrf },
+      });
+      assert.equal(staleResponse.status, 403);
+      await page
+        .getByRole("button", { name: "Approve access", exact: true })
+        .click();
+      await page.waitForURL(f.redirects.a);
+      const callback = JSON.parse(await page.locator("body").innerText());
+      assert.equal(callback.state, state);
+      const exchange = await f.request("/token", {
+        method: "POST",
+        form: {
+          grant_type: "authorization_code",
+          client_id: "a",
+          code: callback.code,
+          code_verifier: verifier,
+          redirect_uri: f.redirects.a,
+          resource: f.issuer,
+        },
+      });
+      assert.equal(exchange.status, 200);
+      assert.equal(typeof exchange.json.refresh_token, "string");
+      const refreshed = await f.request("/token", {
+        method: "POST",
+        form: {
+          grant_type: "refresh_token",
+          client_id: "a",
+          refresh_token: exchange.json.refresh_token,
+          resource: f.issuer,
+        },
+      });
+      assert.equal(refreshed.status, 200);
+      const token = refreshed.json.access_token,
+        read = await f.context("/v2/entries/query", token, {
+          method: "POST",
+          json: { query: "written notes", purpose: PURPOSES[0].code },
+        });
+      assert.equal(read.status, 200);
+      assert.equal(
+        (
+          await f.context("/v2/shares", token, {
+            method: "POST",
+            json: {
+              recipient: { domain: "recipient.example", name: "Synthetic" },
+              refs: [read.json.entries[0].ref],
+              purpose: PURPOSES[0].code,
+              sharedAt: new Date().toISOString(),
+            },
+          })
+        ).status,
+        403,
+      );
+      await page.goto(f.issuer + "/manage/disclosures");
+      assert.match(
+        await page.locator("body").innerText(),
+        /receipt is unconfirmed/i,
+      );
+      await page.goto(f.issuer + "/manage/policy");
+      const form = page
+        .locator("form")
+        .filter({ has: page.getByRole("button", { name: "Set directive" }) });
+      await form.locator('[name="action"]').fill("share");
+      await form
+        .locator('[name="text"]')
+        .fill("Synthetic onward-use restriction");
+      await form.getByRole("button", { name: "Set directive" }).click();
+      assert.match(
+        await page.locator("body").innerText(),
+        /Synthetic onward-use restriction/,
+      );
+      const bundle = (await f.management("/v2/export?include=versions")).json,
+        entry = bundle.entries.find((e) => e.record.status === "active");
+      entry.id = `urn:uuid:${crypto.randomUUID()}`;
+      entry.subject.id = bundle.subject.id = "urn:foreign:browser-subject";
+      entry.record.version = 1;
+      entry.record.relationships = [];
+      bundle.entries = [entry];
+      delete bundle.versions;
+      await page.goto(f.issuer + "/manage/import");
+      await page.locator('[name="source"]').fill(JSON.stringify(bundle));
+      await page.getByRole("button", { name: "Dry run", exact: true }).click();
+      await page.waitForSelector('body[data-stage="import-preview"]');
+      assert.match(
+        await page.locator("body").innerText(),
+        /urn:foreign:browser-subject/,
+      );
+      await page.goto(f.issuer + "/manage/import");
+      await page.locator('[name="source"]').fill(JSON.stringify(bundle));
+      await page
+        .getByRole("button", { name: "Review import", exact: true })
+        .click();
+      await page.waitForSelector('body[data-stage="import-review"]');
+      await page.locator('[name="attest"]').check();
+      await page.getByRole("button", { name: "Apply reviewed import" }).click();
+      await page.waitForSelector('body[data-stage="import-result"]');
+      await page.goto(
+        f.issuer +
+          `/manage/entries/${encodeURIComponent(entry.id)}/classification`,
+      );
+      const categories = page.locator("form").filter({
+        has: page.getByRole("button", {
+          name: "Review categories",
+          exact: true,
+        }),
+      });
+      await categories.locator('[name="values"]').fill("work_context");
+      await categories
+        .getByRole("button", { name: "Review categories", exact: true })
+        .click();
+      await page
+        .getByRole("button", { name: "Approve classification change" })
+        .click();
+      await page.waitForSelector('body[data-stage="entry"]');
+      await f.restart();
+      await page.reload();
+      assert.match(await page.locator("body").innerText(), /work_context/);
+      const exported = (await f.management("/v2/export")).json.entries.find(
+        (e) => e.id === entry.id,
+      );
+      assert.equal(exported.subject.id, bundle.subject.id);
+      assert.equal(exported.record.version, 1);
+      assert.deepEqual(unexpected, []);
+    } finally {
+      await context.close();
+    }
+  },
+);
 
 // Chromium's normal per-profile trust store; never a TLS-ignore option or OS trust edit.
 async function trustedBrowser(f, beforeTrust) {

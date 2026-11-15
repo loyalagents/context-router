@@ -13,7 +13,7 @@ export function withConfirmations(db: DatabaseSync, entry: any): any {
     record: {
       ...entry.record,
       relationships: [
-        ...entry.record.relationships,
+        ...(entry.record.relationships ?? []),
         ...db
           .prepare(
             `SELECT * FROM relations WHERE disposition IN ('open','dismissed','held')
@@ -28,14 +28,17 @@ export function withConfirmations(db: DatabaseSync, entry: any): any {
       ],
       provenance: {
         ...entry.record.provenance,
-        confirmations: [...entry.record.provenance.confirmations, ...appended],
+        confirmations: [
+          ...(entry.record.provenance.confirmations ?? []),
+          ...appended,
+        ],
       },
     },
   };
 }
 export function confirmed(entry: any): boolean {
   return (
-    entry.record.provenance.confirmations.at(-1)?.disposition === "confirmed"
+    entry.record.provenance.confirmations?.at(-1)?.disposition === "confirmed"
   );
 }
 export function authoritative(entry: any): boolean {

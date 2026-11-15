@@ -294,6 +294,45 @@ the coupled grant/token deadline evidence and the complete C5 erasure inventory
 remain explicit adoption boundaries. The supplied research motivates the selected
 completion behavior but does not alter the pinned normative target.
 
+## C5 Planning Requirement Expansion (2026-11-14)
+
+C4 is merged in PR #207 at `666f9d1b5ff3dde322ad4c368b44d2f4399f203e`;
+its [merge/evidence record](README.md#c4-merge-and-c5-planning-ownership-2026-11-14)
+supersedes earlier candidate-era pending statements. This table expands C0-R20 and
+affected shared rows for **the activated bounded C5 implementation**, at that base and the unchanged normative
+pin. The user authorized runtime after independent plan approval; this table is not a test result. The original source assessment
+above remains historical. The [C5 plan](README.md#c5-planning-and-decisions-2026-11-14)
+owns selected D1–D6 directions, including D3 hard-delete deferral, checkpoints,
+copy inventory and validation. These product selections do not resolve the named spec dependencies.
+
+| C5 row / gaps | Required behavior and observable acceptance | Dependency / remaining claim |
+| --- | --- | --- |
+| C5-R01 · G03/G15; C0-R02/R03/R14 | Temporary default, distinct affirmative persistence act, correct visible lifetime and durable election/modality; no forged/stale/preselected persistence | D1; persistent null grant expiry must be separate from finite OAuth/token/session state; C5c |
+| C5-R02 · G03/G04/G16; R02/R03/R06 | Rotating public refresh, resource/client/grant isolation, concurrent reuse/rollback/restart/revoke; no lifetime extension or silent scope widening | C5c; CR-Q4 still blocks complete OAuth profile until minimum/conditional flows resolved; omitted device/client-credentials not hidden |
+| C5-R03 · G09/G11/G15; R04/R05/R19 | Management-only category/purpose edits at expectedVersion, no new content version, from/to audit, null/empty meaning, current+historical enforcement, stale same-version review and response invalidation | C5b; selected D2 exact-capability exception is experimental pending #38; login never content authority |
+| C5-R04 · G10/G11; R19 | Active+conflicted candidate reevaluation after category edits; preserve original assertion ordering, holds, peer states and unaffected edges | C5b; no automatic model identity assurance or semantic detector claim |
+| C5-R05 · G05/G15; R05/R14 | Full stable-ID rule/directive list/set/remove, operator/claim/category matching, immediate future/existing-grant rules, all-denied revoke, delivered text and precedence | C5b; CR-Q8 provisional; CR-Q9 before sensitive C6/C7; clients' actual following remains C7 evidence |
+| C5-R06 · G14/G15; R13/R14/R15 | Audit snapshots of actual offered categories/client identities and copy bounds; full §8.3 filters/JSON-LD export; summary including write copies, empty reads, multigrant notification and uncertainty | C5b/d/e; CR-Q15 interpretation before implementation; no verified-receipt claim |
+| C5-R07 · G05/G14/G16; R20 | Valid-grant attributable sharing report commits event even on403, wrong/foreign refs do not leak, audit failure cannot falsely acknowledge durable report | C5d despite no onward permissions; CR-Q14 blocks post-revocation attribution path and broader historical-permission semantics |
+| C5-R08 · G04/G14/G15; R06/R07/R20 | Durable independent revocation/outbox, same signed token per attempt/restart, ≥5 attempts/≥1h retryable failures, terminal202/400 outcomes, no fake sleep attempts, person-visible failure/last deadline | C5d; CR-Q13 strict-age interoperability and #3 dormancy deadline claims remain unresolved; endpoint/signing lifecycle must be fixed first |
+| C5-R09 · G03/G04/G15; R07/R14 | Retain proposed1h provider cap, distinguish grant/copy expiry, truthfully show legal-retention declarations before consent and at revoke/summary | C5c/d; no real recipient compliance or legal-obligation verification claim |
+| C5-R10 · G11/G15; R09/R14/R20 | Export defaults to all retained current lifecycle states, rules/directives; versions/audit opt-in, exclude only deleted when asked, no erased data, correct durable options event | C5e; #25 invalid example is nonblocking; no credentials/granted authority exported |
+| C5-R11 · G06/G07/G11/G15; R09/R20 | v2 manual import preserves subject/declaration/provenance/confirmations/unknowns; deleted never active; same-ID changed content rejected even at higher version; no manufactured history; local and intra-batch conflict/expiry admission before exposure, with atomic graph audit and no foreign management authority | C5f; D4/#21 association, D5/#24 policies, #19 history/collision/audit import and #19/#37 cross-provider ordering/relationships gate their cases; v1 optional/omitted |
+| C5-R12 · G05/G15/G16; R05/R20 | DryRun no domain/audit change; review binds exact bundle and destination; revalidate atomically; all accepted outcomes/policy effects/import audit commit together; stale preview and lost reply safe | C5f; zero-entry policy-only imports and foreign source audit cannot bypass person review or become local authority |
+| C5-R13 · G11/G14/G16; R16/R19/R20 | Hard deletion explicitly unavailable; retained-history protections unchanged, no purge tables/framework or false success | D3=A; C5g deferred pending #23/#39, mandatory Core capability incomplete; future design begins with a concrete transaction |
+| C5-R14 · G11/G14/G16; R03/R06/R13/R16 | Retained history no implicit TTL; transient retention separately bounded; consumption never becomes a fresh operation; no restored credentials/content after recovery | Cross-cutting C5; selected D6 denies expired-copy replay even under otherwise valid authority, requiring renewed expectations, affected review and explicit §9.6 disposition before implementation |
+| C5-R15 · G01/G15/G18; R01/R14/R17/R18 | Every new management route rejects context credentials; actual synthetic browser/HTTPS/SQLite journey and early denial regressions; complete C5 roadmap disposition | C5h; C6 integration/bypass cleanup, C7 MCP/real clients/N4, C8 package/profile qualification remain separate |
+
+Blocking dependencies prevent only the named branches while independent planning
+and later authorized work continue. They cannot be relabeled as completed C5 or
+used to waive a MUST. Required source/OS/browser/persistence evidence, independent
+complete-diff review and all applicable exact-candidate CI follow the unchanged
+workflow. The original planning-only checks remain historical; the activated runtime
+candidate and focused evidence are recorded in the
+[C5 implementation checkpoint](README.md#c5-implementation-checkpoint-2026-11-15-utc).
+C5-R01–R12/R14/R15 are implemented within the stated experimental boundaries,
+with final candidate review/CI pending. C5-R13 remains an explicit capability gap.
+
 ## Assessment Boundary And Next Use
 
 The [alignment plan](README.md) owns architecture choices, activation decisions,

@@ -144,7 +144,9 @@ async function fixture(t, options = {}) {
   fs.mkdirSync(certDir, { mode: 0o700 });
   const tls = certificates(certDir),
     human = secret(),
-    callbacks = [];
+    callbacks = [],
+    notificationRequests = [];
+  let notificationNow;
   let server;
   t.after(async () => {
     if (server) await server.close();
@@ -153,6 +155,44 @@ async function fixture(t, options = {}) {
   });
   const callbackServer = https.createServer(tls, async (req, res) => {
     const host = req.headers.host;
+    if (
+      options.notifications &&
+      host === `client-a.hcp.test:${callbackPort}` &&
+      req.url === "/revocations" &&
+      req.method === "POST"
+    ) {
+      const chunks = [];
+      for await (const b of req) chunks.push(b);
+      const token = Buffer.concat(chunks).toString();
+      notificationRequests.push({ token, headers: req.headers });
+      const payload = JSON.parse(
+        Buffer.from(token.split(".")[1], "base64url").toString(),
+      );
+      const stale =
+        options.notificationStrictAge &&
+        Math.abs((notificationNow ?? Date.now()) / 1000 - payload.iat) > 300;
+      const status = stale
+        ? 400
+        : (options.notificationStatuses?.[
+            Math.min(
+              notificationRequests.length - 1,
+              options.notificationStatuses.length - 1,
+            )
+          ] ?? 202);
+      if (options.notificationBody === "oversized") {
+        res.writeHead(status).end("x".repeat(5000));
+        return;
+      }
+      if (options.notificationBody === "stalled") {
+        res.writeHead(status);
+        res.flushHeaders();
+        return;
+      }
+      res
+        .writeHead(status, { "content-type": "application/json" })
+        .end(status === 400 ? JSON.stringify({ err: "invalid_request" }) : "");
+      return;
+    }
     if (
       !["a", "b"].some(
         (id) => host === `client-${id}.hcp.test:${callbackPort}`,
@@ -190,8 +230,27 @@ async function fixture(t, options = {}) {
       name: "Synthetic fixture operator",
     },
     redirectUri: redirects[id],
+    ...(options.notifications && id === "a"
+      ? {
+          notificationEndpoint: `https://client-a.hcp.test:${callbackPort}/revocations`,
+          legalRetention: {
+            record: "Synthetic record",
+            obligation: "Synthetic legal requirement",
+            period: "7 years",
+          },
+        }
+      : {}),
   }));
-  const { childProcess, approveFixtures, ...startup } = options;
+  const {
+    childProcess,
+    approveFixtures,
+    notifications,
+    notificationStatuses,
+    notificationStrictAge,
+    notificationBody,
+    ...startup
+  } = options;
+  if (notifications) startup.notificationCa = options.notificationCa ?? tls.ca;
   if (approveFixtures) {
     startup.pendingApproval = true;
     if (childProcess) startup.approveFixtures = true;
@@ -218,6 +277,11 @@ async function fixture(t, options = {}) {
     redirects,
     clients,
     callbacks,
+    notificationRequests,
+    notificationClock: (value) => {
+      notificationNow = value;
+    },
+    notificationTls: (value) => callbackServer.setSecureContext(value),
     request: (route, opts) => request(new URL(route, server.issuer), tls, opts),
     management: (route, opts = {}) =>
       request(new URL(route, server.issuer), tls, {

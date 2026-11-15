@@ -2,7 +2,7 @@
 
 - Status: relationship and design reference; source gaps documented, conformance not established
 - Read when: planning HCP alignment or changing an HCP mapping or conformance claim
-- Last reviewed: 2026-11-14
+- Last reviewed: 2026-11-15 UTC
 
 ## Relationship And Ownership
 
@@ -60,44 +60,44 @@ migration history may be deleted; preservation and historical conversion are not
 required. Start with a fresh HCP schema and isolated synthetic stores. Prioritize
 working HCP behavior quickly and concrete adoption findings that lead to reusable
 specification, guidance, or tooling fixes. Deployment/adapter support is a separate
-C0 decision, now settled as SQLite only. C1–C3 merged in PRs #204–#206;
-[PR #206](https://github.com/loyalagents/context-router/pull/206) completed the
-isolated synthetic read-only HTTPS journey and its final qualification. The product
-owner activated bounded C4 on November 9 from
-`a1ad0c6c248af74f8353c26c7a86f2f43f1ee2ec`: writes and Memory Manager, beginning
-with retry/erasure and lifecycle-history decisions, then independent concrete-plan
-review before dependent tests-first implementation. The corrected C4 plan has
-conditional independent approval for its earlier contract. On November 11 Lucas
-selected invalidation of affected cached responses when permissions change,
-preserving duplicate suppression; the changed plan passed affected review.
-On November 13 Lucas selected original-request completion-only success after known
-commit, with separately authorized response data, and resumed C4. The changed plan
-passed affected review before dependent backend edits. Isolated person/model writes,
-typed conflicts, private proposal staging, retry and management history are implemented;
-focused tests and three TLS-verified browser journeys pass. Candidate `ec6eb027`
-completed independent review and exact-candidate CI in
-[PR #207](https://github.com/loyalagents/context-router/pull/207). Lucas authorized
-the November 14 Claude-review correction batch; affected review and renewed
-candidate evidence are tracked in that PR and the
-[follow-up record](../plans/active/hcp-alignment/README.md#c4-claude-follow-up-2026-11-14).
-C3 results are historical,
-not C4 evidence. C5–C8 remain unactivated. See the canonical brief for ownership,
-decision dependencies and exact evidence.
-Lucas explicitly authorized an update to existing hcp-spec
-[#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594) for this permission decision; the comment is posted and verified.
-The focused committed-write proposal is published in
-[#36](https://github.com/loyalagents/hcp-spec/issues/36), with research evidence and
-the slow-commit question explicitly excluded. This is a selected application
-experiment, not conformance to the pin.
-The November 14 authorization also published conflict-lifecycle
-[#37](https://github.com/loyalagents/hcp-spec/issues/37), mutation-purpose
-[#38](https://github.com/loyalagents/hcp-spec/issues/38), and extension-presentation
-evidence on [#29](https://github.com/loyalagents/hcp-spec/issues/29#issuecomment-6885856155).
-The corrected experiment considers active and conflicted candidates, selects a
-supported purpose allowed by the old/new assertion for person writes, and refuses
-previous experimental store formats without migrating or resetting their content. These are bounded
-application choices, not adoption of new normative rules. Specification sources,
-the sibling checkout and the target revision remain unchanged.
+C0 decision, now settled as SQLite only. C1–C4 merged in PRs #204–#207. The
+[C4 merge record](../plans/active/hcp-alignment/README.md#c4-merge-and-c5-planning-ownership-2026-11-14)
+binds final review/CI to merge `666f9d1b5ff3dde322ad4c368b44d2f4399f203e`.
+C4 implements isolated person/model writes, immutable versions, confirmation and
+lifecycle history, private staging, structural conflicts and durable retries.
+Permission changes permanently invalidate affected response candidates while
+preserving duplicate suppression. Known committed writes can acknowledge minimal
+success on their original channel, with response data authorized separately.
+These are bounded application contracts, not full pinned-spec conformance.
+
+**C5 is activated for bounded implementation after independent plan approval.** Its
+[proposed plan](../plans/active/hcp-alignment/README.md#c5-planning-and-decisions-2026-11-14)
+and [question record](../plans/active/hcp-alignment/spec-questions.md#c5-planning-adoption-disposition-2026-11-14)
+separate requirements, product choices, pin conflicts and acceptance tests for
+remaining governance and portability. D3 hard deletion is deferred until audit/replay semantics are clarified; full Core
+capability remains incomplete. The other selected directions proceed with explicit
+experimental contracts and iterative review. Relevant hcp-spec issues are authorized;
+source edits, revision adoption, merge, release and C6–C8 remain outside scope.
+Earlier C4 draft/pending passages do not describe current ownership.
+
+The [C5 implementation checkpoint](../plans/active/hcp-alignment/README.md#c5-implementation-checkpoint-2026-11-15-utc)
+records the bounded runtime candidate and evidence: governance, persistent refresh,
+audit summaries/reporting, synthetic SET delivery and reviewed v2 portability.
+Targeted checks passed; final complete-diff review and exact-candidate CI remain
+pending. Hard deletion, broader import/reporting cases and C6–C8 remain incomplete.
+
+Lucas's bounded C4 publication authorization produced permission-cache feedback
+on [#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594),
+committed-write [#36](https://github.com/loyalagents/hcp-spec/issues/36),
+conflict-lifecycle [#37](https://github.com/loyalagents/hcp-spec/issues/37),
+mutation-purpose [#38](https://github.com/loyalagents/hcp-spec/issues/38), and
+extension-presentation evidence on [#29](https://github.com/loyalagents/hcp-spec/issues/29#issuecomment-6885856155).
+These are submitted proposals, not merged/adopted resolutions. Conservative
+old/new purpose intersection, dormant deadlines and slow physical COMMIT remain
+explicit limitations. The experiment considers active and conflicted candidates
+and refuses older experimental formats without migration/reset; SQLite hot-journal
+recovery may precede application admission. Specification sources, the sibling
+checkout and the target revision remain unchanged.
 
 [Open Draft 3 questions](../plans/active/hcp-alignment/spec-questions.md)
 stay in Context Router while the upgrade tests the current HCP specification,

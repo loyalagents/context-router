@@ -1,4 +1,5 @@
 /** Bounded experiment policy vocabulary; authority is never inferred from login. */
+export const CREDENTIAL_FAMILY_SECONDS = 30 * 86400;
 export const ACCESS_TYPE =
   "https://hcp.example/spec/authorization/context-access";
 export const CATEGORIES = {

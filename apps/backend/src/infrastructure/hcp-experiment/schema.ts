@@ -2,9 +2,9 @@ import { DatabaseSync } from "node:sqlite";
 
 export const DATA_APPLICATION_ID = 0x48435031;
 export const LEASE_APPLICATION_ID = 0x48434c31;
-// Version 1 graphs may omit quarantined candidates. Refuse application admission;
+// Earlier experiments lack persistent-grant/disclosure contracts. Refuse admission;
 // the isolated experiment has no in-place migration or automatic reset.
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 export const DATA_SCHEMA = [
   `CREATE TABLE store_metadata (
     singleton INTEGER PRIMARY KEY CHECK(singleton=1), root_id TEXT NOT NULL,
@@ -59,13 +59,21 @@ export const DATA_SCHEMA = [
   ) STRICT`,
   `CREATE TABLE client_subjects (client_id TEXT PRIMARY KEY, pseudonym TEXT NOT NULL UNIQUE) STRICT`,
   `CREATE TABLE grants (
-    id TEXT PRIMARY KEY, client_id TEXT NOT NULL, expires_at INTEGER NOT NULL,
+    id TEXT PRIMARY KEY, client_id TEXT NOT NULL, expires_at INTEGER,
     status TEXT NOT NULL CHECK(status IN ('active','revoked','expired')), document TEXT NOT NULL CHECK(json_valid(document))
   ) STRICT`,
   `CREATE TABLE grant_refs (
     grant_id TEXT NOT NULL REFERENCES grants(id), entry_id TEXT NOT NULL REFERENCES entries(id),
     ref TEXT NOT NULL UNIQUE, PRIMARY KEY(grant_id,entry_id)
   ) STRICT`,
+  `CREATE TABLE revocation_outbox (
+    grant_id TEXT PRIMARY KEY REFERENCES grants(id), client_id TEXT NOT NULL, endpoint TEXT NOT NULL,
+    revoked_at TEXT NOT NULL, last_use_until TEXT NOT NULL, token TEXT,
+    attempts INTEGER NOT NULL DEFAULT 0 CHECK(attempts>=0 AND attempts<=5), next_attempt INTEGER NOT NULL,
+    state TEXT NOT NULL DEFAULT 'pending' CHECK(state IN ('pending','delivered','abandoned'))
+  ) STRICT`,
+  `CREATE TRIGGER notification_identity_immutable BEFORE UPDATE OF grant_id,client_id,endpoint,revoked_at,last_use_until ON revocation_outbox BEGIN SELECT RAISE(ABORT,'immutable notification'); END`,
+  `CREATE TRIGGER notification_token_immutable BEFORE UPDATE OF token ON revocation_outbox WHEN OLD.token IS NOT NULL BEGIN SELECT RAISE(ABORT,'immutable notification token'); END`,
   `CREATE TABLE grant_permissions (
     grant_id TEXT PRIMARY KEY REFERENCES grants(id), revision INTEGER NOT NULL CHECK(revision>=1)
   ) STRICT`,
