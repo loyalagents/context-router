@@ -5,6 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import net from "node:net";
 import https from "node:https";
+import { X509Certificate } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
 import { spawn, execFileSync } from "node:child_process";
 import { once } from "node:events";
 import { createRequire } from "node:module";
@@ -421,6 +423,14 @@ test(
           key: source.tls.key,
           cert: fs.readFileSync(path.join(invalid, "test.pem")),
         };
+        if (kind === "expiry") {
+          // X.509 timestamps have second precision. A zero-day leaf can still
+          // be accepted during its final second by a fast browser launch.
+          const notAfter = Date.parse(new X509Certificate(tls.cert).validTo);
+          assert.ok(Number.isFinite(notAfter) && notAfter <= Date.now());
+          await delay(Math.max(0, notAfter + 1_000 - Date.now()));
+          assert.ok(Date.now() >= notAfter + 1_000);
+        }
       }
       let hits = 0;
       server = https.createServer(tls, (_req, res) => {
@@ -429,8 +439,12 @@ test(
       });
       await new Promise((r) => server.listen(port, "127.0.0.1", r));
       await assert.rejects(
-        openSourceBrowser(sandbox, { headless: true }),
+        async () => {
+          // Retain unexpected success so the failure hook still owns cleanup.
+          browser = await openSourceBrowser(sandbox, { headless: true });
+        },
         (e) => e.message.includes(expected),
+        `${kind} fixture must reject with ${expected}`,
       );
       assert.equal(hits, 0);
       server.closeAllConnections();

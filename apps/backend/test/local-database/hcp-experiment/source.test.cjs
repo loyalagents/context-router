@@ -116,18 +116,23 @@ test("source bootstrap approval keeps its original deadline and never publishes 
   const root = sandbox(t),
     selected = await port(),
     realNow = Date.now;
-  let now = realNow();
-  Date.now = () => now;
+  let offset = 0,
+    reviewed = false;
+  // Keep real certificate time during initialization; the store captures this
+  // forwarding clock and must observe the offset applied after review.
+  Date.now = () => realNow() + offset;
   try {
     await assert.rejects(
       initializeSource(root, selected, async (review) => {
-        now += 300_001;
+        reviewed = true;
+        offset = 300_001;
         return approve(review);
       }),
     );
   } finally {
     Date.now = realNow;
   }
+  assert.equal(reviewed, true);
   assert.equal(fs.existsSync(path.join(root, "launcher/ready.json")), false);
   assert.equal(rows(root, "entries").length, 0);
   await assert.rejects(serveSource(root));
