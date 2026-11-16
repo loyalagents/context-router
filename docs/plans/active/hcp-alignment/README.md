@@ -1,7 +1,7 @@
 # HCP Alignment Plan
 
-- Status: C1–C4 merged; bounded C5 implementation authorized after plan review; hard deletion deferred; C6–C8 unactivated; no conformance claim
-- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C5 chat `01a1dcfd-96ec-7590-8682-b40ea62e0d5f` owns planning/implementation integration; orchestrator and reviewers are repository-read-only
+- Status: C1–C5 bounded work merged; C6 first source slice implemented in working candidate, final review/CI pending; hard deletion deferred; C7/C8 unactivated; no conformance claim
+- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C6 step coordinator owns implementation coordination; `c6_implementation` is sole writer; coordinator/reviewers are repository-read-only during that handoff
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
 - Assessment date: 2026-11-07
@@ -9,9 +9,9 @@
 - Relationship and ownership: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
 - Protocol questions: [local Draft 3 adoption notes][questions]
 
-Current work: [C5 activated plan and decisions](#c5-planning-and-decisions-2026-11-14).
+Current work: [C6 implementation activation](#c6-implementation-activation-2026-11-15), following the independently reviewed concrete plan.
 Earlier activation, writer, pending/draft and freeze-time passages below are
-historical records, superseded by the [C4 merge record](#c4-merge-and-c5-planning-ownership-2026-11-14).
+historical records, superseded by the [C5 merge and C6 ownership record](#c5-merge-and-c6-planning-ownership-2026-11-15).
 
 ## Outcome And Scope
 
@@ -3068,6 +3068,691 @@ client, recipient compliance, human product acceptance or full-profile evidence 
 claimed. C6–C8, hard deletion, post-revocation reporting, broader import cases and
 protocol resolutions remain explicitly outstanding. The coordinator owns authorized
 upstream issue updates and draft-PR/CI publication after sole-writer handback.
+
+## C5 Merge And C6 Planning Ownership (2026-11-15)
+
+Lucas requested C6 in a new step chat, **planning only**, with the original chat
+remaining orchestrator and `hcp-spec` unchanged. C5 and its agents yielded before
+this transfer. Arrival verified clean `main` at
+`c3c953a769596930b5b760735344f3f89626fd55`; this planning branch is
+`codex/hcp-c6-application-plan`, using the existing checkout. One C6 coordinator
+writes planning/status documents; investigators and reviewers remain read-only.
+No C6 runtime, test implementation, launch, build, reset, installed/personal-state
+operation, publication or C7/C8 activation is authorized.
+
+Bounded C5 is human-merged in [PR #208](https://github.com/loyalagents/context-router/pull/208).
+The orchestrator verified merge `c3c953a769596930b5b760735344f3f89626fd55`, parents
+`666f9d1b5ff3dde322ad4c368b44d2f4399f203e` and
+`f9206432c5725b9b05e9674aff6df3a8bd6a2dbe`. The reviewed head, actual merge and CI
+merge `d0805c9b825db2afe5bd4cf7db0cd47b5ed84661` share tree
+`41fa7bf18ef5b8b92b83adcbd4ffb2c9bfe2763c`.
+[Regular CI](https://github.com/loyalagents/context-router/actions/runs/43686924781)
+and [migration CI attempt 1](https://github.com/loyalagents/context-router/actions/runs/43686924767)
+passed, with source/UI/packaging receipts and the combined verifier. Source input
+SHA256 was `d6fe695132e500214685876051c7e9b64573fb6a6c5f0d40c29f4b11b39360d0`;
+base manifest was `4e7bae573b7edb96008246b621c64c06dc7ac0a23d0982a03c632656a98a7a06`.
+PR #208 owns final evidence and complete-diff/affected independent review approvals;
+this is transferred C5 evidence, not a new C6 test run. Earlier C5 writer, draft,
+pending and freeze passages are historical, including the checkpoint immediately above.
+
+**Preserved negative evidence:** two local in-band HCP aggregates crashed after
+9 and 17 passing suites. Both macOS reports show `EXC_BAD_ACCESS` in V8
+`ClearStaleLeftTrimmedPointerVisitor` during GC, without an assertion failure;
+cause is unknown and neither aggregate passed. The remaining six suites passed
+54 tests in a fresh process. All 23 suites have scoped passing Mac evidence,
+including four C5 native HTTPS/process wrappers; successful CI does not diagnose
+the local crash. Independent review selected no additional broad local run for
+that C5 candidate. Reopen investigation if affected focused tests, CI or the
+application/fixture server reproduce it. No full local migration gate,
+installed-artifact, cross-boot/power-loss, real-client/model, recipient-compliance
+or full-profile qualification was established.
+
+C5-D1–D6 and the final correction contracts remain selected: rotating fixed-family
+refresh, exact person correction with principal restrictions and separate disclosure
+authority, hard-delete deferral, exact subject attestation, unambiguous manual v2
+transfer and expired-copy replay denial with duplicate suppression. Known-commit
+minimal completion on the original channel and permanent permission-change receipt
+invalidation remain. Restored permissions never revive invalidated receipts.
+
+The normative target remains `2e2939c9bebcefb3bed7bb3522231c0e4d65a315`; original
+adoption materials remain `b764a058eac15a4cd843892e60473089b2e835bb`. The clean
+sibling `hcp-spec` at `5fc62a413794b5927f1251968e04381044af92c1` is **not** the
+target. C6 planning leaves it unchanged locally and remotely, including branches,
+issues/comments, builds and publication. C4/C5 issue permissions do not carry into
+this assignment. Read-only pinned material research supplies planning evidence only.
+
+## C6 Application Planning (2026-11-15)
+
+**Proposal, not runtime activation:** one cohesive source application slice:
+start an explicitly selected isolated synthetic HCP dashboard, enumerate retained
+entries, review an exact person correction, approve its short-lived write authority,
+save once, inspect state/version/history, then close and reopen the same store.
+This is the first useful application journey inside C6; it does not complete the
+C6 roadmap. The [refreshed access-path inventory and acceptance matrix](gap-analysis.md#c6-current-access-path-inventory-2026-11-15)
+are part of this proposal, not runtime evidence.
+
+### Product And Composition Recommendation
+
+Use the existing HCP provider's same-origin `/manage` surface as the first source
+dashboard. Improve its list, detail, correction review and history presentation;
+add an explicit source launcher. `http.ts` already supplies this journey and
+`authority.ts` supplies its authority and durable operation semantics. The new
+work makes that foundation a deliberately runnable, reviewable application surface
+instead of a test-harness-only experience. Do not present unchanged C5 behavior as
+new C6 evidence: acceptance runs through the new launcher and actual browser.
+
+| Choice | Recommendation and consequence |
+| --- | --- |
+| Delivery | Source only, owned synthetic root and browser profile. No installed menu/package integration or ordinary personal/demo slot selection. |
+| UI/composition | Evolve provider-rendered `/manage`; reuse visual patterns selectively. Do not load `LocalUiApplicationModule`, Apollo, generated GraphQL hooks, legacy session transport or the ordinary Next dashboard. They bring legacy storage/MCP/model contracts into the boundary. A Next shell is a later product choice only if it provides concrete value. |
+| First workflow | Human enumeration, one plain-text synthetic correction, exact approval, current/previous version and audit inspection, reopen. Enumeration includes all retained lifecycle states, visibly labeled. It is management inspection, never a bulk Context Client query. |
+| Other C5 controls | Keep existing grants/revoke, confirmation/conflict, classification, rules/directives, summaries and v2 transfer controls reachable as clearly labeled experimental management pages. Their authority does not change. The first slice does not redesign them or claim all cases supported. |
+| Legacy product workflows | Profile projection, document analysis/apply, form fill, smart search, schema/definition and location editing, old seeds/demo/eval import/export, reset/history clear remain absent from the HCP dashboard/composition. The inventory gives each path an explicit disposition. |
+| Data | Synthetic fixtures and synthetic typed corrections only. No pasted personal data, source documents, real model calls, hosted services or external assistant setup. New HCP history persists; legacy-discard permission does not authorize its reset. |
+
+These are recommendations for Lucas's eventual runtime activation, not new
+questions about accepted breaking contracts or optional security guarantees.
+Source-only is sufficient for this proposal; installed delivery, actual inference
+and personal-data exposure need their own selected scope. No compatibility adapter,
+legacy conversion, dual write, migration chain or backup prerequisite is proposed.
+Unrelated legacy runtime and CI remain operational until separately replaced.
+
+### Entry Point, Initialization And Recovery Contract
+
+Proposed source command family: `pnpm --filter backend hcp-source initialize
+--sandbox <absolute-path> --port <port>` and `hcp-source serve --sandbox <absolute-path>`,
+using a new small CLI entrypoint, a non-listening initializer and the existing
+`createSyntheticAuthorization` serving composition. These names are planned
+interfaces, not commands available today. Keep initialization separate from reopen; no
+implicit create-on-open, reset, fallback root or automatic legacy-store adoption.
+
+- Require an explicit private synthetic sandbox and its HCP data child. Keep
+  launcher credentials, certificate material and the owned browser profile in
+  separately validated private siblings, outside the strict HCP data directory.
+  Record the source instance's exact issuer/resource/port, complete synthetic A/B
+  registrations (including fixed redirect origins), certificate and store identity
+  for reopen. Persisted authorization configuration is compared exactly, not just
+  by port; A/B may remain inactive and no callback client needs launching here.
+  Do not infer installed roots from environment or user home.
+- Fresh initialization uses the existing approved-fixture bootstrap mode. Show
+  the exact synthetic bundle and obtain an explicit local approval, acting as the
+  named synthetic persona, bound to its digest before listening. Use the non-listening store/authority path for this
+  initialization; `createSyntheticAuthorization` currently listens before its
+  `initialize` callback and only then attaches the request handler. Its callback
+  alone is therefore not pre-listen review. Finalize the launch descriptor only
+  after approved initialization; a crash in publication cannot imply readiness. The current test callback's
+  automatic fixture approval is test evidence only. Do not reuse it as a human
+  consent claim. Cancellation, expiry or interruption never implicitly approves
+  the bundle; an unproven partial state refuses with an explanation.
+- Select literal loopback and an owned `as.hcp.test` HTTPS origin. Initialization
+  records the explicit configured port without binding it; `serve` alone binds
+  that exact port. Preserve the issuer on reopen; a busy or mismatched port fails
+  without falling back to another origin. Reuse only the already tested fixture TLS
+  approach: a separate pinned Chromium profile with profile-local CA trust and
+  resolver mapping, ordinary certificate verification and an explicit launcher
+  action to open it. No OS trust store, hosts file, existing browser profile,
+  global TLS-ignore flag or automatic dependency/model download changes.
+- Generate/read the synthetic human management credential through an exact private
+  file; no secret in argv, URL, environment diagnostics or stdout. The launcher
+  reports the credential file path and owned origin, never its value. Preserve
+  that identity and credential on reopen; never rotate them as recovery. Missing
+  launch descriptor, changed registrations/credential or expired certificate
+  refuses without regeneration or metadata repair. Browser sign-in still does
+  not grant content-write authority.
+- Reopen admits schema 3 through the existing ownership/lease checks, reuses
+  retained entries/history/policy/grants, and closes bootstrap authority. Reject
+  older experimental schemas, wrong roots, symlinks, incomplete setup and a live
+  or unproven prior owner. Do not chmod unrelated paths, remove journals, repair
+  metadata or silently dispose of a failed instance. Existing SQLite hot-journal
+  recovery may precede logical admission; cold-refusal claims retain that limit.
+- Close the owned browser and provider cleanly with bounded termination and reaping.
+  An unclean stop requires stopped-owner proof before reopen. Preserve C5's
+  durable session/review contract: valid sessions and reviews keep their original
+  absolute deadlines, bindings, consumption and current-policy checks; expired
+  sessions require sign-in. The launcher opens a fresh GET of the entry list,
+  never restores/submits a pending POST or retries a mutation. A new edit needs a
+  new exact review. Original-review recovery remains bounded by its existing
+  binding/deadline; uncertain results require separate state/history inspection.
+  Context grants also retain their selected C5 lifetimes; no authority renewal.
+- No reset/delete command in this first launcher. A fresh instance uses a new
+  explicitly owned sandbox; any later disposal/reset has its own bounded stopped-
+  owner and target checks. Tests may tear down their own fixtures, never the user's
+  app. Keep actual installed identity/data, documents, models and clients untouched.
+
+The launcher must keep browser/profile ownership and store ownership distinct;
+a profile failure cannot reset the database, and a running profile cannot be
+modified behind its owner. Trust setup is a bounded source fixture convenience,
+not an installed trust/distribution solution. Exact supporting files and ownership
+receipt fields should stay small; no generic supervisor or packaging framework.
+
+### Data And Authority Through The Journey
+
+Reuse `managementEntries`/`managementEntry` and `audit` for authenticated human
+inspection, with final authority checks after serialization/rendering. Do not
+route the UI through raw `inspectEntries`, legacy repositories, SQLite handles,
+Context Client query or export as a substitute listing API. Keep whole retained
+entry inspection distinct from minimized grant-bound client disclosures.
+
+For the first editor, accept plain-text General Context statements only. Structured
+JSON entries and unsupported declaration/profile targets remain inspectable, with
+correction unavailable in this editor. Offer correction only for the supported
+active/conflicted/expired/deprecated states; deleted/suspended/revoked entries stay
+inspectable without a misleading edit action. Include a clearly synthetic string
+fixture for the journey, rather than assuming the existing object fixture is editable.
+Never stringify an object and save the string as if its type were unchanged. Show the full exact proposed statement, old and new
+assertion facts, target/current version, retained categories and principal-purpose
+restrictions, selected purpose, expiry and new person provenance before approval.
+Revisions replace content/assertion/evidence whole: make evidence removal, assertion
+restriction changes and absence of inherited confirmations visible rather than
+silently copying another asserter's facts. Preserve unknown content members unless
+the reviewed new contract explicitly changes them; raw extensions never establish
+provider assurance. A future richer editor must define those replacement semantics.
+
+Call `reviewPersonWrite` then `commitReviewedPersonWrite` and `releaseWrite` through
+the existing same-origin forms, session and CSRF boundary. Approval authorizes the
+exact one-use person-write capability; management login alone does not. Keep the
+C5-D2 exception only for this exact person revision, preserving current principal
+restrictions; Context Client old/new purpose intersection remains unchanged. Bind
+body, target/version, category/action/purpose, current graph/policy generation,
+session, CSRF and deadline. Changed-then-restored policy cannot revive an approval.
+Stale review means no mutation and a fresh review, never silent overwrite.
+
+One transaction commits immutable version, truthful person provenance, graph/lifecycle
+effects, durable audit and operation receipt. On lost reply or interrupted navigation,
+do not automatically repeat the mutation. A known durable original-channel result
+may say committed without protected details; an uncertain error must remain uncertain.
+Offer separate authenticated state/history inspection. Displaying current state
+alone cannot prove an earlier attempt rolled back. Late session/policy expiry cannot
+leak entry IDs, content, history or protected redirects after final rendering.
+Expired cached copies remain denied; duplicate suppression remains durable.
+
+All retained C5 pages and `/v2` routes keep their existing boundaries. Old GraphQL,
+MCP, `/api/local`, upload/AI and schema-resource URLs are absent on this origin;
+legacy credentials cannot authenticate it. The current test-only synthetic producer
+stays test-only and runs no model. No new public staging endpoint is introduced.
+
+### Affected Files, Dependencies And Internal Checkpoints
+
+One writer integrates the slice in one cohesive PR after explicit runtime activation.
+Checkpoint names describe testable progress, not separate PRs or new approvals.
+
+| Checkpoint | Files/contracts and order | Tests-first acceptance |
+| --- | --- | --- |
+| C6a · source admission | New backend `hcp-source` entrypoint/launcher; `composition/hcp-authorization.ts`; existing `ownership.ts`, `store.ts`, fixture bootstrap and package script only as needed. First lock explicit root/issuer/credential/profile selection. | Failing source-command tests for fresh approval, cancellation, exact reopen, wrong/live/partial roots, stable issuer and credential, no fallback, no legacy/environment root selection and no secret output; actual process/SQLite admission and cleanup. |
+| C6b · person dashboard | `infrastructure/hcp-experiment/http.ts`; extract small presentation helpers only if needed; reuse authority/write/audit contracts. Rebuild listing/detail/review/history presentation; constrain the first editor. | Failing HTTP tests for all retained states and exact replacements, structured/unsupported-target refusal, full review effects, stale versions/same-version policy, CSRF and context-token denials. Final render/session-expiry checks on every changed page, including committed correction acknowledgement. |
+| C6c · cohesive browser/reopen | New focused source-launcher/browser scenarios beside existing HCP tests; `apps/web/test/hcp-oauth-browser.test.mjs` supplies the pinned profile-trust pattern, not an ordinary web composition dependency. | Actual TLS Chromium fresh initialize → sign in → enumerate → review/cancel → approve once → state/history/previous version → close/reopen; valid-session reopen and expired-session sign-in; original review deadlines/consumption, no automatic POST replay, retained history and no bootstrap reseed. Negative TLS, origin, credentials and legacy endpoints. Kill before/after commit, lost reply and audit failure: no partial state or duplicate write. |
+| C6d · isolation and handoff | Extend `test/local-database/hcp-experiment/isolation.spec.ts` for the exact new launcher import boundary; source contract/document readers and canonical records. No blanket HCP import exemption. | Every inventory family remains absent/excluded; actual legacy adapter refuses HCP root and renamed copied database; no old GraphQL/MCP/prompt/export path receives a store handle. Independent complete-diff review; scoped Mac evidence and all applicable exact-candidate CI. |
+
+The new entrypoint is planned, not an existing file. Existing C5 modules are reuse
+candidates, not a requirement to refactor them all. Keep `schema.ts`, dependencies,
+CI mechanisms, native packaging and unrelated app composition unchanged unless a
+concrete required implementation change is identified and reviewed. If source
+browser launch uses Playwright already installed in the web workspace, use its pinned
+executable/prerequisite without booting Next or moving that dependency by default.
+
+Validation selection follows the [policy matrix](../../../useful/AGENT_WORKFLOW.md#default-and-exceptions):
+backend tests first; focused source/HTTP/SQLite ownership, interruption and browser
+checks after each behavioral change; affected Mac filesystem/process/TLS evidence
+for the launcher; complete-diff independent review and exact-candidate CI for the
+runtime PR. Existing HCP suites and consumer contracts renew only where affected;
+use isolated resources and stable build inputs. Plan actual commands around the
+existing Jest local-database wrappers and Node browser tests, checking pinned Node
+24.21.0, pnpm 10.25.0 and browser prerequisites first. No full local migration gate
+is selected without a named gap it closes beyond these checks and CI. New source
+checks must run in existing applicable test lanes without weakening CI triggers.
+
+Proposed implementation finalization milestone: the C6a–d journey and denials pass,
+known corrections and affected reviews are resolved, a bounded source synthetic
+human retest is completed or explicitly scheduled, and all matrix rows have evidence
+or a named exclusion. Agree that milestone at activation, freeze the candidate,
+then run applicable final gates. Source CI does not qualify an installed artifact.
+Mac other-hardware, installed packaging, physical power loss/cross-boot, real models,
+real hosts and recipient obligations remain explicitly unproved. C5's unexplained
+local aggregate crash remains in the handoff; a recurrence requires investigation,
+not relabeling as a harmless test-runner defect.
+
+### Remaining C6 Roadmap And Adoption Disposition
+
+After this first slice, C6 still owns selected application workflow replacement:
+profile/manual entry UX, document review/apply with truthful actual producer/model
+provenance, location/category/schema disposition, synthetic seed/demo workflows,
+and explicit fresh-initialization/reset delivery. Each needs selection and the same
+complete producer/consumer exclusion check before exposure. Old preference paths
+and migration history may be removed when their affected consumers are replaced or
+excluded and unrelated retained compositions have a disposition; this source slice
+does not delete them merely because they are legacy. Source-only completion cannot
+be called full C6 completion or installed application adoption.
+
+Personal-data extension must revisit C5-D3 hard deletion first; sensitive real-data
+exposure also requires CR-Q9 resolution and explicit adoption. Actual model/document
+and installed delivery are separate bounded choices. C7 owns HCP MCP, real hosts,
+HTTP/MCP parity, CR-Q8 and N4; C8 owns complete package/profile claims. N3's coincident
+grant/token tests still do not independently prove the grant deadline. Broader
+import standing/history, post-revocation reporting, OAuth breadth and dormancy
+remain limited under C5's records.
+
+The [C6 adoption disposition](spec-questions.md#c6-planning-adoption-disposition-2026-11-15)
+records pinned sources, application interpretation, owners and revisit conditions.
+Existing material is sufficient for the bounded proposal; no general integration
+skill or new protocol framework is justified. No upstream writes or target change
+occur in C6 planning. Issue submission alone is not adoption or an eventual fix;
+the orchestrator owns separately authorized follow-through.
+
+### Planning Review And Validation
+
+Sensitive/quality-first reasoning is used for authority, persistence and composition.
+The coordinator uses the user's configured defaults; underlying model/effort is not
+independently observable. Read-only source inventory requested `gpt-6-astra`/`high`;
+authority/recovery investigation and fresh concrete-plan review request
+`gpt-6-astra`/`xhigh`. Accepted spawn settings are observable; actual execution tiers
+remain unverified. The coordinator is the sole planning writer.
+
+**Independent review approved, no unresolved blockers.** Fresh reviewer
+`plan_review` covered the complete five-file planning diff against base
+`c3c953a769596930b5b760735344f3f89626fd55`, substantive diff SHA256
+`8ec237a38409fb3411a7a17f73d403a42479f3d3de8de6038177d5be9ff23ed9`.
+Scope: authority/privacy/provenance, composition/bootstrap, browser/store ownership,
+recovery, complete producer/consumer exclusions, UI scope, acceptance and historical
+evidence. Two plan inconsistencies were corrected and rechecked: retain C5's
+actual persisted session/review contract instead of asserting blanket invalidation;
+record a configured port during non-listening initialization and bind only in
+`serve`. The inventory's source filenames preserve all six legacy tools and
+route-family denials. Review approval is planning-only, not runtime activation or
+implementation evidence. Final changes after that hash only record these results
+and handback; substantive review coverage carries forward unchanged.
+
+**Documentation validation:** pinned Node 24.21.0/pnpm 10.25.0 check passed. Reader
+discovery searched paths, filenames and asserted status/contract wording across
+apps/scripts/workflows, including constructed/basename readers and the maintained
+nonruntime lane. On this docs-only working tree:
+
+- `node --test scripts/check-markdown-links.test.mjs scripts/print-repo-structure.test.mjs scripts/local-migration/ci-path-filters.test.mjs scripts/local-migration/check-contract-baseline.test.mjs`: **120 passed**.
+- Backend `jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts`: **8 passed**; web `web-runtime-config.test.mjs`: **5 passed**; orchestrator `node --import tsx --test test/operator-docs.test.ts`: **1 passed**.
+- `node scripts/check-markdown-links.mjs`: **161 Markdown files passed**;
+  `check-nonruntime.mjs` with `MIGRATION_GATE_BASE_SHA=c3c953a769596930b5b760735344f3f89626fd55`:
+  **passed, baseComparison=performed**; `git diff --check`: **passed**.
+  The first baseline check identified duplicate wire-contract references in the
+  new inventory; replaced those with exact implementation-file pointers and
+  retained every denial obligation. No registry, test or gate was weakened/changed.
+
+Logs are `/tmp/c6-planning-doc-checkers.log`, `/tmp/c6-planning-topology.log`,
+`/tmp/c6-planning-web-doc.log` and `/tmp/c6-planning-operator-doc.log`. No application
+build, runtime suite, browser launch, full local gate or new CI run occurred.
+All applicable exact-candidate CI remains required if this work is later published;
+no PR/publication or merge readiness is claimed. These checks validate planning
+records and their consumers, not C6 runtime acceptance.
+
+**Handback:** the planning result is complete and independently reviewed; C6 runtime
+and the broader roadmap remain unactivated. Five documentation files are left
+uncommitted on `codex/hcp-c6-application-plan`, with HEAD still the C5 merge above:
+this brief, `gap-analysis.md`, `spec-questions.md`, `docs/plans/README.md` and
+`docs/useful/HCP_INTEGRATION.md`. No runtime/test/schema/dependency/CI files changed.
+The sibling remains clean on `codex/encryption-design-investigation` at
+`5fc62a413794b5927f1251968e04381044af92c1`; no upstream mutation or target adoption
+occurred. Actual installed/personal state was not accessed or changed.
+
+The C6 planning writer explicitly **yields checkout ownership to the original
+orchestrator** on delivery of this record, including these uncommitted documents.
+Investigators and the reviewer have finished and remain read-only. The next writer
+must preserve this reviewed planning delta and verify checkout state before further
+work. The orchestrator can read this chat/record; no cross-chat message was sent.
+Lucas's explicit activation is required before implementing the proposed source
+slice. No additional user-owned chat, status-only PR, release or upstream work is
+created by this handback.
+
+## C6 Implementation Activation (2026-11-15)
+
+Lucas explicitly requested implementing the reviewed plan, then feedback from new
+subagents, and a final subagent assessment of whether HCP spec issues should be
+created/updated. This supersedes planning-only status and the prior ownership yield
+for **C6a–d's bounded source-only synthetic dashboard slice**. The five-file reviewed
+planning delta remains intact at activation (SHA256
+`460bf9d47150b02decb61509768ceb7d9f85b750c6a1b135bcfa1769014e02e8`), on
+`codex/hcp-c6-application-plan`, HEAD `c3c953a769596930b5b760735344f3f89626fd55`.
+No unrelated changes were found.
+
+One implementation writer, `c6_implementation`, owns source/tests/docs/build inputs
+until explicit handback. The coordinator and all investigators/reviewers are
+read-only during that ownership. Requested writer and fresh sensitive reviewers:
+`gpt-6-astra`/`xhigh`; accepted requests are observable, actual execution settings
+unverified. The coordinator remains on the user's configured defaults. Follow
+backend tests-first checkpoints and preserve existing tests unless the selected
+requirements change. Use isolated synthetic stores, ports and profile-local trust;
+never the installed app, personal documents/state, models or client settings.
+
+The finalization milestone is the reviewed C6a–d journey and denials implemented,
+focused local source/SQLite/HTTP/browser/Mac checks passing, and accepted correction
+findings resolved. Freeze then for independent complete-diff review and final
+checks. A human source retest remains separately scheduled after that handoff;
+automated browser evidence is not a human acceptance claim. Exact-candidate CI
+remains pending until separately authorized publication; no push/PR, merge or
+release is implied by this activation. A full local migration gate still needs a
+named evidence gap under the policy, not an automatic duplicate run.
+
+`hcp-spec` remains unchanged locally and remotely. The requested final adoption
+subagent may inspect pinned material/current issues read-only and recommend concrete
+issue text locally; publishing new issues/comments, editing specification sources
+or changing the target remains unactivated. C5-D1–D6, the normative/adoption pins,
+remaining C6 roadmap, C7/C8 gates and the unexplained C5 local aggregate crashes
+remain in force. No installed delivery, real model/client, personal-data use or
+hard-deletion implementation is added.
+
+## C6 Source Implementation Checkpoint (2026-11-15)
+
+The activated C6a–d first slice is implemented in the uncommitted working candidate
+based on `c3c953a769596930b5b760735344f3f89626fd55`. This is partial C6, source-only
+and synthetic-only. Use the [source runbook](../../../useful/HCP_SOURCE.md).
+Fresh independent complete-diff and boundary reviews found four accepted corrections;
+the revision below addresses them, and both affected rechecks approved the candidate
+as recorded in the [reviewed handoff](#c6-reviewed-source-handoff-2026-11-15).
+The final HCP issue assessment recommends no upstream update. Separately scheduled
+human source retest and exact-candidate CI remain pending.
+No commit, push, PR, merge, installed artifact or upstream change was made.
+
+- C6a: `hcp-source initialize` records an explicit fixed issuer/port, full A/B
+  registrations, private credential/TLS and root/store identity. Exact digest-bound
+  fixture approval is non-listening; only successful durable approval publishes
+  readiness. Initialization includes a string correction target and all seven
+  retained lifecycle states. Reopen validates ownership/configuration, closed
+  bootstrap and stable subject before listening. Cancellation/partial setup,
+  changed material, busy origin, live/unproven owner and expired seven-day fixture
+  TLS refuse without reset, fallback, regeneration or repair.
+- C6b: same-origin management inspection lists retained states and exposes current
+  and prior content versions with current lifecycle/classification, provenance,
+  concise history and expandable raw documents/audit. The text editor rejects
+  structured/unsupported targets. Exact review states old/new assertion and evidence
+  effects, retained principal restrictions, selected purpose and deadline. Existing
+  review/commit/release services preserve one-use authority, immutable history and
+  duplicate suppression. The saved HTML is rendered before the final release check;
+  late expiry yields content-free known-commit acknowledgement.
+- C6c: `hcp-source open` uses pinned existing Chromium with a separately leased
+  private profile and profile-local CA trust. It verifies the independent Chromium
+  lock before reading profile trust. The pinned launch supplies `about:blank`, then
+  the helper installs same-origin page routing and opens a fresh entry-list GET.
+  No profile-preference rewriting or automatic POST replay was introduced. Tests
+  observe the real source CLI's request trace with persisted last-tab restoration
+  and explicit startup-URL settings. Normal browser close uses the pinned 30-second
+  graceful bound, owned group termination and reaping; uncertain partial startup
+  refuses. Browser and provider lifetimes remain separate.
+- C6d: the source command has an exact isolation allowance; no new blanket import
+  exemption. The real source origin denies legacy GraphQL/MCP/local-admin, analysis,
+  PDF, upload and dashboard route families, including both old apply versions,
+  reset and history-clear requests. Existing old-adapter HCP-store and renamed-copy
+  denials are renewed. Only the additive source OpenSSL/browser sink declarations
+  and exact sink census were added to the contract registry; no gate, CI trigger,
+  dependency, schema or unrelated composition was changed.
+
+Tests-first evidence includes missing-launcher failure, structured/view-only and
+replacement-presentation failures, absent expired-fixture failure, historical-view
+presentation failure, and the final saved-page encoded-entry-link leak before the
+renderer correction. An initial saved-page assertion incorrectly expected HTTP 200;
+the existing 201 contract was retained. A raw-ID assertion initially missed URL
+encoding; its corrected encoded-ID assertion reproduced the actual leak before the
+runtime change. The browser fixture initially named the wrong session table; it
+was corrected to `human_sessions`, with no production schema change. A proposed
+startup-preference value assertion failed although the observed request trace was
+already exactly one GET; that implementation-mirroring assertion and speculative
+preference rewriting were discarded, retaining observable no-replay coverage.
+
+Local validation uses Node 24.21.0/pnpm 10.25.0, existing frozen dependencies and
+Playwright 1.63.0/Chromium 153.0.8010.12. Restricted loopback binding initially failed
+with EPERM; bounded approved execution of owned synthetic fixtures passed. The
+backend build passed. Focused local-database validation passed **7 suites / 76 tests**
+(source wrapper, isolation, writes, write consent/result, expiry and ownership).
+The standalone source/dashboard run passed **17 tests**, including actual source
+kill/reap/reopen, interrupted initialization, policy changed-then-restored,
+foreign/expired/stale review, audit rollback, pre-commit kill and post-commit lost
+reply with one durable version/audit and duplicate suppression. These are scoped
+results, not a new aggregate migration-gate pass. The final source delta passed **7 source tests** and the corrected combined C4/C5/C6
+HTTP consumer run passed **67 tests**, including the 11 dashboard cases. The combined
+browser run passed **6 scenarios**; the final source-browser-only delta passed **2**,
+including a separately launched live Chromium holding the same owned profile.
+A real persisted pending-review tab with restore-on-startup mode 1 and an explicit
+startup-URL mode 4 each produced exactly one observed entry-list GET, no automatic
+POST. A separate explicit original-review recovery request succeeded without renewed
+authority. TLS-negative probes reached no HTTP handler.
+
+The first consumer run correctly caught test-only C6 instrumentation shadowing the
+older `commitWrite` fault phase; the wrapper now activates only for its explicitly
+armed new operation. All old barrier/deadline assertions passed unchanged afterward.
+The C5 browser also caught current categories becoming hidden when raw history was
+collapsed; explicit current classification facts fixed that presentation omission.
+The topology checker caught raw PATH access outside named config loaders; the same
+minimal OpenSSL environment now comes from `config/hcp-source-tools.ts`, preserving
+the existing checker unchanged. A new expired-bootstrap test initially swapped a
+clock function after the store had captured it; correcting the test's clock closure
+proved expiry refusal without a runtime change.
+
+Final documentation/contract evidence: **120 checker tests**, **8 runtime topology
+tests**, **7 web routing/configuration tests**, web test census, **162 Markdown files**,
+`git diff --check`, and `check-nonruntime.mjs` with the exact C5 base and
+**baseComparison=performed** all passed. The latter is only its contract comparison,
+not a runtime qualification receipt. No CI or full local aggregate gate was run.
+Source-only environment-loader extraction leaves rendered pages, authority, storage
+and browser inputs unchanged; the final source tests renew its affected execution,
+and unaffected HTTP/browser evidence carries forward explicitly.
+
+Evidence is under `/private/tmp/c6-implementation-evidence/`; the frozen handoff
+includes `candidate-manifest.json` (every changed/untracked file), exact commands,
+results and `cleanup.json`. No task-matching processes or C6 fixture directories
+remain. Four C2 fixture directories created November 9 predate this task and were
+left untouched. Logs/screenshots and backend build outputs are retained. `source-entry.png` received coordinator visual inspection for readability
+and clipping; this is not human application acceptance. All fixtures are owned
+synthetic roots, with no installed/personal state, documents, model or client changes.
+
+The validation matrix selects focused Mac filesystem/process/TLS/SQLite/browser
+checks plus required future exact-candidate CI. No named gap requires the full local
+migration gate for this slice; its command and requirements remain intact. C5's two
+unexplained aggregate V8 crashes remain unresolved historical evidence and are not
+relabelled. Other hardware, installed packaging, physical loss/cross-boot, actual
+models/hosts, real-data erasure and full HCP package/profile conformance are unproved.
+D3 and CR-Q9 remain gates before their stated personal/sensitive extensions; C7/C8
+and the remaining C6 workflow roadmap are unactivated.
+
+**First frozen handback (historical):** `c6_implementation` yielded write/build ownership to the original
+coordinator after writing the candidate manifest. Fresh independent agents may now
+review the complete base-to-working-tree diff and all untracked additions. The
+coordinator owns subsequent corrections and review bookkeeping. Targeted checks
+passed; final validation pending. No new publication or upstream-write authorization
+is inferred from this handback.
+
+
+## C6 Independent Review Correction Checkpoint (2026-11-15)
+
+Fresh complete-diff and security/persistence/browser reviewers assessed all 24
+first-candidate files and build/evidence identities. Requested configurations were
+Astra/xhigh for both code reviewers and Astra/high for the separate issue assessor;
+the coordinator accepted those requests, and actual execution tiers remain
+unverified. The reviewers did not implement the candidate. Four accepted findings
+required one bounded correction batch; no runtime HTTP, authority or store behavior
+was otherwise changed:
+
+1. Removed the permanent browser test's unconditional Mac-only screenshot path.
+   The already captured local visual-QA artifact remains external evidence.
+2. The actual CLI-open test child now receives only PATH and the already validated
+   pinned `LOCAL_UI_BROWSER_EXECUTABLE`. A validation run used an owned nondefault
+   executable shim pointing to the existing pinned Chromium, with the parent default
+   browser-cache selection empty. Recorded shim invocations show the real CLI
+   children used it; no download or personal-cache mutation occurred.
+3. Browser-initiated Chromium shutdown can disconnect the protocol before child
+   reaping. After the existing pinned Playwright 30-second close bound, the helper
+   keeps its lease while awaiting ESRCH under a separate **five-second monotonic
+   deadline**. It never signals a PID from the ownership record. A still-live/reused
+   PID refuses; asynchronous CLI close errors use the bounded safe error reporter.
+   A closed lease is written only after stopped proof; the lease lock is released
+   on refusal while its durable ownership facts remain.
+4. A rejected launch before returning a context retains an unproven `starting`
+   lease even for an already trusted profile. No stopped-child guarantee is inferred
+   from Playwright launch rejection. The next open refuses before profile-trust
+   access or a second launch; there is no reset, lock deletion or repair.
+
+Three tests failed against the first frozen runtime before these changes: actual
+browser-initiated CLI shutdown exited 1 with an unhandled stack; a simulated
+still-live recorded PID exposed the same unsafe async failure; and a launch
+rejection permitted a subsequent trust read and launch. Their failure log is
+retained. The first correction run exposed a new-test assumption comparing the
+per-request `exportedAt` timestamp; the tests now validate its ISO shape and compare
+all stable export fields without changing runtime export behavior. The full revised
+source-browser suite passed **5 scenarios**, including all three new regressions
+and the existing source journey/TLS checks. Browser and provider lifetimes remain
+separate, and exact reopen still begins with a fresh entry-list GET.
+
+The revised backend build, **7 source CLI tests**, **12 isolation/ownership tests**,
+**8 topology tests**, **120 documentation/contract checker tests**, web test census,
+Markdown links and exact-C5-base contract comparison also passed. No contract
+registry, CI trigger or requirement was changed in this correction batch. The
+original **67 HTTP tests**, unaffected write/consent/result/expiry portions of the
+**76-test local-database result**, and four existing C2–C5 browser scenarios carry
+forward: their HTTP, authority, persistence, fixture and browser-harness inputs
+are byte-identical to the first reviewed manifest. The affected source CLI and new
+browser helper have the renewed checks above. No full local gate or unrelated
+aggregate was rerun; historical unexplained C5 aggregate V8 crashes remain open.
+
+The [postimplementation adoption disposition](spec-questions.md#c6-postimplementation-adoption-disposition-2026-11-15)
+recommends **no new HCP issue or comment update**. Existing #36 rendering/minimal
+completion and #38 correction evidence already cover the selected protocol
+questions. Source launcher/browser/UX work adds no new ambiguity; D3 and CR-Q9
+remain unresolved. No upstream source, issue, comment, branch or publication changed.
+
+The revised candidate remains partial C6 and source/synthetic-only. Evidence is
+recorded separately in `candidate-manifest-r2.json` and `handoff-r2.json` under the
+same temporary evidence directory; the original manifest and review evidence are
+immutable. The following handoff supersedes this checkpoint's pending reviewer
+rechecks. Human source acceptance and exact-candidate CI remain pending.
+
+## C6 Reviewed Source Handoff (2026-11-15)
+
+**C6a–d's bounded source-only synthetic slice is implemented and independently
+reviewed, with no unresolved review blockers.** This is partial C6; use the
+[source runbook](../../../useful/HCP_SOURCE.md). Both fresh reviewers approved
+the corrected 25-file candidate on `codex/hcp-c6-application-plan`, based on
+`c3c953a769596930b5b760735344f3f89626fd55`. Their approval binds to
+`candidate-manifest-r2.json`, SHA256
+`24adb169cbc65c6abd0ab825cc84de35b73a98519d7a26366bc83f7cf43c4c50`.
+
+- `c6_final_review` covered the complete base-to-candidate architecture,
+  correctness, compatibility, tests, UI, documentation and scope; its affected
+  recheck closed both CI portability findings and covered the added test helper.
+- `c6_boundary_review` covered security, filesystem/profile ownership, TLS,
+  authorization, persistence and recovery; its real CLI probe exposed the natural
+  browser-close race, and its affected recheck closed both lifecycle findings.
+- Both independently verified candidate/build/evidence hashes. Their first reviews
+  carry forward only for unchanged inputs; rechecks cover all seven R2 changes.
+  Requested Astra/xhigh configurations were accepted; actual execution tiers
+  remain unverified. The separate Astra/high issue assessor's recommendation is
+  recorded in the [adoption disposition](spec-questions.md#c6-postimplementation-adoption-disposition-2026-11-15):
+  **no new HCP issue/comment update**, with no upstream mutation or target adoption.
+
+Evidence remains under `/private/tmp/c6-implementation-evidence/` in the immutable
+first/R2 manifests and handoffs. Review reports are
+`/private/tmp/c6-complete-diff-review-r2.md` and
+`/private/tmp/c6-boundary-review-20261115/review-r2.json`; the issue assessment is
+`/private/tmp/c6-spec-issue-assessment.md`. The R2 handoff lists exact commands,
+log hashes, failed-first evidence, passing focused checks and unaffected coverage.
+No C6 fixture roots or matching test processes remain. Only logs, the synthetic QA
+image, the owned browser-selection shim and built source outputs are retained.
+
+After approval, the coordinator changes only status, evidence and ownership text
+in this brief, the portfolio, gap analysis and HCP integration reference. The final
+manifest records those four documentation deltas; source, tests, build outputs,
+requirements and approved review coverage remain unchanged. Documentation links,
+exact-base contract comparison and whitespace are checked again for that handoff.
+
+**Targeted checks passed; final validation pending.** Human synthetic-source retest
+and all applicable exact-candidate CI remain required before their respective
+acceptance/readiness claims. No commit, push, PR, merge, release, installed artifact
+or personal-state change occurred. The historical C5 aggregate V8 crashes remain
+unexplained; other hardware, host power loss/cross-boot, real models/clients,
+personal/sensitive data, D3/CR-Q9 resolution and full package/profile conformance
+remain outside this evidence. Broader C6 and C7/C8 are not activated.
+
+The coordinator and implementation/review agents **yield checkout and build
+ownership to the original orchestrator** with all 25 changed/new files uncommitted
+and HEAD unchanged. Preserve this reviewed candidate; no follow-on implementation
+or publication is inferred from the handback. No cross-chat message was sent.
+
+## C6 External Review Follow-Up (2026-11-15)
+
+Lucas supplied Claude Code's independent review and requested disposition and PR
+fixes. This activates one bounded correction/publication round after the prior
+handoff. The original 25-file manifest was verified unchanged before work. No
+matching open PR or published branch existed; publish the corrected source slice
+as one draft PR, retain required exact-candidate CI, and do not merge automatically.
+The coordinator is sole writer/integrator on the same branch. Independent concrete
+plan review requested Astra/xhigh and approved graceful cancellation with persistent
+signal handlers; actual execution tier remains unverified. A fresh implementation
+review follows the frozen correction candidate. Earlier approvals/evidence carry
+forward only where relevant inputs remain unchanged.
+
+Review dispositions and checkpoints:
+
+- **Accepted startup cancellation defect:** register handlers before asynchronous
+  browser open; coalesce repeated SIGINT/SIGTERM while launch/close settles. Close
+  via the existing owned helper and stopped-process proof, suppress premature open
+  success, and retain unproven state on genuine launch rejection. Failed-first
+  real CLI tests cover both signals during fresh and trusted startup; assert clean
+  exit, closed lease, reaped browser, exact reopen and unchanged retained state.
+- **Accepted shutdown and usage defects:** serve shutdown rejects through the
+  sanitized reporter; malformed commands/options print static usage before state
+  access, without echoing arguments. Both have failed-first real CLI tests.
+- **Accepted test gaps:** legacy-route probes require exact absent-route responses
+  for GET/POST and unauthenticated, signed-in cookie and human bearer requests.
+  Model-inferred string eligibility is exercised through actual client write,
+  then person correction. Independently varied retained declaration/profile cases
+  remain view-only and reject forged editor submissions.
+- **Correction to the review:** `reviewPersonWrite` calls `personGrant`, which
+  already rejects issuer-attested and unsupported-profile targets. The text-only
+  restriction belongs to this editor; narrowing the general person-write API to
+  strings is unnecessary and would change its broader contract. No authority,
+  persistence or TLS admission rule is weakened.
+- **Accepted documentation fixes:** reconcile stale pending-review/candidate text;
+  document terminal credential handling, strict Finder-metadata refusal, graceful
+  startup cancellation, terminal stop/Chromium Quit, and the lack of supported
+  browser recovery from an unproven startup record. Window-close behavior remains
+  a human-retest item. Hostname/partial trust-setup refusals remain conservative;
+  no automatic repair, root-allowlist exception or metadata deletion is added.
+
+Finalization milestone: new/affected source, browser, HTTP and ownership checks
+pass; fresh independent review resolves required findings; documentation readers,
+links and exact-base checks pass; then freeze, commit and publish for all applicable
+exact-candidate CI. Focused target-Mac evidence is selected under the validation
+matrix, with no new gap requiring a full local migration-gate run. Human source
+acceptance, installed/other-hardware/physical-loss qualification, C5's unexplained
+aggregate V8 crashes, D3/CR-Q9 and broader C6/C7/C8 limits remain explicit. This
+application-only review creates no new HCP issue or target-adoption requirement.
+
+**Local correction checkpoint:** pinned Node 24.21.0/pnpm 10.25.0 backend build
+passed; **22 source/dashboard tests**, **9 source-browser scenarios**, **20
+ownership/isolation/topology tests**, **120 documentation/contract checker tests**,
+browser test census, 162 Markdown files and exact-C5-base contract/whitespace checks
+passed. Six new CLI failures were reproduced against the prior runtime before the
+fix (four startup-signal cases, usage and serve-close reporting). Initial restricted
+loopback EPERM results were environmental refusals, not behavior evidence; the
+bounded owned-fixture reruns reproduced the actual defects. New eligibility and
+authenticated route-absence checks pass without authority/HTTP/store changes.
+Repeated signals during both startup and close are covered. Existing natural-close,
+live/reused-PID refusal and unproven-launch refusals still pass.
+
+Evidence and the frozen manifest are under `/private/tmp/c6-claude-followup-evidence/`.
+Earlier unchanged source-admission/HTTP/authority/store and C2–C5 consumer coverage
+is retained with file/build hash comparison; affected CLI, source browser, test
+instrumentation and documentation are renewed above.
+
+**Follow-up source review approved:** fresh `claude_followup_final` covered the
+complete 25-file candidate with explicit unchanged-coverage checks. Its one P2
+finding was a new test-ordering race: repeated shutdown signals could precede
+activation of the test's live-PID probe. The corrected test waits for a bounded IPC
+acknowledgement and handles early child exit. All nine browser scenarios passed;
+the final elapsed-clock placement was renewed with the affected case. No production
+code changed in that correction. Approval binds to manifest SHA256
+`1e831490334fbb28f7bdecad630135a418375ab6833125618a54f6c24baca7d9`, with no remaining
+findings. Requested Astra/xhigh was accepted; actual execution tier is unverified.
+The report is `/private/tmp/c6-claude-followup-final-review-approved.md`.
+Only this approval bookkeeping follows the reviewed manifest before commit;
+source/tests/builds and requirements are unchanged. Exact-candidate CI will be
+recorded on the authorized draft PR; human source retest remains pending. No merge,
+installed delivery, personal-state change or upstream-spec mutation is authorized
+by this source-review approval.
 
 ## Feedback And Maintenance
 

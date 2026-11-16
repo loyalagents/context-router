@@ -3320,6 +3320,33 @@
       "ownerSteps": [
         "09"
       ]
+    },
+    {
+      "id": "isolated-hcp-source-launcher",
+      "sources": [
+        {
+          "path": "apps/backend/src/infrastructure/hcp-experiment/source.ts",
+          "fingerprints": [
+            "execFileSync(\"openssl\", args",
+            "timeout: 15_000"
+          ]
+        },
+        {
+          "path": "apps/web/hcp-source-browser.mjs",
+          "fingerprints": [
+            "chromium.launchPersistentContext(profile, options)",
+            "ignoreHTTPSErrors: false",
+            "--host-resolver-rules=MAP as.hcp.test 127.0.0.1"
+          ]
+        }
+      ],
+      "destination": "Explicit source-only synthetic sandbox. OpenSSL creates a private seven-day local fixture CA/leaf without a network call. Existing pinned Playwright Chromium opens only the configured as.hcp.test loopback origin with profile-local CA trust, no OS trust change, no download, and separate bounded browser ownership. No installed/personal composition.",
+      "payload": "Exactly human-approved synthetic fixtures and browser management forms. Credential value stays in its private file until a person enters it in the owned sign-in page; no credentials in argv, URL, environment or launcher output. Browser page requests to other origins are aborted. Chromium background networking is disabled by the pinned Playwright defaults; this is not whole-system egress qualification.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "09"
+      ]
     }
   ],
   "externalClients": [
@@ -5432,6 +5459,12 @@
       "path": "apps/backend/src/infrastructure/hcp-experiment/notifications.ts",
       "sinks": {
         "node-http-import": 1
+      }
+    },
+    {
+      "path": "apps/backend/src/infrastructure/hcp-experiment/source.ts",
+      "sinks": {
+        "exec-file": 1
       }
     },
     {

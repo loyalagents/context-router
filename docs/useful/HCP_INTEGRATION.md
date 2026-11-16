@@ -70,21 +70,33 @@ preserving duplicate suppression. Known committed writes can acknowledge minimal
 success on their original channel, with response data authorized separately.
 These are bounded application contracts, not full pinned-spec conformance.
 
-**C5 is activated for bounded implementation after independent plan approval.** Its
-[proposed plan](../plans/active/hcp-alignment/README.md#c5-planning-and-decisions-2026-11-14)
-and [question record](../plans/active/hcp-alignment/spec-questions.md#c5-planning-adoption-disposition-2026-11-14)
-separate requirements, product choices, pin conflicts and acceptance tests for
-remaining governance and portability. D3 hard deletion is deferred until audit/replay semantics are clarified; full Core
-capability remains incomplete. The other selected directions proceed with explicit
-experimental contracts and iterative review. Relevant hcp-spec issues are authorized;
-source edits, revision adoption, merge, release and C6–C8 remain outside scope.
-Earlier C4 draft/pending passages do not describe current ownership.
+**Bounded C5 merged in [PR #208](https://github.com/loyalagents/context-router/pull/208).**
+The [merge record](../plans/active/hcp-alignment/README.md#c5-merge-and-c6-planning-ownership-2026-11-15)
+records exact source/CI identities, final independent review, successful CI and the
+two unexplained local aggregate crashes. C5 provides synthetic governance,
+persistent rotating refresh, summaries/reporting, signed revocation delivery and
+reviewed v2 portability within its selected contracts. D3 hard deletion remains
+deferred; broader import/reporting/OAuth/dormancy and full Core remain incomplete.
+Earlier candidate-era pending/writer wording is historical.
 
-The [C5 implementation checkpoint](../plans/active/hcp-alignment/README.md#c5-implementation-checkpoint-2026-11-15-utc)
-records the bounded runtime candidate and evidence: governance, persistent refresh,
-audit summaries/reporting, synthetic SET delivery and reviewed v2 portability.
-Targeted checks passed; final complete-diff review and exact-candidate CI remain
-pending. Hard deletion, broader import/reporting cases and C6–C8 remain incomplete.
+**C6's bounded first source slice is implemented and independently reviewed.** The [concrete proposal](../plans/active/hcp-alignment/README.md#c6-application-planning-2026-11-15)
+selects an isolated source synthetic dashboard using HCP management services and
+exact person-write authority, with [complete access-path dispositions](../plans/active/hcp-alignment/gap-analysis.md#c6-current-access-path-inventory-2026-11-15).
+The [activation](../plans/active/hcp-alignment/README.md#c6-implementation-activation-2026-11-15)
+permits its implementation and fresh review, but not installed delivery, model
+inference, personal-data use or C7/C8, or closure of the remaining C6 roadmap. `hcp-spec` stays unchanged locally
+and remotely; C4/C5 publication permissions do not extend to this implementation task.
+Hard deletion must be revisited before any personal-data extension, and CR-Q9 must
+be resolved and explicitly adopted before sensitive real-data exposure.
+
+The bounded source dashboard is implemented; use the
+[source runbook](HCP_SOURCE.md) for explicit synthetic initialization, owned browser,
+exact correction and reopen. The [reviewed handoff](../plans/active/hcp-alignment/README.md#c6-reviewed-source-handoff-2026-11-15)
+records passing focused checks, resolved fresh-review findings and the decision
+that C6 warrants no new upstream issue/comment. Human retest and exact-candidate
+CI remain separate acceptance gates. The [external review follow-up](../plans/active/hcp-alignment/README.md#c6-external-review-follow-up-2026-11-15)
+records subsequent application fixes and the authorized draft PR publication.
+This does not close broader C6 or qualify an installed artifact.
 
 Lucas's bounded C4 publication authorization produced permission-cache feedback
 on [#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594),

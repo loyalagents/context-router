@@ -17,6 +17,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "local-identity": "node --no-global-search-paths dist/local-identity.js",
+    "hcp-source": "node --no-global-search-paths dist/hcp-source.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "pretest": "pnpm prisma:generate && pnpm build",
     "test": "jest --runInBand",

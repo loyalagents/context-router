@@ -14,6 +14,7 @@ import {
 import { authorizationProvider, validateAuthorization } from "./oauth";
 import { COMPLETION_ONLY, WriteConflict } from "./writes";
 import { CONFLICT_DETECTION } from "./conflicts";
+import { GENERAL_PROFILE } from "./fixtures";
 const COOKIE = "__Host-hcp-human";
 class UnsupportedVersion extends Error {}
 const escape = (s: any) =>
@@ -26,6 +27,17 @@ const escape = (s: any) =>
   );
 const hidden = (name: string, value: string) =>
   `<input type="hidden" name="${escape(name)}" value="${escape(value)}">`;
+const editableStatement = (entry: any) =>
+  entry.content.profile === GENERAL_PROFILE &&
+  typeof entry.content.value === "string" &&
+  ["person-declared", "model-inferred"].includes(
+    entry.assertion.declarationType,
+  ) &&
+  ["active", "conflicted", "expired", "deprecated"].includes(
+    entry.record.status,
+  );
+const viewOnly =
+  "View only in this text editor. Structured content, unsupported declarations/profiles and deleted, suspended or revoked entries cannot be corrected here.";
 function accessSummary(access: any[]): string {
   return `<section data-access-summary><ul>${access
     .map((detail) => {
@@ -47,6 +59,7 @@ function entryFacts(entry: any): string {
   const provenance = entry.record.provenance;
   return `<section data-entry-facts><h2>Recorded provenance and current state</h2>
     <p>Version ${entry.record.version} · ${escape(entry.record.status)} · ${escape(entry.assertion.declarationType)}</p>
+    <p>Current categories: ${escape(entry.classification.categories.join(", "))}. Principal purpose restrictions: ${escape(JSON.stringify(entry.classification.permittedPurposes ?? "not restricted"))}.</p>
     <p>Asserter identifier: ${escape(provenance.assertedBy.id)}. Assurance: ${escape(provenance.assertedBy.assurance)}.
     Latest confirmation: ${escape(provenance.confirmations.at(-1)?.disposition ?? "none")}.</p>
     <p>Assertion content, reported source and additional document members may be submitted claims. The recorded assurance and confirmations determine their standing.</p></section>`;
@@ -84,6 +97,16 @@ function json(
   res.setHeader("content-type", type);
   res.end(replacement ?? bytes);
 }
+function renderPage(stage: string, title: string, content: string): string {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(title)}</title><style>body{font:16px system-ui;max-width:900px;margin:3rem auto;padding:0 1rem;line-height:1.5;color:#18262d;background:#f8faf9}label{display:block;margin:1rem 0}input,select,button,textarea{font:inherit}textarea{width:100%;box-sizing:border-box}pre{white-space:pre-wrap;overflow-wrap:anywhere}button{margin:1rem 1rem 1rem 0;padding:.5rem .8rem}small{display:block}article,section{background:white;padding:1rem;margin:1rem 0;border:1px solid #d7e1dc;border-radius:8px}a{color:#155b45}nav{display:flex;gap:1rem;flex-wrap:wrap}</style></head><body data-stage="${stage}"><p>Context Router · Synthetic HCP experiment</p><h1>${escape(title)}</h1>${content}</body></html>`;
+}
+function pageHeaders(res: ServerResponse): void {
+  res.setHeader("content-type", "text/html; charset=utf-8");
+  res.setHeader(
+    "content-security-policy",
+    "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+  );
+}
 function page(
   res: ServerResponse,
   stage: string,
@@ -91,15 +114,10 @@ function page(
   body: string,
   beforeHandoff?: () => string | void,
 ): void {
-  const render = (content: string) =>
-    `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escape(title)}</title><style>body{font:16px system-ui;max-width:800px;margin:3rem auto;padding:0 1rem;line-height:1.5}label{display:block;margin:1rem 0}input,select,button{font:inherit}pre{white-space:pre-wrap;overflow-wrap:anywhere}button{margin:1rem 1rem 1rem 0}small{display:block}</style></head><body data-stage="${stage}"><p>Context Router · Synthetic HCP experiment</p><h1>${escape(title)}</h1>${content}</body></html>`;
+  const render = (content: string) => renderPage(stage, title, content);
   const bytes = render(body);
   const replacement = beforeHandoff?.();
-  res.setHeader("content-type", "text/html; charset=utf-8");
-  res.setHeader(
-    "content-security-policy",
-    "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
-  );
+  pageHeaders(res);
   res.end(typeof replacement === "string" ? render(replacement) : bytes);
 }
 async function requestBytes(
@@ -208,7 +226,7 @@ export function authorizationHandler(
       res,
       "login",
       "Sign in to manage synthetic context",
-      `<p>Signing in does not approve a context grant.</p><form method="post" action="${escape(action)}">${hidden("csrf", s.csrf)}<label>Human management credential <input name="credential" type="password" autocomplete="off" required></label><button>Sign in</button></form>`,
+      `<p>Synthetic data only. Signing in does not approve a context grant or authorize a content write. Each correction requires its own exact approval.</p><form method="post" action="${escape(action)}">${hidden("csrf", s.csrf)}<label>Human management credential <input name="credential" type="password" autocomplete="off" required></label><button>Sign in</button></form>`,
     );
   async function handle(
     req: IncomingMessage,
@@ -800,16 +818,22 @@ export function authorizationHandler(
           s.token,
           form.operationKey,
         );
-        authority.releaseWrite(ticket, (status, bytes) => {
-          const result = JSON.parse(bytes);
-          res.statusCode = status;
-          page(
-            res,
-            "person-saved",
-            "Statement saved",
-            `<p>Your approved statement was committed.</p>${result.id ? `<p><a href="/manage/entries/${encodeURIComponent(result.id)}">Inspect the entry and history</a></p>` : "<p>The entry representation is unavailable under the current permission. Sign in again to inspect retained history.</p>"}`,
-          );
-        });
+        authority.releaseWrite(
+          ticket,
+          (status, bytes) => {
+            res.statusCode = status;
+            pageHeaders(res);
+            res.end(bytes);
+          },
+          (bytes) => {
+            const result = JSON.parse(bytes);
+            return renderPage(
+              "person-saved",
+              "Statement saved",
+              `<p>Your approved statement was committed.</p>${result.id ? `<p><a href="/manage/entries/${encodeURIComponent(result.id)}">Inspect the entry and history</a></p>` : "<p>The entry representation is unavailable under the current permission. Sign in again to inspect retained history.</p>"}<p>Do not repeat an uncertain save. Inspect current state and history through a separate request.</p>`,
+            );
+          },
+        );
         return;
       }
       if (
@@ -825,6 +849,7 @@ export function authorizationHandler(
         const current = target
           ? authority.managementEntry(s.token, target).entry
           : undefined;
+        if (current && !editableStatement(current)) denied();
         const request = {
           ...(current
             ? {
@@ -858,9 +883,11 @@ export function authorizationHandler(
           "person-review",
           "Review your statement",
           `<p>Approving records this wording as your own authenticated statement. A revised version starts without prior confirmations.</p>
+          ${current ? `<p>Target: ${escape(current.id)} · current version ${current.record.version} → new version ${current.record.version + 1}.</p><h2>Previous assertion</h2>${reviewEntry(current)}<details><summary>Previous assertion and evidence, whole</summary><pre>${escape(JSON.stringify({ assertion: current.assertion, evidence: current.evidence }, null, 2))}</pre></details><p>Evidence items removed: ${current.evidence?.length ?? 0}. Prior basis, assertion-purpose restrictions, validity deadline and confirmations are not inherited. The assertion is replaced whole.</p><p>Principal purpose restrictions remain: ${escape(JSON.stringify(current.classification.permittedPurposes ?? "not restricted"))}. Categories remain: ${escape(current.classification.categories.join(", "))}.</p>` : ""}
+          <h2>Proposed assertion</h2><p>New person-declared assertion by the Synthetic context subject (${escape(authority.accountId())}), authenticated by this provider; source person-input. No evidence, basis, assertion-purpose restriction, validity deadline or confirmations are inherited. Unknown content members are preserved; they do not establish assurance.</p>
           <section data-person-authority><p>This authorizes the Synthetic person editor to ${review.operation === "create" ? "create this statement" : "revise this selected statement"} in ${escape(review.access[0].categories.join(", "))} for: ${escape(review.purpose.description)} (${escape(review.purpose.code)}). This permission expires at ${escape(review.expiresAt)}.</p></section>
           <pre>${escape(JSON.stringify(review.request, null, 2))}</pre>
-          <form method="post" action="/manage/person/approve">${hidden("csrf", s.csrf)}${hidden("reviewId", review.reviewId)}${hidden("reviewCsrf", review.csrf)}${hidden("operationKey", random())}<button>Approve and save my statement</button></form>`,
+          <form method="post" action="/manage/person/approve">${hidden("csrf", s.csrf)}${hidden("reviewId", review.reviewId)}${hidden("reviewCsrf", review.csrf)}${hidden("operationKey", random())}<button>Approve and save my statement</button></form><a href="/manage/entries">Cancel without saving</a>`,
         );
       }
       const personEditor = /^\/manage\/person\/([^/]+)$/.exec(route);
@@ -872,12 +899,20 @@ export function authorizationHandler(
         const current = id
           ? authority.managementEntry(s.token, id).entry
           : undefined;
+        if (current && !editableStatement(current))
+          return managementPage(
+            s.token,
+            res,
+            "person-view-only",
+            "View only",
+            `<p>${viewOnly}</p><p><a href="/manage/entries/${encodeURIComponent(current.id)}">Inspect the retained entry</a></p>`,
+          );
         return managementPage(
           s.token,
           res,
           "person-editor",
           current ? "Edit as your own statement" : "Add your own statement",
-          `<p>This is an explicit person statement. Review the exact wording before saving.</p><form method="post" action="/manage/person/review">${hidden("csrf", s.csrf)}
+          `<p>Synthetic data only. This is an explicit person statement. Review the exact wording and replacement effects before saving. Login alone gives no write authority.</p><form method="post" action="/manage/person/review">${hidden("csrf", s.csrf)}
           ${
             current
               ? hidden("entryId", current.id) +
@@ -888,7 +923,7 @@ export function authorizationHandler(
                   .map((c) => `<option value="${c}">${escape(c)}</option>`)
                   .join("")}</select></label>`
           }
-          <label>Your statement <textarea name="value" rows="6" required>${escape(current ? (typeof current.content.value === "string" ? current.content.value : JSON.stringify(current.content.value)) : "")}</textarea></label><button>Review my statement</button></form>`,
+          <label>Your statement <textarea name="value" rows="6" required>${escape(current?.content.value ?? "")}</textarea></label><button>Review my statement</button></form><a href="/manage/entries">Cancel without saving</a>`,
         );
       }
       if (
@@ -985,10 +1020,10 @@ export function authorizationHandler(
           ${entryFacts(result.entry)}
           <pre>${escape(typeof result.entry.content.value === "string" ? result.entry.content.value : JSON.stringify(result.entry.content.value, null, 2))}</pre>
           <details data-raw-entry><summary>Full stored document (includes submitted claims)</summary><p>This document combines submitted content and extensions with provider-maintained records. Additional fields, including standing or fixture claims, do not establish assurance or confirmation.</p><pre data-entry-document>${escape(JSON.stringify(result.entry, null, 2))}</pre></details>
-          <p><a href="/manage/person/${encodeURIComponent(id!)}">Edit as your own statement</a> · <a href="${base}/classification">Edit categories and purposes</a></p>
+          <p>${result.entry.record.version !== result.currentVersion ? `Viewing a previous version. <a href="${base}">Open current version to edit</a>. ` : editableStatement(result.entry) ? `<a href="/manage/person/${encodeURIComponent(id!)}">Edit as your own statement</a> · ` : `${viewOnly} `}<a href="${base}/classification">Edit categories and purposes</a></p>
           ${result.entry.record.version === result.currentVersion && ["active", "conflicted"].includes(result.entry.record.status) ? ["confirmed", "rejected"].map((disposition) => `<form method="post" action="${base}/review">${hidden("csrf", s.csrf)}${hidden("expectedVersion", String(result.currentVersion))}${hidden("disposition", disposition)}<button>${disposition === "confirmed" ? "Review confirmation" : "Review rejection and withdrawal"}</button></form>`).join("") : ""}
           ${result.conflicts.length ? `<h2>Conflicts needing review</h2>${result.conflicts.map((c: any) => `<section>${reviewEntry(c.peer)}<p>${c.quarantined.length ? "This conflict still has a quarantined statement needing review." : "This conflict changed neither statement’s status."}</p>${c.canKeepBoth ? `<form method="post" action="/manage/conflicts/${encodeURIComponent(c.id)}/review">${hidden("csrf", s.csrf)}<button>Review keeping both</button></form>` : ""}</section>`).join("")}` : ""}
-          <h2>Lifecycle and assertion history</h2><pre>${escape(JSON.stringify(history.events, null, 2))}</pre>${history.nextCursor ? `<a href="${base}?cursor=${encodeURIComponent(history.nextCursor)}">Next history page</a>` : ""}`,
+          <h2>Lifecycle and assertion history</h2><ol data-history-summary>${history.events.map((event: any) => `<li><strong>${escape(event.eventType)}</strong> · ${escape(event.timestamp)}${event.data?.version === undefined ? "" : ` · version ${escape(event.data.version)}`}${event.data?.reason === undefined ? "" : `<p>${escape(event.data.reason)}</p>`}</li>`).join("")}</ol><details data-raw-history><summary>Full recorded audit events</summary><pre>${escape(JSON.stringify(history.events, null, 2))}</pre></details>${history.nextCursor ? `<a href="${base}?cursor=${encodeURIComponent(history.nextCursor)}">Next history page</a>` : ""}`,
         );
       }
       if (route === "/manage/entries" && req.method === "GET" && !url.search) {
@@ -997,11 +1032,11 @@ export function authorizationHandler(
           res,
           "entries",
           "Retained entries",
-          `<p><a href="/manage">Grant controls</a> · <a href="/manage/person/new">Add your own statement</a></p>${authority
+          `<p>Synthetic data only. All retained lifecycle states are shown for person inspection. Withdrawal retains history; hard deletion is unavailable. This source experiment is not a conformance claim.</p><nav><a href="/manage">Experimental grant and governance controls</a><a href="/manage/audit">Audit history</a><a href="/manage/person/new">Add your own statement</a></nav>${authority
             .managementEntries(s.token)
             .map(
               (entry) =>
-                `<article><a href="/manage/entries/${encodeURIComponent(entry.id)}">${escape(entry.id)}</a><p>Current lifecycle: ${escape(entry.record.status)} · version ${entry.record.version}</p><pre>${escape(JSON.stringify(entry.content, null, 2))}</pre></article>`,
+                `<article><p>Current lifecycle: ${escape(entry.record.status)} · version ${entry.record.version} · ${escape(entry.classification.categories.join(", "))}</p><pre>${escape(typeof entry.content.value === "string" ? entry.content.value : JSON.stringify(entry.content.value, null, 2))}</pre><a href="/manage/entries/${encodeURIComponent(entry.id)}">Inspect ${escape(entry.id)}</a>${editableStatement(entry) ? "" : `<p>${viewOnly}</p>`}</article>`,
             )
             .join("")}`,
         );
