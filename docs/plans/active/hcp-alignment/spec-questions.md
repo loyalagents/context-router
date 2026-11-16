@@ -14,9 +14,17 @@
 These notes stay in Context Router while we test how well the existing HCP
 specification, schemas, and guides support adoption. They record source-review
 findings, synthetic cases, and possible resolution directions; they are not
-observations from a qualified HCP integration. C1–C4 are merged in PRs #204–#207.
-C5 bounded implementation is now authorized after independent plan approval;
-hard deletion is deferred and relevant upstream issue publication is authorized. Accepted expiry,
+observations from a qualified HCP integration. C1–C5 bounded work is merged in
+PRs #204–#208; the [C5 merge record](README.md#c5-merge-and-c6-planning-ownership-2026-11-15)
+supersedes historical pending/writer text. The bounded C6 source slice is implemented;
+the [reviewed handoff](README.md#c6-reviewed-source-handoff-2026-11-15) records completed
+initial rechecks, and the [external review follow-up](README.md#c6-external-review-follow-up-2026-11-15)
+owns subsequent application corrections and publication. Exact-candidate CI and
+human retest remain separate acceptance gates.
+The independent postimplementation issue assessment recommends no new issue or
+comment update; its disposition is recorded below. Hard deletion stays deferred
+and C7/C8 are unactivated. This task leaves `hcp-spec` unchanged; earlier
+C4/C5 issue publication permissions do not carry forward. Accepted expiry,
 permission invalidation and completion behavior do not change the spec pin or
 resolve the remaining erasure/correction questions.
 Normative text continues to govern examples and schemas.
@@ -1225,12 +1233,65 @@ general HTTP interoperability.
 
 The [implementation checkpoint](README.md#c5-implementation-checkpoint-2026-11-15-utc)
 records the selected D1/D2/D4/D5/D6 contracts, focused failure/restart/browser
-evidence and remaining review/CI. Same-token strict-age rejection and an explicit
+evidence; final review/CI passed in [PR #208](https://github.com/loyalagents/context-router/pull/208),
+with local aggregate-crash limitations preserved in the merge record. Same-token strict-age rejection and an explicit
 exception receiver are both exercised (#41); attributable forbidden reports are
 durable but expired/revoked credentials remain denied (#42). Summary/filter
 interpretations (#43), exact subject-set association (#21), conservative
 chronology/foreign-graph refusal (#19/#37), principal-preserving person correction
 (#38), and expired-copy replay denial (#34) remain local experiment choices.
-The coordinator owns the authorized upstream evidence updates. None of these
+C5's authorized upstream evidence updates are historical; C6 planning authorizes
+no upstream mutation. None of these
 results adopts a new normative pin or closes hard deletion (#23/#39), broader
 OAuth profile support (#40), source-audit/history translation or real-client claims.
+
+
+## C6 Planning Adoption Disposition (2026-11-15)
+
+Read-only source assessment at CR merge `c3c953a769596930b5b760735344f3f89626fd55`,
+with normative `2e2939c9bebcefb3bed7bb3522231c0e4d65a315` and original adoption
+materials `b764a058eac15a4cd843892e60473089b2e835bb`. Consulted pinned §§5.1/5.2.4/
+5.4, 6.1/6.1.9, 8 and 18.4, the revise-request schema, and G1/G4 guidance already
+used in C5. Normative text governs schema omissions and disagreements. Sibling
+HEAD `5fc62a413794b5927f1251968e04381044af92c1` is not adopted. No upstream status
+refresh, source/branch change, build, issue/comment/PR or publication occurred.
+
+| Experienced-team finding / existing material | Application disposition / smallest justified upstream work | Owner and revisit condition |
+| --- | --- | --- |
+| §18.4 requires person enumeration; §5.1 disallows bulk Context Client retrieval. Guides leave ordinary UI design to applications. | Reuse authenticated HCP management inspection for the dashboard. Do not turn query/export into an enumeration workaround or move legacy GraphQL over the HCP database. No new protocol operation or generic integration skill is justified by this planning evidence. | C6 writer at first source journey; revisit guidance only after actual implementation friction is demonstrated |
+| Existing C5 exact correction works under the selected local #38 disposition; §§5.2.4/6 keep write authority distinct from login and response authority. | Reuse the exact one-use grant and separate response-release gate; show whole replacement, new asserter, evidence/assertion effects and no inherited confirmations. String-only editor explicitly excludes structured/unsupported records. The schema is a structural aid, not permission to omit normative replacement or purpose requirements. | C6 writer/reviewer before correction implementation; orchestrator follows #38 separately when authorized |
+| Current source has direct CAS, identity seed and location-cascade writers, plus old prompt/export/history readers. A preference-service wrapper is insufficient. | Full [inventory](gap-analysis.md#c6-current-access-path-inventory-2026-11-15) and isolated composition are application work. A future reusable guide example should show producer **and** consumer closure only if repeated adoption experience warrants it; no upstream change needed now. | C6 writer at each selected workflow/composition expansion |
+| C5-D3/#23/#39 still lack the accepted erasure/audit/replay boundary. | Hard deletion stays unavailable; retained withdrawal or whole-envelope reset is not erasure. No purge/encryption machinery added. Synthetic-only planning can proceed. | Orchestrator assigns separately authorized protocol work; revisit **before any personal-data extension** or full Core qualification |
+| CR-Q9 directive text/category association can disclose withheld categories; CR-Q8 omitted-category behavior and N4 parsing remain unresolved for broader use. | Keep present synthetic interpretations. Do not drop directives or claim category withholding eliminates inference. No new MCP/client exposure here. | Orchestrator: resolve/adopt CR-Q9 before sensitive real data; C7 owner: CR-Q8, N4 and HTTP/MCP parity before real-client qualification |
+| C5 imported standing (#21), broader history/collisions (#19/#24/#37), OAuth breadth (#40), notifications (#41), reports (#42), summaries (#43), dormant expiry (#3) remain bounded. | Carry existing selected contracts and limits. Prior issue/comment submissions are not merged/adopted resolutions; no issue response silently changes the pin. N3 still lacks independent grant-deadline evidence. | Orchestrator tracks capability-specific fixes and explicit adoption before affected expansion/C8; C6 source UI must not advertise broader support |
+
+**Upstream disposition: none newly submitted or changed in C6 planning.** This is
+required by Lucas's explicit unchanged-spec boundary, not a claim that existing
+questions are solved or issue tracking replaces eventual fixes. The orchestrator
+owns separately authorized follow-through; dependent capabilities remain gated.
+The experienced-team limitation remains: source review and a plan are not a new
+team's adoption trial, runtime conformance, memory quality or task-outcome evidence.
+
+## C6 Postimplementation Adoption Disposition (2026-11-15)
+
+A fresh read-only adoption reviewer assessed the frozen first C6a–d candidate and
+current upstream issue/comment bodies. Requested configuration was Astra/high,
+accepted by the coordinator; actual execution tier is unverified. No new issue or
+comment update is recommended. Source launcher, profile ownership and dashboard
+presentation are application work under the existing pinned contract.
+
+The [latest #36 completion comment](https://github.com/loyalagents/hcp-spec/issues/36#issuecomment-6900763542)
+already covers expiry during rendering, withheld details, minimal original-channel
+known-commit acknowledgement and uncertain-error refusal. The C6 encoded-link
+correction supplies another application instance of that boundary. The
+[#38 correction evidence](https://github.com/loyalagents/hcp-spec/issues/38#issuecomment-6889856407)
+already covers exact one-use person authority, purpose distinctions and retained
+principal restrictions. Repeating browser/UX progress would add no new protocol
+question. Exact comment bodies/IDs were available; their creation/update timestamps
+were not returned by the connector.
+
+Existing issues remain unresolved, including D3 hard deletion and CR-Q9 directive/
+category inference. Neither this assessment nor the browser-lifecycle review fixes
+change the normative/adoption pins, authorize personal or sensitive data, close
+broader C6/C7/C8 work, or establish conformance. No upstream source, issue, comment,
+branch or publication was changed.

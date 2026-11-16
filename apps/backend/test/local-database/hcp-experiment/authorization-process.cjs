@@ -33,9 +33,26 @@ for (const name of [
   "reportSharing",
   "prepareNotification",
   "finishNotification",
+  "reviewPersonWrite",
+  "commitReviewedPersonWrite",
+  "commitMutation",
+  "managementEntry",
+  "managementEntries",
 ]) {
   const original = AuthorizationRepository.prototype[name];
   AuthorizationRepository.prototype[name] = function (...args) {
+    // Added C6 observation must not shadow an outer C4/C5 fault phase.
+    if (
+      [
+        "reviewPersonWrite",
+        "commitReviewedPersonWrite",
+        "commitMutation",
+        "managementEntry",
+        "managementEntries",
+      ].includes(name) &&
+      armed?.operation !== name
+    )
+      return original.apply(this, args);
     const previous = phase;
     phase =
       name +
@@ -92,7 +109,7 @@ String.prototype.replace = function (...args) {
   const result = replace.apply(this, args);
   if (
     armed?.point === "during-management-page-render" &&
-    String(this) === "Import recorded"
+    String(this) === (armed.title ?? "Import recorded")
   ) {
     const previous = phase;
     phase = armed.operation;
@@ -135,6 +152,18 @@ const {
   createSyntheticAuthorization,
 } = require("../../../dist/composition/hcp-authorization.js");
 let server;
+const {
+  SyntheticExperiment,
+} = require("../../../dist/infrastructure/hcp-experiment/store.js");
+const openStore = SyntheticExperiment.open;
+let sourceFaults = false;
+SyntheticExperiment.open = function (paths, options) {
+  return openStore.call(
+    this,
+    paths,
+    sourceFaults ? { ...options, clock: Date.now, fault } : options,
+  );
+};
 function fault(point) {
   if (
     !armed ||
@@ -159,30 +188,35 @@ process.on("message", async ({ id, command, value }) => {
     if (command === "start") {
       fixedTime = value.now;
       armed = value.barrier;
-      server = await createSyntheticAuthorization(value.paths, {
-        ...value.options,
-        ...(value.options.approveFixtures
-          ? {
-              initialize: (bootstrap) => {
-                const reviewed = bootstrap.review(
-                  value.options.humanCredential,
-                );
-                if (
-                  !reviewed.fixtures.length ||
-                  !reviewed.notice.includes("synthetic")
-                )
-                  throw new Error("Unreviewed fixtures");
-                bootstrap.approve(
-                  value.options.humanCredential,
-                  reviewed.reviewId,
-                  reviewed.digest,
-                );
-              },
-            }
-          : {}),
-        clock: Date.now,
-        fault,
-      });
+      sourceFaults = !!value.options.source;
+      server = sourceFaults
+        ? await require("../../../dist/infrastructure/hcp-experiment/source.js").serveSource(
+            value.paths.sandbox,
+          )
+        : await createSyntheticAuthorization(value.paths, {
+            ...value.options,
+            ...(value.options.approveFixtures
+              ? {
+                  initialize: (bootstrap) => {
+                    const reviewed = bootstrap.review(
+                      value.options.humanCredential,
+                    );
+                    if (
+                      !reviewed.fixtures.length ||
+                      !reviewed.notice.includes("synthetic")
+                    )
+                      throw new Error("Unreviewed fixtures");
+                    bootstrap.approve(
+                      value.options.humanCredential,
+                      reviewed.reviewId,
+                      reviewed.digest,
+                    );
+                  },
+                }
+              : {}),
+            clock: Date.now,
+            fault,
+          });
       result = { issuer: server.issuer };
     } else if (command === "arm") armed = value;
     else if (command === "resume") {

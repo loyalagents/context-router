@@ -661,6 +661,7 @@ function requireReviewedDocumentReaders(found, inventory) {
 // Each match is either covered by a fixed lane command or has a reviewed reason
 // it does not consume maintained prose. Matching comments/metadata are not readers.
 const documentReaderInventory = {
+  'apps/backend/src/hcp-source.ts': { reason: 'Diagnostic runbook pointer; no document content read.' },
   'apps/backend/test/contracts/runtime-composition.spec.ts': {
     step: 'Test backend launch-topology documentation', target: 'test/contracts/runtime-composition.spec.ts',
   },

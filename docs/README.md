@@ -45,6 +45,9 @@ This file is for doc writers. For agent startup, follow `AGENTS.md`.
   analysis, proposed checkpoints, and evaluation of the current spec's adoption
   experience. Initial [spec questions](plans/active/hcp-alignment/spec-questions.md)
   stay here until concrete findings warrant focused upstream improvements.
+- [Synthetic HCP source dashboard](useful/HCP_SOURCE.md) — explicit private
+  initialization, exact fixture approval, owned TLS browser, correction review,
+  retained history and reopen; no installed/personal-state integration.
 
 - [Installed Mac pilot](useful/INSTALLED_MAC_APP.md) — menu, model, installed CLI,
   private storage, backup/restore, replacement and removal of the local candidate.

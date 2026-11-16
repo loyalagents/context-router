@@ -1,6 +1,6 @@
 # Context Router And HCP: Gap Analysis
 
-- Status: source-level assessment; no runtime conformance established
+- Status: historical source assessment plus C6 inventory and bounded source implementation evidence; no runtime conformance established
 - Assessed: 2026-11-07
 - Plan and decisions: [HCP alignment brief](README.md)
 - Relationship: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
@@ -331,7 +331,100 @@ workflow. The original planning-only checks remain historical; the activated run
 candidate and focused evidence are recorded in the
 [C5 implementation checkpoint](README.md#c5-implementation-checkpoint-2026-11-15-utc).
 C5-R01–R12/R14/R15 are implemented within the stated experimental boundaries,
-with final candidate review/CI pending. C5-R13 remains an explicit capability gap.
+with final review/CI passed in merged PR #208; the [C5 merge record](README.md#c5-merge-and-c6-planning-ownership-2026-11-15) preserves scope and local aggregate crashes. C5-R13 remains an explicit capability gap.
+
+## C6 Current Access-Path Inventory (2026-11-15)
+
+Refreshed by read-only source inspection at CR C5 merge
+`c3c953a769596930b5b760735344f3f89626fd55`. This supersedes the historical bypass
+inventory for C6 planning, not its original source observations. The
+[concrete proposal](README.md#c6-application-planning-2026-11-15) selects an isolated
+source dashboard only. No runtime was launched and no new behavior is proved here.
+Paths below are relative to the repository, primarily under `apps/backend/src/`.
+The inventory groups every current producer/consumer family, including direct
+adapter paths and downstream copies; generated hooks are consumers of their named
+GraphQL route, not a separate authorization boundary.
+
+**Disposition vocabulary:** **rebuild** replaces the selected application contract
+using HCP services; **remove** removes an obsolete control/contract from the HCP
+surface; **disable** offers no operation there; **exclude** means no HCP store,
+credential or data handle reaches that retained composition/tool. Exclusion is a
+positive boundary to verify, not compatibility machinery. All first-slice exclusions
+apply before its first serving readiness. Their ordinary hosted/installed versions
+remain unchanged. Future rebuild/removal requires the stated capability selection,
+with no legacy adapter, conversion or deprecation window required.
+
+| Path / current caller → consumer or storage | First source slice disposition and why | Later owner/trigger |
+| --- | --- | --- |
+| HCP `composition/hcp-authorization.ts` → `authority.ts` → `http.ts` and transactional store | **Rebuild** source selection and management presentation around this existing composition. Use authenticated `managementEntries`, `managementEntry`, `audit`, `reviewPersonWrite`, `commitReviewedPersonWrite` and `releaseWrite`. Raw `store.inspectEntries` remains internal, never the dashboard API. | C6a–d; same authority for every new application route |
+| `composition/local-ui-application.module.ts`, `application-features.module.ts`, `local-mcp-features.module.ts`, hosted `app.module.ts`; `apps/web/local-ui.mjs` | **Exclude** ordinary Nest/GraphQL/MCP/model roots and their old SQLite/PostgreSQL adapters. Do not inject an HCP handle into them or select through the old local/hosted mode flag. | C6 eventual composition selection; retained hosted/PostgreSQL HCP stays out of scope |
+| `modules/preferences/preference/{preference.resolver,preference.service}.ts`: set/suggest/accept/reject/delete → UOW preference upserts/deletes + audit | **Exclude** all old GraphQL mutations. Accept/reject moves between row types; deletion physically removes a row, unlike HCP version/confirmation/withdrawal contracts. | Rebuild selected manual/profile actions in later C6; remove superseded HCP-facing APIs together |
+| Web profile `ProfileForm.tsx`, preferences `ManualPreferenceForm.tsx`, `SuggestionInbox.tsx`, `PreferenceItem.tsx`, generated hooks | **Remove** these controls from HCP navigation; **rebuild** only exact person correction. Existing batch profile set/delete and implicit definition creation have no HCP authority. | C6 profile/manual UX selection; ordinary dashboard remains isolated |
+| `mcp/mcp-tool.providers.ts`: all six tools in `mcp/tools/` | **Exclude** `preference-list.tool.ts`, `preference-search.tool.ts`, `preference-mutate.tool.ts`, `smart-search.tool.ts`, `schema-consolidation.tool.ts`, `permission-grant-list.tool.ts`. These read definitions/active/suggested rows, mutate values/definitions, invoke AI or expose legacy grants. | C7 replaces tools/binding; no old MCP transport or credentials in C6 source dashboard |
+| `mcp/resources/schema.resource.ts`, `mcp/local/local-capabilities.resource.ts` | **Exclude** GraphQL SDL and model-readiness resources. They advertise old interfaces and may probe model status; neither is HCP discovery. | C7/C8 discovery selection |
+| `document-analysis.resolver.ts`: `applyPreferenceSuggestions` V1 → per-item `PreferenceService.setPreference` | **Exclude** resolver, hosted web V1 path, orchestrator and eval callers. Submitted evidence/confidence and partial batch writes cannot become HCP provenance/authority. | C6 document proposal contract, separately activated |
+| `reviewed-suggestion.service.ts`: `prepare`/`applyPreferenceSuggestionsV2` → serializable `tx.preferences.compareAndSetActive`; SQLite/Postgres preference repositories; local web `SuggestionsList.tsx` | **Exclude** the direct CAS facet and V2 callers. Wrapping `PreferenceService` alone misses this writer. No V1 fallback in HCP. | C6 replacement must remove/replace CAS semantics under exact HCP review and atomic audit |
+| `document-analysis.controller.ts`, `document-analysis.service.ts`, `preference-extraction.service.ts` | **Exclude** analysis/upload and duplicate-consolidation paths: active values + definitions/schema enter model prompts; extracted/staged outputs return to web/orchestrator. | C6 actual document producer; authorized pre-prompt selection, truthful source/model provenance and private staging before activation |
+| `modules/workflows/preferences/preference-search/{preference-search.resolver,preference-search.workflow}.ts`; schema-consolidation workflow; `preference-schema-snapshot.service.ts` | **Exclude** search/schema AI reads. MCP supplies filters, but dashboard resolver supplies identity callbacks (`slugs => slugs`, `values => values`). Old MCP filtering does not protect GraphQL prompt construction. | C6 selected AI/search work; model activation separate |
+| `modules/preferences/form-fill/{form-fill.controller,form-fill.service,form-fill-prompt-builder.service}.ts` | **Exclude** the PDF form-fill controller route: active preferences → prompt → model → PDF/results/download. The PDF is another data disclosure/export sink. | Later C6 product selection with output/prompt authority tests |
+| Preference resolver `activePreferences`/`suggestedPreferences`/`preference`; definition resolver catalog/schema export; web `LocalPage.tsx`, profile/preferences/schema pages and caches | **Exclude** all old read routes, hooks and caches. Global/location merge, full rows, schema and stable IDs are not HCP disclosures. | Rebuild only selected HCP entry/list/history views now; other consumers later |
+| Audit/access query services, GraphQL history and web history; local MCP-management permission targets/previews | **Exclude** old snapshots, history export and definition/authority projections. Historical payloads can contain values even when current preferences do not. | C6 HCP audit/summary UI uses its own management service; no legacy-history escape |
+| `modules/auth/verified-human-identity.resolver.ts:seedInitialProfileMemory`; SQLite/Postgres identity storage `createInitialProfileValue` | **Exclude** first-login profile-hint seeding. It directly inserts a preference after identity commit, bypassing `PreferenceService`; login/hints cannot fabricate HCP assertion or consent. | C6 chosen identity/onboarding flow before use |
+| `domains/shared/storage/seed-catalog.ts`, `prisma/seed.ts`, SQLite local runtime | **Exclude** catalog writes to legacy definition storage and legacy identity/bootstrap. **Rebuild** only explicitly approved synthetic HCP fixture initialization. | C6 source initialization now; eventual selected schema/bootstrap later |
+| `apps/backend/scripts/demo/{domain,mcp-import,records}.mjs`, `examples/demo-10-2026/`, desktop demo preparation/runtime | **Exclude** old importer: temporary legacy MCP authority → definition/set operations with historical records. Do not invent historical HCP consent or model facts. | Separate C6 demo/installed selection; current demo and presenter edits untouched |
+| `modules/preferences/location/location.service.ts`, SQLite/Postgres location repositories and FK schema | **Exclude** create/update/delete and location-scoped reads. Location delete cascades preference rows; location edits also change their meaning. | Later C6 choose explicit HCP meaning/lifecycle, never reuse implicit cascade deletion |
+| `preference-definition.{resolver,service}.ts`, schema editor and MCP definition mutations | **Exclude** create/update/archive and old catalog mapping. Definitions affect sensitivity, validation, permissions, exports and model input. | Later C6 reviewed classification/schema design; no silent widening on a definition edit |
+| `modules/reset/user-data-reset.service.ts`, corresponding GraphQL/UI | **Disable** reset in HCP surface; **exclude** reset facets deleting preferences, histories, definitions, locations and grants. No shared HCP handle. | Later C6 bounded owned fresh-store/reset delivery; legacy discard does not cover new HCP records |
+| `modules/preferences/audit/history-clear.service.ts`, `clearMyHistory`, history UI | **Disable** HCP history clear. Retained append-only HCP history is not the old deletable access/audit stream. | Hard deletion remains C5-D3/#23/#39; no substitute erasure via clear/reset |
+| `apps/local-orchestrator/src/server/{analysis-client,apply-client}.ts`; `examples/eval/scripts/ingestor/`, `materialize-synthetic-memory.mjs`, exporter/memory-snapshot clients and queries | **Exclude** GraphQL upload/apply V1, reset/set/suggest/accept/definitions and value/schema snapshot outputs. Downstream scoring and agents must not see HCP records through these files. | Rebuild only if separately selected; old formats are not HCP portability |
+| `examples/eval-harbor/sidecars/cr-memory/server.py`, direct Prisma/SQLite seed/probe/admin scripts, root `test-*.sh` callers | **Exclude** independent FastMCP/storage/snapshot service and operational direct-store callers from HCP roots/endpoints. Similar tool names are not integration evidence. | Relevant eval/tool owner when explicitly selected; never count as HCP qualification |
+| Desktop `runtime/maintenance.mjs`, local identity/MCP administration, backup/restore/recovery, demo reset | **Exclude** installed/offline operators from the synthetic source envelope; preserve installed paths and ownership guards. | C6 later delivery selection requires target inventory and installed evidence; no silent personal/demo reset |
+| Existing HCP `producer.ts`, fixture seed and C5 governance/portability/outbox paths | **Exclude** producer seam from public application entrypoints; label controlled fixture producer `modelExecuted:false`. **Reuse** current governed import/export, policy and history services without wider accepted cases or arbitrary endpoints. | Later actual producer provenance; C5 limitations/selected decisions remain; no model execution now |
+
+Inventory method: inspect composition imports, resolver/controller/tool registrations,
+service and UOW facet callers, direct identity/location/repository writes, web hooks,
+AI input builders and offline scripts through their storage/output boundary. The
+future implementation must repeat reachability checks for changed files, not rely
+only on filename grep or a `PreferenceService` wrapper. The current
+`isolation.spec.ts` checks real old adapter admission (including an HCP database
+renamed to the legacy filename) plus exact source-import boundaries; extend its
+allowlist only for named source entrypoint files. Canary synthetic entries should
+never reach old prompts, schema/history exports, PDFs, eval snapshots or diagnostics.
+
+### C6 First-Slice Requirement And Evidence Matrix
+
+All rows are **planned**, at the unchanged normative pin. The complete C6 roadmap
+is broader; G06–G15/G18 are only partially addressed by this slice.
+
+| ID / requirement | Observable acceptance | Evidence owner / boundary |
+| --- | --- | --- |
+| C6-R01 · G01/G02/G15/G18; §§5.4, 6.1.9, 18.4 | Authenticated person enumerates every retained state and inspects exact current/prior version plus history; context/legacy credentials cannot enumerate. Historical version view labels current classification/lifecycle honestly. | C6b browser/HTTP; management inspection is not bulk Context Client retrieval |
+| C6-R02 · G06–G11/G16; §§3.5/3.8, 5.2.4, 6; C5-D2 | String-valued supported target only; exact replacement/evidence/assertion effects shown; fresh one-use reviewed authority, correct selected purpose and principal restrictions; stale/forged/expired/foreign-session review has no mutation. Old version/provenance preserved, +1 version, new person assertion, no inherited confirmations. | C6b source/SQLite/HTTPS/browser tests first; no issuer/structured editor or real-model claims |
+| C6-R03 · G14/G16; §§8, 9.6; C4 completion and C5-D6 | Version/graph/audit/receipt atomic; failure before commit rolls back; kill/lost response after commit never duplicates. Final serialization/render authority expiry withholds protected details but known commit may acknowledge minimally. Changed-then-restored policy never revives old review/cache. | C6b/c actual process failure + browser; no automatic mutation retry; retained original copy deadline |
+| C6-R04 · G06/G14/G18; C0-R16 | Explicit owned fresh setup/fixture approval; same schema-3 store/config/credential/issuer reopens; entries/history/grants survive, bootstrap stays closed; valid browser/review authority keeps its original deadline/binding/consumption checks; expired or invalidated authority never revives and pending forms never auto-submit. Wrong/live/unproven/partial/symlink/legacy roots, missing descriptor, expired TLS or busy origin refuse safely. | C6a/c SQLite/process/TLS/Mac; no migration/reset/repair or physical host-loss qualification |
+| C6-R05 · G06–G15/G18; C0-R17 | Every inventory family has no HCP handle. Real selected server denies the legacy GraphQL, MCP, local-admin, document analysis/PDF and upload route families; GraphQL operations for both apply versions/reset/history clear are unavailable. Old adapter rejects HCP store/copy. Canary content absent from legacy exports/prompts/logs. | C6a/d composition/import checks plus real admission/route probes; no universal JavaScript sandbox claim |
+| C6-R06 · G01/G13/G18 | Pinned HTTPS browser with owned profile-local trust only; bad CA/hostname/expiry/origin denies; no secret output or arbitrary egress; profile/store ownership and termination are separate and bounded. | C6a/c target-Mac/browser/process; installed/personal profiles and OS trust unchanged |
+| C6-R07 · G15/G18; §18 | Existing C5 controls/limitations remain accurately presented; unsupported actions are unavailable, not mislabeled success. Hard deletion absent, withdrawal not erasure. First source slice is partial C6, no conformance claims. | C6d complete-diff, doc consumers, exact-candidate CI once authorized for publication; D3 before personal data, CR-Q9 before sensitive exposure, C7/C8 unactivated |
+
+No C5 pass is relabeled as a C6 result. Reuse unchanged evidence only with the
+implementation's explicit input/impact assessment. The complete plan owns focused
+checks, the proposed freeze milestone and remaining platform/artifact evidence.
+
+### C6 Working-Candidate Evidence
+
+The inventory above remains the application disposition for the first slice.
+The [implementation checkpoint](README.md#c6-source-implementation-checkpoint-2026-11-15)
+and [source runbook](../../../useful/HCP_SOURCE.md) now supersede planning-only
+availability statements for that slice. C6-R01/R02 have source dashboard inspection,
+view-only guard, exact replacement and authority tests. R03/R04 have actual source
+process/SQLite fault, lost-reply, duplicate-suppression and reopen evidence. R05 has
+exact import isolation, real old-adapter denials and source-origin route denials.
+R06 has owned Chromium/TLS/lease checks and R07 has truthful source controls/runbook
+limits. Both fresh reviews approved the corrected source candidate in the
+[final handoff](README.md#c6-reviewed-source-handoff-2026-11-15); each result remains
+bounded by its test inputs. Human source retest and exact-candidate CI are pending.
+No C5 pass is relabelled C6, and
+no full-C6, installed-delivery, real-model or conformance claim is made.
 
 ## Assessment Boundary And Next Use
 

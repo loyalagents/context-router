@@ -52,26 +52,29 @@ can be a pilot blocker; that does not make it safe to implement concurrently.
 Keep one canonical item, link it from the pilot, and assign a named owner and
 landing order. Do not copy tasks between lists or activate every backlog brief.
 
-HCP's canonical brief is [active](active/hcp-alignment/README.md). C1–C4 are
-human-merged in PRs #204–#207. C4 merged at
-`666f9d1b5ff3dde322ad4c368b44d2f4399f203e`, with successful final review and CI;
-its [merge record](active/hcp-alignment/README.md#c4-merge-and-c5-planning-ownership-2026-11-14)
-preserves the exact evidence and bounded limitations. C5 chat
-`01a1dcfd-96ec-7590-8682-b40ea62e0d5f` now owns **C5 planning, implementation and review** in
-the existing checkout on `codex/hcp-c5-governance-plan`. The orchestrator and
-reviewers stay read-only. [C5's proposed plan](active/hcp-alignment/README.md#c5-planning-and-decisions-2026-11-14)
-covers governance, persistent grants, summaries/sharing/notifications, portability,
-and erasure/recovery. The user authorized bounded C5 runtime after subagent plan approval, iterative
-implementation review, and relevant hcp-spec issues. D3 hard deletion is deferred
-until clarification; no speculative erasure architecture is added. C6–C8, merge,
-release, installed-app work and full conformance remain outside this activation.
-The [implementation checkpoint](active/hcp-alignment/README.md#c5-implementation-checkpoint-2026-11-15-utc)
-records the bounded candidate; targeted checks passed, final review/CI pending.
+HCP's canonical brief is [active](active/hcp-alignment/README.md). C1–C5 bounded
+work is human-merged in PRs #204–#208. The
+[C5 merge record](active/hcp-alignment/README.md#c5-merge-and-c6-planning-ownership-2026-11-15)
+binds final review/CI to `c3c953a769596930b5b760735344f3f89626fd55`, preserving
+both unexplained local aggregate crashes and scoped passing evidence.
+**C6's first source-only synthetic slice is implemented and independently reviewed; human retest and exact-candidate CI remain pending**
+on `codex/hcp-c6-application-plan`; the original chat remains orchestrator.
+The [reviewed plan](active/hcp-alignment/README.md#c6-application-planning-2026-11-15)
+and [activation](active/hcp-alignment/README.md#c6-implementation-activation-2026-11-15)
+cover the isolated HCP dashboard, exact correction, history/reopen and complete
+access-path exclusions. The [final handback](active/hcp-alignment/README.md#c6-reviewed-source-handoff-2026-11-15)
+records both fresh reviews, four resolved findings and the separate recommendation
+to leave HCP issues unchanged. Checkout/build ownership is yielded to the original
+orchestrator with the candidate preserved. The later [external review follow-up](active/hcp-alignment/README.md#c6-external-review-follow-up-2026-11-15)
+authorizes application corrections and draft PR publication; its coordinator owns
+that bounded round. Installed delivery, personal-data use and C7/C8 remain
+unactivated. D3 hard deletion remains deferred;
+there is no full conformance claim.
 
-C4's authorized hcp-spec submissions are #34, #36, #37, #38 and evidence on #29;
-these are proposals, not adopted normative resolutions. C5 now has explicit authority to create/update relevant upstream issues. Specification sources, the sibling checkout and the pinned
-target remain unchanged. The assisted pilot's priority and installed app are
-unchanged.
+C4/C5 upstream issue submissions are proposals, not adopted normative resolutions.
+C6 implementation leaves `hcp-spec` unchanged locally and remotely; prior publication
+permissions do not carry forward. Normative and adoption pins, the assisted pilot's
+priority and the user's installed app remain unchanged.
 
 `active/` contains currently coordinated work. `backlog/` holds useful but
 unactivated briefs; promotion requires an explicit scope/owner/acceptance decision.

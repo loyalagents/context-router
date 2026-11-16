@@ -1725,11 +1725,15 @@ export class AuthorizationRepository {
   releaseWrite(
     ticket: object,
     handoff: (status: number, bytes: string) => void,
+    render: (bytes: string) => string = (bytes) => bytes,
   ): void {
     const committed = this.writes.get(ticket);
     if (!committed) denied();
     this.writes.delete(ticket);
-    let bytes = committed.response.bytes;
+    // Prepare both presentations before the final authority check. The handoff
+    // must not serialize/render protected data after that check (including HTML).
+    let bytes = render(committed.response.bytes);
+    const completion = render(COMPLETION_ONLY);
     try {
       const until = this.kernel.read((db) =>
         this.writeRepresentation(
@@ -1744,7 +1748,7 @@ export class AuthorizationRepository {
         throw new AuthorityError("unauthenticated");
     } catch (error) {
       if (!committed.original) throw error;
-      bytes = COMPLETION_ONLY;
+      bytes = completion;
     }
     handoff(committed.response.status, bytes);
   }

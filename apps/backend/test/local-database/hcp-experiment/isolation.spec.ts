@@ -56,6 +56,7 @@ it("only explicit synthetic compositions import HCP infrastructure; no legacy mo
       );
   }
   const allowed = [
+    "hcp-source.ts",
     "composition/hcp-experiment.ts",
     "composition/hcp-authorization.ts",
     "infrastructure/hcp-experiment/",
@@ -64,9 +65,14 @@ it("only explicit synthetic compositions import HCP infrastructure; no legacy mo
     (f) => f.endsWith(".ts") && !f.endsWith(".spec.ts"),
   )) {
     const relative = path.relative(src, file);
-    if (allowed.some((a) => relative.startsWith(a))) continue;
+    if (
+      allowed.some((a) =>
+        a.endsWith("/") ? relative.startsWith(a) : relative === a,
+      )
+    )
+      continue;
     expect(fs.readFileSync(file, "utf8")).not.toMatch(
-      /(?:from\s*|require\s*\(|import\s*\()["'][^"']*hcp-experiment/,
+      /(?:from\s*|require\s*\(|import\s*\()["'][^"']*hcp-(?:experiment|authorization|source)/,
     );
   }
   const source = fs.readFileSync(
@@ -84,4 +90,20 @@ it("only explicit synthetic compositions import HCP infrastructure; no legacy mo
     /@nestjs|modules\/|mcp\/|local-model|0\.0\.0\.0/,
   );
   expect(authorization).toContain('"127.0.0.1"');
+  for (const name of [
+    "hcp-source.ts",
+    "infrastructure/hcp-experiment/source.ts",
+  ]) {
+    const source = fs.readFileSync(path.join(src, name), "utf8");
+    expect(source).not.toMatch(
+      /@nestjs|modules\/|local-ui|mcp\/|local-model|Prisma|SqliteDatabase|PreferenceService|process\.env\.(?:HOME|DATABASE|LOCAL_)/,
+    );
+  }
+  const browser = fs.readFileSync(
+    path.resolve(src, "../../web/hcp-source-browser.mjs"),
+    "utf8",
+  );
+  expect(browser).not.toMatch(
+    /ignoreHTTPSErrors:\s*true|--ignore-certificate|--disable-web-security|@apollo|local-ui\.mjs|next\/|NODE_TLS_REJECT/,
+  );
 });
