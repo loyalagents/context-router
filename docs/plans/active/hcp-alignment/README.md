@@ -1,7 +1,7 @@
 # HCP Alignment Plan
 
-- Status: C1–C5 bounded work merged; C6 first source slice implemented in working candidate, final review/CI pending; hard deletion deferred; C7/C8 unactivated; no conformance claim
-- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C6 step coordinator owns implementation coordination; `c6_implementation` is sole writer; coordinator/reviewers are repository-read-only during that handoff
+- Status: C1–C5 and bounded C6 source slice merged; bounded human source journey accepted; next is an app-like synthetic demo; continuation/C7–C9 unactivated; no conformance claim
+- Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` owns sequencing and assigns the next sole writer at activation
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
 - Assessment date: 2026-11-07
@@ -9,9 +9,73 @@
 - Relationship and ownership: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
 - Protocol questions: [local Draft 3 adoption notes][questions]
 
-Current work: [C6 implementation activation](#c6-implementation-activation-2026-11-15), following the independently reviewed concrete plan.
-Earlier activation, writer, pending/draft and freeze-time passages below are
-historical records, superseded by the [C5 merge and C6 ownership record](#c5-merge-and-c6-planning-ownership-2026-11-15).
+Current work is the [demo-first continuation plan](#demo-first-continuation-2026-11-19),
+**planning only**. Earlier activation, writer, pending/draft and freeze-time passages
+below are historical. The current status and checkpoint map supersede their routing;
+old “C8 qualification” means current C9, and old “C7/C8 unactivated” records retain
+their original scope rather than retroactively describing the new C8.
+
+## Demo-First Continuation (2026-11-19)
+
+[C6's first source slice merged in PR #209](https://github.com/loyalagents/context-router/pull/209)
+at `d82b806ed9ff524d7fbbce78a3081cf1d22423c9`. Reviewed head
+`90912af6482f97b59137e9d54709159423cf8575`, CI test merge
+`ca6e86b561647bd312ed728e5334a71adab54286` and the merge share tree
+`f77bafe2c984b69424958eda8174ae5e22f59d04`; base was
+`c3c953a769596930b5b760735344f3f89626fd55`.
+[Standard CI](https://github.com/loyalagents/context-router/actions/runs/43804030956)
+and [migration CI attempt 1](https://github.com/loyalagents/context-router/actions/runs/43804030975)
+passed, including all three qualification receipts and native CI.
+
+The November 19 human retest in chat `01a1e333-3f77-73c3-8863-4c542a8b3beb`
+passed sign-in, retained-entry inspection, cancel without save, one approved
+correction, preserved history/v1, and Cmd-Q while the provider remained alive.
+The user accepted this bounded source journey as enough to advance and stopped
+extra testing. Human Ctrl-C and full stop/reopen persistence were **deferred**, not
+passed; no human expired-session or pending-form pass is claimed. Automated evidence
+retains its original scope. Cleanup preserved the synthetic sandbox; no runtime or
+spec defect was found. This is partial C6, not installed-artifact or full qualification.
+
+| Next milestone | Handoff and completion boundary |
+| --- | --- |
+| C6 continuation: early app-development handoff, then polished synthetic demo | Design can start when activated. Before UI implementation, fix the small shared view/action contracts and file ownership; separate presentation from `http.ts` only as needed so UI work has an independent boundary. Reuse `managementEntries`, `managementEntry`, `audit`, `reviewPersonWrite`, `commitReviewedPersonWrite`, and `releaseWrite`; no new frontend or API framework is a prerequisite. Build clear navigation, memory browsing/detail, selected add/edit/review/history/grant controls, loading/error/uncertain outcomes and convenient source launch. `/manage/person/new` exists, but add needs its own selected acceptance evidence; the human pass covered correction. No C7 or spec-resolution dependency for this UI handoff. |
+| Optional overlapping C7: one host/version, synthetic MCP | Start with read-only query/get through the selected transport and narrow grant; add writes only if useful to the demo, with completion/retry evidence. Agree provisional output/error, query-default and N4 media/parsing contracts before affected implementation or trial. UI and MCP can overlap after shared contracts are stable, with separate ownership/worktrees/resources and one integration order. Real-host setup and any off-device synthetic trial need their own scoped activation. |
+| C8: protocol resolution and CR adoption | Use demo/client evidence to resolve prioritized questions, produce the smallest justified spec/schema/example/check/guidance/tooling fixes, then explicitly adopt the selected revision and realign affected CR/consumer contracts and tests. Submission, upstream review/merge, and CR adoption are distinct outcomes; an issue list alone does not complete C8. |
+| C9: selected capability completion and qualification | Complete remaining selected C5/C6/C7 capabilities, close all mandatory package/profile gaps and the requirement/evidence matrix, then freeze and qualify the complete candidate. Source, installed-artifact (if selected), host, Mac and manual evidence remain distinct. |
+
+The UI handoff is usable when another agent can run the isolated source through
+documented supported actions and exercise the selected browse → edit → exact
+review/cancel/approve → retained history and grant-inspection journey, with clear
+loading, denial and uncertain-result states. Only selected add controls require
+new add acceptance; no create-UX expansion is mandatory for this first demo.
+“Optional C7” means optional for the early demo or its overlap, not optional for
+final Agent Interop: retaining that target requires the complete MCP binding at C9.
+
+An app-like **source** experience comes first. Installed Mac packaging is a separate
+selected milestone if the demo needs it. C6 still owns document/model review and
+apply, profile, location/category/schema, seed/demo and fresh-initialization/reset
+workflows: defer these from the initial polished demo, revisit each when selected,
+and complete or explicitly exclude optional workflows before C9. C5 owns its
+mandatory governance/erasure/portability gaps; the orchestrator carries them into
+C8 resolution and C9 completion, never silently drops them. The
+[access-path inventory](gap-analysis.md#c6-current-access-path-inventory-2026-11-15)
+continues to govern every expanded producer and consumer.
+
+Exact consent, distinct management/grant authority, final data-release checks,
+truthful committed-versus-uncertain outcomes and persistence remain required.
+Never automatically replay an uncertain mutation. Legacy compatibility, data
+conversion and migration history remain unnecessary; new HCP history is protected.
+D3 erasure must be resolved and implemented before **any personal-data extension**;
+CR-Q9 must be resolved and explicitly adopted before sensitive real-data exposure.
+User data, models/downloads and client settings stay untouched by this plan.
+
+Pinned §18.3 requires Provider Interop when accepting independently operated
+clients. A bounded C7 host experiment is explicitly incomplete relative to that
+requirement: withholding a conformance claim does not satisfy or waive it, and a
+local bridge does not make the host first-party. C9 must resolve that gap before
+full qualification. This plan activates no runtime, installed/native delivery,
+model run, personal-data use, client setup, or upstream publication; the normative
+and adoption pins remain unchanged and `hcp-spec` remains untouched.
 
 ## Outcome And Scope
 
@@ -107,9 +171,12 @@ from protocol conformance, memory quality, and task outcomes.
 
 Follow the [checkpoint review workflow](#hcp-adoption-reviews-and-upstream-work)
 to turn these observations into improvements. Do not build a general adoption
-framework or skill in advance of demonstrated need. Resolve blocking ambiguities
-before implementing affected behavior, continue independent work, and never weaken
-requirements merely to preserve the experiment's schedule.
+framework or skill in advance of demonstrated need. Before affected implementation,
+record a concrete safe provisional application contract and its evidence limits.
+Escalate earlier only when such a contract cannot be selected safely or the selected
+capability/personal-data boundary requires resolution. Normative resolution of every
+question is not a prerequisite for the synthetic demo; unresolved requirements
+remain claim blockers and C8 resolution work.
 
 This team already has the gap analysis and interpretation notes. Its observations
 establish experienced-team integration friction; they do not establish unaided
@@ -132,7 +199,7 @@ separate, reviewable changes with a concrete example and explicit adoption decis
 
 ### Review At Every Checkpoint
 
-Every C0–C8 closeout includes an **HCP adoption findings and upstream disposition**
+Every C0–C9 closeout includes a lightweight **HCP adoption findings and upstream disposition**
 review. The step owner records what the existing materials made straightforward,
 what required interpretation or a workaround, and what repeated work could help
 other implementers. Classify findings using the categories above and identify the
@@ -144,22 +211,24 @@ Keep detailed findings, stable question IDs, evidence, and dispositions in the
 The coordinator reconciles findings across steps and checks that closeout includes
 a disposition, rather than just a list of observations:
 
-- For a concrete reusable correction or aid within the activated scope, prepare,
-  validate, and open a focused hcp-spec PR as part of closeout. Documentation,
-  examples, tooling, skills, and specification corrections are eligible; logging
-  the need alone is not the normal endpoint. Any nonblocking deferral needs a
-  reason, an owner, and a checkpoint or condition for revisiting it.
-- For unresolved semantics or larger protocol additions, record the concrete case
-  and obtain a separate design decision before changing requirements. A focused
-  issue or proposal can carry that discussion; CR-specific complexity alone does
-  not justify expanding the protocol.
+- Record concrete findings and the smallest justified correction at each checkpoint;
+  no upstream PR is mandatory at every closeout. The orchestrator owns deferred
+  follow-through at C8, with an earlier trigger if a safe local contract cannot be
+  chosen or a selected capability requires it.
+- C8 prioritizes [#36](https://github.com/loyalagents/hcp-spec/issues/36),
+  [#34](https://github.com/loyalagents/hcp-spec/issues/34), CR-Q7, CR-Q8 and
+  [#38](https://github.com/loyalagents/hcp-spec/issues/38), plus feature-relevant
+  questions. For each, record the concrete case, options and decision; implement
+  the smallest justified upstream fix, independently review/merge it, then make
+  an explicit CR adoption/new-pin decision and update affected application and
+  consumer contracts with renewed evidence. Adapt CR where HCP is clear; do not
+  force the protocol to match CR or invent speculative skills.
 - Track **submitted**, **merged**, and **adopted by CR** separately, with links and
-  responsible owners. An open nonblocking upstream review need not hold up
-  independent CR work. A blocker stays attached to the dependent capability until
-  the ambiguity and target decision are resolved.
+  owners. Nonrelevant questions may defer with an owner/revisit condition; an
+  unresolved requirement of the selected capability cannot become conformance.
 
-This is the closeout workflow for activated work. Documenting it now does not
-activate implementation or make changes in hcp-spec.
+This workflow is a plan, not upstream-write or runtime authorization. The
+orchestrator assigns the spec and CR adoption owners when those tasks activate.
 
 **2026-11-08 selected workflow for CR-Q1/CR-Q3:** use focused GitHub issues
 as the handoff to separately assigned spec work. At the user's request, published
@@ -180,16 +249,14 @@ C1 activation below leaves the pin unchanged.
 
 | Pause | Required review and output |
 | --- | --- |
-| End of C0 | Check whether the existing materials establish the first experiment's roles, deployment, and required behavior. Resolve blockers for the selected slice, turn understood reusable corrections into focused upstream PRs, and record decisions deferred to later capabilities. |
-| End of C3 | Review the completed synthetic journey and adoption evidence. Produce justified examples, guidance, tooling, or an initial integration skill from the working path. Record the experienced-team limitation and the disposition of each candidate improvement; no skill is required without a demonstrated reusable need. |
-| End of C7 | Review actual binding/client interoperability and what another team needs to reproduce and validate it. Reconcile outstanding upstream findings and resolve issues affecting the selected package before C8 qualification. |
-| C8 closeout | Verify that reusable materials match the selected normative target and demonstrated behavior. Record final upstream statuses and any nonblocking follow-up with owner/revisit condition. A finding that changes the candidate or target renews affected qualification under the existing freeze/evidence rules. |
+| End of C0 / C3 (historical) | Preserve the first experiment's role/contract decisions and experienced-team adoption findings; their evidence and dispositions remain below. |
+| C6 / C7 demo handoff | Capture UI and actual host friction with reproducible synthetic examples and provisional contracts. Raise only capability-specific blockers early; do not require all upstream issues to merge before independent UI/client work. |
+| C8 resolution and adoption | Produce justified fixes and adopted CR realignment, with the concrete case/options/decision and affected checks. Keep upstream merge distinct from new-pin adoption; assign nonrelevant deferrals. |
+| C9 closeout | Complete mandatory selected capabilities, verify materials against the adopted target, and renew affected qualification for any candidate/target change. Record final upstream statuses and owner/revisit for nonblocking follow-up. |
 
-These pauses deepen the regular review; blockers can be raised at any time.
-An integration skill should guide scope selection, gap analysis, implementation,
-and validation through proven guidance and normative references. Extend it as later
-checkpoints supply evidence, and coordinate validation tooling with HCP's planned
-conformance suite.
+These reviews deepen the regular findings record. Reusable guidance or a skill is
+appropriate only when demonstrated need warrants it; coordinate checks with the
+existing conformance tooling rather than building a parallel framework.
 
 ### Preserve Evidence When HCP Evolves
 
@@ -343,7 +410,7 @@ disclosure history and revocation. The product owner selected a standalone C1
 foundation PR, now merged, before the cohesive C2 PR. One writer integrates each
 activated outcome sequentially. The selected requirement/test matrix is
 [the C0 expansion of G01–G18](gap-analysis.md#c0-requirement-and-test-matrix).
-It is a scoped acceptance list, not the exhaustive C8 conformance matrix.
+It is a scoped acceptance list, not the exhaustive C9 conformance matrix.
 
 #### Actors And Authority
 
@@ -419,7 +486,7 @@ experimental capability manifest. Do **not** present an empty `conformsTo` plus
 `bindings: [http]` as conformant HCP discovery: §19 links binding declarations to
 complete claims and the discovery schema requires a nonempty claims array. Use
 configuration for test discovery until full canonical discovery can be advertised.
-C8 owns claim-bearing `/.well-known/hcp-configuration`; retain its required
+C9 owns claim-bearing `/.well-known/hcp-configuration`; retain its required
 `jwks_uri` even without notification endpoints. The partial manifest is an
 explicit experiment limitation, not a change to §19. Selected HCP operation
 responses still use `HCP-Version: 2.0`, `application/ld+json`, and the §9.7 problem
@@ -589,7 +656,8 @@ Backend behavior changes are tests first. Each checkpoint ends with a recorded
 result and remaining evidence; these are internal checkpoints, not a required PR
 count. Prefer one cohesive PR for a bounded outcome, splitting only at independently
 useful, safe landing points. C0 turns the [first experiment](#first-experiment-c0c3)
-into an implementation brief; C4–C8 retain the remaining alignment roadmap.
+into an implementation brief; C4–C9 retain the remaining alignment roadmap.
+The current C6–C9 sequence supersedes the original C8 qualification numbering.
 Every row also requires the [adoption review and upstream disposition](#hcp-adoption-reviews-and-upstream-work)
 and a [step-chat handoff](#step-chats-and-handoffs). These supplement each row's
 technical exit evidence.
@@ -602,9 +670,10 @@ technical exit evidence.
 | C3. Read-only HTTP journey | Query/get with allowlisted disclosures, grant references, lexical relevance, one quantity bound, directives, use-until, and synchronous durable disclosure history. | Complete the first experiment's two-client journey and negative/failure cases on every selected adapter. Summarize adoption friction with fixtures/revisions/results and the experienced-team limitation. No package/profile claim. Addresses G12–G14 and part of G16. |
 | C4. Writes and Memory Manager | Create/revise/withdraw, immutable revisions and expected-version checks, confirmations, proposal staging, durable HTTP idempotency, valid inference provenance/confidence, symmetric conflict detection and human resolution. | Stale confirmation, rollback, committed-but-lost reply, restart/retry, changed-body conflict, concurrent revisions, both conflict arrival orders, same dimension without contradiction, and multiple unresolved conflict edges. Do not accept inferred HCP entries before this capability is ready. Addresses G06–G11/G16. |
 | C5. Complete governance and portability | Remaining person-facing controls, persistent grants with separate affirmative election, any additional required OAuth flows, full standing-rule/directive editors, export/import, hard deletion, disclosure summaries, notification outcomes, and retention/recovery semantics. | Retain early governance-denial coverage; test separate persistence election and selected-flow requirements, all retained states visible to the person, import dry run/round trip, no deleted resurrection, erasure across copies/caches, and notification retry/dormancy. Implement sharing reports, including unauthorized reports, even if no sharing permissions are issued. Addresses G03–G05/G11/G14/G15. |
-| C6. Application integration and cleanup | Rebuild selected dashboard, document, profile, seed, location, and reset workflows around the HCP model; update their APIs and consumers together. Remove or disable superseded interfaces, storage paths, and old database migrations. Earlier checkpoints must already enforce D4 before shared-store exposure. | New application-contract and workflow tests, including read/write bypass checks across the complete inventory; every selected adapter, fresh initialization/reset, persistence and recovery. No legacy-contract, data-preservation, or historical-conversion requirement. Addresses G06–G15/G18. |
-| C7. HCP MCP and clients | Modern transport, discovery, HCP tools, output/error schemas, and setup for selected clients. Replace existing tools or bridges where useful. | HTTP/MCP semantic parity, new client-contract tests, credential isolation, uncertain-write behavior, and real supported-host interoperability. Resolve [N4 query parsing](spec-questions.md#c7-http-query-parsing-follow-up-n4) before real-client qualification and disposition [CR-Q8](spec-questions.md#cr-q8); [CR-Q9](spec-questions.md#cr-q9) precedes sensitive real-data exposure. Old-client compatibility is not an exit criterion. Keep host-side copy use/directive obligations distinct from provider conformance. Addresses G16–G18. |
-| C8. Selected-package qualification | Freeze the candidate, close the requirement/evidence matrix, independently review the full diff, and publish only fully supported discovery claims. | Focused local evidence, all applicable exact-candidate CI, and explicitly named Mac, installed-artifact, and manual evidence. No claim for an incomplete Part; no schema-only certification. Addresses all selected requirements. |
+| C6. App handoff, synthetic demo and selected workflows | Early UI handoff over existing management/write services, then polished source demo; later selected document/model, profile, location/category/schema, seed/reset and optional installed delivery. | Shared contracts/path ownership before runtime UI; focused browser/workflow and full access-path exclusion checks; exact consent, final release, new-store history/recovery. No C7/spec-merge prerequisite. Broader selected workflows remain owned for completion by C9. Addresses G06–G15/G18. |
+| C7. Bounded HCP MCP and one selected host | Optional overlap with C6 after stable shared contracts and isolated resources. Read-only query/get first; useful writes only as a selected extension. | Provisional CR-Q7 output/error, CR-Q8 query-default and N4 parsing contracts before affected implementation/trial; HTTP/MCP parity, roles/credentials, narrow grants and real host/version evidence. Write extension needs committed/uncertain/retry evidence, no automatic uncertain replay. §18.3 remains unsatisfied until complete Provider Interop; this experiment is not qualification. Addresses G16–G18. |
+| C8. Spec resolution and CR adoption | Resolve #36/#34/CR-Q7/CR-Q8/#38 and feature-relevant findings; deliver smallest justified upstream fixes and explicit CR contract realignment. | Concrete cases/options/decisions; reviewed fixes; separate upstream merge and target adoption; affected app/consumer tests and review. Nonrelevant deferrals have owner/revisit; no issue-only closeout or forced protocol changes to match CR. |
+| C9. Capability completion and selected-package qualification | Finish selected C5/C6/C7 work and mandatory gaps; freeze candidate, close requirement/evidence matrix, independently review full diff, publish only fully supported discovery claims. | Focused local checks, all applicable exact-candidate CI, named Mac/host/manual and installed-artifact evidence if selected. §18.3 Provider Interop and applicable profiles fully satisfied; no incomplete-Part or schema-only certification. Addresses all selected requirements. |
 
 For C3, use lexical relevance ordering and synchronous disclosure audit. When C4
 adds conflict handling, favor a declared structural detector for clear typed
@@ -623,7 +692,10 @@ Use a coordinator chat for sequencing, cross-cutting decisions, review of result
 and upstream work. Start with a C0 planning chat when chat setup is requested;
 create later step chats as their inputs and dependencies become ready. The default
 C0–C3 implementation order remains sequential. Independent investigation and review
-can run in parallel without starting dependent implementation early.
+can run in parallel without starting dependent implementation early. C6 UI design
+can begin at its activation; implementation needs shared contracts and path ownership.
+C7 can overlap only under the bounded ownership/resource conditions above, without
+waiting for C8 resolution of every issue.
 
 | Role | Responsibility |
 | --- | --- |
@@ -3323,10 +3395,11 @@ excluded and unrelated retained compositions have a disposition; this source sli
 does not delete them merely because they are legacy. Source-only completion cannot
 be called full C6 completion or installed application adoption.
 
-Personal-data extension must revisit C5-D3 hard deletion first; sensitive real-data
+Personal-data extension requires C5-D3 erasure resolution and implementation first; sensitive real-data
 exposure also requires CR-Q9 resolution and explicit adoption. Actual model/document
 and installed delivery are separate bounded choices. C7 owns HCP MCP, real hosts,
-HTTP/MCP parity, CR-Q8 and N4; C8 owns complete package/profile claims. N3's coincident
+HTTP/MCP parity, CR-Q8 and N4; current C8 owns resolution/adoption and C9 owns
+complete package/profile claims (superseding the original C8 qualification label). N3's coincident
 grant/token tests still do not independently prove the grant deadline. Broader
 import standing/history, post-revocation reporting, OAuth breadth and dormancy
 remain limited under C5's records.
