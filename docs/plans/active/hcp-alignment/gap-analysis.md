@@ -1,6 +1,6 @@
 # Context Router And HCP: Gap Analysis
 
-- Status: historical source assessment plus C6 inventory and bounded source implementation evidence; no runtime conformance established
+- Status: historical source assessment plus C6 inventory and merged bounded source evidence; demo-first C6–C9 routing below; no conformance established
 - Assessed: 2026-11-07
 - Plan and decisions: [HCP alignment brief](README.md)
 - Relationship: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
@@ -321,7 +321,7 @@ copy inventory and validation. These product selections do not resolve the named
 | C5-R12 · G05/G15/G16; R05/R20 | DryRun no domain/audit change; review binds exact bundle and destination; revalidate atomically; all accepted outcomes/policy effects/import audit commit together; stale preview and lost reply safe | C5f; zero-entry policy-only imports and foreign source audit cannot bypass person review or become local authority |
 | C5-R13 · G11/G14/G16; R16/R19/R20 | Hard deletion explicitly unavailable; retained-history protections unchanged, no purge tables/framework or false success | D3=A; C5g deferred pending #23/#39, mandatory Core capability incomplete; future design begins with a concrete transaction |
 | C5-R14 · G11/G14/G16; R03/R06/R13/R16 | Retained history no implicit TTL; transient retention separately bounded; consumption never becomes a fresh operation; no restored credentials/content after recovery | Cross-cutting C5; selected D6 denies expired-copy replay even under otherwise valid authority, requiring renewed expectations, affected review and explicit §9.6 disposition before implementation |
-| C5-R15 · G01/G15/G18; R01/R14/R17/R18 | Every new management route rejects context credentials; actual synthetic browser/HTTPS/SQLite journey and early denial regressions; complete C5 roadmap disposition | C5h; C6 integration/bypass cleanup, C7 MCP/real clients/N4, C8 package/profile qualification remain separate |
+| C5-R15 · G01/G15/G18; R01/R14/R17/R18 | Every new management route rejects context credentials; actual synthetic browser/HTTPS/SQLite journey and early denial regressions; complete C5 roadmap disposition | C5h; C6 integration/bypass cleanup, C7 MCP/real clients/N4, C8 resolution/adoption and C9 package/profile qualification remain separate |
 
 Blocking dependencies prevent only the named branches while independent planning
 and later authorized work continue. They cannot be relabeled as completed C5 or
@@ -361,7 +361,7 @@ with no legacy adapter, conversion or deprecation window required.
 | `modules/preferences/preference/{preference.resolver,preference.service}.ts`: set/suggest/accept/reject/delete → UOW preference upserts/deletes + audit | **Exclude** all old GraphQL mutations. Accept/reject moves between row types; deletion physically removes a row, unlike HCP version/confirmation/withdrawal contracts. | Rebuild selected manual/profile actions in later C6; remove superseded HCP-facing APIs together |
 | Web profile `ProfileForm.tsx`, preferences `ManualPreferenceForm.tsx`, `SuggestionInbox.tsx`, `PreferenceItem.tsx`, generated hooks | **Remove** these controls from HCP navigation; **rebuild** only exact person correction. Existing batch profile set/delete and implicit definition creation have no HCP authority. | C6 profile/manual UX selection; ordinary dashboard remains isolated |
 | `mcp/mcp-tool.providers.ts`: all six tools in `mcp/tools/` | **Exclude** `preference-list.tool.ts`, `preference-search.tool.ts`, `preference-mutate.tool.ts`, `smart-search.tool.ts`, `schema-consolidation.tool.ts`, `permission-grant-list.tool.ts`. These read definitions/active/suggested rows, mutate values/definitions, invoke AI or expose legacy grants. | C7 replaces tools/binding; no old MCP transport or credentials in C6 source dashboard |
-| `mcp/resources/schema.resource.ts`, `mcp/local/local-capabilities.resource.ts` | **Exclude** GraphQL SDL and model-readiness resources. They advertise old interfaces and may probe model status; neither is HCP discovery. | C7/C8 discovery selection |
+| `mcp/resources/schema.resource.ts`, `mcp/local/local-capabilities.resource.ts` | **Exclude** GraphQL SDL and model-readiness resources. They advertise old interfaces and may probe model status; neither is HCP discovery. | C7 transport; C9 claim-bearing discovery |
 | `document-analysis.resolver.ts`: `applyPreferenceSuggestions` V1 → per-item `PreferenceService.setPreference` | **Exclude** resolver, hosted web V1 path, orchestrator and eval callers. Submitted evidence/confidence and partial batch writes cannot become HCP provenance/authority. | C6 document proposal contract, separately activated |
 | `reviewed-suggestion.service.ts`: `prepare`/`applyPreferenceSuggestionsV2` → serializable `tx.preferences.compareAndSetActive`; SQLite/Postgres preference repositories; local web `SuggestionsList.tsx` | **Exclude** the direct CAS facet and V2 callers. Wrapping `PreferenceService` alone misses this writer. No V1 fallback in HCP. | C6 replacement must remove/replace CAS semantics under exact HCP review and atomic audit |
 | `document-analysis.controller.ts`, `document-analysis.service.ts`, `preference-extraction.service.ts` | **Exclude** analysis/upload and duplicate-consolidation paths: active values + definitions/schema enter model prompts; extracted/staged outputs return to web/orchestrator. | C6 actual document producer; authorized pre-prompt selection, truthful source/model provenance and private staging before activation |
@@ -393,7 +393,8 @@ never reach old prompts, schema/history exports, PDFs, eval snapshots or diagnos
 
 ### C6 First-Slice Requirement And Evidence Matrix
 
-All rows are **planned**, at the unchanged normative pin. The complete C6 roadmap
+The rows define the first-slice acceptance contract at the unchanged normative pin;
+merged implementation evidence is recorded below. The complete C6 roadmap
 is broader; G06–G15/G18 are only partially addressed by this slice.
 
 | ID / requirement | Observable acceptance | Evidence owner / boundary |
@@ -404,13 +405,13 @@ is broader; G06–G15/G18 are only partially addressed by this slice.
 | C6-R04 · G06/G14/G18; C0-R16 | Explicit owned fresh setup/fixture approval; same schema-3 store/config/credential/issuer reopens; entries/history/grants survive, bootstrap stays closed; valid browser/review authority keeps its original deadline/binding/consumption checks; expired or invalidated authority never revives and pending forms never auto-submit. Wrong/live/unproven/partial/symlink/legacy roots, missing descriptor, expired TLS or busy origin refuse safely. | C6a/c SQLite/process/TLS/Mac; no migration/reset/repair or physical host-loss qualification |
 | C6-R05 · G06–G15/G18; C0-R17 | Every inventory family has no HCP handle. Real selected server denies the legacy GraphQL, MCP, local-admin, document analysis/PDF and upload route families; GraphQL operations for both apply versions/reset/history clear are unavailable. Old adapter rejects HCP store/copy. Canary content absent from legacy exports/prompts/logs. | C6a/d composition/import checks plus real admission/route probes; no universal JavaScript sandbox claim |
 | C6-R06 · G01/G13/G18 | Pinned HTTPS browser with owned profile-local trust only; bad CA/hostname/expiry/origin denies; no secret output or arbitrary egress; profile/store ownership and termination are separate and bounded. | C6a/c target-Mac/browser/process; installed/personal profiles and OS trust unchanged |
-| C6-R07 · G15/G18; §18 | Existing C5 controls/limitations remain accurately presented; unsupported actions are unavailable, not mislabeled success. Hard deletion absent, withdrawal not erasure. First source slice is partial C6, no conformance claims. | C6d complete-diff, doc consumers, exact-candidate CI once authorized for publication; D3 before personal data, CR-Q9 before sensitive exposure, C7/C8 unactivated |
+| C6-R07 · G15/G18; §18 | Existing C5 controls/limitations remain accurately presented; unsupported actions are unavailable, not mislabeled success. Hard deletion absent, withdrawal not erasure. First source slice is partial C6, no conformance claims. | C6d complete-diff, doc consumers, exact-candidate CI once authorized for publication; D3 before personal data, CR-Q9 before sensitive exposure, C6 continuation/C7–C9 unactivated |
 
 No C5 pass is relabeled as a C6 result. Reuse unchanged evidence only with the
 implementation's explicit input/impact assessment. The complete plan owns focused
 checks, the proposed freeze milestone and remaining platform/artifact evidence.
 
-### C6 Working-Candidate Evidence
+### C6 Merged Source Evidence
 
 The inventory above remains the application disposition for the first slice.
 The [implementation checkpoint](README.md#c6-source-implementation-checkpoint-2026-11-15)
@@ -422,9 +423,32 @@ exact import isolation, real old-adapter denials and source-origin route denials
 R06 has owned Chromium/TLS/lease checks and R07 has truthful source controls/runbook
 limits. Both fresh reviews approved the corrected source candidate in the
 [final handoff](README.md#c6-reviewed-source-handoff-2026-11-15); each result remains
-bounded by its test inputs. Human source retest and exact-candidate CI are pending.
+bounded by its test inputs. PR #209 source CI passed; the
+[current status](README.md#demo-first-continuation-2026-11-19) records the accepted
+bounded human correction journey and deferred human Ctrl-C/full stop-reopen checks.
+The existing add-statement route is available code, not part of that human pass.
 No C5 pass is relabelled C6, and
 no full-C6, installed-delivery, real-model or conformance claim is made.
+
+### Current Completion Routing
+
+The first demo can reuse the existing management/read/review/write/release seams;
+small presentation separation permits independent UI ownership without a framework
+rewrite. C6 owns early UI handoff and polished source launch/navigation, memory
+browsing/detail, selected add/edit/review/history/grant flows and clear failure or
+uncertain results. Add and any newly selected controls need their own evidence.
+
+| Remaining requirement/work | Owner and trigger |
+| --- | --- |
+| Document/model review/apply, profile, location/category/schema, seed/demo and fresh-store/reset workflows; G06–G15/G18 | C6 owner at each selected expansion, with the inventory's exclusions retained until replacement. Defer from initial demo; finish selected workflows or explicitly exclude optional scope by C9. Installed Mac delivery is a separate selected milestone, with actual artifact evidence. No legacy compatibility/conversion obligation; new HCP history remains protected. |
+| C5 hard deletion, broader portability/reporting/notifications/OAuth/dormancy and N3 independent grant-deadline evidence | C5 capability owners coordinated by the orchestrator; resolve feature-relevant questions in C8 and complete mandatory selected-package gaps by C9. D3 erasure resolution/implementation is earlier if any personal-data extension is selected; CR-Q9 resolved/adopted before sensitive data. A demo deferral never waives a MUST. |
+| G16–G18 bounded host/binding | C7 owner: one host/version and synthetic query/get initially, optional useful writes with completion/retry evidence. Provisional CR-Q7/CR-Q8/N4 contracts precede affected implementation/trial; normative merge may follow in C8. Stable shared contracts and isolated ownership/resources permit overlap with UI. |
+| Protocol fixes and application realignment | C8 spec/CR owners: concrete cases/options/decisions, justified fixes, independent review/merge and explicit adoption/new pin with renewed affected app/consumer evidence. Nonrelevant issues need owner/revisit; unresolved selected requirements remain qualification blockers. |
+| Complete claims and discovery | C9 owner: full selected capability and package/profile matrix, including pinned §18.3 Provider Interop for independently operated clients. C7 remains an incomplete experiment against this requirement; withholding claims or using a local bridge does not satisfy it. |
+
+This routing supersedes old C8 qualification references as C9 while retaining
+historical evidence IDs. No continuation, host setup, off-device trial, personal
+state, model, installed delivery or upstream change is activated by this plan.
 
 ## Assessment Boundary And Next Use
 

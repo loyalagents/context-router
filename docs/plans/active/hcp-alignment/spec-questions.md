@@ -14,28 +14,35 @@
 These notes stay in Context Router while we test how well the existing HCP
 specification, schemas, and guides support adoption. They record source-review
 findings, synthetic cases, and possible resolution directions; they are not
-observations from a qualified HCP integration. C1–C5 bounded work is merged in
-PRs #204–#208; the [C5 merge record](README.md#c5-merge-and-c6-planning-ownership-2026-11-15)
-supersedes historical pending/writer text. The bounded C6 source slice is implemented;
-the [reviewed handoff](README.md#c6-reviewed-source-handoff-2026-11-15) records completed
-initial rechecks, and the [external review follow-up](README.md#c6-external-review-follow-up-2026-11-15)
-owns subsequent application corrections and publication. Exact-candidate CI and
-human retest remain separate acceptance gates.
-The independent postimplementation issue assessment recommends no new issue or
-comment update; its disposition is recorded below. Hard deletion stays deferred
-and C7/C8 are unactivated. This task leaves `hcp-spec` unchanged; earlier
-C4/C5 issue publication permissions do not carry forward. Accepted expiry,
-permission invalidation and completion behavior do not change the spec pin or
-resolve the remaining erasure/correction questions.
-Normative text continues to govern examples and schemas.
+observations from a qualified HCP integration. C1–C5 and the bounded C6 source slice
+are merged in PRs #204–#209. The [current status and routing](README.md#demo-first-continuation-2026-11-19)
+records source CI and the accepted bounded November 19 human correction journey,
+including deferred human Ctrl-C/full stop-reopen checks. Historical candidate and
+writer records below retain their original scope. No full C6 or conformance claim
+is made. C6 continuation/C7–C9 remain unactivated; this planning update leaves
+`hcp-spec` unchanged and neither pin changes. Prior publication permissions do not
+carry forward. Normative text continues to govern examples and schemas.
 
-Use the [adoption approach][cr-plan] to investigate each question when it affects
-the selected slice. Record whether existing materials answer it, whether it is an
-application mapping decision, or whether a concrete gap merits a focused upstream
-question/change. The proposals below are not accepted requirements and do not
-change the pinned baseline. Preserve the stable IDs and record evidence and
-dispositions here; a blocking ambiguity must be resolved before implementing the
-affected behavior, without holding up independent work.
+Use the existing materials first; distinguish application adaptation from a
+specification/guidance gap. Record a safe provisional contract and evidence limits
+before affected synthetic implementation. A normative answer or merge for every
+question is not a prerequisite for C6 UI work or a bounded C7 experiment. If no
+safe contract can be selected, block that capability and escalate earlier.
+D3 erasure resolution/implementation precedes any personal-data extension;
+CR-Q9 resolution and explicit adoption precede sensitive real data.
+
+### Current Question Routing
+
+| Owner / trigger | Work and completion boundary |
+| --- | --- |
+| C6 UI owner, at selected controls | Reuse exact reviewed write and release authority under current #36/#34/#38 interpretations. Add usability and failure evidence; do not call these local choices normative resolutions. UI can proceed without C7 or all upstream merges. |
+| C7 binding owner, before affected implementation/trial | Fix and test provisional CR-Q7 output/error/no-result contracts for selected tools, CR-Q8 omitted-category defaults and N4 query media/duplicate-key handling. Initial query/get does not require implementing unused write/report tools. Preserve role/grant separation, final disclosure, truthful completion and no uncertain mutation replay. |
+| C8 orchestrator with assigned spec and CR owners | Prioritize #36, #34, CR-Q7, CR-Q8, #38 and feature-relevant questions below. For each concrete case, compare options, decide, produce the smallest justified spec/schema/example/check/guidance/tooling fix, review/merge separately, then explicitly adopt the target and realign CR/consumer contracts with affected tests. An issue list alone is insufficient. No speculative skill or change solely to match CR. |
+| C9 capability/qualification owners | Complete mandatory C5/C6/C7 gaps and resolve selected-capability requirements before claims. Nonrelevant issues may defer with owner/revisit; submitted/merged/adopted remain distinct. Old C8 qualification references below map to C9, not the new resolution phase. |
+
+The pinned §18.3 Provider Interop requirement still applies to independently
+operated clients. C7's selected-host experiment is incomplete against it; “no
+claim” is not compliance, and bridge locality is not first-party operation.
 
 | ID | Kind | Decision or correction needed |
 | --- | --- | --- |
@@ -560,6 +567,11 @@ examples for every tool, including the no-result case, with checks against the
 Core and MCP error mappings. Role-aware behavioral scenarios are still needed:
 schema validity alone does not prove safe Context Client disclosure.
 
+**Current routing:** C7 records and tests a provisional descriptor/result/error
+contract for its selected tools before implementation or trial; an unused
+report-sharing tool need not be added to the initial query/get slice. C8 owns
+normative/artifact resolution and explicit CR adoption before full binding claims.
+
 The target MCP revision is explicitly 2026-07-28. Availability of that published
 revision is not an open question in this record; actual SDK/host compatibility
 remains implementation evidence.
@@ -939,8 +951,9 @@ an allowed-category query must still withhold entries with any denied category.
 **Disposition:** retain C3's fail-closed interpretation and add actual HTTP
 regressions for explicit and omitted categories, with allowed-category controls.
 This closes a test gap without changing runtime behavior. The original
-orchestrator owns clarification before affected real-client C7 integration;
-upstream publication and adoption require separate authorization. This question
+C7 owner records/tests the provisional default before affected implementation or
+real-host trial; the orchestrator routes normative resolution and adoption to C8.
+Upstream publication and adoption require separate authorization. This question
 is recorded locally, not submitted or resolved in hcp-spec.
 
 <a id="cr-q9"></a>
@@ -1222,7 +1235,7 @@ duplicate JSON keys. These are parser choices, not an established authorization
 bypass or a new normative HCP interpretation.
 
 **Owner / revisit:** the C7 binding owner must define and test query media-type
-handling before real-client qualification: parameterized JSON, rejection of
+handling before affected implementation or the bounded real-host trial: parameterized JSON, rejection of
 unsupported query encodings, and an explicit duplicate-key policy. Prefer a
 query-specific JSON path while retaining form parsing for OAuth/human routes;
 verify compatibility with the then-selected binding. This record neither changes

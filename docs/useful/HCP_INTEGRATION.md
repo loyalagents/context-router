@@ -2,7 +2,7 @@
 
 - Status: relationship and design reference; source gaps documented, conformance not established
 - Read when: planning HCP alignment or changing an HCP mapping or conformance claim
-- Last reviewed: 2026-11-15 UTC
+- Last reviewed: 2026-11-19
 
 ## Relationship And Ownership
 
@@ -79,24 +79,41 @@ reviewed v2 portability within its selected contracts. D3 hard deletion remains
 deferred; broader import/reporting/OAuth/dormancy and full Core remain incomplete.
 Earlier candidate-era pending/writer wording is historical.
 
-**C6's bounded first source slice is implemented and independently reviewed.** The [concrete proposal](../plans/active/hcp-alignment/README.md#c6-application-planning-2026-11-15)
-selects an isolated source synthetic dashboard using HCP management services and
-exact person-write authority, with [complete access-path dispositions](../plans/active/hcp-alignment/gap-analysis.md#c6-current-access-path-inventory-2026-11-15).
-The [activation](../plans/active/hcp-alignment/README.md#c6-implementation-activation-2026-11-15)
-permits its implementation and fresh review, but not installed delivery, model
-inference, personal-data use or C7/C8, or closure of the remaining C6 roadmap. `hcp-spec` stays unchanged locally
-and remotely; C4/C5 publication permissions do not extend to this implementation task.
-Hard deletion must be revisited before any personal-data extension, and CR-Q9 must
-be resolved and explicitly adopted before sensitive real-data exposure.
+**C6's bounded first source slice merged in [PR #209](https://github.com/loyalagents/context-router/pull/209).**
+The [current status](../plans/active/hcp-alignment/README.md#demo-first-continuation-2026-11-19)
+binds green source CI and the accepted November 19 human correction journey to
+its scope; human Ctrl-C/full stop-reopen remain deferred. The
+[source runbook](HCP_SOURCE.md) describes the isolated synthetic dashboard.
+This is partial C6, not installed-artifact or conformance qualification.
 
-The bounded source dashboard is implemented; use the
-[source runbook](HCP_SOURCE.md) for explicit synthetic initialization, owned browser,
-exact correction and reopen. The [reviewed handoff](../plans/active/hcp-alignment/README.md#c6-reviewed-source-handoff-2026-11-15)
-records passing focused checks, resolved fresh-review findings and the decision
-that C6 warrants no new upstream issue/comment. Human retest and exact-candidate
-CI remain separate acceptance gates. The [external review follow-up](../plans/active/hcp-alignment/README.md#c6-external-review-follow-up-2026-11-15)
-records subsequent application fixes and the authorized draft PR publication.
-This does not close broader C6 or qualify an installed artifact.
+The current sequence is early C6 app-development handoff and polished synthetic
+source demo; optional overlapping C7 integration with one selected host/version;
+C8 concrete protocol fixes **and CR adoption/realignment**; C9 selected capability
+completion and package/profile qualification. Old “C8 qualification” records map
+to C9. Existing management/write/release services support UI work without a new
+framework or completion of every spec issue first. Broader C6 workflows and
+mandatory C5 gaps remain owned; installed Mac packaging is a separate selected
+milestone if needed. No legacy compatibility, conversion or migration history is
+required, while new HCP history retains its guarantees.
+
+C7 initially selects synthetic read-only query/get; useful writes are optional and
+need completion/retry evidence. Concrete provisional output/error/query-default/N4
+parsing contracts precede affected implementation or trial. Shared contracts and
+isolated ownership/resources permit UI/MCP overlap; real-host setup and off-device
+synthetic use need scoped activation. Pinned §18.3 requires Provider Interop for
+independently operated clients, so the bounded C7 experiment is incomplete against
+that requirement. “No claim” does not satisfy it, and a local bridge does not make
+a host first-party. C9 closes the gap before qualification.
+
+C8 prioritizes #36/#34/CR-Q7/CR-Q8/#38 and feature-relevant findings: concrete case,
+options, decision, smallest justified fix, upstream review/merge, then explicit
+CR adoption/new pin, app/consumer contract changes and renewed affected evidence.
+An issue list alone is not completion. Lightweight checkpoint findings feed this
+phase; no upstream PR is mandatory at every checkpoint and no speculative skill
+is required. D3 erasure resolution and implementation precede **any personal-data
+extension**; CR-Q9 resolution and explicit adoption precede sensitive real data.
+This is planning only: no runtime, native/model/client/personal-state activity or
+upstream publication is activated. Both pins and `hcp-spec` remain unchanged.
 
 Lucas's bounded C4 publication authorization produced permission-cache feedback
 on [#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594),
@@ -138,7 +155,10 @@ As alignment proceeds, classify findings by where they belong:
   observed ambiguity in the local question record first. Use the existing HCP
   materials; distinguish application adaptation from missing guidance, unclear
   requirements, or reusable tooling needs. Raise focused hcp-spec questions or
-  changes when evidence warrants, resolving blockers before affected implementation.
+  changes when evidence warrants. Record safe provisional contracts before affected
+  synthetic implementation; resolve earlier only if no safe local contract exists
+  or the selected capability/data boundary requires it. C8 owns deeper resolution
+  and adoption; unresolved selected requirements still block conformance.
   Do not silently redefine the protocol to match this app. Reassess accepted
   changes and adopt a new target revision explicitly.
 

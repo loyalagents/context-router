@@ -57,19 +57,20 @@ work is human-merged in PRs #204–#208. The
 [C5 merge record](active/hcp-alignment/README.md#c5-merge-and-c6-planning-ownership-2026-11-15)
 binds final review/CI to `c3c953a769596930b5b760735344f3f89626fd55`, preserving
 both unexplained local aggregate crashes and scoped passing evidence.
-**C6's first source-only synthetic slice is implemented and independently reviewed; human retest and exact-candidate CI remain pending**
-on `codex/hcp-c6-application-plan`; the original chat remains orchestrator.
-The [reviewed plan](active/hcp-alignment/README.md#c6-application-planning-2026-11-15)
-and [activation](active/hcp-alignment/README.md#c6-implementation-activation-2026-11-15)
-cover the isolated HCP dashboard, exact correction, history/reopen and complete
-access-path exclusions. The [final handback](active/hcp-alignment/README.md#c6-reviewed-source-handoff-2026-11-15)
-records both fresh reviews, four resolved findings and the separate recommendation
-to leave HCP issues unchanged. Checkout/build ownership is yielded to the original
-orchestrator with the candidate preserved. The later [external review follow-up](active/hcp-alignment/README.md#c6-external-review-follow-up-2026-11-15)
-authorizes application corrections and draft PR publication; its coordinator owns
-that bounded round. Installed delivery, personal-data use and C7/C8 remain
-unactivated. D3 hard deletion remains deferred;
-there is no full conformance claim.
+**C6's bounded source-only synthetic slice merged in [PR #209](https://github.com/loyalagents/context-router/pull/209).**
+The [current status and sequence](active/hcp-alignment/README.md#demo-first-continuation-2026-11-19)
+records green source CI and the accepted bounded November 19 human correction
+journey; human Ctrl-C/full stop-reopen remain deferred. Next is an early C6
+app-development handoff and polished synthetic source demo, with optional C7
+read-only MCP integration for one host/version after stable shared contracts and
+isolated ownership/resources. C8 now delivers protocol fixes **and CR adoption**;
+C9 completes selected capabilities and qualification (formerly C8 qualification).
+Broader C6 workflows and mandatory C5 gaps remain owned. Installed Mac delivery
+is a separate selected milestone if needed; D3 erasure precedes any personal-data
+extension and CR-Q9 resolution/adoption precedes sensitive real data. The
+orchestrator owns the next activation: this update is planning only, with no
+runtime, client/model/personal-state change or C7–C9 execution authorized. No full
+C6, artifact or conformance claim is made.
 
 C4/C5 upstream issue submissions are proposals, not adopted normative resolutions.
 C6 implementation leaves `hcp-spec` unchanged locally and remotely; prior publication
