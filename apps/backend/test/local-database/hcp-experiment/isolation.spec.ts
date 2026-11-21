@@ -99,6 +99,13 @@ it("only explicit synthetic compositions import HCP infrastructure; no legacy mo
       /@nestjs|modules\/|local-ui|mcp\/|local-model|Prisma|SqliteDatabase|PreferenceService|process\.env\.(?:HOME|DATABASE|LOCAL_)/,
     );
   }
+  const presentation = fs.readFileSync(
+    path.join(src, "infrastructure/hcp-experiment/management-presentation.ts"),
+    "utf8",
+  );
+  expect(presentation).not.toMatch(
+    /(?:from\s*|require\s*\(|import\s*\()["']|\b(?:fetch|XMLHttpRequest|localStorage|sessionStorage)\b|<script/,
+  );
   const browser = fs.readFileSync(
     path.resolve(src, "../../web/hcp-source-browser.mjs"),
     "utf8",
