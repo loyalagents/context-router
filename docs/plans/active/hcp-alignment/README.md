@@ -1,6 +1,6 @@
 # HCP Alignment Plan
 
-- Status: C1–C5 and bounded C6 source slice merged; bounded human source journey accepted; next is an app-like synthetic demo; continuation/C7–C9 unactivated; no conformance claim
+- Status: C1–C5 and bounded C6 source slice merged; bounded human source journey accepted; bounded demo UI continuation active; C7–C9 unactivated; no conformance claim
 - Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` owns sequencing and assigns the next sole writer at activation
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
@@ -9,11 +9,156 @@
 - Relationship and ownership: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
 - Protocol questions: [local Draft 3 adoption notes][questions]
 
-Current work is the [demo-first continuation plan](#demo-first-continuation-2026-11-19),
-**planning only**. Earlier activation, writer, pending/draft and freeze-time passages
+Current work is the [bounded demo UI activation](#c6-demo-ui-activation-2026-11-19),
+under the [demo-first continuation](#demo-first-continuation-2026-11-19). Earlier activation, writer, pending/draft and freeze-time passages
 below are historical. The current status and checkpoint map supersede their routing;
 old “C8 qualification” means current C9, and old “C7/C8 unactivated” records retain
 their original scope rather than retroactively describing the new C8.
+
+## C6 Demo UI Activation (2026-11-19)
+
+Lucas activated this bounded continuation in the C6 owner chat, with orchestrator
+`01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` retaining sequencing. Base is merged main
+`3f453e57b6139816d1daf40a1fc8715d7dd1e1ec`; branch `codex/hcp-c6-demo-ui`.
+The C6 coordinator is the sole writer/integrator in this checkout. Reviewers are
+read-only; builds and disposable synthetic test instances belong to the writer.
+No commit, PR, merge, release, installed/personal-state work, C7 or upstream change
+is selected. The previous source retest sandbox stays untouched. Lucas clarified
+that the existing flows are fine: prioritize a working handoff, avoid unnecessary
+abstraction or a guided redesign, and iterate on visual design later.
+
+**Selected experience:** preserve existing flows with modest consistent navigation,
+readable retained entries/current and previous versions, text correction, exact
+review/cancel/approve, history and grant inspection. Create/add is not selected
+for new UX or acceptance; existing experimental capabilities remain reachable
+without expanding their authority. Source launch continues to use the owned
+initializer/provider/browser commands; improve their contributor instructions,
+not process or trust mechanics.
+
+**Risk and roles:** balanced presentation work with sensitive authority-boundary
+review. Coordinator/sole writer uses Lucas's chat defaults (model/effort not
+independently observable). Discovery requests `gpt-6-astra` / `high`; plan and
+final boundary review request `gpt-6-astra` / `xhigh`. Tool acceptance verifies
+requested configuration only, not underlying execution. No model tier was
+specifically requested by Lucas.
+
+Independent Astra/xhigh plan review approved the narrowed implementation plan
+before runtime edits. The user clarification removed the proposed client script;
+native loading and existing forms suffice. Requested settings were accepted by
+the tool; actual model/effort remain unverified. Checkpoints:
+
+1. Fix the small view/action contract and ownership in the source runbook. Add
+   focused HTTP/browser expectations first. Extract selected management renderers
+   into a pure presentation module, taking admitted snapshots and explicit form
+   fields. No store, network, authority calls, credential handling or random IDs
+   in presentation. Keep editor eligibility enforcement, body allowlists, session,
+   CSRF, review/operation-key creation and final `managementPage`/`releaseWrite`
+   checks in `http.ts`; schema, authority and composition remain unchanged.
+2. Improve the existing list/detail/review/history/grant views over those snapshots. Keep
+   exact JSON expandable, replacement effects and current lifecycle visible,
+   unsupported targets view-only, and existing experimental governance reachable.
+   Add generic browser-only denial/error recovery (same statuses, no protected
+   data/redirects). Use native browser navigation/loading; add no JavaScript or
+   CSP exception. OAuth/API problem contracts and OAuth presentation stay unchanged. Known committed minimal success stays distinct
+   from uncertain mutation outcome.
+3. Validate the integrated source candidate and publish a local handoff. Focused
+   dashboard/source/writes/governance/OAuth consumer tests, final-render expiry,
+   persistence/fault cases, isolation, build, and pinned real Chromium source/OAuth
+   journeys cover affected behavior. Check narrow/mobile layout, keyboard focus,
+   empty/denied/stale/uncertain states and no automatic POST replay. Run affected
+   doc consumers/link/contract/whitespace checks. Do not run a full migration gate
+   without a named new evidence gap; no such gap is selected now.
+
+Finalization milestone for this assignment: selected journey implemented, known
+review corrections resolved, focused checks passed, fresh independent complete-diff
+review complete, and source runbook ready for another UI agent. Freeze code and
+relevant test inputs at that point. No new human acceptance round is required to
+finish implementation; a later optional human trial retains its own scope.
+Exact-candidate CI remains pending until publication is requested. No installed
+artifact/native qualification or full C6/conformance claim follows from this work.
+Prior deferred human stop/reopen, expired-session and pending-form acceptance
+remain deferred. Remaining C6 workflows, C5 gaps and C7–C9 ownership below survive.
+
+### C6 Demo UI Source Handoff (2026-11-20)
+
+**Publication handoff:** Lucas subsequently requested that the original
+orchestrator coordinate the PR and CI. The C6 chat yielded checkout/build/runtime
+ownership; the orchestrator is now the sole integrator for one cohesive PR and
+exact-candidate CI. The implementation-time uncommitted, no-publication and
+retained-writer statements below describe the earlier handoff, not current
+authorization. Runtime and test inputs remain frozen; this publication note
+changes only ownership/status. Final commit and CI identities/results will be
+recorded in the PR. No automatic merge, release or upstream change is authorized.
+
+**Approved CI follow-up:** PR #211's first UI qualification failed the existing
+TLS-expiry fixture's wall-clock prerequisite after one timer wait, before the
+browser rejection probe. Lucas approved bounded polling of that prerequisite;
+the original expiry assertion and Chromium TLS rejection/zero-request checks
+remain intact. Runtime inputs are unchanged. Renew the affected browser evidence,
+review this test-only correction and run exact-candidate CI; record results in
+the PR without treating the initial failed run as a pass.
+
+The bounded source implementation is complete locally. Existing flows remain;
+management presentation now has consistent Memories/Grants/History navigation,
+readable content and exact proposed text, expandable full records, grant summaries,
+empty states and static denial/uncertain-result recovery. No JavaScript, new API,
+framework, authority/schema or launcher behavior was added. The
+[source UI handoff](../../../useful/HCP_SOURCE.md#ui-contributor-handoff) gives another
+agent supported launch/actions, small view inputs and file ownership.
+
+Base and HEAD remain `3f453e57b6139816d1daf40a1fc8715d7dd1e1ec` on
+`codex/hcp-c6-demo-ui`; **seven paths are uncommitted**:
+
+- `apps/backend/src/infrastructure/hcp-experiment/http.ts` and new
+  `management-presentation.ts`: route adapter and pure views.
+- `apps/backend/test/local-database/hcp-experiment/dashboard.test.cjs` and
+  `isolation.spec.ts`, plus `apps/web/test/hcp-source-browser.test.mjs`:
+  affected HTTP/browser/isolation evidence.
+- This plan and `docs/useful/HCP_SOURCE.md`: scope, evidence and contributor handoff.
+
+Tests-first evidence was three expected failures (navigation/grant view, HTML
+refusal and uncertain outcome) with 14 passes. Iteration caught and
+fixed a hidden receipt caveat; the existing browser assertion was preserved.
+Uncertain-error wording was clarified while preserving the existing portability
+assertion against completion claims. No failing check was weakened.
+
+Frozen runtime inputs reviewed independently: `http.ts` SHA-256
+`da3019cc7ef98b3c9a44bcb89025b0c4c82744b50394b0688484c2e262c40181`;
+`management-presentation.ts` SHA-256
+`2c479c9e03a640bdc46c263ade6a26079dbb198f93d5b4579f4293c2b038e840`.
+Fresh complete seven-path review (requested Astra/xhigh; execution unverified)
+approved with no actionable findings. Later handoff prose adds evidence only;
+runtime/test inputs stay frozen.
+
+Final local evidence on Node 24.21.0 / pnpm 10.25.0:
+
+- Backend build passed. Dashboard, source, writes, governance, OAuth and portability
+  Node test files: **112/112** passed, including durable fault/reopen cases, final
+  render expiry and known-committed/minimal versus uncertain outcomes.
+- Pinned Playwright 1.63.0 / Chromium 153.0.8010.12 source and OAuth browser files:
+  **13/13** passed, including correction/cancel/approve/history, mobile width,
+  keyboard navigation, denial recovery and no pending-form replay on reopen.
+- Jest HCP isolation: **2/2** passed, including real legacy-adapter refusal and the
+  pure presentation/import boundary. Visual inspection of list/detail/review,
+  empty grants and mobile screenshots passed in disposable automated fixtures.
+- Markdown links passed against the exact base with zero unexpected violations;
+  contract baseline passed with base comparison performed (41 capabilities,
+  58 consumers); whitespace passed. No additional direct readers of the two edited
+  documents were found. No full local migration gate was selected.
+
+Owned test processes stopped; disposable test state was cleaned. The previous
+human sandbox, installed/personal app, clients, models and OS trust were untouched.
+The sibling `hcp-spec` remains clean at `5fc62a413794b5927f1251968e04381044af92c1`;
+no upstream changes or target adoption occurred. No new protocol finding emerged:
+this is application presentation under the existing provisional correction/release
+contracts; C8 retains their normative resolution/adoption.
+
+**Targeted checks passed; final validation pending.** Publication is not authorized,
+so exact-candidate CI is pending. No new human acceptance, installed/native artifact,
+full C6 or conformance qualification is claimed. Previously deferred human checks
+remain deferred. This chat retains C6 ownership for the next requested UI iteration
+or source trial; the original orchestrator retains sequencing and remaining
+C5/C6/C7–C9 scope. No commit, PR, merge or release was created.
 
 ## Demo-First Continuation (2026-11-19)
 

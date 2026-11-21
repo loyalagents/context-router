@@ -120,7 +120,43 @@ test(
     );
     const detail =
       issuer + `/manage/entries/${encodeURIComponent(selected.id)}`;
-    await page.goto(detail);
+    const navigation = page.getByRole("navigation", {
+      name: "Main navigation",
+      exact: true,
+    });
+    assert.equal(
+      await navigation
+        .getByRole("link", { name: "Memories", exact: true })
+        .getAttribute("aria-current"),
+      "page",
+    );
+    await page.keyboard.press("Tab");
+    assert.equal(
+      await page
+        .getByRole("link", { name: "Skip to content" })
+        .evaluate((el) => el === document.activeElement),
+      true,
+    );
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    await page
+      .locator("article")
+      .filter({ hasText: selected.content.value })
+      .getByRole("link", { name: "Inspect memory" })
+      .click();
+    assert.equal(page.url(), detail);
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page
       .getByRole("link", { name: "Edit as your own statement", exact: true })
       .click();
@@ -168,6 +204,31 @@ test(
       await page.locator("body").innerText(),
       /current lifecycle and classification/,
     );
+    await navigation.getByRole("link", { name: "Grants", exact: true }).click();
+    await page
+      .getByRole("link", { name: "All retained grants", exact: true })
+      .click();
+    assert.ok((await page.locator("[data-grant-summary]").count()) > 0);
+    await page
+      .getByRole("link", { name: "Inspect grant and history", exact: true })
+      .first()
+      .click();
+    assert.equal(await page.locator("[data-history-summary]").count(), 1);
+    const postsBeforeDenial = observed.filter(
+      (r) => r.method === "POST",
+    ).length;
+    const refused = await page.goto(detail + "?version=0");
+    assert.equal(refused.status(), 400);
+    assert.match(await page.locator("h1").innerText(), /Request refused/);
+    assert.equal(await page.locator("form").count(), 0);
+    assert.equal(
+      observed.filter((r) => r.method === "POST").length,
+      postsBeforeDenial,
+    );
+    await page
+      .getByRole("link", { name: "Inspect memories and history", exact: true })
+      .click();
+    assert.equal(page.url(), issuer + "/manage/entries");
     // Leave a pending review, then reopen: a fresh GET must not submit it.
     await page.goto(detail);
     await page
@@ -428,7 +489,11 @@ test(
           // be accepted during its final second by a fast browser launch.
           const notAfter = Date.parse(new X509Certificate(tls.cert).validTo);
           assert.ok(Number.isFinite(notAfter) && notAfter <= Date.now());
-          await delay(Math.max(0, notAfter + 1_000 - Date.now()));
+          // A timer firing does not prove the wall clock crossed that boundary.
+          const waitDeadline = performance.now() + 5_000;
+          while (Date.now() < notAfter + 1_000 && performance.now() < waitDeadline) {
+            await delay(25);
+          }
           assert.ok(Date.now() >= notAfter + 1_000);
         }
       }

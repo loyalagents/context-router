@@ -134,3 +134,81 @@ profile/schema/location workflows, reset, history clear and old prompt/export/ev
 paths are absent from this source composition. No model executes here. Broader
 import standing/history, notifications/reporting, OAuth/dormancy, real hosts,
 installed delivery and full package/profile qualification remain outside this slice.
+
+## UI Contributor Handoff
+
+Start with the initialization/serve/open commands above; **do not use `pnpm dev`**.
+The source dashboard is provider-rendered HTML at `/manage/entries`, not the Next.js
+app. Only the backend build is needed for these views. Keep `serve` and `open` in
+separate terminals; after a source edit, stop the owned provider, rebuild, and
+serve the same explicitly selected sandbox. Do not initialize it again. A closed
+browser can be reopened with the same `open --sandbox` command. These are manual
+source commands, not installed-app controls.
+
+The first demo keeps the existing correction flow:
+
+1. Sign in, then choose **Memories**. All retained states are visible; open a
+   memory to inspect its content, current lifecycle and immutable versions.
+2. On a supported current text entry, choose **Edit as your own statement**.
+   Enter synthetic text and choose **Review my statement**.
+3. Read the exact proposed text and replacement effects, purpose and deadline.
+   **Cancel without saving** leaves the content unchanged. Only the person's
+   **Approve and save my statement** act authorizes the exact write.
+4. From a committed result, choose **Inspect the entry and history**. Version
+   links show historical content with current lifecycle/classification labels.
+5. Choose **Grants** to inspect active or all retained grants, their approved
+   actions, categories, purposes, deadlines and history. Registration alone grants
+   no access. Add/create and other existing experimental management controls stay
+   under the expandable section on this page; they are outside the correction
+   demo's human acceptance.
+
+Pages use normal browser loading and form navigation, with no client JavaScript,
+background requests or automatic retries. A denied/stale review requires separate
+inspection and a fresh review. A server failure after submission can leave the
+outcome uncertain: do not resubmit to test whether it committed. If the browser
+loses the response entirely, use **Memories** or reopen the browser for a fresh GET,
+then inspect current state and history. A known committed result with withheld
+details still says committed; it does not invite another save.
+
+### Small View And Action Contract
+
+The UI owner can edit
+[`management-presentation.ts`](../../apps/backend/src/infrastructure/hcp-experiment/management-presentation.ts)
+and focused presentation/browser assertions. It holds CSS, escaped HTML and small
+structural input types. It receives admitted snapshots and explicit form fields;
+it never opens a store, authenticates, creates authority, generates operation keys,
+performs requests or sends responses. Unknown stored members remain inspectable
+in expandable full documents, without acquiring assurance.
+
+| View | Data supplied by the HTTP owner | Supported action |
+| --- | --- | --- |
+| Memories | `managementEntries`; HTTP-computed text-editor eligibility | GET `/manage/entries/:id` |
+| Entry and history | `managementEntry`, `audit`, current/selected versions and session CSRF | GET version/history links; existing reviewed actions |
+| Text editor | Current supported entry and CSRF | POST `/manage/person/review`: `csrf`, `entryId`, `expectedVersion`, `value` |
+| Exact review | Previous entry, `reviewPersonWrite` result, subject, CSRF and generated operation key | POST `/manage/person/approve`: `csrf`, `reviewId`, `reviewCsrf`, `operationKey`; cancel is a GET |
+| Saved | Only the representation supplied inside `releaseWrite`, possibly without an ID | Separate GET inspection; no replay |
+| Grants | `listGrants`, last possible copy deadlines and filtered `audit` | Existing inspect/all/revoke routes, with unchanged authority |
+
+[`http.ts`](../../apps/backend/src/infrastructure/hcp-experiment/http.ts) remains
+owned by the integrator for route/body validation, eligibility enforcement,
+session/origin/CSRF checks, exact request construction, authority calls and final
+render/release checks. The presentation eligibility flag only controls a link;
+it cannot authorize an edit. No route/API framework, shared client cache or legacy
+GraphQL adapter is needed. Coordinate changes to these contracts before overlapping
+UI and future C7 work; keep one writer for shared routes/authority and separate
+resources for independent runtime work. `authority.ts`, schema, launcher and browser
+ownership are outside presentation-only ownership.
+
+Focused verification after a backend build uses the existing tests:
+
+```sh
+node --test --test-concurrency=1 apps/backend/test/local-database/hcp-experiment/dashboard.test.cjs
+node --test --test-concurrency=1 apps/web/test/hcp-source-browser.test.mjs
+```
+
+The automated tests create and approve their own disposable synthetic fixtures;
+that is automated test evidence, never a person's fixture/content approval or
+human acceptance. Keep the pinned toolchain/browser prerequisites and run affected
+OAuth/governance/portability consumers when changing shared management presentation.
+The [validation policy](AGENT_WORKFLOW.md#validation-and-context-discipline) governs
+final review/CI; source UI evidence does not qualify the installed Mac app.
