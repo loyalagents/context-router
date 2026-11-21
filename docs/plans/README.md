@@ -60,16 +60,23 @@ both unexplained local aggregate crashes and scoped passing evidence.
 **C6's bounded source-only synthetic slice merged in [PR #209](https://github.com/loyalagents/context-router/pull/209).**
 The [current status and sequence](active/hcp-alignment/README.md#demo-first-continuation-2026-11-19)
 records green source CI and the accepted bounded November 19 human correction
-journey; human Ctrl-C/full stop-reopen remain deferred. Next is an early C6
-app-development handoff and polished synthetic source demo, with optional C7
-read-only MCP integration for one host/version after stable shared contracts and
-isolated ownership/resources. C8 now delivers protocol fixes **and CR adoption**;
+journey; human Ctrl-C/full stop-reopen remain deferred. The bounded C6 demo UI
+and contributor handoff merged in [PR #211](https://github.com/loyalagents/context-router/pull/211)
+at `f92260060152b6872b5732587027bd161bc4f590`; its
+[merge record](active/hcp-alignment/README.md#c6-demo-ui-merge-and-c7a-planning-2026-11-21)
+binds final review and green CI without upgrading human/artifact acceptance.
+Current work is the [reviewed C7a local handoff](active/hcp-alignment/c7-read-brief.md#c7a-local-handoff):
+synthetic query/get implementation and focused checks are complete; Lucas authorized
+the C7a writer to commit and publish one PR for independent Claude Code review,
+with exact-candidate CI and the separate host trial pending. C8 delivers
+protocol fixes **and CR adoption**;
 C9 completes selected capabilities and qualification (formerly C8 qualification).
 Broader C6 workflows and mandatory C5 gaps remain owned. Installed Mac delivery
 is a separate selected milestone if needed; D3 erasure precedes any personal-data
 extension and CR-Q9 resolution/adoption precedes sensitive real data. The
-orchestrator owns the next activation: this update is planning only, with no
-runtime, client/model/personal-state change or C7–C9 execution authorized. No full
+orchestrator retains sequencing; the C7a implementation chat owns the authorized
+publication step, checkout, tests/builds and disposable synthetic resources. C7b actual host/model
+use, personal-state changes and C8–C9 execution remain unactivated. No full
 C6, artifact or conformance claim is made.
 
 C4/C5 upstream issue submissions are proposals, not adopted normative resolutions.

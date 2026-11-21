@@ -29,6 +29,8 @@ import { authorizationProvider, validateAuthorization } from "./oauth";
 import { COMPLETION_ONLY, WriteConflict } from "./writes";
 import { CONFLICT_DETECTION } from "./conflicts";
 import { GENERAL_PROFILE } from "./fixtures";
+import { requestJson, RequestJsonError } from "./request-json";
+import { mcpHandler } from "./mcp";
 const COOKIE = "__Host-hcp-human";
 class UnsupportedVersion extends Error {}
 const editableStatement = (entry: any) =>
@@ -154,6 +156,7 @@ export function authorizationHandler(
     oauth = provider.callback();
   const issuer = authority.configuration.issuer,
     host = new URL(issuer).host;
+  const mcp = mcpHandler(authority);
   const currentHuman = (credential: string) => {
     if (!authority.isManagement(credential))
       throw new AuthorityError("unauthenticated");
@@ -227,6 +230,7 @@ export function authorizationHandler(
     res.setHeader("cache-control", "no-store");
     res.setHeader("referrer-policy", "strict-origin");
     res.setHeader("x-content-type-options", "nosniff");
+    if (req.url?.split("?")[0] === "/v2/mcp") return mcp(req, res);
     if (req.url?.startsWith("/v2/")) res.setHeader("hcp-version", "2.0");
     if (
       req.headers.host !== host ||
@@ -1172,7 +1176,10 @@ export function authorizationHandler(
         for (const key of url.searchParams.keys())
           if (url.searchParams.getAll(key).length !== 1) invalid();
         const input = isQuery
-          ? await body(req)
+          ? await requestJson(req).catch((error) => {
+              if (error instanceof RequestJsonError) invalid();
+              throw error;
+            })
           : Object.fromEntries(url.searchParams);
         if (!isQuery && input.version !== undefined) {
           if (!/^[1-9][0-9]*$/.test(input.version)) invalid();

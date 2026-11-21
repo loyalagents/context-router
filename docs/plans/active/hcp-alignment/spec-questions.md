@@ -19,7 +19,10 @@ are merged in PRs #204–#209. The [current status and routing](README.md#demo-f
 records source CI and the accepted bounded November 19 human correction journey,
 including deferred human Ctrl-C/full stop-reopen checks. Historical candidate and
 writer records below retain their original scope. No full C6 or conformance claim
-is made. C6 continuation/C7–C9 remain unactivated; this planning update leaves
+is made. C6's bounded UI continuation subsequently merged in PR #211; the
+[current merge/planning record](README.md#c6-demo-ui-merge-and-c7a-planning-2026-11-21)
+supersedes historical pending prose. [C7a implementation](c7-read-brief.md) is now
+activated for controlled synthetic clients; C7b/C8–C9 remain unactivated. This work leaves
 `hcp-spec` unchanged and neither pin changes. Prior publication permissions do not
 carry forward. Normative text continues to govern examples and schemas.
 
@@ -571,10 +574,29 @@ schema validity alone does not prove safe Context Client disclosure.
 contract for its selected tools before implementation or trial; an unused
 report-sharing tool need not be added to the initial query/get slice. C8 owns
 normative/artifact resolution and explicit CR adoption before full binding claims.
+The [C7a proposed contract](c7-read-brief.md#cr-q7-provisional-descriptors-results-and-errors)
+specifies query/get inputs, disclosure-only success/error alternatives and exact
+structured/text JSON equality. It also records the §10.3 JSON text versus §10.4
+prose-error example discrepancy for C8; no protocol amendment is adopted here.
 
 The target MCP revision is explicitly 2026-07-28. Availability of that published
 revision is not an open question in this record; actual SDK/host compatibility
 remains implementation evidence.
+
+**C7a implementation finding (2026-11-21):** the official pinned client 2.4.0
+consumes the selected query/get descriptors and JSON success/error copies over
+controlled HTTPS using explicit modern negotiation. This establishes a peer result,
+not host qualification. Source schemas require role-specific narrowing and local
+reference bundling before their generic stored-entry alternatives are safe to
+publish to a Context Client. A useful C8 deliverable remains complete, closed,
+role-specific tool descriptors and checked success/empty/error examples, resolving
+the text-error discrepancy explicitly. No generalized integration framework is
+needed for these two tools. Primary MCP review also found that identity metadata
+is recommended, cache fields are required for discover/list, and unreadable IDs
+are omitted in the modern schema despite a null-emitting SDK server example.
+The adapter follows the schema. Full message patterns/subscriptions and host
+credential/copy/directive duties remain C9 qualification gaps; neither this local
+decision nor package installation adopts a protocol amendment.
 
 ## C0 Adoption Review And Dispositions
 
@@ -955,6 +977,8 @@ C7 owner records/tests the provisional default before affected implementation or
 real-host trial; the orchestrator routes normative resolution and adoption to C8.
 Upstream publication and adoption require separate authorization. This question
 is recorded locally, not submitted or resolved in hcp-spec.
+The [C7a brief](c7-read-brief.md#cr-q8-and-n4) proposes carrying the same fail-closed
+default through MCP, including explicit allowed-only and empty-array controls.
 
 <a id="cr-q9"></a>
 
@@ -1228,19 +1252,25 @@ C5 governance/portability roadmap or permits a conformance claim.
 
 ## C7 HTTP Query Parsing Follow-Up (N4)
 
-**Application interoperability limitation:** the shared request parser matches
-content types exactly. C3 rejects `application/json; charset=utf-8` with 422,
-accepts a simple form-encoded query, and uses JSON.parse's last-value behavior for
+**Historical C3 interoperability limitation:** the shared request parser matched
+content types exactly. C3 rejected `application/json; charset=utf-8` with 422,
+accepted a simple form-encoded query, and used JSON.parse's last-value behavior for
 duplicate JSON keys. These are parser choices, not an established authorization
 bypass or a new normative HCP interpretation.
 
-**Owner / revisit:** the C7 binding owner must define and test query media-type
+**Owner / revisit (planning record):** the C7 binding owner must define and test query media-type
 handling before affected implementation or the bounded real-host trial: parameterized JSON, rejection of
 unsupported query encodings, and an explicit duplicate-key policy. Prefer a
 query-specific JSON path while retaining form parsing for OAuth/human routes;
 verify compatibility with the then-selected binding. This record neither changes
 the parser nor activates C7. C3's selected-client evidence does not establish
 general HTTP interoperability.
+The [C7a parser proposal](c7-read-brief.md#cr-q8-and-n4) selected parameterized UTF-8
+JSON, rejection of other query encodings and duplicate decoded member names at every
+depth, and retention of OAuth/human form parsing. That planning choice is now implemented
+and tested in the uncommitted [C7a implementation](c7-read-brief.md#c7a-implementation-record-2026-11-21).
+It remains an application parser policy, not a new normative HCP interpretation;
+publication and exact-candidate CI remain pending.
 
 ## C5 Implementation Evidence (2026-11-15 UTC)
 

@@ -10,7 +10,17 @@ import {
   matchesOperator,
   uri,
   validateAccess,
+  AuthorityError,
 } from "./policy";
+/** Only request-versus-grant failures carry a challenge; stored policy never does. */
+export class ReadScopeError extends AuthorityError {
+  constructor(
+    readonly scopes: string[],
+    readonly purpose?: string,
+  ) {
+    super("denied");
+  }
+}
 export interface ReadRequest {
   kind: "query" | "get";
   purpose: string;
@@ -101,17 +111,27 @@ export function selectRead(
       return false;
     }
   });
-  if (!access.length) denied();
+  const requestedScopes = (request.categories ?? []).map(
+    (c) => `hcp:${c}:read`,
+  );
+  if (!access.length)
+    throw new ReadScopeError(requestedScopes, request.purpose);
   const permitted = [
     ...new Set<string>(access.flatMap((d: any) => d.categories)),
   ];
   const searched = request.categories ?? permitted;
-  if (
-    request.kind === "query" &&
-    (searched.some((c) => !permitted.includes(c)) ||
-      deniedCategories(grant.client, searched, rules).length)
-  )
-    denied();
+  if (request.kind === "query") {
+    if (searched.some((c) => !permitted.includes(c)))
+      throw new ReadScopeError(
+        requestedScopes,
+        searched.every((c) =>
+          grant.access.some((d: any) => d.categories.includes(c)),
+        )
+          ? request.purpose
+          : undefined,
+      );
+    if (deniedCategories(grant.client, searched, rules).length) denied();
+  }
   let rows: any[];
   if (request.kind === "get") {
     const row: any = db

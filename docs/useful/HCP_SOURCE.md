@@ -1,6 +1,6 @@
 # Synthetic HCP Source Dashboard
 
-- Status: bounded C6 source experiment; implementation checks and independent review are recorded in the [active brief](../plans/active/hcp-alignment/README.md#c6-implementation-activation-2026-11-15).
+- Status: bounded C6 source experiment with activated [C7a synthetic MCP reads](../plans/active/hcp-alignment/c7-read-brief.md); final C7a review/validation is recorded in that brief.
 - This command uses synthetic data only. Do not paste personal information or connect real assistants.
 - This is separate from the installed Mac application, its documents, identities, models and client settings. It does not establish HCP conformance or complete the C6 roadmap.
 
@@ -212,3 +212,56 @@ human acceptance. Keep the pinned toolchain/browser prerequisites and run affect
 OAuth/governance/portability consumers when changing shared management presentation.
 The [validation policy](AGENT_WORKFLOW.md#validation-and-context-discipline) governs
 final review/CI; source UI evidence does not qualify the installed Mac app.
+
+## Controlled MCP Read Checks (C7a)
+
+The isolated provider exposes `/v2/mcp` over its existing verified HTTPS identity.
+Only `hcp_queryContext` and `hcp_getEntry` are implemented. It speaks MCP
+2026-07-28 with per-request metadata/headers and authorization, public static
+`server/discover`, and protected `tools/list`/`tools/call`. It issues no MCP session.
+The experimental discovery reference makes no HCP conformance claim; three methods
+do not establish complete MCP or Provider/Agent Interop qualification.
+
+After the exact toolchain check and backend build above, run the controlled tests:
+
+```sh
+node --test --test-concurrency=1 apps/backend/test/local-database/hcp-experiment/mcp.test.cjs apps/backend/test/local-database/hcp-experiment/mcp-parity.test.cjs apps/backend/test/local-database/hcp-experiment/mcp-release.test.cjs apps/backend/test/local-database/hcp-experiment/query-json.test.cjs apps/backend/test/local-database/hcp-experiment/read-wire.test.cjs
+```
+
+The `mcp.spec.ts` wrapper includes this coverage in existing local-database/CI
+qualification without changing routing. Tests create their own synthetic OAuth
+A/B clients, TLS identities and SQLite roots and clean up owned resources. The
+test peer is exactly `@modelcontextprotocol/client` 2.4.0, with
+`versionNegotiation: {mode: {pin: "2026-07-28"}}`. Fixture-local name resolution
+and CA verification change no OS trust, personal client or model. The provider
+does not import the SDK peer; unrelated legacy SDK resolutions remain unchanged.
+
+Both interfaces share selection, projection, final authorization and durable
+`context.read` auditing. MCP validates and serializes its complete envelope and
+both content representations before commit. Final handoff is synchronous;
+interrupted committed attempts remain `attempted`/`unconfirmed`. A separate read
+is a new authorized retrieval, never automatic replay. HTTP query and MCP accept
+bounded UTF-8 JSON and reject duplicate decoded member names at every depth
+(32 KiB body, 64 nesting levels). OAuth/human forms are unchanged.
+
+Omitted categories expand to all purpose-approved categories and fail if a
+standing rule denies any; explicit empty categories return an audited empty
+result. Missing/private/foreign/withheld refs have the same generic tool denial.
+Request-only grant denials use a host-visible scope challenge; stored-policy
+denials never do. Calls are limited to 60 per registered client per 60-second
+monotonic window, shared across that client's grants/tokens and reset on process
+restart. Governance/revocation is outside this limiter.
+
+One integrator owns `http.ts`, `authority.ts`, `disclosure.ts`, `mcp.ts`,
+`mcp-contract.ts`, `request-json.ts`, schemas and shared fixtures. Bundled Core
+schemas come from normative revision `2e2939c9bebcefb3bed7bb3522231c0e4d65a315`;
+source IDs are retained and descriptor references are local. Runtime/build never
+reads the sibling repository or fetches schemas. Preserve structured/text equality,
+hidden-entry denials and the whole-envelope release boundary.
+
+Actual host configuration/model use requires separate C7b activation naming the
+exact Claude Code executable/version, fresh localhost TLS/profile/port and
+registration, temporary read-only consent, host-held OAuth delivery inaccessible
+to model tools, synthetic prompt/destination and human evidence. Never reuse the
+retained C6 human sandbox or A/B credentials. Controlled checks establish no
+installed-artifact, human host, copy/directive enforcement or full HCP claim.

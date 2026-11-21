@@ -1786,7 +1786,11 @@ export class AuthorizationRepository {
   /** One owner + synchronous SQLite serializes authority changes through handoff.
    * Pre-serialize inside the transaction. After commit only clock comparisons and
    * the transport's synchronous end(bytes) are permitted; never await drain. */
-  releaseRead(ticket: object, handoff: (bytes: string) => void): void {
+  releaseRead(
+    ticket: object,
+    handoff: (bytes: string) => void,
+    serialize: (result: any) => string = JSON.stringify,
+  ): void {
     const prepared = this.reads.get(ticket);
     if (!prepared) denied();
     this.reads.delete(ticket);
@@ -1866,7 +1870,7 @@ export class AuthorizationRepository {
         useUntil: iso(useUntil[i]),
         categories: entries[i].classification.categories,
       }));
-      const bytes = JSON.stringify({
+      const bytes = serialize({
         ...(prepared.request.kind === "query"
           ? { entries, categoriesSearched: selected.categories }
           : { entry: entries[0] }),
@@ -1877,11 +1881,20 @@ export class AuthorizationRepository {
           method: prepared.request.kind === "query" ? "lexical" : "none",
         },
       });
+      // The serializer is pure and synchronous. Validate the whole wire response
+      // before appending the audit; a Promise must never escape into handoff.
+      if (typeof bytes !== "string") throw new Error("Invalid read serializer");
+      const authorityUntil = Math.min(tokenUntil, grantExpiry(grant)),
+        copyUntil = Math.min(prepared.copyUntil, ...useUntil),
+        serializedAt = this.kernel.now();
+      if (serializedAt >= authorityUntil)
+        throw new AuthorityError("unauthenticated");
+      if (serializedAt >= copyUntil) denied();
       this.kernel.append(db, audit);
       return {
         bytes,
-        authorityUntil: Math.min(tokenUntil, grantExpiry(grant)),
-        copyUntil: Math.min(prepared.copyUntil, ...useUntil),
+        authorityUntil,
+        copyUntil,
       };
     });
     // A disk commit may cross a deadline. Its immutable attempted-read event stays

@@ -112,8 +112,10 @@ An issue list alone is not completion. Lightweight checkpoint findings feed this
 phase; no upstream PR is mandatory at every checkpoint and no speculative skill
 is required. D3 erasure resolution and implementation precede **any personal-data
 extension**; CR-Q9 resolution and explicit adoption precede sensitive real data.
-This is planning only: no runtime, native/model/client/personal-state activity or
-upstream publication is activated. Both pins and `hcp-spec` remain unchanged.
+The later [C7a activation](../plans/active/hcp-alignment/c7-read-brief.md) selects
+synthetic query/get implementation and controlled clients only. Actual host/model,
+native/personal-state activity and upstream publication remain unactivated. Both
+pins and `hcp-spec` remain unchanged.
 
 Lucas's bounded C4 publication authorization produced permission-cache feedback
 on [#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594),
