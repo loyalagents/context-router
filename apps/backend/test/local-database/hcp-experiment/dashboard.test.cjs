@@ -42,6 +42,72 @@ async function review(
     },
   });
 }
+test("C6 demo navigation, empty grants and readable retained inspection use existing routes", async (t) => {
+  const f = await fixture(t, { approveFixtures: true }),
+    browser = await signedIn(f);
+  const list = await browser.request("/manage/entries");
+  assert.match(list.text, /aria-label="Main navigation"/);
+  assert.match(list.text, /aria-current="page"[^>]*>Memories/);
+  assert.doesNotMatch(list.text, /href="\/manage\/person\/new"/);
+  assert.doesNotMatch(list.text, /<script/);
+  const grants = await browser.request("/manage");
+  assert.match(grants.text, /No active grants/);
+  assert.match(grants.text, /All retained grants/);
+  const token = await authorize(f, "a", [detail(["general_preferences"])]);
+  const grant = (await f.context("/v2/grants", token)).json.grants[0];
+  const inspected = await browser.request(
+    `/manage?grantId=${encodeURIComponent(grant.grantId)}`,
+  );
+  assert.match(inspected.text, /data-grant-summary/);
+  assert.ok(
+    inspected.text.includes(
+      grant.access[0].purposes[0].description.replaceAll("'", "&#39;"),
+    ),
+  );
+  assert.match(inspected.text, /Full grant document/);
+  assert.match(inspected.text, /data-history-summary/);
+});
+test("C6 review displays exact submitted text without executing or flattening markup", async (t) => {
+  const f = await fixture(t, { approveFixtures: true }),
+    browser = await signedIn(f);
+  const entry = (await entries(f)).entries.find(
+    (e) => typeof e.content.value === "string" && e.record.status === "active",
+  );
+  const value =
+    'Synthetic <script>example()</script> & "quoted" text\n</textarea>';
+  const reviewed = await review(f, browser, entry, value);
+  assert.equal(reviewed.status, 200);
+  assert.match(
+    reviewed.text,
+    /&lt;script&gt;example\(\)&lt;\/script&gt; &amp; &quot;quoted&quot; text/,
+  );
+  assert.match(reviewed.text, /Exact replacement document/);
+  assert.doesNotMatch(reviewed.text, /<script|<\/textarea>/);
+  assert.equal(
+    (await entries(f)).entries.find((e) => e.id === entry.id).record.version,
+    entry.record.version,
+  );
+});
+test("C6 browser denial has safe recovery links without reflecting rejected content", async (t) => {
+  const f = await fixture(t, { approveFixtures: true }),
+    browser = await signedIn(f);
+  const denied = await browser.request("/manage/person/review", {
+    method: "POST",
+    headers: { origin: f.issuer },
+    form: {
+      csrf: "forged",
+      value: "private rejected value <script>bad()</script>",
+    },
+  });
+  assert.equal(denied.status, 403);
+  assert.match(denied.headers["content-type"], /text\/html/);
+  assert.match(denied.text, /Request refused/);
+  assert.match(denied.text, /href="\/manage\/entries"/);
+  assert.doesNotMatch(
+    denied.text,
+    /private rejected value|bad\(\)|<form|<script/,
+  );
+});
 test("C6 inspection labels current lifecycle and classification; structured and unavailable targets are view-only", async (t) => {
   const f = await fixture(t, { approveFixtures: true }),
     browser = await signedIn(f),
@@ -49,7 +115,7 @@ test("C6 inspection labels current lifecycle and classification; structured and 
   const list = await browser.request("/manage/entries");
   assert.match(list.text, /Synthetic data only/);
   for (const entry of before.entries) {
-    assert.ok(list.text.includes(entry.id));
+    assert.ok(list.text.includes(encodeURIComponent(entry.id)));
     const detail = await browser.request(
       `/manage/entries/${encodeURIComponent(entry.id)}`,
     );
@@ -305,6 +371,8 @@ for (const [stage, title] of [
   ["editor", "Edit as your own statement"],
   ["review", "Review your statement"],
   ["saved", "Statement saved"],
+  ["grants", "Human grant controls"],
+  ["audit", "Disclosure and audit history"],
 ])
   test(`C6 ${stage} withholds protected details at the final HTML render deadline`, async (t) => {
     const f = await fixture(t, { approveFixtures: true, childProcess: true }),
@@ -313,6 +381,10 @@ for (const [stage, title] of [
         (e) =>
           e.record.status === "active" && typeof e.content.value === "string",
       );
+    const protectedGrant =
+      stage === "grants"
+        ? (await f.context("/v2/grants", await authorize(f))).json.grants[0]
+        : undefined;
     const reviewed =
       stage === "saved" ? await review(f, browser, entry) : undefined;
     await f.arm({
@@ -332,11 +404,15 @@ for (const [stage, title] of [
         : stage === "review"
           ? await review(f, browser, entry)
           : await browser.request(
-              stage === "entries"
-                ? "/manage/entries"
-                : stage === "entry"
-                  ? `/manage/entries/${encodeURIComponent(entry.id)}`
-                  : `/manage/person/${encodeURIComponent(entry.id)}`,
+              stage === "grants"
+                ? "/manage"
+                : stage === "audit"
+                  ? "/manage/audit"
+                  : stage === "entries"
+                    ? "/manage/entries"
+                    : stage === "entry"
+                      ? `/manage/entries/${encodeURIComponent(entry.id)}`
+                      : `/manage/person/${encodeURIComponent(entry.id)}`,
             );
     assert.equal(response.status, stage === "saved" ? 201 : 401);
     assert.ok(!response.text.includes(entry.id));
@@ -345,6 +421,12 @@ for (const [stage, title] of [
       response.text,
       /written notes|Synthetic correction|context\.created|context\.revised/,
     );
+    if (protectedGrant) {
+      assert.ok(!response.text.includes(protectedGrant.grantId));
+      assert.ok(
+        !response.text.includes(encodeURIComponent(protectedGrant.grantId)),
+      );
+    }
     if (stage === "saved") assert.match(response.text, /committed/);
   });
 test("C6 source reviews reject foreign sessions, CSRF, stale versions, expired deadlines and policy changes restored to the same value", async (t) => {
@@ -462,7 +544,14 @@ for (const [point, action] of [
       await f.boundary();
       await f.kill();
     }
-    await response;
+    const outcome = await response;
+    if (point === "before-audit") {
+      assert.equal(outcome.status, 503);
+      assert.match(outcome.headers["content-type"], /text\/html/);
+      assert.match(outcome.text, /Save outcome uncertain/);
+      assert.match(outcome.text, /Do not submit again/);
+      assert.doesNotMatch(outcome.text, /<form|Synthetic correction/);
+    }
     await f.restart();
     const current = (await entries(f)).entries.find((e) => e.id === entry.id);
     assert.equal(
