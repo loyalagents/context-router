@@ -214,6 +214,10 @@ test(
       .first()
       .click();
     assert.equal(await page.locator("[data-history-summary]").count(), 1);
+    assert.match(
+      await page.locator("[data-history-summary]").innerText(),
+      /grant\.issued/,
+    );
     const postsBeforeDenial = observed.filter(
       (r) => r.method === "POST",
     ).length;
@@ -491,7 +495,10 @@ test(
           assert.ok(Number.isFinite(notAfter) && notAfter <= Date.now());
           // A timer firing does not prove the wall clock crossed that boundary.
           const waitDeadline = performance.now() + 5_000;
-          while (Date.now() < notAfter + 1_000 && performance.now() < waitDeadline) {
+          while (
+            Date.now() < notAfter + 1_000 &&
+            performance.now() < waitDeadline
+          ) {
             await delay(25);
           }
           assert.ok(Date.now() >= notAfter + 1_000);

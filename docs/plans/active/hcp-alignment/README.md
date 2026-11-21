@@ -98,6 +98,16 @@ remain intact. Runtime inputs are unchanged. Renew the affected browser evidence
 review this test-only correction and run exact-candidate CI; record results in
 the PR without treating the initial failed run as a pass.
 
+**External review follow-up:** Claude approved the complete candidate and found
+two non-blocking issues: revoked grant summaries could imply continuing access,
+and grant-history tests accepted the empty state. The authorized correction shows
+ended access for inactive grants and requires a visible `grant.issued` event in
+HTTP/browser tests. The TLS wait is formatted without changing its behavior.
+This supersedes the earlier presentation hash and affected test evidence below;
+renew dashboard/browser checks, affected review and exact-candidate CI before
+the authorized merge. The next planning task will record the merge and update
+the portfolio. Generic uncertain-outcome copy remains a non-blocking observation.
+
 The bounded source implementation is complete locally. Existing flows remain;
 management presentation now has consistent Memories/Grants/History navigation,
 readable content and exact proposed text, expandable full records, grant summaries,

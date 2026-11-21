@@ -66,6 +66,19 @@ test("C6 demo navigation, empty grants and readable retained inspection use exis
   );
   assert.match(inspected.text, /Full grant document/);
   assert.match(inspected.text, /data-history-summary/);
+  assert.match(inspected.text, /<strong>grant\.issued<\/strong>/);
+  assert.ok(
+    inspected.text.includes(`<dt>Access ends</dt><dd>${grant.expiresAt}</dd>`),
+  );
+  const revoked = await browser.request("/manage/revoke", {
+    method: "POST",
+    headers: { origin: f.issuer },
+    form: { csrf: inputs(inspected.text).csrf, grantId: grant.grantId },
+  });
+  assert.equal(revoked.status, 303);
+  const retained = await browser.request(revoked.headers.location);
+  assert.match(retained.text, /<dt>Access ended<\/dt><dd>revoked<\/dd>/);
+  assert.doesNotMatch(retained.text, /<dt>Access ends<\/dt>/);
 });
 test("C6 review displays exact submitted text without executing or flattening markup", async (t) => {
   const f = await fixture(t, { approveFixtures: true }),
