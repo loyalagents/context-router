@@ -489,7 +489,11 @@ test(
           // be accepted during its final second by a fast browser launch.
           const notAfter = Date.parse(new X509Certificate(tls.cert).validTo);
           assert.ok(Number.isFinite(notAfter) && notAfter <= Date.now());
-          await delay(Math.max(0, notAfter + 1_000 - Date.now()));
+          // A timer firing does not prove the wall clock crossed that boundary.
+          const waitDeadline = performance.now() + 5_000;
+          while (Date.now() < notAfter + 1_000 && performance.now() < waitDeadline) {
+            await delay(25);
+          }
           assert.ok(Date.now() >= notAfter + 1_000);
         }
       }

@@ -90,6 +90,14 @@ authorization. Runtime and test inputs remain frozen; this publication note
 changes only ownership/status. Final commit and CI identities/results will be
 recorded in the PR. No automatic merge, release or upstream change is authorized.
 
+**Approved CI follow-up:** PR #211's first UI qualification failed the existing
+TLS-expiry fixture's wall-clock prerequisite after one timer wait, before the
+browser rejection probe. Lucas approved bounded polling of that prerequisite;
+the original expiry assertion and Chromium TLS rejection/zero-request checks
+remain intact. Runtime inputs are unchanged. Renew the affected browser evidence,
+review this test-only correction and run exact-candidate CI; record results in
+the PR without treating the initial failed run as a pass.
+
 The bounded source implementation is complete locally. Existing flows remain;
 management presentation now has consistent Memories/Grants/History navigation,
 readable content and exact proposed text, expandable full records, grant summaries,
