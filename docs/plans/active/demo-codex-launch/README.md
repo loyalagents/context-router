@@ -91,3 +91,44 @@ owner-operated Codex sign-in/conversation are still pending at this checkpoint;
 the package receipts will bind subsequent evidence to this source. Original PR,
 running application and profiles remain untouched. Final validation remains
 pending as scoped above.
+
+## PR 213 integration checkpoint
+
+The owner requested bringing PR 213's new `a22e7e96` and `93411eff` commits into
+this branch. Integrate through a local merge; no push, PR merge or replacement of
+the user's running app is requested. Root remains sole writer. Independent plan
+review approved the integration; sensitive review requested Extra High, inherited
+effective settings unverified. Complete integrated-diff review precedes handoff.
+
+The architecture stays the same. Claude's explicit tool list/default permission
+mode remains Claude-only. Both clients inherit phase-based launch timing, an
+indefinitely open picker, canonical project validation with native feedback,
+persistent launch errors, distinct interrupted status, and a short private
+per-chat temporary directory retained for independent jobs. Preserve Codex's
+isolated auth, project-config refusal, ordinary approvals, role-bound progress
+and concurrent sessions. The incoming Context refresh is useful for Codex writes;
+active drafts remain protected. All other upstream UI and CI-test fixes are kept.
+
+Tests were merged/extended first: the prior product failed tool, interruption,
+progress and picker regressions before applying the shared fixes. The initial
+43 focused launcher/runtime/guard checks passed. Added Codex parity covers picker
+timing, unchanged-progress timeout, interruption, launch-error retry, native
+canonicalization and per-chat temporary paths. Freeze code for full native and
+web suites, plus discovery, contract, path-filter and documentation checks. Those
+suites cover native picker changes and the incoming UI/concurrency adjustments;
+no aggregate lifecycle gap calls for a full local migration gate. Existing HTTP
+and offline pinned-Codex argument/auth evidence is unaffected; no HTTP routes,
+Codex configuration or auth parsing change in this integration.
+
+This is a source-branch integration handoff. The previously delivered package
+remains bound to `87102afe`; its artifact pass does not cover this merged source.
+New package/live-provider acceptance and final exact-candidate CI remain pending.
+
+Integrated-diff review approved with no blocking findings. Final source checks
+passed: 250 native tests, 146 web tests, 115 contract/path-filter/discovery/link
+checker tests, 43 focused launcher/runtime/guard tests and the four renewed native
+picker/concurrent-chat cases. Test counts overlap and are not a combined total.
+Web and native builds, contract census, test discovery, Markdown links and
+whitespace passed. PR 213 still pointed to `93411eff` at the final remote check.
+The merge is local to `codex/demo-codex-launch`; no remote branch, running app or
+profile was changed. Targeted checks passed; final validation pending.

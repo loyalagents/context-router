@@ -665,6 +665,7 @@ const documentReaderInventory = {
   'apps/backend/test/contracts/runtime-composition.spec.ts': {
     step: 'Test backend launch-topology documentation', target: 'test/contracts/runtime-composition.spec.ts',
   },
+  'apps/desktop/test/native/claude-connect.test.mjs': { reason: 'Writes a synthetic project README in an owned temporary fixture; does not read maintained prose.' },
   'apps/local-orchestrator/test/operator-docs.test.ts': {
     step: 'Test orchestrator operator documentation', target: 'test/operator-docs.test.ts',
   },

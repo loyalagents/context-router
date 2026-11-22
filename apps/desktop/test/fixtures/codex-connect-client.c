@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <sys/stat.h>
 static int has(int argc,char **argv,const char *value){for(int i=1;i<argc;i++)if(!strcmp(argv[i],value))return 1;return 0;}
 int main(int argc,char **argv){
  if(argc==2&&!strcmp(argv[1],"--version")){puts("codex-cli 0.160.0");return 0;}
@@ -22,6 +23,9 @@ int main(int argc,char **argv){
  }
  if(!getenv("CR_DEMO_TOKEN")){fprintf(stderr,"Error: stdin is not a terminal\n");return 1;}
  if(!has(argc,argv,"features.shell_tool=true")||!has(argc,argv,"workspace-write")||!has(argc,argv,"on-request")||!has(argc,argv,"mcp_servers.context_router_demo.tools.mutatePreferences.approval_mode=\"prompt\""))return 6;
+ const char *temporary=getenv("TMPDIR");struct stat st;
+ if(!temporary||strlen(temporary)>64||stat(temporary,&st)||st.st_uid!=getuid()||(st.st_mode&0777)!=0700)return 12;
+ char temporaryRecord[80];snprintf(temporaryRecord,sizeof(temporaryRecord),"chat-%d.tmp",getpid());FILE *record=fopen(temporaryRecord,"wx");if(!record)return 13;fputs(temporary,record);fclose(record);
  if(system("node -e 'require(\"fs\").writeFileSync(\"coding-result.txt\",\"demo coding works\")'"))return 5;
  char ready[80],release[80];snprintf(ready,sizeof(ready),"chat-%d.ready",getpid());FILE *file=fopen(ready,"wx");if(!file)return 10;fclose(file);
  snprintf(release,sizeof(release),"chat-%d.release",getpid());for(int i=0;access("hold-chats",F_OK)==0&&access(release,F_OK)!=0;i++){if(i>600)return 11;usleep(100000);}return 0;

@@ -13,9 +13,10 @@ export function contextText(value: unknown): string {
   return JSON.stringify(value, null, 2) ?? '';
 }
 
-export default function DemoContextLibrary({ preferences, definitions, accessToken, onUpdate, onDelete, tools, status }: {
+export default function DemoContextLibrary({ preferences, definitions, accessToken, onUpdate, onDelete, onInteractionChange, tools, status }: {
   preferences: Preference[]; definitions: PreferenceDefinition[]; accessToken: string;
   onUpdate: (preference: Preference) => void; onDelete: (id: string) => void;
+  onInteractionChange: (active: boolean) => void;
   tools: ReactNode; status: ReactNode;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -58,7 +59,7 @@ export default function DemoContextLibrary({ preferences, definitions, accessTok
           }}><span className="demo-context-value">{contextText(item.value)}</span></button>)}</div>;
         }) : <div className="demo-empty"><h2>{preferences.length ? 'No matching context' : 'Your context starts here'}</h2><p>{preferences.length ? 'Try a different search or category.' : 'Add a memory or import a document to get started.'}</p></div>}
       </section>
-      <aside className="demo-inspector" aria-label="Context details">{selected ? <PreferenceItem key={selected.id} preference={selected} accessToken={accessToken} onUpdate={onUpdate} onDelete={id => {setInteracting(false);setSelectedId(null);onDelete(id);}} demoDetail definition={definitions.find(definition => definition.id === selected.definitionId)} onInteractionChange={active => {if(active) setSelectedId(selected.id);setInteracting(active);}}/> : <div className="demo-empty">Select a memory to see its details.</div>}</aside>
+      <aside className="demo-inspector" aria-label="Context details">{selected ? <PreferenceItem key={selected.id} preference={selected} accessToken={accessToken} onUpdate={onUpdate} onDelete={id => {setInteracting(false);onInteractionChange(false);setSelectedId(null);onDelete(id);}} demoDetail definition={definitions.find(definition => definition.id === selected.definitionId)} onInteractionChange={active => {if(active) setSelectedId(selected.id);setInteracting(active);onInteractionChange(active);}}/> : <div className="demo-empty">Select a memory to see its details.</div>}</aside>
     </div>
     <div className="demo-context-footer"><span>Stored on this Mac</span><Link prefetch={false} href="/dashboard/history">View activity <DemoIcon name="arrow"/></Link></div>
   </main>;

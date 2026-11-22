@@ -11,7 +11,7 @@ test('focused direct web commands partition every umbrella test and include irre
   assert.deepEqual([...helpers, ...browser].sort(), [...files].sort());
   assert.ok(browser.includes('client-names.test.mjs'));
   assert.ok(helpers.includes('client-name-format.test.mjs'));
-  assert.equal(manifest.scripts['test:local-ui'], 'node --unhandled-rejections=strict --test --test-concurrency=1 test/*.test.mjs');
+  assert.equal(manifest.scripts['test:local-ui'], 'node --unhandled-rejections=strict --test --test-concurrency=2 test/*.test.mjs');
   assert.equal(manifest.scripts.test, 'pnpm test:local-ui');
   for (const group of ['helpers', 'browser']) assert.equal(manifest.scripts['pretest:' + group], 'node test/check-test-groups.mjs');
   const root = JSON.parse(await readFile(new URL('../../../package.json', import.meta.url), 'utf8'));

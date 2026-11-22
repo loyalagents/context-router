@@ -20,9 +20,9 @@ test('generation change after sign-in prevents launch',async()=>{
   await assert.rejects(connectClaude(launch,{check:async()=>{if(signedIn)throw Error('stale');},authStatus:async()=>signedIn,run:async()=>{calls++;signedIn=true;return 0;},state:async()=>{},credential:()=>{throw Error('must not read');}}),/stale/);
   assert.equal(calls,1);
 });
-test('coding keeps isolated config, strict MCP and ordinary permissions while enabling default tools',()=>{
+test('coding explicitly exposes shell and web tools with ordinary permissions and isolated MCP',()=>{
   const coding=codingLaunchSpec(launch,'/chosen/project');
-  assert.equal(coding.cwd,'/chosen/project');assert.equal(coding.args[coding.args.indexOf('--tools')+1],'default');assert.ok(coding.args.includes('--strict-mcp-config'));assert.ok(!coding.args.includes('--dangerously-skip-permissions'));assert.equal(coding.env.CLAUDE_CONFIG_DIR,launch.env.CLAUDE_CONFIG_DIR);assert.equal(launch.args[launch.args.indexOf('--tools')+1],'');
+  assert.equal(coding.cwd,'/chosen/project');assert.deepEqual(coding.args[coding.args.indexOf('--tools')+1].split(','),['Bash','Edit','Glob','Grep','NotebookEdit','Read','Task','WebFetch','WebSearch','Write','AskUserQuestion','EnterPlanMode','ExitPlanMode']);assert.equal(coding.args[coding.args.indexOf('--permission-mode')+1],'default');assert.ok(coding.args.includes('--strict-mcp-config'));assert.ok(!coding.args.includes('--dangerously-skip-permissions'));assert.equal(coding.env.CLAUDE_CONFIG_DIR,launch.env.CLAUDE_CONFIG_DIR);assert.equal(launch.args[launch.args.indexOf('--tools')+1],'');
 });
 
 test('progress is private, request-bound, immutable and cannot replay a retained launch request',async t=>{
@@ -42,4 +42,26 @@ test('a retained legacy invocation can reuse login but cannot initiate sign-in',
  assert.equal(runs,0);
  assert.equal(await authenticateClient(launch,{check:async()=>{},authStatus:async()=>true,run:async()=>runs++,state:async()=>{},allowLogin:false}),0);
  assert.equal(runs,0);
+});
+
+for(const command of ['claude','codex'])test(`${command} chat interruption is distinct from setup failure and never claims confirmed exit`,async()=>{
+ const states=[];
+ await assert.rejects(startClient({...launch,command},{check:async()=>{},run:async()=>{throw Error('lost child');},state:async s=>states.push(s),credential:()=> 'fixture-token'}),/lost child/);
+ assert.deepEqual(states,['starting','interrupted']);
+ const ended=[];assert.equal(await startClient({...launch,command},{check:async()=>{},run:async()=>129,state:async s=>ended.push(s),credential:()=> 'fixture-token'}),129);
+ assert.deepEqual(ended,['starting','interrupted']);
+});
+test('confirmed exit progress outranks a late generic helper failure',async t=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');
+ const {beginConnectProgress,readConnectProgress}=await import('../../backend/scripts/demo/claude-connect.mjs');
+ const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'cr-connect-exit-')));t.after(()=>fs.rm(root,{recursive:true,force:true}));await fs.mkdir(path.join(root,'demo'),{mode:0o700});
+ const spec={root,installationId:'a'.repeat(32),store:'b'.repeat(32),generation:'c'.repeat(32)},id='d'.repeat(32),state=await beginConnectProgress(spec,id);
+ await state('starting');await state('exited');await state('failed');assert.equal(await readConnectProgress(spec,id),'exited');
+});
+
+test('coding temporary directories are private, unique and short enough for Unix sockets',async t=>{
+ const fs=await import('node:fs/promises'),net=await import('node:net'),path=await import('node:path');
+ const {codingTemporaryDirectory}=await import('../../backend/scripts/demo/claude-connect.mjs');
+ const directories=[await codingTemporaryDirectory(),await codingTemporaryDirectory()];t.after(()=>Promise.all(directories.map(dir=>fs.rm(dir,{recursive:true,force:true}))));assert.notEqual(...directories);
+ for(const directory of directories){assert.equal((await fs.stat(directory)).mode&0o777,0o700);assert.equal(await fs.realpath(directory),directory);const socket=path.join(directory,'tsx-501','12345678901234567890.pipe');await fs.mkdir(path.dirname(socket));assert.ok(Buffer.byteLength(socket)<104);const server=net.createServer();await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(socket,resolve);});await new Promise(resolve=>server.close(resolve));}
 });

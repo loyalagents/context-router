@@ -246,3 +246,87 @@ flow, followed by an independent Claude review. Exact-candidate CI and that
 review remain pending. No merge is authorized. This acceptance does not qualify
 personal-mode onboarding, other Macs, distribution, broad recovery or a general
 production release; HCP backend replacement remains outside this change.
+
+## PR 213 CI correction
+
+The owner authorized fixes and publication while preserving the running demo,
+and will inspect CI personally. Two failures were reproduced locally: the older
+AI-guidance browser test expected always-visible search after switching modes,
+and the document-reader census lacked the new native test's synthetic README.
+The browser test now opens the demo tools/search and restores its synthetic query
+after remount; all original guidance and no-replay assertions remain. The census
+classifies the fixture as generated output, not a maintained-document reader.
+
+The saved UI-lane log left about 539 seconds for tests after preparation/build;
+the separate serial frontend suite took about 494 seconds. To improve headroom,
+the umbrella now runs at most two isolated test files concurrently. Per-file
+cases and focused groups remain serial. Independent plan and diff review found
+no shared-state blocker: fixtures own temporary roots, databases, credentials,
+browser instances and ephemeral ports. Gate deadlines, required commands, test
+coverage, failure handling and CI routing are unchanged. Requested reviewer
+effort was High; inherited effective model/effort was not independently verified.
+
+Local results: 38 inventory/path-filter tests, 25 AI-browser tests, the two test
+selection checks and 20 Markdown-checker tests passed. The complete 139-test web
+umbrella passed with zero failures, skips or cancellations and exited cleanly in
+266.53 seconds. Contract census, test discovery, links and whitespace passed.
+This is local scheduling evidence, not a claim about a future CI result. No
+product code, gate runner or coverage changed, so affected tests suffice for
+this correction without a new app build or full local migration gate. The
+running app, profiles and chats were untouched. CI monitoring remains with the
+owner; merge remains unauthorized.
+
+## Claude review corrections for PR 213
+
+The owner requested disposition and fixes for the review of `c848c1ce`. Root
+remains sole writer. Independent launcher and UI plan reviews approved the bounded
+corrections; sensitive review requested Extra High and UI review High, with
+inherited effective settings unverified. A fresh complete-diff review covers this
+round before publication. The existing local demo trial milestone is unchanged;
+CI monitoring remains with the owner and no merge is authorized.
+
+Accepted: explicitly name Claude's coding tools (including Bash/WebFetch) and
+select `--permission-mode default`; explain rejected folders in a native alert,
+canonicalize with `realpath`, and preserve a valid remembered project after a bad
+new choice; allow an indefinitely open picker and give Terminal its own timeout;
+use a short private per-chat temporary directory; retain launch errors across
+polls; clear Activity's client filter on sidebar navigation while preserving Back;
+warn before leaving Profile drafts; refresh Context on focus/return outside edits
+and cancel passive reads when editing starts. The freshness fix is not concurrent
+write conflict detection. Short temporary directories remain retained because
+independent coding jobs may still use them; only owned offline fixtures clean up
+their exact recorded temporary paths.
+
+Accepted the misleading closed-Terminal status finding, but rejected always
+reporting `exited` in `finally`: interrupted or unknown child lifetime must not be
+presented as confirmed exit. A separate `interrupted` message leaves uncertain
+guard evidence intact; a known nonzero child exit can settle its owned guard.
+Confirmed `exited` outranks a later generic helper failure. Also rejected
+settling the auth guard before signal/error checks, which would discard uncertain
+ownership evidence. Recovery of interrupted setup remains outside this change.
+The three CI findings were already addressed in `a22e7e96`; no new CI query was
+made and none of the required checks, budgets or assertions were weakened.
+
+Tests were written first for changed backend/runtime behavior and reproduced the
+failures. Initial native picker and four browser regressions failed before fixes.
+Review additionally found that repeated old progress could renew a timeout; a
+failing deterministic regression now covers stable repeated `unconfirmed` polls.
+The real pinned Claude 2.1.299, isolated from user auth with a dummy key and OS
+network denial except a local mock endpoint, exposed Bash/WebFetch and reported
+`permissionMode: default`. This is stronger than checking argv strings but is not
+a live subscription interaction. The production web/native builds and 24 focused
+launcher, guard and native tests passed. Full affected browser/native checks and
+actual artifact verification are recorded at handoff; final CI and renewed human
+coding acceptance remain pending. No named aggregate lifecycle gap calls for a
+full local migration gate; baseline runtime, Mac native, documentation and trial
+artifact rows of the validation policy apply.
+
+The frozen correction diff has independent approval across code, tests and docs.
+The reviewer clarified that a normal nonzero child exit settles its owned guard;
+both documents now distinguish that from uncertain lifetime. Cleanup assertions
+are bounded to exact owned short temporary-directory names. All 143 web cases
+passed with no failures, skips or cancellations (274.01 seconds), along with 20
+Markdown checker tests, links, contract census, test selection and whitespace.
+The full native suite and separate package trial receipts complete the handoff
+without changing these frozen inputs. The running demo, chats and state remain
+untouched; installing the trial is an explicit user restart.

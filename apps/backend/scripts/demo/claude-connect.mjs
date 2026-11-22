@@ -6,11 +6,22 @@ import {codexCodingLaunchSpec,codexLoginSpec} from './codex-connect.mjs';
 import { safeError, privateJson } from './files.mjs';
 import { trustedDirectory, trustedBytes, ensurePrivateDirectory, writeSyncedJson } from './trusted-files.mjs';
 
-export const connectStates = ['checking', 'signing-in', 'starting', 'exited', 'login-failed', 'failed'];
+export const connectStates = ['checking', 'signing-in', 'starting', 'login-failed', 'failed', 'exited', 'interrupted'];
 export function codingLaunchSpec(launch, project) {
   const args = launch.command==='codex'?[...codexCodingLaunchSpec(launch,project).args]:[...launch.args];
-  if(launch.command==='claude')args[args.indexOf('--tools') + 1] = 'default';
+  if(launch.command==='claude'){
+    // --restricted requires explicit tool names; its default alias omits Bash/WebFetch.
+    args[args.indexOf('--tools') + 1] = 'Bash,Edit,Glob,Grep,NotebookEdit,Read,Task,WebFetch,WebSearch,Write,AskUserQuestion,EnterPlanMode,ExitPlanMode';
+    args.push('--permission-mode','default');
+  }
   return {...launch, args, cwd:project, env:{...launch.env,PATH:[launch.env.PATH,path.join(os.userInfo().homedir,'.nvm/versions/node/v24.21.0/bin'),path.join(os.userInfo().homedir,'.local/bin'),'/opt/homebrew/bin','/usr/local/bin'].join(path.delimiter)}};
+}
+/** Retained for coding jobs that may outlive their foreground chat. */
+export async function codingTemporaryDirectory() {
+  const base=process.platform==='darwin'?'/private/tmp':await fs.realpath(os.tmpdir());
+  const directory=await fs.mkdtemp(path.join(base,'cr-code-'));
+  await trustedDirectory(directory);
+  return directory;
 }
 export async function validateDemoProject(project, root) {
   await trustedDirectory(project, false);
@@ -50,9 +61,11 @@ export async function startClient(launch,{check,run,state,credential}) {
   const session={...launch,env:{...launch.env,CR_DEMO_TOKEN:credential()}};
   await state('starting');
   process.stdout.write(`Opening ${launch.command==='codex'?'Codex':'Claude Code'} with Context Router configured. You can open another chat from Connections without closing this one.\n`);
-  const code=await run(session);
-  await state(code===0?'exited':'failed');
-  return code;
+  try{
+    const code=await run(session);
+    await state(code===0?'exited':'interrupted');
+    return code;
+  }catch(error){await state('interrupted');throw error;}
 }
 
 function progressDirectory(spec, request) {

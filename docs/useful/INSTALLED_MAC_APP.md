@@ -155,6 +155,14 @@ provider authentication is inspected just by loading Connections. The retained
 qualified Claude 2.1.299 executable is discovered automatically where available;
 **Choose executable…** in the native panel remains the fallback.
 
+Coding launches explicitly enable the named coding tools, including Bash and
+WebFetch, and select Claude's `default` permission mode (normal prompts). The
+restricted profile's implicit tool defaults are insufficient. Project paths are
+canonicalized; invalid selections show a native explanation and do not replace
+the previous valid choice. The picker can stay open without a launch timeout.
+Each chat receives a short private `/private/tmp/cr-code-*` directory for tools
+that create Unix sockets. It is retained because project jobs may outlive Claude.
+
 The dashboard distinguishes native handoff, sign-in, and recent successful context
 reads by the exact B credential. A recent read is not a live connection indicator
 or proof that one particular Terminal session made it. **Open Claude Code** starts
@@ -182,6 +190,15 @@ Claude's B credential. Choose a project without its own `.codex/config.toml`;
 the demo ignores parent project configuration and never edits existing settings.
 The native picker/inspection remains one operation at a
 time; switching assistants never transfers a launch result or login profile.
+The same picker validation, retained short per-chat temporary directory, interruption
+feedback and persistent launch-error behavior apply to both assistants.
+
+The latest chat's confirmed exit and interruption have separate dashboard
+messages. Uncertain invocation guard evidence remains retained; interruption
+status is not proof that all child jobs stopped. Launch errors remain visible until an
+explicit retry. Context reloads saved values on focus/return when no edit is open;
+an in-flight passive refresh is cancelled when editing starts. This improves
+freshness but does not provide conflict detection for simultaneous edits.
 
 Terminal handoffs use unique private retained `demo/launch-requests/.../open.command`
 files. They contain quoted helper arguments and no credentials, use a clean

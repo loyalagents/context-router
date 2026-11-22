@@ -312,3 +312,53 @@ test('Codex launch is explicit, remembers in-flight state on reload, and reports
  await button.click();assert.equal(opens,2);assert.deepEqual(requests[1],{chooseProject:false});assert.equal(await button.isDisabled(),true);
  state={...state,state:'exited',busy:false};await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();await f.page.getByRole('button',{name:'Change project',exact:true}).click();assert.equal(opens,3);assert.deepEqual(requests[2],{chooseProject:true});
 });
+
+test('demo context refreshes external changes on focus without replacing active or newly opened drafts', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ const selected=(await f.graphql('query { activePreferences { id slug value } }')).activePreferences.find(p=>p.slug.startsWith('work.demo001.')&&typeof p.value==='string');
+ const {connect,call}=await import('../../backend/scripts/demo/mcp-import.mjs');const path=await import('node:path');
+ const peer=await connect(Number(new URL(f.ready.mcpOrigin).port),path.join(f.root,'demo/exports/agent-a.token'));t.after(()=>peer.close());
+ const write=value=>call(peer,'mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug:selected.slug,value:JSON.stringify(value)}});
+ await f.page.getByLabel('Search your context').fill(selected.slug);await f.page.getByRole('region',{name:'Saved context'}).getByRole('button').first().click();
+ await write('External update one');await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await f.page.locator('.demo-detail-value').getByText('External update one',{exact:true}).waitFor();
+ await f.page.getByRole('button',{name:'Edit context',exact:true}).click();const editor=f.page.getByLabel('Value for '+selected.slug,{exact:true});await editor.fill('Unsaved draft');
+ await write('External update two');await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await f.page.waitForTimeout(300);assert.equal(await editor.inputValue(),'Unsaved draft');
+ await f.page.getByRole('button',{name:'Cancel',exact:true}).click();await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await f.page.locator('.demo-detail-value').getByText('External update two',{exact:true}).waitFor();
+ let release,seen;const hold=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve);t.after(()=>release());
+ await f.page.route('**/graphql',async route=>{if(!route.request().postDataJSON().query.includes('LocalSavedPreferences'))return route.continue();const response=await route.fetch();seen();await hold;await route.fulfill({response}).catch(()=>{});});
+ await write('External delayed update');await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await waiting;
+ await f.page.getByRole('button',{name:'Edit context',exact:true}).click();await editor.fill('Draft wins over passive response');release();await f.page.waitForTimeout(300);assert.equal(await editor.inputValue(),'Draft wins over passive response');
+});
+
+for(const client of ['claude','codex'])test(`${client} demo launch errors remain visible across polls without automatic replay and permit explicit retry`, {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);let opens=0,polls=0;
+ await f.page.route(`**/api/local/demo/${client}/status`,route=>{polls++;return route.fulfill({json:{available:true,state:'idle',busy:false}});});
+ await f.page.route(`**/api/local/demo/${client}/open`,route=>{opens++;return opens===1?route.fulfill({status:503,json:{}}):route.fulfill({json:{available:true,state:'checking',busy:true}});});
+ await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ if(client==='codex')await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();
+ const button=f.page.getByRole('button',{name:client==='codex'?'Open Codex':'Open Claude Code',exact:true});await button.click();const error=f.page.getByText('Launch could not be confirmed. Check Terminal before retrying.',{exact:true});await error.waitFor();
+ const before=polls;await f.page.waitForTimeout(4500);assert.ok(polls>=before+2);assert.equal(await error.isVisible(),true);assert.equal(opens,1);assert.equal(await button.isDisabled(),false);
+ await button.click();await f.page.getByText(client==='codex'?'Checking Codex on this Mac…':'Checking Claude Code on this Mac…',{exact:true}).waitFor();assert.equal(opens,2);
+});
+
+test('demo sidebar clears the Activity client filter and Back restores it', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ const clients=JSON.parse(f.cli('local-mcp.js','list').stdout).result,id=clients[0].id;
+ await f.page.goto(f.ready.origin+'/dashboard/history#mcp-client='+id);const panel=f.page.getByRole('tabpanel',{name:'Assistant access',exact:true});
+ await panel.getByRole('button',{name:'Remove client filter',exact:true}).waitFor();
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();
+ await f.page.waitForFunction(()=>location.hash==='');await panel.getByRole('button',{name:'Remove client filter',exact:true}).waitFor({state:'hidden'});
+ await f.page.goBack();await panel.getByRole('button',{name:'Remove client filter',exact:true}).waitFor();assert.equal(new URL(f.page.url()).hash,'#mcp-client='+id);
+});
+
+test('demo profile drafts warn on navigation and a completed save clears the warning', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ await f.page.locator('.demo-more summary').click();await f.page.getByRole('link',{name:'Profile',exact:true}).click();
+ await f.page.getByLabel('Full Name',{exact:false}).fill('Synthetic review profile');
+ await f.page.getByLabel('Contact Email',{exact:false}).fill('review@example.test');
+ const connections=f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true});let dialogs=0;
+ const dismiss=async dialog=>{dialogs++;await dialog.dismiss();};f.page.on('dialog',dismiss);
+ await connections.click();assert.equal(dialogs,1);assert.equal(new URL(f.page.url()).pathname,'/dashboard/profile');
+ await f.page.getByRole('button',{name:'Save Changes',exact:true}).click();await f.page.getByText('Profile updated successfully.',{exact:true}).waitFor();
+ await connections.click();await f.page.getByRole('heading',{name:'Connections',exact:true}).waitFor();assert.equal(dialogs,1);
+});
