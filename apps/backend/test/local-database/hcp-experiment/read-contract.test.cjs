@@ -26,6 +26,11 @@ const {
 } = require("../../../dist/infrastructure/hcp-experiment/policy.js");
 const audit = async (f) =>
   (await f.management("/v2/audit?limit=100")).json.events;
+const revealedFields = [5, null, [], ["/credentialSubject/forged"]].map(
+  (revealed) => ({
+    evidence: [{ role: "supports", type: "urn:example:opaque", revealed }],
+  }),
+);
 const badFields = [
   { evidence: [{ note: "missing role and type" }] },
   { evidence: [{ role: "supports" }] },
@@ -44,21 +49,22 @@ const badFields = [
       language: 7,
     },
   },
+  ...revealedFields,
   { record: { provenance: { source: "person-input" }, metadata: 7 } },
 ];
 
-test("C7 fixture admission rejects invalid Core fields before initialization", () => {
+test("C7 fixture admission rejects invalid Core and provider-owned fields before initialization", () => {
   const {
     validateFixtures,
   } = require("../../../dist/infrastructure/hcp-experiment/fixtures.js");
-  for (const extra of badFields.slice(0, 6)) {
+  for (const extra of badFields.slice(0, -1)) {
     const fixtures = syntheticFixtures();
     Object.assign(fixtures[0].versions[0], extra);
     assert.throws(() => validateFixtures(fixtures));
   }
 });
 
-test("C7 Core-invalid writes reject before persistence while valid unknown evidence survives both bindings", async (t) => {
+test("C7 invalid and provider-owned writes reject before persistence while valid unknown evidence survives both bindings", async (t) => {
   const f = await fixture(t, { approveFixtures: true });
   const writer = await authorize(f, "a", [
     detail(["general_preferences"], undefined, { actions: ["read", "write"] }),
@@ -88,7 +94,8 @@ test("C7 Core-invalid writes reject before persistence while valid unknown evide
     {
       role: "supports",
       type: "urn:example:opaque",
-      extra: { nested: [null, 7] },
+      extra: { nested: [null, 7], revealed: "opaque nested extension" },
+      credential: { revealed: "opaque credential member" },
     },
   ];
   assert.equal(
@@ -181,7 +188,11 @@ test("C7 policy and classification ingress reject Core-invalid identifiers witho
 test("C7 imports reject malformed current/history entries and directives before application", async (t) => {
   const f = await fixture(t, { approveFixtures: true });
   const original = (await f.management("/v2/export?include=versions")).json;
-  for (const history of [false, true]) {
+  for (const [history, evidence] of [false, true].flatMap((history) =>
+    [[{ role: "supports" }], ...revealedFields.map((v) => v.evidence)].map(
+      (evidence) => [history, evidence],
+    ),
+  )) {
     const bundle = structuredClone(original),
       entry = bundle.entries.find((e) => e.record.version === 2);
     bundle.entries = [entry];
@@ -191,7 +202,7 @@ test("C7 imports reject malformed current/history entries and directives before 
       e.id = id;
       e.record.relationships = [];
     }
-    (history ? bundle.versions[0] : entry).evidence = [{ role: "supports" }];
+    (history ? bundle.versions[0] : entry).evidence = evidence;
     const r = await f.management("/v2/import?dryRun=true", {
       method: "POST",
       json: { export: JSON.stringify(bundle) },
@@ -220,6 +231,100 @@ test("C7 imports reject malformed current/history entries and directives before 
     (await audit(f)).filter((e) => e.eventType === "context.imported").length,
     0,
   );
+});
+
+test("C7 retained evidence revealed metadata is omitted from current/history reads without changing storage", async (t) => {
+  const f = await fixture(t, { approveFixtures: true, childProcess: true }),
+    token = await authorize(f);
+  await f.close();
+  const file = path.join(f.sandbox, "experiment", "entries.sqlite"),
+    db = new DatabaseSync(file),
+    evidence = [
+      {
+        role: "supports",
+        type: "urn:example:opaque",
+        credential: { revealed: "opaque credential field", claims: [1, null] },
+        extension: { revealed: "opaque nested extension" },
+      },
+    ];
+  let id;
+  const stored = [];
+  try {
+    id = db.prepare("SELECT id FROM entries WHERE current_version=2").get().id;
+    const original = JSON.parse(
+      db
+        .prepare(
+          "SELECT document FROM entry_versions WHERE entry_id=? AND version=2",
+        )
+        .get(id).document,
+    );
+    for (const [version, revealed] of [
+      [3, 5],
+      [4, ["/credentialSubject/forged"]],
+    ]) {
+      const doc = structuredClone(original);
+      doc.record.version = version;
+      doc.evidence = [{ ...evidence[0], revealed }];
+      stored.push(JSON.stringify(doc));
+      // Append pre-fix fixtures after normal close; never disable immutable triggers.
+      db.prepare("INSERT INTO entry_versions VALUES(?,?,?,NULL)").run(
+        id,
+        version,
+        stored.at(-1),
+      );
+    }
+    db.prepare("UPDATE entries SET current_version=4 WHERE id=?").run(id);
+  } finally {
+    db.close();
+  }
+  await f.restart();
+  const before = (await audit(f)).filter(
+    (e) => e.eventType === "context.read",
+  ).length;
+  const http = await query(f, token, { categories: ["general_preferences"] });
+  assert.equal(http.status, 200);
+  assert.equal(http.json.entries.length, 1);
+  const entry = http.json.entries[0];
+  assert.equal(entry.version, 4);
+  assert.deepEqual(entry.evidence, evidence);
+  const mcp = await mcpQuery(f, token, { categories: ["general_preferences"] });
+  assert.equal(mcp.status, 200);
+  assert.equal(mcp.json.result.isError, false);
+  assert.deepEqual(
+    mcp.json.result.structuredContent.entries[0].evidence,
+    evidence,
+  );
+  const historical = await get(f, token, entry.ref, { version: 3 });
+  assert.equal(historical.status, 200);
+  assert.deepEqual(historical.json.entry.evidence, evidence);
+  const historicalMcp = await mcpGet(f, token, entry.ref, { version: 3 });
+  assert.equal(historicalMcp.status, 200);
+  assert.equal(historicalMcp.json.result.isError, false);
+  assert.deepEqual(
+    historicalMcp.json.result.structuredContent.entry.evidence,
+    evidence,
+  );
+  assert.equal(
+    (await audit(f)).filter((e) => e.eventType === "context.read").length,
+    before + 4,
+  );
+  await f.close();
+  const inspect = new DatabaseSync(file, { readOnly: true });
+  try {
+    assert.deepEqual(
+      inspect
+        .prepare(
+          "SELECT document FROM entry_versions WHERE entry_id=? AND version>=3 ORDER BY version",
+        )
+        .all(id)
+        .map((r) => r.document),
+      stored,
+    );
+  } finally {
+    inspect.close();
+  }
+  await f.restart();
+  assert.deepEqual((await query(f, token)).json.entries[0].evidence, evidence);
 });
 
 for (const retained of ["current", "historical", "directive"])

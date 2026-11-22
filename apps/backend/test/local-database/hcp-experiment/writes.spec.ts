@@ -144,7 +144,7 @@ describe("C4 durable person writes and original completion", () => {
     record: { provenance: { source: "person-input" } },
     ...extra,
   });
-  it("refuses non-Core person writes and classification reviews without issuing review authority", () => {
+  it("refuses non-Core and provider-owned person writes and classification reviews without issuing review authority", () => {
     const { grant } = issue();
     const personInput = (extra = {}) =>
       input(grant, { subject: { id: authority.accountId() }, ...extra });
@@ -162,6 +162,9 @@ describe("C4 durable person writes and original completion", () => {
       { evidence: [{ role: "supports" }] },
       { assertion: { declarationType: "person-declared", basis: { task: 7 } } },
       { content: { ...input(grant).content, language: 7 } },
+      ...[5, null, [], ["/credentialSubject/forged"]].map((revealed) => ({
+        evidence: [{ role: "supports", type: "urn:example:opaque", revealed }],
+      })),
     ])
       expect(() =>
         authority.reviewPersonWrite(
@@ -1794,7 +1797,7 @@ describe("C4 durable person writes and original completion", () => {
     expect(retained.record.provenance.confirmations).toEqual([]);
   });
 
-  it("rejects credential-content evidence and unsupported General Context values without consuming keys", () => {
+  it("rejects credential-content/provider-owned evidence and unsupported General Context values without consuming keys", () => {
     const { grant, token } = issue();
     const body = input(grant);
     const before = store.inspectEntries().length;
@@ -1802,6 +1805,10 @@ describe("C4 durable person writes and original completion", () => {
       ...[null, false, 42, ["not a top-level object"]].map((value) => ({
         ...body,
         content: { ...body.content, value },
+      })),
+      ...[5, null, [], ["/credentialSubject/forged"]].map((revealed) => ({
+        ...body,
+        evidence: [{ role: "supports", type: "urn:example:opaque", revealed }],
       })),
       {
         ...body,

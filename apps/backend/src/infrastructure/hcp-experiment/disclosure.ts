@@ -256,6 +256,17 @@ export function project(
 ): any {
   const e = item.entry,
     classification: any = { categories: item.categories };
+  // This slice derives no credentials. Never forward a stored caller's claim
+  // about provider disclosure; retain every other field and malformed shape so
+  // shared result validation still refuses unrelated invalid retained evidence.
+  const evidence = Array.isArray(e.evidence)
+    ? e.evidence.map((value: any) => {
+        if (!value || typeof value !== "object" || Array.isArray(value))
+          return value;
+        const { revealed: _revealed, ...stored } = value;
+        return stored;
+      })
+    : e.evidence;
   for (const field of ["dimension", "permittedPurposes"])
     if (e.classification[field] !== undefined)
       classification[field] = e.classification[field];
@@ -264,7 +275,7 @@ export function project(
     version: e.record.version,
     content: e.content,
     assertion: e.assertion,
-    evidence: e.evidence,
+    evidence,
     classification,
     standing: {
       assurance: e.record.provenance.assertedBy.assurance,

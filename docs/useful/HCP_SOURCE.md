@@ -241,7 +241,13 @@ final authorization and durable `context.read` auditing. Invalid retained result
 fail only that request without a read audit or global store latch; management and
 revocation remain available. Unexpected serializer/storage/audit faults retain the
 existing fail-closed latch. Entry, classification, directive and import admission
-also checks Core shapes. MCP serializes its complete envelope and
+also checks Core shapes. New mutation, import and fixture admission rejects
+top-level evidence-item `revealed`, which this slice reserves for provider
+disclosure metadata. Query/get projection omits that member from retained evidence
+without rewriting storage; nested opaque fields and other unknown evidence fields
+remain intact. This slice performs no credential derivation. Previously committed
+mutation retries preserve their original stored response bytes; this projection
+rule applies to query/get, not those durable receipts. MCP serializes its complete envelope and
 both content representations before commit. Final handoff is synchronous;
 interrupted committed attempts remain `attempted`/`unconfirmed`. A separate read
 is a new authorized retrieval, never automatic replay. HTTP query and MCP accept

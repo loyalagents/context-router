@@ -2,7 +2,7 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { withConfirmations } from "./entry-state";
-import { validCore } from "./core-contract";
+import { hasRevealedEvidence, validCore } from "./core-contract";
 import {
   AuthorityError,
   categories,
@@ -297,6 +297,7 @@ export function mutationDocument(
   if (
     !Array.isArray(evidence) ||
     evidence.length > 100 ||
+    hasRevealedEvidence(evidence) ||
     evidence.some(
       (e) => !object(e) || e.verification !== undefined || e.role === "content",
     )

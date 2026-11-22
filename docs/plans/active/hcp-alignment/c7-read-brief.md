@@ -566,3 +566,42 @@ dependency/legacy SDK evidence carries forward only for unchanged inputs.
 **Targeted checks passed; final validation pending.** The PR description is the
 publication/CI receipt; no pass-only commit is required. Host/manual/installed
 artifact evidence remains outside this round, and no merge is authorized.
+
+### Revealed Evidence Re-review Correction
+
+Lucas requested fixes for the Claude re-review at
+`b78c580af54c97514888b7a4a1e3e0c03063ef9b`. Accept its medium-severity finding:
+the pinned stored-entry schema permits an extra evidence-item `revealed` member,
+while the disclosure schema constrains it. Copying a value such as `5` can refuse
+every matching read; the earlier non-latching fix already preserves management
+and revocation. All earlier findings were confirmed resolved. Both previous-head
+CI workflows subsequently passed, but do not qualify this correction.
+
+The bounded interpretation follows pinned §14.9: `revealed` describes provider
+derivation for a disclosure. This synthetic General Context slice derives no
+credentials. Reject its presence, regardless of value, at new mutation/person,
+current/history import and fixture/seed admission. Omit only that top-level member
+from query/get projections of retained evidence, preserving nested opaque members,
+unknown evidence types, unrelated invalid-shape refusals and stored document bytes.
+Neither the pinned schemas nor `validCore` are changed. This is an application
+admission/projection rule, not a claim that Core entry schema forbids that member.
+
+Independent read-only plan review `review_corrections_plan` approved these
+checkpoints (requested Astra/xhigh, actual execution unverified):
+
+1. Observe failing admission/person/key-reuse and retained-projection regressions.
+2. Add the shared own-property guard and copy-only projection; build and run focused
+   checks, including malformed and valid forged values, historical reads and reopen.
+3. Freeze, independently review affected contracts against the complete PR, renew
+   the MCP/write/import/read coverage and documentation readers, then publish to
+   the existing PR and renew exact-candidate CI. Carry forward only unaffected
+   prior review and evidence; no full local migration gate is selected.
+
+The reviewer identified a deliberate boundary: existing committed mutation
+receipts replay stored response bytes before new-admission validation. Preserve
+those bytes and known-commit recovery; do not rewrite receipts or claim this
+correction removes the member from every possible response. The guarantee covers
+new mutation admission and query/get disclosure projection. No stored data,
+personal client, host/model, installed artifact, spec pin or upstream work changes.
+Final local results, review approval and CI identities belong in the PR receipt;
+the previous round's broader evidence remains scoped to unchanged inputs.

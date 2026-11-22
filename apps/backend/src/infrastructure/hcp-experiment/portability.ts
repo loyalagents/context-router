@@ -17,7 +17,7 @@ import {
   validatePolicy,
 } from "./policy";
 import { storedEntry } from "./writes";
-import { validCore } from "./core-contract";
+import { hasRevealedEvidence, validCore } from "./core-contract";
 const parse = (v: any) => JSON.parse(String(v));
 export const canonical = (v: any): string =>
   JSON.stringify(v, function (_key, value) {
@@ -131,6 +131,8 @@ export function exportDocument(
 }
 function validateEntry(entry: any): void {
   if (!validCore("entry.json", entry)) throw new Error("invalid Core entry");
+  if (hasRevealedEvidence(entry.evidence))
+    throw new Error("provider disclosure evidence is unsupported");
   if (
     !object(entry) ||
     entry.schema !== "https://hcp.example/spec/entry/2.0" ||

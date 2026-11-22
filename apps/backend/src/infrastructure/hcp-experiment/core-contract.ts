@@ -141,6 +141,15 @@ addFormats(ajv);
 for (const document of Object.values(documents)) ajv.addSchema(document);
 export const validCore = (schema: string, value: unknown): boolean =>
   !!ajv.getSchema(base + schema)!(value);
+/** Reserved provider disclosure metadata, not caller-supplied stored evidence. */
+export const hasRevealedEvidence = (evidence: unknown): boolean =>
+  Array.isArray(evidence) &&
+  evidence.some(
+    (item) =>
+      item !== null &&
+      typeof item === "object" &&
+      Object.prototype.hasOwnProperty.call(item, "revealed"),
+  );
 const directiveInput = copy("directive.json");
 delete directiveInput.$id;
 directiveInput.required = ["action", "effect", "text"];
