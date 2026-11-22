@@ -33,7 +33,8 @@ interface PreferencesClientProps {
 }
 
 const SAVED_PREFERENCES_QUERY = /* GraphQL */ `
-  query LocalSavedPreferences {
+  query LocalSavedPreferences($includeCatalog: Boolean!) {
+    preferenceCatalog @include(if: $includeCatalog) { id slug namespace displayName ownerUserId description valueType scope options isSensitive isCore category }
     activePreferences {
       id
       slug
@@ -82,7 +83,7 @@ function PreferencesContent({
   );
   const [uploadBatch, setUploadBatch] = useState<UploadBatchResult | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [refreshError, setRefreshError] = useState(false);
+  const [refreshError, setRefreshError] = useState<'passive' | 'explicit' | null>(null);
   const refreshRequest = useRef<AbortController | null>(null);
   const mounted = useRef(false);
   const interacting = useRef(false);
@@ -104,15 +105,15 @@ function PreferencesContent({
     const controller = new AbortController();
     refreshRequest.current = controller;
     passiveRequest.current = passive ? controller : null;
-    setRefreshing(true);
-    setRefreshError(false);
+    setRefreshing(!passive);
+    setRefreshError(null);
     const current = () => mounted.current && !controller.signal.aborted && refreshRequest.current === controller && (!passive || !interacting.current);
-    void localGraphql<{ activePreferences: Preference[] }>(SAVED_PREFERENCES_QUERY, undefined, controller.signal)
+    void localGraphql<{ activePreferences: Preference[]; preferenceCatalog?: PreferenceDefinition[] }>(SAVED_PREFERENCES_QUERY, { includeCatalog: demo }, controller.signal)
       .then((data) => {
-        if (current()) setActivePreferences(data.activePreferences);
+        if (current()) { setActivePreferences(data.activePreferences);if (data.preferenceCatalog) setPreferenceDefinitions(data.preferenceCatalog); }
       })
       .catch(() => {
-        if (current()) setRefreshError(true);
+        if (current()) setRefreshError(passive ? 'passive' : 'explicit');
       })
       .finally(() => {
         if (current()) {
@@ -120,7 +121,7 @@ function PreferencesContent({
           setRefreshing(false);
         }
       });
-  }, [local]);
+  }, [local, demo]);
 
   const onContextInteraction = (active: boolean) => {
     interacting.current = active;
@@ -220,7 +221,7 @@ function PreferencesContent({
   };
 
   if (demo) return <DemoContextLibrary preferences={activePreferences} definitions={preferenceDefinitions} accessToken={accessToken} onUpdate={handlePreferenceUpdate} onDelete={handlePreferenceDelete} onInteractionChange={onContextInteraction}
-    status={<>{refreshing && <p role="status" className="demo-edit-notice">Refreshing saved preferences…</p>}{refreshError && <div role="alert" className="mb-4 text-red-700"><p>Saved preferences could not refresh. Apply outcomes are unchanged; the list may be out of date.</p><button onClick={() => refreshSavedPreferences()} className="underline">Retry saved preferences refresh</button></div>}</>}
+    status={<>{refreshing && <p role="status" className="demo-edit-notice">Refreshing saved preferences…</p>}{refreshError && <div role={refreshError === 'passive' ? 'status' : 'alert'} className={refreshError === 'passive' ? 'mb-4 text-sm text-gray-500' : 'mb-4 text-red-700'}><p>{refreshError === 'passive' ? 'Context may be out of date. Could not refresh in the background.' : 'Saved preferences could not refresh. Apply outcomes are unchanged; the list may be out of date.'}</p><button onClick={() => refreshSavedPreferences()} className="underline">Retry saved preferences refresh</button></div>}</>}
     tools={<>
       <details open><summary>Add a memory</summary><div><ManualPreferenceForm accessToken={accessToken} definitions={preferenceDefinitions} onSaved={handleManualPreferenceSaved}/></div></details>
       <details><summary>Import from Documents</summary><div>{uploadBatch ? <SuggestionsList batch={uploadBatch} onClose={handleClose} onApplied={handleApplied} accessToken={accessToken}/> : <DocumentUpload onAnalysisComplete={handleAnalysisComplete} accessToken={accessToken}/>}</div></details>

@@ -330,3 +330,48 @@ Markdown checker tests, links, contract census, test selection and whitespace.
 The full native suite and separate package trial receipts complete the handoff
 without changing these frozen inputs. The running demo, chats and state remain
 untouched; installing the trial is an explicit user restart.
+
+
+## Final demo polish after the second Claude review
+
+The owner authorized the remaining polish and an updated PR description. Root
+is sole writer. Independent plan review approved exact preapproval of the two
+context-read tools, stable automatic selection, quiet passive refresh, fresh
+field definitions, request-correlated launch error recovery and accurate sign-in
+interruption feedback. It additionally required preserving a new-memory draft's
+field interpretation across catalog refreshes; the form now holds that snapshot
+until Clear or successful save. Only demo reads include the refreshed catalog;
+personal/hosted behavior and backend authorization are unchanged. Requested
+sensitive review effort is Extra High; inherited effective settings unverified.
+
+The read allowlist precedes `--permission-mode default` so appended auth commands
+cannot be consumed as tool names. No wildcard, mutation or Bash preapproval is
+added. Actual pinned Claude 2.1.299 was exercised with fake credentials, disposable
+configuration and OS networking limited to one local mock endpoint: both allowed
+MCP reads executed; mutation and Bash calls were denied without approval; no Bash
+marker was created; mode remained default and signed-out subscription auth status
+parsed correctly. This is actual print-mode permission behavior, not live account
+or interactive subscription acceptance.
+
+Backend regressions failed first for tool flags and specific sign-in states;
+14 helper and 34 focused launcher/guard/native tests passed after correction.
+The sign-in catch leaves guard settlement unchanged. UI regressions cover fallback
+selection through reorder/removal/filtering, layout stability, sensitive catalog
+refresh, draft field types, quiet read failure/retry and new-request progress after
+a lost launch reply. The complete affected web suite and fresh independent diff
+review precede publication. Native source is unchanged: carry forward the 248-test
+Mac pass from `93411eff`, renewed affected helper/native integration and the actual
+new packaged trial. No named aggregate lifecycle gap requires a full local gate.
+
+The previous review reports all required CI green at `93411eff`; that report does
+not qualify this new candidate. The owner continues CI monitoring. Preserve the
+running app, existing chats and demo state; build a separate clean-source bundle
+and verify its dashboard/native/MCP and overlapping offline coding chats before
+updating the existing launcher. Final live subscription read/command/two-chat
+acceptance remains the owner's retest. No merge or general release is authorized.
+
+The complete code/test/docs/derived-inventory diff has independent approval. The
+four new browser behaviors passed focused checks (the quiet-notice assertion was
+scoped to its own status element), and 75 contract/Markdown checker tests, contract
+census, links and whitespace passed. The full web run and actual artifact receipts
+complete the frozen-source handoff; no user app restart is performed by the agent.

@@ -4130,7 +4130,8 @@
       "kind": "query",
       "operation": "LocalSavedPreferences",
       "rootFields": [
-        "activePreferences"
+        "activePreferences",
+        "preferenceCatalog"
       ]
     },
     {
@@ -5462,6 +5463,18 @@
     },
     {
       "path": "apps/web/components/local/DemoClaudeConnect.tsx",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
+    },
+    {
+      "path": "docs/useful/INSTALLED_MAC_APP.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPreferenceSlugs"
+    },
+    {
+      "path": "docs/useful/INSTALLED_MAC_APP.md",
       "contract": "mcp",
       "kind": "tool",
       "reference": "searchPreferences"

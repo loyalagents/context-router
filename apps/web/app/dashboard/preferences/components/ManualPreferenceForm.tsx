@@ -112,8 +112,11 @@ export default function ManualPreferenceForm({
   useDemoDraft(!!demo && !!(slug || description || textValue || arrayValue || enumOptions), !!demo && isSubmitting);
   const graphqlUrl = GRAPHQL_URL;
 
+  // Keep a draft's field interpretation stable across background catalog refreshes.
+  const [draftDefinitions, setDraftDefinitions] = useState<PreferenceDefinition[] | null>(null);
+  const availableDefinitions = demo && draftDefinitions ? draftDefinitions : definitions;
   const normalizedSlug = slug.trim();
-  const existingDefinition = definitions.find(
+  const existingDefinition = availableDefinitions.find(
     (definition) => definition.slug === normalizedSlug,
   );
   const isNewDefinition = normalizedSlug.length > 0 && !existingDefinition;
@@ -126,6 +129,7 @@ export default function ManualPreferenceForm({
       .filter(Boolean);
 
   const resetForm = () => {
+    setDraftDefinitions(null);
     setSlug('');
     setDescription('');
     setValueType('STRING');
@@ -252,7 +256,7 @@ export default function ManualPreferenceForm({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-6">
+    <div className="bg-white rounded-lg shadow p-6 mb-6" onChangeCapture={() => { if (demo && !draftDefinitions) setDraftDefinitions(definitions); }}>
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <h2 className="text-lg font-semibold">{demo ? 'Add a memory' : 'Add Preference Manually'}</h2>
@@ -276,7 +280,7 @@ export default function ManualPreferenceForm({
             className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           <datalist id="preference-slug-options">
-            {definitions.map((definition) => (
+            {availableDefinitions.map((definition) => (
               <option key={definition.id} value={definition.slug} />
             ))}
           </datalist>

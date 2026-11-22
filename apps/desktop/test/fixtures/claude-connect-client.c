@@ -9,6 +9,8 @@ int main(int argc,char **argv){
  if(argc==2&&!strcmp(argv[1],"--version")){puts("2.1.299");return 0;}
  if(argc==2&&!strcmp(argv[1],"--help")){puts("--restricted --strict-mcp-config --tools --setting-sources --disable-slash-commands --no-chrome");return 0;}
  if(argc==3&&(!strcmp(argv[1],"--bg")||!strcmp(argv[1],"--background"))){fprintf(stderr,"'%s' is disabled by CLAUDE_CODE_DISABLE_AGENT_VIEW.\n",argv[1]);return 1;}
+ int reads=0;for(int i=1;i+3<argc;i++)if(!strcmp(argv[i],"--allowedTools")&&!strcmp(argv[i+1],"mcp__context_router_demo__searchPreferences,mcp__context_router_demo__listPreferenceSlugs")&&!strcmp(argv[i+2],"--permission-mode")&&!strcmp(argv[i+3],"default"))reads=1;
+ if(!reads)return 14;
  char marker[PATH_MAX];snprintf(marker,sizeof(marker),"%s/fixture-login",getenv("CLAUDE_CONFIG_DIR"));
  if(argc>=4&&!strcmp(argv[argc-3],"auth")&&!strcmp(argv[argc-2],"status")){
   int logged=access(marker,F_OK)==0;
