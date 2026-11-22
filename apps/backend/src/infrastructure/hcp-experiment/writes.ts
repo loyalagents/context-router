@@ -2,6 +2,7 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { withConfirmations } from "./entry-state";
+import { validCore } from "./core-contract";
 import {
   AuthorityError,
   categories,
@@ -12,6 +13,7 @@ import {
   object,
   strings,
   uri,
+  purposeCode,
   validateAccess,
 } from "./policy";
 
@@ -244,7 +246,7 @@ export function mutationDocument(
     if (
       item.permittedPurposes !== undefined &&
       (!strings(item.permittedPurposes, 0) ||
-        !item.permittedPurposes.every(uri))
+        !item.permittedPurposes.every(purposeCode))
     )
       invalid();
   if (classification.dimension != null) {
@@ -304,7 +306,7 @@ export function mutationDocument(
   const at = new Date(now).toISOString(),
     version = current ? current.record.version + 1 : 1;
   const { expectedVersion: _expected, reason: _reason, ...extensions } = input;
-  return {
+  const document = {
     ...structuredClone(extensions),
     "@context": ["https://hcp.example/contexts/v2"],
     schema: "https://hcp.example/spec/entry/2.0",
@@ -343,6 +345,8 @@ export function mutationDocument(
       },
     },
   };
+  if (!validCore("entry.json", document)) invalid();
+  return document;
 }
 export function assertNewPurpose(document: any, purpose: string): void {
   if (document && !permitsPurpose(document, purpose)) denied();

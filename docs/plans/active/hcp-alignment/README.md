@@ -1,6 +1,6 @@
 # HCP Alignment Plan
 
-- Status: C1–C5 and bounded C6 source/UI slices merged; bounded human source journey accepted; C7a local implementation/review complete with final validation pending; C7b/C8–C9 unactivated; no conformance claim
+- Status: C1–C5 and bounded C6 source/UI slices merged; bounded human source journey accepted; C7a PR #212 review corrections approved with final validation pending; C7b/C8–C9 unactivated; no conformance claim
 - Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` owns sequencing and assigns the next sole writer at activation
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
@@ -9,7 +9,7 @@
 - Relationship and ownership: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
 - Protocol questions: [local Draft 3 adoption notes][questions]
 
-Current work is the [reviewed C7a local handoff](c7-read-brief.md#c7a-local-handoff), following
+Current work is the [C7a review correction round](c7-read-brief.md#claude-review-correction-round), following
 the [C6 UI merge](#c6-demo-ui-merge-and-c7a-planning-2026-11-21) and
 [demo-first continuation](#demo-first-continuation-2026-11-19). Earlier activation, writer, pending/draft and freeze-time passages
 below are historical. The current status and checkpoint map supersede their routing;
@@ -30,6 +30,10 @@ the corrected Unicode denial defect, and remaining exact-candidate CI/host evide
 Lucas subsequently authorized this writer to commit and publish one C7a PR and
 prepare an independent Claude Code review handoff. The PR description records its
 candidate and CI state. Merge/release and actual host work remain unapproved.
+The implementation is published in [PR #212](https://github.com/loyalagents/context-router/pull/212).
+Lucas requested fixes for its Claude review; the corrected source has fresh
+independent approval. The brief records the correction scope and local evidence;
+the PR description records renewed exact-candidate CI and remaining qualification.
 The following merge/planning record retains its original scope.
 
 Lucas authorized the final Claude feedback corrections and merge of

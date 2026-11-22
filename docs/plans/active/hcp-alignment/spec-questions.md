@@ -1268,9 +1268,11 @@ general HTTP interoperability.
 The [C7a parser proposal](c7-read-brief.md#cr-q8-and-n4) selected parameterized UTF-8
 JSON, rejection of other query encodings and duplicate decoded member names at every
 depth, and retention of OAuth/human form parsing. That planning choice is now implemented
-and tested in the uncommitted [C7a implementation](c7-read-brief.md#c7a-implementation-record-2026-11-21).
+and tested in the [C7a implementation](c7-read-brief.md#c7a-implementation-record-2026-11-21),
+published in [PR #212](https://github.com/loyalagents/context-router/pull/212).
 It remains an application parser policy, not a new normative HCP interpretation;
-publication and exact-candidate CI remain pending.
+the [Claude correction round](c7-read-brief.md#claude-review-correction-round)
+renews affected validation and exact-candidate CI before merge.
 
 ## C5 Implementation Evidence (2026-11-15 UTC)
 

@@ -12,6 +12,7 @@ it("qualifies the bounded C7 MCP binding, official peer, HTTP parity and durable
         ...[
           "query-json.test.cjs",
           "read-wire.test.cjs",
+          "read-contract.test.cjs",
           "mcp.test.cjs",
           "mcp-parity.test.cjs",
           "mcp-release.test.cjs",

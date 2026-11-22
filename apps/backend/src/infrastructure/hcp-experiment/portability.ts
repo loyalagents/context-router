@@ -17,6 +17,7 @@ import {
   validatePolicy,
 } from "./policy";
 import { storedEntry } from "./writes";
+import { validCore } from "./core-contract";
 const parse = (v: any) => JSON.parse(String(v));
 export const canonical = (v: any): string =>
   JSON.stringify(v, function (_key, value) {
@@ -129,6 +130,7 @@ export function exportDocument(
   };
 }
 function validateEntry(entry: any): void {
+  if (!validCore("entry.json", entry)) throw new Error("invalid Core entry");
   if (
     !object(entry) ||
     entry.schema !== "https://hcp.example/spec/entry/2.0" ||
@@ -329,6 +331,8 @@ export function interpretImport(
           rules: kind === "rules" ? [body] : [],
           directives: kind === "directives" ? [body] : [],
         });
+        if (kind === "directives" && !validCore("directive.json", item))
+          throw new Error("invalid Core directive");
         const held = db
           .prepare("SELECT kind,document FROM policies WHERE id=?")
           .get(id);

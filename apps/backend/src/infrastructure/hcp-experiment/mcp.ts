@@ -70,7 +70,9 @@ export function mcpHandler(authority: AuthorizationRepository) {
   // Fixed registered-client keys bound memory; a new grant/token cannot reset a bucket.
   const buckets = new Map<string, { start: number; calls: number }>();
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    let id: string | number | undefined, tool: ReadTool | undefined;
+    let id: string | number | undefined,
+      tool: ReadTool | undefined,
+      method: string | undefined;
     const send = (status: number, value: any) => {
       const bytes = JSON.stringify(value);
       res.statusCode = status;
@@ -125,6 +127,7 @@ export function mcpHandler(authority: AuthorizationRepository) {
       )
         protocol(406, -32600, "JSON and event-stream acceptance required.");
       const message = await requestJson(req);
+      method = typeof message?.method === "string" ? message.method : undefined;
       if (
         !only(message, ["jsonrpc", "id", "method", "params"]) ||
         message.jsonrpc !== "2.0" ||
@@ -318,7 +321,11 @@ export function mcpHandler(authority: AuthorizationRepository) {
         error: {
           code: failure.code,
           message: failure.detail,
-          ...(failure.data ? { data: failure.data } : {}),
+          ...(method === "initialize"
+            ? { data: { ...failure.data, supported: [MCP_VERSION] } }
+            : failure.data
+              ? { data: failure.data }
+              : {}),
         },
       });
     }

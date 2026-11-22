@@ -65,17 +65,18 @@ and contributor handoff merged in [PR #211](https://github.com/loyalagents/conte
 at `f92260060152b6872b5732587027bd161bc4f590`; its
 [merge record](active/hcp-alignment/README.md#c6-demo-ui-merge-and-c7a-planning-2026-11-21)
 binds final review and green CI without upgrading human/artifact acceptance.
-Current work is the [reviewed C7a local handoff](active/hcp-alignment/c7-read-brief.md#c7a-local-handoff):
-synthetic query/get implementation and focused checks are complete; Lucas authorized
-the C7a writer to commit and publish one PR for independent Claude Code review,
-with exact-candidate CI and the separate host trial pending. C8 delivers
+Current work is the [C7a review correction round](active/hcp-alignment/c7-read-brief.md#claude-review-correction-round)
+in [PR #212](https://github.com/loyalagents/context-router/pull/212): synthetic
+query/get is published; Lucas authorized fixes to the Claude Code findings.
+The corrected source has independent review approval, with final local checks and
+renewed exact-candidate CI recorded in the PR. The separate host trial remains pending. C8 delivers
 protocol fixes **and CR adoption**;
 C9 completes selected capabilities and qualification (formerly C8 qualification).
 Broader C6 workflows and mandatory C5 gaps remain owned. Installed Mac delivery
 is a separate selected milestone if needed; D3 erasure precedes any personal-data
 extension and CR-Q9 resolution/adoption precedes sensitive real data. The
 orchestrator retains sequencing; the C7a implementation chat owns the authorized
-publication step, checkout, tests/builds and disposable synthetic resources. C7b actual host/model
+correction/publication step, checkout, tests/builds and disposable synthetic resources. C7b actual host/model
 use, personal-state changes and C8–C9 execution remain unactivated. No full
 C6, artifact or conformance claim is made.
 

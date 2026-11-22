@@ -9,6 +9,7 @@ import {
 } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { insertFixtures } from "./seed";
+import { assertReadResult, validCore } from "./core-contract";
 import * as conflicts from "./conflict-graph";
 import { contradicts } from "./conflicts";
 import { relationships } from "./relationships";
@@ -66,6 +67,7 @@ import {
   scopeAccess,
   strings,
   uri,
+  purposeCode,
   validateAccess,
   validatePolicy,
 } from "./policy";
@@ -1870,7 +1872,7 @@ export class AuthorizationRepository {
         useUntil: iso(useUntil[i]),
         categories: entries[i].classification.categories,
       }));
-      const bytes = serialize({
+      const value = {
         ...(prepared.request.kind === "query"
           ? { entries, categoriesSearched: selected.categories }
           : { entry: entries[0] }),
@@ -1880,7 +1882,9 @@ export class AuthorizationRepository {
         minimization: {
           method: prepared.request.kind === "query" ? "lexical" : "none",
         },
-      });
+      };
+      assertReadResult(prepared.request.kind, value);
+      const bytes = serialize(value);
       // The serializer is pure and synchronous. Validate the whole wire response
       // before appending the audit; a Promise must never escape into handoff.
       if (typeof bytes !== "string") throw new Error("Invalid read serializer");
@@ -2126,6 +2130,8 @@ export class AuthorizationRepository {
                 setBy: "context-subject",
                 createdAt: iso(now),
               };
+            if (kind === "directives" && !validCore("directive.json", item))
+              invalid();
             db.prepare("INSERT INTO policies VALUES(?,?,?)").run(
               id,
               kind,
@@ -2218,7 +2224,7 @@ export class AuthorizationRepository {
     else if (
       input.permittedPurposes !== null &&
       (!strings(input.permittedPurposes, 0) ||
-        !input.permittedPurposes.every(uri))
+        !input.permittedPurposes.every(purposeCode))
     )
       invalid();
   }
@@ -2239,6 +2245,8 @@ export class AuthorizationRepository {
     const classification = { ...current.classification };
     if (to === null) delete classification[field];
     else classification[field] = to;
+    if (!validCore("common.json#/$defs/classification", classification))
+      invalid();
     db.prepare("UPDATE entries SET classification=? WHERE id=?").run(
       JSON.stringify(classification),
       id,
@@ -2511,6 +2519,8 @@ export class AuthorizationRepository {
             setBy: "context-subject",
             createdAt: iso(this.kernel.now()),
           };
+        if (kind === "directives" && !validCore("directive.json", item))
+          invalid();
         db.prepare("INSERT INTO policies VALUES(?,?,?)").run(
           id,
           kind,

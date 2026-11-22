@@ -48,13 +48,14 @@ test("C7 modern public discovery, protected descriptors, query/get and JSON text
     assert.equal(tool.outputSchema.type, "object");
     assert.equal(tool.inputSchema.additionalProperties, false);
     assert.ok(tool.outputSchema.anyOf);
-    const checkRefs = (value) => {
+    const checkRefs = (value, root = false) => {
       if (!value || typeof value !== "object") return;
+      if (!root) assert.equal(value.$schema, undefined);
       if (value.$ref) assert.ok(value.$ref.startsWith("#"), value.$ref);
       for (const child of Object.values(value)) checkRefs(child);
     };
-    checkRefs(tool.inputSchema);
-    checkRefs(tool.outputSchema);
+    checkRefs(tool.inputSchema, true);
+    checkRefs(tool.outputSchema, true);
   }
   const result = await mcpQuery(f, token);
   assert.equal(result.status, 200);
@@ -478,24 +479,28 @@ test("C7 a purpose missing for requested categories remains an actionable purpos
   assert.ok(r.headers["www-authenticate"].includes("hcp:work_context:read"));
 });
 
-test("C7 scope challenges safely encode Unicode and control characters without disclosure", async (t) => {
+test("C7 malformed categories never become OAuth scope challenges", async (t) => {
   const f = await fixture(t, { approveFixtures: true }),
     token = await authorize(f);
-  for (const [category, encoded] of [
-    ["😀", "%F0%9F%98%80"],
-    ["\ud800", "%EF%BF%BD"],
-    ["\udc00", "%EF%BF%BD"],
-    ["café", "caf%C3%A9"],
-    ["\r\n", "%0D%0A"],
-    ['"\\', '\\"\\\\'],
+  for (const category of [
+    "😀",
+    "\ud800",
+    "\udc00",
+    "café",
+    "\r\n",
+    '"\\',
+    "general_preferences:write hcp:work_context",
+    "x offline_access openid y",
   ]) {
     const r = await mcpQuery(f, token, { categories: [category] });
-    assert.equal(r.status, 403, JSON.stringify(category));
+    assert.equal(r.status, 200, JSON.stringify(category));
+    assert.equal(r.headers["www-authenticate"], undefined);
+    assert.equal(r.json.result.isError, true);
+    assert.equal(r.json.result.structuredContent.type, "malformed-request");
     assert.equal(
-      r.headers["www-authenticate"],
-      `Bearer resource_metadata="${f.issuer}/.well-known/oauth-protected-resource", error="insufficient_scope", scope="hcp:${encoded}:read"`,
+      (await query(f, token, { categories: [category] })).status,
+      422,
     );
-    assert.deepEqual(r.json, { error: "insufficient_scope" });
   }
   assert.equal(
     (await f.management("/v2/audit")).json.events.filter(

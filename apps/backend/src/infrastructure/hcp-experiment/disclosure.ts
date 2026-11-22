@@ -1,6 +1,7 @@
 /** Pure, bounded read selection and public projection. No transport or authority issuance. */
 import type { DatabaseSync } from "node:sqlite";
 import { withConfirmations, confirmed } from "./entry-state";
+import { validCore } from "./core-contract";
 import {
   denied,
   deniedCategories,
@@ -8,7 +9,8 @@ import {
   invalid,
   keys,
   matchesOperator,
-  uri,
+  purposeCode,
+  CATEGORIES,
   validateAccess,
   AuthorityError,
 } from "./policy";
@@ -43,7 +45,7 @@ export function readRequest(
       : ["purpose", "purposeDescription", "version"],
   );
   if (
-    !uri(input.purpose) ||
+    !purposeCode(input.purpose) ||
     (input.purposeDescription !== undefined &&
       (typeof input.purposeDescription !== "string" ||
         !input.purposeDescription.trim() ||
@@ -59,7 +61,11 @@ export function readRequest(
         (!Array.isArray(input.categories) ||
           input.categories.length > 100 ||
           input.categories.some(
-            (v: any) => typeof v !== "string" || !v || v.length > 512,
+            (v: any) =>
+              typeof v !== "string" ||
+              !v ||
+              v.length > 512 ||
+              !validCore("common.json#/$defs/category", v),
           ))) ||
       (input.maxEntries !== undefined &&
         (!Number.isSafeInteger(input.maxEntries) || input.maxEntries < 1))
@@ -111,9 +117,9 @@ export function selectRead(
       return false;
     }
   });
-  const requestedScopes = (request.categories ?? []).map(
-    (c) => `hcp:${c}:read`,
-  );
+  const requestedScopes = (request.categories ?? [])
+    .filter((c) => Object.prototype.hasOwnProperty.call(CATEGORIES, c))
+    .map((c) => `hcp:${c}:read`);
   if (!access.length)
     throw new ReadScopeError(requestedScopes, request.purpose);
   const permitted = [

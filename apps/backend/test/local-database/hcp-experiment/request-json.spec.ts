@@ -31,3 +31,19 @@ it("rejects invalid JSON and bounds nesting before recursion can exhaust the sta
   ])
     expect(() => parseRequestJson(text)).toThrow(RequestJsonError);
 });
+
+it("allows exactly 64 containers and refuses 65, including empty innermost containers", () => {
+  for (const [open, close, leaf] of [
+    ["[", "]", "0"],
+    ['{"x":', "}", "0"],
+    ["[", "]", ""],
+    ['{"x":', "}", "{}"],
+  ]) {
+    const offset = leaf === "{}" ? 1 : 0;
+    const accepted =
+      open.repeat(64 - offset) + leaf + close.repeat(64 - offset);
+    const refused = open.repeat(65 - offset) + leaf + close.repeat(65 - offset);
+    expect(parseRequestJson(accepted)).toEqual(JSON.parse(accepted));
+    expect(() => parseRequestJson(refused)).toThrow(RequestJsonError);
+  }
+});

@@ -42,6 +42,7 @@ export function parseRequestJson(text: string): any {
       return;
     }
     if (first === "{" || first === "[") {
+      if (depth >= 64) fail();
       at++;
       space();
       const end = first === "{" ? "}" : "]",

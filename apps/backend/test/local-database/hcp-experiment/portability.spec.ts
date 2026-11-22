@@ -222,7 +222,15 @@ describe("C5 bounded v2 portability", () => {
     );
     const graph = foreign();
     graph.entries[0].record.relationships = [
-      { type: "derivedFrom", target: `urn:uuid:${randomUUID()}` },
+      {
+        type: "derivedFrom",
+        target: `urn:uuid:${randomUUID()}`,
+        assertedBy: {
+          role: "management-client",
+          id: "urn:example:source-management-client",
+        },
+        recordedAt: graph.entries[0].record.provenance.recordedAt,
+      },
     ];
     expect(
       a.previewImport(human, { export: graph }).outcomes[0].reason,

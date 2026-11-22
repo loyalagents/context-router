@@ -1,6 +1,6 @@
 # C7a Synthetic MCP Read Brief
 
-- Status: C7a local implementation and independent review complete; targeted checks passed, final validation pending; controlled synthetic clients only, no host trial
+- Status: PR #212 published; Claude review corrections independently approved, final validation pending; controlled synthetic clients only, no host trial
 - Base: merged main `f92260060152b6872b5732587027bd161bc4f590`; publication branch `codex/hcp-c7-read-plan`
 - Sequencing: original orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; implementation chat `01a20029-3e43-7d70-9e84-4dcc8acd73e7` is sole checkout writer/integrator (including docs/builds/disposable fixtures); orchestrator and reviewers read-only
 - Profile: sensitive authority/transport work; coordinator/writer and scoped read-only reviewers requested Astra / `xhigh`; actual execution settings unverified
@@ -461,7 +461,10 @@ legacy SDK Ajv link at 8.20.0 after restoring its original 8.18.0 lock resolutio
 Frozen installation with `--force --ignore-scripts` refreshed the links without
 changing the lockfile; direct and legacy SDK Ajv both resolve to **8.18.0**.
 The rebuilt C7 suite and legacy SDK integrations renew affected execution evidence.
-All preexisting lock resolutions remain unchanged; the lock retains pnpm formatting.
+All preexisting lock resolutions remain unchanged. The lock was manually merged
+from pnpm-generated additions to preserve those resolutions, then verified by
+frozen installation; its added blocks are not in pnpm's usual sorted order.
+This is the accurate provenance of the earlier lock, not a generated-format claim.
 
 Logs and immutable review manifests are under `/private/tmp/c7a-*`: final Jest,
 consumer and browser logs; `final-r2-c7`, `legacy-sdk-smoke`, `unicode-red` and
@@ -470,9 +473,9 @@ manifest includes this evidence-only documentation delta. No tests, CI triggers,
 contract baseline or approval requirements were weakened. The contract check is
 not a claim that this mixed runtime diff qualifies for nonruntime CI selection.
 
-**Targeted checks passed; final validation pending.** The checkout remains
-uncommitted on the same branch/base for the orchestrator. No commit, push, PR,
-merge or release occurred. Applicable standard CI (including native) and full
+**Historical local handoff: targeted checks passed; final validation pending.**
+At that handoff the checkout was uncommitted; no publication, merge or release had
+occurred. Subsequent publication is recorded below. Applicable standard CI (including native) and full
 migration CI source/UI/packaging lanes must qualify the exact published candidate;
 prior PR #211 results do not qualify this diff. No full local migration gate was
 selected under the validation policy. Installed artifacts, other platforms,
@@ -480,3 +483,86 @@ the separately activated C7b human host trial and deferred C6 manual cases remai
 unqualified here. C8 protocol resolution/adoption and C9 completeness remain owned.
 The sibling `hcp-spec` stays clean at `5fc62a413794b5927f1251968e04381044af92c1`;
 the normative/adoption pins and retained C6 human sandbox are unchanged.
+
+### Claude Review Correction Round
+
+Lucas requested assessment and fixes for the external review of PR #212 at
+`8f72a248ebb4fe3d408107d276c3b43f51211e26`. Its availability and scope-token
+injection reproductions were independently confirmed on disposable fixtures.
+This candidate was committed/pushed in [PR #212](https://github.com/loyalagents/context-router/pull/212).
+[Standard CI](https://github.com/loyalagents/context-router/actions/runs/44961548193)
+and [migration CI](https://github.com/loyalagents/context-router/actions/runs/44961548075)
+passed for that original head; the review identifies test merge
+`60f24a49eaca1eef10145d79a0a364cf4af5b107`. Those passes do not qualify the corrections.
+Accept the underlying defects and the parity/schema/depth/diagnostic/doc corrections.
+Qualify the report's wording: a write-authorized grant here also requires read;
+the injected challenge solicits broader consent rather than bypassing consent.
+
+The sole writer retains ownership. Independent read-only plan review
+`review_corrections_plan` approved the following checkpoints, adding classification
+governance to ingress coverage. Requested reviewer profile is Astra/xhigh; actual
+execution remains unverified. No host, upstream, personal-state or merge work is
+activated. Continue the existing PR under its publication authorization.
+
+1. Add failing Core-admission, retained-data, challenge and boundary regressions.
+   Preserve Core-valid unknown evidence types/extensions. Validate ordinary/human
+   writes, classification edits, policy, import current/history and seed inputs.
+2. Share pure pinned schema validation between ingress, descriptors and both read
+   bindings. Refuse invalid output before serialization/audit via a narrow expected
+   error; preserve the latch for unexpected serializer, async, audit and store faults.
+   Assert rollback, continued management/revocation and unrelated valid reads.
+3. Validate Core category syntax, emit only advertised requested read scopes, add
+   raw no-challenge denial assertions, remove nested dialect declarations, enforce
+   exactly 64 containers, and identify modern versions in legacy initialize errors.
+4. Reconcile lockfile provenance/publication wording, freeze the corrected candidate,
+   run affected local checks and independent complete-diff review, then update the
+   existing PR and renew exact-candidate CI. Carry forward only unaffected evidence.
+
+Implementation now uses `core-contract.ts` for pinned Core validation and the
+same bounded read contract in both HTTP and MCP. Known invalid read output raises
+only `ReadResultError`; the narrow store exemption preserves rollback and retains
+latching for generic serializer/async/audit/storage faults. Admission validates
+full mutation documents, classification, directives, fixture fields/assembled
+entries and imported current/history records. Core-valid unknown evidence and
+extensions remain supported. No retained data is silently removed or rewritten.
+
+Malformed categories now produce malformed-request instead of the earlier Unicode
+challenge behavior; valid unknown slugs/URIs never become OAuth scope hints. Only
+requested advertised read scopes are emitted. Raw stored-rule/historical-purpose
+denials are checked separately from normalized parity. Schema dialect declarations
+are root-only, nesting counts objects/arrays exactly, and recognized legacy
+initialize errors list the supported revision. These corrections follow the
+[JSON Schema root rules](https://json-schema.org/draft/2020-12/json-schema-core#section-8.1.1)
+and [MCP versioning diagnostic guidance](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning#backward-compatibility-with-initialization-based-versions).
+
+The lockfile is intentionally unchanged: accurately documenting its manual merge
+avoids re-resolving unrelated dependencies for an ordering-only nit. The original
+head's frozen installation and CI evidence remain applicable to those unchanged
+dependency inputs; runtime/test evidence is renewed below.
+
+Fresh read-only reviewer `claude_corrections_final` approved the complete 34-file
+base-to-candidate diff with no actionable findings. Its manifest SHA-256 is
+`456f9226afc8ae880e5a07e769b04aeadeea117aefd8905a9ff03591a4f05f6c`;
+all file hashes and all nine pinned schema objects were verified before/after
+review. Requested Astra/xhigh settings remain unverified in execution. The later
+import fixture correction supplies required relationship actor/time fields while
+preserving the existing foreign-relationship rejection assertion; affected review
+and the selected suite are renewed. All runtime inputs remain byte-identical to
+the complete reviewed candidate.
+
+Correction evidence uses Node **24.21.0** / pnpm **10.25.0**, disposable synthetic
+stores and the target Apple Silicon Mac. Both reported exploits were reproduced;
+new admission, retained-data, schema/category and depth regressions failed before
+the runtime correction. Backend build, focused integration/MCP **18/18**, affected
+Jest **4 suites / 79 tests**, existing HTTP consumers **141/141**, and source/OAuth
+browser **13/13** passed. Counts overlap. The final HCP Jest selection and renewed
+import fixture suite are recorded with their outcomes in the PR description,
+alongside exact corrected-candidate standard/native and full migration CI.
+Documentation links, maintained readers, exact-base contracts, style and whitespace
+are checked after the final evidence-only documentation update. No full local
+migration gate is selected under the unchanged validation policy; original
+dependency/legacy SDK evidence carries forward only for unchanged inputs.
+
+**Targeted checks passed; final validation pending.** The PR description is the
+publication/CI receipt; no pass-only commit is required. Host/manual/installed
+artifact evidence remains outside this round, and no merge is authorized.

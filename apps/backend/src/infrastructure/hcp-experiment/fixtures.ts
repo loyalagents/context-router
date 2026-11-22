@@ -1,4 +1,5 @@
 /** Deliberately simulated storage history; not consent, live grants or a production write API. */
+import { validCore } from "./core-contract";
 export type Json =
   | null
   | boolean
@@ -131,6 +132,7 @@ export function validateFixtures(
         "revoked",
       ].includes(f.status) ||
       !object(f.classification) ||
+      !validCore("common.json#/$defs/classification", f.classification) ||
       !Array.isArray(f.versions) ||
       ![1, 2].includes(f.versions.length)
     )
@@ -146,6 +148,9 @@ export function validateFixtures(
     )
       throw new Error("Unsupported fixture category");
     for (const v of f.versions) {
+      for (const field of ["content", "assertion", "evidence"] as const)
+        if (!validCore(`common.json#/$defs/${field}`, v[field]))
+          throw new Error("Invalid Core fixture version");
       if (
         Object.keys(v).some(
           (k) =>

@@ -50,6 +50,8 @@ for (const mode of ["envelope", "throw", "async", "expire"])
       assert.equal(result.status, mode === "expire" ? 401 : 503);
       assert.equal(result.text.includes("private-canary"), false);
       assert.equal(result.json.entries, undefined);
+      if (mode === "throw" || mode === "async")
+        assert.equal((await f.management("/v2/audit")).status, 503);
       // Unexpected serializer faults latch the store unavailable. Reopen under its
       // normal ownership protocol before inspecting rollback; never bypass the latch.
       await f.close();

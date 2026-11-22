@@ -225,7 +225,7 @@ do not establish complete MCP or Provider/Agent Interop qualification.
 After the exact toolchain check and backend build above, run the controlled tests:
 
 ```sh
-node --test --test-concurrency=1 apps/backend/test/local-database/hcp-experiment/mcp.test.cjs apps/backend/test/local-database/hcp-experiment/mcp-parity.test.cjs apps/backend/test/local-database/hcp-experiment/mcp-release.test.cjs apps/backend/test/local-database/hcp-experiment/query-json.test.cjs apps/backend/test/local-database/hcp-experiment/read-wire.test.cjs
+node --test --test-concurrency=1 apps/backend/test/local-database/hcp-experiment/mcp.test.cjs apps/backend/test/local-database/hcp-experiment/mcp-parity.test.cjs apps/backend/test/local-database/hcp-experiment/mcp-release.test.cjs apps/backend/test/local-database/hcp-experiment/query-json.test.cjs apps/backend/test/local-database/hcp-experiment/read-wire.test.cjs apps/backend/test/local-database/hcp-experiment/read-contract.test.cjs
 ```
 
 The `mcp.spec.ts` wrapper includes this coverage in existing local-database/CI
@@ -236,24 +236,31 @@ test peer is exactly `@modelcontextprotocol/client` 2.4.0, with
 and CA verification change no OS trust, personal client or model. The provider
 does not import the SDK peer; unrelated legacy SDK resolutions remain unchanged.
 
-Both interfaces share selection, projection, final authorization and durable
-`context.read` auditing. MCP validates and serializes its complete envelope and
+Both interfaces share selection, projection, Core/disclosure result validation,
+final authorization and durable `context.read` auditing. Invalid retained results
+fail only that request without a read audit or global store latch; management and
+revocation remain available. Unexpected serializer/storage/audit faults retain the
+existing fail-closed latch. Entry, classification, directive and import admission
+also checks Core shapes. MCP serializes its complete envelope and
 both content representations before commit. Final handoff is synchronous;
 interrupted committed attempts remain `attempted`/`unconfirmed`. A separate read
 is a new authorized retrieval, never automatic replay. HTTP query and MCP accept
 bounded UTF-8 JSON and reject duplicate decoded member names at every depth
-(32 KiB body, 64 nesting levels). OAuth/human forms are unchanged.
+(32 KiB body, at most 64 nested objects/arrays, including empty containers).
+OAuth/human forms are unchanged.
 
 Omitted categories expand to all purpose-approved categories and fail if a
 standing rule denies any; explicit empty categories return an audited empty
 result. Missing/private/foreign/withheld refs have the same generic tool denial.
-Request-only grant denials use a host-visible scope challenge; stored-policy
-denials never do. Calls are limited to 60 per registered client per 60-second
+Request categories must match Core syntax. Request-only grant denials use a
+host-visible challenge, with scope hints restricted to requested advertised read
+scopes; unknown valid category identifiers add no scope hint. Stored-policy denials
+never challenge. Calls are limited to 60 per registered client per 60-second
 monotonic window, shared across that client's grants/tokens and reset on process
 restart. Governance/revocation is outside this limiter.
 
 One integrator owns `http.ts`, `authority.ts`, `disclosure.ts`, `mcp.ts`,
-`mcp-contract.ts`, `request-json.ts`, schemas and shared fixtures. Bundled Core
+`mcp-contract.ts`, `core-contract.ts`, `request-json.ts`, schemas and shared fixtures. Bundled Core
 schemas come from normative revision `2e2939c9bebcefb3bed7bb3522231c0e4d65a315`;
 source IDs are retained and descriptor references are local. Runtime/build never
 reads the sibling repository or fetches schemas. Preserve structured/text equality,
