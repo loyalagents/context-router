@@ -132,3 +132,31 @@ Web and native builds, contract census, test discovery, Markdown links and
 whitespace passed. PR 213 still pointed to `93411eff` at the final remote check.
 The merge is local to `codex/demo-codex-launch`; no remote branch, running app or
 profile was changed. Targeted checks passed; final validation pending.
+
+## Selected-assistant access shortcut
+
+The owner reported that Review access jumped to the connection list's first row.
+Pass the selected assistant's actual native client ID into the existing permission
+editor instead. Reuse current-list eligibility for the shortcut and row button;
+missing, unknown or revoked clients, refreshes and existing permission/rename
+drafts cannot open a different editor. Names and list order do not identify the
+target. The mounted editor keeps its identity/draft when the assistant selector
+changes, and its existing heading focus brings the controls into view.
+
+Root remains sole writer. Independent bounded UI plan review approved; requested
+effort High, effective inherited settings unverified. The new real-browser
+regression reproduced the missing editor before implementation. Validate both
+assistants, renamed labels, exact editor identity/focus, existing drafts and
+missing/unknown/revoked IDs, plus affected permission/connection consumers.
+Native/backend behavior is unchanged, so their prior evidence carries forward.
+Complete-diff review and a separate verified package precede the human retest;
+the actual-artifact smoke now exercises both access shortcuts. Reuse the existing
+synthetic demo state only through the updated launcher, preserving the running
+app and prior bundle. Exact-candidate CI and live acceptance remain pending.
+
+Independent complete-diff review approved with no blocking findings. The web
+build and all 59 affected demo, permission and client-name browser tests passed,
+including the new exact-target/focus/draft regression. Contract census, test
+discovery, Markdown links and whitespace passed. Freeze this source for the
+separate package; its receipt records actual-artifact checks and remaining
+human/CI scope. Targeted checks passed; final validation pending.

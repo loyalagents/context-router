@@ -4,6 +4,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import Link from 'next/link';
 import {localGraphql, localJson} from '@/lib/authenticated-fetch';
 
+type AccessReview = {reviewAccess:(clientId:string)=>void;canReviewAccess:(clientId:string)=>boolean};
 type Setup = {available:boolean; state?:string; busy?:boolean; request?:string; startedAt?:string; clientId?:string};
 const messagesFor=(name:string,version:string):Record<string,string> => ({
   idle:`Choose a project once. Sign in only when needed; ${name} opens with your demo context configured.`,
@@ -23,14 +24,14 @@ const messagesFor=(name:string,version:string):Record<string,string> => ({
 });
 const query = `query DemoClaudeRead($input:McpAccessHistoryInput!){mcpAccessHistory(input:$input){items{clientKey occurredAt outcome operationName responseMetadata}}}`;
 type ReadEvent = {clientKey:string;occurredAt:string;outcome:string;operationName:string;responseMetadata?:{activeCount?:number}};
-export default function DemoClaudeConnect({reviewAccess}:{reviewAccess:()=>void}) {
+export default function DemoClaudeConnect({reviewAccess,canReviewAccess}:AccessReview) {
   const [client,setClient]=useState<'claude'|'codex'>('claude');
   return <><div className="flex gap-3 flex-wrap mb-4" role="group" aria-label="Choose coding assistant">
     <button className={`demo-button ${client==='claude'?'demo-primary':''}`} aria-pressed={client==='claude'} onClick={()=>setClient('claude')}>Claude Code</button>
     <button className={`demo-button ${client==='codex'?'demo-primary':''}`} aria-pressed={client==='codex'} onClick={()=>setClient('codex')}>Codex CLI</button>
-  </div><DemoCliConnect key={client} client={client} reviewAccess={reviewAccess}/></>;
+  </div><DemoCliConnect key={client} client={client} reviewAccess={reviewAccess} canReviewAccess={canReviewAccess}/></>;
 }
-function DemoCliConnect({client,reviewAccess}:{client:'claude'|'codex';reviewAccess:()=>void}) {
+function DemoCliConnect({client,reviewAccess,canReviewAccess}:AccessReview&{client:'claude'|'codex'}) {
   const name=client==='codex'?'Codex':'Claude Code',provider=client==='codex'?'OpenAI':'Anthropic';
   const messages=messagesFor(name,client==='codex'?'0.160.0':'2.1.299');
   const [setup,setSetup]=useState<Setup|null>(null),[error,setError]=useState(''),[launchError,setLaunchError]=useState(''),[submitting,setSubmitting]=useState(false),[lastRead,setLastRead]=useState<string|null>(null);
@@ -77,7 +78,7 @@ function DemoCliConnect({client,reviewAccess}:{client:'claude'|'codex';reviewAcc
       <div><span className="demo-step-number">3</span><h3>See your context in use</h3>
         <p>{lastRead?`Context read at ${new Date(lastRead).toLocaleTimeString()}.`:`Ask ${name} to read your saved context. Recent access will appear here.`}</p>
         {lastRead&&<p className="mt-2">Activity is shared across your demo chats; it does not identify a specific chat or show whether it is still open.</p>}
-        <div className="flex gap-3 flex-wrap mt-4"><button className="demo-button" onClick={reviewAccess}>Review access</button><Link prefetch={false} className="demo-button" href={setup?.clientId?`/dashboard/history#mcp-client=${encodeURIComponent(setup.clientId)}`:'/dashboard/history'}>View activity</Link></div>
+        <div className="flex gap-3 flex-wrap mt-4"><button className="demo-button" disabled={!setup?.clientId||!canReviewAccess(setup.clientId)} onClick={()=>{if(setup?.clientId)reviewAccess(setup.clientId);}}>Review access</button><Link prefetch={false} className="demo-button" href={setup?.clientId?`/dashboard/history#mcp-client=${encodeURIComponent(setup.clientId)}`:'/dashboard/history'}>View activity</Link></div>
       </div>
     </div>
     <p className="demo-provider-notice">Opening {name} allows {provider} sign-in and use of this synthetic demo context and your chosen project. {name} uses its normal file and command permissions.{client==='codex'&&' Saving context changes requires approval and your current access permissions.'}</p>

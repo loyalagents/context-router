@@ -68,7 +68,6 @@ export default function McpClients() {
   const ActivityLink = demo ? Link : 'a';
   const [inspectionCard, setInspectionCard] = useState('');
   const inspectionPanel = useRef<HTMLDivElement>(null);
-  const connectionsList = useRef<HTMLUListElement>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [editing,setEditing]=useState<Client|null>(null);
   const editButtons=useRef(new Map<string,HTMLButtonElement>());
@@ -364,6 +363,8 @@ export default function McpClients() {
           <button type="button" className={button} disabled={busy} onClick={()=>{cancelledRename.current=renameDraft.client.id;setRenameDraft(null);setRenameError('');}}>Cancel rename</button>
         </div>
       </form>;
+  const editableClient = (id:string) => !busy&&!editing&&!renameDraft ? items.find(client=>client.id===id&&!client.revoked) : undefined;
+  const openPermissions = (id:string) => {const client=editableClient(id);if(client)setEditing(client);};
   const permissionsPanel = editing&&<McpPermissionsEditor key={editing.id} client={editing} onChanged={()=>{channel.current?.postMessage('invalidate');invalidate();}} onClose={()=>{const id=editing.id;setEditing(null);queueMicrotask(()=>editButtons.current.get(id)?.focus());}}/>;
   const authorityPanel = snapshot && (
         <section
@@ -520,7 +521,7 @@ export default function McpClients() {
       );
   return (
     <div className="space-y-6">
-      {demo && <DemoClaudeConnect reviewAccess={() => {connectionsList.current?.focus();connectionsList.current?.scrollIntoView({block:'start'});}}/>}
+      {demo && <DemoClaudeConnect reviewAccess={openPermissions} canReviewAccess={id=>!!editableClient(id)}/>}
       {!demo && <>
       <p>
         Each row is a separately issued client instance. Matching product labels
@@ -561,7 +562,7 @@ export default function McpClients() {
       {!busy && !items.length && <p>{demo ? 'No connections on this page.' : 'No client instances on this page.'}</p>}
       {renamePanel}
       {permissionsPanel}
-      <ul ref={connectionsList} tabIndex={-1} aria-label="Connections" className="space-y-3">
+      <ul aria-label="Connections" className="space-y-3">
         {(demo ? [...items].sort((a,b) => Number(a.revoked)-Number(b.revoked) || a.label.localeCompare(b.label) || a.id.localeCompare(b.id)) : items).map((client) => (
           <li key={client.id} className={demo ? 'demo-client-card' : 'rounded border p-4'}>
             <div className={demo ? 'demo-client-name font-semibold' : 'font-semibold'}>
@@ -574,7 +575,7 @@ export default function McpClients() {
             <p>Current effective access: {client.summary?`${client.summary.level} across ${client.summary.total} active field definitions in scope`:'Unavailable'}. More specific exceptions may apply; prefixes also cover future fields.</p>
             <p className="text-xs">Generation {client.generation}</p>
             </>}
-            <button ref={element=>{if(element)editButtons.current.set(client.id,element);else editButtons.current.delete(client.id);}} className={button} disabled={busy||client.revoked||!!editing} aria-label={`Edit permissions ${client.id}`} onClick={()=>setEditing(client)}>{demo ? 'Edit access' : 'Edit permissions'}</button>{' '}
+            <button ref={element=>{if(element)editButtons.current.set(client.id,element);else editButtons.current.delete(client.id);}} className={button} disabled={!editableClient(client.id)} aria-label={`Edit permissions ${client.id}`} onClick={()=>openPermissions(client.id)}>{demo ? 'Edit access' : 'Edit permissions'}</button>{' '}
 
 <ActivityLink {...(demo ? {prefetch:false} : {})} className={button} href={`/dashboard/history#mcp-client=${client.id}`} aria-label={`View activity ${client.id}`}>View activity</ActivityLink>
             {demo ? <details className="demo-connection-details"><summary>Details</summary><p>Maximum value access: {maximumValueLevel(client.policy)}. Definition management: {client.policy.capabilities.includes('preferences:define') ? 'allowed by maximum' : 'not allowed by maximum'}.</p><p>Sensitive values: {client.policy.allowSensitive ? 'allowed by maximum, within effective scope' : 'blocked by maximum'}.</p><p>Allowed scope: {client.policy.targets.join(', ') || 'No targets'}. Prefixes may include future fields.</p><p>Instance: <code>{client.id}</code> · Generation {client.generation}</p>            <button ref={element=>{if(element)renameButtons.current.set(client.id,element);else renameButtons.current.delete(client.id);}} className={button} disabled={busy || !!renameDraft} aria-label={`Rename ${client.id}`} onClick={()=>{setRenameDraft({client,name:client.label,needsRead:false});setRenameError('');}}>Rename</button>

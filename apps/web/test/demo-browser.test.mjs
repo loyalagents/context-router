@@ -221,7 +221,7 @@ test('demo connection details, inspect focus and current labels stay attached to
  await panel.getByRole('heading',{name:'CLI maximum policy',exact:true}).waitFor();
  assert.equal(await rows.nth(1).getByRole('region',{name:'Connection inspection'}).count(),0);
  await f.page.getByText('Demo walkthrough (optional)',{exact:true}).click();await f.page.getByRole('button',{name:'Copy step 1 prompt',exact:true}).waitFor();
- await f.page.getByRole('button',{name:'Review access',exact:true}).click();assert.equal(await f.page.getByRole('list',{name:'Connections',exact:true}).evaluate(el=>el===document.activeElement),true);
+ assert.equal(await f.page.getByRole('button',{name:'Review access',exact:true}).isDisabled(),true); // Source-only demo has no bound native client.
 });
 
 test('demo preserves permission drafts during passive refresh and keeps a tab stop after a filtered memory edit', {timeout:60000}, async t=>{
@@ -361,4 +361,27 @@ test('demo profile drafts warn on navigation and a completed save clears the war
  await connections.click();assert.equal(dialogs,1);assert.equal(new URL(f.page.url()).pathname,'/dashboard/profile');
  await f.page.getByRole('button',{name:'Save Changes',exact:true}).click();await f.page.getByText('Profile updated successfully.',{exact:true}).waitFor();
  await connections.click();await f.page.getByRole('heading',{name:'Connections',exact:true}).waitFor();assert.equal(dialogs,1);
+});
+
+
+test('Review access opens the selected assistant exact permissions and preserves existing drafts', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);
+ const {readFile}=await import('node:fs/promises'),receipt=JSON.parse(await readFile(f.root+'/demo/generation.json'));
+ const a=receipt.clients.agentA,b=receipt.clients.agentB;
+ f.cli('local-mcp.js','rename','--id',a,'--label','Z renamed assistant');
+ f.cli('local-mcp.js','rename','--id',b,'--label','A renamed assistant');
+ let codexId=a;
+ await f.page.route('**/api/local/demo/claude/status',route=>route.fulfill({json:{available:true,clientId:b,state:'idle',busy:false}}));
+ await f.page.route('**/api/local/demo/codex/status',route=>route.fulfill({json:{available:true,clientId:codexId,state:'idle',busy:false}}));
+ await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ const review=f.page.getByRole('button',{name:'Review access',exact:true}),panel=f.page.getByRole('region',{name:'Edit permissions',exact:true});
+ const open=async(id,label)=>{await review.click();await panel.getByText('Instance '+id+'.',{exact:false}).waitFor();assert.match(await panel.getByRole('heading').innerText(),new RegExp(label));assert.equal(await panel.getByRole('heading').evaluate(el=>el===document.activeElement),true);assert.ok(await panel.getByRole('heading').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));};
+ await open(b,'A renamed assistant');await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();await open(a,'Z renamed assistant');
+ await panel.getByLabel('Maximum value access').selectOption('Blocked');
+ await f.page.getByRole('button',{name:'Claude Code',exact:true}).click();assert.equal(await review.isDisabled(),true);assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');await panel.getByText('Instance '+a+'.',{exact:false}).waitFor();
+ await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ const card=f.page.locator('.demo-client-card').filter({has:f.page.getByRole('button',{name:'Edit permissions '+a,exact:true})});await card.locator('summary').click();await card.getByRole('button',{name:'Rename '+a,exact:true}).click();assert.equal(await review.isDisabled(),true);await f.page.getByRole('button',{name:'Cancel rename',exact:true}).click();
+ const revoked=JSON.parse(f.cli('local-mcp.js','list').stdout).result.find(client=>client.revoked).id;
+ for(const id of [undefined,'missing-client',revoked]){codexId=id;await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();await f.page.getByText('Choose a project once.',{exact:false}).waitFor();assert.equal(await review.isDisabled(),true);assert.equal(await panel.count(),0);await f.page.getByRole('button',{name:'Claude Code',exact:true}).click();}
 });
