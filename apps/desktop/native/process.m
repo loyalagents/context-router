@@ -114,6 +114,13 @@ BOOL CRWriteBounded(int fd, NSData *bytes, double deadline) {
   if(!_commands.length)_sendDeadline=CRLifecycleNow()+2;
   [_commands appendData:bytes];[_commands appendBytes:"\n" length:1];
 }
+- (void)claudeStatus:(NSDictionary *)status {
+  if(_input<0||_exited||_protocolFailed)CRFail();
+  NSData *bytes=[NSJSONSerialization dataWithJSONObject:status options:0 error:nil];
+  if(!bytes||bytes.length+_commands.length+1>16384)CRFail();
+  if(!_commands.length)_sendDeadline=CRLifecycleNow()+2;
+  [_commands appendData:bytes];[_commands appendBytes:"\n" length:1];
+}
 - (BOOL)flush:(NSMutableData *)data fd:(int)fd allowClosedQuit:(BOOL)allowClosedQuit {
   if(!data.length)return YES;
   ssize_t count=write(fd,data.bytes,data.length);

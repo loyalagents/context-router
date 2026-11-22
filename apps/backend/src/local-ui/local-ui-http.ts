@@ -31,6 +31,8 @@ const pages = new Set([
   '/dashboard/form-fill',
 ]);
 const apiRoutes = new Set([
+  '/api/local/demo/claude/open',
+  '/api/local/demo/claude/status',
   '/graphql',
   '/api/preferences/analysis',
   '/api/form-fill/pdf',
@@ -142,6 +144,11 @@ export const rejectUiRequest = (res: ServerResponse, status = 400) => {
   reply(res, status, { error: 'Local UI request rejected' });
 };
 
+export interface DemoClaudeActions {
+  open(chooseProject: boolean): Promise<unknown>;
+  status(): Promise<unknown>;
+}
+
 export class LocalUiBoundary {
   private active = 0;
   private controls = 0;
@@ -154,6 +161,7 @@ export class LocalUiBoundary {
     private readonly web: LocalUiWebHandler,
     private readonly management?: LocalUiManagement,
     private readonly aiPolicy?: LocalUiAiPolicy,
+    private readonly demoClaude?: DemoClaudeActions,
   ) {}
 
   middleware = (
@@ -354,7 +362,8 @@ export class LocalUiBoundary {
       control ||
       route === '/api/local/capabilities' ||
       route === '/api/local/session' ||
-      route.startsWith('/api/local/mcp/')
+      route.startsWith('/api/local/mcp/') ||
+      route.startsWith('/api/local/demo/claude/')
     ) {
       const chunks: Buffer[] = [];
       for await (const chunk of req) {
@@ -374,6 +383,19 @@ export class LocalUiBoundary {
       }
       if (!body || typeof body !== 'object' || Array.isArray(body))
         return rejectUiRequest(res);
+      if (route.startsWith('/api/local/demo/claude/')) {
+        req[UI_REVALIDATE]();
+        const open = route.endsWith('/open');
+        if (open ? Object.keys(body).join() !== 'chooseProject' || typeof body.chooseProject !== 'boolean' : Object.keys(body).length !== 0)
+          return rejectUiRequest(res);
+        if (!this.demoClaude) {
+          if (open) return rejectUiRequest(res, 503);
+          return reply(res, 200, { available: false });
+        }
+        const result = await (open ? this.demoClaude.open(body.chooseProject) : this.demoClaude.status());
+        req[UI_REVALIDATE]();
+        return reply(res, 200, result);
+      }
       if (route.startsWith('/api/local/mcp/')) {
         req[UI_REVALIDATE]();
         if (!this.management) return rejectUiRequest(res, 503);

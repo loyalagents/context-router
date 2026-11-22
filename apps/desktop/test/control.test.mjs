@@ -27,3 +27,9 @@ for(const variant of ['wrong-generation','extra-field','unknown-command','partia
   else if(variant!=='no-start')f.send(frame);
   f.child.stdio[5].end();assert.equal((await f.ended)[0],1);assert.equal(f.output().out,'');assert.equal(f.output().err,'control-rejected\n');
 });
+test('Claude status uses exact bounded schema and current generation',async t=>{
+ const f=await fixture(t);f.send({version:1,generation,command:'start'});f.send({version:1,generation,command:'demo-claude-status',request:'b'.repeat(32),state:'terminal-opened'});f.child.stdio[5].end();assert.equal((await f.ended)[0],0);assert.deepEqual(JSON.parse(f.output().out).commands,['demo-claude-status']);
+});
+for(const extra of [{state:'execute'},{request:'../other'},{project:'/tmp'}])test('Claude status rejects unbounded/native action payload '+JSON.stringify(extra),async t=>{
+ const f=await fixture(t);f.send({version:1,generation,command:'start'});f.send({version:1,generation,command:'demo-claude-status',request:'b'.repeat(32),state:'checking',...extra});f.child.stdio[5].end();assert.equal((await f.ended)[0],1);
+});

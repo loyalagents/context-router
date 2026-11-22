@@ -34,6 +34,7 @@ ${variant==='busy'?"await control.send('model-status',{state:'busy'});":''}
 ${variant==='lost-app' ? 'process.exit(2);' : variant==='status-eof' ? 'await control.stopped;await control.close();' : variant==='unsolicited-drain' ? "await control.send('drained');await control.stopped;await control.close();" : "await control.stopped;await control.send('drained');await control.close();"+(variant==='failed-exit'?'process.exitCode=2;':'')}`);
   if(variant==='failed-startup') {
     // Actual product application cleanup around a backend whose partial cleanup failed.
+    await copyFile(path.resolve(import.meta.dirname,'../../runtime/demo-claude.mjs'),path.join(runtime,'demo-claude.mjs'));
     await copyFile(path.resolve(import.meta.dirname,'../../runtime/application.mjs'),path.join(runtime,'application.mjs'));
     await writeFile(path.join(runtime,'managed.mjs'),`import fs from 'node:fs';import {openManagedControl} from './control.mjs';
 export const authority={revokeManagedAdmission(){},invalidateManagedModel(){}};

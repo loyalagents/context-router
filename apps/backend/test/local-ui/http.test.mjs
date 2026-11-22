@@ -1491,3 +1491,18 @@ test("browser Save immediately bounds local smart-search context and results on 
   ]);
   await search([]);
 });
+
+test('demo native actions require injected capability, session, origin and exact body',async t=>{
+  let opens=0;const demoClaude={status:async()=>({available:true,state:'idle'}),open:async change=>{opens++;return {state:change?'choosing-project':'checking'};}};
+  const f=await fixture(t,{demoClaude});const delivery=f.runtime.issueUnlock();
+  const token=(await f.request('/api/local/unlock',{body:{bootstrap:fs.readFileSync(delivery.path,'utf8').trim()}})).json().token;
+  assert.equal((await f.request('/api/local/demo/claude/open',{body:{chooseProject:false}})).status,401);
+  assert.equal((await f.request('/api/local/demo/claude/open',{token,headers:{origin:'http://evil.test'},body:{chooseProject:false}})).status,403);
+  assert.equal((await f.request('/api/local/demo/claude/open',{token,body:{chooseProject:false,project:'/untrusted'}})).status,400);
+  assert.equal(opens,0);
+  assert.equal((await f.request('/api/local/demo/claude/status',{token})).json().available,true);
+  assert.equal((await f.request('/api/local/demo/claude/open',{token,body:{chooseProject:false}})).status,200);assert.equal(opens,1);
+  const noNative=await fixture(t);const unlock=noNative.runtime.issueUnlock();const other=(await noNative.request('/api/local/unlock',{body:{bootstrap:fs.readFileSync(unlock.path,'utf8').trim()}})).json().token;
+  assert.equal((await noNative.request('/api/local/demo/claude/status',{token:other})).json().available,false);
+  assert.equal((await noNative.request('/api/local/demo/claude/open',{token:other,body:{chooseProject:false}})).status,503);
+});

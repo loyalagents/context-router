@@ -3347,6 +3347,24 @@
       "ownerSteps": [
         "09"
       ]
+    },
+    {
+      "id": "demo-claude-profile-auth-status",
+      "sources": [
+        {
+          "path": "apps/backend/scripts/demo/claude-connect.mjs",
+          "fingerprints": [
+            "spawnSync(launch.executable,[...launch.args,'auth','status','--json']"
+          ]
+        }
+      ],
+      "destination": "Qualified pinned Claude CLI auth-status, only after an explicit demo Open action and under the exclusive demo profile guard. No conversation is started by this status check.",
+      "payload": "Isolated persistent demo configuration and a clean environment. No MCP token, inherited provider secret, or personal Claude configuration is supplied. Status output is parsed privately and is never returned to the dashboard.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "07"
+      ]
     }
   ],
   "externalClients": [
@@ -4399,6 +4417,14 @@
       "rootFields": [
         "__typename"
       ]
+    },
+    {
+      "path": "apps/web/components/local/DemoClaudeConnect.tsx",
+      "kind": "query",
+      "operation": "DemoClaudeRead",
+      "rootFields": [
+        "mcpAccessHistory"
+      ]
     }
   ],
   "contractReferences": [
@@ -5433,6 +5459,12 @@
       "contract": "http",
       "kind": "route",
       "reference": "/api/local/mcp/targets"
+    },
+    {
+      "path": "apps/web/components/local/DemoClaudeConnect.tsx",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
     }
   ],
   "outboundSinkInventory": [
@@ -6101,6 +6133,12 @@
       "path": "test-vertex-ai.sh",
       "sinks": {
         "curl": 1
+      }
+    },
+    {
+      "path": "apps/backend/scripts/demo/claude-connect.mjs",
+      "sinks": {
+        "spawn": 1
       }
     }
   ]

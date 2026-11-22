@@ -146,6 +146,25 @@ closed, and inspect retained state before opening Desktop or retrying. Interrupt
 apply can retain its guard, proposal and backup; never delete a guard or replay an
 uncertain mutation. Restart is not automatic recovery.
 
+The sidebar demo preview adds **Connections → Open Claude Code**. On first use,
+choose a separate demo project folder. The app remembers it; **Change project**
+opens the picker again. Terminal checks the isolated Claude demo sign-in, signs
+in only when needed, then opens normal Claude coding tools with the current demo
+MCP configuration. The dashboard button is the explicit provider action; no
+provider authentication is inspected just by loading Connections. The retained
+qualified Claude 2.1.299 executable is discovered automatically where available;
+**Choose executable…** in the native panel remains the fallback.
+
+The dashboard distinguishes native handoff, sign-in, and recent successful context
+reads by the exact B credential. A recent read is not a live connection indicator
+or proof that one particular Terminal session made it. Use `/exit` in the existing
+Claude session before reopening; after restarting Context Router, open a fresh
+session from Connections. Requests cannot be replayed. Interrupted/uncertain
+invocation guards remain retained. Normal coding can create independent project
+processes such as dev servers; Context Router Quit does not stop them. This flow
+is a synthetic demo preview; live sign-in and coding acceptance remain a human
+trial, not broader personal-mode onboarding qualification.
+
 Terminal handoffs use unique private retained `demo/launch-requests/.../open.command`
 files. They contain quoted helper arguments and no credentials, use a clean
 Terminal environment, and are never overwritten, reused or automatically removed.

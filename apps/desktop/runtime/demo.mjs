@@ -6,7 +6,7 @@ const resources=path.resolve(import.meta.dirname,'../..'),require=createRequire(
 const unavailable='Demo command unavailable. Copy current commands from CR → Demo setup; state is retained.';
 let nativeResult;
 try{
-  const {values,positionals}=parseArgs({strict:true,allowPositionals:true,options:{root:{type:'string'},store:{type:'string'},generation:{type:'string'},endpoint:{type:'string'},client:{type:'string'},auth:{type:'string'},executable:{type:'string'},config:{type:'string'},proposal:{type:'string'},'proposal-sha256':{type:'string'},'desktop-closed':{type:'boolean'},'native-result':{type:'boolean'}}});
+  const {values,positionals}=parseArgs({strict:true,allowPositionals:true,options:{root:{type:'string'},store:{type:'string'},generation:{type:'string'},endpoint:{type:'string'},client:{type:'string'},auth:{type:'string'},executable:{type:'string'},project:{type:'string'},request:{type:'string'},config:{type:'string'},proposal:{type:'string'},'proposal-sha256':{type:'string'},'desktop-closed':{type:'boolean'},'native-result':{type:'boolean'}}});
   const wantsNativeResult=values['native-result']===true;delete values['native-result'];
   if(['root','store','generation','endpoint'].some(key=>!values[key])||process.versions.node!=='24.21.0')throw new Error();
   const spec={root:values.root,store:values.store,generation:values.generation,endpoint:values.endpoint};
@@ -27,6 +27,9 @@ try{
   }else if(inspect){
     const {inspectInstalledClient}=await import(require.resolve('backend/scripts/demo/installed-clients.mjs'));
     console.log(JSON.stringify(await inspectInstalledClient(spec,{command:values.client,executable:values.executable})));
+  }else if(command==='connect'&&role==='B'&&positionals.length===2&&values.client==='claude'&&values.auth==='subscription'&&values.project&&values.request&&Object.keys(values).every(key=>['root','store','generation','endpoint','client','executable','auth','project','request'].includes(key))){
+    const {launchInstalledClient}=await import(require.resolve('backend/scripts/demo/installed-clients.mjs'));
+    process.exitCode=await launchInstalledClient(spec,{role:'b',command:'claude',auth:'subscription',connect:true,project:values.project,request:values.request,executable:values.executable});
   }else if(['login','launch'].includes(command)&&positionals.length===2&&['A','B'].includes(role)&&Object.keys(values).every(key=>['root','store','generation','endpoint','client','executable','auth'].includes(key))){
     const {launchInstalledClient}=await import(require.resolve('backend/scripts/demo/installed-clients.mjs'));
     process.exitCode=await launchInstalledClient(spec,{role:role.toLowerCase(),command:values.client??'codex',login:command==='login',executable:values.executable,auth:values.auth});

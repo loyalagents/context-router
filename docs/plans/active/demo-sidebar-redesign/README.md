@@ -120,3 +120,64 @@ Contract census, Markdown links, test discovery and whitespace checks passed.
 Contract merge-base comparison and final CI remain pending. The refreshed artifact
 checker additionally requires persistent document/sidebar identity across routes
 and Assistant access as the default; its receipt will accompany the trial output.
+
+## Claude Code connection checkpoint
+
+The owner activated implementation after approving normal Claude Code in Terminal
+with a chosen demo project. Root remains sole writer. The independent plan review
+approved a narrow authenticated dashboard action through the existing private
+native control channel, native project/executable choice, and one guarded helper
+operation spanning demo-profile auth check, optional login and coding launch.
+Requested sensitive review effort: Extra High; inherited effective model/effort
+is not independently verified. The complete implementation receives fresh review.
+
+The dashboard sends only a project-picker boolean; the runtime generates the
+request identity and native code supplies paths and binding. Each Terminal request
+is claimed once. Immutable bounded private progress records are informational,
+bound to installation/store/generation/request/role. They cannot authorize launch,
+retry, cleanup or guard removal. The stable demo profile and chosen project are
+reused; personal profiles are never adopted. Login completion revalidates the
+active generation and executable before MCP credential delivery and launch.
+
+Normal coding enables Claude's default tools with ordinary permission prompts,
+strict demo MCP configuration, isolated settings and an explicit tool PATH.
+The profile guard covers the foreground Claude invocation. Project dev servers or
+other jobs created by coding tools may outlive Claude; Context Router does not
+own or stop them. Interrupted/uncertain Claude invocation guards stay retained.
+After a runtime restart, exit the old Claude and open a fresh session. Native
+Terminal handoff, helper progress and recent successful B reads are separate
+observations; a read does not prove which Terminal session made it or a heartbeat.
+
+Checkpoints: combined launcher/project support; dashboard/native status bridge;
+then a source-bound packaged synthetic trial for user sign-in and coding. Backend
+route and orchestration tests were written first. Required focused checks cover
+HTTP auth/origin/body restrictions, private control validation, duplicate and
+replayed requests, cancelled/stale native selection, login failure/reuse, coding
+in a nonempty project, exact-client activity and reload. Native build/tests are
+selected because the application/supervisor/menu protocol changed. The packaged
+browser check exercises the real outbound action and correlated native reply
+without opening a provider. Actual Claude flags receive an offline empty-profile
+preflight; real sign-in/conversation and AppKit usability are the owner's trial.
+
+The handoff milestone is this runnable demo trial, followed by user feedback.
+Preserve the existing isolated demo envelope between builds so edits and future
+login survive. No personal-app replacement, HCP changes, provider conversation,
+model download or automated user sign-in. Targeted checks and independent review
+precede packaging; final CI/full release qualification remain pending. No named
+aggregate lifecycle evidence gap selects a full local migration gate here; the
+existing CI/gates remain intact. No merge is authorized.
+
+Source checkpoint: independent complete-diff review approved after correcting a
+stale-progress/new-request race and using the stored `local:<clientId>` activity
+key. The new race regression failed first, then passed. The primary-button and
+contract-inventory/doc delta also received approval. Backend/native/web builds,
+35 HTTP tests, 11 demo browser tests, 37 focused helper/control/transport cases,
+55 contract-checker tests and 20 Markdown-checker tests passed. The final primary
+button build renewed the launch/read browser case; other demo behavior is unchanged.
+Nine connect/state tests were renewed after wording correction. Actual pinned
+Claude 2.1.299 accepted the coding argv in disposable signed-out offline preflight.
+The offline native stand-in proved login once/reuse, request replay refusal and
+an actual Node coding command in the selected nonempty project. Native full-suite
+completion and verified packaged bridge evidence are recorded in the trial output
+before handoff. Contract census passed; merge-base comparison and final CI remain
+pending. The user's running earlier preview remains untouched.

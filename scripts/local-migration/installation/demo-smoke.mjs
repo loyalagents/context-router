@@ -93,6 +93,18 @@ try{
  assert.equal(await page.locator('.demo-detail-value').innerText(),firstValue+' — artifact visual trial');
  await page.getByRole('button',{name:'Edit context',exact:true}).click();await page.locator('.demo-inspector textarea').fill(firstValue);await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.getByLabel('Search your context').fill('');await page.getByRole('button',{name:'Edit context',exact:true}).waitFor();
  await page.goto(ready.origin+'/dashboard/permissions');
+ // Exercise the actual HTTP → application → guardian bridge without opening a provider.
+ await page.getByRole('button',{name:'Open Claude Code',exact:true}).waitFor();
+ await page.screenshot({path:path.join(root,'claude-connections.png'),fullPage:true});
+ const claudeBefore=current.events.length;
+ await page.getByRole('button',{name:'Open Claude Code',exact:true}).click();
+ const claudeRequest=await current.event('demo-claude-open',claudeBefore);
+ assert.equal(claudeRequest.chooseProject,false);assert.match(claudeRequest.request,/^[a-f0-9]{32}$/);
+ current.child.stdin.write(JSON.stringify({version:1,generation:ready.generation,command:'demo-claude-status',request:claudeRequest.request,state:'cancelled'})+'\n');
+ await page.getByText('Project selection cancelled.',{exact:false}).waitFor();
+ await page.reload();await page.getByText('Project selection cancelled.',{exact:false}).waitFor();
+ assert.equal(current.events.slice(claudeBefore).filter(event=>event.type==='demo-claude-open').length,1);
+ phase('dashboard-native-claude-request-and-correlated-cancellation');
  const authority=()=>page.evaluate(async()=>{const response=await fetch('/api/local/mcp/list',{method:'POST',headers:{'content-type':'application/json','x-context-router-ui':'1',authorization:'Bearer '+sessionStorage.getItem('context-router.browser-session.v1')},body:'{}'});if(!response.ok)throw new Error('Authority read failed');return (await response.json()).items;});
  const permissionBefore=await authority(),selectedId=demoReceipt.clients.agentB;
  await page.getByRole('button',{name:'Edit permissions '+selectedId,exact:true}).click();

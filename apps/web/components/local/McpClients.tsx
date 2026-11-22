@@ -8,6 +8,7 @@ import { usableClientName } from '@/lib/local-client-name';
 import { useLocalSession } from './LocalSession';
 import Link from 'next/link';
 import DemoGuide from './DemoGuide';
+import DemoClaudeConnect from './DemoClaudeConnect';
 import { useDemoDraft } from './DemoDrafts';
 
 type Client = {
@@ -519,11 +520,7 @@ export default function McpClients() {
       );
   return (
     <div className="space-y-6">
-      {demo && <section className="demo-connection-intro" aria-label="Connect Claude Code"><h2>Connect Claude Code</h2><p>Bring your saved context into Claude Code. Start with the existing demo setup on this Mac.</p><div className="demo-setup-steps">
-        <div><span className="demo-step-number">1</span><h3>Review access</h3><p>Review “Claude Code — reader” below (Agent B in Mac setup). Names are editable; access is shown for each connection.</p><button className="demo-button mt-3" onClick={() => {connectionsList.current?.focus();connectionsList.current?.scrollIntoView({block:'start'});}}>Review access</button></div>
-        <div><span className="demo-step-number">2</span><h3>Open Claude Code</h3><p>In the Mac menu bar, choose CR → Demo setup… → Claude Code, then Sign in or Open. This demo requires version 2.1.299.</p></div>
-        <div><span className="demo-step-number">3</span><h3>See it in use</h3><p>Ask Claude to read your saved context, then open that client’s activity. Opening Terminal alone does not verify a connection.</p><Link prefetch={false} className="demo-button mt-3" href="/dashboard/history">View activity</Link></div>
-      </div><p className="demo-provider-notice">Claude may send retrieved context to Anthropic. This demo contains synthetic historical data.</p></section>}
+      {demo && <DemoClaudeConnect reviewAccess={() => {connectionsList.current?.focus();connectionsList.current?.scrollIntoView({block:'start'});}}/>}
       {!demo && <>
       <p>
         Each row is a separately issued client instance. Matching product labels

@@ -9,6 +9,7 @@ import { privateJson, privatePath, safeError } from './files.mjs';
 import { trustedDirectory, trustedBytes, ensurePrivateDirectory, writeSyncedJson, syncDirectory, exists } from './trusted-files.mjs';
 import { activeDemo } from './active.mjs';
 import { clientLaunchSpec, loginSpec, preflightClient } from './clients.mjs';
+import { codingLaunchSpec, validateDemoProject, claudeAuthStatus, connectClaude, beginConnectProgress } from './claude-connect.mjs';
 import { readCredential } from '../mcp-bridge/credential.mjs';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -60,32 +61,42 @@ export async function qualifiedExecutable(command,searchPath=process.env.PATH??'
   }
   throw safeError(`Install the qualified native ${command} CLI and place it on PATH.`);
 }
-export async function inspectInstalledClient(spec,{command='codex',role=command==='codex'?'a':'b',executable:explicit,auth=command==='claude'?'subscription':undefined}={}){
+export async function inspectInstalledClient(spec,{coding=false,command='codex',role=command==='codex'?'a':'b',executable:explicit,auth=command==='claude'?'subscription':undefined}={}){
     await activeDemo(spec);
-    const executable=await qualifiedExecutable(command,process.env.PATH,explicit);
+    const retained=path.join(os.userInfo().homedir,'.local/share/claude/versions/2.1.299');
+    const executable=await qualifiedExecutable(command,process.env.PATH,explicit??(command==='claude'&&await exists(retained)?retained:undefined));
     // Version/help/config probes use an empty disposable identity, never the
     // persisted demo login or MCP export, and cannot start a model session.
     const probe=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'cr-installed-preflight-')));
     try{
       const probeSpec=clientLaunchSpec({command,root:probe,profileRoot:probe,mcpPort:Number(new URL(spec.endpoint).port),dataset:'demo001',agent:role,auth},{executable:executable.path});
       for(const value of new Set([probeSpec.cwd,probeSpec.env.TMPDIR,probeSpec.env.CODEX_HOME,probeSpec.env.CLAUDE_CONFIG_DIR].filter(Boolean)))await fs.mkdir(value,{mode:0o700});
-      preflightClient(probeSpec,{versionGuidance:'Use Choose executable… in Demo setup to select an existing qualified native executable, or install this version.'});
+      preflightClient(coding?codingLaunchSpec(probeSpec,probeSpec.cwd):probeSpec,{versionGuidance:'Use Choose executable… in Demo setup to select an existing qualified native executable, or install this version.'});
     }finally{await fs.rm(probe,{recursive:true,force:true});}
     if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed during preflight.');
     await activeDemo(spec);
     return {...executable,version:command==='codex'?'0.160.0':'2.1.299'};
 }
-export async function launchInstalledClient(spec,{role,command='codex',login=false,executable:explicit,auth=command==='claude'?'subscription':undefined}){
+export async function launchInstalledClient(spec,{role,command='codex',login=false,connect=false,project,request,executable:explicit,auth=command==='claude'?'subscription':undefined}){
   if(!['a','b'].includes(role))throw safeError('Choose Agent A or B.');
-  return withClientGuard(spec.root,role,async guard=>{
+  if(connect&&(role!=='b'||command!=='claude'||auth!=='subscription'||login))throw safeError('Unsupported demo connection.');
+  if(connect){const active=await activeDemo(spec);spec={...spec,installationId:active.installationId};}
+  const state=connect?await beginConnectProgress(spec,request):undefined;
+  try{return await withClientGuard(spec.root,role,async guard=>{
     process.stdout.write('Checking the qualified client and isolated preflight settings…\n');
-    const receipt=await activeDemo(spec),executable=await inspectInstalledClient(spec,{command,role,executable:explicit,auth});
+    const receipt=await activeDemo(spec),executable=await inspectInstalledClient(spec,{command,role,executable:explicit,auth,coding:connect});
     // spawnSync probes block signal callbacks. Yield explicitly before any
     // persistent profile work, even if every probe happened to succeed.
     await guard.checkpoint();
     const profile=await profileFor(spec.root,receipt.installationId,role,guard);
     let launch=clientLaunchSpec({command,root:path.join(spec.root,'demo',spec.store),profileRoot:profile,mcpPort:Number(new URL(spec.endpoint).port),dataset:'demo001',agent:role,auth},{executable:executable.path});
     for(const value of new Set([launch.cwd,launch.env.TMPDIR,launch.env.CODEX_HOME,launch.env.CLAUDE_CONFIG_DIR].filter(Boolean)))await privatePath(value,true);
+    if(connect){
+      await validateDemoProject(project,spec.root);
+      launch=codingLaunchSpec(launch,project);
+      const check=async()=>{await guard.checkpoint();await activeDemo(spec);await validateDemoProject(project,spec.root);if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed before launch.');};
+      return connectClaude(launch,{check,authStatus:value=>claudeAuthStatus(value,guard),run:value=>runForeground(value,guard),state,credential:()=>readCredential(launch.credentialFile)});
+    }
     if((await fs.readdir(launch.cwd)).length)throw safeError('Demo workspace must remain empty.');
     if(login){
       if(command==='codex')launch=loginSpec(launch);
@@ -99,7 +110,7 @@ export async function launchInstalledClient(spec,{role,command='codex',login=fal
     if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed before launch.');
     process.stdout.write(login?'Starting explicit login in the isolated demo profile.\n':'Starting a fresh demo client. Its provider may receive retrieved demo context.\n');
     return runForeground(launch,guard);
-  });
+  });}catch(error){await state?.('failed').catch(()=>{});throw error;}
 }
 
 export async function runForeground(launch,guard){
@@ -114,7 +125,8 @@ export async function runForeground(launch,guard){
       child.once('error',()=>{if(child.pid===undefined)guard.settled();reject(safeError(child.pid===undefined?'Client did not start.':'Client launch outcome uncertain; guard retained.'));});
       child.once('close',(code,signal)=>{
         signals.forEach((name,i)=>process.off(name,handlers[i]));
-        // Qualified foreground CLI normal exit settles its supported cohort.
+        // Normal foreground CLI exit releases this profile invocation. Coding
+        // tools may leave independent project jobs; we do not own or settle them.
         // Lost wait, abrupt helper loss, or signal termination retains evidence.
         if(signal||!Number.isInteger(code)){reject(safeError('Client lifetime uncertain; guard retained.'));return;}
         guard.settled();resolve(code);
