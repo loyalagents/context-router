@@ -48,9 +48,11 @@ export default function HistoryTabs({
       if (key) setActiveTab('mcp');
       invalidate();
     };
+    const showAll = () => { setClientFilter(''); setActiveTab('mcp'); invalidate(); };
+    window.addEventListener('context-router.activity-all', showAll);
     window.addEventListener('hashchange', navigate);
     window.addEventListener('popstate', navigate);
-    return () => { window.removeEventListener('hashchange', navigate); window.removeEventListener('popstate', navigate); };
+    return () => { window.removeEventListener('context-router.activity-all', showAll); window.removeEventListener('hashchange', navigate); window.removeEventListener('popstate', navigate); };
   }, [local, invalidate]);
   const changeClientFilter = (value: string) => {
     setClientFilter(value);

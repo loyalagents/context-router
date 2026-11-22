@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { HttpLink } from '@apollo/client';
 import {
   ApolloNextAppProvider,
@@ -85,6 +85,8 @@ function PreferencesContent({
   const [refreshError, setRefreshError] = useState(false);
   const refreshRequest = useRef<AbortController | null>(null);
   const mounted = useRef(false);
+  const interacting = useRef(false);
+  const passiveRequest = useRef<AbortController | null>(null);
 
   useEffect(() => {
     mounted.current = true;
@@ -96,14 +98,15 @@ function PreferencesContent({
   }, [accessToken]);
 
   // This callback returns no mutation result and never propagates read failures.
-  const refreshSavedPreferences = () => {
-    if (!local || !mounted.current) return;
+  const refreshSavedPreferences = useCallback((passive = false) => {
+    if (!local || !mounted.current || (passive && interacting.current)) return;
     refreshRequest.current?.abort();
     const controller = new AbortController();
     refreshRequest.current = controller;
+    passiveRequest.current = passive ? controller : null;
     setRefreshing(true);
     setRefreshError(false);
-    const current = () => mounted.current && !controller.signal.aborted && refreshRequest.current === controller;
+    const current = () => mounted.current && !controller.signal.aborted && refreshRequest.current === controller && (!passive || !interacting.current);
     void localGraphql<{ activePreferences: Preference[] }>(SAVED_PREFERENCES_QUERY, undefined, controller.signal)
       .then((data) => {
         if (current()) setActivePreferences(data.activePreferences);
@@ -117,7 +120,20 @@ function PreferencesContent({
           setRefreshing(false);
         }
       });
+  }, [local]);
+
+  const onContextInteraction = (active: boolean) => {
+    interacting.current = active;
+    if (active && passiveRequest.current && refreshRequest.current === passiveRequest.current) {
+      passiveRequest.current.abort();refreshRequest.current = null;passiveRequest.current = null;setRefreshing(false);
+    }
   };
+  useEffect(() => {
+    if (!demo) return;
+    const refresh = () => { if (document.visibilityState === 'visible') refreshSavedPreferences(true); };
+    window.addEventListener('focus', refresh);window.addEventListener('pageshow', refresh);document.addEventListener('visibilitychange', refresh);
+    return () => { window.removeEventListener('focus', refresh);window.removeEventListener('pageshow', refresh);document.removeEventListener('visibilitychange', refresh); };
+  }, [demo, refreshSavedPreferences]);
 
   // A read begun before a manual write completed may contain an older snapshot.
   // Replace only an in-flight read; the confirmed manual result updates immediately.
@@ -203,8 +219,8 @@ function PreferencesContent({
     }
   };
 
-  if (demo) return <DemoContextLibrary preferences={activePreferences} definitions={preferenceDefinitions} accessToken={accessToken} onUpdate={handlePreferenceUpdate} onDelete={handlePreferenceDelete}
-    status={<>{refreshing && <p role="status" className="demo-edit-notice">Refreshing saved preferences…</p>}{refreshError && <div role="alert" className="mb-4 text-red-700"><p>Saved preferences could not refresh. Apply outcomes are unchanged; the list may be out of date.</p><button onClick={refreshSavedPreferences} className="underline">Retry saved preferences refresh</button></div>}</>}
+  if (demo) return <DemoContextLibrary preferences={activePreferences} definitions={preferenceDefinitions} accessToken={accessToken} onUpdate={handlePreferenceUpdate} onDelete={handlePreferenceDelete} onInteractionChange={onContextInteraction}
+    status={<>{refreshing && <p role="status" className="demo-edit-notice">Refreshing saved preferences…</p>}{refreshError && <div role="alert" className="mb-4 text-red-700"><p>Saved preferences could not refresh. Apply outcomes are unchanged; the list may be out of date.</p><button onClick={() => refreshSavedPreferences()} className="underline">Retry saved preferences refresh</button></div>}</>}
     tools={<>
       <details open><summary>Add a memory</summary><div><ManualPreferenceForm accessToken={accessToken} definitions={preferenceDefinitions} onSaved={handleManualPreferenceSaved}/></div></details>
       <details><summary>Import from Documents</summary><div>{uploadBatch ? <SuggestionsList batch={uploadBatch} onClose={handleClose} onApplied={handleApplied} accessToken={accessToken}/> : <DocumentUpload onAnalysisComplete={handleAnalysisComplete} accessToken={accessToken}/>}</div></details>
@@ -293,7 +309,7 @@ function PreferencesContent({
           {refreshError && (
             <div role="alert" className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               <p>Saved preferences could not refresh. Apply outcomes are unchanged; the list may be out of date.</p>
-              <button onClick={refreshSavedPreferences} className="mt-2 underline">Retry saved preferences refresh</button>
+              <button onClick={() => refreshSavedPreferences()} className="mt-2 underline">Retry saved preferences refresh</button>
             </div>
           )}
           {activePreferences.length === 0 ? (

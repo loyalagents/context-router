@@ -224,18 +224,27 @@
   [NSApp activateIgnoringOtherApps:YES];
   NSOpenPanel *picker=[NSOpenPanel openPanel];picker.canChooseFiles=NO;picker.canChooseDirectories=YES;picker.canCreateDirectories=YES;picker.allowsMultipleSelection=NO;
   picker.message=@"Choose a demo project for Claude Code. Claude can edit files and run commands here with its normal permission prompts. This folder will be remembered.";picker.prompt=@"Use demo project";
-  return [picker runModal]==NSModalResponseOK?picker.URL.path.stringByResolvingSymlinksInPath:nil;
+  return [picker runModal]==NSModalResponseOK?picker.URL.path:nil;
+}
+- (void)showInvalidClaudeProject {
+  NSAlert *alert=[NSAlert new];alert.messageText=@"Choose a separate project folder";alert.informativeText=@"Choose an existing folder outside Context Router data. Do not select your home folder, the data folder, or a folder containing it.";[alert addButtonWithTitle:@"OK"];[alert runModal];
 }
 - (void)openDashboardClaude:(NSDictionary *)request {
   @try{
     if(![self demoBindingCurrent:request[@"binding"]])return;
     NSString *key=[self demoChoiceKey:@"claude-project"],*project=[[self demoDefaults] stringForKey:key];BOOL directory=NO;
-    if([request[@"chooseProject"] boolValue]||!project||![NSFileManager.defaultManager fileExistsAtPath:project isDirectory:&directory]||!directory){
+    BOOL choosing=[request[@"chooseProject"] boolValue]||!project||![NSFileManager.defaultManager fileExistsAtPath:project isDirectory:&directory]||!directory;
+    if(choosing){
       [self sendClaudeStatus:@"choosing-project" request:request];project=[self chooseClaudeProject];
     }
     if(![self demoBindingCurrent:request[@"binding"]])return;
     if(!project){[self sendClaudeStatus:@"cancelled" request:request];return;}
-    if(!project.isAbsolutePath||project.length>4096||[project rangeOfCharacterFromSet:NSCharacterSet.controlCharacterSet].location!=NSNotFound||[project isEqual:_root]||[project hasPrefix:[_root stringByAppendingString:@"/"]]||[_root hasPrefix:[project stringByAppendingString:@"/"]]||[project isEqual:@"/"])CRFail();
+    char canonical[PATH_MAX];
+    if(project.isAbsolutePath&&realpath(project.fileSystemRepresentation,canonical))project=@(canonical);else project=nil;
+    if(!project||project.length>4096||[project rangeOfCharacterFromSet:NSCharacterSet.controlCharacterSet].location!=NSNotFound||[project isEqual:NSHomeDirectory()]||[project isEqual:_root]||[project hasPrefix:[_root stringByAppendingString:@"/"]]||[_root hasPrefix:[project stringByAppendingString:@"/"]]||[project isEqual:@"/"]){
+      if(!choosing)[[self demoDefaults] removeObjectForKey:key];
+      [self showInvalidClaudeProject];[self sendClaudeStatus:@"cancelled" request:request];return;
+    }
     [[self demoDefaults] setObject:project forKey:key];
     _demoCopyBinding=request[@"binding"];_demoPanelIdentity=CRRandom(16);if(!_demoChoices)_demoChoices=[NSMutableDictionary dictionary];
     id saved=[[self demoDefaults] objectForKey:[self demoChoiceKey:@"claude"]];

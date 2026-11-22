@@ -9,7 +9,7 @@ import { privateJson, privatePath, safeError } from './files.mjs';
 import { trustedDirectory, trustedBytes, ensurePrivateDirectory, writeSyncedJson, syncDirectory, exists } from './trusted-files.mjs';
 import { activeDemo } from './active.mjs';
 import { clientLaunchSpec, loginSpec, preflightClient } from './clients.mjs';
-import { codingLaunchSpec, validateDemoProject, claudeAuthStatus, authenticateClaude, startClaude, beginConnectProgress } from './claude-connect.mjs';
+import { codingLaunchSpec, codingTemporaryDirectory, validateDemoProject, claudeAuthStatus, authenticateClaude, startClaude, beginConnectProgress } from './claude-connect.mjs';
 import { readCredential } from '../mcp-bridge/credential.mjs';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -110,7 +110,11 @@ export async function launchInstalledClient(spec,{role,command='codex',login=fal
         return prepared;
       });
       if(prepared.code!==0)return prepared.code;
-      return await withClientGuard(spec.root,'b-session-'+request,guard=>startClaude(prepared.launch,{check:()=>prepared.check(guard),run:value=>runForeground(value,guard),state,credential:()=>readCredential(prepared.launch.credentialFile)}));
+      return await withClientGuard(spec.root,'b-session-'+request,async guard=>{
+        await prepared.check(guard);
+        prepared.launch.env.TMPDIR=await codingTemporaryDirectory();
+        return startClaude(prepared.launch,{check:()=>prepared.check(guard),run:value=>runForeground(value,guard),state,credential:()=>readCredential(prepared.launch.credentialFile)});
+      });
     }
     const legacy=()=>withClientGuard(spec.root,role,async guard=>{
       let {launch,executable}=await prepare(guard);

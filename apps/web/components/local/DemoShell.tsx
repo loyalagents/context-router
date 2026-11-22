@@ -49,7 +49,7 @@ export default function DemoShell({ children, onLock, busy, aiState }: { childre
   }}>
     <aside className="demo-sidebar" aria-label="Application sidebar">
       <Link prefetch={false} className="demo-brand" href="/dashboard"><span className="demo-logo" aria-hidden="true">cr</span>Context Router</Link>
-      <nav aria-label="Main navigation">{links.map(link => <Link prefetch={false} key={link.href} href={link.href} aria-current={link.active ? 'page' : undefined}><DemoIcon name={link.icon}/>{link.label}</Link>)}</nav>
+      <nav aria-label="Main navigation">{links.map(link => <Link prefetch={false} key={link.href} href={link.href} onNavigate={() => { if (link.href === '/dashboard/history') window.dispatchEvent(new Event('context-router.activity-all')); }} aria-current={link.active ? 'page' : undefined}><DemoIcon name={link.icon}/>{link.label}</Link>)}</nav>
       <details key={pathname} className="demo-more" open={more.some(link => link.href === pathname)}><summary>More tools</summary>{more.map(link => <Link prefetch={false} key={link.href} href={link.href} aria-current={pathname === link.href ? 'page' : undefined}>{link.label}</Link>)}</details>
       <div className="demo-sidebar-bottom">
         <aside aria-label="Demo mode"><details><summary><span className="demo-badge">Synthetic demo</span></summary><div className="demo-mode-details"><strong>On this Mac · Historical 2024–2025 sample</strong><p>Edits persist. Installed local AI is used when available.</p><p>AI: {aiState} (last checked)</p><p>Use CR → Demo setup for connections, CR → Reset sample data for a fresh sample, or CR → Return to personal mode.</p><p>Clear memory and Clear history do not reset demo identity or connection credentials.</p></div></details></aside>

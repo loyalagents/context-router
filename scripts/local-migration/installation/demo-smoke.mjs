@@ -155,6 +155,7 @@ try{
   assert.equal(await fs.readFile(path.join(codingProject,'coding-result.txt'),'utf8'),'demo coding works');
  }finally{
   await fs.rm(path.join(codingProject,'hold-chats'),{force:true});await Promise.allSettled(chats.map(chat=>chat.closed));
+  for(const file of await fs.readdir(codingProject)){if(!/^chat-\d+\.tmp$/.test(file))continue;const temporary=await fs.readFile(path.join(codingProject,file),'utf8');assert.match(temporary,/^\/private\/tmp\/cr-code-[A-Za-z0-9]{6}$/);await fs.rm(temporary,{recursive:true,force:true});}
  }
  helper(spec,connectArguments('1'.repeat(32)),1,connectProfile);
  phase('packaged-claude-connect-overlapping-chats-independent-exit-login-reuse-coding-and-replay-refusal');

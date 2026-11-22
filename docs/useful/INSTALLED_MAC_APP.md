@@ -155,6 +155,14 @@ provider authentication is inspected just by loading Connections. The retained
 qualified Claude 2.1.299 executable is discovered automatically where available;
 **Choose executable…** in the native panel remains the fallback.
 
+Coding launches explicitly enable the named coding tools, including Bash and
+WebFetch, and select Claude's `default` permission mode (normal prompts). The
+restricted profile's implicit tool defaults are insufficient. Project paths are
+canonicalized; invalid selections show a native explanation and do not replace
+the previous valid choice. The picker can stay open without a launch timeout.
+Each chat receives a short private `/private/tmp/cr-code-*` directory for tools
+that create Unix sockets. It is retained because project jobs may outlive Claude.
+
 The dashboard distinguishes native handoff, sign-in, and recent successful context
 reads by the exact B credential. A recent read is not a live connection indicator
 or proof that one particular Terminal session made it. **Open Claude Code** starts
@@ -170,6 +178,13 @@ invocation; use Connections for overlapping chats. Normal coding can create inde
 processes such as dev servers; Context Router Quit does not stop them. This flow
 is a synthetic demo preview; live sign-in and coding acceptance remain a human
 trial, not broader personal-mode onboarding qualification.
+
+The latest chat's confirmed exit and interruption have separate dashboard
+messages. Uncertain invocation guard evidence remains retained; interruption
+status is not proof that all child jobs stopped. Launch errors remain visible until an
+explicit retry. Context reloads saved values on focus/return when no edit is open;
+an in-flight passive refresh is cancelled when editing starts. This improves
+freshness but does not provide conflict detection for simultaneous edits.
 
 Terminal handoffs use unique private retained `demo/launch-requests/.../open.command`
 files. They contain quoted helper arguments and no credentials, use a clean

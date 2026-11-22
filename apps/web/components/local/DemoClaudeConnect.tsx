@@ -12,6 +12,7 @@ const messages:Record<string,string> = {
   'terminal-opened':'Terminal opened. Continue there; sign-in will appear if needed.',
   'signing-in':'Complete Claude sign-in in Terminal. Your project will open automatically afterward.',
   starting:'Your latest chat is opening in Terminal. You can open another chat here and keep earlier chats running.',
+  interrupted:'The latest Claude launch or chat was interrupted. Earlier chats can stay open; you can open a fresh chat here.',
   exited:'Your latest chat has closed. You can open a fresh conversation in the same project.',
   cancelled:'Project selection cancelled. Open Claude Code when you’re ready.',
   'login-failed':'Sign-in did not finish. Open Claude Code to try again.',
@@ -23,7 +24,7 @@ const messages:Record<string,string> = {
 const query = `query DemoClaudeRead($input:McpAccessHistoryInput!){mcpAccessHistory(input:$input){items{clientKey occurredAt outcome operationName responseMetadata}}}`;
 type ReadEvent = {clientKey:string;occurredAt:string;outcome:string;operationName:string;responseMetadata?:{activeCount?:number}};
 export default function DemoClaudeConnect({reviewAccess}:{reviewAccess:()=>void}) {
-  const [setup,setSetup]=useState<Setup|null>(null),[error,setError]=useState(''),[submitting,setSubmitting]=useState(false),[lastRead,setLastRead]=useState<string|null>(null);
+  const [setup,setSetup]=useState<Setup|null>(null),[error,setError]=useState(''),[launchError,setLaunchError]=useState(''),[submitting,setSubmitting]=useState(false),[lastRead,setLastRead]=useState<string|null>(null);
   const epoch=useRef(0),mounted=useRef(false),pending=useRef(false);
   const refresh=useCallback(async(signal:AbortSignal)=>{
     if(pending.current)return;
@@ -46,9 +47,9 @@ export default function DemoClaudeConnect({reviewAccess}:{reviewAccess:()=>void}
     return()=>{mounted.current=false;controller.abort();clearTimeout(timer);epoch.current++;};
   },[refresh]);
   async function open(chooseProject=false){
-    if(pending.current)return;pending.current=true;epoch.current++;setSubmitting(true);setError('');setLastRead(null);
+    if(pending.current)return;pending.current=true;epoch.current++;setSubmitting(true);setLaunchError('');setError('');setLastRead(null);
     try{const next=await localJson<Setup>('/api/local/demo/claude/open',{chooseProject});if(mounted.current)setSetup(next);}
-    catch{if(mounted.current)setError('Launch could not be confirmed. Check Terminal before retrying.');}
+    catch{if(mounted.current)setLaunchError('Launch could not be confirmed. Check Terminal before retrying.');}
     finally{pending.current=false;if(mounted.current)setSubmitting(false);}
   }
   const disabled=submitting||!!setup?.busy||!setup?.available||!!error;
@@ -61,7 +62,7 @@ export default function DemoClaudeConnect({reviewAccess}:{reviewAccess:()=>void}
         <div className="flex gap-3 flex-wrap mt-4"><button className="demo-button demo-primary" disabled={disabled} onClick={()=>void open()}>Open Claude Code</button><button className="demo-button" disabled={disabled} onClick={()=>void open(true)}>Change project</button></div>
       </div>
       <div><span className="demo-step-number">2</span><h3>Continue in Terminal</h3>
-        <p role="status" aria-live="polite">{error||(!setup?'Checking setup availability…':!setup.available?'Open the installed Mac demo to launch Claude Code.':messages[setup.state??'idle']??'Check Terminal to continue.')}</p>
+        <p role="status" aria-live="polite">{launchError||error||(!setup?'Checking setup availability…':!setup.available?'Open the installed Mac demo to launch Claude Code.':messages[setup.state??'idle']??'Check Terminal to continue.')}</p>
         <p className="mt-3">After restarting Context Router, open a fresh chat here to use the current connection.</p>
       </div>
       <div><span className="demo-step-number">3</span><h3>See your context in use</h3>

@@ -4,6 +4,7 @@ import { authenticatedFetch } from '@/lib/authenticated-fetch';
 
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useDemoDraft } from '@/components/local/DemoDrafts';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
 const PROFILE_FIELDS = [
@@ -88,6 +89,7 @@ export default function ProfileForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  useDemoDraft(PROFILE_FIELDS.some(field => values[field.slug].trim() !== stringifyPreferenceValue(persistedBySlug.current.get(field.slug)?.value).trim()), loading);
 
   const graphqlRequest = async (
     query: string,
