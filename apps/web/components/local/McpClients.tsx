@@ -5,6 +5,7 @@ import { localJson, LocalRequestError } from '@/lib/authenticated-fetch';
 import { ClientName } from './ClientNames';
 import McpPermissionsEditor, { maximumValueLevel, type PermissionSummary } from './McpPermissionsEditor';
 import { usableClientName } from '@/lib/local-client-name';
+import { useLocalSession } from './LocalSession';
 
 type Client = {
   id: string;
@@ -47,6 +48,8 @@ type Snapshot = {
 const button = 'rounded border px-3 py-2 disabled:opacity-50';
 
 export default function McpClients() {
+  const demo = useLocalSession()?.capabilities.runtime?.mode === 'demo';
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [editing,setEditing]=useState<Client|null>(null);
   const editButtons=useRef(new Map<string,HTMLButtonElement>());
   const [items, setItems] = useState<Client[]>([]);
@@ -54,8 +57,8 @@ export default function McpClients() {
   const [next, setNext] = useState<string | null>(null);
   const [selected, setSelected] = useState('');
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [targets, setTargets] = useState('profile.first_name');
-  const [target, setTarget] = useState('*');
+  const [targets, setTargets] = useState(demo ? '' : 'profile.first_name');
+  const [target, setTarget] = useState(demo ? '' : '*');
   const [action, setAction] = useState('READ');
   const [effect, setEffect] = useState('DENY');
   const [busy, setBusy] = useState(false);
@@ -324,6 +327,12 @@ export default function McpClients() {
   }
   return (
     <div className="space-y-6">
+      {demo && <section className="demo-connection-intro" aria-label="Connect Claude Code"><h2>Connect Claude Code</h2><p>Bring your saved context into Claude Code. Start with the existing demo setup on this Mac.</p><div className="demo-setup-steps">
+        <div><span className="demo-step-number">1</span><h3>Review access</h3><p>Review the demo reader’s permissions below. Each connection has its own access, and you can revoke it at any time.</p></div>
+        <div><span className="demo-step-number">2</span><h3>Open Claude Code</h3><p>In the Mac menu bar, choose CR → Demo setup… → Claude Code, then Sign in or Open. This demo requires version 2.1.299.</p></div>
+        <div><span className="demo-step-number">3</span><h3>See it in use</h3><p>Ask Claude to read your saved context, then open that client’s activity. Opening Terminal alone does not verify a connection.</p></div>
+      </div><p className="text-xs mt-5">Claude may send retrieved context to Anthropic. This demo contains synthetic historical data.</p></section>}
+      {!demo && <>
       <p>
         Each row is a separately issued client instance. Matching product labels
         do not share identity. Edit maximum policy and rules here. Issue or rotate
@@ -334,6 +343,7 @@ export default function McpClients() {
         specific database DENY, but cannot expand that maximum. Write also
         requires read and suggest access.
       </p>
+      </>}
       {readError && <p role="alert">{readError}</p>}
       <div className="flex gap-3">
         <button className={button} disabled={busy} onClick={invalidate}>
@@ -379,15 +389,17 @@ export default function McpClients() {
       {editing&&<McpPermissionsEditor key={editing.id} client={editing} onChanged={()=>{channel.current?.postMessage('invalidate');invalidate();}} onClose={()=>{const id=editing.id;setEditing(null);queueMicrotask(()=>editButtons.current.get(id)?.focus());}}/>}
       <ul className="space-y-3">
         {items.map((client) => (
-          <li key={client.id} className="rounded border p-4">
-            <div className="font-semibold">
+          <li key={client.id} className={demo ? 'demo-client-card' : 'rounded border p-4'}>
+            <div className={demo ? 'demo-client-name font-semibold' : 'font-semibold'}>
               <ClientName clientKey={`local:${client.id}`} label={client.label} /> {client.revoked && '(revoked)'}
             </div>
+            {demo ? <><p className="demo-client-summary">{client.revoked ? 'Access revoked.' : client.summary ? `${client.summary.level} across ${client.summary.total} active field definitions in scope.` : 'Current access summary unavailable.'} {client.summary && !client.revoked && 'More specific exceptions may apply.'}</p><details><summary>Access details</summary><p>Maximum value access: {maximumValueLevel(client.policy)}. Definition management: {client.policy.capabilities.includes('preferences:define') ? 'allowed by maximum' : 'not allowed by maximum'}.</p><p>Sensitive values: {client.policy.allowSensitive ? 'allowed by maximum, within effective scope' : 'blocked by maximum'}.</p><p>Allowed scope: {client.policy.targets.join(', ') || 'No targets'}. Prefixes may include future fields.</p><p>Instance: <code>{client.id}</code> · Generation {client.generation}</p></details></> : <>
             <code className="break-all">{client.id}</code>
             <p>Maximum values: <strong>{maximumValueLevel(client.policy)}</strong> · Definition management maximum: {client.policy.capabilities.includes('preferences:define')?'allowed':'blocked'} · Sensitive {client.policy.allowSensitive?'allowed':'blocked'}</p>
             <p className="break-all">Allowed scope: {client.policy.targets.join(', ')||'No targets'} · {client.ruleCount===null?'Rule count unavailable':`${client.ruleCount??0} rules`}</p>
             <p>Current effective access: {client.summary?`${client.summary.level} across ${client.summary.total} active field definitions in scope`:'Unavailable'}. More specific exceptions may apply; prefixes also cover future fields.</p>
             <p className="text-xs">Generation {client.generation}</p>
+            </>}
             <button ref={element=>{if(element)editButtons.current.set(client.id,element);else editButtons.current.delete(client.id);}} className={button} disabled={busy||client.revoked||!!editing} aria-label={`Edit permissions ${client.id}`} onClick={()=>setEditing(client)}>Edit permissions</button>{' '}
 
             <button ref={element=>{if(element)renameButtons.current.set(client.id,element);else renameButtons.current.delete(client.id);}} className={button} disabled={busy || !!renameDraft} aria-label={`Rename ${client.id}`} onClick={()=>{setRenameDraft({client,name:client.label,needsRead:false});setRenameError('');}}>Rename</button>
@@ -396,7 +408,7 @@ export default function McpClients() {
             <button
               className={button}
               disabled={busy}
-              onClick={() => void inspect(client.id)}
+              onClick={() => { setAdvancedOpen(true); void inspect(client.id); }}
               aria-label={`Inspect ${client.id}`}
             >
               Inspect authority
@@ -404,6 +416,8 @@ export default function McpClients() {
           </li>
         ))}
       </ul>
+      {demo && <button className="demo-button demo-quiet" aria-expanded={advancedOpen} onClick={() => setAdvancedOpen(!advancedOpen)}>Advanced access inspection and grants</button>}
+      <div hidden={demo && !advancedOpen} className="space-y-6">
       <label className="block">
         Exact slugs to inspect (up to 32, separated by commas)
         <input
@@ -422,6 +436,7 @@ export default function McpClients() {
           Inspect selected instance
         </button>
       )}
+      </div>
       {outcome && (
         <div
           ref={outcomePanel}
@@ -467,6 +482,7 @@ export default function McpClients() {
           <p id="mcp-change-message">{outcome.message}</p>
         </div>
       )}
+      <div hidden={demo && !advancedOpen}>
       {snapshot && (
         <section
           className="space-y-4 border-t pt-4"
@@ -620,6 +636,7 @@ export default function McpClients() {
           </button>
         </section>
       )}
+      </div>
     </div>
   );
 }

@@ -140,6 +140,8 @@ interface PageData {
 function LocalPageContent({ page }: { page: Page }) {
   const session = useLocalSession();
   const sessionToken = session?.token;
+  const demo = session?.capabilities.runtime?.mode === 'demo';
+  const effectivePage = demo && page === 'dashboard' ? 'preferences' : page;
   const [data, setData] = useState<PageData | null>(null);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -148,8 +150,8 @@ function LocalPageContent({ page }: { page: Page }) {
     const controller = new AbortController();
     setError('');
     setData(null);
-    if (!queries[page]) return;
-    void localGraphql<PageData>(queries[page], undefined, controller.signal)
+    if (!queries[effectivePage]) return;
+    void localGraphql<PageData>(queries[effectivePage], undefined, controller.signal)
       .then((result) => {
         if (!controller.signal.aborted) setData(result);
       })
@@ -160,7 +162,7 @@ function LocalPageContent({ page }: { page: Page }) {
           );
       });
     return () => controller.abort();
-  }, [page, sessionToken, attempt]);
+  }, [effectivePage, sessionToken, attempt]);
   if (!session) return null;
   if (error)
     return (
@@ -174,14 +176,14 @@ function LocalPageContent({ page }: { page: Page }) {
         </button>
       </main>
     );
-  if (queries[page] && !data)
+  if (queries[effectivePage] && !data)
     return (
       <main role="status" className="p-10">
         Loading {page}…
       </main>
     );
   const accessToken = session.token;
-  if (page === 'dashboard')
+  if (effectivePage === 'dashboard')
     return (
       <>
       <DashboardView
@@ -193,7 +195,7 @@ function LocalPageContent({ page }: { page: Page }) {
       {session.capabilities.runtime?.mode === 'demo' && <DemoGuide />}
       </>
     );
-  if (page === 'preferences')
+  if (effectivePage === 'preferences')
     return (
       <PreferencesClient
         initialActivePreferences={data!.activePreferences}
@@ -203,7 +205,7 @@ function LocalPageContent({ page }: { page: Page }) {
         allowDemoReset={false}
       />
     );
-  if (page === 'schema')
+  if (effectivePage === 'schema')
     return (
       <div className="p-10 max-w-4xl">
         <SchemaClient
@@ -214,18 +216,18 @@ function LocalPageContent({ page }: { page: Page }) {
     );
   const title = {
     profile: 'Edit Profile',
-    history: 'Audit History',
+    history: demo ? 'Activity' : 'Audit History',
     'form-fill': 'Form Fill',
-    permissions: 'MCP Clients',
-  }[page];
+    permissions: demo ? 'Connections' : 'MCP Clients',
+  }[effectivePage];
   return (
-    <main className="p-10">
-      <div className="max-w-6xl">
-        <div className="flex justify-between items-center mb-6">
+    <main className={demo ? 'demo-page' : 'p-10'}>
+      <div className={demo ? '' : 'max-w-6xl'}>
+        <div className={demo ? 'demo-page-header' : 'flex justify-between items-center mb-6'}>
           <h1 className="text-2xl font-bold">{title}</h1>
-          <a href="/dashboard" className="text-blue-600">
+          {!demo && <a href="/dashboard" className="text-blue-600">
             Back to Dashboard
-          </a>
+          </a>}
         </div>
         {page === 'profile' && (
           <ProfileForm

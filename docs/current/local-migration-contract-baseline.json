@@ -4529,6 +4529,12 @@
       "reference": "searchPreferences"
     },
     {
+      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "smartSearchPreferences"
+    },
+    {
       "path": "apps/web/app/dashboard/history/page.tsx",
       "contract": "http",
       "kind": "route",

@@ -15,6 +15,7 @@ import {
   localTransport,
   LocalRequestError,
 } from '@/lib/authenticated-fetch';
+import DemoShell from './DemoShell';
 
 export interface LocalCapabilities {
   runtime?: { mode: 'personal' | 'demo'; launcher: 'native' | 'terminal'; generation?: string; storeId?: string };
@@ -332,6 +333,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
         },
       }}
     >
+      {capabilities.runtime?.mode === 'demo' ? <DemoShell onLock={logout} busy={busy} aiState={capabilities.status.state}>{children}</DemoShell> : <>
       <div className="px-10 pt-5 flex justify-between gap-3 text-sm">
         <span>Local dashboard · AI: {capabilities.status.state} (last checked)</span>
         <button
@@ -343,16 +345,11 @@ export default function LocalSession({ children }: { children: ReactNode }) {
           Lock dashboard
         </button>
       </div>
-      {capabilities.runtime?.mode === 'demo' ? (
-        <aside aria-label="Demo mode" className="mx-10 mt-5 rounded border border-amber-400 bg-amber-50 p-4 text-amber-950">
-          <strong>Demo mode — historical 2024–2025 sample</strong>
-          <p className="mt-1">Edits persist. Installed local AI is used when available. Use CR → Demo setup for client commands, CR → Reset sample data for a fresh sample, or CR → Return to personal mode.</p>
-          <p className="mt-1 text-sm">Clear memory removes memories; Clear history removes audit history. Neither resets the demo identity or client tokens.</p>
-        </aside>
-      ) : capabilities.runtime?.launcher === 'native' ? (
+      {capabilities.runtime?.launcher === 'native' ? (
         <p className="mx-10 mt-4 text-sm text-gray-600">Personal mode · Use CR → Enter demo mode to explore the historical sample.</p>
       ) : null}
       {children}
+      </>}
     </SessionContext.Provider>
   );
 }

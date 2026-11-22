@@ -11,6 +11,7 @@ import { authenticatedFetch, localGraphql } from '@/lib/authenticated-fetch';
 import { useLocalSession } from '@/components/local/LocalSession';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 import PreferenceSearch from '@/components/local/PreferenceSearch';
+import DemoContextLibrary from '@/components/local/DemoContextLibrary';
 import DocumentUpload from './components/DocumentUpload';
 import SuggestionsList from './components/SuggestionsList';
 import PreferenceItem from './components/PreferenceItem';
@@ -71,7 +72,9 @@ function PreferencesContent({
   accessToken,
   allowDemoReset,
 }: PreferencesClientProps) {
-  const local = !!useLocalSession();
+  const session = useLocalSession();
+  const local = !!session;
+  const demo = session?.capabilities.runtime?.mode === 'demo';
   const [activePreferences, setActivePreferences] = useState<Preference[]>(initialActivePreferences);
   const [suggestedPreferences, setSuggestedPreferences] = useState<Preference[]>(initialSuggestedPreferences);
   const [preferenceDefinitions, setPreferenceDefinitions] = useState<PreferenceDefinition[]>(
@@ -199,6 +202,16 @@ function PreferencesContent({
       setPreferenceDefinitions((prev) => [...prev, createdDefinition]);
     }
   };
+
+  if (demo) return <DemoContextLibrary preferences={activePreferences} definitions={preferenceDefinitions} accessToken={accessToken} onUpdate={handlePreferenceUpdate} onDelete={handlePreferenceDelete}
+    status={<>{refreshing && <p role="status" className="demo-edit-notice">Refreshing saved preferences…</p>}{refreshError && <div role="alert" className="mb-4 text-red-700"><p>Saved preferences could not refresh. Apply outcomes are unchanged; the list may be out of date.</p><button onClick={refreshSavedPreferences} className="underline">Retry saved preferences refresh</button></div>}</>}
+    tools={<>
+      <details open><summary>Add a memory</summary><div><ManualPreferenceForm accessToken={accessToken} definitions={preferenceDefinitions} onSaved={handleManualPreferenceSaved}/></div></details>
+      <details><summary>Import from Documents</summary><div>{uploadBatch ? <SuggestionsList batch={uploadBatch} onClose={handleClose} onApplied={handleApplied} accessToken={accessToken}/> : <DocumentUpload onAnalysisComplete={handleAnalysisComplete} accessToken={accessToken}/>}</div></details>
+      {suggestedPreferences.length > 0 && <details><summary>Review suggestions ({suggestedPreferences.length})</summary><div><SuggestionInbox suggestions={suggestedPreferences} accessToken={accessToken} onAccept={handleSuggestionAccept} onReject={handleSuggestionReject}/></div></details>}
+      <details><summary>AI-assisted search</summary><div><PreferenceSearch preferences={activePreferences} definitions={preferenceDefinitions}/></div></details>
+      <details><summary>Memory maintenance</summary><div><MemoryResetPanel accessToken={accessToken} allowDemoReset={allowDemoReset}/></div></details>
+    </>}/>;
 
   // Group preferences by category
   const groupedPreferences = activePreferences.reduce(

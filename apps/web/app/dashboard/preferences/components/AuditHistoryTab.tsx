@@ -2,6 +2,7 @@
 
 import { authenticatedFetch } from '@/lib/authenticated-fetch';
 import { ClientName } from '@/components/local/ClientNames';
+import { useLocalSession } from '@/components/local/LocalSession';
 
 import { gql } from '@apollo/client';
 import { print } from 'graphql';
@@ -232,6 +233,8 @@ export default function AuditHistoryTab({
   onClientFilterChange,
   showHeader = true,
 }: AuditHistoryTabProps) {
+  const demo = useLocalSession()?.capabilities.runtime?.mode === 'demo';
+  const FilterContainer = demo ? 'details' : 'div';
   const [draftFilters, setDraftFilters] = useState<HistoryFilters>({...DEFAULT_FILTERS, actorClientKey: clientFilter ?? ''});
   const [appliedFilters, setAppliedFilters] = useState<HistoryFilters>({...DEFAULT_FILTERS, actorClientKey: clientFilter ?? ''});
   const [items, setItems] = useState<AuditHistoryItem[]>([]);
@@ -467,6 +470,8 @@ export default function AuditHistoryTab({
           </label>
         </div>
 
+        <FilterContainer className={demo ? 'demo-activity-filters' : ''}>
+        {demo && <summary>Filter activity</summary>}
         <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-3">
           <label className="text-sm">
             <span className="block font-medium text-gray-700 mb-1">Slug</span>
@@ -645,6 +650,7 @@ export default function AuditHistoryTab({
           </button>
         </div>
 
+        </FilterContainer>
         {activeFilterChips.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
             {activeFilterChips.map((chip) => (

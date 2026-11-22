@@ -20,7 +20,10 @@ export default function HistoryTabs({
   accessToken,
   preferenceDefinitions,
 }: HistoryTabsProps) {
-  const local = !!useLocalSession();
+  const session = useLocalSession();
+  const local = !!session;
+  const demo = session?.capabilities.runtime?.mode === 'demo';
+  const Maintenance = demo ? 'details' : 'div';
   const [clientFilter, setClientFilter] = useState(() => local && typeof window !== 'undefined' ? activityClientKey(window.location.hash) : '');
   const [activeTab, setActiveTab] = useState<'audit' | 'mcp'>(() => clientFilter ? 'mcp' : 'audit');
   const [generation, setGeneration] = useState(0);
@@ -81,13 +84,16 @@ export default function HistoryTabs({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border bg-white p-5 space-y-3">
+    <div className={demo ? 'demo-history-layout demo-activity' : 'space-y-6'}>
+      <Maintenance className={demo ? 'demo-activity-maintenance' : 'rounded-lg border bg-white p-5 space-y-3'}>
+        {demo && <summary>History maintenance</summary>}
+        <div className={demo ? 'demo-maintenance-content' : 'space-y-3'}>
         <p>Mutation and MCP access history stay until explicitly cleared. Clearing history preserves current memory, live provenance, schema, identity and client access.</p>
         <p className="text-sm text-gray-600">Old values may remain in history after Clear memory. History clearing does not erase backups, disk remnants or other clients’ transcripts.</p>
         <button type="button" disabled={clearing} onClick={() => { setConfirmation(''); setConfirming(true); }} className="text-red-700 underline disabled:opacity-50">{clearing ? 'Clearing history…' : 'Clear both history streams'}</button>
         {message && <p role="status">{message}</p>}
-      </div>
+        </div>
+      </Maintenance>
       <dialog ref={dialog} onCancel={() => setConfirming(false)} className="rounded-lg p-6 max-w-xl backdrop:bg-black/40">
         <form onSubmit={(event) => { event.preventDefault(); void clear(); }} className="space-y-4">
           <h2 className="text-xl font-semibold">Clear both history streams?</h2>
@@ -109,7 +115,7 @@ export default function HistoryTabs({
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          Audit
+          {demo ? 'Context changes' : 'Audit'}
         </button>
         <button
           type="button"
@@ -122,7 +128,7 @@ export default function HistoryTabs({
               : 'text-gray-600 hover:bg-gray-100'
           }`}
         >
-          MCP Access
+          {demo ? 'Assistant access' : 'MCP Access'}
         </button>
       </div>
 

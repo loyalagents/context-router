@@ -70,12 +70,27 @@ try{
  phase('native-demo-rename-domain-isolation-reopen-unchanged-token-authority-and-receipt');
  const prerequisite=localUiBrowserPrerequisite(repository,process.env),{chromium}=createRequire(path.join(repository,'apps/web/package.json'))('playwright');browser=await chromium.launch({headless:true,executablePath:prerequisite.executable,env:{PATH:'/usr/bin:/bin',HOME:root}});const context=await browser.newContext(),outbound=[];await context.route('**/*',route=>{if(new URL(route.request().url()).origin!==ready.origin){outbound.push('outside-active-origin');return route.abort();}return route.continue();});const page=await context.newPage();page.setDefaultTimeout(10000);
  await page.goto(ready.origin+'/dashboard');assert.equal(await page.getByRole('complementary',{name:'Demo mode'}).count(),0);await page.getByLabel('Unlock token').fill((await fs.readFile(ready.unlockFile,'utf8')).trim());await page.getByRole('button',{name:'Unlock local dashboard'}).click();
- for(const name of ['Dashboard','Account Information','Profile Memory'])await page.getByRole('heading',{name,exact:true}).waitFor();
- const navigation=[['Edit Profile','/dashboard/profile'],['Preferences','/dashboard/preferences'],['Form Fill','/dashboard/form-fill'],['Audit History','/dashboard/history'],['Preference Schema','/dashboard/schema'],['Permission Grants','/dashboard/permissions']];
- assert.deepEqual(await page.locator('a[href^="/dashboard/"]').evaluateAll(links=>links.map(a=>[a.textContent.trim(),a.getAttribute('href')])),navigation);
- const summary=page.getByText('Demo walkthrough (optional)',{exact:true}),guide=page.locator('details').filter({has:summary});assert.equal(await guide.getAttribute('open'),null);assert.equal(await guide.getByRole('button',{name:'Copy step 1 prompt',exact:true}).isVisible(),false);await page.screenshot({path:path.join(root,'demo-dashboard.png'),fullPage:true});
- await summary.click();assert.equal(await guide.getByRole('button',{name:/Copy step [1-5] prompt/}).count(),5);await context.grantPermissions(['clipboard-read','clipboard-write'],{origin:ready.origin});const prompt=await guide.locator('li p').first().innerText();await guide.getByRole('button',{name:'Copy step 1 prompt',exact:true}).click();assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),prompt);await page.screenshot({path:path.join(root,'demo-walkthrough-expanded.png'),fullPage:true});await summary.click();assert.equal(await guide.getAttribute('open'),null);
- for(const [label,view,heading] of [['Edit Profile','profile','Edit Profile'],['Preferences','preferences','Preferences'],['Preference Schema','schema','Preference Schema'],['Permission Grants','permissions','MCP Clients'],['Audit History','history','Audit History']]){await page.goto(ready.origin+'/dashboard');await page.getByRole('link',{name:label,exact:true}).click();await page.waitForURL(ready.origin+'/dashboard/'+view);await page.getByRole('heading',{name:heading,exact:true}).waitFor();await page.getByRole('complementary',{name:'Demo mode'}).waitFor();}
+ await page.getByRole('heading',{name:'Your context',exact:true}).waitFor();
+ const navigation=page.getByRole('navigation',{name:'Main navigation'});
+ assert.deepEqual(await navigation.getByRole('link').allTextContents(),['Context','Connections','Activity']);
+ const contextList=page.getByRole('region',{name:'Saved context'});
+ assert.equal(await contextList.getByRole('button').count(),189);
+ assert.equal(await page.getByRole('button',{name:'Smart search',exact:true}).isVisible(),false);
+ await page.screenshot({path:path.join(root,'demo-dashboard.png'),fullPage:true});
+ for(const [label,view,heading] of [['Connections','permissions','Connections'],['Activity','history','Activity']]){await navigation.getByRole('link',{name:label,exact:true}).click();await page.waitForURL(ready.origin+'/dashboard/'+view);await page.getByRole('heading',{name:heading,exact:true}).waitFor();await page.getByRole('complementary',{name:'Demo mode'}).waitFor();}
+ await navigation.getByRole('link',{name:'Context',exact:true}).click();await contextList.waitFor();
+ for(const width of [1280,1440]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);}
+ const firstValue=await page.locator('.demo-detail-value').innerText();
+ await page.getByRole('button',{name:'Edit context',exact:true}).click();
+ await page.locator('.demo-inspector textarea').fill(firstValue+' — artifact visual trial');
+ await page.getByRole('button',{name:'Save changes',exact:true}).click();
+ await page.getByRole('button',{name:'Edit context',exact:true}).waitFor();
+ assert.equal(await page.locator('.demo-detail-value').innerText(),firstValue+' — artifact visual trial');
+ await page.reload();await page.getByRole('heading',{name:'Your context',exact:true}).waitFor();
+ await page.getByLabel('Search your context').fill('artifact visual trial');
+ await contextList.getByRole('button').first().click();
+ assert.equal(await page.locator('.demo-detail-value').innerText(),firstValue+' — artifact visual trial');
+ await page.getByRole('button',{name:'Edit context',exact:true}).click();await page.locator('.demo-inspector textarea').fill(firstValue);await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.getByRole('button',{name:'Edit context',exact:true}).waitFor();
  await page.goto(ready.origin+'/dashboard/permissions');
  const authority=()=>page.evaluate(async()=>{const response=await fetch('/api/local/mcp/list',{method:'POST',headers:{'content-type':'application/json','x-context-router-ui':'1',authorization:'Bearer '+sessionStorage.getItem('context-router.browser-session.v1')},body:'{}'});if(!response.ok)throw new Error('Authority read failed');return (await response.json()).items;});
  const permissionBefore=await authority(),selectedId=demoReceipt.clients.agentB;
@@ -100,7 +115,7 @@ try{
  assert.deepEqual((await authority()).map(({summary,ruleCount,...row})=>row),permissionBefore.map(({summary,ruleCount,...row})=>row));
  await permissionPanel.screenshot({path:path.join(root,'demo-permissions-save.png')});
  phase('installed-demo-permissions-save-selected-client-only-personal-receipt-preservation-and-real-mcp');
- assert.deepEqual(outbound,[]);await context.close();await browser.close();browser=undefined;phase('real-packaged-shared-dashboard-optional-guide-and-reused-views');
+ assert.deepEqual(outbound,[]);await context.close();await browser.close();browser=undefined;phase('real-packaged-sidebar-context-edit-persistence-and-reused-views');
  if(browserOnly){await stop(current,ready);receipt.status='passed';}else{
  const exports=path.join(envelope,'demo',firstStore,'exports'),a=await client(ready,path.join(exports,'agent-a.token')),b=await client(ready,path.join(exports,'agent-b.token')),c=await client(ready,path.join(exports,'agent-c.token'));
  const slug='home.demo001.artifact_note';await call(a,'mutatePreferences',{operation:'CREATE_DEFINITION',definition:{slug,description:'Explicit synthetic artifact change',valueType:'STRING',scope:'GLOBAL',isSensitive:true}});await call(a,'mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug,value:'"fresh portable artifact"'}});
