@@ -1,3 +1,4 @@
+import { SessionPermissionActivity, permissionChanges, type PermissionChange, type PermissionActivity } from './session-permission-activity';
 import { setImmediate as yieldToRequests } from 'node:timers/promises';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { SqliteMcpCredentials } from '../infrastructure/storage/sqlite/sqlite-mcp-credentials';
@@ -9,6 +10,11 @@ import { requireEditable, summarizePermissions, previewPermissions } from './loc
 
 /** Browser administration reads one bounded SQLite snapshot, then uses MCP's evaluator. */
 export class LocalUiManagement {
+  private readonly activity = new SessionPermissionActivity();
+  private recordChange(id: string, action: PermissionActivity['action'], changes: () => PermissionChange[]) {
+    // A presentation failure must never turn a committed authority change into an error.
+    try { return this.activity.record(id, action, changes()); } catch { return null; }
+  }
   constructor(
     private readonly credentials: SqliteMcpCredentials,
     private readonly principalId: string,
@@ -70,6 +76,15 @@ export class LocalUiManagement {
     const invalid = () => {
       throw new BadRequestException('Local MCP administration rejected');
     };
+    if (route === '/api/local/mcp/changes') {
+      if (keys !== '') return invalid();
+      return this.activity.read();
+    }
+    if (route === '/api/local/mcp/changes/clear') {
+      if (keys !== 'sessionId,throughSequence') return invalid();
+      revalidate();
+      return this.activity.clear(body.sessionId, body.throughSequence);
+    }
     if (route === '/api/local/mcp/list') {
       if (keys !== '' && (keys !== 'after' || typeof body.after !== 'string'))
         invalid();
@@ -315,7 +330,7 @@ export class LocalUiManagement {
           },
           revalidate,
         );
-        return { changed: true, ...result };
+        return { changed: true, ...result, changeId: this.recordChange(id, 'save', () => permissionChanges(snapshot.client.policy, policy, snapshot.grants, edits)) };
       } catch (error) {
         if (
           error instanceof Error &&
@@ -337,9 +352,11 @@ export class LocalUiManagement {
       }
       if (route === '/api/local/mcp/revoke' && (keys === 'generation,id' || keys === 'generation,id,revision')) {
         if (body.revision !== undefined && (typeof body.revision !== 'string' || !/^[a-f0-9]{64}$/.test(body.revision))) return invalid();
-        return {
-          client: this.credentials.revoke(id, body.generation as number, body.revision as string | undefined),
-        };
+        const client = this.credentials.revoke(id, body.generation as number, body.revision as string | undefined);
+        // Revoke increments generation only for a real transition; no catalog read is needed.
+        this.recordChange(id, 'revoke', () => client.generation === Number(body.generation) + 1
+          ? [{kind:'connection', before:'Active', after:'Revoked'}] : []);
+        return { client };
       }
       if (
         route === '/api/local/mcp/grant' &&
@@ -355,6 +372,7 @@ export class LocalUiManagement {
           return invalid();
         const target = body.target,
           action = body.action;
+        const before = this.credentials.inspectForUi(id);
         this.credentials.grant(
           id,
           target,
@@ -363,6 +381,8 @@ export class LocalUiManagement {
           { generation: body.generation as number, revision: body.revision },
           (snapshot) => this.allowUnderMaximum(snapshot, target, action),
         );
+        this.recordChange(id, 'grant', () => before.status === 'AVAILABLE'
+          ? permissionChanges(before.client.policy, before.client.policy, before.grants, validateLocalMcpGrantEdits([{target,action,effect:body.effect}])) : []);
         return { changed: true };
       }
       return invalid();

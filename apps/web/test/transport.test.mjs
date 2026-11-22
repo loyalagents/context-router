@@ -120,3 +120,10 @@ test('permissions discovery and preview are fixed human routes and Save is never
   await assert.rejects(transport.request('/api/local/mcp/save',{method:'POST',body:'{}'}),/lost/);
   assert.deepEqual(calls,['/api/local/mcp/targets','/api/local/mcp/preview','/api/local/mcp/save']);
 });
+
+test('session activity read and clear stay authenticated and an uncertain clear is never retried',async()=>{
+ const calls=[];const transport=createLocalTransport(async(route,options)=>{calls.push([route,options]);if(route.endsWith('/clear'))throw Error('lost clear');return new Response('{}');});transport.setSession(token);
+ await transport.request('/api/local/mcp/changes',{method:'POST',body:'{}'});
+ await assert.rejects(transport.request('/api/local/mcp/changes/clear',{method:'POST',body:'{}'}),/lost clear/);assert.equal(calls.length,2);assert.equal(calls[1][1].headers.get('authorization'),'Bearer '+token);
+ await assert.rejects(transport.request('/api/local/mcp/changes?principal=x',{method:'POST'}));transport.clear();await assert.rejects(transport.request('/api/local/mcp/changes',{method:'POST'}));
+});

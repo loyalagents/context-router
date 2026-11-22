@@ -6,7 +6,8 @@ import { GRAPHQL_URL } from '@/lib/runtime-config';
 import AuditHistoryTab from '../preferences/components/AuditHistoryTab';
 import McpAccessHistoryTab from './McpAccessHistoryTab';
 import { useLocalSession } from '@/components/local/LocalSession';
-import { activityClientKey, localClientId } from '@/lib/local-client-name';
+import { ClearSessionPermissionActivity } from '@/components/local/SessionPermissionActivity';
+import { activityChangeId, activityClientKey, localClientId } from '@/lib/local-client-name';
 
 interface HistoryTabsProps {
   accessToken: string;
@@ -27,6 +28,7 @@ export default function HistoryTabs({
   const Maintenance = demo ? 'details' : 'div';
   const [clientFilter, setClientFilter] = useState(() => local && typeof window !== 'undefined' ? activityClientKey(window.location.hash) : '');
   const [activeTab, setActiveTab] = useState<'audit' | 'mcp'>(() => clientFilter || demo ? 'mcp' : 'audit');
+  const [highlightChangeId, setHighlightChangeId] = useState(() => local && typeof window !== 'undefined' ? activityChangeId(window.location.hash) : null);
   const [generation, setGeneration] = useState(0);
   const [clearing, setClearing] = useState(false);
   const [confirmation, setConfirmation] = useState('');
@@ -45,10 +47,11 @@ export default function HistoryTabs({
     const navigate = () => {
       const key = activityClientKey(window.location.hash);
       setClientFilter(key);
+      setHighlightChangeId(activityChangeId(window.location.hash));
       if (key) setActiveTab('mcp');
       invalidate();
     };
-    const showAll = () => { setClientFilter(''); setActiveTab('mcp'); invalidate(); };
+    const showAll = () => { setClientFilter(''); setHighlightChangeId(null); setActiveTab('mcp'); invalidate(); };
     window.addEventListener('context-router.activity-all', showAll);
     window.addEventListener('hashchange', navigate);
     window.addEventListener('popstate', navigate);
@@ -56,6 +59,7 @@ export default function HistoryTabs({
   }, [local, invalidate]);
   const changeClientFilter = (value: string) => {
     setClientFilter(value);
+    setHighlightChangeId(null);
     const id = localClientId(value);
     const { pathname, search, hash } = window.location;
     const destination = pathname + search + (id ? `#mcp-client=${id}` : '');
@@ -93,14 +97,15 @@ export default function HistoryTabs({
         <div className={demo ? 'demo-maintenance-content' : 'space-y-3'}>
         <p>Mutation and MCP access history stay until explicitly cleared. Clearing history preserves current memory, live provenance, schema, identity and client access.</p>
         <p className="text-sm text-gray-600">Old values may remain in history after Clear memory. History clearing does not erase backups, disk remnants or other clients’ transcripts.</p>
-        <button type="button" disabled={clearing} onClick={() => { setConfirmation(''); setConfirming(true); }} className="text-red-700 underline disabled:opacity-50">{clearing ? 'Clearing history…' : 'Clear both history streams'}</button>
+        <button type="button" disabled={clearing} onClick={() => { setConfirmation(''); setConfirming(true); }} className="text-red-700 underline disabled:opacity-50">{clearing ? 'Clearing history…' : demo ? 'Clear stored history' : 'Clear both history streams'}</button>
         {message && <p role="status">{message}</p>}
+        {demo && <ClearSessionPermissionActivity onCleared={() => { invalidate(); channel.current?.postMessage('invalidate'); }}/>}
         </div>
       </Maintenance>
       <dialog ref={dialog} onCancel={() => setConfirming(false)} className="rounded-lg p-6 max-w-xl backdrop:bg-black/40">
         <form onSubmit={(event) => { event.preventDefault(); void clear(); }} className="space-y-4">
-          <h2 className="text-xl font-semibold">Clear both history streams?</h2>
-          <p>This permanently deletes recorded changes and MCP access events. Current memory and client access remain. There is no undo.</p>
+          <h2 className="text-xl font-semibold">{demo ? 'Clear stored history?' : 'Clear both history streams?'}</h2>
+          <p>This permanently deletes stored context changes and MCP access events. Current memory and client access remain. There is no undo.</p>
           <label htmlFor="history-confirmation" className="block">Type CLEAR HISTORY to confirm</label>
           <input id="history-confirmation" autoFocus value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="border rounded p-2 w-full" autoComplete="off" />
           <div className="flex gap-4"><button disabled={confirmation !== 'CLEAR HISTORY'} className="bg-red-700 text-white rounded px-4 py-2 disabled:bg-gray-400">Clear history permanently</button><button type="button" onClick={() => setConfirming(false)}>Cancel</button></div>
@@ -135,6 +140,7 @@ export default function HistoryTabs({
 
       <div id="mcp-panel" role="tabpanel" aria-labelledby="mcp-tab" hidden={activeTab !== 'mcp'}>
         <McpAccessHistoryTab
+          highlightChangeId={highlightChangeId}
           key={`mcp-${generation}`}
           invalidationSignal={pending.current.signal}
           clientFilter={local ? clientFilter : undefined}

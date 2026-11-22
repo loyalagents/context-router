@@ -1,0 +1,46 @@
+'use client';
+
+import {useEffect, useRef, useState} from 'react';
+import {localJson} from '@/lib/authenticated-fetch';
+import {ClientName} from './ClientNames';
+
+export type PermissionChange = {kind:'maximum'|'scope'|'sensitive'|'rule'|'connection';target?:string;action?:string;before:string;after:string};
+export type PermissionActivity = {id:string;sequence:number;occurredAt:string;clientKey:string;actor:'dashboard-user';action:'save'|'grant'|'revoke';changes:PermissionChange[];omittedChanges:number};
+export type PermissionActivityPage = {sessionId:string;latestSequence:number;limit:number;truncated:boolean;items:PermissionActivity[]};
+const value = (change:PermissionChange, text:string) => change.kind === 'maximum'
+  ? text === 'None' ? 'Blocked' : text.split(', ').map(capability=>({ 'preferences:read':'Read', 'preferences:suggest':'Suggest', 'preferences:write':'Write', 'preferences:define':'Manage definitions' }[capability]??capability)).join(', ')
+  : text;
+const label = (change:PermissionChange) => change.kind === 'maximum' ? 'Maximum capabilities' : change.kind === 'sensitive' ? 'Sensitive context' : change.kind === 'connection' ? 'Connection' : change.kind === 'scope' ? `Allowed scope · ${change.target}` : `${change.action} rule · ${change.target}`;
+
+export function PermissionActivityRow({event,highlight}:{event:PermissionActivity;highlight:boolean}) {
+  const element=useRef<HTMLDetailsElement>(null);
+  useEffect(()=>{if(highlight){element.current?.scrollIntoView({block:'nearest'});element.current?.focus({preventScroll:true});}},[highlight]);
+  return <details ref={element} tabIndex={highlight?-1:undefined} open={highlight||undefined} data-permission-change={event.id} className={`m-3 rounded-lg border-l-4 border-violet-500 bg-violet-50 p-4 ${highlight?'ring-2 ring-violet-300':''}`}>
+    <summary className="cursor-pointer"><strong>You {event.action==='revoke'?'revoked access for':'changed permissions for'} <ClientName clientKey={event.clientKey} showId={false}/></strong>
+      <span className="mt-1 block text-sm text-gray-600">{event.changes.slice(0,2).map(change=>`${label(change)}: ${value(change,change.before)} → ${value(change,change.after)}`).join(' · ')}{event.changes.length>2?' · More changes':''}</span>
+      <span className="mt-1 block text-xs text-gray-500">Dashboard change · {new Date(event.occurredAt).toLocaleTimeString()}</span>
+    </summary>
+    <div className="mt-3 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th className="p-2">Setting</th><th className="p-2">Before</th><th className="p-2">After</th></tr></thead><tbody>{event.changes.map((change,index)=><tr key={index} className="border-t border-violet-200"><td className="break-all p-2">{label(change)}</td><td className="p-2">{value(change,change.before)}</td><td className="p-2">{value(change,change.after)}</td></tr>)}</tbody></table></div>
+    {!!event.omittedChanges&&<p className="mt-2 text-sm">{event.omittedChanges} additional setting changes were omitted from this bounded session record.</p>}
+    <p className="mt-2 text-xs">Settings changed as shown. More specific rules may affect access.</p>
+    <p className="mt-2 break-all text-xs">Assistant: {event.clientKey} · {new Date(event.occurredAt).toLocaleString()}</p>
+  </details>;
+}
+
+export function ClearSessionPermissionActivity({onCleared}:{onCleared:()=>void}) {
+  const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
+  const life=useRef<AbortController|null>(null);
+  useEffect(()=>()=>life.current?.abort(),[]);
+  async function clear() {
+    if(busy)return;const controller=new AbortController();life.current=controller;setBusy(true);setMessage('');
+    try{
+      const snapshot=await localJson<PermissionActivityPage>('/api/local/mcp/changes',{},controller.signal);
+      if(controller.signal.aborted)return;
+      if(!window.confirm('Clear dashboard permission changes recorded so far in this app session? Stored history and current permissions stay unchanged.'))return;
+      await localJson('/api/local/mcp/changes/clear',{sessionId:snapshot.sessionId,throughSequence:snapshot.latestSequence},controller.signal);
+      if(!controller.signal.aborted){setMessage('Session permission changes cleared. New changes may appear.');onCleared();}
+    }catch{if(!controller.signal.aborted)setMessage('Session clear was not confirmed. Refresh and review before trying again.');}
+    finally{if(!controller.signal.aborted)setBusy(false);}
+  }
+  return <div className="mt-3"><p className="text-sm">Temporary permission-change entries are separate from stored history.</p><button type="button" disabled={busy} className="text-red-700 underline disabled:opacity-50" onClick={()=>void clear()}>{busy?'Clearing session changes…':'Clear session permission changes'}</button>{message&&<p role="status">{message}</p>}</div>;
+}

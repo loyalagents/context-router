@@ -447,6 +447,7 @@ test('a failure after COMMIT remains an error even though one complete Save is d
   f.database.connect=connect;
   assert.deepEqual(f.store.authenticate(f.token).policy,fullPolicy);
   assert.equal(f.store.inspectForUi(f.a.id).grants.length,1);
+  assert.equal((await p.service.handle('/api/local/mcp/changes',{})).items.length,0);
 });
 
 test('future and archived targets disclose rule-removal or ALLOW widening even without current matching fields',async t=>{
@@ -1007,4 +1008,66 @@ test('preview discloses narrowing of future scope, sensitivity, DEFINE, value le
       p.preview.narrowing.some((text) => text.includes(term)),
       term,
     );
+});
+
+async function saveSessionPermissions(service, f, policy, edits = []) {
+ const state=await service.handle('/api/local/mcp/inspect',{id:f.a.id});
+ const body={id:f.a.id,generation:state.client.generation,revision:state.revision,catalogRevision:state.catalogRevision,policy,edits};
+ const preview=await service.handle('/api/local/mcp/preview',body);
+ return service.handle('/api/local/mcp/save',{...body,previewKey:preview.previewKey});
+}
+test('session activity records one real Save with exact changes, skips preview/no-op/conflicts and contains no secrets',async t=>{
+ const f=fixture(t),p=await proposal(f,fullPolicy,[{target:'work.*',action:'READ',effect:'DENY'}]);
+ const read=()=>p.service.handle('/api/local/mcp/changes',{});
+ assert.equal((await read()).items.length,0);
+ const saved=await p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey});
+ let log=await read();assert.equal(log.items.length,1);assert.equal(saved.changeId,log.items[0].id);
+ assert.equal(log.items[0].clientKey,'local:'+f.a.id);assert.equal(log.items[0].actor,'dashboard-user');
+ assert.ok(log.items[0].changes.some(c=>c.kind==='rule'&&c.target==='work.*'&&c.action==='READ'&&c.before==='No rule'&&c.after==='DENY'));
+ const serialized=JSON.stringify(log);assert.equal(serialized.includes(f.token),false);assert.equal(serialized.includes('secret_digest'),false);
+ assert.equal((await saveSessionPermissions(p.service,f,fullPolicy,[{target:'work.*',action:'READ',effect:'DENY'}])).changeId,null);
+ assert.equal((await read()).items.length,1);
+ await assert.rejects(p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey}));assert.equal((await read()).items.length,1);
+ const {LocalUiManagement}=require('../../dist/local-ui/local-ui-management.js');
+ assert.equal((await new LocalUiManagement(f.store,f.principalId).handle('/api/local/mcp/changes',{})).items.length,0);
+});
+test('session activity bounds retention and clear preserves newer events and rejects an old app session',async t=>{
+ const f=fixture(t),p=await proposal(f,fullPolicy);
+ for(let i=0;i<53;i++)await saveSessionPermissions(p.service,f,{...fullPolicy,allowSensitive:i%2===0});
+ const log=await p.service.handle('/api/local/mcp/changes',{});assert.equal(log.items.length,50);assert.equal(log.truncated,true);assert.equal(log.latestSequence,53);assert.ok(Buffer.byteLength(JSON.stringify(log))<512*1024);
+ await p.service.handle('/api/local/mcp/changes/clear',{sessionId:log.sessionId,throughSequence:0});
+ assert.equal((await p.service.handle('/api/local/mcp/changes',{})).truncated,true,'a stale clear must retain the notice for later evictions');
+ await saveSessionPermissions(p.service,f,{...fullPolicy,allowSensitive:false});
+ await p.service.handle('/api/local/mcp/changes/clear',{sessionId:log.sessionId,throughSequence:log.latestSequence});
+ const after=await p.service.handle('/api/local/mcp/changes',{});assert.equal(after.items.length,1);assert.equal(after.items[0].sequence,54);assert.equal(after.truncated,false);
+ await assert.rejects(p.service.handle('/api/local/mcp/changes/clear',{sessionId:'0'.repeat(32),throughSequence:54}));assert.equal((await p.service.handle('/api/local/mcp/changes',{})).items.length,1);
+ const c=f.database.connect();try{assert.equal(c.all('SELECT * FROM local_mcp_clients').length,2);}finally{c.close();}
+});
+test('advanced dashboard grant and revoke record only effective changes for their exact instance',async t=>{
+ const f=fixture(t),p=await proposal(f,fullPolicy),service=p.service;
+ const inspect=()=>service.handle('/api/local/mcp/inspect',{id:f.a.id});
+ let state=await inspect();const body={id:f.a.id,generation:1,revision:state.revision,target:'work.*',action:'READ',effect:'DENY'};
+ await service.handle('/api/local/mcp/grant',body);state=await inspect();await service.handle('/api/local/mcp/grant',{...body,revision:state.revision});
+ await service.handle('/api/local/mcp/revoke',{id:f.a.id,generation:1});await service.handle('/api/local/mcp/revoke',{id:f.a.id,generation:2});
+ const log=await service.handle('/api/local/mcp/changes',{});assert.equal(log.items.length,2);assert.equal(log.items[0].action,'revoke');assert.equal(log.items[1].action,'grant');assert.ok(log.items.every(e=>e.clientKey==='local:'+f.a.id));
+});
+test('a failed write rolls back and does not invent session change records',async t=>{
+ const f=fixture(t),p=await proposal(f,fullPolicy);const before=f.store.authenticate(f.token).policy,connect=f.database.connect.bind(f.database);
+ f.database.connect=()=>{const c=connect(),exec=c.exec.bind(c);let writing=false;c.exec=sql=>{if(sql==='BEGIN IMMEDIATE')writing=true;if(writing&&sql==='COMMIT')throw Error('injected commit failure');return exec(sql);};return c;};
+ await assert.rejects(p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey}),/injected commit failure/);f.database.connect=connect;
+ assert.deepEqual(f.store.authenticate(f.token).policy,before);
+ assert.equal((await p.service.handle('/api/local/mcp/changes',{})).items.length,0);
+});
+
+test('session logging failure cannot mask a committed Save; separate stores do not share activity',async t=>{
+ const f=fixture(t),p=await proposal(f,fullPolicy);p.service.activity.record=()=>{throw Error('synthetic logger failure');};
+ const result=await p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey});assert.equal(result.changed,true);assert.equal(result.changeId,null);assert.deepEqual(f.store.authenticate(f.token).policy,fullPolicy);
+ const other=fixture(t),q=await proposal(other,fullPolicy);assert.equal((await q.service.handle('/api/local/mcp/changes',{})).items.length,0);
+});
+
+test('large session diffs are bounded and disclose truncation, while reordered policy sets are a no-op',async t=>{
+ const f=fixture(t),p=await proposal(f,fullPolicy,Array.from({length:80},(_,i)=>({target:`work.field_${i}`,action:'READ',effect:'DENY'})));
+ await p.service.handle('/api/local/mcp/save',{...p.body,previewKey:p.preview.previewKey});const log=await p.service.handle('/api/local/mcp/changes',{});assert.equal(log.items.length,1);assert.equal(log.items[0].changes.length,24);assert.ok(log.items[0].omittedChanges>=56);assert.ok(Buffer.byteLength(JSON.stringify(log.items[0]))<=8192);
+ assert.equal((await saveSessionPermissions(p.service,f,{...fullPolicy,capabilities:[...fullPolicy.capabilities].reverse()})).changeId,null);assert.equal((await p.service.handle('/api/local/mcp/changes',{})).items.length,1);
+ const {LocalUiManagement}=require('../../dist/local-ui/local-ui-management.js');const reopened=new LocalUiManagement(f.store,f.principalId);await assert.rejects(reopened.handle('/api/local/mcp/changes/clear',{sessionId:log.sessionId,throughSequence:0}),/session changed/);
 });

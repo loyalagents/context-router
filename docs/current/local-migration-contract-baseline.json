@@ -5465,6 +5465,48 @@
       "contract": "mcp",
       "kind": "tool",
       "reference": "searchPreferences"
+    },
+    {
+      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/changes"
+    },
+    {
+      "path": "apps/web/components/local/SessionPermissionActivity.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/changes"
+    },
+    {
+      "path": "apps/web/components/local/SessionPermissionActivity.tsx",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/changes/clear"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/changes"
+    },
+    {
+      "path": "apps/web/lib/local-transport.ts",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/changes/clear"
+    },
+    {
+      "path": "docs/plans/active/demo-sidebar-redesign/activity-session.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/changes"
+    },
+    {
+      "path": "docs/plans/active/demo-sidebar-redesign/activity-session.md",
+      "contract": "http",
+      "kind": "route",
+      "reference": "/api/local/mcp/changes/clear"
     }
   ],
   "outboundSinkInventory": [

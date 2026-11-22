@@ -12,6 +12,8 @@ import {
   type PermissionConflict,
 } from "./permissions-draft";
 import { useDemoDraft } from "./DemoDrafts";
+import Link from "next/link";
+import {useLocalSession} from "./LocalSession";
 import { ClientName } from "./ClientNames";
 
 export type McpPolicy = {
@@ -183,6 +185,8 @@ export default function McpPermissionsEditor({
     policy: null,
     edits: [],
   });
+  const demo = useLocalSession()?.capabilities.runtime?.mode === "demo";
+  const [changeId,setChangeId] = useState<string|null>(null);
   const outcomeRef = useRef<HTMLDivElement>(null);
   const interacted = useRef(false);
   useDemoDraft(!!intent.current?.intents.length, saving);
@@ -431,10 +435,12 @@ export default function McpPermissionsEditor({
     setSaving(true);
     setPreview(null);
     setOutcome(null);
+    setChangeId(null);
     setError("");
     try {
       const result = await localJson<{
         changed: boolean;
+        changeId?: string|null;
         client: Client;
         revision: string;
       }>("/api/local/mcp/save", body, c.signal);
@@ -456,6 +462,7 @@ export default function McpPermissionsEditor({
           grants: acknowledgedGrants,
         }),
       );
+      setChangeId(typeof result.changeId === "string" && /^[a-f0-9]{32}$/.test(result.changeId) ? result.changeId : null);
       setOutcome({
         kind: "confirmed",
         message:
@@ -529,6 +536,7 @@ export default function McpPermissionsEditor({
                 : "Save not confirmed"}
           </strong>
           <p>{outcome.message}</p>
+          {demo && outcome.kind === "confirmed" && changeId && <Link prefetch={false} className="mt-2 inline-block underline" href={`/dashboard/history#mcp-client=${client.id}&change=${changeId}`}>View change in Activity</Link>}
         </div>
       )}
       {error && <p role="alert">{error}</p>}

@@ -1,6 +1,7 @@
 'use client';
 
-import { authenticatedFetch } from '@/lib/authenticated-fetch';
+import { PermissionActivityRow, type PermissionActivityPage } from '@/components/local/SessionPermissionActivity';
+import { authenticatedFetch, localJson } from '@/lib/authenticated-fetch';
 import { ClientName } from '@/components/local/ClientNames';
 import { useLocalSession } from '@/components/local/LocalSession';
 
@@ -89,6 +90,7 @@ interface McpAccessHistoryTabProps {
   invalidationSignal?: AbortSignal;
   clientFilter?: string;
   onClientFilterChange?: (value: string) => void;
+  highlightChangeId?: string | null;
 }
 
 function formatAbsoluteTimestamp(value: string): string {
@@ -181,12 +183,15 @@ export default function McpAccessHistoryTab({
   invalidationSignal,
   clientFilter,
   onClientFilterChange,
+  highlightChangeId,
 }: McpAccessHistoryTabProps) {
   const demo = useLocalSession()?.capabilities.runtime?.mode === 'demo';
   const FilterContainer = demo ? 'details' : 'div';
   const [draftFilters, setDraftFilters] = useState<McpAccessFilters>({...DEFAULT_FILTERS, clientKey: clientFilter ?? ''});
   const [appliedFilters, setAppliedFilters] = useState<McpAccessFilters>({...DEFAULT_FILTERS, clientKey: clientFilter ?? ''});
   const [items, setItems] = useState<McpAccessHistoryItem[]>([]);
+  const [permissionPage,setPermissionPage] = useState<PermissionActivityPage|null>(null);
+  const [permissionError,setPermissionError] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState(false);
@@ -204,7 +209,7 @@ export default function McpAccessHistoryTab({
   useEffect(() => {
     if (clientFilter === undefined) return;
     requestVersionRef.current++; pendingRef.current?.abort();
-    setItems([]); setNextCursor(null); setHasNextPage(false); setExpandedIds({});
+    setItems([]); setPermissionPage(null); setPermissionError(false); setNextCursor(null); setHasNextPage(false); setExpandedIds({});
     setDraftFilters(previous => ({...previous, clientKey: clientFilter}));
     setAppliedFilters(previous => ({...previous, clientKey: clientFilter}));
   }, [clientFilter]);
@@ -312,7 +317,12 @@ export default function McpAccessHistoryTab({
         input.occurredTo = new Date(sanitizedAppliedFilters.occurredTo).toISOString();
       }
 
-      const page = await fetchMcpAccessHistory(accessToken, input, signal);
+      const [page] = await Promise.all([
+        fetchMcpAccessHistory(accessToken, input, signal),
+        demo ? localJson<PermissionActivityPage>('/api/local/mcp/changes', {}, signal).then(page => {
+          if (!signal.aborted && requestVersion === requestVersionRef.current) { setPermissionPage(page); setPermissionError(false); }
+        }).catch(() => { if (!signal.aborted && requestVersion === requestVersionRef.current) setPermissionError(true); }) : Promise.resolve(),
+      ]);
 
       if (signal.aborted || requestVersion !== requestVersionRef.current) {
         return;
@@ -341,7 +351,7 @@ export default function McpAccessHistoryTab({
         setIsLoadingMore(false);
       }
     }
-  }, [accessToken, sanitizedAppliedFilters, invalidationSignal]);
+  }, [accessToken, sanitizedAppliedFilters, invalidationSignal, demo]);
 
   useEffect(() => {
     if (!shouldLoad) {
@@ -366,6 +376,19 @@ export default function McpAccessHistoryTab({
     void loadHistory(lastRequestRef.current.reset, lastRequestRef.current.cursor);
   };
 
+  const requestOnlyFilters = !!(sanitizedAppliedFilters.surface || sanitizedAppliedFilters.operationName || sanitizedAppliedFilters.outcome || sanitizedAppliedFilters.correlationId);
+  const visibleChanges = demo && !requestOnlyFilters ? (permissionPage?.items ?? []).filter(event => {
+    const time=Date.parse(event.occurredAt), oldest=items.at(-1)?.occurredAt;
+    return (!sanitizedAppliedFilters.clientKey || event.clientKey===sanitizedAppliedFilters.clientKey)
+      && (!sanitizedAppliedFilters.occurredFrom || time>=Date.parse(sanitizedAppliedFilters.occurredFrom))
+      && (!sanitizedAppliedFilters.occurredTo || time<=Date.parse(sanitizedAppliedFilters.occurredTo))
+      && (!hasNextPage || !oldest || time>=Date.parse(oldest) || event.id===highlightChangeId);
+  }) : [];
+  const rows = [
+    ...items.map(item=>({kind:'request' as const,item})),
+    ...visibleChanges.map(item=>({kind:'permission' as const,item})),
+  ].sort((a,b)=>Date.parse(b.item.occurredAt)-Date.parse(a.item.occurredAt) || b.item.id.localeCompare(a.item.id));
+
   const toggleExpanded = (id: string) => {
     setExpandedIds((previous) => ({
       ...previous,
@@ -379,12 +402,21 @@ export default function McpAccessHistoryTab({
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
         <div>
-          <h2 className="text-lg font-semibold">{demo ? 'Assistant access' : 'MCP Access'}</h2>
+          <h2 className="text-lg font-semibold">{demo ? 'Assistant activity' : 'MCP Access'}</h2>
           <p className="text-sm text-gray-600 mt-1">
-            {demo ? 'See when an assistant used your context, and what was returned.' : 'Review request-level MCP tool and resource access by connected clients.'}
+            {demo ? 'See dashboard permission changes and requests made by your assistants.' : 'Review request-level MCP tool and resource access by connected clients.'}
           </p>
         </div>
 
+        {demo && <div className="mt-3 text-sm text-gray-600">
+          <p>Up to 50 recent dashboard permission changes from this app session. They disappear when Context Router restarts; CLI changes are not recorded here.</p>
+          <p>Ordered by recorded time. Requests already running may finish under earlier access.</p>
+          <button type="button" className="mt-2 underline" disabled={isLoadingInitial || isLoadingMore} onClick={() => void loadHistory(true)}>Refresh activity</button>
+          {permissionPage?.truncated && <p>Older permission changes have been dropped from this session log.</p>}
+          {requestOnlyFilters && <p>Permission changes are hidden while request-specific filters are active.</p>}
+          {permissionError && <p role="status">Session permission changes could not load. Request history is shown separately; use Refresh to retry.</p>}
+          {highlightChangeId && permissionPage && !permissionError && !permissionPage.items.some(event=>event.id===highlightChangeId && (!sanitizedAppliedFilters.clientKey || event.clientKey===sanitizedAppliedFilters.clientKey)) && <p role="status">This permission change is no longer available in this app session.</p>}
+        </div>}
         <FilterContainer className={demo ? 'demo-activity-filters mt-3' : ''}>
         {demo && <summary>Filter activity</summary>}
         <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2 lg:grid-cols-4">
@@ -563,7 +595,7 @@ export default function McpAccessHistoryTab({
           </div>
         )}
 
-        {isLoadingInitial && items.length === 0 ? (
+        {isLoadingInitial && rows.length === 0 ? (
           <div className="p-6 space-y-3">
             {[0, 1, 2].map((index) => (
               <div
@@ -572,13 +604,15 @@ export default function McpAccessHistoryTab({
               />
             ))}
           </div>
-        ) : items.length === 0 ? (
+        ) : rows.length === 0 ? (
           <div className="p-10 text-center text-gray-500">
-            {demo ? (isFiltered ? 'No assistant activity matches these filters.' : 'No assistant activity yet. Use your connected assistant, then return here.') : (isFiltered ? 'No MCP access events match the current filters.' : 'No MCP access history yet.')}
+            {demo ? (isFiltered ? 'No assistant activity matches these filters.' : 'No assistant activity yet. Change permissions or use your connected assistant, then return here.') : (isFiltered ? 'No MCP access events match the current filters.' : 'No MCP access history yet.')}
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {items.map((item) => {
+            {rows.map((row) => {
+              if (row.kind === 'permission') return <PermissionActivityRow key={'permission:'+row.item.id} event={row.item} highlight={row.item.id===highlightChangeId}/>;
+              const item=row.item;
               const isExpanded = Boolean(expandedIds[item.id]);
 
               return (

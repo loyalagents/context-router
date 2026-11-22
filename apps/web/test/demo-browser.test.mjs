@@ -89,7 +89,7 @@ for(const demo of [false,true])test(`${demo?'demo':'personal'} uses its intended
   await f.page.getByRole('heading',{name:'Your context, in Claude Code',exact:true}).waitFor();await f.page.getByText(/Open the installed Mac demo to launch/).waitFor();
   assert.equal(await f.page.getByText('Connection verified',{exact:true}).count(),0);
   await nav.getByRole('link',{name:'Activity',exact:true}).click();await f.page.getByRole('heading',{name:'Activity',exact:true}).waitFor();
-  assert.equal(await f.page.getByRole('button',{name:'Clear both history streams',exact:true}).isVisible(),false);
+  assert.equal(await f.page.getByRole('button',{name:'Clear stored history',exact:true}).isVisible(),false);
   await nav.getByRole('link',{name:'Context',exact:true}).click();await list.waitFor();
   await f.page.getByRole('button',{name:'Lock dashboard',exact:true}).click();await f.page.getByLabel('Unlock token').waitFor();assert.equal(await list.count(),0);
   return;
@@ -335,4 +335,37 @@ test('demo profile drafts warn on navigation and a completed save clears the war
  await connections.click();assert.equal(dialogs,1);assert.equal(new URL(f.page.url()).pathname,'/dashboard/profile');
  await f.page.getByRole('button',{name:'Save Changes',exact:true}).click();await f.page.getByText('Profile updated successfully.',{exact:true}).waitFor();
  await connections.click();await f.page.getByRole('heading',{name:'Connections',exact:true}).waitFor();assert.equal(dialogs,1);
+});
+
+
+test('demo session permission change links to Activity without requests, survives reload, and interleaves a real denied request', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ const fs=await import('node:fs/promises');const receipt=JSON.parse(await fs.readFile(f.root+'/demo/generation.json','utf8')),id=receipt.clients.agentB;
+ const {connect}=await import('../../backend/scripts/demo/mcp-import.mjs');const peer=await connect(Number(new URL(f.ready.mcpOrigin).port),f.root+'/demo/exports/agent-b.token');t.after(()=>peer.close());
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ await f.page.getByRole('button',{name:'Edit permissions '+id,exact:true}).click();const editor=f.page.getByRole('region',{name:'Edit permissions',exact:true});
+ await editor.getByLabel('Maximum value access').selectOption('Blocked');await editor.getByRole('button',{name:'Preview resulting access',exact:true}).click();await editor.getByRole('region',{name:'Resulting access preview'}).waitFor();
+ await editor.getByRole('button',{name:'Save permissions',exact:true}).click();const link=editor.getByRole('link',{name:'View change in Activity',exact:true});await link.waitFor();const href=await link.getAttribute('href');assert.match(href,new RegExp('#mcp-client='+id+'&change=[a-f0-9]{32}$'));
+ await link.click();const panel=f.page.getByRole('tabpanel',{name:'Assistant access',exact:true});const row=panel.locator('[data-permission-change]');await row.waitFor();assert.equal(await row.count(),1);assert.equal(await row.getAttribute('open'),'');assert.match(await row.innerText(),/Read.*Blocked/s);
+ assert.equal(await panel.locator('.demo-history-row').count(),0,'permission changes appear even before any assistant request');
+ await f.page.reload();await row.waitFor();assert.equal(await row.count(),1);
+ const denied=await peer.callTool({name:'searchPreferences',arguments:{query:'travel.demo001.'}});assert.equal(denied.isError,true);
+ await panel.getByRole('button',{name:'Refresh activity',exact:true}).click();await panel.locator('.demo-history-meta').filter({hasText:'Denied'}).waitFor();
+ assert.equal(await row.count(),1);const order=await panel.locator('[data-permission-change], .demo-history-row').evaluateAll(nodes=>nodes.map(n=>n.hasAttribute('data-permission-change')?'change':'request'));assert.deepEqual(order,['request','change']);
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();await f.page.waitForFunction(()=>location.hash==='');await f.page.goBack();await row.waitFor();assert.equal(new URL(f.page.url()).hash,href.slice(href.indexOf('#')));
+ if(process.env.ACTIVITY_DEMO_SCREENSHOT)await f.page.screenshot({path:process.env.ACTIVITY_DEMO_SCREENSHOT,fullPage:true});
+ await f.page.getByText('History maintenance',{exact:true}).click();f.page.once('dialog',dialog=>dialog.accept());await f.page.getByRole('button',{name:'Clear session permission changes',exact:true}).click();await f.page.getByText('Session permission changes cleared. New changes may appear.',{exact:true}).waitFor();
+ await row.waitFor({state:'hidden'});await panel.getByText('This permission change is no longer available in this app session.',{exact:true}).waitFor();assert.equal(await panel.locator('.demo-history-meta').filter({hasText:'Denied'}).count(),1);
+});
+
+test('demo session permission rows respect client and request filters and remain after a lost Save response', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ const fs=await import('node:fs/promises');const receipt=JSON.parse(await fs.readFile(f.root+'/demo/generation.json','utf8')),id=receipt.clients.agentB;
+ await f.page.route('**/api/local/mcp/save',async route=>{await route.fetch();await route.abort();});
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();await f.page.getByRole('button',{name:'Edit permissions '+id,exact:true}).click();const editor=f.page.getByRole('region',{name:'Edit permissions',exact:true});
+ await editor.getByLabel('Maximum value access').selectOption('Blocked');await editor.getByRole('button',{name:'Preview resulting access',exact:true}).click();await editor.getByRole('region',{name:'Resulting access preview'}).waitFor();await editor.getByRole('button',{name:'Save permissions',exact:true}).click();await editor.getByText('Save not confirmed',{exact:true}).waitFor();assert.equal(await editor.getByRole('link',{name:'View change in Activity',exact:true}).count(),0);
+ await f.page.goto(f.ready.origin+'/dashboard/history#mcp-client='+id);const panel=f.page.getByRole('tabpanel',{name:'Assistant access',exact:true});const row=panel.locator('[data-permission-change]');await row.waitFor();
+ await panel.getByText('Filter activity',{exact:true}).click();await panel.getByLabel('Operation',{exact:true}).fill('searchPreferences');await panel.getByRole('button',{name:'Apply',exact:true}).click();await row.waitFor({state:'hidden'});await panel.getByText('Permission changes are hidden while request-specific filters are active.',{exact:true}).waitFor();
+ await f.page.goto(f.ready.origin+'/dashboard/history#mcp-client='+receipt.clients.agentA);await panel.getByText('No assistant activity matches these filters.',{exact:true}).waitFor();assert.equal(await row.count(),0);
+ await f.page.goto(f.ready.origin+'/dashboard/history#mcp-client='+id);await row.waitFor();assert.equal(await row.count(),1);
 });
