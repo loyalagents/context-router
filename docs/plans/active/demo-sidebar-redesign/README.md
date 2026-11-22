@@ -224,3 +224,25 @@ protocol or named aggregate lifecycle gap requires a full local migration gate.
 Final CI, contract merge-base comparison, live concurrent Claude acceptance and
 full release qualification remain pending. The milestone remains a source-bound
 local demo trial for human use; no merge is authorized.
+
+## Owner acceptance and PR handoff
+
+The owner accepted the delivered `f47c9620` local demo: two Claude Code chats
+were open together and both read the saved context. After closing one chat, the
+remaining chat still read context and the request appeared in Activity. Earlier
+owner checks also confirmed launch, context retrieval, Activity and exit/reopen.
+This closes the requested synthetic-demo multi-chat acceptance on this Mac.
+
+The packaged trial at `f47c9620` passed the installed dashboard/native handoff,
+context editing/persistence, permissions and real MCP checks, plus two overlapping
+offline CLI processes, independent exit, reused login, actual project coding and
+request replay refusal. Source/build inputs were clean and caller integrity was
+verified. Local build/trial receipts remain under `out/claude-multichat-package/`.
+This documentation-only handoff preserves all runtime/build inputs and carries
+forward that artifact and focused evidence; no new app build is required.
+
+The owner requested one PR covering the sidebar redesign and Claude connection
+flow, followed by an independent Claude review. Exact-candidate CI and that
+review remain pending. No merge is authorized. This acceptance does not qualify
+personal-mode onboarding, other Macs, distribution, broad recovery or a general
+production release; HCP backend replacement remains outside this change.
