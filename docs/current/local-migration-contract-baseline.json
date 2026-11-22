@@ -4130,7 +4130,8 @@
       "kind": "query",
       "operation": "LocalSavedPreferences",
       "rootFields": [
-        "activePreferences"
+        "activePreferences",
+        "preferenceCatalog"
       ]
     },
     {
@@ -5507,6 +5508,18 @@
       "contract": "http",
       "kind": "route",
       "reference": "/api/local/mcp/changes/clear"
+    },
+    {
+      "path": "docs/useful/INSTALLED_MAC_APP.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPreferenceSlugs"
+    },
+    {
+      "path": "docs/useful/INSTALLED_MAC_APP.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
     }
   ],
   "outboundSinkInventory": [

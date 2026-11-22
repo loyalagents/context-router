@@ -1,8 +1,8 @@
 # Demo session permission activity
 
 - Activated by the owner in the Activity-focused fork; base `93411eff`.
-- Worktree: `d54b/context-router`; root is sole writer. The inherited uncommitted
-  `apps/desktop/test/claude-connect.test.mjs` belongs to connection polish and stays untouched.
+- Worktree: `d54b/context-router`; root is sole writer. The inherited connection-polish test edits were preserved byte-for-byte and
+  subsequently arrived unchanged through main at `d0464330`.
 - Milestone: reviewed implementation, focused local validation, and a separate
   source-bound demo trial. Preserve the running app, chats, data and sign-in.
   No automatic merge or CI monitoring; the owner handles CI.
@@ -105,3 +105,21 @@ of the Activity commit and is recorded as a dirty test-only input if packaged.
 This is a local demo trial. Exact-candidate CI (owner-managed), fresh human Claude
 permission rehearsal, and full release qualification remain pending. No running
 app, provider session, client configuration or personal state was changed.
+
+## Main integration (2026-11-22)
+
+The owner requested merging main at `d0464330` (PR #213, polish `d419790d`).
+Its exact Claude read preapprovals, sign-in/launch messages and Context refresh
+fixes complement this feature. Preapproval suppresses Claude tool prompts; CR
+permission enforcement still determines what the tools can read. No change to
+the bounded session log, direct links, or HCP scope is needed.
+
+Resolve the additive browser-test, contract-reference and brief conflicts by
+retaining both sides. The formerly dirty desktop test is identical to main, so
+its content is now committed upstream rather than an outstanding local edit.
+Renew the web build, demo-browser integration cases, Claude helper checks and
+contract/document consumers. Backend Activity source and tests are unchanged;
+carry their prior evidence forward. Request a scoped independent merge review.
+No app bundle is rebuilt in this source integration: the existing trial remains
+bound to `79319a20` and its original receipts. The running demo and state stay
+untouched; merged-source artifact validation and owner-managed CI remain pending.

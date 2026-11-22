@@ -156,8 +156,11 @@ qualified Claude 2.1.299 executable is discovered automatically where available;
 **Choose executable…** in the native panel remains the fallback.
 
 Coding launches explicitly enable the named coding tools, including Bash and
-WebFetch, and select Claude's `default` permission mode (normal prompts). The
-restricted profile's implicit tool defaults are insufficient. Project paths are
+WebFetch, and select Claude's `default` permission mode (normal prompts). Only
+`context_router_demo`'s `searchPreferences` and `listPreferenceSlugs` are
+preapproved for seamless reads; Context Router's actual grants still apply. Bash
+and mutations are not preapproved. The restricted profile's implicit tool
+defaults are insufficient. Project paths are
 canonicalized; invalid selections show a native explanation and do not replace
 the previous valid choice. The picker can stay open without a launch timeout.
 Each chat receives a short private `/private/tmp/cr-code-*` directory for tools
@@ -181,10 +184,15 @@ trial, not broader personal-mode onboarding qualification.
 
 The latest chat's confirmed exit and interruption have separate dashboard
 messages. Uncertain invocation guard evidence remains retained; interruption
-status is not proof that all child jobs stopped. Launch errors remain visible until an
-explicit retry. Context reloads saved values on focus/return when no edit is open;
-an in-flight passive refresh is cancelled when editing starts. This improves
-freshness but does not provide conflict detection for simultaneous edits.
+status is not proof that all child jobs stopped. Interrupted sign-in has its own
+message without clearing uncertain setup guards. Launch errors remain visible
+until an explicit retry or a newly observed request supplies updated launch status.
+Context quietly reloads values and field definitions on focus/return when no
+memory edit is open; an in-flight passive refresh is cancelled when editing
+starts. Selection stays on the displayed memory while it remains in the results.
+New-memory drafts retain their field definitions until Clear or successful save.
+Background failures show a muted stale-data notice with read-only retry. This
+improves freshness but does not provide simultaneous-edit conflict detection.
 
 Terminal handoffs use unique private retained `demo/launch-requests/.../open.command`
 files. They contain quoted helper arguments and no credentials, use a clean

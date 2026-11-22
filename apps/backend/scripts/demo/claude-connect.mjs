@@ -5,12 +5,13 @@ import { spawnSync } from 'node:child_process';
 import { safeError, privateJson } from './files.mjs';
 import { trustedDirectory, trustedBytes, ensurePrivateDirectory, writeSyncedJson } from './trusted-files.mjs';
 
-export const connectStates = ['checking', 'signing-in', 'starting', 'login-failed', 'failed', 'exited', 'interrupted'];
+export const connectStates = ['checking', 'signing-in', 'starting', 'failed', 'login-failed', 'login-interrupted', 'exited', 'interrupted'];
 export function codingLaunchSpec(launch, project) {
   const args = [...launch.args];
   // --restricted requires explicit tool names; its 'default' alias omits Bash/WebFetch.
   args[args.indexOf('--tools') + 1] = 'Bash,Edit,Glob,Grep,NotebookEdit,Read,Task,WebFetch,WebSearch,Write,AskUserQuestion,EnterPlanMode,ExitPlanMode';
-  args.push('--permission-mode','default');
+  // Terminate the variadic tool list before auth subcommands are appended.
+  args.push('--allowedTools','mcp__context_router_demo__searchPreferences,mcp__context_router_demo__listPreferenceSlugs','--permission-mode','default');
   return {...launch, args, cwd:project, env:{...launch.env,PATH:[launch.env.PATH,path.join(os.userInfo().homedir,'.nvm/versions/node/v24.21.0/bin'),path.join(os.userInfo().homedir,'.local/bin'),'/opt/homebrew/bin','/usr/local/bin'].join(path.delimiter)}};
 }
 /** Retained for coding jobs that may outlive their foreground Claude chat. */
@@ -45,7 +46,9 @@ export async function authenticateClaude(launch,{check,authStatus,run,state,allo
     await state('signing-in');
     process.stdout.write('Sign in to the separate Claude demo profile. Claude will open automatically afterward.\n');
     await check();
-    const code=await run({...launch,args:[...launch.args,'auth','login']});
+    let code;
+    try { code=await run({...launch,args:[...launch.args,'auth','login']}); }
+    catch(error) { await state('login-interrupted');throw error; }
     if(code!==0){await state('login-failed');return code;}
     await check();
     if(!await authStatus(launch)){await state('login-failed');return 1;}

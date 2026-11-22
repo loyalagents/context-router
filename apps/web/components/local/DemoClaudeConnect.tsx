@@ -15,6 +15,7 @@ const messages:Record<string,string> = {
   interrupted:'The latest Claude launch or chat was interrupted. Earlier chats can stay open; you can open a fresh chat here.',
   exited:'Your latest chat has closed. You can open a fresh conversation in the same project.',
   cancelled:'Project selection cancelled. Open Claude Code when you’re ready.',
+  'login-interrupted':'Sign-in was interrupted. Check any remaining sign-in window. If another launch is blocked, the interrupted setup needs recovery.',
   'login-failed':'Sign-in did not finish. Open Claude Code to try again.',
   failed:'Setup did not finish. Check Terminal for the reason.',
   busy:'Another Mac setup window is open. Finish or close it, then try again.',
@@ -25,6 +26,7 @@ const query = `query DemoClaudeRead($input:McpAccessHistoryInput!){mcpAccessHist
 type ReadEvent = {clientKey:string;occurredAt:string;outcome:string;operationName:string;responseMetadata?:{activeCount?:number}};
 export default function DemoClaudeConnect({reviewAccess}:{reviewAccess:()=>void}) {
   const [setup,setSetup]=useState<Setup|null>(null),[error,setError]=useState(''),[launchError,setLaunchError]=useState(''),[submitting,setSubmitting]=useState(false),[lastRead,setLastRead]=useState<string|null>(null);
+  const failedAttempt=useRef<{previousRequest?:string}|null>(null);
   const epoch=useRef(0),mounted=useRef(false),pending=useRef(false);
   const refresh=useCallback(async(signal:AbortSignal)=>{
     if(pending.current)return;
@@ -33,6 +35,7 @@ export default function DemoClaudeConnect({reviewAccess}:{reviewAccess:()=>void}
       const next=await localJson<Setup>('/api/local/demo/claude/status',{},signal);
       if(signal.aborted||current!==epoch.current)return;
       setSetup(next);setError('');
+      if(failedAttempt.current && next.request && next.request !== failedAttempt.current.previousRequest){failedAttempt.current=null;setLaunchError('');}
       if(next.clientId&&next.startedAt){
         const data=await localGraphql<{mcpAccessHistory:{items:ReadEvent[]}}>(query,{input:{first:20,clientKey:`local:${next.clientId}`,operationName:'searchPreferences',outcome:'SUCCESS',occurredFrom:next.startedAt}},signal);
         if(signal.aborted||current!==epoch.current)return;
@@ -47,9 +50,9 @@ export default function DemoClaudeConnect({reviewAccess}:{reviewAccess:()=>void}
     return()=>{mounted.current=false;controller.abort();clearTimeout(timer);epoch.current++;};
   },[refresh]);
   async function open(chooseProject=false){
-    if(pending.current)return;pending.current=true;epoch.current++;setSubmitting(true);setLaunchError('');setError('');setLastRead(null);
+    if(pending.current)return;const previousRequest=setup?.request;failedAttempt.current=null;pending.current=true;epoch.current++;setSubmitting(true);setLaunchError('');setError('');setLastRead(null);
     try{const next=await localJson<Setup>('/api/local/demo/claude/open',{chooseProject});if(mounted.current)setSetup(next);}
-    catch{if(mounted.current)setLaunchError('Launch could not be confirmed. Check Terminal before retrying.');}
+    catch{if(mounted.current){failedAttempt.current={previousRequest};setLaunchError('Launch could not be confirmed. Check Terminal before retrying.');}}
     finally{pending.current=false;if(mounted.current)setSubmitting(false);}
   }
   const disabled=submitting||!!setup?.busy||!setup?.available||!!error;
