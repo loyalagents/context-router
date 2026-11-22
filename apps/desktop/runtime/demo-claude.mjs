@@ -1,5 +1,5 @@
 import {randomBytes} from 'node:crypto';
-const busy = new Set(['checking','choosing-project','terminal-opened','signing-in','starting']);
+const busy = new Set(['checking','choosing-project','terminal-opened','signing-in']);
 /** Native capability injected only by the managed demo composition. No shell arguments cross HTTP. */
 export function createDemoClaude({cap,send,readProgress,readClient,assertActive=()=>{}}) {
   if(cap?.mode!=='demo')throw new Error('Demo launcher unavailable');

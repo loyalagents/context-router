@@ -28,10 +28,11 @@ export function claudeAuthStatus(launch, guard) {
     throw safeError('Could not verify the separate demo sign-in. No conversation was started.');
   return value.loggedIn;
 }
-/** One caller-owned profile guard spans auth, optional login and the foreground CLI. */
-export async function connectClaude(launch,{check,authStatus,run,state,credential}) {
+/** Serialized setup; a legacy invocation may reuse a verified login but never repeat it. */
+export async function authenticateClaude(launch,{check,authStatus,run,state,allowLogin=true}) {
   await check();
   if(!await authStatus(launch)) {
+    if(!allowLogin)throw safeError('An earlier demo invocation is retained. Finish that invocation before signing in again.');
     await state('signing-in');
     process.stdout.write('Sign in to the separate Claude demo profile. Claude will open automatically afterward.\n');
     await check();
@@ -40,10 +41,14 @@ export async function connectClaude(launch,{check,authStatus,run,state,credentia
     await check();
     if(!await authStatus(launch)){await state('login-failed');return 1;}
   }
+  return 0;
+}
+/** Each fresh foreground chat has its own invocation guard. */
+export async function startClaude(launch,{check,run,state,credential}) {
   await check();
   const session={...launch,env:{...launch.env,CR_DEMO_TOKEN:credential()}};
   await state('starting');
-  process.stdout.write('Opening Claude Code with Context Router configured. Use /exit before reopening or restarting the demo.\n');
+  process.stdout.write('Opening Claude Code with Context Router configured. You can open another chat from Connections without closing this one.\n');
   const code=await run(session);
   await state(code===0?'exited':'failed');
   return code;

@@ -181,3 +181,46 @@ an actual Node coding command in the selected nonempty project. Native full-suit
 completion and verified packaged bridge evidence are recorded in the trial output
 before handoff. Contract census passed; merge-base comparison and final CI remain
 pending. The user's running earlier preview remains untouched.
+
+
+## Multiple Claude chats checkpoint
+
+The owner requested opening fresh demo chats while existing chats stay open.
+Root is sole writer. Independent plan review approved splitting serialized
+setup/sign-in from request-scoped foreground invocation guards, with two fixes:
+retained legacy B guards permit only verified signed-in reuse of an initialized
+profile, and new legacy B actions share the setup lock. Both are implemented.
+Legacy native-panel actions retain their existing single-action lifetime;
+Connections provides overlapping chats. No guards are reclaimed or credentials
+copied. Unknown setup remains blocking; unknown foreground lifetime retains only
+that request's evidence. Activity remains shared across demo chats. Requested
+sensitive review effort is Extra High; inherited actual model/effort is unverified.
+
+The previous one-chat/profile-lifetime and exit-before-reopen requirements are
+superseded for Connections. Latest-request status enables another launch after
+setup finishes, without claiming a live connection or session count. Existing
+chats and the running demo are preserved during implementation and packaging.
+A new bundle reuses the current demo envelope and sign-in. Restarting the app
+requires a fresh chat for the current endpoint; it does not close old Terminals.
+
+Tests were written first: the new guard-scope and runtime-busy regressions failed
+before implementation, then passed. Independent diff review found a cancellation
+handoff race during asynchronous setup-guard release. A deterministic regression
+failed first; the guard now checks cancellation after release and before removing
+listeners. The reviewer approved the complete diff and affected correction.
+A shared guard-message regression was corrected without changing assertions.
+
+The production web build, second-launch browser case and 105 focused connection,
+control, native handoff and checker cases passed. After the cancellation fix,
+14 guard/native overlap/foreground cases and 26 guard/Desktop consumer cases
+passed. Unchanged web, control and checker coverage carries forward. The native
+fixture proves two actual offline CLI processes overlap, one exits while the
+other remains alive, login is reused, legacy evidence is unchanged and retained
+requests cannot replay. Actual packaged evidence follows in the trial output.
+
+The artifact checker repeats overlapping foreground/coding/login/replay evidence
+using the shipped helper under network and checkout denial. No changed native
+protocol or named aggregate lifecycle gap requires a full local migration gate.
+Final CI, contract merge-base comparison, live concurrent Claude acceptance and
+full release qualification remain pending. The milestone remains a source-bound
+local demo trial for human use; no merge is authorized.

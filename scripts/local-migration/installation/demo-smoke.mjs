@@ -136,12 +136,28 @@ try{
  const connectProfile=path.join(root,'offline-connect.sb');
  await fs.writeFile(connectProfile,(await fs.readFile(profile,'utf8'))+[codingClient,'/bin/sh','/bin/bash'].map(file=>`(allow process-exec (literal ${JSON.stringify(file)}))\n`).join(''),{mode:0o600});
  const connectArguments=request=>['connect','B','--client','claude','--auth','subscription','--executable',codingClient,'--project',codingProject,'--request',request];
- for(const request of ['1'.repeat(32),'2'.repeat(32)]){
-   helper(spec,connectArguments(request),0,connectProfile);
-   assert.equal(await fs.readFile(path.join(codingProject,'coding-result.txt'),'utf8'),'demo coding works');
+ await fs.writeFile(path.join(codingProject,'hold-chats'),'');
+ const chats=[],chatPids=[];
+ try{
+  for(const request of ['1'.repeat(32),'2'.repeat(32)]){
+   const child=spawn('/usr/bin/sandbox-exec',['-f',connectProfile,exe,'demo','--root',envelope,'--store',spec.store,'--generation',spec.generation,'--endpoint',spec.endpoint,...connectArguments(request)],{env:{PATH:'',LC_ALL:'C'},stdio:['ignore','ignore','pipe']});
+   const chat={child,closed:once(child,'close'),error:''};chat.closed.catch(()=>{});child.stderr.on('data',bytes=>{chat.error=(chat.error+bytes).slice(-4096);});chats.push(chat);
+   const deadline=Date.now()+30000;
+   while((await fs.readdir(codingProject)).filter(name=>/^chat-\d+\.ready$/.test(name)).length<chats.length){assert.equal(child.exitCode,null,chat.error);assert.ok(Date.now()<deadline,'overlapping packaged chats did not start');await pause();}
+   chatPids.push((await fs.readdir(codingProject)).filter(name=>/^chat-\d+\.ready$/.test(name)).map(name=>Number(name.slice(5,-6))).find(pid=>!chatPids.includes(pid)));
+   await fs.access(path.join(envelope,'demo/client-guards',`b-session-${request}.json`));
+   await assert.rejects(fs.access(path.join(envelope,'demo/client-guards/b-setup.json')));
+  }
+  for(const pid of chatPids)process.kill(pid,0);
+  await fs.writeFile(path.join(codingProject,`chat-${chatPids[0]}.release`),'');assert.equal((await chats[0].closed)[0],0,chats[0].error);
+  process.kill(chatPids[1],0);assert.equal(chats[1].child.exitCode,null);
+  await fs.rm(path.join(codingProject,'hold-chats'));assert.equal((await chats[1].closed)[0],0,chats[1].error);
+  assert.equal(await fs.readFile(path.join(codingProject,'coding-result.txt'),'utf8'),'demo coding works');
+ }finally{
+  await fs.rm(path.join(codingProject,'hold-chats'),{force:true});await Promise.allSettled(chats.map(chat=>chat.closed));
  }
  helper(spec,connectArguments('1'.repeat(32)),1,connectProfile);
- phase('packaged-claude-connect-offline-login-reuse-coding-and-replay-refusal');
+ phase('packaged-claude-connect-overlapping-chats-independent-exit-login-reuse-coding-and-replay-refusal');
  if(browserOnly){await stop(current,ready);receipt.status='passed';}else{
  const exports=path.join(envelope,'demo',firstStore,'exports'),a=await client(ready,path.join(exports,'agent-a.token')),b=await client(ready,path.join(exports,'agent-b.token')),c=await client(ready,path.join(exports,'agent-c.token'));
  const slug='home.demo001.artifact_note';await call(a,'mutatePreferences',{operation:'CREATE_DEFINITION',definition:{slug,description:'Explicit synthetic artifact change',valueType:'STRING',scope:'GLOBAL',isSensitive:true}});await call(a,'mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug,value:'"fresh portable artifact"'}});

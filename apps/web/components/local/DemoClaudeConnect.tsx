@@ -11,14 +11,14 @@ const messages:Record<string,string> = {
   'choosing-project':'Choose your demo project in the Mac folder picker.',
   'terminal-opened':'Terminal opened. Continue there; sign-in will appear if needed.',
   'signing-in':'Complete Claude sign-in in Terminal. Your project will open automatically afterward.',
-  starting:'Continue in Claude Code in Terminal. Approve the project if prompted, then ask it to read your saved context.',
-  exited:'Claude has closed. You can open a fresh conversation in the same project.',
+  starting:'Your latest chat is opening in Terminal. You can open another chat here and keep earlier chats running.',
+  exited:'Your latest chat has closed. You can open a fresh conversation in the same project.',
   cancelled:'Project selection cancelled. Open Claude Code when you’re ready.',
   'login-failed':'Sign-in did not finish. Open Claude Code to try again.',
-  failed:'Setup did not finish. Check Terminal for the reason. If Claude is already open, use /exit before reopening.',
+  failed:'Setup did not finish. Check Terminal for the reason.',
   busy:'Another Mac setup window is open. Finish or close it, then try again.',
   'client-unavailable':'Claude could not pass setup checks. In CR → Demo setup, use Choose executable to select Claude Code 2.1.299, then try again.',
-  unconfirmed:'Launch is unconfirmed. Check Terminal before trying again; exit any existing demo Claude session first.',
+  unconfirmed:'Launch is unconfirmed. Check Terminal before trying again; finish any sign-in already in progress.',
 };
 const query = `query DemoClaudeRead($input:McpAccessHistoryInput!){mcpAccessHistory(input:$input){items{clientKey occurredAt outcome operationName responseMetadata}}}`;
 type ReadEvent = {clientKey:string;occurredAt:string;outcome:string;operationName:string;responseMetadata?:{activeCount?:number}};
@@ -57,16 +57,16 @@ export default function DemoClaudeConnect({reviewAccess}:{reviewAccess:()=>void}
     <p>Open a project in Terminal with your demo context already connected.</p>
     <div className="demo-setup-steps">
       <div><span className="demo-step-number">1</span><h3>Open your project</h3>
-        <p>Normal coding tools, a separate demo sign-in, and your existing context permissions.</p>
+        <p>Each click starts a fresh chat. Chats share your demo sign-in and context permissions.</p>
         <div className="flex gap-3 flex-wrap mt-4"><button className="demo-button demo-primary" disabled={disabled} onClick={()=>void open()}>Open Claude Code</button><button className="demo-button" disabled={disabled} onClick={()=>void open(true)}>Change project</button></div>
       </div>
       <div><span className="demo-step-number">2</span><h3>Continue in Terminal</h3>
         <p role="status" aria-live="polite">{error||(!setup?'Checking setup availability…':!setup.available?'Open the installed Mac demo to launch Claude Code.':messages[setup.state??'idle']??'Check Terminal to continue.')}</p>
-        <p className="mt-3">After restarting Context Router, exit the old Claude session and open a fresh one here.</p>
+        <p className="mt-3">After restarting Context Router, open a fresh chat here to use the current connection.</p>
       </div>
       <div><span className="demo-step-number">3</span><h3>See your context in use</h3>
         <p>{lastRead?`Context read at ${new Date(lastRead).toLocaleTimeString()}.`:'Ask Claude to read your saved context. Recent access will appear here.'}</p>
-        {lastRead&&<p className="mt-2">Recent activity from this demo credential; not a live connection indicator.</p>}
+        {lastRead&&<p className="mt-2">Activity is shared across your demo chats; it does not identify a specific chat or show whether it is still open.</p>}
         <div className="flex gap-3 flex-wrap mt-4"><button className="demo-button" onClick={reviewAccess}>Review access</button><Link prefetch={false} className="demo-button" href={setup?.clientId?`/dashboard/history#mcp-client=${encodeURIComponent(setup.clientId)}`:'/dashboard/history'}>View activity</Link></div>
       </div>
     </div>

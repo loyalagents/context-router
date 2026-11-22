@@ -16,3 +16,13 @@ test('a delayed old progress read cannot overwrite a newer launch',async()=>{
  progress='exited';await flow.status();progress=null;const second=await flow.open(false);assert.notEqual(second.request,first.request);
  release('exited');await oldPoll;assert.equal((await flow.status()).state,'checking');
 });
+
+test('a running chat allows a fresh request while setup still deduplicates and old chat completion is ignored',async()=>{
+ const sent=[],progress=new Map();const flow=createDemoClaude({cap,send:async(_,value)=>sent.push(value),readProgress:async id=>progress.get(id),readClient:async()=> 'exact-b'});
+ const first=await flow.open(false);progress.set(first.request,'signing-in');
+ assert.equal((await flow.status()).busy,true);await flow.open(false);assert.equal(sent.length,1);
+ progress.set(first.request,'starting');assert.equal((await flow.status()).busy,false);
+ const second=await flow.open(false);assert.notEqual(second.request,first.request);assert.equal(sent.length,2);
+ progress.set(first.request,'exited');flow.accept({request:first.request,state:'failed'});
+ assert.equal((await flow.status()).state,'checking');assert.equal((await flow.status()).busy,true);
+});

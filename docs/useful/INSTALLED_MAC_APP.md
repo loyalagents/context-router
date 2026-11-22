@@ -157,10 +157,16 @@ qualified Claude 2.1.299 executable is discovered automatically where available;
 
 The dashboard distinguishes native handoff, sign-in, and recent successful context
 reads by the exact B credential. A recent read is not a live connection indicator
-or proof that one particular Terminal session made it. Use `/exit` in the existing
-Claude session before reopening; after restarting Context Router, open a fresh
-session from Connections. Requests cannot be replayed. Interrupted/uncertain
-invocation guards remain retained. Normal coding can create independent project
+or proof that one particular Terminal session made it. **Open Claude Code** starts
+a fresh chat once setup finishes; earlier chats can stay open. Chats share the
+isolated demo sign-in and B credential. Setup/sign-in is serialized, while each
+foreground chat has its own invocation guard. After restarting Context Router,
+open a fresh session from Connections for the current endpoint. Requests cannot
+be replayed. Interrupted/uncertain invocation guards remain retained; uncertain
+setup blocks further setup. A retained older B guard allows only an already
+initialized, verified signed-in profile to be reused, never new login or profile
+creation. Legacy native-panel B actions still hold the setup lock for their full
+invocation; use Connections for overlapping chats. Normal coding can create independent project
 processes such as dev servers; Context Router Quit does not stop them. This flow
 is a synthetic demo preview; live sign-in and coding acceptance remain a human
 trial, not broader personal-mode onboarding qualification.

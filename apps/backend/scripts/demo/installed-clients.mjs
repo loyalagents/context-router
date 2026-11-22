@@ -9,12 +9,12 @@ import { privateJson, privatePath, safeError } from './files.mjs';
 import { trustedDirectory, trustedBytes, ensurePrivateDirectory, writeSyncedJson, syncDirectory, exists } from './trusted-files.mjs';
 import { activeDemo } from './active.mjs';
 import { clientLaunchSpec, loginSpec, preflightClient } from './clients.mjs';
-import { codingLaunchSpec, validateDemoProject, claudeAuthStatus, connectClaude, beginConnectProgress } from './claude-connect.mjs';
+import { codingLaunchSpec, validateDemoProject, claudeAuthStatus, authenticateClaude, startClaude, beginConnectProgress } from './claude-connect.mjs';
 import { readCredential } from '../mcp-bridge/credential.mjs';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export async function withClientGuard(root,role,action){
-  if(!['a','b','desktop'].includes(role))throw safeError('Unknown demo role.');
+  if(!['a','b','desktop','b-setup'].includes(role)&&!/^b-session-[a-f0-9]{32}$/.test(role))throw safeError('Unknown demo role.');
   const signals=['SIGINT','SIGTERM','SIGHUP'];let cancelled=false;
   const cancel=()=>{cancelled=true;},check=()=>{if(cancelled)throw safeError('Demo command cancelled. Any uncertain invocation evidence is retained.');};
   // A signal only latches cancellation. The owned action must unwind before its
@@ -26,10 +26,13 @@ export async function withClientGuard(root,role,action){
   let owned=false,mutated=false,settled=false;
   try{
     await trustedDirectory(root);await trustedDirectory(path.join(root,'demo'));await checkpoint();await ensurePrivateDirectory(directory);await checkpoint();
-    try{await writeSyncedJson(file,record);owned=true;}catch(e){if(e.code==='EEXIST')throw safeError('This demo profile has an active or uncertain invocation. Retain its guard; do not delete it or reuse the profile.');throw e;}
+    try{await writeSyncedJson(file,record);owned=true;}catch(e){if(e.code==='EEXIST')throw safeError('This demo operation has an active or uncertain invocation. Retain its guard; do not delete it or repeat that operation.');throw e;}
     await checkpoint();const result=await action({checkpoint,mutating(){check();mutated=true;settled=false;},settled(){settled=true;}});await checkpoint();return result;
   }finally{
-    try{if(owned&&(!mutated||settled)){if(!isDeepStrictEqual(await privateJson(file),record))throw safeError('Invocation guard changed; retained for inspection.');await fs.unlink(file);await syncDirectory(directory);}}
+    try{if(owned&&(!mutated||settled)){if(!isDeepStrictEqual(await privateJson(file),record))throw safeError('Invocation guard changed; retained for inspection.');await fs.unlink(file);await syncDirectory(directory);}
+      // Cancellation during async release must not be lost before a caller starts
+      // its next guarded phase. No await separates this check from listener removal.
+      check();}
     finally{signals.forEach(signal=>process.off(signal,cancel));}
   }
 }
@@ -82,35 +85,52 @@ export async function launchInstalledClient(spec,{role,command='codex',login=fal
   if(connect&&(role!=='b'||command!=='claude'||auth!=='subscription'||login))throw safeError('Unsupported demo connection.');
   if(connect){const active=await activeDemo(spec);spec={...spec,installationId:active.installationId};}
   const state=connect?await beginConnectProgress(spec,request):undefined;
-  try{return await withClientGuard(spec.root,role,async guard=>{
+  const prepare=async guard=>{
     process.stdout.write('Checking the qualified client and isolated preflight settings…\n');
     const receipt=await activeDemo(spec),executable=await inspectInstalledClient(spec,{command,role,executable:explicit,auth,coding:connect});
     // spawnSync probes block signal callbacks. Yield explicitly before any
     // persistent profile work, even if every probe happened to succeed.
     await guard.checkpoint();
     const profile=await profileFor(spec.root,receipt.installationId,role,guard);
-    let launch=clientLaunchSpec({command,root:path.join(spec.root,'demo',spec.store),profileRoot:profile,mcpPort:Number(new URL(spec.endpoint).port),dataset:'demo001',agent:role,auth},{executable:executable.path});
+    const launch=clientLaunchSpec({command,root:path.join(spec.root,'demo',spec.store),profileRoot:profile,mcpPort:Number(new URL(spec.endpoint).port),dataset:'demo001',agent:role,auth},{executable:executable.path});
     for(const value of new Set([launch.cwd,launch.env.TMPDIR,launch.env.CODEX_HOME,launch.env.CLAUDE_CONFIG_DIR].filter(Boolean)))await privatePath(value,true);
+    const check=async invocation=>{await invocation.checkpoint();await activeDemo(spec);if(connect)await validateDemoProject(project,spec.root);if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed before launch.');};
+    return {launch,check,executable};
+  };
+  try{
     if(connect){
-      await validateDemoProject(project,spec.root);
-      launch=codingLaunchSpec(launch,project);
-      const check=async()=>{await guard.checkpoint();await activeDemo(spec);await validateDemoProject(project,spec.root);if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed before launch.');};
-      return connectClaude(launch,{check,authStatus:value=>claudeAuthStatus(value,guard),run:value=>runForeground(value,guard),state,credential:()=>readCredential(launch.credentialFile)});
+      const prepared=await withClientGuard(spec.root,'b-setup',async guard=>{
+        const legacy=await exists(path.join(spec.root,'demo/client-guards/b.json'));
+        // Older helpers held b.json across setup AND the chat. Retain it; only
+        // reuse a complete signed-in profile, never replay its uncertain setup.
+        if(legacy&&!await exists(path.join(spec.root,'demo/profiles/b/profile.json')))throw safeError('An earlier demo setup is retained. Finish it before opening another chat.');
+        const prepared=await prepare(guard);await validateDemoProject(project,spec.root);
+        prepared.launch=codingLaunchSpec(prepared.launch,project);
+        prepared.code=await authenticateClaude(prepared.launch,{check:()=>prepared.check(guard),authStatus:value=>claudeAuthStatus(value,guard),run:value=>runForeground(value,guard),state,allowLogin:!legacy});
+        return prepared;
+      });
+      if(prepared.code!==0)return prepared.code;
+      return await withClientGuard(spec.root,'b-session-'+request,guard=>startClaude(prepared.launch,{check:()=>prepared.check(guard),run:value=>runForeground(value,guard),state,credential:()=>readCredential(prepared.launch.credentialFile)}));
     }
-    if((await fs.readdir(launch.cwd)).length)throw safeError('Demo workspace must remain empty.');
-    if(login){
-      if(command==='codex')launch=loginSpec(launch);
-      else launch={...launch,args:[...launch.args,'auth','login']};
-    }else if(command==='codex')await privatePath(path.join(launch.env.CODEX_HOME,'auth.json'));
-    else if(auth==='api-key'){if(!process.env.CR_DEMO_ANTHROPIC_API_KEY)throw safeError('Explicit api-key launch requires CR_DEMO_ANTHROPIC_API_KEY.');launch.env.ANTHROPIC_API_KEY=process.env.CR_DEMO_ANTHROPIC_API_KEY;}
-    await activeDemo(spec);
-    if(!login)launch.env.CR_DEMO_TOKEN=readCredential(launch.credentialFile);
-    // Last check closes reset-during-preflight before external session start.
-    await activeDemo(spec);
-    if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed before launch.');
-    process.stdout.write(login?'Starting explicit login in the isolated demo profile.\n':'Starting a fresh demo client. Its provider may receive retrieved demo context.\n');
-    return runForeground(launch,guard);
-  });}catch(error){await state?.('failed').catch(()=>{});throw error;}
+    const legacy=()=>withClientGuard(spec.root,role,async guard=>{
+      let {launch,executable}=await prepare(guard);
+      if((await fs.readdir(launch.cwd)).length)throw safeError('Demo workspace must remain empty.');
+      if(login){
+        if(command==='codex')launch=loginSpec(launch);
+        else launch={...launch,args:[...launch.args,'auth','login']};
+      }else if(command==='codex')await privatePath(path.join(launch.env.CODEX_HOME,'auth.json'));
+      else if(auth==='api-key'){if(!process.env.CR_DEMO_ANTHROPIC_API_KEY)throw safeError('Explicit api-key launch requires CR_DEMO_ANTHROPIC_API_KEY.');launch.env.ANTHROPIC_API_KEY=process.env.CR_DEMO_ANTHROPIC_API_KEY;}
+      await activeDemo(spec);
+      if(!login)launch.env.CR_DEMO_TOKEN=readCredential(launch.credentialFile);
+      // Last check closes reset-during-preflight before external session start.
+      await activeDemo(spec);
+      if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed before launch.');
+      process.stdout.write(login?'Starting explicit login in the isolated demo profile.\n':'Starting a fresh demo client. Its provider may receive retrieved demo context.\n');
+      return runForeground(launch,guard);
+    });
+    // Legacy B actions share the setup lock; their existing b guard is preserved.
+    return await (role==='b'?withClientGuard(spec.root,'b-setup',legacy):legacy());
+  }catch(error){await state?.('failed').catch(()=>{});throw error;}
 }
 
 export async function runForeground(launch,guard){
