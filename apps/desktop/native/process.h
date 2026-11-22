@@ -25,6 +25,7 @@
 - (instancetype)initWithExecutable:(NSString *)file arguments:(NSArray<NSString *> *)arguments directory:(NSString *)directory lock:(int)lock capability:(NSDictionary *)capability role:(NSString *)role;
 - (NSArray<NSDictionary *> *)pump;
 - (void)command:(NSString *)command generation:(NSString *)generation;
+- (void)claudeStatus:(NSDictionary *)status;
 - (void)signal:(int)number;
 @end
 BOOL CRWriteBounded(int fd, NSData *bytes, double deadline);

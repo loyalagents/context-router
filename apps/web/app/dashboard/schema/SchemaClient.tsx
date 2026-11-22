@@ -1,5 +1,7 @@
 'use client';
 
+import { useLocalSession } from '@/components/local/LocalSession';
+
 import { authenticatedFetch } from '@/lib/authenticated-fetch';
 
 import { useState } from 'react';
@@ -327,6 +329,7 @@ function DefinitionForm({
 type ViewFilter = 'all' | 'system' | 'personal';
 
 export default function SchemaClient({ initialCatalog, accessToken }: SchemaClientProps) {
+  const demo = useLocalSession()?.capabilities.runtime?.mode === 'demo';
   const [catalog, setCatalog] = useState(initialCatalog);
   const [view, setView] = useState<ViewFilter>('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -554,7 +557,7 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Preference Schema</h1>
+        <h1 className="text-2xl font-bold">{demo ? 'Memory fields' : 'Preference Schema'}</h1>
         <div className="flex gap-3 items-center">
           <div className="flex items-center gap-1 border border-gray-300 rounded overflow-hidden">
             <span className="px-2 py-2 text-xs text-gray-500 bg-gray-50 border-r border-gray-300">
@@ -578,9 +581,9 @@ export default function SchemaClient({ initialCatalog, accessToken }: SchemaClie
           >
             + Add Definition
           </button>
-          <a href="/dashboard" className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800">
+          {!demo && <a href="/dashboard" className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800">
             Back to Dashboard
-          </a>
+          </a>}
         </div>
       </div>
 

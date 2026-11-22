@@ -2,6 +2,7 @@
 
 import { authenticatedFetch } from '@/lib/authenticated-fetch';
 import { ClientName } from '@/components/local/ClientNames';
+import { useLocalSession } from '@/components/local/LocalSession';
 
 import { gql } from '@apollo/client';
 import { print } from 'graphql';
@@ -181,6 +182,8 @@ export default function McpAccessHistoryTab({
   clientFilter,
   onClientFilterChange,
 }: McpAccessHistoryTabProps) {
+  const demo = useLocalSession()?.capabilities.runtime?.mode === 'demo';
+  const FilterContainer = demo ? 'details' : 'div';
   const [draftFilters, setDraftFilters] = useState<McpAccessFilters>({...DEFAULT_FILTERS, clientKey: clientFilter ?? ''});
   const [appliedFilters, setAppliedFilters] = useState<McpAccessFilters>({...DEFAULT_FILTERS, clientKey: clientFilter ?? ''});
   const [items, setItems] = useState<McpAccessHistoryItem[]>([]);
@@ -376,12 +379,14 @@ export default function McpAccessHistoryTab({
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
         <div>
-          <h2 className="text-lg font-semibold">MCP Access</h2>
+          <h2 className="text-lg font-semibold">{demo ? 'Assistant access' : 'MCP Access'}</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Review request-level MCP tool and resource access by connected clients.
+            {demo ? 'See when an assistant used your context, and what was returned.' : 'Review request-level MCP tool and resource access by connected clients.'}
           </p>
         </div>
 
+        <FilterContainer className={demo ? 'demo-activity-filters mt-3' : ''}>
+        {demo && <summary>Filter activity</summary>}
         <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2 lg:grid-cols-4">
           <label className="text-sm">
             <span className="block font-medium text-gray-700 mb-1">Client key</span>
@@ -522,6 +527,7 @@ export default function McpAccessHistoryTab({
           </button>
         </div>
 
+        </FilterContainer>
         {activeFilterChips.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
             {activeFilterChips.map((chip) => (
@@ -568,7 +574,7 @@ export default function McpAccessHistoryTab({
           </div>
         ) : items.length === 0 ? (
           <div className="p-10 text-center text-gray-500">
-            {isFiltered ? 'No MCP access events match the current filters.' : 'No MCP access history yet.'}
+            {demo ? (isFiltered ? 'No assistant activity matches these filters.' : 'No assistant activity yet. Use your connected assistant, then return here.') : (isFiltered ? 'No MCP access events match the current filters.' : 'No MCP access history yet.')}
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
@@ -583,11 +589,27 @@ export default function McpAccessHistoryTab({
                     aria-expanded={isExpanded}
                     className="w-full text-left"
                   >
+                    {demo ? <div className="demo-history-row">
+                      <div><p><strong><ClientName clientKey={item.clientKey} showId={false}/></strong>{' '}
+                        {item.outcome !== 'SUCCESS' && 'attempted to '}
+                        {item.operationName === 'searchPreferences' || item.operationName === 'smartSearchPreferences' ? (item.outcome === 'SUCCESS' ? 'searched context' : 'search context') : item.operationName === 'mutatePreferences' ? (item.outcome === 'SUCCESS' ? 'requested a memory change' : 'request a memory change') : item.operationName}
+                      </p><p className="demo-history-meta">
+                        {(() => {
+                          const metadata = item.responseMetadata;
+                          if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata) || item.outcome !== 'SUCCESS') return null;
+                          const key = item.operationName === 'searchPreferences' ? 'activeCount' : item.operationName === 'smartSearchPreferences' ? 'matchedActiveCount' : null;
+                          const count = key ? (metadata as Record<string, unknown>)[key] : undefined;
+                          return typeof count === 'number' && Number.isInteger(count) && count >= 0 ? <span>{count} {count === 1 ? 'memory' : 'memories'} returned · </span> : null;
+                        })()}
+                        <span title={formatAbsoluteTimestamp(item.occurredAt)}>{formatRelativeTimestamp(item.occurredAt)}</span>
+                        {item.outcome !== 'SUCCESS' && <span className={item.outcome === 'DENY' ? 'text-amber-800' : 'text-red-700'}> · {OUTCOME_LABELS[item.outcome] || item.outcome}</span>}
+                      </p></div><span className="demo-history-details">Details {isExpanded ? '▴' : '▾'}</span>
+                    </div> : <>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-semibold text-gray-900">
-                            {item.operationName}
+                            {demo && item.operationName === 'searchPreferences' ? 'Searched context' : item.operationName}
                           </span>
                           <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
                             {SURFACE_LABELS[item.surface] || item.surface}
@@ -616,12 +638,13 @@ export default function McpAccessHistoryTab({
                             {formatAbsoluteTimestamp(item.occurredAt)}
                           </span>
                           <span>{formatRelativeTimestamp(item.occurredAt)}</span>
-                          {item.correlationId && (
+                          {!demo && item.correlationId && (
                             <span className="break-all">
                               Correlation ID: {item.correlationId}
                             </span>
                           )}
                         </div>
+
                       </div>
 
                       <div className="text-gray-400 self-start">
@@ -641,12 +664,13 @@ export default function McpAccessHistoryTab({
                           />
                         </svg>
                       </div>
-                    </div>
+                    </div>                    </>}
                   </button>
 
                   {isExpanded && (
                     <div className="mt-5 space-y-4">
                       <p className="text-xs break-all">Client key: <code>{item.clientKey || 'None'}</code></p>
+                      {demo && <p className="text-xs break-all">Operation: {item.operationName} · {SURFACE_LABELS[item.surface] || item.surface} · {item.latencyMs}ms · {formatAbsoluteTimestamp(item.occurredAt)}{item.correlationId ? ` · Correlation ID: ${item.correlationId}` : ''}</p>}
                       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                         <div className="rounded-lg border border-gray-200">
                           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">

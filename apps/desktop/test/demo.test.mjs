@@ -25,6 +25,10 @@ test('shared managed seed uses real MCP, revokes importer, preserves edits on re
     return { config, directory, receipt };
   }
   const one = await prepare('b');
+  const seededIdentity = b.createSqliteIdentityRuntime(one.config);
+  const seededState = await seededIdentity.service.verifyReadyState();
+  const seededClients = new b.SqliteMcpCredentials(seededIdentity.database, seededState.state.principalId).list();
+  assert.equal(seededClients.find(client => client.id === one.receipt.clients.agentB).label, 'Claude Code — reader');
   assert.equal((await verifyDemoBaseline(one)).active, 189);
   let runtime = await b.createLocalMcpApplication(one.config, { port: 0 }), a, reader;
   try {

@@ -20,11 +20,11 @@ await fs.cp(source,bundle,{recursive:true,verbatimSymlinks:true});await verifyCa
 const exe=path.join(bundle,'Contents/MacOS/context-router'),node=path.join(bundle,'Contents/Resources/bin/node'),profile=path.join(root,'offline.sb');
 const {parse}=await import('yaml'),store=parse(await fs.readFile(path.join(repository,'node_modules/.modules.yaml'),'utf8')).storeDir;
 await fs.writeFile(profile,'(version 1)\n(allow default)\n'+[repository,store,path.dirname(path.dirname(process.execPath))].map(p=>`(deny file-read* (subpath ${JSON.stringify(p)}))\n`).join('')+'(deny process-exec)\n'+[exe,node].map(p=>`(allow process-exec (literal ${JSON.stringify(p)}))\n`).join('')+`(allow process-exec (subpath ${JSON.stringify(path.join(envelope,'demo/desktop'))}))\n(deny network-outbound)\n(allow network-outbound (remote ip "localhost:*"))\n`,{mode:0o600});
-const receipt={version:1,status:'running',scope:browserOnly?'browser-only':'full-demo-cycle',root,bundle,source:identity,phases:[],limitations:['Synthetic state with real packaged native/backend/browser/MCP. No AppKit interaction, provider login/session, real model retention/startup, distribution or human acceptance.','Desktop uses an injected test-only temporary-root context; human snapshots require a durable private envelope.',...(browserOnly?['Browser, rename and permissions scope only. It excludes the later A/B/C authority, immutable Desktop, reconnect, reset and personal-return proofs.']:[])]},owners=[],clients=[];let browser;
+const receipt={version:1,status:'running',scope:browserOnly?'browser-only':'full-demo-cycle',root,bundle,source:identity,phases:[],limitations:['Synthetic state with real packaged native/backend/browser/MCP. No AppKit interaction, provider login/session, real model retention/startup, distribution or human acceptance.','Desktop uses an injected test-only temporary-root context; human snapshots require a durable private envelope.',...(browserOnly?['Browser, rename, permissions and offline Claude connect scope only. It excludes the later A/B/C authority, immutable Desktop, reconnect, reset and personal-return proofs.']:[])]},owners=[],clients=[];let browser;
 const phase=name=>{receipt.phases.push(name);console.log('Demo artifact: '+name);};
 const pause=()=>new Promise(resolve=>setTimeout(resolve,20));
 const portProbe=net.createServer();await new Promise(resolve=>portProbe.listen(0,'127.0.0.1',resolve));const demoPort=portProbe.address().port;await new Promise(resolve=>portProbe.close(resolve));
-const command=(args,expected=0)=>{const result=spawnSync('/usr/bin/sandbox-exec',['-f',profile,exe,...args],{env:{PATH:'',LC_ALL:'C'},encoding:'utf8',timeout:30000,maxBuffer:1024*1024});assert.equal(result.status,expected,result.stderr);return result.stdout;};
+const command=(args,expected=0,sandboxProfile=profile)=>{const result=spawnSync('/usr/bin/sandbox-exec',['-f',sandboxProfile,exe,...args],{env:{PATH:'',LC_ALL:'C'},encoding:'utf8',timeout:30000,maxBuffer:1024*1024});assert.equal(result.status,expected,result.stderr);return result.stdout;};
 function launch(){
  const child=spawn('/usr/bin/sandbox-exec',['-f',profile,exe,'guardian','--root',envelope,'--ui-port','0','--mcp-port','0','--demo-mcp-port',String(demoPort)],{env:{PATH:'',LC_ALL:'C'},stdio:['pipe','pipe','pipe']}),owner={child,closed:once(child,'close'),events:[],pending:'',error:''};owners.push(owner);child.stdin.on('error',()=>{});
  child.stdout.on('data',b=>{owner.pending+=b;assert.ok(owner.pending.length<65536);let end;while((end=owner.pending.indexOf('\n'))>=0){owner.events.push(JSON.parse(owner.pending.slice(0,end)));owner.pending=owner.pending.slice(end+1);}});child.stderr.on('data',b=>{owner.error+=b;assert.ok(owner.error.length<65536);});
@@ -33,7 +33,7 @@ function launch(){
 }
 async function stop(owner,ready){if(owner.child.exitCode===null&&owner.child.signalCode===null){if(ready)owner.send('quit',ready.generation);else owner.child.stdin.end();}let timer;try{assert.equal((await Promise.race([owner.closed,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Native exact exit unobserved; retain fixture')),30000);})]))[0],0,owner.error);}finally{clearTimeout(timer);}assert.equal(owner.events.at(-1)?.outcome,'ok');}
 const metadata=()=>fs.readFile(path.join(envelope,'installation.json'),'utf8').then(JSON.parse);
-const helper=(spec,args,expected=0)=>command(['demo','--root',envelope,'--store',spec.store,'--generation',spec.generation,'--endpoint',spec.endpoint,...args],expected);
+const helper=(spec,args,expected=0,sandboxProfile=profile)=>command(['demo','--root',envelope,'--store',spec.store,'--generation',spec.generation,'--endpoint',spec.endpoint,...args],expected,sandboxProfile);
 async function client(ready,file){const c=await connect(Number(new URL(ready.mcpOrigin).port),file);clients.push(c);return c;}
 async function closeClients(){for(const c of clients.splice(0))await c.close();}
 const hash=b=>createHash('sha256').update(b).digest('hex');
@@ -70,13 +70,41 @@ try{
  phase('native-demo-rename-domain-isolation-reopen-unchanged-token-authority-and-receipt');
  const prerequisite=localUiBrowserPrerequisite(repository,process.env),{chromium}=createRequire(path.join(repository,'apps/web/package.json'))('playwright');browser=await chromium.launch({headless:true,executablePath:prerequisite.executable,env:{PATH:'/usr/bin:/bin',HOME:root}});const context=await browser.newContext(),outbound=[];await context.route('**/*',route=>{if(new URL(route.request().url()).origin!==ready.origin){outbound.push('outside-active-origin');return route.abort();}return route.continue();});const page=await context.newPage();page.setDefaultTimeout(10000);
  await page.goto(ready.origin+'/dashboard');assert.equal(await page.getByRole('complementary',{name:'Demo mode'}).count(),0);await page.getByLabel('Unlock token').fill((await fs.readFile(ready.unlockFile,'utf8')).trim());await page.getByRole('button',{name:'Unlock local dashboard'}).click();
- for(const name of ['Dashboard','Account Information','Profile Memory'])await page.getByRole('heading',{name,exact:true}).waitFor();
- const navigation=[['Edit Profile','/dashboard/profile'],['Preferences','/dashboard/preferences'],['Form Fill','/dashboard/form-fill'],['Audit History','/dashboard/history'],['Preference Schema','/dashboard/schema'],['Permission Grants','/dashboard/permissions']];
- assert.deepEqual(await page.locator('a[href^="/dashboard/"]').evaluateAll(links=>links.map(a=>[a.textContent.trim(),a.getAttribute('href')])),navigation);
- const summary=page.getByText('Demo walkthrough (optional)',{exact:true}),guide=page.locator('details').filter({has:summary});assert.equal(await guide.getAttribute('open'),null);assert.equal(await guide.getByRole('button',{name:'Copy step 1 prompt',exact:true}).isVisible(),false);await page.screenshot({path:path.join(root,'demo-dashboard.png'),fullPage:true});
- await summary.click();assert.equal(await guide.getByRole('button',{name:/Copy step [1-5] prompt/}).count(),5);await context.grantPermissions(['clipboard-read','clipboard-write'],{origin:ready.origin});const prompt=await guide.locator('li p').first().innerText();await guide.getByRole('button',{name:'Copy step 1 prompt',exact:true}).click();assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),prompt);await page.screenshot({path:path.join(root,'demo-walkthrough-expanded.png'),fullPage:true});await summary.click();assert.equal(await guide.getAttribute('open'),null);
- for(const [label,view,heading] of [['Edit Profile','profile','Edit Profile'],['Preferences','preferences','Preferences'],['Preference Schema','schema','Preference Schema'],['Permission Grants','permissions','MCP Clients'],['Audit History','history','Audit History']]){await page.goto(ready.origin+'/dashboard');await page.getByRole('link',{name:label,exact:true}).click();await page.waitForURL(ready.origin+'/dashboard/'+view);await page.getByRole('heading',{name:heading,exact:true}).waitFor();await page.getByRole('complementary',{name:'Demo mode'}).waitFor();}
+ await page.getByRole('heading',{name:'Your context',exact:true}).waitFor();
+ const navigation=page.getByRole('navigation',{name:'Main navigation'});
+ assert.deepEqual(await navigation.getByRole('link').allTextContents(),['Context','Connections','Activity']);
+ const contextList=page.getByRole('region',{name:'Saved context'});
+ assert.equal(await contextList.getByRole('button').count(),189);
+ assert.equal(await page.getByRole('button',{name:'Smart search',exact:true}).isVisible(),false);
+ await page.screenshot({path:path.join(root,'demo-dashboard.png'),fullPage:true});
+ await page.evaluate(()=>{window.demoSidebarNode=document.querySelector('.demo-sidebar');window.demoDocument=document;});
+ for(const [label,view,heading] of [['Connections','permissions','Connections'],['Activity','history','Activity']]){await navigation.getByRole('link',{name:label,exact:true}).click();await page.waitForURL(ready.origin+'/dashboard/'+view);await page.getByRole('heading',{name:heading,exact:true}).waitFor();await page.getByRole('complementary',{name:'Demo mode'}).waitFor();assert.equal(await page.evaluate(()=>window.demoSidebarNode===document.querySelector('.demo-sidebar')&&window.demoDocument===document),true);if(view==='history')assert.equal(await page.getByRole('tab',{name:'Assistant access',exact:true}).getAttribute('aria-selected'),'true');}
+ await navigation.getByRole('link',{name:'Context',exact:true}).click();await contextList.waitFor();
+ for(const width of [1280,1440]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);}
+ const firstValue=await page.locator('.demo-detail-value').innerText();
+ await page.getByRole('button',{name:'Edit context',exact:true}).click();
+ await page.locator('.demo-inspector textarea').fill(firstValue+' — artifact visual trial');
+ await page.getByRole('button',{name:'Save changes',exact:true}).click();
+ await page.getByRole('button',{name:'Edit context',exact:true}).waitFor();
+ assert.equal(await page.locator('.demo-detail-value').innerText(),firstValue+' — artifact visual trial');
+ await page.reload();await page.getByRole('heading',{name:'Your context',exact:true}).waitFor();
+ await page.getByLabel('Search your context').fill('artifact visual trial');
+ await contextList.getByRole('button').first().click();
+ assert.equal(await page.locator('.demo-detail-value').innerText(),firstValue+' — artifact visual trial');
+ await page.getByRole('button',{name:'Edit context',exact:true}).click();await page.locator('.demo-inspector textarea').fill(firstValue);await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.getByLabel('Search your context').fill('');await page.getByRole('button',{name:'Edit context',exact:true}).waitFor();
  await page.goto(ready.origin+'/dashboard/permissions');
+ // Exercise the actual HTTP → application → guardian bridge without opening a provider.
+ await page.getByRole('button',{name:'Open Claude Code',exact:true}).waitFor();
+ await page.screenshot({path:path.join(root,'claude-connections.png'),fullPage:true});
+ const claudeBefore=current.events.length;
+ await page.getByRole('button',{name:'Open Claude Code',exact:true}).click();
+ const claudeRequest=await current.event('demo-claude-open',claudeBefore);
+ assert.equal(claudeRequest.chooseProject,false);assert.match(claudeRequest.request,/^[a-f0-9]{32}$/);
+ current.child.stdin.write(JSON.stringify({version:1,generation:ready.generation,command:'demo-claude-status',request:claudeRequest.request,state:'cancelled'})+'\n');
+ await page.getByText('Project selection cancelled.',{exact:false}).waitFor();
+ await page.reload();await page.getByText('Project selection cancelled.',{exact:false}).waitFor();
+ assert.equal(current.events.slice(claudeBefore).filter(event=>event.type==='demo-claude-open').length,1);
+ phase('dashboard-native-claude-request-and-correlated-cancellation');
  const authority=()=>page.evaluate(async()=>{const response=await fetch('/api/local/mcp/list',{method:'POST',headers:{'content-type':'application/json','x-context-router-ui':'1',authorization:'Bearer '+sessionStorage.getItem('context-router.browser-session.v1')},body:'{}'});if(!response.ok)throw new Error('Authority read failed');return (await response.json()).items;});
  const permissionBefore=await authority(),selectedId=demoReceipt.clients.agentB;
  await page.getByRole('button',{name:'Edit permissions '+selectedId,exact:true}).click();
@@ -100,7 +128,37 @@ try{
  assert.deepEqual((await authority()).map(({summary,ruleCount,...row})=>row),permissionBefore.map(({summary,ruleCount,...row})=>row));
  await permissionPanel.screenshot({path:path.join(root,'demo-permissions-save.png')});
  phase('installed-demo-permissions-save-selected-client-only-personal-receipt-preservation-and-real-mcp');
- assert.deepEqual(outbound,[]);await context.close();await browser.close();browser=undefined;phase('real-packaged-shared-dashboard-optional-guide-and-reused-views');
+ assert.deepEqual(outbound,[]);await context.close();await browser.close();browser=undefined;phase('real-packaged-sidebar-context-edit-persistence-and-reused-views');
+ // Run the shipped wrapper/helper with an owned offline CLI, never a real account.
+ const codingProject=path.join(root,'coding-project'),codingClient=path.join(root,'claude-connect-client');
+ await fs.mkdir(codingProject,{mode:0o700});await fs.writeFile(path.join(codingProject,'README.md'),'Synthetic demo project.');
+ const codingBuild=spawnSync('/usr/bin/clang',[path.join(repository,'apps/desktop/test/fixtures/claude-connect-client.c'),'-o',codingClient],{encoding:'utf8',timeout:20000});assert.equal(codingBuild.status,0,codingBuild.stderr);
+ const connectProfile=path.join(root,'offline-connect.sb');
+ await fs.writeFile(connectProfile,(await fs.readFile(profile,'utf8'))+[codingClient,'/bin/sh','/bin/bash'].map(file=>`(allow process-exec (literal ${JSON.stringify(file)}))\n`).join(''),{mode:0o600});
+ const connectArguments=request=>['connect','B','--client','claude','--auth','subscription','--executable',codingClient,'--project',codingProject,'--request',request];
+ await fs.writeFile(path.join(codingProject,'hold-chats'),'');
+ const chats=[],chatPids=[];
+ try{
+  for(const request of ['1'.repeat(32),'2'.repeat(32)]){
+   const child=spawn('/usr/bin/sandbox-exec',['-f',connectProfile,exe,'demo','--root',envelope,'--store',spec.store,'--generation',spec.generation,'--endpoint',spec.endpoint,...connectArguments(request)],{env:{PATH:'',LC_ALL:'C'},stdio:['ignore','ignore','pipe']});
+   const chat={child,closed:once(child,'close'),error:''};chat.closed.catch(()=>{});child.stderr.on('data',bytes=>{chat.error=(chat.error+bytes).slice(-4096);});chats.push(chat);
+   const deadline=Date.now()+30000;
+   while((await fs.readdir(codingProject)).filter(name=>/^chat-\d+\.ready$/.test(name)).length<chats.length){assert.equal(child.exitCode,null,chat.error);assert.ok(Date.now()<deadline,'overlapping packaged chats did not start');await pause();}
+   chatPids.push((await fs.readdir(codingProject)).filter(name=>/^chat-\d+\.ready$/.test(name)).map(name=>Number(name.slice(5,-6))).find(pid=>!chatPids.includes(pid)));
+   await fs.access(path.join(envelope,'demo/client-guards',`b-session-${request}.json`));
+   await assert.rejects(fs.access(path.join(envelope,'demo/client-guards/b-setup.json')));
+  }
+  for(const pid of chatPids)process.kill(pid,0);
+  await fs.writeFile(path.join(codingProject,`chat-${chatPids[0]}.release`),'');assert.equal((await chats[0].closed)[0],0,chats[0].error);
+  process.kill(chatPids[1],0);assert.equal(chats[1].child.exitCode,null);
+  await fs.rm(path.join(codingProject,'hold-chats'));assert.equal((await chats[1].closed)[0],0,chats[1].error);
+  assert.equal(await fs.readFile(path.join(codingProject,'coding-result.txt'),'utf8'),'demo coding works');
+ }finally{
+  await fs.rm(path.join(codingProject,'hold-chats'),{force:true});await Promise.allSettled(chats.map(chat=>chat.closed));
+  for(const file of await fs.readdir(codingProject)){if(!/^chat-\d+\.tmp$/.test(file))continue;const temporary=await fs.readFile(path.join(codingProject,file),'utf8');assert.match(temporary,/^\/private\/tmp\/cr-code-[A-Za-z0-9]{6}$/);await fs.rm(temporary,{recursive:true,force:true});}
+ }
+ helper(spec,connectArguments('1'.repeat(32)),1,connectProfile);
+ phase('packaged-claude-connect-overlapping-chats-independent-exit-login-reuse-coding-and-replay-refusal');
  if(browserOnly){await stop(current,ready);receipt.status='passed';}else{
  const exports=path.join(envelope,'demo',firstStore,'exports'),a=await client(ready,path.join(exports,'agent-a.token')),b=await client(ready,path.join(exports,'agent-b.token')),c=await client(ready,path.join(exports,'agent-c.token'));
  const slug='home.demo001.artifact_note';await call(a,'mutatePreferences',{operation:'CREATE_DEFINITION',definition:{slug,description:'Explicit synthetic artifact change',valueType:'STRING',scope:'GLOBAL',isSensitive:true}});await call(a,'mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug,value:'"fresh portable artifact"'}});

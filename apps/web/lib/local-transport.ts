@@ -2,6 +2,8 @@ const routes = new Set([
   '/graphql',
   '/api/preferences/analysis',
   '/api/form-fill/pdf',
+  '/api/local/demo/claude/open',
+  '/api/local/demo/claude/status',
   '/api/local/unlock',
   '/api/local/logout',
   '/api/local/capabilities',

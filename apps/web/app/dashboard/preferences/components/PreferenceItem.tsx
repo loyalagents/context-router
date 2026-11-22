@@ -3,10 +3,12 @@
 import { authenticatedFetch } from '@/lib/authenticated-fetch';
 
 import { useState } from 'react';
+import { useDemoDraft } from '@/components/local/DemoDrafts';
 import { ClientName } from '@/components/local/ClientNames';
 import { useLocalSession } from '@/components/local/LocalSession';
 import { localClientId } from '@/lib/local-client-name';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
+import type { PreferenceDefinition } from '../types';
 
 interface Preference {
   id: string;
@@ -33,6 +35,9 @@ interface PreferenceItemProps {
   accessToken: string;
   onUpdate: (updated: Preference) => void;
   onDelete: (id: string) => void;
+  demoDetail?: boolean;
+  definition?: PreferenceDefinition;
+  onInteractionChange?: (active: boolean) => void;
 }
 
 const SET_PREFERENCE_MUTATION = `
@@ -94,8 +99,12 @@ export default function PreferenceItem({
   accessToken,
   onUpdate,
   onDelete,
+  demoDetail = false,
+  definition,
+  onInteractionChange,
 }: PreferenceItemProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [editAsString, setEditAsString] = useState(false);
   const [editValue, setEditValue] = useState(JSON.stringify(preference.value, null, 2));
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -109,7 +118,7 @@ export default function PreferenceItem({
       // Parse the edited value
       let parsedValue: any;
       try {
-        parsedValue = JSON.parse(editValue);
+        parsedValue = editAsString ? editValue : JSON.parse(editValue);
       } catch {
         setError('Invalid JSON format');
         setIsSaving(false);
@@ -143,6 +152,7 @@ export default function PreferenceItem({
 
       onUpdate(data.data.setPreference);
       setIsEditing(false);
+      onInteractionChange?.(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update preference');
     } finally {
@@ -151,12 +161,13 @@ export default function PreferenceItem({
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete "${preference.slug}"?`)) {
+    if (!confirm(`Are you sure you want to delete "${demoDetail && typeof preference.value === 'string' ? preference.value.slice(0, 160) : preference.slug}"?`)) {
       return;
     }
 
     setError(null);
     setIsDeleting(true);
+    onInteractionChange?.(true);
 
     try {
       const graphqlUrl = GRAPHQL_URL;
@@ -184,6 +195,7 @@ export default function PreferenceItem({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete preference');
       setIsDeleting(false);
+      onInteractionChange?.(false);
     }
   };
 
@@ -191,6 +203,7 @@ export default function PreferenceItem({
     setEditValue(JSON.stringify(preference.value, null, 2));
     setError(null);
     setIsEditing(false);
+    onInteractionChange?.(false);
   };
 
   // Extract the key part from slug (e.g., "food.dietary_restrictions" -> "dietary_restrictions")
@@ -199,6 +212,31 @@ export default function PreferenceItem({
   const clientKey = preference.lastModifiedBy?.actorClientKey;
   const namedClient = local && localClientId(clientKey) && preference.lastModifiedBy?.origin !== 'DOCUMENT_ANALYSIS';
   const lastModifiedLabel = formatLastModifiedBy(preference.lastModifiedBy);
+
+  useDemoDraft(demoDetail && isEditing, demoDetail && (isSaving || isDeleting));
+  const startEditing = () => {
+    const asString = demoDetail && typeof preference.value === 'string';
+    setEditAsString(asString);
+    setEditValue(asString ? preference.value : JSON.stringify(preference.value, null, 2));
+    setError(null);
+    setIsEditing(true);
+    onInteractionChange?.(true);
+  };
+  if (demoDetail) return <div>
+    <div className="demo-detail-heading"><span>CONTEXT DETAILS</span><span className="demo-category-name">{preference.category || 'Other'}</span></div>
+    {isEditing ? <div>
+      <p className="demo-edit-notice" role="status">Save or cancel before choosing another memory or changing filters.</p>
+      <label className="text-sm text-gray-600">{editAsString ? 'Context' : 'Structured value (JSON)'}<textarea aria-label={`Value for ${preference.slug}`} value={editValue} onChange={event => setEditValue(event.target.value)} disabled={isSaving}/></label>
+      {error && <p role="alert" className="mb-3 text-sm text-red-700">{error}</p>}
+      <div className="demo-editor-actions"><button className="demo-button demo-primary" onClick={handleSave} disabled={isSaving}>{isSaving ? 'Saving…' : 'Save changes'}</button><button className="demo-button demo-quiet" onClick={handleCancel} disabled={isSaving}>Cancel</button></div>
+    </div> : <>
+      <div className="demo-detail-value">{typeof preference.value === 'string' ? preference.value : JSON.stringify(preference.value, null, 2)}</div>
+      <button className="demo-button" onClick={startEditing} disabled={isDeleting}>Edit context</button>
+      {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
+    </>}
+    <dl className="demo-detail-meta"><div><dt>Source</dt><dd>{preference.sourceType === 'INFERRED' ? 'Inferred' : preference.sourceType.toLowerCase().replace(/_/g, ' ')}</dd></div><div><dt>Updated</dt><dd>{new Date(preference.updatedAt).toLocaleDateString()}</dd></div>{lastModifiedLabel && <div><dt>Last changed</dt><dd>{namedClient ? <ClientName clientKey={clientKey!} showId={false}/> : lastModifiedLabel.replace(/^Modified by /, '')}</dd></div>}<div><dt>Sensitivity</dt><dd>{definition ? definition.isSensitive ? 'Sensitive' : 'Standard' : 'Unknown'}</dd></div></dl>
+    <details><summary>Technical details</summary><p>Field: <code>{preference.slug}</code></p><p>Memory ID: <code>{preference.id}</code></p>{clientKey && <p>Client key: <code>{clientKey}</code></p>}{preference.locationId && <p>Location: {preference.locationId}</p>}<p>{preference.description}</p></details><button className="demo-button demo-quiet demo-danger mt-4" onClick={handleDelete} disabled={isDeleting || isEditing}>{isDeleting ? 'Deleting…' : 'Delete memory'}</button>
+  </div>;
 
   return (
     <div className="border rounded-lg p-3">

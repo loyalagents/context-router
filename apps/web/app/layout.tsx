@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { ApolloWrapper } from '@/lib/apollo-wrapper';
 import './globals.css';
+import '@/components/local/demo.css';
 import LocalSession from '@/components/local/LocalSession';
 
 export const dynamic = 'force-dynamic';

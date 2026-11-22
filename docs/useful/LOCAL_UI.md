@@ -240,6 +240,9 @@ helpers without builds or Chromium. `pnpm --filter web test:browser` runs the
 complete browser group with the prerequisites above. The existing `test:local-ui`
 umbrella and root `pnpm test:web` include both. The focused selector refuses a
 changed file census until every new suite is explicitly classified.
+The umbrella runs at most two isolated test files concurrently; tests within each
+file and the focused commands remain serial. Fixtures own separate temporary
+state, browser instances and ephemeral ports; application builds are read-only.
 
 Optional timing uses `LOCAL_UI_TEST_TIMING=1 pnpm --filter web test:browser`.
 Each fixture emits one diagnostic with fixed mode and numeric setup, body and

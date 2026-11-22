@@ -7,6 +7,7 @@ import {ended} from '../fixtures/supervisor-fixture.mjs';
 import {editedFixture,replace,journal} from '../fixtures/revision-fixture.mjs';
 
 async function actualApplication(runtime){
+  await copyFile(path.resolve(import.meta.dirname,'../../runtime/demo-claude.mjs'),path.join(runtime,'demo-claude.mjs'));
   await copyFile(path.resolve(import.meta.dirname,'../../runtime/application.mjs'),path.join(runtime,'application.mjs'));
   await writeFile(path.join(runtime,'managed.mjs'),`import fs from 'node:fs';import path from 'node:path';import {openManagedControl} from './control.mjs';
 let cap,current,issued=0;export const authority={revokeManagedAdmission(){},invalidateManagedModel(){}};

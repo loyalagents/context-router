@@ -1,0 +1,22 @@
+'use client';
+
+export default function DemoGuide() {
+  const prompts = [
+    'Search preferences using the literal prefixes travel.demo001. and home.demo001. These are historical 2024–2025 memories; do not assume dates or bookings are current.',
+    'Search with the prefix travel.demo001. and propose one change to a returned preference. Wait for my explicit approval before writing it, then confirm the stored value.',
+    'In a fresh Agent B or C conversation, read the exact changed slug again and report the current stored value.',
+    'Search using the literal prefixes health.demo001. and finance.demo001. Report what the tools permit; do not guess or infer restricted values.',
+    'Review the changed memory’s Last changed field and Activity → Context changes. Compare the original importer event with the later agent change and Assistant access event.',
+  ];
+  return <details className="demo-walkthrough rounded border p-5">
+    <summary className="cursor-pointer font-semibold">Demo walkthrough (optional)</summary>
+    <div className="mt-4 space-y-6">
+    <p>The sample contains historical memories. Read by category prefix because one response is limited to 100 results. The current permissions and history views show real stored state, including your changes.</p>
+    <p>Use CR → Demo setup for the current generation’s client commands. Agent A starts with write and definition access; B and C start as readers with health and finance restrictions. Open Connections → Edit access to review their actual current permissions. Start fresh conversations after every mode switch or reset.</p>
+    <ol className="list-decimal pl-6 space-y-5">{prompts.map((prompt, index) => <li key={prompt}>
+      <p>{prompt}</p><button type="button" className="mt-1 text-blue-700 underline" onClick={() => void navigator.clipboard.writeText(prompt)}>Copy step {index + 1} prompt</button>
+    </li>)}</ol>
+    <p className="text-sm text-gray-600">Use sensitive-value reveal deliberately in history. A denied read is evidence of the active grants, while an empty allowed read can mean no matching memories.</p>
+    </div>
+  </details>;
+}

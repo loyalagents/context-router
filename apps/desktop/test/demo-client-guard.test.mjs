@@ -41,3 +41,35 @@ test('Homebrew executable exception is confined to exact pinned native Codex and
  for(const change of [{gid:20},{mode:0o40777},{uid:process.getuid()+1}])assert.equal(administratorCaskroom('/opt/homebrew/Caskroom',{...stat,...change},context),false);
  assert.equal(administratorCaskroom('/opt/homebrew/Caskroom/other',stat,context),false);assert.equal(administratorCaskroom('/opt/homebrew/Caskroom',stat),false);
 });
+
+test('Claude setup serializes auth while distinct session guards overlap and retain only their own uncertainty',async t=>{
+ const root=await fixture(t),session='b-session-'+ 'a'.repeat(32);
+ await withClientGuard(root,'b',async()=>{
+  await withClientGuard(root,'b-setup',async()=>{
+   await assert.rejects(withClientGuard(root,'b-setup',()=>{}));
+  });
+  await assert.rejects(withClientGuard(root,session,async guard=>{
+   await withClientGuard(root,'b-setup',()=>{});
+   await withClientGuard(root,'b-session-'+ 'b'.repeat(32),()=>{});
+   await assert.rejects(withClientGuard(root,session,()=>{}));
+   guard.mutating();throw Error('uncertain session');
+  }),/uncertain session/);
+  await assert.rejects(withClientGuard(root,session,()=>{}));
+  await withClientGuard(root,'b-setup',()=>{});
+ });
+ await assert.rejects(withClientGuard(root,'b-setup',async guard=>{guard.mutating();throw Error('uncertain setup');}),/uncertain setup/);
+ await assert.rejects(withClientGuard(root,'b-setup',()=>{}),/active or uncertain/);
+ await assert.rejects(withClientGuard(root,'b-session-../../escape',()=>{}));
+});
+
+test('cancellation during setup guard release prevents the following foreground chat',async t=>{
+ const root=await fixture(t),unlink=fs.unlink;let started=false;
+ fs.unlink=async file=>{await unlink(file);if(file===path.join(root,'demo/client-guards/b-setup.json'))process.emit('SIGINT');};
+ try{
+  await assert.rejects((async()=>{
+   await withClientGuard(root,'b-setup',guard=>guard.settled());
+   await withClientGuard(root,'b-session-'+ 'c'.repeat(32),()=>{started=true;});
+  })(),/cancelled/);
+  assert.equal(started,false);
+ }finally{fs.unlink=unlink;}
+});

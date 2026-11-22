@@ -18,6 +18,7 @@ for(const [variant,label] of [[0,'normal'],[1,'early-exit'],[2,'ignore-term']])t
 });
 test('actual application entrypoint invalidates model admission and preserves unlock service',async t=>{
   const f=await editedFixture(t,'normal',async(runtime,f)=>{
+    await copyFile(path.resolve(import.meta.dirname,'../../runtime/demo-claude.mjs'),path.join(runtime,'demo-claude.mjs'));
     await copyFile(path.resolve(import.meta.dirname,'../../runtime/application.mjs'),path.join(runtime,'application.mjs'));
     await writeFile(path.join(runtime,'managed.mjs'),`import fs from 'node:fs';import path from 'node:path';import {openManagedControl} from './control.mjs';let cap;
 export const authority={revokeManagedAdmission(){},invalidateManagedModel(){fs.writeFileSync(path.join(cap.envelope,'models','invalidated'),'yes');}};

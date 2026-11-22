@@ -146,6 +146,54 @@ closed, and inspect retained state before opening Desktop or retrying. Interrupt
 apply can retain its guard, proposal and backup; never delete a guard or replay an
 uncertain mutation. Restart is not automatic recovery.
 
+The sidebar demo preview adds **Connections → Open Claude Code**. On first use,
+choose a separate demo project folder. The app remembers it; **Change project**
+opens the picker again. Terminal checks the isolated Claude demo sign-in, signs
+in only when needed, then opens normal Claude coding tools with the current demo
+MCP configuration. The dashboard button is the explicit provider action; no
+provider authentication is inspected just by loading Connections. The retained
+qualified Claude 2.1.299 executable is discovered automatically where available;
+**Choose executable…** in the native panel remains the fallback.
+
+Coding launches explicitly enable the named coding tools, including Bash and
+WebFetch, and select Claude's `default` permission mode (normal prompts). Only
+`context_router_demo`'s `searchPreferences` and `listPreferenceSlugs` are
+preapproved for seamless reads; Context Router's actual grants still apply. Bash
+and mutations are not preapproved. The restricted profile's implicit tool
+defaults are insufficient. Project paths are
+canonicalized; invalid selections show a native explanation and do not replace
+the previous valid choice. The picker can stay open without a launch timeout.
+Each chat receives a short private `/private/tmp/cr-code-*` directory for tools
+that create Unix sockets. It is retained because project jobs may outlive Claude.
+
+The dashboard distinguishes native handoff, sign-in, and recent successful context
+reads by the exact B credential. A recent read is not a live connection indicator
+or proof that one particular Terminal session made it. **Open Claude Code** starts
+a fresh chat once setup finishes; earlier chats can stay open. Chats share the
+isolated demo sign-in and B credential. Setup/sign-in is serialized, while each
+foreground chat has its own invocation guard. After restarting Context Router,
+open a fresh session from Connections for the current endpoint. Requests cannot
+be replayed. Interrupted/uncertain invocation guards remain retained; uncertain
+setup blocks further setup. A retained older B guard allows only an already
+initialized, verified signed-in profile to be reused, never new login or profile
+creation. Legacy native-panel B actions still hold the setup lock for their full
+invocation; use Connections for overlapping chats. Normal coding can create independent project
+processes such as dev servers; Context Router Quit does not stop them. This flow
+is a synthetic demo preview; live sign-in and coding acceptance remain a human
+trial, not broader personal-mode onboarding qualification.
+
+The latest chat's confirmed exit and interruption have separate dashboard
+messages. Uncertain invocation guard evidence remains retained; interruption
+status is not proof that all child jobs stopped. Interrupted sign-in has its own
+message without clearing uncertain setup guards. Launch errors remain visible
+until an explicit retry or a newly observed request supplies updated launch status.
+Context quietly reloads values and field definitions on focus/return when no
+memory edit is open; an in-flight passive refresh is cancelled when editing
+starts. Selection stays on the displayed memory while it remains in the results.
+New-memory drafts retain their field definitions until Clear or successful save.
+Background failures show a muted stale-data notice with read-only retry. This
+improves freshness but does not provide simultaneous-edit conflict detection.
+
 Terminal handoffs use unique private retained `demo/launch-requests/.../open.command`
 files. They contain quoted helper arguments and no credentials, use a clean
 Terminal environment, and are never overwritten, reused or automatically removed.

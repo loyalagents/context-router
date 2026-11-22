@@ -3347,6 +3347,24 @@
       "ownerSteps": [
         "09"
       ]
+    },
+    {
+      "id": "demo-claude-profile-auth-status",
+      "sources": [
+        {
+          "path": "apps/backend/scripts/demo/claude-connect.mjs",
+          "fingerprints": [
+            "spawnSync(launch.executable,[...launch.args,'auth','status','--json']"
+          ]
+        }
+      ],
+      "destination": "Qualified pinned Claude CLI auth-status, only after an explicit demo Open action and under the exclusive demo profile guard. No conversation is started by this status check.",
+      "payload": "Isolated persistent demo configuration and a clean environment. No MCP token, inherited provider secret, or personal Claude configuration is supplied. Status output is parsed privately and is never returned to the dashboard.",
+      "defaultRuntime": false,
+      "disposition": "RETAIN",
+      "ownerSteps": [
+        "07"
+      ]
     }
   ],
   "externalClients": [
@@ -4112,7 +4130,8 @@
       "kind": "query",
       "operation": "LocalSavedPreferences",
       "rootFields": [
-        "activePreferences"
+        "activePreferences",
+        "preferenceCatalog"
       ]
     },
     {
@@ -4399,6 +4418,14 @@
       "rootFields": [
         "__typename"
       ]
+    },
+    {
+      "path": "apps/web/components/local/DemoClaudeConnect.tsx",
+      "kind": "query",
+      "operation": "DemoClaudeRead",
+      "rootFields": [
+        "mcpAccessHistory"
+      ]
     }
   ],
   "contractReferences": [
@@ -4526,7 +4553,19 @@
       "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
       "contract": "mcp",
       "kind": "tool",
+      "reference": "mutatePreferences"
+    },
+    {
+      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+      "contract": "mcp",
+      "kind": "tool",
       "reference": "searchPreferences"
+    },
+    {
+      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "smartSearchPreferences"
     },
     {
       "path": "apps/web/app/dashboard/history/page.tsx",
@@ -5421,6 +5460,24 @@
       "contract": "http",
       "kind": "route",
       "reference": "/api/local/mcp/targets"
+    },
+    {
+      "path": "apps/web/components/local/DemoClaudeConnect.tsx",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
+    },
+    {
+      "path": "docs/useful/INSTALLED_MAC_APP.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPreferenceSlugs"
+    },
+    {
+      "path": "docs/useful/INSTALLED_MAC_APP.md",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "searchPreferences"
     }
   ],
   "outboundSinkInventory": [
@@ -5889,7 +5946,7 @@
       "path": "scripts/local-migration/installation/demo-smoke.mjs",
       "sinks": {
         "fetch": 1,
-        "spawn": 4
+        "spawn": 6
       }
     },
     {
@@ -6089,6 +6146,12 @@
       "path": "test-vertex-ai.sh",
       "sinks": {
         "curl": 1
+      }
+    },
+    {
+      "path": "apps/backend/scripts/demo/claude-connect.mjs",
+      "sinks": {
+        "spawn": 1
       }
     }
   ]
