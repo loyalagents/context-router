@@ -20,11 +20,11 @@ await fs.cp(source,bundle,{recursive:true,verbatimSymlinks:true});await verifyCa
 const exe=path.join(bundle,'Contents/MacOS/context-router'),node=path.join(bundle,'Contents/Resources/bin/node'),profile=path.join(root,'offline.sb');
 const {parse}=await import('yaml'),store=parse(await fs.readFile(path.join(repository,'node_modules/.modules.yaml'),'utf8')).storeDir;
 await fs.writeFile(profile,'(version 1)\n(allow default)\n'+[repository,store,path.dirname(path.dirname(process.execPath))].map(p=>`(deny file-read* (subpath ${JSON.stringify(p)}))\n`).join('')+'(deny process-exec)\n'+[exe,node].map(p=>`(allow process-exec (literal ${JSON.stringify(p)}))\n`).join('')+`(allow process-exec (subpath ${JSON.stringify(path.join(envelope,'demo/desktop'))}))\n(deny network-outbound)\n(allow network-outbound (remote ip "localhost:*"))\n`,{mode:0o600});
-const receipt={version:1,status:'running',scope:browserOnly?'browser-only':'full-demo-cycle',root,bundle,source:identity,phases:[],limitations:['Synthetic state with real packaged native/backend/browser/MCP. No AppKit interaction, provider login/session, real model retention/startup, distribution or human acceptance.','Desktop uses an injected test-only temporary-root context; human snapshots require a durable private envelope.',...(browserOnly?['Browser, rename and permissions scope only. It excludes the later A/B/C authority, immutable Desktop, reconnect, reset and personal-return proofs.']:[])]},owners=[],clients=[];let browser;
+const receipt={version:1,status:'running',scope:browserOnly?'browser-only':'full-demo-cycle',root,bundle,source:identity,phases:[],limitations:['Synthetic state with real packaged native/backend/browser/MCP. No AppKit interaction, provider login/session, real model retention/startup, distribution or human acceptance.','Desktop uses an injected test-only temporary-root context; human snapshots require a durable private envelope.',...(browserOnly?['Browser, rename, permissions and offline Claude connect scope only. It excludes the later A/B/C authority, immutable Desktop, reconnect, reset and personal-return proofs.']:[])]},owners=[],clients=[];let browser;
 const phase=name=>{receipt.phases.push(name);console.log('Demo artifact: '+name);};
 const pause=()=>new Promise(resolve=>setTimeout(resolve,20));
 const portProbe=net.createServer();await new Promise(resolve=>portProbe.listen(0,'127.0.0.1',resolve));const demoPort=portProbe.address().port;await new Promise(resolve=>portProbe.close(resolve));
-const command=(args,expected=0)=>{const result=spawnSync('/usr/bin/sandbox-exec',['-f',profile,exe,...args],{env:{PATH:'',LC_ALL:'C'},encoding:'utf8',timeout:30000,maxBuffer:1024*1024});assert.equal(result.status,expected,result.stderr);return result.stdout;};
+const command=(args,expected=0,sandboxProfile=profile)=>{const result=spawnSync('/usr/bin/sandbox-exec',['-f',sandboxProfile,exe,...args],{env:{PATH:'',LC_ALL:'C'},encoding:'utf8',timeout:30000,maxBuffer:1024*1024});assert.equal(result.status,expected,result.stderr);return result.stdout;};
 function launch(){
  const child=spawn('/usr/bin/sandbox-exec',['-f',profile,exe,'guardian','--root',envelope,'--ui-port','0','--mcp-port','0','--demo-mcp-port',String(demoPort)],{env:{PATH:'',LC_ALL:'C'},stdio:['pipe','pipe','pipe']}),owner={child,closed:once(child,'close'),events:[],pending:'',error:''};owners.push(owner);child.stdin.on('error',()=>{});
  child.stdout.on('data',b=>{owner.pending+=b;assert.ok(owner.pending.length<65536);let end;while((end=owner.pending.indexOf('\n'))>=0){owner.events.push(JSON.parse(owner.pending.slice(0,end)));owner.pending=owner.pending.slice(end+1);}});child.stderr.on('data',b=>{owner.error+=b;assert.ok(owner.error.length<65536);});
@@ -33,7 +33,7 @@ function launch(){
 }
 async function stop(owner,ready){if(owner.child.exitCode===null&&owner.child.signalCode===null){if(ready)owner.send('quit',ready.generation);else owner.child.stdin.end();}let timer;try{assert.equal((await Promise.race([owner.closed,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Native exact exit unobserved; retain fixture')),30000);})]))[0],0,owner.error);}finally{clearTimeout(timer);}assert.equal(owner.events.at(-1)?.outcome,'ok');}
 const metadata=()=>fs.readFile(path.join(envelope,'installation.json'),'utf8').then(JSON.parse);
-const helper=(spec,args,expected=0)=>command(['demo','--root',envelope,'--store',spec.store,'--generation',spec.generation,'--endpoint',spec.endpoint,...args],expected);
+const helper=(spec,args,expected=0,sandboxProfile=profile)=>command(['demo','--root',envelope,'--store',spec.store,'--generation',spec.generation,'--endpoint',spec.endpoint,...args],expected,sandboxProfile);
 async function client(ready,file){const c=await connect(Number(new URL(ready.mcpOrigin).port),file);clients.push(c);return c;}
 async function closeClients(){for(const c of clients.splice(0))await c.close();}
 const hash=b=>createHash('sha256').update(b).digest('hex');
@@ -129,6 +129,19 @@ try{
  await permissionPanel.screenshot({path:path.join(root,'demo-permissions-save.png')});
  phase('installed-demo-permissions-save-selected-client-only-personal-receipt-preservation-and-real-mcp');
  assert.deepEqual(outbound,[]);await context.close();await browser.close();browser=undefined;phase('real-packaged-sidebar-context-edit-persistence-and-reused-views');
+ // Run the shipped wrapper/helper with an owned offline CLI, never a real account.
+ const codingProject=path.join(root,'coding-project'),codingClient=path.join(root,'claude-connect-client');
+ await fs.mkdir(codingProject,{mode:0o700});await fs.writeFile(path.join(codingProject,'README.md'),'Synthetic demo project.');
+ const codingBuild=spawnSync('/usr/bin/clang',[path.join(repository,'apps/desktop/test/fixtures/claude-connect-client.c'),'-o',codingClient],{encoding:'utf8',timeout:20000});assert.equal(codingBuild.status,0,codingBuild.stderr);
+ const connectProfile=path.join(root,'offline-connect.sb');
+ await fs.writeFile(connectProfile,(await fs.readFile(profile,'utf8'))+[codingClient,'/bin/sh','/bin/bash'].map(file=>`(allow process-exec (literal ${JSON.stringify(file)}))\n`).join(''),{mode:0o600});
+ const connectArguments=request=>['connect','B','--client','claude','--auth','subscription','--executable',codingClient,'--project',codingProject,'--request',request];
+ for(const request of ['1'.repeat(32),'2'.repeat(32)]){
+   helper(spec,connectArguments(request),0,connectProfile);
+   assert.equal(await fs.readFile(path.join(codingProject,'coding-result.txt'),'utf8'),'demo coding works');
+ }
+ helper(spec,connectArguments('1'.repeat(32)),1,connectProfile);
+ phase('packaged-claude-connect-offline-login-reuse-coding-and-replay-refusal');
  if(browserOnly){await stop(current,ready);receipt.status='passed';}else{
  const exports=path.join(envelope,'demo',firstStore,'exports'),a=await client(ready,path.join(exports,'agent-a.token')),b=await client(ready,path.join(exports,'agent-b.token')),c=await client(ready,path.join(exports,'agent-c.token'));
  const slug='home.demo001.artifact_note';await call(a,'mutatePreferences',{operation:'CREATE_DEFINITION',definition:{slug,description:'Explicit synthetic artifact change',valueType:'STRING',scope:'GLOBAL',isSensitive:true}});await call(a,'mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug,value:'"fresh portable artifact"'}});

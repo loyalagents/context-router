@@ -5933,7 +5933,7 @@
       "path": "scripts/local-migration/installation/demo-smoke.mjs",
       "sinks": {
         "fetch": 1,
-        "spawn": 4
+        "spawn": 5
       }
     },
     {
