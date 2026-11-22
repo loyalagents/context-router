@@ -106,6 +106,20 @@ it("only explicit synthetic compositions import HCP infrastructure; no legacy mo
   expect(presentation).not.toMatch(
     /(?:from\s*|require\s*\(|import\s*\()["']|\b(?:fetch|XMLHttpRequest|localStorage|sessionStorage)\b|<script/,
   );
+  for (const name of [
+    "mcp.ts",
+    "mcp-contract.ts",
+    "core-contract.ts",
+    "request-json.ts",
+  ]) {
+    const adapter = fs.readFileSync(
+      path.join(src, "infrastructure/hcp-experiment", name),
+      "utf8",
+    );
+    expect(adapter).not.toMatch(
+      /@modelcontextprotocol\/(?:sdk|client)|@nestjs|modules\/|local-model|SqliteDatabase|PreferenceService/,
+    );
+  }
   const browser = fs.readFileSync(
     path.resolve(src, "../../web/hcp-source-browser.mjs"),
     "utf8",

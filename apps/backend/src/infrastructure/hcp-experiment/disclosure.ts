@@ -1,6 +1,7 @@
 /** Pure, bounded read selection and public projection. No transport or authority issuance. */
 import type { DatabaseSync } from "node:sqlite";
 import { withConfirmations, confirmed } from "./entry-state";
+import { validCore } from "./core-contract";
 import {
   denied,
   deniedCategories,
@@ -8,9 +9,20 @@ import {
   invalid,
   keys,
   matchesOperator,
-  uri,
+  purposeCode,
+  CATEGORIES,
   validateAccess,
+  AuthorityError,
 } from "./policy";
+/** Only request-versus-grant failures carry a challenge; stored policy never does. */
+export class ReadScopeError extends AuthorityError {
+  constructor(
+    readonly scopes: string[],
+    readonly purpose?: string,
+  ) {
+    super("denied");
+  }
+}
 export interface ReadRequest {
   kind: "query" | "get";
   purpose: string;
@@ -33,7 +45,7 @@ export function readRequest(
       : ["purpose", "purposeDescription", "version"],
   );
   if (
-    !uri(input.purpose) ||
+    !purposeCode(input.purpose) ||
     (input.purposeDescription !== undefined &&
       (typeof input.purposeDescription !== "string" ||
         !input.purposeDescription.trim() ||
@@ -49,7 +61,11 @@ export function readRequest(
         (!Array.isArray(input.categories) ||
           input.categories.length > 100 ||
           input.categories.some(
-            (v: any) => typeof v !== "string" || !v || v.length > 512,
+            (v: any) =>
+              typeof v !== "string" ||
+              !v ||
+              v.length > 512 ||
+              !validCore("common.json#/$defs/category", v),
           ))) ||
       (input.maxEntries !== undefined &&
         (!Number.isSafeInteger(input.maxEntries) || input.maxEntries < 1))
@@ -101,17 +117,27 @@ export function selectRead(
       return false;
     }
   });
-  if (!access.length) denied();
+  const requestedScopes = (request.categories ?? [])
+    .filter((c) => Object.prototype.hasOwnProperty.call(CATEGORIES, c))
+    .map((c) => `hcp:${c}:read`);
+  if (!access.length)
+    throw new ReadScopeError(requestedScopes, request.purpose);
   const permitted = [
     ...new Set<string>(access.flatMap((d: any) => d.categories)),
   ];
   const searched = request.categories ?? permitted;
-  if (
-    request.kind === "query" &&
-    (searched.some((c) => !permitted.includes(c)) ||
-      deniedCategories(grant.client, searched, rules).length)
-  )
-    denied();
+  if (request.kind === "query") {
+    if (searched.some((c) => !permitted.includes(c)))
+      throw new ReadScopeError(
+        requestedScopes,
+        searched.every((c) =>
+          grant.access.some((d: any) => d.categories.includes(c)),
+        )
+          ? request.purpose
+          : undefined,
+      );
+    if (deniedCategories(grant.client, searched, rules).length) denied();
+  }
   let rows: any[];
   if (request.kind === "get") {
     const row: any = db
@@ -230,6 +256,17 @@ export function project(
 ): any {
   const e = item.entry,
     classification: any = { categories: item.categories };
+  // This slice derives no credentials. Never forward a stored caller's claim
+  // about provider disclosure; retain every other field and malformed shape so
+  // shared result validation still refuses unrelated invalid retained evidence.
+  const evidence = Array.isArray(e.evidence)
+    ? e.evidence.map((value: any) => {
+        if (!value || typeof value !== "object" || Array.isArray(value))
+          return value;
+        const { revealed: _revealed, ...stored } = value;
+        return stored;
+      })
+    : e.evidence;
   for (const field of ["dimension", "permittedPurposes"])
     if (e.classification[field] !== undefined)
       classification[field] = e.classification[field];
@@ -238,7 +275,7 @@ export function project(
     version: e.record.version,
     content: e.content,
     assertion: e.assertion,
-    evidence: e.evidence,
+    evidence,
     classification,
     standing: {
       assurance: e.record.provenance.assertedBy.assurance,

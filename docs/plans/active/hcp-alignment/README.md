@@ -1,6 +1,6 @@
 # HCP Alignment Plan
 
-- Status: C1–C5 and bounded C6 source slice merged; bounded human source journey accepted; bounded demo UI continuation active; C7–C9 unactivated; no conformance claim
+- Status: C1–C5 and bounded C6 source/UI slices merged; bounded human source journey accepted; C7a PR #212 review corrections approved with final validation pending; C7b/C8–C9 unactivated; no conformance claim
 - Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` owns sequencing and assigns the next sole writer at activation
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
@@ -9,11 +9,69 @@
 - Relationship and ownership: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
 - Protocol questions: [local Draft 3 adoption notes][questions]
 
-Current work is the [bounded demo UI activation](#c6-demo-ui-activation-2026-11-19),
-under the [demo-first continuation](#demo-first-continuation-2026-11-19). Earlier activation, writer, pending/draft and freeze-time passages
+Current work is the [C7a review correction round](c7-read-brief.md#claude-review-correction-round), following
+the [C6 UI merge](#c6-demo-ui-merge-and-c7a-planning-2026-11-21) and
+[demo-first continuation](#demo-first-continuation-2026-11-19). Earlier activation, writer, pending/draft and freeze-time passages
 below are historical. The current status and checkpoint map supersede their routing;
 old “C8 qualification” means current C9, and old “C7/C8 unactivated” records retain
 their original scope rather than retroactively describing the new C8.
+
+## C6 Demo UI Merge And C7a Planning (2026-11-21)
+
+**Current activation:** Lucas subsequently authorized C7a implementation in chat
+`01a20029-3e43-7d70-9e84-4dcc8acd73e7`, now sole writer/integrator in this checkout.
+The original orchestrator retains sequencing and stays read-only in this checkout.
+The reviewed brief and four planning files are carried forward; controlled synthetic
+clients, tests/builds and disposable fixtures are selected, with no actual host/model,
+personal state or upstream changes. C7b/C8/C9 remain separately gated.
+Implementation and independent review are now complete; the
+[local handoff](c7-read-brief.md#c7a-local-handoff) records passing focused checks,
+the corrected Unicode denial defect, and remaining exact-candidate CI/host evidence.
+Lucas subsequently authorized this writer to commit and publish one C7a PR and
+prepare an independent Claude Code review handoff. The PR description records its
+candidate and CI state. Merge/release and actual host work remain unapproved.
+The implementation is published in [PR #212](https://github.com/loyalagents/context-router/pull/212).
+Lucas requested fixes for its Claude review; the corrected source has fresh
+independent approval. The brief records the correction scope and local evidence;
+the PR description records renewed exact-candidate CI and remaining qualification.
+The following merge/planning record retains its original scope.
+
+Lucas authorized the final Claude feedback corrections and merge of
+[PR #211](https://github.com/loyalagents/context-router/pull/211). It merged as
+`f92260060152b6872b5732587027bd161bc4f590`, with base
+`3f453e57b6139816d1daf40a1fc8715d7dd1e1ec`, final head
+`8db0bf35846549a8e3a4f286662dbf6beff3dc2a` and CI test merge
+`4af9eb9b03743b75ace3ffb98350c9ab7646a470`. The orchestrator verified merge parents
+and the identical final tree `2da9b53e9aed77f5abe9e887bfd2bd811d029b15`.
+[Standard CI](https://github.com/loyalagents/context-router/actions/runs/44943974385)
+passed docs/backend/frontend/native; [migration CI attempt 1](https://github.com/loyalagents/context-router/actions/runs/44943974354)
+passed with verified `ci-source`, `ci-ui`, `ci-packaging` receipts and aggregate
+bound to that source/base. Vercel passed. The PR body is the final evidence record.
+
+The final delta shows ended access/status for inactive grants and requires
+`grant.issued` in HTTP and visible-browser history checks; the HTTP regression
+actually revokes. The TLS prerequisite polling was formatted only. Tests-first
+failure was observed before the fix; backend build and 27 affected dashboard/source
+browser tests passed, as did Prettier, 162-file Markdown links, exact-base contract
+comparison (41 capabilities/58 consumers) and whitespace. Fresh affected review
+(requested Astra/high, actual execution unverified) approved the four-file delta;
+only unaffected prior coverage carried forward. No full local migration gate was
+selected. These results supersede the affected candidate hashes and pending CI
+wording below, while preserving that record's historical scope.
+
+The source UI handoff is delivered. This adds no new human acceptance, installed
+artifact qualification, full C6 or HCP conformance claim. The accepted November 19
+journey and deferred human Ctrl-C/full stop-reopen/expired-session/pending-form
+checks remain as recorded. Broader C5/C6 capabilities remain owned.
+
+The orchestrator assigned a sole documentation writer for [C7a planning](c7-read-brief.md)
+from this clean merged base; root and reviewers remain read-only until handoff.
+The brief proposes synthetic query/get, one host/version, CR-Q7/CR-Q8/N4 contracts,
+tests-first checkpoints and a later bounded host activation. No runtime, host
+configuration, credential/trust/client changes, model use, off-device synthetic
+trial, commit/PR or upstream change is activated by this planning assignment.
+`hcp-spec` stays untouched; normative/adoption pins are unchanged. C8 still owns
+protocol resolution **and CR adoption**, and C9 mandatory completion/qualification.
 
 ## C6 Demo UI Activation (2026-11-19)
 
@@ -193,8 +251,8 @@ spec defect was found. This is partial C6, not installed-artifact or full qualif
 
 | Next milestone | Handoff and completion boundary |
 | --- | --- |
-| C6 continuation: early app-development handoff, then polished synthetic demo | Design can start when activated. Before UI implementation, fix the small shared view/action contracts and file ownership; separate presentation from `http.ts` only as needed so UI work has an independent boundary. Reuse `managementEntries`, `managementEntry`, `audit`, `reviewPersonWrite`, `commitReviewedPersonWrite`, and `releaseWrite`; no new frontend or API framework is a prerequisite. Build clear navigation, memory browsing/detail, selected add/edit/review/history/grant controls, loading/error/uncertain outcomes and convenient source launch. `/manage/person/new` exists, but add needs its own selected acceptance evidence; the human pass covered correction. No C7 or spec-resolution dependency for this UI handoff. |
-| Optional overlapping C7: one host/version, synthetic MCP | Start with read-only query/get through the selected transport and narrow grant; add writes only if useful to the demo, with completion/retry evidence. Agree provisional output/error, query-default and N4 media/parsing contracts before affected implementation or trial. UI and MCP can overlap after shared contracts are stable, with separate ownership/worktrees/resources and one integration order. Real-host setup and any off-device synthetic trial need their own scoped activation. |
+| C6 continuation: source UI handoff delivered | Bounded navigation, retained-entry/version inspection, correction/review/history/grant views and contributor contracts merged in PR #211. Broader workflows and selected add acceptance remain owned; `/manage/person/new` exists but was outside the human correction pass. Later visual/workflow iterations require their own scope; no C7 or spec-resolution dependency for the delivered UI handoff. |
+| C7: one host/version, synthetic MCP | [C7a planning](c7-read-brief.md) proposes read-only query/get through direct Streamable HTTP and a narrow grant, with Claude Code 2.1.299 as the later host. Provisional output/error, query-default and N4 contracts precede implementation. One integrator owns shared routes/release/composition; UI overlap needs stable contracts, separate worktrees/resources and an integration order. Runtime, real-host setup and off-device synthetic use require separate bounded activation; writes/report tools are excluded from this first slice. |
 | C8: protocol resolution and CR adoption | Use demo/client evidence to resolve prioritized questions, produce the smallest justified spec/schema/example/check/guidance/tooling fixes, then explicitly adopt the selected revision and realign affected CR/consumer contracts and tests. Submission, upstream review/merge, and CR adoption are distinct outcomes; an issue list alone does not complete C8. |
 | C9: selected capability completion and qualification | Complete remaining selected C5/C6/C7 capabilities, close all mandatory package/profile gaps and the requirement/evidence matrix, then freeze and qualify the complete candidate. Source, installed-artifact (if selected), host, Mac and manual evidence remain distinct. |
 

@@ -39,6 +39,7 @@ import {
   type AuthorizationConfiguration,
 } from "./authority";
 import { AuthorityError } from "./policy";
+import { ReadResultError } from "./core-contract";
 import { insertFixtures } from "./seed";
 
 // Internal operator inspection only. No context-client, disclosure or management authorization API.
@@ -453,7 +454,11 @@ export class SyntheticExperiment {
             this.#fault?.("after-data-commit");
             return result;
           } catch (error) {
-            if (!(error instanceof AuthorityError)) this.#failed = true;
+            if (
+              !(error instanceof AuthorityError) &&
+              !(error instanceof ReadResultError)
+            )
+              this.#failed = true;
             if (this.#db.isTransaction) this.#db.exec("ROLLBACK");
             throw error;
           }

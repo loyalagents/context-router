@@ -2,6 +2,8 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import type { SyntheticFixture } from "./fixtures";
+import { hasRevealedEvidence, validCore } from "./core-contract";
+import { invalid } from "./policy";
 const uuid = () => `urn:uuid:${randomUUID()}`;
 
 export function insertFixtures(
@@ -86,6 +88,15 @@ export function insertFixtures(
           })),
         },
       };
+      if (
+        hasRevealedEvidence(document.evidence) ||
+        !validCore("entry.json", {
+          ...document,
+          classification: fixture.classification,
+          record: { ...document.record, status: fixture.status },
+        })
+      )
+        invalid();
       db.prepare("INSERT INTO entry_versions VALUES(?,?,?,?)").run(
         id,
         version,

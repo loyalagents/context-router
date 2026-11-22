@@ -1,4 +1,5 @@
 /** Bounded experiment policy vocabulary; authority is never inferred from login. */
+import { validCore, validDirectiveInput } from "./core-contract";
 export const CREDENTIAL_FAMILY_SECONDS = 30 * 86400;
 export const ACCESS_TYPE =
   "https://hcp.example/spec/authorization/context-access";
@@ -99,6 +100,8 @@ export function categories(input: any, min = 1): void {
   )
     invalid();
 }
+export const purposeCode = (value: unknown): boolean =>
+  uri(value) && validCore("common.json#/$defs/purposeCode", value);
 export function validateAccess(
   input: any,
   allowMissingPurposes = false,
@@ -125,7 +128,7 @@ export function validateAccess(
       for (const p of d.purposes) {
         keys(p, ["code", "description"]);
         if (
-          !uri(p.code) ||
+          !purposeCode(p.code) ||
           typeof p.description !== "string" ||
           !p.description.trim() ||
           p.description.length > 512
@@ -307,6 +310,7 @@ export function validatePolicy(input: any): {
         )
           invalid();
       } else if (
+        !validDirectiveInput(p) ||
         (!["share", "sign", "transact"].includes(p.action) && !uri(p.action)) ||
         !["deny", "ask-first", "permit"].includes(p.effect) ||
         typeof p.text !== "string" ||

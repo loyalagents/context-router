@@ -182,6 +182,34 @@ function fault(point) {
   fs.writeSync(1, JSON.stringify({ boundary: point }) + "\n");
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0);
 }
+// Observe the complete protected MCP envelope, not just its inner HCP object.
+const stringify = JSON.stringify;
+JSON.stringify = function (value, ...args) {
+  const bytes = stringify.call(JSON, value, ...args);
+  if (
+    value?.jsonrpc === "2.0" &&
+    value.result?.structuredContent &&
+    !value.result.isError
+  ) {
+    if (phase !== "releaseRead")
+      throw new Error("MCP success serialized outside release");
+    fault("during-mcp-serialization");
+  }
+  return bytes;
+};
+const responseEnd = require("node:http").ServerResponse.prototype.end;
+require("node:http").ServerResponse.prototype.end = function (bytes, ...args) {
+  if (typeof bytes === "string" && bytes.startsWith('{"jsonrpc":"2.0"')) {
+    const envelope = JSON.parse(bytes);
+    if (
+      envelope.result?.structuredContent &&
+      !envelope.result.isError &&
+      phase !== "releaseRead"
+    )
+      throw new Error("MCP handoff outside synchronous release");
+  }
+  return responseEnd.call(this, bytes, ...args);
+};
 process.on("message", async ({ id, command, value }) => {
   try {
     let result = {};
