@@ -42,12 +42,24 @@ test('installed AI guidance uses menu actions without inferring model files or r
   await unlock(f);
   const search = f.page.getByRole('region', { name: 'Preference search' });
   const read = async () => (await search.innerText()).replace(/\s+/g, ' ');
+  let displayedMode = mode;
   const check = async () => {
     const before = checks;
     const response = f.page.waitForResponse(r => r.url().endsWith('/api/local/capabilities'));
     await search.getByRole('button', { name: 'Check model status' }).click();
     await response;
     assert.equal(checks, before + 1, 'one explicit readiness check');
+    if (mode !== displayedMode) {
+      await f.page.getByRole('heading', { name: mode === 'demo' ? 'Your context' : 'Preferences', exact: true }).waitFor();
+      if (mode === 'demo') {
+        // Switching presentation mounts the demo's initially collapsed tools.
+        await f.page.getByRole('button', { name: 'Add or import', exact: true }).click();
+        await f.page.getByText('AI-assisted search', { exact: true }).click();
+      }
+      await search.waitFor();
+      await search.getByLabel('Search query', { exact: true }).fill('synthetic');
+      displayedMode = mode;
+    }
   };
   await search.getByLabel('Search query', { exact: true }).fill('synthetic');
   assert.match(await read(), /AI: unavailable \(last checked\)/);

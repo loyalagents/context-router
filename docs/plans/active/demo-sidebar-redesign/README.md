@@ -246,3 +246,32 @@ flow, followed by an independent Claude review. Exact-candidate CI and that
 review remain pending. No merge is authorized. This acceptance does not qualify
 personal-mode onboarding, other Macs, distribution, broad recovery or a general
 production release; HCP backend replacement remains outside this change.
+
+## PR 213 CI correction
+
+The owner authorized fixes and publication while preserving the running demo,
+and will inspect CI personally. Two failures were reproduced locally: the older
+AI-guidance browser test expected always-visible search after switching modes,
+and the document-reader census lacked the new native test's synthetic README.
+The browser test now opens the demo tools/search and restores its synthetic query
+after remount; all original guidance and no-replay assertions remain. The census
+classifies the fixture as generated output, not a maintained-document reader.
+
+The saved UI-lane log left about 539 seconds for tests after preparation/build;
+the separate serial frontend suite took about 494 seconds. To improve headroom,
+the umbrella now runs at most two isolated test files concurrently. Per-file
+cases and focused groups remain serial. Independent plan and diff review found
+no shared-state blocker: fixtures own temporary roots, databases, credentials,
+browser instances and ephemeral ports. Gate deadlines, required commands, test
+coverage, failure handling and CI routing are unchanged. Requested reviewer
+effort was High; inherited effective model/effort was not independently verified.
+
+Local results: 38 inventory/path-filter tests, 25 AI-browser tests, the two test
+selection checks and 20 Markdown-checker tests passed. The complete 139-test web
+umbrella passed with zero failures, skips or cancellations and exited cleanly in
+266.53 seconds. Contract census, test discovery, links and whitespace passed.
+This is local scheduling evidence, not a claim about a future CI result. No
+product code, gate runner or coverage changed, so affected tests suffice for
+this correction without a new app build or full local migration gate. The
+running app, profiles and chats were untouched. CI monitoring remains with the
+owner; merge remains unauthorized.
