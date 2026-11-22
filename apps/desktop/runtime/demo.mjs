@@ -27,9 +27,9 @@ try{
   }else if(inspect){
     const {inspectInstalledClient}=await import(require.resolve('backend/scripts/demo/installed-clients.mjs'));
     console.log(JSON.stringify(await inspectInstalledClient(spec,{command:values.client,executable:values.executable})));
-  }else if(command==='connect'&&role==='B'&&positionals.length===2&&values.client==='claude'&&values.auth==='subscription'&&values.project&&values.request&&Object.keys(values).every(key=>['root','store','generation','endpoint','client','executable','auth','project','request'].includes(key))){
+  }else if(command==='connect'&&positionals.length===2&&((role==='B'&&values.client==='claude'&&values.auth==='subscription')||(role==='A'&&values.client==='codex'&&values.auth===undefined))&&values.project&&values.request&&Object.keys(values).every(key=>['root','store','generation','endpoint','client','executable','auth','project','request'].includes(key))){
     const {launchInstalledClient}=await import(require.resolve('backend/scripts/demo/installed-clients.mjs'));
-    process.exitCode=await launchInstalledClient(spec,{role:'b',command:'claude',auth:'subscription',connect:true,project:values.project,request:values.request,executable:values.executable});
+    process.exitCode=await launchInstalledClient(spec,{role:role.toLowerCase(),command:values.client,auth:values.auth,connect:true,project:values.project,request:values.request,executable:values.executable});
   }else if(['login','launch'].includes(command)&&positionals.length===2&&['A','B'].includes(role)&&Object.keys(values).every(key=>['root','store','generation','endpoint','client','executable','auth'].includes(key))){
     const {launchInstalledClient}=await import(require.resolve('backend/scripts/demo/installed-clients.mjs'));
     process.exitCode=await launchInstalledClient(spec,{role:role.toLowerCase(),command:values.client??'codex',login:command==='login',executable:values.executable,auth:values.auth});

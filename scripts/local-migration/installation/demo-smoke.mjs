@@ -20,7 +20,7 @@ await fs.cp(source,bundle,{recursive:true,verbatimSymlinks:true});await verifyCa
 const exe=path.join(bundle,'Contents/MacOS/context-router'),node=path.join(bundle,'Contents/Resources/bin/node'),profile=path.join(root,'offline.sb');
 const {parse}=await import('yaml'),store=parse(await fs.readFile(path.join(repository,'node_modules/.modules.yaml'),'utf8')).storeDir;
 await fs.writeFile(profile,'(version 1)\n(allow default)\n'+[repository,store,path.dirname(path.dirname(process.execPath))].map(p=>`(deny file-read* (subpath ${JSON.stringify(p)}))\n`).join('')+'(deny process-exec)\n'+[exe,node].map(p=>`(allow process-exec (literal ${JSON.stringify(p)}))\n`).join('')+`(allow process-exec (subpath ${JSON.stringify(path.join(envelope,'demo/desktop'))}))\n(deny network-outbound)\n(allow network-outbound (remote ip "localhost:*"))\n`,{mode:0o600});
-const receipt={version:1,status:'running',scope:browserOnly?'browser-only':'full-demo-cycle',root,bundle,source:identity,phases:[],limitations:['Synthetic state with real packaged native/backend/browser/MCP. No AppKit interaction, provider login/session, real model retention/startup, distribution or human acceptance.','Desktop uses an injected test-only temporary-root context; human snapshots require a durable private envelope.',...(browserOnly?['Browser, rename, permissions and offline Claude connect scope only. It excludes the later A/B/C authority, immutable Desktop, reconnect, reset and personal-return proofs.']:[])]},owners=[],clients=[];let browser;
+const receipt={version:1,status:'running',scope:browserOnly?'browser-only':'full-demo-cycle',root,bundle,source:identity,phases:[],limitations:['Synthetic state with real packaged native/backend/browser/MCP. No AppKit interaction, provider login/session, real model retention/startup, distribution or human acceptance.','Desktop uses an injected test-only temporary-root context; human snapshots require a durable private envelope.',...(browserOnly?['Browser, rename, permissions and offline Claude/Codex connect scope only. It excludes the later A/B/C authority, immutable Desktop, reconnect, reset and personal-return proofs.']:[])]},owners=[],clients=[];let browser;
 const phase=name=>{receipt.phases.push(name);console.log('Demo artifact: '+name);};
 const pause=()=>new Promise(resolve=>setTimeout(resolve,20));
 const portProbe=net.createServer();await new Promise(resolve=>portProbe.listen(0,'127.0.0.1',resolve));const demoPort=portProbe.address().port;await new Promise(resolve=>portProbe.close(resolve));
@@ -100,11 +100,20 @@ try{
  await page.getByRole('button',{name:'Open Claude Code',exact:true}).click();
  const claudeRequest=await current.event('demo-claude-open',claudeBefore);
  assert.equal(claudeRequest.chooseProject,false);assert.match(claudeRequest.request,/^[a-f0-9]{32}$/);
- current.child.stdin.write(JSON.stringify({version:1,generation:ready.generation,command:'demo-claude-status',request:claudeRequest.request,state:'cancelled'})+'\n');
+ await page.getByRole('button',{name:'Codex CLI',exact:true}).click();
+ const codexBefore=current.events.length;await page.getByRole('button',{name:'Open Codex',exact:true}).click();
+ const codexRequest=await current.event('demo-codex-open',codexBefore);assert.notEqual(codexRequest.request,claudeRequest.request);
+ current.child.stdin.write(JSON.stringify({version:1,generation:ready.generation,command:'demo-codex-status',request:claudeRequest.request,state:'failed'})+'\n');
+ await page.waitForTimeout(250);
+ const codexStatus=await page.evaluate(async()=>{const r=await fetch('/api/local/demo/codex/status',{method:'POST',headers:{'content-type':'application/json','x-context-router-ui':'1',authorization:'Bearer '+sessionStorage.getItem('context-router.browser-session.v1')},body:'{}'});return r.json();});
+ assert.equal(codexStatus.state,'checking');assert.equal(codexStatus.clientId,demoReceipt.clients.agentA);
+ for(const [client,request] of [['claude',claudeRequest],['codex',codexRequest]])current.child.stdin.write(JSON.stringify({version:1,generation:ready.generation,command:`demo-${client}-status`,request:request.request,state:'cancelled'})+'\n');
  await page.getByText('Project selection cancelled.',{exact:false}).waitFor();
+ await page.screenshot({path:path.join(root,'codex-connections.png'),fullPage:true});
  await page.reload();await page.getByText('Project selection cancelled.',{exact:false}).waitFor();
  assert.equal(current.events.slice(claudeBefore).filter(event=>event.type==='demo-claude-open').length,1);
- phase('dashboard-native-claude-request-and-correlated-cancellation');
+ assert.equal(current.events.slice(codexBefore).filter(event=>event.type==='demo-codex-open').length,1);
+ phase('dashboard-native-cli-requests-cross-client-refusal-and-correlated-cancellation');
  const authority=()=>page.evaluate(async()=>{const response=await fetch('/api/local/mcp/list',{method:'POST',headers:{'content-type':'application/json','x-context-router-ui':'1',authorization:'Bearer '+sessionStorage.getItem('context-router.browser-session.v1')},body:'{}'});if(!response.ok)throw new Error('Authority read failed');return (await response.json()).items;});
  const permissionBefore=await authority(),selectedId=demoReceipt.clients.agentB;
  await page.getByRole('button',{name:'Edit permissions '+selectedId,exact:true}).click();
@@ -130,23 +139,25 @@ try{
  phase('installed-demo-permissions-save-selected-client-only-personal-receipt-preservation-and-real-mcp');
  assert.deepEqual(outbound,[]);await context.close();await browser.close();browser=undefined;phase('real-packaged-sidebar-context-edit-persistence-and-reused-views');
  // Run the shipped wrapper/helper with an owned offline CLI, never a real account.
- const codingProject=path.join(root,'coding-project'),codingClient=path.join(root,'claude-connect-client');
+ for(const vendor of ['claude','codex']){
+ const role=vendor==='codex'?'a':'b',requests=vendor==='codex'?['3'.repeat(32),'4'.repeat(32)]:['1'.repeat(32),'2'.repeat(32)];
+ const codingProject=path.join(root,vendor+'-coding-project'),codingClient=path.join(root,vendor+'-connect-client');
  await fs.mkdir(codingProject,{mode:0o700});await fs.writeFile(path.join(codingProject,'README.md'),'Synthetic demo project.');
- const codingBuild=spawnSync('/usr/bin/clang',[path.join(repository,'apps/desktop/test/fixtures/claude-connect-client.c'),'-o',codingClient],{encoding:'utf8',timeout:20000});assert.equal(codingBuild.status,0,codingBuild.stderr);
- const connectProfile=path.join(root,'offline-connect.sb');
+ const codingBuild=spawnSync('/usr/bin/clang',[path.join(repository,`apps/desktop/test/fixtures/${vendor}-connect-client.c`),'-o',codingClient],{encoding:'utf8',timeout:20000});assert.equal(codingBuild.status,0,codingBuild.stderr);
+ const connectProfile=path.join(root,vendor+'-offline-connect.sb');
  await fs.writeFile(connectProfile,(await fs.readFile(profile,'utf8'))+[codingClient,'/bin/sh','/bin/bash'].map(file=>`(allow process-exec (literal ${JSON.stringify(file)}))\n`).join(''),{mode:0o600});
- const connectArguments=request=>['connect','B','--client','claude','--auth','subscription','--executable',codingClient,'--project',codingProject,'--request',request];
+ const connectArguments=request=>['connect',role.toUpperCase(),'--client',vendor,...(vendor==='claude'?['--auth','subscription']:[]),'--executable',codingClient,'--project',codingProject,'--request',request];
  await fs.writeFile(path.join(codingProject,'hold-chats'),'');
  const chats=[],chatPids=[];
  try{
-  for(const request of ['1'.repeat(32),'2'.repeat(32)]){
+  for(const request of requests){
    const child=spawn('/usr/bin/sandbox-exec',['-f',connectProfile,exe,'demo','--root',envelope,'--store',spec.store,'--generation',spec.generation,'--endpoint',spec.endpoint,...connectArguments(request)],{env:{PATH:'',LC_ALL:'C'},stdio:['ignore','ignore','pipe']});
    const chat={child,closed:once(child,'close'),error:''};chat.closed.catch(()=>{});child.stderr.on('data',bytes=>{chat.error=(chat.error+bytes).slice(-4096);});chats.push(chat);
    const deadline=Date.now()+30000;
    while((await fs.readdir(codingProject)).filter(name=>/^chat-\d+\.ready$/.test(name)).length<chats.length){assert.equal(child.exitCode,null,chat.error);assert.ok(Date.now()<deadline,'overlapping packaged chats did not start');await pause();}
    chatPids.push((await fs.readdir(codingProject)).filter(name=>/^chat-\d+\.ready$/.test(name)).map(name=>Number(name.slice(5,-6))).find(pid=>!chatPids.includes(pid)));
-   await fs.access(path.join(envelope,'demo/client-guards',`b-session-${request}.json`));
-   await assert.rejects(fs.access(path.join(envelope,'demo/client-guards/b-setup.json')));
+   await fs.access(path.join(envelope,'demo/client-guards',`${role}-session-${request}.json`));
+   await assert.rejects(fs.access(path.join(envelope,`demo/client-guards/${role}-setup.json`)));
   }
   for(const pid of chatPids)process.kill(pid,0);
   await fs.writeFile(path.join(codingProject,`chat-${chatPids[0]}.release`),'');assert.equal((await chats[0].closed)[0],0,chats[0].error);
@@ -156,8 +167,9 @@ try{
  }finally{
   await fs.rm(path.join(codingProject,'hold-chats'),{force:true});await Promise.allSettled(chats.map(chat=>chat.closed));
  }
- helper(spec,connectArguments('1'.repeat(32)),1,connectProfile);
- phase('packaged-claude-connect-overlapping-chats-independent-exit-login-reuse-coding-and-replay-refusal');
+ helper(spec,connectArguments(requests[0]),1,connectProfile);
+ phase(`packaged-${vendor}-connect-overlapping-chats-independent-exit-login-reuse-coding-and-replay-refusal`);
+ }
  if(browserOnly){await stop(current,ready);receipt.status='passed';}else{
  const exports=path.join(envelope,'demo',firstStore,'exports'),a=await client(ready,path.join(exports,'agent-a.token')),b=await client(ready,path.join(exports,'agent-b.token')),c=await client(ready,path.join(exports,'agent-c.token'));
  const slug='home.demo001.artifact_note';await call(a,'mutatePreferences',{operation:'CREATE_DEFINITION',definition:{slug,description:'Explicit synthetic artifact change',valueType:'STRING',scope:'GLOBAL',isSensitive:true}});await call(a,'mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug,value:'"fresh portable artifact"'}});

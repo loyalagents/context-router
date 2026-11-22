@@ -39,6 +39,7 @@ export async function createLocalUiApplication(
     webHandler: LocalUiWebHandler;
     model?: LocalModelSelection;
     demoClaude?: import('../local-ui/local-ui-http').DemoClaudeActions;
+    demoCodex?: import('../local-ui/local-ui-http').DemoClaudeActions;
   },
 ) {
   for (const port of [options.port, options.mcpPort])
@@ -101,6 +102,7 @@ export async function createLocalUiApplication(
       new LocalUiManagement(credentials, ready.state.principalId),
       policy,
       options.demoClaude,
+      options.demoCodex,
     );
     application.use(boundary.middleware);
     application.useBodyParser('json', { limit: 256 * 1024 });

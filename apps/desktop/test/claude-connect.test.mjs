@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { authenticateClaude, startClaude, codingLaunchSpec } from '../../backend/scripts/demo/claude-connect.mjs';
+import { authenticateClient, startClient, codingLaunchSpec } from '../../backend/scripts/demo/claude-connect.mjs';
 import { clientLaunchSpec } from '../../backend/scripts/demo/clients.mjs';
 
-const connectClaude=async(launch,options)=>{const code=await authenticateClaude(launch,options);return code===0?startClaude(launch,options):code;};
+const connectClaude=async(launch,options)=>{const code=await authenticateClient(launch,options);return code===0?startClient(launch,options):code;};
 const launch = clientLaunchSpec({command:'claude',auth:'subscription',agent:'b',root:'/demo',mcpPort:8790,dataset:'demo001'},{executable:'/native/claude'});
 for (const signedIn of [true,false]) test(`connect checks isolated auth, ${signedIn?'reuses login':'signs in once'}, then opens coding session`,async()=>{
   const events=[];let authenticated=signedIn;
@@ -38,8 +38,8 @@ test('progress is private, request-bound, immutable and cannot replay a retained
 
 test('a retained legacy invocation can reuse login but cannot initiate sign-in',async()=>{
  let runs=0;
- await assert.rejects(authenticateClaude(launch,{check:async()=>{},authStatus:async()=>false,run:async()=>runs++,state:async()=>{},allowLogin:false}),/earlier demo invocation/);
+ await assert.rejects(authenticateClient(launch,{check:async()=>{},authStatus:async()=>false,run:async()=>runs++,state:async()=>{},allowLogin:false}),/earlier demo invocation/);
  assert.equal(runs,0);
- assert.equal(await authenticateClaude(launch,{check:async()=>{},authStatus:async()=>true,run:async()=>runs++,state:async()=>{},allowLogin:false}),0);
+ assert.equal(await authenticateClient(launch,{check:async()=>{},authStatus:async()=>true,run:async()=>runs++,state:async()=>{},allowLogin:false}),0);
  assert.equal(runs,0);
 });

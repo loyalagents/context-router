@@ -26,3 +26,12 @@ test('a running chat allows a fresh request while setup still deduplicates and o
  progress.set(first.request,'exited');flow.accept({request:first.request,state:'failed'});
  assert.equal((await flow.status()).state,'checking');assert.equal((await flow.status()).busy,true);
 });
+
+test('Codex and Claude launch/status stay separate while each supports multiple chats',async()=>{
+ const sent=[],progress=new Map();const make=client=>createDemoClaude({cap,client,send:async(type,payload)=>sent.push({type,...payload}),readProgress:async id=>progress.get(id),readClient:async()=>client==='codex'?'exact-a':'exact-b'});
+ const codex=make('codex'),claude=make('claude');const a=await codex.open(false),b=await claude.open(false);
+ assert.equal(sent[0].type,'demo-codex-open');assert.equal(sent[1].type,'demo-claude-open');assert.equal(a.clientId,'exact-a');assert.equal(b.clientId,'exact-b');
+ codex.accept({request:b.request,state:'failed'});assert.equal((await codex.status()).state,'checking');
+ progress.set(a.request,'starting');await codex.status();await codex.open(false);assert.equal(sent.length,3);assert.equal((await claude.status()).busy,true);
+ assert.throws(()=>make('unknown'));
+});

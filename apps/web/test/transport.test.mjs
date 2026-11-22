@@ -120,3 +120,10 @@ test('permissions discovery and preview are fixed human routes and Save is never
   await assert.rejects(transport.request('/api/local/mcp/save',{method:'POST',body:'{}'}),/lost/);
   assert.deepEqual(calls,['/api/local/mcp/targets','/api/local/mcp/preview','/api/local/mcp/save']);
 });
+
+test('both demo assistants use the fixed authenticated browser destinations',async()=>{
+ const calls=[],transport=createLocalTransport(async(url,options)=>{calls.push({url,options});return new Response('{}');});transport.setSession(token);
+ for(const client of ['claude','codex'])for(const action of ['status','open'])await transport.request(`/api/local/demo/${client}/${action}`,{method:'POST',body:action==='open'?'{"chooseProject":false}':'{}'});
+ assert.equal(calls.length,4);for(const call of calls)assert.equal(call.options.headers.get('authorization'),'Bearer '+token);
+ await assert.rejects(transport.request('/api/local/demo/unknown/open',{method:'POST'}));
+});

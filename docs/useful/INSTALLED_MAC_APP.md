@@ -171,6 +171,18 @@ processes such as dev servers; Context Router Quit does not stop them. This flow
 is a synthetic demo preview; live sign-in and coding acceptance remain a human
 trial, not broader personal-mode onboarding qualification.
 
+The Codex demo follow-up adds a **Codex CLI** selector alongside **Claude Code**
+in Connections. **Open Codex** remembers a separate project choice, checks the
+isolated demo ChatGPT sign-in, signs in only when needed and opens normal coding
+in Terminal. It requires the qualified native Codex 0.160.0 executable. Coding
+uses workspace-write sandboxing and on-request approvals; context mutation also
+requires approval and the current Agent A grants. Several fresh Codex chats can
+stay open together. Their recent Activity uses the A credential, separately from
+Claude's B credential. Choose a project without its own `.codex/config.toml`;
+the demo ignores parent project configuration and never edits existing settings.
+The native picker/inspection remains one operation at a
+time; switching assistants never transfers a launch result or login profile.
+
 Terminal handoffs use unique private retained `demo/launch-requests/.../open.command`
 files. They contain quoted helper arguments and no credentials, use a clean
 Terminal environment, and are never overwritten, reused or automatically removed.

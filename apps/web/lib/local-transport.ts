@@ -4,6 +4,8 @@ const routes = new Set([
   '/api/form-fill/pdf',
   '/api/local/demo/claude/open',
   '/api/local/demo/claude/status',
+  '/api/local/demo/codex/open',
+  '/api/local/demo/codex/status',
   '/api/local/unlock',
   '/api/local/logout',
   '/api/local/capabilities',

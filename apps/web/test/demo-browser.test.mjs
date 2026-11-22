@@ -287,3 +287,28 @@ test('Claude launch is explicit, remembers in-flight state on reload, and report
  await button.click();assert.equal(opens,2);assert.deepEqual(requests[1],{chooseProject:false});assert.equal(await button.isDisabled(),true);
  state={...state,state:'exited',busy:false};await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();await f.page.getByRole('button',{name:'Change project',exact:true}).click();assert.equal(opens,3);assert.deepEqual(requests[2],{chooseProject:true});
 });
+
+test('Codex launch is explicit, remembers in-flight state on reload, and reports only recent exact-client reads', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);
+ const fs=await import('node:fs'),path=await import('node:path'),{createRequire}=await import('node:module');
+ const require=createRequire(new URL('../../backend/package.json',import.meta.url));
+ const {Client}=require('@modelcontextprotocol/sdk/client/index.js'),{StreamableHTTPClientTransport}=require('@modelcontextprotocol/sdk/client/streamableHttp.js');
+ const receipt=JSON.parse(fs.readFileSync(path.join(f.root,'demo/generation.json'),'utf8'));const peers=[];t.after(async()=>{for(const peer of peers)await peer.close();});
+ async function read(role){const peer=new Client({name:'synthetic-connect-test',version:'1'},{capabilities:{}});peers.push(peer);await peer.connect(new StreamableHTTPClientTransport(new URL(f.ready.mcpOrigin),{requestInit:{headers:{Authorization:'Bearer '+fs.readFileSync(path.join(f.root,`demo/exports/agent-${role}.token`),'utf8').trim()}}}));const result=await peer.callTool({name:'searchPreferences',arguments:{query:'work.demo001.'}});assert.ok(!result.isError,JSON.stringify(result));}
+ await read('a');
+ let state={available:true,clientId:receipt.clients.agentA,state:'idle',busy:false},opens=0;const requests=[];
+ await f.page.route('**/api/local/demo/codex/status',route=>route.fulfill({json:state}));
+ await f.page.route('**/api/local/demo/codex/open',route=>{opens++;requests.push(route.request().postDataJSON());state={...state,state:'checking',busy:true,request:'d'.repeat(32),startedAt:new Date().toISOString()};return route.fulfill({json:state});});
+ await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();
+ const button=f.page.getByRole('button',{name:'Open Codex',exact:true});await button.waitFor();await f.page.getByText('Choose a project once.',{exact:false}).waitFor();assert.equal(opens,0);
+ await button.click();assert.equal(opens,1);assert.deepEqual(requests,[{chooseProject:false}]);assert.equal(await button.isDisabled(),true);
+ state={...state,state:'terminal-opened'};await f.page.getByText('Terminal opened.',{exact:false}).waitFor();assert.equal(await f.page.getByText(/^Context read at /).count(),0);
+ await f.page.reload();await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();await f.page.getByText('Terminal opened.',{exact:false}).waitFor();assert.equal(opens,1);
+ await read('b');await f.page.waitForTimeout(2200);assert.equal(await f.page.getByText(/^Context read at /).count(),0);
+ await read('a');const history=(await f.graphql('query($input:McpAccessHistoryInput!){mcpAccessHistory(input:$input){items{clientKey occurredAt outcome operationName responseMetadata}}}',{input:{first:20,clientKey:`local:${receipt.clients.agentA}`}})).mcpAccessHistory.items;assert.ok(history.some(item=>item.operationName==='searchPreferences'&&item.responseMetadata?.activeCount>0),JSON.stringify(history));await f.page.getByText(/^Context read at /).waitFor();
+ const activity=f.page.getByRole('region',{name:'Connect Codex'}).getByRole('link',{name:'View activity'});assert.ok((await activity.getAttribute('href')).endsWith('#mcp-client='+receipt.clients.agentA));
+ state={...state,state:'starting',busy:false};await f.page.getByText('Your latest chat is opening', {exact:false}).waitFor();assert.equal(await button.isDisabled(),false);
+ await button.click();assert.equal(opens,2);assert.deepEqual(requests[1],{chooseProject:false});assert.equal(await button.isDisabled(),true);
+ state={...state,state:'exited',busy:false};await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();await f.page.getByRole('button',{name:'Change project',exact:true}).click();assert.equal(opens,3);assert.deepEqual(requests[2],{chooseProject:true});
+});
