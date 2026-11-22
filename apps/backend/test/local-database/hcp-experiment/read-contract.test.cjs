@@ -416,8 +416,12 @@ test("C7 stored-rule and historical-purpose denials never challenge for more OAu
     token = await authorize(f, "a", [
       detail(["general_preferences", "work_context"]),
     ]);
-  const ref = (await mcpQuery(f, token)).json.result.structuredContent
-    .entries[0].ref;
+  const entries = (
+    await mcpQuery(f, token, { categories: ["general_preferences"] })
+  ).json.result.structuredContent.entries;
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].version, 2);
+  const ref = entries[0].ref;
   const noChallenge = (r) => {
     assert.equal(r.status, 200);
     assert.equal(r.json.result.isError, true);
