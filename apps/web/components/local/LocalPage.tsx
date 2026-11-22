@@ -121,6 +121,7 @@ const queries = {
   history: /* GraphQL */ `
     query LocalHistoryCatalog {
       preferenceCatalog {
+        category
         slug
         isSensitive
       }
@@ -166,7 +167,7 @@ function LocalPageContent({ page }: { page: Page }) {
   if (!session) return null;
   if (error)
     return (
-      <main className="p-10">
+      <main className={demo ? 'demo-page' : 'p-10'}>
         <p role="alert">{error}</p>
         <button
           className="mt-4 text-blue-700 underline"
@@ -178,8 +179,8 @@ function LocalPageContent({ page }: { page: Page }) {
     );
   if (queries[effectivePage] && !data)
     return (
-      <main role="status" className="p-10">
-        Loading {page}…
+      <main role="status" className={demo ? 'demo-page' : 'p-10'}>
+        Loading {demo ? ({dashboard:'context',preferences:'context',history:'activity',schema:'memory fields',profile:'profile','form-fill':'form fill',permissions:'connections'}[page]) : page}…
       </main>
     );
   const accessToken = session.token;
@@ -192,7 +193,6 @@ function LocalPageContent({ page }: { page: Page }) {
         error={null}
         local
       />
-      {session.capabilities.runtime?.mode === 'demo' && <DemoGuide />}
       </>
     );
   if (effectivePage === 'preferences')
@@ -207,7 +207,7 @@ function LocalPageContent({ page }: { page: Page }) {
     );
   if (effectivePage === 'schema')
     return (
-      <div className="p-10 max-w-4xl">
+      <div className={demo ? 'demo-page' : 'p-10 max-w-4xl'}>
         <SchemaClient
           initialCatalog={data!.preferenceCatalog}
           accessToken={accessToken}
@@ -255,25 +255,4 @@ export default function LocalPage({ page }: { page: Page }) {
   const session = useLocalSession();
   if (!session) return null;
   return <ClientNamesProvider key={`${page}-${session.token}`}><LocalPageContent page={page} /></ClientNamesProvider>;
-}
-
-function DemoGuide() {
-  const prompts = [
-    'Search preferences using the literal prefixes travel.demo001. and home.demo001. These are historical 2024–2025 memories; do not assume dates or bookings are current.',
-    'Search with the prefix travel.demo001. and propose one change to a returned preference. Wait for my explicit approval before writing it, then confirm the stored value.',
-    'In a fresh Agent B or C conversation, read the exact changed slug again and report the current stored value.',
-    'Search using the literal prefixes health.demo001. and finance.demo001. Report what the tools permit; do not guess or infer restricted values.',
-    'Review the changed memory’s Modified by field and its Audit History. Compare the original importer event with the later agent change and MCP Access event.',
-  ];
-  return <details className="mx-10 mb-10 max-w-5xl rounded border p-5">
-    <summary className="cursor-pointer font-semibold">Demo walkthrough (optional)</summary>
-    <div className="mt-4 space-y-6">
-    <p>The sample contains historical memories. Read by category prefix because one response is limited to 100 results. The current permissions and history views show real stored state, including your changes.</p>
-    <p>Use CR → Demo setup for the current generation’s client commands. Agent A starts with write and definition access; B and C start as readers with health and finance restrictions. Inspect Permission Grants for their actual current grants. Start fresh conversations after every mode switch or reset.</p>
-    <ol className="list-decimal pl-6 space-y-5">{prompts.map((prompt, index) => <li key={prompt}>
-      <p>{prompt}</p><button type="button" className="mt-1 text-blue-700 underline" onClick={() => void navigator.clipboard.writeText(prompt)}>Copy step {index + 1} prompt</button>
-    </li>)}</ol>
-    <p className="text-sm text-gray-600">Use sensitive-value reveal deliberately in history. A denied read is evidence of the active grants, while an empty allowed read can mean no matching memories.</p>
-    </div>
-  </details>;
 }

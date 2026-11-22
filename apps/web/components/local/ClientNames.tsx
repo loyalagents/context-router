@@ -132,10 +132,12 @@ export function ClientName({
   clientKey,
   label,
   fullId = false,
+  showId = true,
 }: {
   clientKey: string;
   label?: string;
   fullId?: boolean;
+  showId?: boolean;
 }) {
   const context = useContext(Context),
     id = localClientId(clientKey);
@@ -153,7 +155,7 @@ export function ClientName({
   return (
     <span title={clientKey} className="[overflow-wrap:anywhere]">
       <bdi dir="auto">{name}</bdi>{" "}
-      <code aria-hidden="true">
+      <code aria-hidden="true" hidden={!showId}>
         <bdi dir="ltr">· {id.slice(-8)}</bdi>
       </code>
       <span className={fullId ? "block text-xs font-normal" : "sr-only"}>

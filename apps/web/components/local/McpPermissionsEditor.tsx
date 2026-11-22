@@ -11,6 +11,7 @@ import {
   type PermissionDraft,
   type PermissionConflict,
 } from "./permissions-draft";
+import { useDemoDraft } from "./DemoDrafts";
 import { ClientName } from "./ClientNames";
 
 export type McpPolicy = {
@@ -184,6 +185,7 @@ export default function McpPermissionsEditor({
   });
   const outcomeRef = useRef<HTMLDivElement>(null);
   const interacted = useRef(false);
+  useDemoDraft(!!intent.current?.intents.length, saving);
   const valid =
     snapshot?.status === "AVAILABLE" &&
     snapshot.catalogStatus === "AVAILABLE" &&

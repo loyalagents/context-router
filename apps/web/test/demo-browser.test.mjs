@@ -32,6 +32,8 @@ test('demo plain-text editor preserves string type, pending draft identity and p
  await f.page.route('**/graphql',async route=>{if(route.request().postDataJSON().query.includes('mutation SetPreference')){seen();await hold;}await route.continue();});
  await f.page.getByRole('button',{name:'Save changes',exact:true}).click();await waiting;
  assert.equal(await editor.isDisabled(),true);assert.equal(await f.page.getByRole('button',{name:'Cancel',exact:true}).isDisabled(),true);
+ f.page.once('dialog',dialog=>dialog.accept());await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ assert.equal(new URL(f.page.url()).pathname,'/dashboard');assert.equal(await editor.inputValue(),value);
  release();await f.page.getByRole('button',{name:'Edit context',exact:true}).waitFor();
  const after=(await f.graphql('query { activePreferences { id slug value } }')).activePreferences;
  assert.equal(after.find(p=>p.id===selected.id).value,value);assert.deepEqual(after.filter(p=>p.id!==selected.id),original.filter(p=>p.id!==selected.id));
@@ -121,14 +123,15 @@ test('seeded demo client rename preserves historical attribution and exact activ
  const history=()=>{const c=f.database.connect();try{return c.all('SELECT id,actor_client_key,before_state,after_state FROM preference_audit_events WHERE subject_slug=? ORDER BY id',[slug]);}finally{c.close();}};
  const before=history();assert.ok(before.length>=2);assert.ok(before.every(event=>event.actor_client_key===key));
  await f.page.goto(f.ready.origin+'/dashboard/permissions');await f.page.getByLabel('Unlock token').fill(f.bootstrap);await f.page.getByRole('button',{name:'Unlock local dashboard'}).click();
- await f.page.getByRole('button',{name:'Rename '+id,exact:true}).click();await f.page.getByLabel('Client name',{exact:true}).fill(label);await f.page.getByRole('button',{name:'Save name'}).click();await f.page.getByRole('status',{name:'Client name saved',exact:true}).waitFor();
+ await f.page.locator('.demo-client-card').filter({has:f.page.getByRole('button',{name:'Edit permissions '+id,exact:true})}).locator('summary').click();
+ await f.page.getByRole('button',{name:'Rename '+id,exact:true}).click();await f.page.getByLabel('Connection name',{exact:true}).fill(label);await f.page.getByRole('button',{name:'Save name'}).click();await f.page.getByRole('status',{name:'Connection name saved',exact:true}).waitFor();
  await f.page.getByRole('link',{name:'View activity '+id,exact:true}).click();
  for(const tab of ['Assistant access','Context changes']){
   await f.page.getByRole('tab',{name:tab,exact:true}).click();const panel=f.page.getByRole('tabpanel',{name:tab,exact:true});
   if(tab==='Context changes'){await panel.getByText('Filter activity',{exact:true}).click();await panel.getByRole('button',{name:'More filters',exact:true}).click();}
   assert.equal(new URL(f.page.url()).hash,'#mcp-client='+id);assert.equal(await panel.getByLabel(tab==='Context changes'?'Actor client key':'Client key').inputValue(),key);
   await panel.getByText(label,{exact:true}).first().waitFor();
-  const row=panel.getByRole('button').filter({hasText:tab==='Context changes'?slug:'mutatePreferences'}).first();await row.click();
+  const row=panel.getByRole('button').filter({hasText:tab==='Context changes'?'Memory set':'requested a memory change'}).first();await row.click();
   await panel.getByText('Client key: '+key,{exact:true}).waitFor();await f.page.getByRole('complementary',{name:'Demo mode'}).waitFor();
  }
  assert.deepEqual(history(),before,'rename must leave existing audit payloads and exact actor keys intact');
@@ -136,7 +139,7 @@ test('seeded demo client rename preserves historical attribution and exact activ
  assert.ok((await f.page.textContent('body')).includes(key));await f.page.getByRole('complementary',{name:'Demo mode'}).waitFor();
  const after=JSON.parse(f.cli('local-mcp.js','list').stdout).result;
  assert.equal(after.find(client=>client.id===id).label,label);
- assert.equal(after.find(client=>client.id===receipt.clients.agentB).label,'Demo agent B — reader');
+ assert.equal(after.find(client=>client.id===receipt.clients.agentB).label,'Claude Code — reader');
  assert.deepEqual(JSON.parse(await readFile(f.root+'/demo/generation.json')),receipt);
 });
 
@@ -171,4 +174,92 @@ test('demo uses the installed local model for smart search while keeping histori
  const results=f.page.getByLabel('Smart search results');await results.getByText('Synthetic historical travel match',{exact:true}).waitFor();
  await results.getByText(slug,{exact:true}).waitFor();assert.equal(f.peer.state.completionBodies.length,1);
  await banner.waitFor();assert.equal((await f.graphql('query { activePreferences { slug } }')).activePreferences.length,189);
+});
+
+test('demo navigation retains its shell, protects edits and makes memory selection keyboard accessible', {timeout:60000}, async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ const nav=f.page.getByRole('navigation',{name:'Main navigation'}),list=f.page.getByRole('region',{name:'Saved context'});
+ await f.page.evaluate(()=>{window.demoShellNode=document.querySelector('.demo-sidebar');window.demoDocument=document;});
+ for(const [name,heading] of [['Connections','Connections'],['Activity','Activity'],['Context','Your context']]){
+  await nav.getByRole('link',{name,exact:true}).click();await f.page.getByRole('heading',{name:heading,exact:true}).waitFor();
+  assert.equal(await f.page.evaluate(()=>window.demoShellNode===document.querySelector('.demo-sidebar')&&window.demoDocument===document),true);
+  if(name==='Activity')assert.equal(await f.page.getByRole('tab',{name:'Assistant access',exact:true}).getAttribute('aria-selected'),'true');
+ }
+ await list.getByRole('button').first().waitFor();
+ assert.equal(await list.locator('button[tabindex="0"]').count(),1);
+ await list.locator('button[tabindex="0"]').focus();await f.page.keyboard.press('ArrowDown');
+ assert.equal(await list.getByRole('button').nth(1).getAttribute('aria-pressed'),'true');
+ await f.page.keyboard.press('End');assert.equal(await list.getByRole('button').last().getAttribute('aria-pressed'),'true');
+ await f.page.keyboard.press('Home');assert.equal(await list.getByRole('button').first().getAttribute('aria-pressed'),'true');
+ await f.page.keyboard.press('Tab');assert.equal(await f.page.getByRole('button',{name:'Edit context',exact:true}).evaluate(el=>el===document.activeElement),true);
+ const top=(await list.boundingBox()).y;await f.page.getByRole('button',{name:'Edit context',exact:true}).click();
+ const editor=f.page.locator('.demo-inspector textarea');await editor.fill('Unsaved navigation fixture');
+ assert.equal((await list.boundingBox()).y,top,'edit notice must not shift the list');
+ for(const link of [nav.getByRole('link',{name:'Connections',exact:true}), f.page.getByRole('link',{name:'Context Router',exact:true}), f.page.getByRole('link',{name:'Connect Claude Code',exact:true})]){
+  f.page.once('dialog',dialog=>dialog.dismiss());await link.click();assert.equal(await editor.inputValue(),'Unsaved navigation fixture');
+ }
+ f.page.once('dialog',dialog=>dialog.accept());await nav.getByRole('link',{name:'Activity',exact:true}).click();await f.page.getByRole('heading',{name:'Activity',exact:true}).waitFor();
+ await nav.getByRole('link',{name:'Context',exact:true}).click();await list.waitFor();
+ for(const [width,height] of [[1280,720],[1440,900],[1920,1080]]){await f.page.setViewportSize({width,height});assert.equal(await f.page.evaluate(()=>document.documentElement.scrollHeight>window.innerHeight+1),false);assert.equal(await f.page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);}
+ await f.page.getByRole('button',{name:'Add or import',exact:true}).click();const tools=f.page.getByRole('region',{name:'Context tools'});
+ assert.equal(await tools.evaluate(el=>el===document.activeElement),true);assert.ok((await tools.boundingBox()).y<(await list.boundingBox()).y);
+ await f.page.getByRole('button',{name:'Add or import',exact:true}).click();
+ await f.page.getByText('More tools',{exact:true}).click();await f.page.getByRole('link',{name:'Memory fields',exact:true}).click();
+ await f.page.getByRole('heading',{name:'Memory fields',exact:true}).waitFor();
+ await f.page.locator('.demo-more[open]').waitFor();assert.equal(await f.page.getByRole('link',{name:'Memory fields',exact:true}).getAttribute('aria-current'),'page');
+ assert.equal(await f.page.getByRole('link',{name:'Back to Dashboard',exact:true}).count(),0);
+});
+
+test('demo connection details, inspect focus and current labels stay attached to their exact connection', {timeout:60000}, async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ const rows=f.page.locator('.demo-client-card');await rows.first().waitFor();
+ const labels=await rows.locator('.demo-client-name').allTextContents();assert.match(labels[0],/Claude Code — reader/);assert.match(labels.at(-1),/revoked/);
+ const card=rows.first();assert.equal(await card.getByRole('button',{name:/Inspect /}).isVisible(),false);
+ await card.locator('summary').click();await card.getByRole('button',{name:/Inspect /}).click();
+ const panel=card.getByRole('region',{name:'Connection inspection'});await panel.waitFor();assert.equal(await panel.evaluate(el=>el===document.activeElement),true);
+ await panel.getByRole('heading',{name:'CLI maximum policy',exact:true}).waitFor();
+ assert.equal(await rows.nth(1).getByRole('region',{name:'Connection inspection'}).count(),0);
+ await f.page.getByText('Demo walkthrough (optional)',{exact:true}).click();await f.page.getByRole('button',{name:'Copy step 1 prompt',exact:true}).waitFor();
+ await f.page.getByRole('button',{name:'Review access',exact:true}).click();assert.equal(await f.page.getByRole('list',{name:'Connections',exact:true}).evaluate(el=>el===document.activeElement),true);
+});
+
+test('demo preserves permission drafts during passive refresh and keeps a tab stop after a filtered memory edit', {timeout:60000}, async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ const nav=f.page.getByRole('navigation',{name:'Main navigation'});
+ await nav.getByRole('link',{name:'Connections',exact:true}).click();
+ const card=f.page.locator('.demo-client-card').first();await card.getByRole('button',{name:/Edit permissions /}).click();
+ const panel=f.page.getByRole('region',{name:'Edit permissions',exact:true});
+ await panel.getByLabel('Maximum value access').selectOption('Blocked');
+ await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await f.page.locator('.demo-client-card').first().waitFor();assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');
+ f.page.once('dialog',dialog=>dialog.dismiss());await nav.getByRole('link',{name:'Context',exact:true}).click();assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');
+ await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ await nav.getByRole('link',{name:'Context',exact:true}).click();await f.page.getByLabel('Search your context').fill('project');
+ const list=f.page.getByRole('region',{name:'Saved context'});assert.ok(await list.getByRole('button').count()>1);
+ await list.getByRole('button').first().click();await f.page.getByRole('button',{name:'Edit context',exact:true}).click();await f.page.locator('.demo-inspector textarea').fill('Synthetic updated memory without the search term');
+ await f.page.getByRole('button',{name:'Save changes',exact:true}).click();await f.page.getByRole('button',{name:'Edit context',exact:true}).waitFor();
+ assert.equal(await list.locator('button[tabindex="0"]').count(),1);assert.equal(await list.locator('button[aria-pressed="true"]').count(),1);
+});
+
+test('demo access summaries preserve mixed, unavailable and definition-management distinctions', {timeout:60000}, async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ const {readFile}=await import('node:fs/promises'),receipt=JSON.parse(await readFile(f.root+'/demo/generation.json'));
+ await f.page.route('**/api/local/mcp/list',async route=>{
+  const response=await route.fetch(),body=await response.json();
+  for(const item of body.items){
+   if(item.id===receipt.clients.agentA)item.summary={level:'Mixed',total:189,counts:{blocked:69,read:100,suggest:0,write:20,define:0}};
+   if(item.id===receipt.clients.agentB)item.summary=null;
+   if(item.id===receipt.clients.agentC)item.summary={level:'Read',total:145,counts:{blocked:0,read:145,suggest:0,write:0,define:1}};
+  }
+  await route.fulfill({response,json:body});
+ });
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ const row=id=>f.page.locator('.demo-client-card').filter({has:f.page.getByRole('button',{name:'Edit permissions '+id,exact:true})});
+ await row(receipt.clients.agentA).getByText(/Mixed access across 189 fields/).waitFor();
+ assert.doesNotMatch(await row(receipt.clients.agentA).innerText(),/Can read 189|Cannot change/);
+ await row(receipt.clients.agentB).getByText('Current access summary unavailable.',{exact:true}).waitFor();
+ assert.doesNotMatch(await row(receipt.clients.agentB).innerText(),/Can read 0|Cannot change/);
+ await row(receipt.clients.agentC).getByText(/Can read 145 fields/).waitFor();
+ assert.doesNotMatch(await row(receipt.clients.agentC).innerText(),/Cannot change/);
 });

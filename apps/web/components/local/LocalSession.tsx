@@ -258,13 +258,13 @@ export default function LocalSession({ children }: { children: ReactNode }) {
   };
   if (!ready)
     return (
-      <main className="p-10" role="status">
+      <main className="local-session-screen" role="status">
         Opening local dashboard…
       </main>
     );
   if (disconnected)
     return (
-      <main className="flex min-h-screen items-center justify-center p-6">
+      <main className="local-session-screen">
         <section className="w-full max-w-lg space-y-5" aria-labelledby="disconnected-title">
           <h1 id="disconnected-title" className="text-3xl font-bold">
             Dashboard disconnected
@@ -278,7 +278,7 @@ export default function LocalSession({ children }: { children: ReactNode }) {
     );
   if (!token || !capabilities)
     return (
-      <main className="flex min-h-screen items-center justify-center p-6">
+      <main className="local-session-screen">
         <form onSubmit={unlock} className="w-full max-w-lg space-y-5">
           <h1 className="text-3xl font-bold">Context Router</h1>
           <p>

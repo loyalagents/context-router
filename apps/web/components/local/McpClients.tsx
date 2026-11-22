@@ -6,6 +6,9 @@ import { ClientName } from './ClientNames';
 import McpPermissionsEditor, { maximumValueLevel, type PermissionSummary } from './McpPermissionsEditor';
 import { usableClientName } from '@/lib/local-client-name';
 import { useLocalSession } from './LocalSession';
+import Link from 'next/link';
+import DemoGuide from './DemoGuide';
+import { useDemoDraft } from './DemoDrafts';
 
 type Client = {
   id: string;
@@ -45,10 +48,26 @@ type Snapshot = {
     define: boolean;
   }[];
 };
-const button = 'rounded border px-3 py-2 disabled:opacity-50';
+function accessSummary(client: Client) {
+  if (client.revoked) return 'Access revoked.';
+  const summary = client.summary;
+  if (!summary) return 'Current access summary unavailable.';
+  const {counts, level, total} = summary;
+  const text = level === 'Read' ? `Can read ${counts.read} fields.`
+    : level === 'Write' ? `Can write ${counts.write} fields.`
+    : level === 'Suggest changes' ? `Can suggest changes to ${counts.suggest} fields.`
+    : level === 'Blocked' ? 'Current fields are blocked.'
+    : total === 0 ? 'No current fields in scope.' : `Mixed access across ${total} fields.`;
+  return text + (total > 0 && counts.suggest === 0 && counts.write === 0 && counts.define === 0 ? ' Cannot change current fields.' : '');
+}
 
 export default function McpClients() {
   const demo = useLocalSession()?.capabilities.runtime?.mode === 'demo';
+  const button = demo ? 'demo-button' : 'rounded border px-3 py-2 disabled:opacity-50';
+  const ActivityLink = demo ? Link : 'a';
+  const [inspectionCard, setInspectionCard] = useState('');
+  const inspectionPanel = useRef<HTMLDivElement>(null);
+  const connectionsList = useRef<HTMLUListElement>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [editing,setEditing]=useState<Client|null>(null);
   const editButtons=useRef(new Map<string,HTMLButtonElement>());
@@ -76,6 +95,8 @@ export default function McpClients() {
   const mutation = useRef<AbortController | null>(null);
   const revision = useRef(0);
   const channel = useRef<BroadcastChannel | null>(null);
+  useDemoDraft(!!demo && !!renameDraft, !!demo && !!mutation.current);
+  useEffect(() => { if (inspectionCard) { inspectionPanel.current?.focus(); inspectionPanel.current?.scrollIntoView({block:'nearest'}); } }, [inspectionCard]);
   useEffect(() => {
     if (renameDraft || !cancelledRename.current) return;
     // The form has unmounted and the captured instance's button is enabled again.
@@ -115,6 +136,7 @@ export default function McpClients() {
     revision.current++;
     pending.current?.abort();
     setSnapshot(null);
+    setInspectionCard('');
     setItems([]);
     setNext(null);
     // A background refresh cannot cancel an already submitted authority change.
@@ -163,14 +185,14 @@ export default function McpClients() {
       })
       .catch(() => {
         if (!controller.signal.aborted && current === revision.current)
-          setReadError('Unable to load client instances. Reload to continue.');
+          setReadError(demo ? 'Unable to load connections. Refresh to continue.' : 'Unable to load client instances. Reload to continue.');
       })
       .finally(() => {
         if (!controller.signal.aborted && current === revision.current)
           setBusy(false);
       });
     return () => controller.abort();
-  }, [cursor, generation]);
+  }, [cursor, generation, demo]);
   async function inspect(id = selected) {
     if (mutation.current) return;
     pending.current?.abort();
@@ -308,7 +330,7 @@ export default function McpClients() {
       await localJson('/api/local/mcp/rename', {id:captured.client.id,label:captured.name,expectedLabel:captured.client.label,generation:captured.client.generation},controller.signal);
       if (mutation.current === controller && !controller.signal.aborted) {
         setRenameDraft(null);
-        setOutcome({...attempted,status:'confirmed',message:'Client name saved. Existing tokens and permissions continue unchanged.'});
+        setOutcome({...attempted,status:'confirmed',message:demo ? 'Connection name saved. Existing credentials and permissions continue unchanged.' : 'Client name saved. Existing tokens and permissions continue unchanged.'});
         window.dispatchEvent(new Event('context-router.client-names'));
       }
     } catch (error) {
@@ -325,55 +347,10 @@ export default function McpClients() {
       }
     }
   }
-  return (
-    <div className="space-y-6">
-      {demo && <section className="demo-connection-intro" aria-label="Connect Claude Code"><h2>Connect Claude Code</h2><p>Bring your saved context into Claude Code. Start with the existing demo setup on this Mac.</p><div className="demo-setup-steps">
-        <div><span className="demo-step-number">1</span><h3>Review access</h3><p>Review the demo reader’s permissions below. Each connection has its own access, and you can revoke it at any time.</p></div>
-        <div><span className="demo-step-number">2</span><h3>Open Claude Code</h3><p>In the Mac menu bar, choose CR → Demo setup… → Claude Code, then Sign in or Open. This demo requires version 2.1.299.</p></div>
-        <div><span className="demo-step-number">3</span><h3>See it in use</h3><p>Ask Claude to read your saved context, then open that client’s activity. Opening Terminal alone does not verify a connection.</p></div>
-      </div><p className="text-xs mt-5">Claude may send retrieved context to Anthropic. This demo contains synthetic historical data.</p></section>}
-      {!demo && <>
-      <p>
-        Each row is a separately issued client instance. Matching product labels
-        do not share identity. Edit maximum policy and rules here. Issue or rotate
-        credentials with the local MCP CLI.
-      </p>
-      <p>
-        Database grants narrow the maximum policy. ALLOW can override a less
-        specific database DENY, but cannot expand that maximum. Write also
-        requires read and suggest access.
-      </p>
-      </>}
-      {readError && <p role="alert">{readError}</p>}
-      <div className="flex gap-3">
-        <button className={button} disabled={busy} onClick={invalidate}>
-          Reload clients
-        </button>
-        {cursor && (
-          <button
-            className={button}
-            disabled={busy}
-            onClick={() => { if (!mutation.current) setCursor(undefined); }}
-          >
-            First page
-          </button>
-        )}
-        {next && (
-          <button
-            className={button}
-            disabled={busy}
-            onClick={() => { if (!mutation.current) setCursor(next); }}
-          >
-            Next page
-          </button>
-        )}
-      </div>
-      {busy && <p role="status">Loading current authority…</p>}
-      {!busy && !items.length && <p>No client instances on this page.</p>}
-      {renameDraft && <form className="space-y-3 rounded border p-4" aria-label="Rename client" onSubmit={event=>{event.preventDefault();void rename();}}>
+  const renamePanel = renameDraft && <form className="space-y-3 rounded border p-4" aria-label={demo ? 'Rename connection' : 'Rename client'} onSubmit={event=>{event.preventDefault();void rename();}}>
         <p>Rename <ClientName clientKey={`local:${renameDraft.client.id}`} label={renameDraft.client.label} /></p>
         <p className="text-xs break-all">Instance ID: <code>{renameDraft.client.id}</code></p>
-        <label className="block">Client name
+        <label className="block">{demo ? 'Connection name' : 'Client name'}
           <input autoFocus required maxLength={64} className="block rounded border p-2 w-full" value={renameDraft.name} disabled={!!mutation.current}
             onChange={event=>setRenameDraft({...renameDraft,name:event.target.value})} />
         </label>
@@ -385,105 +362,9 @@ export default function McpClients() {
           <button type="button" className={button} disabled={busy} onClick={()=>void readCurrentName()}>Read current name</button>
           <button type="button" className={button} disabled={busy} onClick={()=>{cancelledRename.current=renameDraft.client.id;setRenameDraft(null);setRenameError('');}}>Cancel rename</button>
         </div>
-      </form>}
-      {editing&&<McpPermissionsEditor key={editing.id} client={editing} onChanged={()=>{channel.current?.postMessage('invalidate');invalidate();}} onClose={()=>{const id=editing.id;setEditing(null);queueMicrotask(()=>editButtons.current.get(id)?.focus());}}/>}
-      <ul className="space-y-3">
-        {items.map((client) => (
-          <li key={client.id} className={demo ? 'demo-client-card' : 'rounded border p-4'}>
-            <div className={demo ? 'demo-client-name font-semibold' : 'font-semibold'}>
-              <ClientName clientKey={`local:${client.id}`} label={client.label} /> {client.revoked && '(revoked)'}
-            </div>
-            {demo ? <><p className="demo-client-summary">{client.revoked ? 'Access revoked.' : client.summary ? `${client.summary.level} across ${client.summary.total} active field definitions in scope.` : 'Current access summary unavailable.'} {client.summary && !client.revoked && 'More specific exceptions may apply.'}</p><details><summary>Access details</summary><p>Maximum value access: {maximumValueLevel(client.policy)}. Definition management: {client.policy.capabilities.includes('preferences:define') ? 'allowed by maximum' : 'not allowed by maximum'}.</p><p>Sensitive values: {client.policy.allowSensitive ? 'allowed by maximum, within effective scope' : 'blocked by maximum'}.</p><p>Allowed scope: {client.policy.targets.join(', ') || 'No targets'}. Prefixes may include future fields.</p><p>Instance: <code>{client.id}</code> · Generation {client.generation}</p></details></> : <>
-            <code className="break-all">{client.id}</code>
-            <p>Maximum values: <strong>{maximumValueLevel(client.policy)}</strong> · Definition management maximum: {client.policy.capabilities.includes('preferences:define')?'allowed':'blocked'} · Sensitive {client.policy.allowSensitive?'allowed':'blocked'}</p>
-            <p className="break-all">Allowed scope: {client.policy.targets.join(', ')||'No targets'} · {client.ruleCount===null?'Rule count unavailable':`${client.ruleCount??0} rules`}</p>
-            <p>Current effective access: {client.summary?`${client.summary.level} across ${client.summary.total} active field definitions in scope`:'Unavailable'}. More specific exceptions may apply; prefixes also cover future fields.</p>
-            <p className="text-xs">Generation {client.generation}</p>
-            </>}
-            <button ref={element=>{if(element)editButtons.current.set(client.id,element);else editButtons.current.delete(client.id);}} className={button} disabled={busy||client.revoked||!!editing} aria-label={`Edit permissions ${client.id}`} onClick={()=>setEditing(client)}>Edit permissions</button>{' '}
-
-            <button ref={element=>{if(element)renameButtons.current.set(client.id,element);else renameButtons.current.delete(client.id);}} className={button} disabled={busy || !!renameDraft} aria-label={`Rename ${client.id}`} onClick={()=>{setRenameDraft({client,name:client.label,needsRead:false});setRenameError('');}}>Rename</button>
-            {' '}<a className={button} href={`/dashboard/history#mcp-client=${client.id}`} aria-label={`View activity ${client.id}`}>View activity</a>{' '}
-
-            <button
-              className={button}
-              disabled={busy}
-              onClick={() => { setAdvancedOpen(true); void inspect(client.id); }}
-              aria-label={`Inspect ${client.id}`}
-            >
-              Inspect authority
-            </button>
-          </li>
-        ))}
-      </ul>
-      {demo && <button className="demo-button demo-quiet" aria-expanded={advancedOpen} onClick={() => setAdvancedOpen(!advancedOpen)}>Advanced access inspection and grants</button>}
-      <div hidden={demo && !advancedOpen} className="space-y-6">
-      <label className="block">
-        Exact slugs to inspect (up to 32, separated by commas)
-        <input
-          className="block border rounded p-2 w-full"
-          value={targets}
-          maxLength={4128}
-          onChange={(event) => setTargets(event.target.value)}
-        />
-      </label>
-      {selected && (
-        <button
-          className={button}
-          disabled={busy}
-          onClick={() => void inspect()}
-        >
-          Inspect selected instance
-        </button>
-      )}
-      </div>
-      {outcome && (
-        <div
-          ref={outcomePanel}
-          role={outcome.status === 'confirmed' ? 'status' : 'alert'}
-          aria-atomic="true"
-          aria-labelledby="mcp-change-title"
-          aria-describedby="mcp-change-context mcp-change-message"
-          tabIndex={-1}
-          className={`space-y-2 rounded border-2 p-4 [overflow-wrap:anywhere] focus:outline focus:outline-2 focus:outline-offset-2 ${
-            outcome.status === 'rejected'
-              ? 'border-red-700 bg-red-50 text-red-950'
-              : outcome.status === 'uncertain'
-                ? 'border-amber-700 bg-amber-50 text-amber-950'
-                : 'border-green-700 bg-green-50 text-green-950'
-          }`}
-        >
-          <h2 id="mcp-change-title" className="text-lg font-semibold">
-            {outcome.status === 'rejected'
-              ? outcome.kind === 'rename' ? 'Name not saved' : outcome.kind === 'revoke' ? 'Revoke not saved' : 'Grant not saved'
-              : outcome.status === 'uncertain'
-                ? 'Change not confirmed'
-                : outcome.kind === 'rename' ? 'Client name saved'
-                : outcome.kind === 'revoke'
-                  ? 'Client instance revoked'
-                  : outcome.grant?.effect === 'REMOVE'
-                    ? 'Grant removed'
-                    : 'Grant saved'}
-          </h2>
-          <div id="mcp-change-context">
-            <p>Client: <strong><ClientName clientKey={`local:${outcome.client.id}`} label={outcome.client.label} /></strong></p>
-            <p>Instance ID: <code>{outcome.client.id}</code></p>
-            {outcome.grant ? (
-              <p>
-                Attempted grant: <code>{outcome.grant.target}</code>
-                {' · '}{outcome.grant.action}{' · '}{outcome.grant.effect}
-              </p>
-            ) : outcome.kind === 'rename' ? (
-              <p>Attempted name: <strong>{outcome.newName}</strong></p>
-            ) : (
-              <p>Attempted action: Revoke this instance</p>
-            )}
-          </div>
-          <p id="mcp-change-message">{outcome.message}</p>
-        </div>
-      )}
-      <div hidden={demo && !advancedOpen}>
-      {snapshot && (
+      </form>;
+  const permissionsPanel = editing&&<McpPermissionsEditor key={editing.id} client={editing} onChanged={()=>{channel.current?.postMessage('invalidate');invalidate();}} onClose={()=>{const id=editing.id;setEditing(null);queueMicrotask(()=>editButtons.current.get(id)?.focus());}}/>;
+  const authorityPanel = snapshot && (
         <section
           className="space-y-4 border-t pt-4"
           aria-label="Selected client authority"
@@ -635,8 +516,165 @@ export default function McpClients() {
             Revoke this instance
           </button>
         </section>
+      );
+  return (
+    <div className="space-y-6">
+      {demo && <section className="demo-connection-intro" aria-label="Connect Claude Code"><h2>Connect Claude Code</h2><p>Bring your saved context into Claude Code. Start with the existing demo setup on this Mac.</p><div className="demo-setup-steps">
+        <div><span className="demo-step-number">1</span><h3>Review access</h3><p>Review “Claude Code — reader” below (Agent B in Mac setup). Names are editable; access is shown for each connection.</p><button className="demo-button mt-3" onClick={() => {connectionsList.current?.focus();connectionsList.current?.scrollIntoView({block:'start'});}}>Review access</button></div>
+        <div><span className="demo-step-number">2</span><h3>Open Claude Code</h3><p>In the Mac menu bar, choose CR → Demo setup… → Claude Code, then Sign in or Open. This demo requires version 2.1.299.</p></div>
+        <div><span className="demo-step-number">3</span><h3>See it in use</h3><p>Ask Claude to read your saved context, then open that client’s activity. Opening Terminal alone does not verify a connection.</p><Link prefetch={false} className="demo-button mt-3" href="/dashboard/history">View activity</Link></div>
+      </div><p className="demo-provider-notice">Claude may send retrieved context to Anthropic. This demo contains synthetic historical data.</p></section>}
+      {!demo && <>
+      <p>
+        Each row is a separately issued client instance. Matching product labels
+        do not share identity. Edit maximum policy and rules here. Issue or rotate
+        credentials with the local MCP CLI.
+      </p>
+      <p>
+        Database grants narrow the maximum policy. ALLOW can override a less
+        specific database DENY, but cannot expand that maximum. Write also
+        requires read and suggest access.
+      </p>
+      </>}
+      {readError && !inspectionCard && <p role="alert">{readError}</p>}
+      <div className="flex gap-3">
+        <button className={button} disabled={busy} onClick={invalidate}>
+          {demo ? 'Refresh connections' : 'Reload clients'}
+        </button>
+        {cursor && (
+          <button
+            className={button}
+            disabled={busy}
+            onClick={() => { if (!mutation.current) setCursor(undefined); }}
+          >
+            First page
+          </button>
+        )}
+        {next && (
+          <button
+            className={button}
+            disabled={busy}
+            onClick={() => { if (!mutation.current) setCursor(next); }}
+          >
+            Next page
+          </button>
+        )}
+      </div>
+      {busy && !inspectionCard && <p role="status">Loading current authority…</p>}
+      {!busy && !items.length && <p>{demo ? 'No connections on this page.' : 'No client instances on this page.'}</p>}
+      {renamePanel}
+      {permissionsPanel}
+      <ul ref={connectionsList} tabIndex={-1} aria-label="Connections" className="space-y-3">
+        {(demo ? [...items].sort((a,b) => Number(a.revoked)-Number(b.revoked) || a.label.localeCompare(b.label) || a.id.localeCompare(b.id)) : items).map((client) => (
+          <li key={client.id} className={demo ? 'demo-client-card' : 'rounded border p-4'}>
+            <div className={demo ? 'demo-client-name font-semibold' : 'font-semibold'}>
+              <ClientName clientKey={`local:${client.id}`} label={client.label} showId={!demo} /> {client.revoked && '(revoked)'}
+            </div>
+            {demo ? <p className="demo-client-summary">{accessSummary(client)} {!client.revoked && client.summary && 'More specific exceptions may apply.'}</p> : <>
+            <code className="break-all">{client.id}</code>
+            <p>Maximum values: <strong>{maximumValueLevel(client.policy)}</strong> · Definition management maximum: {client.policy.capabilities.includes('preferences:define')?'allowed':'blocked'} · Sensitive {client.policy.allowSensitive?'allowed':'blocked'}</p>
+            <p className="break-all">Allowed scope: {client.policy.targets.join(', ')||'No targets'} · {client.ruleCount===null?'Rule count unavailable':`${client.ruleCount??0} rules`}</p>
+            <p>Current effective access: {client.summary?`${client.summary.level} across ${client.summary.total} active field definitions in scope`:'Unavailable'}. More specific exceptions may apply; prefixes also cover future fields.</p>
+            <p className="text-xs">Generation {client.generation}</p>
+            </>}
+            <button ref={element=>{if(element)editButtons.current.set(client.id,element);else editButtons.current.delete(client.id);}} className={button} disabled={busy||client.revoked||!!editing} aria-label={`Edit permissions ${client.id}`} onClick={()=>setEditing(client)}>{demo ? 'Edit access' : 'Edit permissions'}</button>{' '}
+
+<ActivityLink {...(demo ? {prefetch:false} : {})} className={button} href={`/dashboard/history#mcp-client=${client.id}`} aria-label={`View activity ${client.id}`}>View activity</ActivityLink>
+            {demo ? <details className="demo-connection-details"><summary>Details</summary><p>Maximum value access: {maximumValueLevel(client.policy)}. Definition management: {client.policy.capabilities.includes('preferences:define') ? 'allowed by maximum' : 'not allowed by maximum'}.</p><p>Sensitive values: {client.policy.allowSensitive ? 'allowed by maximum, within effective scope' : 'blocked by maximum'}.</p><p>Allowed scope: {client.policy.targets.join(', ') || 'No targets'}. Prefixes may include future fields.</p><p>Instance: <code>{client.id}</code> · Generation {client.generation}</p>            <button ref={element=>{if(element)renameButtons.current.set(client.id,element);else renameButtons.current.delete(client.id);}} className={button} disabled={busy || !!renameDraft} aria-label={`Rename ${client.id}`} onClick={()=>{setRenameDraft({client,name:client.label,needsRead:false});setRenameError('');}}>Rename</button>
+            <button
+              className={button}
+              disabled={busy}
+              onClick={() => { if (demo) { setInspectionCard(client.id); if (inspectionCard === client.id) inspectionPanel.current?.focus(); } else setAdvancedOpen(true); void inspect(client.id); }}
+              aria-label={`Inspect ${client.id}`}
+            >
+              Inspect authority
+            </button>
+</details> : <>            <button ref={element=>{if(element)renameButtons.current.set(client.id,element);else renameButtons.current.delete(client.id);}} className={button} disabled={busy || !!renameDraft} aria-label={`Rename ${client.id}`} onClick={()=>{setRenameDraft({client,name:client.label,needsRead:false});setRenameError('');}}>Rename</button>
+            <button
+              className={button}
+              disabled={busy}
+              onClick={() => { if (demo) { setInspectionCard(client.id); if (inspectionCard === client.id) inspectionPanel.current?.focus(); } else setAdvancedOpen(true); void inspect(client.id); }}
+              aria-label={`Inspect ${client.id}`}
+            >
+              Inspect authority
+            </button>
+</>}
+            {demo && inspectionCard === client.id && <div ref={inspectionPanel} tabIndex={-1} role="region" aria-label="Connection inspection" className="demo-inline-inspection">
+              {busy && <p role="status">Loading current authority…</p>}
+              {readError && <p role="alert">{readError}</p>}
+              {snapshot?.client.id === client.id && authorityPanel}
+            </div>}
+          </li>
+        ))}
+      </ul>
+      {demo && <button className="demo-button demo-quiet" aria-expanded={advancedOpen} onClick={() => setAdvancedOpen(!advancedOpen)}><span aria-hidden="true">{advancedOpen ? '▾' : '▸'}</span> Advanced access inspection and grants</button>}
+      <div hidden={demo && !advancedOpen} className="space-y-6">
+      <label className="block">
+        Exact slugs to inspect (up to 32, separated by commas)
+        <input
+          className="block border rounded p-2 w-full"
+          value={targets}
+          maxLength={4128}
+          onChange={(event) => setTargets(event.target.value)}
+        />
+      </label>
+      {selected && (
+        <button
+          className={button}
+          disabled={busy}
+          onClick={() => { if (demo) setInspectionCard(selected); void inspect(); }}
+        >
+          Inspect selected instance
+        </button>
       )}
       </div>
+      {outcome && (
+        <div
+          ref={outcomePanel}
+          role={outcome.status === 'confirmed' ? 'status' : 'alert'}
+          aria-atomic="true"
+          aria-labelledby="mcp-change-title"
+          aria-describedby="mcp-change-context mcp-change-message"
+          tabIndex={-1}
+          className={`space-y-2 rounded border-2 p-4 [overflow-wrap:anywhere] focus:outline focus:outline-2 focus:outline-offset-2 ${
+            outcome.status === 'rejected'
+              ? 'border-red-700 bg-red-50 text-red-950'
+              : outcome.status === 'uncertain'
+                ? 'border-amber-700 bg-amber-50 text-amber-950'
+                : 'border-green-700 bg-green-50 text-green-950'
+          }`}
+        >
+          <h2 id="mcp-change-title" className="text-lg font-semibold">
+            {outcome.status === 'rejected'
+              ? outcome.kind === 'rename' ? 'Name not saved' : outcome.kind === 'revoke' ? 'Revoke not saved' : 'Grant not saved'
+              : outcome.status === 'uncertain'
+                ? 'Change not confirmed'
+                : outcome.kind === 'rename' ? (demo ? 'Connection name saved' : 'Client name saved')
+                : outcome.kind === 'revoke'
+                  ? 'Client instance revoked'
+                  : outcome.grant?.effect === 'REMOVE'
+                    ? 'Grant removed'
+                    : 'Grant saved'}
+          </h2>
+          <div id="mcp-change-context">
+            <p>Client: <strong><ClientName clientKey={`local:${outcome.client.id}`} label={outcome.client.label} /></strong></p>
+            <p>Instance ID: <code>{outcome.client.id}</code></p>
+            {outcome.grant ? (
+              <p>
+                Attempted grant: <code>{outcome.grant.target}</code>
+                {' · '}{outcome.grant.action}{' · '}{outcome.grant.effect}
+              </p>
+            ) : outcome.kind === 'rename' ? (
+              <p>Attempted name: <strong>{outcome.newName}</strong></p>
+            ) : (
+              <p>Attempted action: Revoke this instance</p>
+            )}
+          </div>
+          <p id="mcp-change-message">{outcome.message}</p>
+        </div>
+      )}
+      {!demo && authorityPanel}
+      {demo && <DemoGuide />}
     </div>
   );
 }

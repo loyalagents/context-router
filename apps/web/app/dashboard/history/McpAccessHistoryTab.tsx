@@ -574,7 +574,7 @@ export default function McpAccessHistoryTab({
           </div>
         ) : items.length === 0 ? (
           <div className="p-10 text-center text-gray-500">
-            {isFiltered ? 'No MCP access events match the current filters.' : 'No MCP access history yet.'}
+            {demo ? (isFiltered ? 'No assistant activity matches these filters.' : 'No assistant activity yet. Use your connected assistant, then return here.') : (isFiltered ? 'No MCP access events match the current filters.' : 'No MCP access history yet.')}
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
@@ -589,6 +589,22 @@ export default function McpAccessHistoryTab({
                     aria-expanded={isExpanded}
                     className="w-full text-left"
                   >
+                    {demo ? <div className="demo-history-row">
+                      <div><p><strong><ClientName clientKey={item.clientKey} showId={false}/></strong>{' '}
+                        {item.outcome !== 'SUCCESS' && 'attempted to '}
+                        {item.operationName === 'searchPreferences' || item.operationName === 'smartSearchPreferences' ? (item.outcome === 'SUCCESS' ? 'searched context' : 'search context') : item.operationName === 'mutatePreferences' ? (item.outcome === 'SUCCESS' ? 'requested a memory change' : 'request a memory change') : item.operationName}
+                      </p><p className="demo-history-meta">
+                        {(() => {
+                          const metadata = item.responseMetadata;
+                          if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata) || item.outcome !== 'SUCCESS') return null;
+                          const key = item.operationName === 'searchPreferences' ? 'activeCount' : item.operationName === 'smartSearchPreferences' ? 'matchedActiveCount' : null;
+                          const count = key ? (metadata as Record<string, unknown>)[key] : undefined;
+                          return typeof count === 'number' && Number.isInteger(count) && count >= 0 ? <span>{count} {count === 1 ? 'memory' : 'memories'} returned · </span> : null;
+                        })()}
+                        <span title={formatAbsoluteTimestamp(item.occurredAt)}>{formatRelativeTimestamp(item.occurredAt)}</span>
+                        {item.outcome !== 'SUCCESS' && <span className={item.outcome === 'DENY' ? 'text-amber-800' : 'text-red-700'}> · {OUTCOME_LABELS[item.outcome] || item.outcome}</span>}
+                      </p></div><span className="demo-history-details">Details {isExpanded ? '▴' : '▾'}</span>
+                    </div> : <>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
@@ -628,13 +644,7 @@ export default function McpAccessHistoryTab({
                             </span>
                           )}
                         </div>
-                        {demo && (() => {
-                          const metadata = item.responseMetadata;
-                          if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
-                          const key = item.operationName === 'searchPreferences' ? 'activeCount' : item.operationName === 'smartSearchPreferences' ? 'matchedActiveCount' : null;
-                          const count = key ? (metadata as Record<string, unknown>)[key] : undefined;
-                          return typeof count === 'number' && Number.isInteger(count) && count >= 0 ? <p className="demo-count">{count} {count === 1 ? 'memory' : 'memories'} returned</p> : null;
-                        })()}
+
                       </div>
 
                       <div className="text-gray-400 self-start">
@@ -654,13 +664,13 @@ export default function McpAccessHistoryTab({
                           />
                         </svg>
                       </div>
-                    </div>
+                    </div>                    </>}
                   </button>
 
                   {isExpanded && (
                     <div className="mt-5 space-y-4">
                       <p className="text-xs break-all">Client key: <code>{item.clientKey || 'None'}</code></p>
-                      {demo && <p className="text-xs break-all">Operation: {item.operationName}{item.correlationId ? ` · Correlation ID: ${item.correlationId}` : ''}</p>}
+                      {demo && <p className="text-xs break-all">Operation: {item.operationName} · {SURFACE_LABELS[item.surface] || item.surface} · {item.latencyMs}ms · {formatAbsoluteTimestamp(item.occurredAt)}{item.correlationId ? ` · Correlation ID: ${item.correlationId}` : ''}</p>}
                       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                         <div className="rounded-lg border border-gray-200">
                           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">

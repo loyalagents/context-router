@@ -77,7 +77,8 @@ try{
  assert.equal(await contextList.getByRole('button').count(),189);
  assert.equal(await page.getByRole('button',{name:'Smart search',exact:true}).isVisible(),false);
  await page.screenshot({path:path.join(root,'demo-dashboard.png'),fullPage:true});
- for(const [label,view,heading] of [['Connections','permissions','Connections'],['Activity','history','Activity']]){await navigation.getByRole('link',{name:label,exact:true}).click();await page.waitForURL(ready.origin+'/dashboard/'+view);await page.getByRole('heading',{name:heading,exact:true}).waitFor();await page.getByRole('complementary',{name:'Demo mode'}).waitFor();}
+ await page.evaluate(()=>{window.demoSidebarNode=document.querySelector('.demo-sidebar');window.demoDocument=document;});
+ for(const [label,view,heading] of [['Connections','permissions','Connections'],['Activity','history','Activity']]){await navigation.getByRole('link',{name:label,exact:true}).click();await page.waitForURL(ready.origin+'/dashboard/'+view);await page.getByRole('heading',{name:heading,exact:true}).waitFor();await page.getByRole('complementary',{name:'Demo mode'}).waitFor();assert.equal(await page.evaluate(()=>window.demoSidebarNode===document.querySelector('.demo-sidebar')&&window.demoDocument===document),true);if(view==='history')assert.equal(await page.getByRole('tab',{name:'Assistant access',exact:true}).getAttribute('aria-selected'),'true');}
  await navigation.getByRole('link',{name:'Context',exact:true}).click();await contextList.waitFor();
  for(const width of [1280,1440]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);}
  const firstValue=await page.locator('.demo-detail-value').innerText();
@@ -90,7 +91,7 @@ try{
  await page.getByLabel('Search your context').fill('artifact visual trial');
  await contextList.getByRole('button').first().click();
  assert.equal(await page.locator('.demo-detail-value').innerText(),firstValue+' — artifact visual trial');
- await page.getByRole('button',{name:'Edit context',exact:true}).click();await page.locator('.demo-inspector textarea').fill(firstValue);await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.getByRole('button',{name:'Edit context',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Edit context',exact:true}).click();await page.locator('.demo-inspector textarea').fill(firstValue);await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.getByLabel('Search your context').fill('');await page.getByRole('button',{name:'Edit context',exact:true}).waitFor();
  await page.goto(ready.origin+'/dashboard/permissions');
  const authority=()=>page.evaluate(async()=>{const response=await fetch('/api/local/mcp/list',{method:'POST',headers:{'content-type':'application/json','x-context-router-ui':'1',authorization:'Bearer '+sessionStorage.getItem('context-router.browser-session.v1')},body:'{}'});if(!response.ok)throw new Error('Authority read failed');return (await response.json()).items;});
  const permissionBefore=await authority(),selectedId=demoReceipt.clients.agentB;

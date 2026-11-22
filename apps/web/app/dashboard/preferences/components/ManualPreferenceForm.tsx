@@ -2,6 +2,8 @@
 
 import { authenticatedFetch } from '@/lib/authenticated-fetch';
 
+import { useLocalSession } from '@/components/local/LocalSession';
+import { useDemoDraft } from '@/components/local/DemoDrafts';
 import { useState } from 'react';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
@@ -106,6 +108,8 @@ export default function ManualPreferenceForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const demo = useLocalSession()?.capabilities.runtime?.mode === 'demo';
+  useDemoDraft(!!demo && !!(slug || description || textValue || arrayValue || enumOptions), !!demo && isSubmitting);
   const graphqlUrl = GRAPHQL_URL;
 
   const normalizedSlug = slug.trim();
@@ -152,7 +156,7 @@ export default function ManualPreferenceForm({
     setError(null);
 
     if (!normalizedSlug) {
-      setError('Slug is required');
+      setError(demo ? 'Choose a memory field.' : 'Slug is required');
       return;
     }
 
@@ -164,7 +168,7 @@ export default function ManualPreferenceForm({
     }
 
     if (isNewDefinition && !description.trim()) {
-      setError('Description is required for new custom slugs');
+      setError(demo ? 'Describe the new memory field.' : 'Description is required for new custom slugs');
       return;
     }
 
@@ -251,9 +255,9 @@ export default function ManualPreferenceForm({
     <div className="bg-white rounded-lg shadow p-6 mb-6">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
-          <h2 className="text-lg font-semibold">Add Preference Manually</h2>
+          <h2 className="text-lg font-semibold">{demo ? 'Add a memory' : 'Add Preference Manually'}</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Add a global preference directly. New slugs are created as personal definitions first.
+            {demo ? 'Choose a memory field or create one, then enter the value to save.' : 'Add a global preference directly. New slugs are created as personal definitions first.'}
           </p>
         </div>
       </div>
@@ -261,11 +265,11 @@ export default function ManualPreferenceForm({
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Slug
+            {demo ? 'Memory field' : 'Slug'}
           </label>
           <input
             list="preference-slug-options"
-            aria-label="Slug"
+            aria-label={demo ? 'Memory field' : 'Slug'}
                 value={slug}
             onChange={(event) => setSlug(event.target.value)}
             placeholder="food.oatmeal"
@@ -282,7 +286,7 @@ export default function ManualPreferenceForm({
             </p>
           ) : normalizedSlug ? (
             <p className="text-xs text-amber-700 mt-1">
-              New custom slug. This form will create a personal global definition first.
+              {demo ? 'New memory field. Its definition will be created before saving the memory.' : 'New custom slug. This form will create a personal global definition first.'}
             </p>
           ) : null}
         </div>
@@ -410,7 +414,7 @@ export default function ManualPreferenceForm({
             disabled={isSubmitting}
             className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
           >
-            {isSubmitting ? 'Saving...' : 'Save Preference'}
+            {isSubmitting ? 'Saving...' : demo ? 'Save memory' : 'Save Preference'}
           </button>
           <button
             onClick={resetForm}

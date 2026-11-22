@@ -128,6 +128,7 @@ interface AuditHistoryTabProps {
   accessToken: string;
   preferenceDefinitions: Array<{
     slug: string;
+    category?: string;
     isSensitive: boolean;
   }>;
   shouldLoad: boolean;
@@ -446,7 +447,7 @@ export default function AuditHistoryTab({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className={`bg-white rounded-lg shadow p-6 ${demo ? 'demo-audit-filters' : ''}`}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           {showHeader ? (
             <div>
@@ -711,6 +712,11 @@ export default function AuditHistoryTab({
                     aria-expanded={isExpanded}
                     className="w-full text-left"
                   >
+                    {demo ? <div className="demo-history-row"><div>
+                      <p><strong>{(EVENT_LABELS[item.eventType] || item.eventType).replace('Preference', 'Memory')}</strong> · <span className="demo-category-name">{preferenceDefinitions.find(definition => definition.slug === item.subjectSlug)?.category || 'Memory'}</span></p>
+                      <p className="demo-history-meta">{item.actorClientKey ? <ClientName clientKey={item.actorClientKey} showId={false}/> : ACTOR_TYPE_LABELS[item.actorType] || item.actorType} · <span title={formatAbsoluteTimestamp(item.occurredAt)}>{formatRelativeTimestamp(item.occurredAt)}</span></p>
+                      {isSensitive && !showSensitiveValues && <span className="demo-sensitive-label">{item.sensitivity === 'SENSITIVE' ? 'Sensitive at event time' : 'Unknown sensitivity'} · values hidden</span>}
+                    </div><span className="demo-history-details">Details {isExpanded ? '▴' : '▾'}</span></div> : <>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
@@ -767,14 +773,15 @@ export default function AuditHistoryTab({
                           />
                         </svg>
                       </div>
-                    </div>
+                    </div>                    </>}
                   </button>
 
                   {isExpanded && (
                     <div className="mt-5 space-y-4">
+                      {demo && <p className="text-xs break-all">Memory field: <code>{item.subjectSlug}</code> · {ORIGIN_LABELS[item.origin] || item.origin} · {formatAbsoluteTimestamp(item.occurredAt)}{item.correlationId ? ` · Correlation ID: ${item.correlationId}` : ''}</p>}
                       <p className="text-xs break-all">Client key: <code>{item.actorClientKey || 'None'}</code></p>
                       {isSensitive && !showSensitiveValues ? (
-                        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        <div className={demo ? 'rounded-lg border bg-gray-50 px-4 py-3 text-sm text-gray-700' : 'rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'}>
                           This event was sensitive when recorded, or its historical classification is unknown. Turn on “Show
                           sensitive values” to view stored payload details.
                         </div>

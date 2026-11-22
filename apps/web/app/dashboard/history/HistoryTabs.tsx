@@ -12,6 +12,7 @@ interface HistoryTabsProps {
   accessToken: string;
   preferenceDefinitions: Array<{
     slug: string;
+    category?: string;
     isSensitive: boolean;
   }>;
 }
@@ -25,7 +26,7 @@ export default function HistoryTabs({
   const demo = session?.capabilities.runtime?.mode === 'demo';
   const Maintenance = demo ? 'details' : 'div';
   const [clientFilter, setClientFilter] = useState(() => local && typeof window !== 'undefined' ? activityClientKey(window.location.hash) : '');
-  const [activeTab, setActiveTab] = useState<'audit' | 'mcp'>(() => clientFilter ? 'mcp' : 'audit');
+  const [activeTab, setActiveTab] = useState<'audit' | 'mcp'>(() => clientFilter || demo ? 'mcp' : 'audit');
   const [generation, setGeneration] = useState(0);
   const [clearing, setClearing] = useState(false);
   const [confirmation, setConfirmation] = useState('');
@@ -104,32 +105,17 @@ export default function HistoryTabs({
         </form>
       </dialog>
       <div role="tablist" aria-label="History streams" className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
-        <button
-          type="button"
-          role="tab" id="audit-tab" aria-controls="audit-panel" aria-selected={activeTab === 'audit'} tabIndex={activeTab === 'audit' ? 0 : -1}
-          onKeyDown={(event) => { if (['ArrowLeft', 'ArrowRight', 'End'].includes(event.key)) { event.preventDefault(); setActiveTab('mcp'); document.getElementById('mcp-tab')?.focus(); } }}
-          onClick={() => setActiveTab('audit')}
-          className={`rounded-md px-4 py-2 text-sm font-medium ${
-            activeTab === 'audit'
-              ? 'bg-gray-900 text-white'
-              : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          {demo ? 'Context changes' : 'Audit'}
-        </button>
-        <button
-          type="button"
-          role="tab" id="mcp-tab" aria-controls="mcp-panel" aria-selected={activeTab === 'mcp'} tabIndex={activeTab === 'mcp' ? 0 : -1}
-          onKeyDown={(event) => { if (['ArrowLeft', 'ArrowRight', 'Home'].includes(event.key)) { event.preventDefault(); setActiveTab('audit'); document.getElementById('audit-tab')?.focus(); } }}
-          onClick={() => setActiveTab('mcp')}
-          className={`rounded-md px-4 py-2 text-sm font-medium ${
-            activeTab === 'mcp'
-              ? 'bg-gray-900 text-white'
-              : 'text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          {demo ? 'Assistant access' : 'MCP Access'}
-        </button>
+        {(demo ? ['mcp', 'audit'] as const : ['audit', 'mcp'] as const).map((tab, index, tabs) => <button
+          key={tab} type="button" role="tab" id={`${tab}-tab`} aria-controls={`${tab}-panel`} aria-selected={activeTab === tab} tabIndex={activeTab === tab ? 0 : -1}
+          onKeyDown={event => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            const destination = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs[tabs.length - 1] : tabs[(index + 1) % tabs.length];
+            setActiveTab(destination); document.getElementById(`${destination}-tab`)?.focus();
+          }}
+          onClick={() => setActiveTab(tab)}
+          className={`rounded-md px-4 py-2 text-sm font-medium ${activeTab === tab ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+        >{tab === 'mcp' ? (demo ? 'Assistant access' : 'MCP Access') : (demo ? 'Context changes' : 'Audit')}</button>)}
       </div>
 
       <div id="audit-panel" role="tabpanel" aria-labelledby="audit-tab" hidden={activeTab !== 'audit'}>

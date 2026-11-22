@@ -73,3 +73,50 @@ the supported artifact `demo-smoke.mjs --browser-only` check. No live Claude,
 personal state, external account, local model download or inference is part of
 this visual checkpoint. Keep the packaged artifact and launch instructions in the
 trial output alongside its exact build receipt.
+
+## Feedback correction round
+
+The owner authorized corrections to the review of `2d442abd`. Keep the three
+primary destinations and real backend; improve navigation continuity, draft
+warnings on same-tab links, inline add/inspection, current connection labels,
+keyboard access, compact activity and presentation consistency. New demo stores
+name Agent B “Claude Code — reader”; names never establish identity or authority.
+Existing stores are not relabeled implicitly. Active-before-revoked sorting is
+within the fetched connection page. Read/write/mixed/unavailable summaries retain
+their distinct meanings, sensitive-value masking and technical evidence.
+
+The optional existing walkthrough moves to Connections. Memory categories receive
+sticky headings/counts, with one keyboard tab stop and Arrow/Home/End navigation.
+Desktop list/detail panes fit the viewport; narrow screens retain the stacked
+layout. Secondary pages keep their active navigation. Lock/expiry always clear
+private state, even during edits. The draft warning covers same-tab links and
+browser document unload; browser Back/Forward within Next is not claimed as a
+comprehensive draft guard.
+
+An independent read-only plan review approved this approach with real DOM/session
+continuity, full-ID inspection targeting, pending-mutation, keyboard, hash-filter
+and permission-summary checks. Root remains sole writer. Balanced profile;
+requested review effort High, actual inherited model/effort unverified.
+
+Renew the production build, demo/client/permission/session browser coverage,
+seed-label integration, contract/docs checks and complete-diff review. A refreshed
+source-bound Mac trial needs actual packaged browser evidence before handoff.
+The same visual-feedback milestone remains in force; final CI, live-Claude and
+full release/artifact qualification remain pending. No boundary or native lifecycle
+change selects a full local migration gate for this correction round.
+
+The complete-diff review found and resolved two issues: keep permission/rename
+editors mounted through transient connection-list refreshes, and reconcile the
+memory selection with filtered results after editing. The affected review and
+final wording/artifact-checker delta are approved. The production build passed;
+seed tests passed 2/2 after the expected label assertion failed first. Ten demo
+browser cases passed on the corrected build (nine together, then the navigation
+case after fixing its route-completion wait). The broader run's 70 unaffected
+session/client-name/permission cases passed and carry forward: the later changes
+restore stable demo editor mounting, demo selection/wording and accessible logo
+text; the added effect dependency is constant within an authenticated session.
+No relevant personal/session/authority semantics changed after those checks.
+Contract census, Markdown links, test discovery and whitespace checks passed.
+Contract merge-base comparison and final CI remain pending. The refreshed artifact
+checker additionally requires persistent document/sidebar identity across routes
+and Assistant access as the default; its receipt will accompany the trial output.
