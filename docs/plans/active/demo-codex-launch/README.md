@@ -251,3 +251,17 @@ isolated package (tests use disposable resources and do not change build inputs)
 The package receipt will bind the final renewed suite and actual-artifact results.
 No source changes follow this freeze without affected revalidation. Targeted
 checks passed; final validation pending.
+
+## Main Context page button wording
+
+The owner requested the exact label **Connect to AI** for the Context page button.
+Only its text and the existing navigation-test lookup change; the destination
+remains Connections with both assistants. Run the production build and existing
+navigation/draft browser case. This is a small copy correction, not substantive
+permission or process work. Carry forward unchanged connection, drawer and native
+evidence from `0a95ea31` (67 affected browser, 31 helper, 2 native and actual
+packaged demo checks passed). Build a separate source-bound trial and verify the
+actual button and both assistant options in a disposable demo installation, then
+update the same launcher without touching running apps or stored sign-in. The
+artifact receipt records this narrower retest; CI and human acceptance remain
+pending. No full local migration gate or repeated unrelated suites are selected.
