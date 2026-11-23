@@ -49,7 +49,13 @@ export class SessionPermissionActivity {
 
 export function permissionChanges(before: LocalMcpPolicy, after: LocalMcpPolicy, grants: LocalMcpGrantSnapshot[], edits: LocalMcpGrantEdit[]): PermissionChange[] {
   const changes: PermissionChange[] = [];
-  const capabilities = (policy: LocalMcpPolicy) => [...policy.capabilities].sort().join(', ') || 'None';
+  const capabilities = (policy: LocalMcpPolicy) => {
+    // Compare the minimal equivalent maximum; DEFINE is independent of value access.
+    const values = new Set(policy.capabilities);
+    if (values.has('preferences:write')) values.delete('preferences:suggest');
+    if (values.has('preferences:write') || values.has('preferences:suggest')) values.delete('preferences:read');
+    return [...values].sort().join(', ') || 'None';
+  };
   if (capabilities(before) !== capabilities(after)) changes.push({kind:'maximum', before:capabilities(before), after:capabilities(after)});
   for (const target of [...new Set([...before.targets, ...after.targets])].sort()) {
     const was = before.targets.includes(target), now = after.targets.includes(target);

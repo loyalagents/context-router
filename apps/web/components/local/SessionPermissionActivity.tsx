@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState, type RefObject} from 'react';
 import {localJson} from '@/lib/authenticated-fetch';
 import {ClientName} from './ClientNames';
 
@@ -12,13 +12,27 @@ const value = (change:PermissionChange, text:string) => change.kind === 'maximum
   : text;
 const label = (change:PermissionChange) => change.kind === 'maximum' ? 'Maximum capabilities' : change.kind === 'sensitive' ? 'Sensitive context' : change.kind === 'connection' ? 'Connection' : change.kind === 'scope' ? `Allowed scope · ${change.target}` : `${change.action} rule · ${change.target}`;
 
-export function PermissionActivityRow({event,highlight}:{event:PermissionActivity;highlight:boolean}) {
+export type PermissionRevealState = {revealed:boolean;open:boolean};
+export function PermissionActivityRow({event,highlight,active,revealState,olderThanLoaded,relativeTime,absoluteTime}:{event:PermissionActivity;highlight:boolean;active:boolean;revealState?:RefObject<PermissionRevealState>;olderThanLoaded:boolean;relativeTime:string;absoluteTime:string}) {
   const element=useRef<HTMLDetailsElement>(null);
-  useEffect(()=>{if(highlight){element.current?.scrollIntoView({block:'nearest'});element.current?.focus({preventScroll:true});}},[highlight]);
-  return <details ref={element} tabIndex={highlight?-1:undefined} open={highlight||undefined} data-permission-change={event.id} className={`m-3 rounded-lg border-l-4 border-violet-500 bg-violet-50 p-4 ${highlight?'ring-2 ring-violet-300':''}`}>
-    <summary className="cursor-pointer"><strong>You {event.action==='revoke'?'revoked access for':'changed permissions for'} <ClientName clientKey={event.clientKey} showId={false}/></strong>
+  useEffect(()=>{
+    if(highlight && active && revealState && !revealState.current.revealed && element.current){
+      revealState.current.revealed=true;revealState.current.open=true;element.current.open=true;
+      element.current.scrollIntoView({block:'nearest'});element.current.focus({preventScroll:true});
+    }
+  },[highlight,active,revealState]);
+  return <details ref={element} tabIndex={highlight?-1:undefined} open={highlight ? revealState?.current.open : undefined} onToggle={() => { if(highlight && revealState && element.current) revealState.current.open=element.current.open; }} data-permission-change={event.id} className={`m-3 rounded-lg border-l-4 border-violet-500 bg-violet-50 p-4 ${highlight?'ring-2 ring-violet-300':''}`}>
+    <summary className="cursor-pointer" onClick={click => {
+      if(highlight && revealState && element.current){
+        // Native toggle is queued; save the choice before a focus refresh can remount us.
+        click.preventDefault();
+        revealState.current.open = !element.current.open;
+        element.current.open = revealState.current.open;
+      }
+    }}><strong>You {event.action==='revoke'?'revoked access for':'changed permissions for'} <ClientName clientKey={event.clientKey} showId={false}/></strong>
       <span className="mt-1 block text-sm text-gray-600">{event.changes.slice(0,2).map(change=>`${label(change)}: ${value(change,change.before)} → ${value(change,change.after)}`).join(' · ')}{event.changes.length>2?' · More changes':''}</span>
-      <span className="mt-1 block text-xs text-gray-500">Dashboard change · {new Date(event.occurredAt).toLocaleTimeString()}</span>
+      <span className="mt-1 block text-xs text-gray-500">Dashboard change · <span title={absoluteTime}>{relativeTime}</span></span>
+      {olderThanLoaded && <span className="mt-2 block text-sm">Older than the loaded requests; Load more to see what came between.</span>}
     </summary>
     <div className="mt-3 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th className="p-2">Setting</th><th className="p-2">Before</th><th className="p-2">After</th></tr></thead><tbody>{event.changes.map((change,index)=><tr key={index} className="border-t border-violet-200"><td className="break-all p-2">{label(change)}</td><td className="p-2">{value(change,change.before)}</td><td className="p-2">{value(change,change.after)}</td></tr>)}</tbody></table></div>
     {!!event.omittedChanges&&<p className="mt-2 text-sm">{event.omittedChanges} additional setting changes were omitted from this bounded session record.</p>}
@@ -27,7 +41,7 @@ export function PermissionActivityRow({event,highlight}:{event:PermissionActivit
   </details>;
 }
 
-export function ClearSessionPermissionActivity({onCleared}:{onCleared:()=>void}) {
+export function ClearSessionPermissionActivity({onInvalidated}:{onInvalidated:()=>void}) {
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const life=useRef<AbortController|null>(null);
   useEffect(()=>()=>life.current?.abort(),[]);
@@ -38,8 +52,8 @@ export function ClearSessionPermissionActivity({onCleared}:{onCleared:()=>void})
       if(controller.signal.aborted)return;
       if(!window.confirm('Clear dashboard permission changes recorded so far in this app session? Stored history and current permissions stay unchanged.'))return;
       await localJson('/api/local/mcp/changes/clear',{sessionId:snapshot.sessionId,throughSequence:snapshot.latestSequence},controller.signal);
-      if(!controller.signal.aborted){setMessage('Session permission changes cleared. New changes may appear.');onCleared();}
-    }catch{if(!controller.signal.aborted)setMessage('Session clear was not confirmed. Refresh and review before trying again.');}
+      if(!controller.signal.aborted){setMessage('Session permission changes cleared. New changes may appear.');onInvalidated();}
+    }catch{if(!controller.signal.aborted){setMessage('Session clear was not confirmed. Review history before trying again.');onInvalidated();}}
     finally{if(!controller.signal.aborted)setBusy(false);}
   }
   return <div className="mt-3"><p className="text-sm">Temporary permission-change entries are separate from stored history.</p><button type="button" disabled={busy} className="text-red-700 underline disabled:opacity-50" onClick={()=>void clear()}>{busy?'Clearing session changes…':'Clear session permission changes'}</button>{message&&<p role="status">{message}</p>}</div>;

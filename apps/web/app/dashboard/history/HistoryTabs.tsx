@@ -6,7 +6,7 @@ import { GRAPHQL_URL } from '@/lib/runtime-config';
 import AuditHistoryTab from '../preferences/components/AuditHistoryTab';
 import McpAccessHistoryTab from './McpAccessHistoryTab';
 import { useLocalSession } from '@/components/local/LocalSession';
-import { ClearSessionPermissionActivity } from '@/components/local/SessionPermissionActivity';
+import { ClearSessionPermissionActivity, type PermissionRevealState } from '@/components/local/SessionPermissionActivity';
 import { activityChangeId, activityClientKey, localClientId } from '@/lib/local-client-name';
 
 interface HistoryTabsProps {
@@ -29,6 +29,7 @@ export default function HistoryTabs({
   const [clientFilter, setClientFilter] = useState(() => local && typeof window !== 'undefined' ? activityClientKey(window.location.hash) : '');
   const [activeTab, setActiveTab] = useState<'audit' | 'mcp'>(() => clientFilter || demo ? 'mcp' : 'audit');
   const [highlightChangeId, setHighlightChangeId] = useState(() => local && typeof window !== 'undefined' ? activityChangeId(window.location.hash) : null);
+  const permissionReveal = useRef<PermissionRevealState>({revealed:false,open:true});
   const [generation, setGeneration] = useState(0);
   const [clearing, setClearing] = useState(false);
   const [confirmation, setConfirmation] = useState('');
@@ -45,19 +46,21 @@ export default function HistoryTabs({
   useEffect(() => {
     if (!local) return;
     const navigate = () => {
+      permissionReveal.current = {revealed:false,open:true};
       const key = activityClientKey(window.location.hash);
       setClientFilter(key);
       setHighlightChangeId(activityChangeId(window.location.hash));
       if (key) setActiveTab('mcp');
       invalidate();
     };
-    const showAll = () => { setClientFilter(''); setHighlightChangeId(null); setActiveTab('mcp'); invalidate(); };
+    const showAll = () => { permissionReveal.current = {revealed:false,open:true}; setClientFilter(''); setHighlightChangeId(null); setActiveTab('mcp'); invalidate(); };
     window.addEventListener('context-router.activity-all', showAll);
     window.addEventListener('hashchange', navigate);
     window.addEventListener('popstate', navigate);
     return () => { window.removeEventListener('context-router.activity-all', showAll); window.removeEventListener('hashchange', navigate); window.removeEventListener('popstate', navigate); };
   }, [local, invalidate]);
   const changeClientFilter = (value: string) => {
+    permissionReveal.current = {revealed:false,open:true};
     setClientFilter(value);
     setHighlightChangeId(null);
     const id = localClientId(value);
@@ -85,7 +88,7 @@ export default function HistoryTabs({
       if (!mounted.current) return;
       const status = result.data?.clearMyHistory?.status;
       if (!response.ok || result.errors || !status) throw new Error();
-      setMessage(status === 'CLEARED' ? 'Both history streams cleared. Concurrent activity may add new events.' : status === 'ROLLED_BACK' ? 'History clear rolled back because of concurrent activity. Refresh and review before trying again.' : 'Clear outcome is uncertain. Refresh and review before deciding to clear again. No automatic retry was made.');
+      setMessage(status === 'CLEARED' ? (demo ? 'Stored history cleared; session permission changes remain. Concurrent activity may add new events.' : 'Both history streams cleared. Concurrent activity may add new events.') : status === 'ROLLED_BACK' ? 'History clear rolled back because of concurrent activity. Refresh and review before trying again.' : 'Clear outcome is uncertain. Refresh and review before deciding to clear again. No automatic retry was made.');
     } catch { if (mounted.current) setMessage('Clear outcome is uncertain. Refresh and review before deciding to clear again. No automatic retry was made.'); }
     finally { if (mounted.current) { invalidate(); channel.current?.postMessage('invalidate'); setClearing(false); } }
   };
@@ -99,13 +102,13 @@ export default function HistoryTabs({
         <p className="text-sm text-gray-600">Old values may remain in history after Clear memory. History clearing does not erase backups, disk remnants or other clients’ transcripts.</p>
         <button type="button" disabled={clearing} onClick={() => { setConfirmation(''); setConfirming(true); }} className="text-red-700 underline disabled:opacity-50">{clearing ? 'Clearing history…' : demo ? 'Clear stored history' : 'Clear both history streams'}</button>
         {message && <p role="status">{message}</p>}
-        {demo && <ClearSessionPermissionActivity onCleared={() => { invalidate(); channel.current?.postMessage('invalidate'); }}/>}
+        {demo && <ClearSessionPermissionActivity onInvalidated={() => { invalidate(); channel.current?.postMessage('invalidate'); }}/>}
         </div>
       </Maintenance>
       <dialog ref={dialog} onCancel={() => setConfirming(false)} className="rounded-lg p-6 max-w-xl backdrop:bg-black/40">
         <form onSubmit={(event) => { event.preventDefault(); void clear(); }} className="space-y-4">
           <h2 className="text-xl font-semibold">{demo ? 'Clear stored history?' : 'Clear both history streams?'}</h2>
-          <p>This permanently deletes stored context changes and MCP access events. Current memory and client access remain. There is no undo.</p>
+          <p>{demo ? 'This permanently deletes stored context changes and MCP access events. Session permission changes, current memory and client access remain. There is no undo.' : 'This permanently deletes recorded changes and MCP access events. Current memory and client access remain. There is no undo.'}</p>
           <label htmlFor="history-confirmation" className="block">Type CLEAR HISTORY to confirm</label>
           <input id="history-confirmation" autoFocus value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="border rounded p-2 w-full" autoComplete="off" />
           <div className="flex gap-4"><button disabled={confirmation !== 'CLEAR HISTORY'} className="bg-red-700 text-white rounded px-4 py-2 disabled:bg-gray-400">Clear history permanently</button><button type="button" onClick={() => setConfirming(false)}>Cancel</button></div>
@@ -141,6 +144,7 @@ export default function HistoryTabs({
       <div id="mcp-panel" role="tabpanel" aria-labelledby="mcp-tab" hidden={activeTab !== 'mcp'}>
         <McpAccessHistoryTab
           highlightChangeId={highlightChangeId}
+          permissionReveal={permissionReveal}
           key={`mcp-${generation}`}
           invalidationSignal={pending.current.signal}
           clientFilter={local ? clientFilter : undefined}

@@ -1071,3 +1071,17 @@ test('large session diffs are bounded and disclose truncation, while reordered p
  assert.equal((await saveSessionPermissions(p.service,f,{...fullPolicy,capabilities:[...fullPolicy.capabilities].reverse()})).changeId,null);assert.equal((await p.service.handle('/api/local/mcp/changes',{})).items.length,1);
  const {LocalUiManagement}=require('../../dist/local-ui/local-ui-management.js');const reopened=new LocalUiManagement(f.store,f.principalId);await assert.rejects(reopened.handle('/api/local/mcp/changes/clear',{sessionId:log.sessionId,throughSequence:0}),/session changed/);
 });
+
+test('session activity treats implied read and suggest capabilities as equivalent maximums',async t=>{
+ const f=fixture(t),p=await proposal(f,fullPolicy);
+ for(const [redundant,minimal] of [
+  [['preferences:read','preferences:suggest','preferences:write','preferences:define'],['preferences:write','preferences:define']],
+  [['preferences:read','preferences:suggest'],['preferences:suggest']],
+ ]){
+  f.store.permissions(f.a.id,{...fullPolicy,capabilities:redundant});
+  const saved=await saveSessionPermissions(p.service,f,{...fullPolicy,capabilities:minimal});
+  assert.equal(saved.changeId,null);assert.equal((await p.service.handle('/api/local/mcp/changes',{})).items.length,0);
+ }
+ const changed=await saveSessionPermissions(p.service,f,{...fullPolicy,capabilities:['preferences:read']});
+ const log=await p.service.handle('/api/local/mcp/changes',{});assert.equal(log.items[0].id,changed.changeId);assert.deepEqual(log.items[0].changes,[{kind:'maximum',before:'preferences:suggest',after:'preferences:read'}]);
+});

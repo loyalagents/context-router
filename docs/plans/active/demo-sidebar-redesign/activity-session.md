@@ -123,3 +123,29 @@ carry their prior evidence forward. Request a scoped independent merge review.
 No app bundle is rebuilt in this source integration: the existing trial remains
 bound to `79319a20` and its original receipts. The running demo and state stay
 untouched; merged-source artifact validation and owner-managed CI remain pending.
+
+## Claude review corrections (2026-11-22)
+
+The owner authorized fixes to the review of `1754b814`. Agree with the linked-row
+reveal timing, pagination-gap notice, timestamp consistency, equivalent maximums,
+clear wording/reconciliation and missing race coverage. A reveal resets on explicit
+link/Back/client navigation, while passive focus preserves its open/collapsed state.
+Independent plan review additionally requires reveal only in the visible tab and
+DEFINE remaining independent of the Write/Suggest/Read implication chain.
+
+Root remains sole writer; the existing independent reviewer checks this bounded
+correction diff. Checkpoints: reproduce the capability issue with a backend test,
+fix and rerun session tests; fix UI and run focused browser cases for combined-read
+timing, viewport reveal, collapse, pagination, failures and invalidation; then
+review the diff and run affected shared-history tests plus build/docs/contract
+checks. No authorization, storage-schema, native or HCP changes are introduced.
+The supplied review is source-only evidence; renewed artifact testing is needed
+before replacing the older trial. This round leaves the current bundle and running
+demo untouched. CI monitoring remains with the owner.
+
+The focused browser run reproduced a further collapse race: the native details
+toggle event can run after focus invalidation removes the row. The linked summary
+now records the toggle synchronously, with the native toggle handler retained as
+a fallback. The regression covers passive focus, explicit Back reveal, keyboard
+toggling, delayed streams and failures in either stream. Independent review
+approved this correction; final focused browser results are recorded separately.

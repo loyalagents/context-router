@@ -418,3 +418,66 @@ test('lost launch reply clears only when a new request is observed without repla
  state={...state,state:'starting',request:'b'.repeat(32)};await f.page.getByText('Your latest chat is opening', {exact:false}).waitFor();assert.equal(await error.count(),0);assert.equal(opens,1);
  state={...state,state:'login-interrupted'};await f.page.getByText('Sign-in was interrupted.',{exact:false}).waitFor();assert.equal(await f.page.getByText('Setup did not finish.',{exact:false}).count(),0);
 });
+
+async function permissionActivityFixture(t) {
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ const fs=await import('node:fs/promises'),receipt=JSON.parse(await fs.readFile(f.root+'/demo/generation.json','utf8')),id=receipt.clients.agentB;
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ await f.page.getByRole('button',{name:'Edit permissions '+id,exact:true}).click();const editor=f.page.getByRole('region',{name:'Edit permissions',exact:true});
+ await editor.getByLabel('Maximum value access').selectOption('Blocked');await editor.getByRole('button',{name:'Preview resulting access',exact:true}).click();await editor.getByRole('region',{name:'Resulting access preview'}).waitFor();await editor.getByRole('button',{name:'Save permissions',exact:true}).click();
+ const link=editor.getByRole('link',{name:'View change in Activity',exact:true});await link.waitFor();const href=await link.getAttribute('href'),eventId=href.split('&change=')[1];
+ return {...f,id,otherId:receipt.clients.agentA,href,eventId,link,panel:f.page.getByRole('tabpanel',{name:'Assistant access',exact:true})};
+}
+function deferredActivityReply(t) {
+ let release,seen;const hold=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve);t.after(()=>release());return{hold,waiting,release,seen};
+}
+
+test('activity reveal waits for both streams, marks unloaded gaps, and preserves collapse on focus', {timeout:60000},async t=>{
+ const f=await permissionActivityFixture(t),gate=deferredActivityReply(t),changes=deferredActivityReply(t),now=Date.now();let historyReads=0,permissionReads=0,failChanges=false,failRequests=false;
+ const request=(n,time)=>({id:'synthetic-request-'+n,occurredAt:new Date(time).toISOString(),clientKey:'local:'+f.id,surface:'TOOLS_CALL',operationName:'searchPreferences',outcome:'SUCCESS',correlationId:'synthetic',latencyMs:1,requestMetadata:null,responseMetadata:null,errorMetadata:null});
+ await f.page.route('**/api/local/mcp/changes',async route=>{permissionReads++;if(failChanges)return route.fulfill({status:503,json:{}});const response=await route.fetch(),body=await response.json();body.items[0].occurredAt=new Date(now-86400000).toISOString();body.items.push({...body.items[0],id:'f'.repeat(32),occurredAt:new Date(now-90000000).toISOString()});await route.fulfill({response,json:body});changes.seen();});
+ await f.page.route('**/graphql',async route=>{
+  const body=route.request().postDataJSON();if(!body.query.includes('McpAccessHistoryForTab'))return route.continue();historyReads++;if(failRequests)return route.fulfill({json:{errors:[{message:'Synthetic request read failed'}]}});gate.seen();await gate.hold;
+  const more=!!body.variables.input.after;await route.fulfill({json:{data:{mcpAccessHistory:{hasNextPage:!more,nextCursor:more?null:'older',items:more?[request(20,now-100000000)]:Array.from({length:20},(_,i)=>request(i,now-i*1000))}}}}).catch(()=>{});
+ });
+ await f.page.evaluate(()=>{window.activityReveals=[];const original=HTMLElement.prototype.scrollIntoView;HTMLElement.prototype.scrollIntoView=function(...args){if(this.dataset.permissionChange)window.activityReveals.push(this.dataset.permissionChange);return original.apply(this,args);};});
+ await f.link.click();await gate.waiting;await changes.waiting;await f.page.waitForTimeout(100);
+ assert.equal(await f.panel.locator('[data-permission-change]').count(),0,'do not reveal a partial timeline');
+ await f.page.getByRole('tab',{name:'Context changes',exact:true}).click();gate.release();await f.page.waitForTimeout(100);assert.deepEqual(await f.page.evaluate(()=>window.activityReveals),[],'hidden tab must not consume the reveal');
+ await f.page.getByRole('tab',{name:'Assistant access',exact:true}).click();const row=f.panel.locator('[data-permission-change="'+f.eventId+'"]');await row.waitFor();await row.getByText('Older than the loaded requests; Load more to see what came between.',{exact:true}).waitFor();
+ assert.equal(await f.panel.locator('[data-permission-change]').count(),1,'unlinked older changes wait for Load more');
+ await f.page.waitForFunction(id=>document.activeElement?.getAttribute('data-permission-change')===id,f.eventId);
+ const box=await row.boundingBox();assert.ok(box.y>=0&&box.y+box.height<=f.page.viewportSize().height+1,'linked change is in view after request insertion');
+ assert.match(await row.locator('summary > .text-xs [title]').textContent(),/yesterday|day ago/);assert.match(await row.locator('summary > .text-xs [title]').getAttribute('title'),/\d{4}/);
+ await row.locator('summary').click();await f.page.waitForFunction(id=>!document.querySelector('[data-permission-change="'+id+'"]').open,f.eventId);
+ const previous=historyReads,previousRow=await row.elementHandle();const refreshed=f.page.waitForResponse(response=>response.url().endsWith('/graphql')&&response.request().postDataJSON().query.includes('McpAccessHistoryForTab'));
+ await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await previousRow.waitForElementState('hidden');await refreshed;await row.waitFor();assert.ok(historyReads>previous);assert.equal(await row.getAttribute('open'),null,JSON.stringify(await f.page.evaluate(()=>({reveals:window.activityReveals,hash:location.hash}))));assert.deepEqual(await f.page.evaluate(()=>window.activityReveals),[f.eventId]);
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();await f.page.waitForFunction(()=>location.hash==='');await row.waitFor({state:'hidden'});await f.page.goBack();await row.waitFor();await f.page.waitForFunction(id=>document.activeElement?.getAttribute('data-permission-change')===id,f.eventId);assert.equal(await row.getAttribute('open'),'');assert.deepEqual(await f.page.evaluate(()=>window.activityReveals),[f.eventId,f.eventId]);
+ await row.locator('summary').press('Enter');assert.equal(await row.getAttribute('open'),null);await row.locator('summary').press('Enter');assert.equal(await row.getAttribute('open'),'');
+ await f.panel.getByRole('button',{name:'Load more',exact:true}).click();await f.panel.locator('[data-permission-change="'+ 'f'.repeat(32)+'"]').waitFor();assert.equal(await f.panel.getByText('Older than the loaded requests; Load more to see what came between.',{exact:true}).count(),0);
+ failChanges=true;await f.panel.getByRole('button',{name:'Refresh activity',exact:true}).click();await f.panel.getByText('Session permission changes could not load.',{exact:false}).waitFor();assert.equal(await f.panel.locator('.demo-history-row').count(),20);assert.equal(await row.count(),0);assert.ok(permissionReads>=4);
+ failChanges=false;failRequests=true;await f.panel.getByRole('button',{name:'Refresh activity',exact:true}).click();await f.panel.getByText('Synthetic request read failed',{exact:true}).waitFor();await row.waitFor();assert.equal(await f.panel.locator('.demo-history-row').count(),0);
+});
+
+for(const action of ['clear','client','lock'])test('delayed session activity cannot return after '+action,{timeout:60000},async t=>{
+ const f=await permissionActivityFixture(t),gate=deferredActivityReply(t);let held=false;
+ await f.page.route('**/api/local/mcp/changes',async route=>{const response=await route.fetch();if(!held){held=true;gate.seen();await gate.hold;}await route.fulfill({response}).catch(()=>{});});
+ await f.link.click();await gate.waiting;
+ if(action==='clear'){
+  await f.page.getByText('History maintenance',{exact:true}).click();f.page.once('dialog',dialog=>dialog.accept());await f.page.getByRole('button',{name:'Clear session permission changes',exact:true}).click();await f.page.getByText('Session permission changes cleared.',{exact:false}).waitFor();
+ }else if(action==='client'){
+  await f.page.evaluate(id=>{location.hash='mcp-client='+id;},f.otherId);await f.panel.getByText('No assistant activity matches these filters.',{exact:true}).waitFor();
+ }else{
+  await f.page.getByRole('button',{name:'Lock dashboard',exact:true}).click();await f.page.getByLabel('Unlock token').waitFor();
+ }
+ gate.release();await f.page.waitForTimeout(150);assert.equal(await f.page.locator('[data-permission-change]').count(),0);
+});
+
+test('activity clear distinguishes stored history and refreshes after an uncertain session clear', {timeout:60000},async t=>{
+ const f=await permissionActivityFixture(t),gate=deferredActivityReply(t);await f.link.click();const row=f.panel.locator('[data-permission-change]');await row.waitFor();
+ await f.page.route('**/graphql',async route=>{if(!route.request().postDataJSON().query.includes('mutation ClearHistory'))return route.continue();const response=await route.fetch();gate.seen();await gate.hold;await route.fulfill({response});});
+ await f.page.getByText('History maintenance',{exact:true}).click();await f.page.getByRole('button',{name:'Clear stored history',exact:true}).click();await f.page.getByLabel('Type CLEAR HISTORY to confirm').fill('CLEAR HISTORY');await f.page.getByRole('button',{name:'Clear history permanently',exact:true}).click();await gate.waiting;
+ assert.equal(await f.panel.getByRole('button',{name:'Refresh activity',exact:true}).isDisabled(),true);gate.release();await f.page.getByText('Stored history cleared; session permission changes remain.',{exact:false}).waitFor();await row.waitFor();
+ let clears=0;await f.page.route('**/api/local/mcp/changes/clear',async route=>{clears++;await route.fetch();await route.abort();});
+ f.page.once('dialog',dialog=>dialog.accept());await f.page.getByRole('button',{name:'Clear session permission changes',exact:true}).click();await f.page.getByText('Session clear was not confirmed.',{exact:false}).waitFor();await row.waitFor({state:'hidden'});await f.panel.getByText('This permission change is no longer available in this app session.',{exact:true}).waitFor();assert.equal(clears,1);
+});

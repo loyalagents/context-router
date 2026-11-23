@@ -1,13 +1,13 @@
 'use client';
 
-import { PermissionActivityRow, type PermissionActivityPage } from '@/components/local/SessionPermissionActivity';
+import { PermissionActivityRow, type PermissionActivityPage, type PermissionRevealState } from '@/components/local/SessionPermissionActivity';
 import { authenticatedFetch, localJson } from '@/lib/authenticated-fetch';
 import { ClientName } from '@/components/local/ClientNames';
 import { useLocalSession } from '@/components/local/LocalSession';
 
 import { gql } from '@apollo/client';
 import { print } from 'graphql';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { McpAccessHistoryForTabQuery } from '@/lib/generated/graphql';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
@@ -91,6 +91,7 @@ interface McpAccessHistoryTabProps {
   clientFilter?: string;
   onClientFilterChange?: (value: string) => void;
   highlightChangeId?: string | null;
+  permissionReveal?: RefObject<PermissionRevealState>;
 }
 
 function formatAbsoluteTimestamp(value: string): string {
@@ -184,6 +185,7 @@ export default function McpAccessHistoryTab({
   clientFilter,
   onClientFilterChange,
   highlightChangeId,
+  permissionReveal,
 }: McpAccessHistoryTabProps) {
   const demo = useLocalSession()?.capabilities.runtime?.mode === 'demo';
   const FilterContainer = demo ? 'details' : 'div';
@@ -192,6 +194,7 @@ export default function McpAccessHistoryTab({
   const [items, setItems] = useState<McpAccessHistoryItem[]>([]);
   const [permissionPage,setPermissionPage] = useState<PermissionActivityPage|null>(null);
   const [permissionError,setPermissionError] = useState(false);
+  const [revealReady,setRevealReady] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState(false);
@@ -272,6 +275,7 @@ export default function McpAccessHistoryTab({
   }, [sanitizedAppliedFilters]);
 
   const loadHistory = useCallback(async (reset: boolean, cursor: string | null = null) => {
+    if (!shouldLoad) return;
     pendingRef.current?.abort();
     const controller = new AbortController(); pendingRef.current = controller;
     const signal = invalidationSignal ? AbortSignal.any([invalidationSignal, controller.signal]) : controller.signal;
@@ -286,6 +290,7 @@ export default function McpAccessHistoryTab({
     }
 
     setError(null);
+    setRevealReady(false);
 
     try {
       const input: Record<string, unknown> = {
@@ -317,22 +322,25 @@ export default function McpAccessHistoryTab({
         input.occurredTo = new Date(sanitizedAppliedFilters.occurredTo).toISOString();
       }
 
-      const [page] = await Promise.all([
+      const [requests, permissions] = await Promise.allSettled([
         fetchMcpAccessHistory(accessToken, input, signal),
-        demo ? localJson<PermissionActivityPage>('/api/local/mcp/changes', {}, signal).then(page => {
-          if (!signal.aborted && requestVersion === requestVersionRef.current) { setPermissionPage(page); setPermissionError(false); }
-        }).catch(() => { if (!signal.aborted && requestVersion === requestVersionRef.current) setPermissionError(true); }) : Promise.resolve(),
+        demo ? localJson<PermissionActivityPage>('/api/local/mcp/changes', {}, signal) : Promise.resolve(null),
       ]);
+      if (signal.aborted || requestVersion !== requestVersionRef.current) return;
 
-      if (signal.aborted || requestVersion !== requestVersionRef.current) {
-        return;
+      // Publish both streams in one render so pagination and linked-row reveal
+      // use the settled request page, while either stream can fail independently.
+      setPermissionPage(permissions.status === 'fulfilled' ? permissions.value : null);
+      setPermissionError(permissions.status === 'rejected');
+      if (requests.status === 'fulfilled') {
+        const page = requests.value;
+        setItems(previous => reset ? page.items : [...previous, ...page.items]);
+        setHasNextPage(page.hasNextPage);
+        setNextCursor(page.nextCursor ?? null);
+      } else {
+        if (reset) { setItems([]); setHasNextPage(false); setNextCursor(null); }
+        setError(requests.reason instanceof Error ? requests.reason.message : 'Failed to load MCP access history.');
       }
-
-      setItems((previous) =>
-        reset ? page.items : [...previous, ...page.items],
-      );
-      setHasNextPage(page.hasNextPage);
-      setNextCursor(page.nextCursor ?? null);
 
       if (reset) {
         setExpandedIds({});
@@ -349,12 +357,14 @@ export default function McpAccessHistoryTab({
       if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setIsLoadingInitial(false);
         setIsLoadingMore(false);
+        setRevealReady(true);
       }
     }
-  }, [accessToken, sanitizedAppliedFilters, invalidationSignal, demo]);
+  }, [accessToken, sanitizedAppliedFilters, invalidationSignal, demo, shouldLoad]);
 
   useEffect(() => {
     if (!shouldLoad) {
+      requestVersionRef.current++; pendingRef.current?.abort(); setRevealReady(false);
       return;
     }
 
@@ -411,7 +421,7 @@ export default function McpAccessHistoryTab({
         {demo && <div className="mt-3 text-sm text-gray-600">
           <p>Up to 50 recent dashboard permission changes from this app session. They disappear when Context Router restarts; CLI changes are not recorded here.</p>
           <p>Ordered by recorded time. Requests already running may finish under earlier access.</p>
-          <button type="button" className="mt-2 underline" disabled={isLoadingInitial || isLoadingMore} onClick={() => void loadHistory(true)}>Refresh activity</button>
+          <button type="button" className="mt-2 underline" disabled={!shouldLoad || isLoadingInitial || isLoadingMore} onClick={() => void loadHistory(true)}>Refresh activity</button>
           {permissionPage?.truncated && <p>Older permission changes have been dropped from this session log.</p>}
           {requestOnlyFilters && <p>Permission changes are hidden while request-specific filters are active.</p>}
           {permissionError && <p role="status">Session permission changes could not load. Request history is shown separately; use Refresh to retry.</p>}
@@ -611,7 +621,7 @@ export default function McpAccessHistoryTab({
         ) : (
           <div className="divide-y divide-gray-200">
             {rows.map((row) => {
-              if (row.kind === 'permission') return <PermissionActivityRow key={'permission:'+row.item.id} event={row.item} highlight={row.item.id===highlightChangeId}/>;
+              if (row.kind === 'permission') return <PermissionActivityRow key={'permission:'+row.item.id} event={row.item} highlight={row.item.id===highlightChangeId} active={shouldLoad && revealReady && !isLoadingInitial && !isLoadingMore} revealState={permissionReveal} olderThanLoaded={hasNextPage && !!items.at(-1) && Date.parse(row.item.occurredAt)<Date.parse(items.at(-1)!.occurredAt)} relativeTime={formatRelativeTimestamp(row.item.occurredAt)} absoluteTime={formatAbsoluteTimestamp(row.item.occurredAt)}/>;
               const item=row.item;
               const isExpanded = Boolean(expandedIds[item.id]);
 
