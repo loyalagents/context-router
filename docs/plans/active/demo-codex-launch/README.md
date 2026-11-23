@@ -309,3 +309,35 @@ the full UI suite for the shared consumers alongside isolated packaging. The
 artifact receipt will record final suite and actual-app checks. Earlier native
 process/guard coverage carries forward for unchanged inputs; no new live provider
 session is selected. Targeted checks passed; final validation pending.
+
+## Main integration after PR 216 opened
+
+The owner requested latest main `02ab7995` (PR 214), then explicitly deferred any
+app rebuild/update until another PR lands and is merged here. Keep the existing
+launcher, running app and demo state unchanged. The prior `93377cfa` bundle and
+its checks are evidence for that source only, not the merged seed.
+
+Main adds three fictional I-9 memories, updates three existing memories, and
+improves the shared assistant retrieval instruction. New stores contain 192
+active memories. Retained stores remain unchanged and compatible; no reset or
+supplement import is authorized by this merge. The common instruction already
+reaches both installed coding launchers, so no new connection mechanism is needed.
+Preserve branch coding tools, concurrent sessions, Codex label assertions and
+all drawer/UI changes. Resolve the overlapping seed test by retaining the Codex
+label check and main's 192 count and fictional-data assertions.
+
+Independent integration-plan review approved this scope (requested High;
+effective inherited settings unverified). Renew seed/input/failure, shared-client
+and coding helper checks; run affected demo browser cases serially with private
+temporary state, docs/contract consumers and native compilation for the menu copy.
+Carry unchanged UI/native process evidence from the preceding correction round:
+the broad UI run passed 155 cases, and all seven setup/credential failures passed
+in an isolated serial rerun without source changes. Retain both logs. Review the
+merged diff, commit and push PR 216. Exact-candidate CI and human acceptance remain
+pending; no new package is selected under the owner's revised scope.
+
+Integrated source review approved: updated shared instructions reach both coding
+launchers; auth isolation, token exclusion, lifecycle guards, concurrent chats and
+UI behavior remain intact. The five affected browser cases, native compilation,
+Markdown links, contract census and whitespace checks passed. Seed/recovery/helper
+run results will be recorded in PR 216 when settled, without a result-only commit.

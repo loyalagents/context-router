@@ -90,8 +90,9 @@ expose the hosted advanced demo-reset controls.
 
 **CR → Reset sample data…** is a separate native lifecycle operation. It drains
 the active demo, prepares a fresh unique store/principal through the real MCP
-importer, and publishes only a verified settled candidate. It restores the 189
-active historical sample memories, original definitions/import history and fresh
+importer, and publishes only a verified settled candidate. It restores the bundled
+sample memories (192 in the current source, including the fictional I-9 supplement),
+definitions/import history and fresh
 A/B/C client credentials. Later edits, custom clients and grant changes do not
 carry forward. Personal data/authority and model assets are preserved. Prior demo
 stores/exports and stable provider profiles remain retained; this is not secure

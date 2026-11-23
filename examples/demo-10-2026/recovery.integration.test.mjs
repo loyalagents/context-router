@@ -71,7 +71,7 @@ for (const [signal, fresh] of [['SIGINT', false], ['SIGTERM', true]]) {
   test(`${signal} during real import revokes the importer and preserves failure evidence${fresh ? ' and prior selection' : ''}`, { timeout: 30000 }, async t => {
     const f = await fixture(t, fresh), worker = f.start();
     const progress = await worker.ready(), root = progress.root;
-    assert.equal(progress.completed, 1); assert.equal(progress.total, 189);
+    assert.equal(progress.completed, 1); assert.equal(progress.total, 192);
     await worker.interrupt(signal);
     worker.child.send('continue'); // Resume only after the child caught the signal.
     assert.deepEqual(await worker.exited, { code: 1, signal: null });

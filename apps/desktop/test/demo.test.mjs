@@ -30,11 +30,21 @@ test('shared managed seed uses real MCP, revokes importer, preserves edits on re
   const seededClients = new b.SqliteMcpCredentials(seededIdentity.database, seededState.state.principalId).list();
   assert.equal(seededClients.find(client => client.id === one.receipt.clients.agentB).label, 'Claude Code — reader');
   assert.equal(seededClients.find(client => client.id === one.receipt.clients.agentA).label, 'Codex — writer');
-  assert.equal((await verifyDemoBaseline(one)).active, 189);
+  assert.equal((await verifyDemoBaseline(one)).active, 192);
   let runtime = await b.createLocalMcpApplication(one.config, { port: 0 }), a, reader;
   try {
     a = await connect(runtime.port, path.join(one.directory, 'exports/agent-a.token'));
     reader = await connect(runtime.port, path.join(one.directory, 'exports/agent-b.token'));
+    const supplemented = seed.plan.entries.filter(e => e.preference.evidence.sourceRecord.provenance.source === 'synthetic-i9-demo');
+    assert.equal(supplemented.length, 6);
+    for (const entry of supplemented) {
+      const found = await call(reader, 'searchPreferences', { query: entry.definition.slug });
+      assert.equal(found.active.count, 1);
+      assert.equal(found.active.preferences[0].value, JSON.parse(entry.preference.value));
+    }
+    for (const category of ['health', 'finance']) {
+      assert.equal((await call(reader, 'searchPreferences', { query: `${category}.demo001.` })).active.count, 0);
+    }
     const slug = 'home.demo001.presenter_note';
     await call(a, 'mutatePreferences', { operation: 'CREATE_DEFINITION', definition: { slug, displayName: 'Presenter note', description: 'Explicit rehearsal addition', valueType: 'STRING', scope: 'GLOBAL', isSensitive: true } });
     await call(a, 'mutatePreferences', { operation: 'SET_PREFERENCE', preference: { slug, value: JSON.stringify('explicit rehearsal note') } });

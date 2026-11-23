@@ -77,13 +77,13 @@ for(const demo of [false,true])test(`${demo?'demo':'personal'} uses its intended
  if(demo){
   await f.page.getByRole('heading',{name:'Your context',exact:true}).waitFor();
   const list=f.page.getByRole('region',{name:'Saved context'}),nav=f.page.getByRole('navigation',{name:'Main navigation'});
-  assert.equal(await list.getByRole('button').count(),189);
+  assert.equal(await list.getByRole('button').count(),192);
   assert.deepEqual(await nav.getByRole('link').allTextContents(),['Context','Connections','Activity']);
   assert.equal(await f.page.getByRole('heading',{name:'Account Information'}).count(),0);
   assert.equal(await f.page.getByRole('button',{name:'Smart search',exact:true}).isVisible(),false);
   for(const width of [1280,1440,375]){await f.page.setViewportSize({width,height:900});assert.equal(await f.page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);}
   await f.page.setViewportSize({width:1440,height:900});assert.ok((await list.boundingBox()).y<400);
-  await f.page.getByLabel('Context category').selectOption({index:1});assert.ok(await list.getByRole('button').count()<189);
+  await f.page.getByLabel('Context category').selectOption({index:1});assert.ok(await list.getByRole('button').count()<192);
   await f.page.getByLabel('Search your context').fill('no-such-memory-xyz');await list.getByText('No matching context',{exact:true}).waitFor();
   await nav.getByRole('link',{name:'Connections',exact:true}).click();await f.page.getByRole('heading',{name:'Connections',exact:true}).waitFor();
   await f.page.getByRole('heading',{name:'Your context, in Claude Code',exact:true}).waitFor();await f.page.getByText(/Open the installed Mac demo to launch/).waitFor();
@@ -173,7 +173,7 @@ test('demo uses the installed local model for smart search while keeping histori
  await f.page.getByRole('button',{name:'Smart search',exact:true}).click();
  const results=f.page.getByLabel('Smart search results');await results.getByText('Synthetic historical travel match',{exact:true}).waitFor();
  await results.getByText(slug,{exact:true}).waitFor();assert.equal(f.peer.state.completionBodies.length,1);
- await banner.waitFor();assert.equal((await f.graphql('query { activePreferences { slug } }')).activePreferences.length,189);
+ await banner.waitFor();assert.equal((await f.graphql('query { activePreferences { slug } }')).activePreferences.length,192);
 });
 
 test('demo navigation retains its shell, protects edits and makes memory selection keyboard accessible', {timeout:60000}, async t=>{

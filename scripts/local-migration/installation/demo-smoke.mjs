@@ -74,7 +74,7 @@ try{
  const navigation=page.getByRole('navigation',{name:'Main navigation'});
  assert.deepEqual(await navigation.getByRole('link').allTextContents(),['Context','Connections','Activity']);
  const contextList=page.getByRole('region',{name:'Saved context'});
- assert.equal(await contextList.getByRole('button').count(),189);
+ assert.equal(await contextList.getByRole('button').count(),192);
  assert.equal(await page.getByRole('button',{name:'Smart search',exact:true}).isVisible(),false);
  await page.screenshot({path:path.join(root,'demo-dashboard.png'),fullPage:true});
  await page.evaluate(()=>{window.demoSidebarNode=document.querySelector('.demo-sidebar');window.demoDocument=document;});
