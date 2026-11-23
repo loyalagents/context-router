@@ -70,6 +70,13 @@ export default function McpClients() {
   const inspectionPanel = useRef<HTMLDivElement>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [editing,setEditing]=useState<Client|null>(null);
+  const permissionTrigger=useRef<{id:string;button:HTMLButtonElement}|null>(null);
+  useEffect(()=>{
+    if(editing || !permissionTrigger.current)return;
+    const {id,button}=permissionTrigger.current;permissionTrigger.current=null;
+    const target=button.isConnected&&!button.disabled?button:editButtons.current.get(id);
+    if(target&&!target.disabled)target.focus({preventScroll:true});
+  },[editing]);
   const editButtons=useRef(new Map<string,HTMLButtonElement>());
   const [items, setItems] = useState<Client[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
@@ -364,8 +371,8 @@ export default function McpClients() {
         </div>
       </form>;
   const editableClient = (id:string) => !busy&&!editing&&!renameDraft ? items.find(client=>client.id===id&&!client.revoked) : undefined;
-  const openPermissions = (id:string) => {const client=editableClient(id);if(client)setEditing(client);};
-  const permissionsPanel = editing&&<McpPermissionsEditor key={editing.id} client={editing} onChanged={()=>{channel.current?.postMessage('invalidate');invalidate();}} onClose={()=>{const id=editing.id;setEditing(null);queueMicrotask(()=>editButtons.current.get(id)?.focus());}}/>;
+  const openPermissions = (id:string,trigger:HTMLButtonElement) => {const client=editableClient(id);if(client){permissionTrigger.current={id,button:trigger};setEditing(client);}};
+  const permissionsPanel = editing&&<McpPermissionsEditor key={editing.id} client={editing} drawer={demo} onChanged={()=>{channel.current?.postMessage('invalidate');invalidate();}} onClose={()=>setEditing(null)}/>;
   const authorityPanel = snapshot && (
         <section
           className="space-y-4 border-t pt-4"
@@ -575,7 +582,7 @@ export default function McpClients() {
             <p>Current effective access: {client.summary?`${client.summary.level} across ${client.summary.total} active field definitions in scope`:'Unavailable'}. More specific exceptions may apply; prefixes also cover future fields.</p>
             <p className="text-xs">Generation {client.generation}</p>
             </>}
-            <button ref={element=>{if(element)editButtons.current.set(client.id,element);else editButtons.current.delete(client.id);}} className={button} disabled={!editableClient(client.id)} aria-label={`Edit permissions ${client.id}`} onClick={()=>openPermissions(client.id)}>{demo ? 'Edit access' : 'Edit permissions'}</button>{' '}
+            <button ref={element=>{if(element)editButtons.current.set(client.id,element);else editButtons.current.delete(client.id);}} className={button} disabled={!editableClient(client.id)} aria-label={`Edit permissions ${client.id}`} onClick={event=>openPermissions(client.id,event.currentTarget)}>{demo ? 'Edit access' : 'Edit permissions'}</button>{' '}
 
 <ActivityLink {...(demo ? {prefetch:false} : {})} className={button} href={`/dashboard/history#mcp-client=${client.id}`} aria-label={`View activity ${client.id}`}>View activity</ActivityLink>
             {demo ? <details className="demo-connection-details"><summary>Details</summary><p>Maximum value access: {maximumValueLevel(client.policy)}. Definition management: {client.policy.capabilities.includes('preferences:define') ? 'allowed by maximum' : 'not allowed by maximum'}.</p><p>Sensitive values: {client.policy.allowSensitive ? 'allowed by maximum, within effective scope' : 'blocked by maximum'}.</p><p>Allowed scope: {client.policy.targets.join(', ') || 'No targets'}. Prefixes may include future fields.</p><p>Instance: <code>{client.id}</code> · Generation {client.generation}</p>            <button ref={element=>{if(element)renameButtons.current.set(client.id,element);else renameButtons.current.delete(client.id);}} className={button} disabled={busy || !!renameDraft} aria-label={`Rename ${client.id}`} onClick={()=>{setRenameDraft({client,name:client.label,needsRead:false});setRenameError('');}}>Rename</button>

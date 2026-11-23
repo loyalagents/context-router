@@ -233,8 +233,8 @@ test('demo preserves permission drafts during passive refresh and keeps a tab st
  await panel.getByLabel('Maximum value access').selectOption('Blocked');
  await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));
  await f.page.locator('.demo-client-card').first().waitFor();assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');
- f.page.once('dialog',dialog=>dialog.dismiss());await nav.getByRole('link',{name:'Context',exact:true}).click();assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');
- await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ f.page.once('dialog',dialog=>dialog.dismiss());await f.page.keyboard.press('Escape');assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');
+ f.page.once('dialog',dialog=>dialog.accept());await panel.getByRole('button',{name:'Cancel',exact:true}).click();
  await nav.getByRole('link',{name:'Context',exact:true}).click();await f.page.getByLabel('Search your context').fill('project');
  const list=f.page.getByRole('region',{name:'Saved context'});assert.ok(await list.getByRole('button').count()>1);
  await list.getByRole('button').first().click();await f.page.getByRole('button',{name:'Edit context',exact:true}).click();await f.page.locator('.demo-inspector textarea').fill('Synthetic updated memory without the search term');
@@ -376,12 +376,80 @@ test('Review access opens the selected assistant exact permissions and preserves
  await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
  const review=f.page.getByRole('button',{name:'Review access',exact:true}),panel=f.page.getByRole('region',{name:'Edit permissions',exact:true});
  const open=async(id,label)=>{await review.click();await panel.getByText('Instance '+id+'.',{exact:false}).waitFor();assert.match(await panel.getByRole('heading').innerText(),new RegExp(label));assert.equal(await panel.getByRole('heading').evaluate(el=>el===document.activeElement),true);assert.ok(await panel.getByRole('heading').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));};
- await open(b,'A renamed assistant');await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ await open(b,'A renamed assistant');
+ const drawer=f.page.getByRole('dialog',{name:'Assistant access controls'}),close=f.page.getByRole('button',{name:'Close access controls'});
+ assert.equal(await drawer.evaluate(el=>el.matches(':modal')),true);
+ assert.ok(await drawer.evaluate(el=>Math.abs(el.getBoundingClientRect().right-innerWidth)<1));
+ await f.page.keyboard.press('Tab');assert.equal(await drawer.evaluate(el=>el.contains(document.activeElement)),true);
+ await f.page.getByRole('button',{name:'Claude Code',exact:true}).evaluate(el=>el.focus());assert.equal(await drawer.evaluate(el=>el.contains(document.activeElement)),true);
+ await f.page.keyboard.press('Escape');await drawer.waitFor({state:'hidden'});assert.equal(await review.evaluate(el=>el===document.activeElement),true);
  await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();await open(a,'Z renamed assistant');
  await panel.getByLabel('Maximum value access').selectOption('Blocked');
- await f.page.getByRole('button',{name:'Claude Code',exact:true}).click();assert.equal(await review.isDisabled(),true);assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');await panel.getByText('Instance '+a+'.',{exact:false}).waitFor();
- await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ f.page.once('dialog',dialog=>dialog.dismiss());await f.page.keyboard.press('Escape');assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');await panel.getByText('Instance '+a+'.',{exact:false}).waitFor();
+ f.page.once('dialog',dialog=>dialog.dismiss());await f.page.mouse.click(10,100);assert.equal(await drawer.isVisible(),true);
+ f.page.once('dialog',dialog=>dialog.accept());await close.click();await drawer.waitFor({state:'hidden'});assert.equal(await review.evaluate(el=>el===document.activeElement),true);
+ await open(a,'Z renamed assistant');await f.page.mouse.click(10,100);await drawer.waitFor({state:'hidden'});
+ // A pending save cannot be dismissed, and a confirmed save leaves no dirty warning.
+ await open(a,'Z renamed assistant');await panel.getByLabel('Maximum value access').selectOption('Blocked');
+ await panel.getByRole('button',{name:'Preview resulting access',exact:true}).click();await panel.getByRole('region',{name:'Resulting access preview'}).waitFor();
+ let release,seen;const pending=new Promise(resolve=>seen=resolve),hold=new Promise(resolve=>release=resolve);t.after(()=>release?.());
+ await f.page.route('**/api/local/mcp/save',async route=>{seen();await hold;await route.continue();});
+ await panel.getByRole('button',{name:'Save permissions',exact:true}).click();await pending;
+ assert.equal(await close.isDisabled(),true);assert.equal(await panel.getByRole('button',{name:'Cancel',exact:true}).isDisabled(),true);
+ await f.page.keyboard.press('Escape');assert.equal(await drawer.isVisible(),true);await f.page.mouse.click(10,100);assert.equal(await drawer.isVisible(),true);
+ release();await panel.getByText('Permissions saved',{exact:true}).waitFor();await close.click();await drawer.waitFor({state:'hidden'});
+ await f.page.setViewportSize({width:390,height:844});await open(a,'Z renamed assistant');assert.ok(await drawer.evaluate(el=>el.getBoundingClientRect().width<=innerWidth));await close.click();await f.page.setViewportSize({width:1280,height:900});
+ await f.page.getByRole('button',{name:'Claude Code',exact:true}).click();
  const card=f.page.locator('.demo-client-card').filter({has:f.page.getByRole('button',{name:'Edit permissions '+a,exact:true})});await card.locator('summary').click();await card.getByRole('button',{name:'Rename '+a,exact:true}).click();assert.equal(await review.isDisabled(),true);await f.page.getByRole('button',{name:'Cancel rename',exact:true}).click();
  const revoked=JSON.parse(f.cli('local-mcp.js','list').stdout).result.find(client=>client.revoked).id;
  for(const id of [undefined,'missing-client',revoked]){codexId=id;await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();await f.page.getByText('Choose a project once.',{exact:false}).waitFor();assert.equal(await review.isDisabled(),true);assert.equal(await panel.count(),0);await f.page.getByRole('button',{name:'Claude Code',exact:true}).click();}
+});
+
+test('passive context refresh keeps automatic selection and layout stable through reorder and removal', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ const list=f.page.getByRole('region',{name:'Saved context'}),selected=()=>list.locator('[aria-pressed="true"]');
+ const firstId=await f.page.locator('.demo-inspector details code').nth(1).textContent();
+ const first=await selected().innerText(),before=(await list.boundingBox()).y;let release,seen,remove=false;
+ let waiting=new Promise(resolve=>seen=resolve),hold=new Promise(resolve=>release=resolve);t.after(()=>release());
+ await f.page.route('**/graphql',async route=>{if(!route.request().postDataJSON().query.includes('LocalSavedPreferences'))return route.continue();const response=await route.fetch(),body=await response.json();body.data.activePreferences.reverse();if(remove)body.data.activePreferences=body.data.activePreferences.filter(p=>p.id!==firstId);seen();await hold;await route.fulfill({response,json:body});});
+ await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await waiting;
+ assert.equal(await f.page.getByText('Refreshing saved preferences…',{exact:true}).count(),0);assert.equal((await list.boundingBox()).y,before);
+ release();await f.page.waitForTimeout(300);assert.equal(await selected().innerText(),first);
+ // A removed selected item gets a new pinned fallback; later reorder cannot move it.
+ remove=true;await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await f.page.waitForFunction(value=>document.querySelector('.demo-context-row[aria-pressed="true"]')?.textContent!==value,first);
+ const fallback=await selected().innerText();assert.notEqual(fallback,first);assert.equal(await list.locator('[tabindex="0"]').count(),1);
+ await f.page.unroute('**/graphql');await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await f.page.waitForTimeout(300);assert.equal(await selected().innerText(),fallback);
+ await f.page.getByLabel('Search your context').fill('work.demo001.');const filtered=await selected().innerText();await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await f.page.waitForTimeout(300);assert.equal(await selected().innerText(),filtered);
+});
+
+test('passive context refresh updates sensitivity and preserves manual field interpretation until Clear', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
+ const {connect,call}=await import('../../backend/scripts/demo/mcp-import.mjs'),path=await import('node:path');
+ const peer=await connect(Number(new URL(f.ready.mcpOrigin).port),path.join(f.root,'demo/exports/agent-a.token'));t.after(()=>peer.close());
+ const slug='work.demo001.polish_sensitive';
+ await f.page.getByRole('button',{name:'Add or import',exact:true}).click();const tools=f.page.getByRole('region',{name:'Context tools'});
+ await tools.getByLabel('Memory field',{exact:true}).fill(slug);await tools.getByLabel('Value',{exact:true}).fill('Unfinished string draft');
+ await call(peer,'mutatePreferences',{operation:'CREATE_DEFINITION',definition:{slug,description:'Synthetic sensitive field',valueType:'BOOLEAN',scope:'GLOBAL',isSensitive:true}});
+ await call(peer,'mutatePreferences',{operation:'SET_PREFERENCE',preference:{slug,value:'true'}});
+ await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await f.page.getByLabel('Search your context').fill(slug);await f.page.locator('.demo-detail-meta').getByText('Sensitive',{exact:true}).waitFor();
+ assert.equal(await tools.getByLabel('Value',{exact:true}).evaluate(e=>e.tagName),'INPUT');assert.equal(await tools.getByLabel('Value',{exact:true}).inputValue(),'Unfinished string draft');
+ await tools.getByRole('button',{name:'Clear',exact:true}).click();await tools.getByLabel('Memory field',{exact:true}).fill(slug);assert.equal(await tools.getByLabel('Value',{exact:true}).evaluate(e=>e.tagName),'SELECT');
+});
+
+test('failed passive refresh is a quiet stale-data notice with an explicit read retry', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);let fail=true;
+ await f.page.route('**/graphql',route=>route.request().postDataJSON().query.includes('LocalSavedPreferences')&&fail?route.fulfill({status:503,json:{}}):route.continue());
+ await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await f.page.getByText('Context may be out of date. Could not refresh in the background.',{exact:true}).waitFor();assert.equal(await f.page.getByText('Context may be out of date. Could not refresh in the background.',{exact:true}).locator('..').getAttribute('role'),'status');
+ fail=false;await f.page.getByRole('button',{name:'Retry saved preferences refresh',exact:true}).click();await f.page.getByText('Context may be out of date.',{exact:false}).waitFor({state:'hidden'});
+});
+
+for(const client of ['claude','codex'])test(`${client} lost launch reply clears only when a new request is observed without replay`, {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);let opens=0,state={available:true,state:'exited',busy:false,request:'a'.repeat(32)};
+ await f.page.route(`**/api/local/demo/${client}/status`,route=>route.fulfill({json:state}));
+ await f.page.route(`**/api/local/demo/${client}/open`,route=>{opens++;return route.abort();});
+ await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();if(client==='codex')await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();
+ await f.page.getByRole('button',{name:client==='codex'?'Open Codex':'Open Claude Code',exact:true}).click();const error=f.page.getByText('Launch could not be confirmed.',{exact:false});await error.waitFor();
+ await f.page.waitForTimeout(2300);assert.equal(await error.isVisible(),true);assert.equal(opens,1);
+ state={...state,state:'starting',request:'b'.repeat(32)};await f.page.getByText('Your latest chat is opening', {exact:false}).waitFor();assert.equal(await error.count(),0);assert.equal(opens,1);
+ state={...state,state:'login-interrupted'};await f.page.getByText('Sign-in was interrupted.',{exact:false}).waitFor();assert.equal(await f.page.getByText('Setup did not finish.',{exact:false}).count(),0);
 });

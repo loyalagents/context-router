@@ -141,10 +141,12 @@ export default function McpPermissionsEditor({
   client,
   onClose,
   onChanged,
+  drawer = false,
 }: {
   client: Client;
   onClose: () => void;
   onChanged: () => void;
+  drawer?: boolean;
 }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [policy, setPolicy] = useState<McpPolicy | null>(null);
@@ -179,6 +181,13 @@ export default function McpPermissionsEditor({
     controllers: new Set<AbortController>(),
   });
   const title = useRef<HTMLHeadingElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const backdropPress = useRef(false);
+  function requestClose() {
+    if (life.current.submitting || saving) return;
+    if (drawer && intent.current?.intents.length && !window.confirm("Discard unsaved access changes?")) return;
+    onClose();
+  }
   const draft = useRef<{ policy: McpPolicy | null; edits: Edit[] }>({
     policy: null,
     edits: [],
@@ -258,6 +267,12 @@ export default function McpPermissionsEditor({
   useEffect(() => {
     const s = life.current;
     s.mounted = true;
+    const modal = dialog.current;
+    const previousOverflow = document.body.style.overflow;
+    if (drawer) {
+      modal?.showModal();
+      document.body.style.overflow = "hidden";
+    }
     title.current?.focus();
     void readCurrent(true);
     const invalidate = () => {
@@ -275,6 +290,10 @@ export default function McpPermissionsEditor({
     for (const event of ["pointerdown", "keydown", "input", "focusin"])
       document.addEventListener(event, activity, true);
     return () => {
+      if (drawer) {
+        modal?.close();
+        document.body.style.overflow = previousOverflow;
+      }
       s.mounted = false;
       s.version++;
       s.read++;
@@ -501,10 +520,10 @@ export default function McpPermissionsEditor({
     if (edit.effect !== "REMOVE")
       rules.push({ ...edit, id: "draft:" + edit.target + edit.action });
   }
-  return (
+  const content = (
     <section
       aria-label="Edit permissions"
-      className="space-y-5 rounded-xl border-2 border-blue-200 bg-white p-5 shadow-sm"
+      className={drawer ? "space-y-5 bg-white p-6" : "space-y-5 rounded-xl border-2 border-blue-200 bg-white p-5 shadow-sm"}
     >
       <h2 ref={title} tabIndex={-1} className="text-xl font-semibold">
         Edit permissions —{" "}
@@ -999,10 +1018,22 @@ export default function McpPermissionsEditor({
         >
           {saving ? "Saving…" : "Save permissions"}
         </button>
-        <button className={button} disabled={saving} onClick={onClose}>
+        <button className={button} disabled={saving} onClick={requestClose}>
           Cancel
         </button>
       </div>
     </section>
   );
+  if (!drawer) return content;
+  const outside = (event: React.PointerEvent<HTMLDialogElement> | React.MouseEvent<HTMLDialogElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    return event.target === event.currentTarget && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom);
+  };
+  return <dialog ref={dialog} className="demo-access-drawer" aria-label="Assistant access controls"
+    onCancel={event => { event.preventDefault(); requestClose(); }}
+    onPointerDown={event => { backdropPress.current = outside(event); }}
+    onClick={event => { const dismiss = backdropPress.current && outside(event); backdropPress.current = false; if (dismiss) requestClose(); }}>
+    <div className="demo-access-drawer-toolbar"><span>Assistant access</span><button className="demo-button" aria-label="Close access controls" disabled={saving} onClick={requestClose}>Close ×</button></div>
+    {content}
+  </dialog>;
 }

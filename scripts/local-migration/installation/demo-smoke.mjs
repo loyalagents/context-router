@@ -100,7 +100,10 @@ try{
   await page.getByRole('button',{name:'Review access',exact:true}).click();
   const editor=page.getByRole('region',{name:'Edit permissions',exact:true});await editor.getByText('Instance '+id+'.',{exact:false}).waitFor();
   assert.equal(await editor.getByRole('heading').evaluate(el=>el===document.activeElement),true);
-  await editor.getByRole('button',{name:'Cancel',exact:true}).click();
+  assert.equal(await page.getByRole('dialog',{name:'Assistant access controls'}).evaluate(el=>el.matches(':modal')),true);
+  if(assistant==='Codex CLI')await page.screenshot({path:path.join(root,'codex-access-drawer.png')});
+  await page.getByRole('button',{name:'Close access controls',exact:true}).click();
+  assert.equal(await page.getByRole('button',{name:'Review access',exact:true}).evaluate(el=>el===document.activeElement),true);
  }
  await page.getByRole('button',{name:'Claude Code',exact:true}).click();
  phase('review-access-opens-exact-selected-assistant-editor');

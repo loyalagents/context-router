@@ -32,6 +32,8 @@ export default function DemoContextLibrary({ preferences, definitions, accessTok
   const ordered = categories.flatMap(name => filtered.filter(item => (item.category || 'Other') === name));
   // Identity is always the complete preference ID. A filter never retargets a draft.
   const selected = (interacting ? preferences : ordered).find(item => item.id === selectedId) ?? ordered[0];
+  const resolvedId = selected?.id ?? null;
+  useEffect(() => { if (!interacting && selectedId !== resolvedId) setSelectedId(resolvedId); }, [interacting, selectedId, resolvedId]);
   const choose = (id: string) => { if (!interacting) setSelectedId(id); };
   return <main className={`demo-page demo-context-page${toolsOpen ? ' demo-tools-open' : ''}`}>
     <header className="demo-page-header"><div><h1>Your context</h1><p>Memories your connected assistants can read, within the access you allow.</p></div><Link prefetch={false} className="demo-button demo-primary" href="/dashboard/permissions"><DemoIcon name="connections"/>Connect Claude Code</Link></header>

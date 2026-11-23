@@ -65,3 +65,23 @@ test('coding temporary directories are private, unique and short enough for Unix
  const directories=[await codingTemporaryDirectory(),await codingTemporaryDirectory()];t.after(()=>Promise.all(directories.map(dir=>fs.rm(dir,{recursive:true,force:true}))));assert.notEqual(...directories);
  for(const directory of directories){assert.equal((await fs.stat(directory)).mode&0o777,0o700);assert.equal(await fs.realpath(directory),directory);const socket=path.join(directory,'tsx-501','12345678901234567890.pipe');await fs.mkdir(path.dirname(socket));assert.ok(Buffer.byteLength(socket)<104);const server=net.createServer();await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(socket,resolve);});await new Promise(resolve=>server.close(resolve));}
 });
+
+
+test('coding preapproves only the two context reads before the permission flag and auth subcommand',()=>{
+ const args=codingLaunchSpec(launch,'/chosen/project').args;
+ assert.deepEqual(args.slice(args.indexOf('--allowedTools'),args.indexOf('--permission-mode')+2),['--allowedTools','mcp__context_router_demo__searchPreferences,mcp__context_router_demo__listPreferenceSlugs','--permission-mode','default']);
+ assert.deepEqual([...args,'auth','status','--json'].slice(-5),['--permission-mode','default','auth','status','--json']);
+});
+for(const command of ['claude','codex'])test(`${command} lost sign-in child reports interrupted sign-in without reading credentials or starting coding`,async()=>{
+ const states=[];let runs=0;
+ const client=command==='codex'?clientLaunchSpec({command,agent:'a',root:'/demo',mcpPort:8790,dataset:'demo001'},{executable:'/native/codex'}):launch;
+ await assert.rejects(connectClaude(client,{check:async()=>{},authStatus:async()=>false,run:async()=>{runs++;throw Error('lost sign-in child');},state:async state=>states.push(state),credential:()=>{throw Error('must not read');}}),/lost sign-in child/);
+ assert.equal(runs,1);assert.deepEqual(states,['signing-in','login-interrupted']);
+});
+for(const role of ['a','b'])for(const specific of ['login-failed','login-interrupted'])test(`${role} ${specific} progress outranks generic helper failure`,async t=>{
+ const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');
+ const {beginConnectProgress,readConnectProgress}=await import('../../backend/scripts/demo/claude-connect.mjs');
+ const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'cr-login-progress-')));t.after(()=>fs.rm(root,{recursive:true,force:true}));await fs.mkdir(path.join(root,'demo'),{mode:0o700});
+ const spec={root,role,installationId:'a'.repeat(32),store:'b'.repeat(32),generation:'c'.repeat(32)},id='d'.repeat(32),state=await beginConnectProgress(spec,id);
+ await state('signing-in');await state(specific);await state('failed');assert.equal(await readConnectProgress(spec,id),specific);
+});

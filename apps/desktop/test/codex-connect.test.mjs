@@ -5,7 +5,7 @@ import {codexCodingLaunchSpec,parseCodexAuthStatus,codexLoginSpec,validateCodexP
 const base=clientLaunchSpec({command:'codex',agent:'a',root:'/demo',dataset:'demo001',mcpPort:8790},{executable:'/native/codex'});
 test('Codex coding enables real tools and project instructions with ordinary approvals and isolated MCP/profile',()=>{
  const next=codingLaunchSpec(base,'/project');
- assert.deepEqual(next.args,codexCodingLaunchSpec(base,'/project').args);assert.ok(!next.args.includes('--tools'));assert.ok(!next.args.includes('--permission-mode'));
+ assert.deepEqual(next.args,codexCodingLaunchSpec(base,'/project').args);assert.ok(!next.args.includes('--tools'));assert.ok(!next.args.includes('--permission-mode'));assert.ok(!next.args.includes('--allowedTools'));
  assert.equal(next.cwd,'/project');assert.equal(next.env.CODEX_HOME,base.env.CODEX_HOME);assert.equal(next.args[next.args.indexOf('--sandbox')+1],'workspace-write');assert.equal(next.args[next.args.indexOf('--ask-for-approval')+1],'on-request');
  for(const feature of ['shell_tool','unified_exec','view_image'])assert.ok(next.args.includes(`features.${feature}=true`));
  assert.ok(next.args.includes('project_doc_max_bytes=32768'));assert.ok(next.args.includes('mcp_servers.context_router_demo.tools.mutatePreferences.approval_mode="prompt"'));assert.ok(next.args.includes('--strict-config'));assert.ok(next.args.includes('--no-daemon'));

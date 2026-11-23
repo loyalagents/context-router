@@ -160,3 +160,53 @@ including the new exact-target/focus/draft regression. Contract census, test
 discovery, Markdown links and whitespace passed. Freeze this source for the
 separate package; its receipt records actual-artifact checks and remaining
 human/CI scope. Targeted checks passed; final validation pending.
+
+## Main integration after PR 213 merged
+
+The owner requested latest `main` (`d0464330`), including `d419790d` demo polish.
+Root remains sole writer. Independent sensitive plan review approved; requested
+Extra High, inherited effective settings unverified. Keep Claude's two exact
+context-read allowances inside its own argument branch. Codex arguments and
+context-mutation approvals stay unchanged. Shared sign-in interruption reporting
+retains uncertain guards and outranks generic failure. Lost launch replies clear
+only when the selected assistant reports a new request, without launch replay.
+Preserve the exact-ID access shortcut and draft protections. Incoming quiet
+context/catalog refresh, stable selection and manual field snapshots improve the
+Codex write journey without a new architecture or backend replacement.
+
+Regressions were extended first to both assistants/roles and failed against the
+prior helper. After integration, 50 focused helper/runtime/guard tests and both
+native concurrent-chat cases passed. Run the full web suite for the changed shared
+form/catalog consumers and retained access shortcut, plus contract/link checks.
+No native source, HTTP admission, Codex config/auth parsing or persisted schema
+changed; carry forward their unchanged broader evidence. Independent integrated
+diff review precedes local merge commit. No full local migration gate is selected.
+
+The owner selected a right-side access drawer and continued the demo update.
+The reviewed plan uses a demo-only native modal dialog with independent scrolling,
+Close/Escape/backdrop dismissal, unsaved-draft confirmation, and blocked dismissal
+while saving. Exact client identity and personal-mode inline behavior stay intact.
+The actual invoking button is captured from its event and regains focus on close.
+Logout/session replacement still forces private editor cleanup without prompting.
+Root remains sole writer; inherited reviewer settings remain unverified.
+
+Finalization: review the integrated diff, run the full web suite and affected
+contract/document checks, then commit one local merge candidate. Build a separate
+source-bound demo artifact and exercise both access shortcuts and both CLI launch
+flows on that artifact before updating the existing launcher. Preserve the user's
+running app, synthetic state, sign-in and previous bundles. Exact-candidate CI and
+human acceptance of this new build remain pending. No full local migration gate
+is selected; packaging is a bounded trial, not release qualification.
+
+Integrated source checkpoint: independent complete-diff review approved without
+blocking findings. Web production build, all 152 existing local UI tests, 2 focused
+drawer tests and 75 contract/link checker tests passed. The reviewer suggested
+explicit forced-expiry coverage; the existing expiry test now covers both inline
+and demo drawer presentation with a guaranteed dirty draft. Both focused cases
+passed after correcting the new test's presentation fixture. Only tests changed
+after the full web pass; unchanged runtime coverage carries forward. Contract
+census, test discovery, Markdown links and whitespace passed. The 50 renewed
+helper/runtime checks and 2 affected native overlapping-chat cases remain valid;
+unchanged broader native evidence is carried forward explicitly. Freeze this
+candidate for the separate packaged trial. Targeted checks passed; final
+validation pending.
