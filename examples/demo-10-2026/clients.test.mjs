@@ -7,6 +7,19 @@ import { spawnSync } from 'node:child_process';
 import { clientLaunchSpec, preflightClient, loginSpec } from './clients.mjs';
 import { parseOptions } from './demo.mjs';
 
+test('demo instructions include career reads and distinguish fictional details from dated context', () => {
+  for (const command of ['claude', 'codex']) {
+    const spec = clientLaunchSpec({ command, root: '/private/tmp/example', dataset: 'custom', mcpPort: 1 }, { executable: '/bin/false' });
+    const instruction = spec.args.at(-1);
+    for (const category of ['career', 'family', 'home']) assert.ok(instruction.includes(`${category}.custom.`));
+    assert.match(instruction, /fictional.*details/i);
+    assert.match(instruction, /dated.*historical/i);
+    assert.match(instruction, /unfiltered read may truncate/);
+    assert.match(instruction, /listPreferenceSlugs/);
+    assert.match(instruction, /search.*metadata.*not.*memory values/i);
+  }
+});
+
 test('CLI discovery includes the running Node installation used by npm global installs', async t => {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'cr-demo-nvm-')));
   t.after(() => fs.rm(root, { recursive: true, force: true }));

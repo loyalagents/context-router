@@ -36,6 +36,17 @@ test('shared managed seed uses real MCP, revokes importer, preserves edits on re
     reader = await connect(runtime.port, path.join(one.directory, 'exports/agent-b.token'));
     const supplemented = seed.plan.entries.filter(e => e.preference.evidence.sourceRecord.provenance.source === 'synthetic-i9-demo');
     assert.equal(supplemented.length, 6);
+    const readme = await fs.readFile(new URL('../../../examples/demo-10-2026/README.md', import.meta.url), 'utf8');
+    const task = readme.slice(readme.indexOf('> Use fresh Context Router'), readme.indexOf('\n\nFresh source demos'));
+    const prefixes = [...new Set(task.match(/\b(?:career|family|home)\.demo001\./g) ?? [])];
+    assert.deepEqual(prefixes, ['career.demo001.', 'family.demo001.', 'home.demo001.']);
+    const taskFacts = new Map();
+    for (const query of prefixes) {
+      for (const row of (await call(reader, 'searchPreferences', { query })).active.preferences) taskFacts.set(row.slug, row.value);
+    }
+    const formFacts = supplemented.filter(e => !e.definition.slug.startsWith('work.'));
+    assert.equal(formFacts.length, 5);
+    for (const entry of formFacts) assert.equal(taskFacts.get(entry.definition.slug), JSON.parse(entry.preference.value));
     for (const entry of supplemented) {
       const found = await call(reader, 'searchPreferences', { query: entry.definition.slug });
       assert.equal(found.active.count, 1);

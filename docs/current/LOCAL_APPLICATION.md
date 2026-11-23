@@ -81,7 +81,7 @@ active memories from 201 records: a historical 2024–2025 snapshot plus the
 [fictional I-9 supplement](../../examples/demo-10-2026/README.md#richards-fictional-i-9-demo-details).
 Older installed bundles retain their original seed until updated.
 Reopen preserves presenter edits and grants;
-reset restores original definitions/import history and fresh A/B/C credentials,
+reset imports the bundled sample with new import history and fresh A/B/C credentials,
 retaining old stores and stable isolated provider profiles. Demo reuses verified
 installed model weights with a fresh owned inference session. Missing or invalid
 weights keep the no-model path; demo downloads remain disabled. Assets are retained.

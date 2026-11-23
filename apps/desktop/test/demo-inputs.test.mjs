@@ -6,6 +6,19 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const corpus = fileURLToPath(new URL('../../../examples/demo-10-2026/001_user_001', import.meta.url));
+function assertNoSsn(plan) {
+  const records = [...plan.entries.map(e => e.preference.evidence.sourceRecord), ...plan.skipped.map(e => e.sourceRecord)];
+  const text = records.flatMap(record => [record.memory, record.provenance.note ?? '']).join('\n');
+  assert.doesNotMatch(text, /\bSSN\b|social security|(?<!\d)\d{3}[- ]?\d{2}[- ]?\d{4}(?!\d)/i);
+}
+test('SSN guard covers active and inactive memories and provenance notes, with or without separators', () => {
+  for (const status of ['active', 'inactive']) for (const field of ['memory', 'note']) for (const ssn of ['123-45-6789', '123456789', '123 45 6789']) {
+    const record = { memory: 'Synthetic context', provenance: { note: 'Fictional detail' } };
+    if (field === 'memory') record.memory = ssn; else record.provenance.note = ssn;
+    const plan = status === 'active' ? { entries: [{ preference: { evidence: { sourceRecord: record } } }], skipped: [] } : { entries: [], skipped: [{ sourceRecord: record }] };
+    assert.throws(() => assertNoSsn(plan), assert.AssertionError, `${status} ${field}: ${ssn}`);
+  }
+});
 test('packaged seed uses the pinned canonical corpus and rejects tampering', async () => {
   const { loadBundledSeed } = await import('../../backend/scripts/demo/seed.mjs');
   const { loadDemoPlan } = await import('../../../examples/demo-10-2026/records.mjs');
@@ -46,7 +59,8 @@ test('I-9 supplement contains the approved fictional facts, stable updates and n
     assert.equal(record.version, ['bf484cfa', '1519761c', '9923db9c'].some(id => record.id.includes(id)) ? 2 : 1);
   }
   const memories = plan.entries.map(e => JSON.parse(e.preference.value)).join('\n');
-  assert.doesNotMatch(memories, /Upper St\. Clair|\bSSN\b|social security|\b\d{3}-\d{2}-\d{4}\b/i);
+  assert.doesNotMatch(memories, /Upper St\. Clair/);
+  assertNoSsn(plan);
 });
 test('backend deployment explicitly includes shared importer, clients and bridge', async () => {
   const pkg = JSON.parse(await fs.readFile(new URL('../../backend/package.json', import.meta.url)));

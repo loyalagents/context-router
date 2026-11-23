@@ -32,10 +32,20 @@ keep their UUIDs and increment their versions; unrelated records stay unchanged.
 
 No SSN is included. The existing Claude reader can retrieve all six memories
 under its current category grants; health and finance remain restricted.
-Use the [existing I-9 PDF](../eval/forms/i-9/form.pdf) and a task such as:
+For the PDF task, copy the [existing I-9 PDF](../eval/forms/i-9/form.pdf) into a
+demo project folder as `i-9.pdf`. In the installed demo, open **Connections →
+Claude Code → Open Claude Code** and choose that folder. If a project is already
+remembered, use **Change project** to select the folder containing `i-9.pdf`.
+This flow enables
+normal coding tools and file permissions. The source CLI launchers documented
+below restrict native tools and cannot write a filled PDF.
 
-> Use Context Router to read Richard's saved context and prefill employee
-> Section 1 of this I-9 as a fictional demo draft for review. Leave the SSN,
+For the default `demo001` dataset, use a task such as:
+
+> Use fresh Context Router searchPreferences reads for career.demo001.,
+> family.demo001., and home.demo001. to retrieve Richard's saved identity and
+> contact details. Use those fictional demo facts to prefill employee Section 1
+> of i-9.pdf as a draft for review. Leave the SSN,
 > employee signature, signature date, and all employer Section 2 fields blank.
 > Do not invent missing information, sign, or submit the form. Save a separate
 > filled PDF and summarize any fields left for human completion.
@@ -43,7 +53,10 @@ Use the [existing I-9 PDF](../eval/forms/i-9/form.pdf) and a task such as:
 Fresh source demos and newly built app bundles include this supplement. Existing
 stores are not rewritten on reopen. An existing demo can receive these six edits
 through the normal Context editor or authorized MCP mutations without resetting
-its history, clients or grants. An older installed app still resets to its older
+its history, clients or grants. Context-editor edits and MCP writes without
+explicit evidence do not attach the seed's `synthetic-i9-demo` provenance;
+preserving that marker requires supplying the authored evidence in the MCP write.
+An older installed app still resets to its older
 bundled seed until that app is updated. The full seed-manifest digest identifies
 the revised corpus; its `historical-2024-2025-v1` format/version family is unchanged.
 
@@ -137,7 +150,7 @@ is needed only if their dedicated session has expired. Each command resolves
 the generation, endpoint and credential once. A running assistant remains bound
 to that generation even if another generation is later selected.
 
-For a fresh copy of the original dataset, stop your demo clients and server,
+For a fresh copy of the current dataset at the selected input path, stop your demo clients and server,
 then run:
 
 ```sh
