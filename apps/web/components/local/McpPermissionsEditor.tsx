@@ -142,11 +142,13 @@ export default function McpPermissionsEditor({
   onClose,
   onChanged,
   drawer = false,
+  assistantName,
 }: {
   client: Client;
   onClose: () => void;
   onChanged: () => void;
   drawer?: boolean;
+  assistantName?: string;
 }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [policy, setPolicy] = useState<McpPolicy | null>(null);
@@ -178,6 +180,8 @@ export default function McpPermissionsEditor({
     read: 0,
     search: 0,
     submitting: false,
+    reading: false,
+    refreshAgain: false,
     controllers: new Set<AbortController>(),
   });
   const title = useRef<HTMLHeadingElement>(null);
@@ -193,6 +197,8 @@ export default function McpPermissionsEditor({
     policy: null,
     edits: [],
   });
+  const previewRef = useRef<HTMLDivElement>(null);
+  useEffect(()=>{if(drawer&&preview){previewRef.current?.focus({preventScroll:true});previewRef.current?.scrollIntoView({block:"nearest"});}},[drawer,preview]);
   const outcomeRef = useRef<HTMLDivElement>(null);
   const interacted = useRef(false);
   useDemoDraft(!!intent.current?.intents.length, saving);
@@ -226,7 +232,9 @@ export default function McpPermissionsEditor({
   }
   async function readCurrent(initial = false) {
     const s = life.current;
-    if (!s.mounted) return;
+    if (!s.mounted || s.submitting) return;
+    if (s.reading) { s.refreshAgain=true; return; }
+    s.reading=true;
     const read = ++s.read,
       c = controller();
     setBusy(true);
@@ -239,7 +247,7 @@ export default function McpPermissionsEditor({
         { id: client.id },
         c.signal,
       );
-      if (!s.mounted || c.signal.aborted || read !== s.read) return;
+      if (!s.mounted || c.signal.aborted || read !== s.read || s.refreshAgain) return;
       if (
         data.client?.id !== client.id ||
         typeof data.adminRevision !== "string" ||
@@ -262,7 +270,10 @@ export default function McpPermissionsEditor({
         );
     } finally {
       s.controllers.delete(c);
-      if (s.mounted && read === s.read) setBusy(false);
+      if (s.mounted && read === s.read) {
+        s.reading=false;setBusy(false);
+        if(s.refreshAgain&&!s.submitting){s.refreshAgain=false;void readCurrent();}
+      }
     }
   }
   useEffect(() => {
@@ -280,6 +291,7 @@ export default function McpPermissionsEditor({
       s.version++;
       setPreview(null);
       setStale(true);
+      if(drawer&&!s.submitting){if(s.reading)s.refreshAgain=true;else void readCurrent();}
     };
     const activity = () => {
       if (s.submitting) interacted.current = true;
@@ -298,6 +310,7 @@ export default function McpPermissionsEditor({
       }
       s.version++;
       s.read++;
+      s.reading=false;s.refreshAgain=false;
       s.search++;
       s.controllers.forEach((c) => c.abort());
       s.controllers.clear();
@@ -521,13 +534,10 @@ export default function McpPermissionsEditor({
     if (edit.effect !== "REMOVE")
       rules.push({ ...edit, id: "draft:" + edit.target + edit.action });
   }
-  const content = (
-    <section
-      aria-label="Edit permissions"
-      className={drawer ? "space-y-5 bg-white p-6" : "space-y-5 rounded-xl border-2 border-blue-200 bg-white p-5 shadow-sm"}
-    >
+  const ScopeControls = drawer ? "details" : "div";
+  const body = <>
       <h2 ref={title} tabIndex={-1} className="text-xl font-semibold">
-        Edit permissions —{" "}
+        {drawer&&assistantName?`${assistantName} access`:"Edit permissions"} —{" "}
         <ClientName clientKey={`local:${client.id}`} label={client.label} />
       </h2>
       <p className="text-xs break-all">
@@ -671,7 +681,7 @@ export default function McpPermissionsEditor({
                 })
               }
             />{" "}
-            Allow definition management (DEFINE)
+            {drawer?"Manage context fields":"Allow definition management (DEFINE)"}
           </label>
           <p className="text-sm">
             Create, update and archive field definitions within the allowed
@@ -692,6 +702,9 @@ export default function McpPermissionsEditor({
             definitions. Global and personal fields sharing a slug use the same
             rules.
           </p>
+          {drawer&&maximumValueLevel(policy)==="Blocked"&&policy.capabilities.includes("preferences:define")&&<p className="demo-connection-denied">Reading and changing values is blocked. Field management remains enabled separately, within its scope and rules.</p>}
+          <ScopeControls className={drawer?"demo-access-advanced space-y-4":"space-y-4"}>
+          {drawer&&<summary>Advanced: categories, fields and rules</summary>}
           <h3 className="font-semibold">Allowed scope</h3>
           <div className="flex flex-wrap gap-2">
             {policy.targets.map((target) => (
@@ -938,6 +951,7 @@ export default function McpPermissionsEditor({
               </p>
             </div>
           </details>
+          </ScopeControls>
         </fieldset>
       )}
       {preview && (
@@ -945,6 +959,7 @@ export default function McpPermissionsEditor({
           className="space-y-2 rounded border bg-blue-50 p-4"
           role="region"
           aria-label="Resulting access preview"
+          ref={previewRef} tabIndex={-1}
         >
           <h3 className="font-semibold">Resulting access</h3>
           <p>Before</p>
@@ -994,7 +1009,9 @@ export default function McpPermissionsEditor({
           </details>
         </div>
       )}
-      <div className="flex flex-wrap gap-3">
+  </>;
+  const actions = (
+      <div className={drawer?"demo-access-actions":"flex flex-wrap gap-3"}>
         <button
           className={button}
           disabled={
@@ -1023,8 +1040,11 @@ export default function McpPermissionsEditor({
           Cancel
         </button>
       </div>
-    </section>
   );
+  const content = <section aria-label="Edit permissions" className={drawer?"demo-access-content":"space-y-5 rounded-xl border-2 border-blue-200 bg-white p-5 shadow-sm"}>
+    {drawer?<div className="demo-access-body space-y-5">{body}</div>:body}
+    {actions}
+  </section>;
   if (!drawer) return content;
   const outside = (event: React.PointerEvent<HTMLDialogElement> | React.MouseEvent<HTMLDialogElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();

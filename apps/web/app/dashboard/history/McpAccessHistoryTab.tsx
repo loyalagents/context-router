@@ -192,6 +192,7 @@ export default function McpAccessHistoryTab({
   const [isLoadingInitial, setIsLoadingInitial] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [browsingOlder,setBrowsingOlder]=useState(false);
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const lastRequestRef = useRef<{ reset: boolean; cursor: string | null }>({
     reset: true,
@@ -199,6 +200,7 @@ export default function McpAccessHistoryTab({
   });
   const requestVersionRef = useRef(0);
   const pendingRef = useRef<AbortController | null>(null);
+  const quietRequestRef = useRef<AbortController | null>(null);
   useEffect(() => () => { requestVersionRef.current++; pendingRef.current?.abort(); }, []);
 
   useEffect(() => {
@@ -266,19 +268,18 @@ export default function McpAccessHistoryTab({
     return chips;
   }, [sanitizedAppliedFilters]);
 
-  const loadHistory = useCallback(async (reset: boolean, cursor: string | null = null) => {
+  const loadHistory = useCallback(async (reset: boolean, cursor: string | null = null, quiet = false) => {
+    if(quiet&&pendingRef.current)return;
+    if(!quiet)setBrowsingOlder(!reset);
     pendingRef.current?.abort();
     const controller = new AbortController(); pendingRef.current = controller;
+    if(quiet)quietRequestRef.current=controller;
     const signal = invalidationSignal ? AbortSignal.any([invalidationSignal, controller.signal]) : controller.signal;
     const requestVersion = requestVersionRef.current + 1;
     requestVersionRef.current = requestVersion;
     lastRequestRef.current = { reset, cursor };
 
-    if (reset) {
-      setIsLoadingInitial(true);
-    } else {
-      setIsLoadingMore(true);
-    }
+    if (!quiet) { if (reset) setIsLoadingInitial(true); else setIsLoadingMore(true); }
 
     setError(null);
 
@@ -324,7 +325,7 @@ export default function McpAccessHistoryTab({
       setHasNextPage(page.hasNextPage);
       setNextCursor(page.nextCursor ?? null);
 
-      if (reset) {
+      if (reset && !quiet) {
         setExpandedIds({});
       }
     } catch (loadError) {
@@ -336,6 +337,8 @@ export default function McpAccessHistoryTab({
         );
       }
     } finally {
+      if(pendingRef.current===controller)pendingRef.current=null;
+      if(quietRequestRef.current===controller)quietRequestRef.current=null;
       if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setIsLoadingInitial(false);
         setIsLoadingMore(false);
@@ -350,6 +353,13 @@ export default function McpAccessHistoryTab({
 
     void loadHistory(true);
   }, [loadHistory, shouldLoad]);
+
+  useEffect(()=>{
+    if(!demo||!shouldLoad||browsingOlder||Object.values(expandedIds).some(Boolean)||JSON.stringify(draftFilters)!==JSON.stringify(appliedFilters))return;
+    let stopped=false,timer:ReturnType<typeof setTimeout>;
+    const poll=async()=>{if(document.visibilityState==='visible')await loadHistory(true,null,true);if(!stopped)timer=setTimeout(poll,3000);};
+    timer=setTimeout(poll,3000);return()=>{stopped=true;clearTimeout(timer);quietRequestRef.current?.abort();};
+  },[demo,shouldLoad,browsingOlder,expandedIds,draftFilters,appliedFilters,loadHistory]);
 
   const handleApplyFilters = () => {
     setAppliedFilters({ ...draftFilters });

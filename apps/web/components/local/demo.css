@@ -84,6 +84,18 @@
 @media(max-width:600px){.demo-history-row{gap:10px}.demo-audit-filters{display:block}.demo-audit-filters>div:first-child{margin-bottom:12px}.demo-setup-steps .demo-button{margin-top:10px}}
 .demo-context-row{scroll-margin-top:88px;scroll-margin-bottom:8px}
 
-.demo-app .demo-access-drawer{position:fixed;inset:0 0 0 auto;margin:0!important;width:min(720px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;padding:0;border:0;background:#fff;color:#222934;box-shadow:-12px 0 48px #17243826;scroll-padding-top:88px;overflow-y:auto;overscroll-behavior:contain}
+.demo-app .demo-access-drawer{position:fixed;inset:0 0 0 auto;margin:0!important;width:min(720px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;padding:0;border:0;background:#fff;color:#222934;box-shadow:-12px 0 48px #17243826;overflow:hidden;overscroll-behavior:contain}
 .demo-access-drawer::backdrop{background:#18233866}
-.demo-access-drawer-toolbar{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px;background:#fff;border-bottom:1px solid #e3e7ed;font-weight:600}
+.demo-access-drawer-toolbar{flex-shrink:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px;background:#fff;border-bottom:1px solid #e3e7ed;font-weight:600}
+
+.demo-app .demo-access-drawer[open]{display:flex;flex-direction:column}
+.demo-access-content{display:flex;flex-direction:column;flex:1;min-height:0}
+.demo-access-body{flex:1;min-height:0;overflow:auto;padding:24px;scroll-padding:16px;overscroll-behavior:contain}
+.demo-access-actions{display:flex;flex-wrap:wrap;gap:12px;flex-shrink:0;padding:16px 24px;border-top:1px solid #e3e7ed;background:#fff}
+.demo-access-advanced>summary{font-weight:600;cursor:pointer;padding:8px 0}
+.demo-assistant-tabs{display:flex;gap:24px;border-bottom:1px solid #dce2eb;margin-bottom:24px}
+.demo-assistant-tabs [role=tab]{padding:12px 2px;border-bottom:3px solid transparent;color:#5b6677;font-weight:600}
+.demo-assistant-tabs [role=tab][aria-selected=true]{border-bottom-color:#315cbb;color:#254caa}
+.demo-app .demo-connection-error{color:#a52d27;background:#fff1ef;border-left:3px solid #c34138;padding:12px;border-radius:4px}
+.demo-app .demo-connection-denied{color:#805200;background:#fff8e6;padding:12px;border-radius:4px}
+@media(max-width:600px){.demo-access-actions{gap:8px;padding:12px}.demo-access-body{padding:16px}.demo-access-actions button{padding:8px 10px}}

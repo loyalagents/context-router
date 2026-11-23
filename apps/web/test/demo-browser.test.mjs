@@ -300,11 +300,11 @@ test('Codex launch is explicit, remembers in-flight state on reload, and reports
  await f.page.route('**/api/local/demo/codex/status',route=>route.fulfill({json:state}));
  await f.page.route('**/api/local/demo/codex/open',route=>{opens++;requests.push(route.request().postDataJSON());state={...state,state:'checking',busy:true,request:'d'.repeat(32),startedAt:new Date().toISOString()};return route.fulfill({json:state});});
  await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
- await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();
+ await f.page.getByRole('tab',{name:'Codex',exact:true}).click();
  const button=f.page.getByRole('button',{name:'Open Codex',exact:true});await button.waitFor();await f.page.getByText('Choose a project once.',{exact:false}).waitFor();assert.equal(opens,0);
  await button.click();assert.equal(opens,1);assert.deepEqual(requests,[{chooseProject:false}]);assert.equal(await button.isDisabled(),true);
  state={...state,state:'terminal-opened'};await f.page.getByText('Terminal opened.',{exact:false}).waitFor();assert.equal(await f.page.getByText(/^Context read at /).count(),0);
- await f.page.reload();await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();await f.page.getByText('Terminal opened.',{exact:false}).waitFor();assert.equal(opens,1);
+ await f.page.reload();await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await f.page.getByText('Terminal opened.',{exact:false}).waitFor();assert.equal(opens,1);
  await read('b');await f.page.waitForTimeout(2200);assert.equal(await f.page.getByText(/^Context read at /).count(),0);
  await read('a');const history=(await f.graphql('query($input:McpAccessHistoryInput!){mcpAccessHistory(input:$input){items{clientKey occurredAt outcome operationName responseMetadata}}}',{input:{first:20,clientKey:`local:${receipt.clients.agentA}`}})).mcpAccessHistory.items;assert.ok(history.some(item=>item.operationName==='searchPreferences'&&item.responseMetadata?.activeCount>0),JSON.stringify(history));await f.page.getByText(/^Context read at /).waitFor();
  const activity=f.page.getByRole('region',{name:'Connect Codex'}).getByRole('link',{name:'View activity'});assert.ok((await activity.getAttribute('href')).endsWith('#mcp-client='+receipt.clients.agentA));
@@ -335,7 +335,7 @@ for(const client of ['claude','codex'])test(`${client} demo launch errors remain
  await f.page.route(`**/api/local/demo/${client}/status`,route=>{polls++;return route.fulfill({json:{available:true,state:'idle',busy:false}});});
  await f.page.route(`**/api/local/demo/${client}/open`,route=>{opens++;return opens===1?route.fulfill({status:503,json:{}}):route.fulfill({json:{available:true,state:'checking',busy:true}});});
  await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
- if(client==='codex')await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();
+ if(client==='codex')await f.page.getByRole('tab',{name:'Codex',exact:true}).click();
  const button=f.page.getByRole('button',{name:client==='codex'?'Open Codex':'Open Claude Code',exact:true});await button.click();const error=f.page.getByText('Launch could not be confirmed. Check Terminal before retrying.',{exact:true});await error.waitFor();
  const before=polls;await f.page.waitForTimeout(4500);assert.ok(polls>=before+2);assert.equal(await error.isVisible(),true);assert.equal(opens,1);assert.equal(await button.isDisabled(),false);
  await button.click();await f.page.getByText(client==='codex'?'Checking Codex on this Mac…':'Checking Claude Code on this Mac…',{exact:true}).waitFor();assert.equal(opens,2);
@@ -375,16 +375,16 @@ test('Review access opens the selected assistant exact permissions and preserves
  await f.page.route('**/api/local/demo/codex/status',route=>route.fulfill({json:{available:true,clientId:codexId,state:'idle',busy:false}}));
  await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
  const review=f.page.getByRole('button',{name:'Review access',exact:true}),panel=f.page.getByRole('region',{name:'Edit permissions',exact:true});
- const open=async(id,label)=>{await review.click();await panel.getByText('Instance '+id+'.',{exact:false}).waitFor();assert.match(await panel.getByRole('heading').innerText(),new RegExp(label));assert.equal(await panel.getByRole('heading').evaluate(el=>el===document.activeElement),true);assert.ok(await panel.getByRole('heading').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));};
+ const open=async(id,label)=>{await review.click();await panel.getByText('Instance '+id+'.',{exact:false}).waitFor();assert.match(await panel.getByRole('heading',{level:2}).innerText(),new RegExp(label));assert.equal(await panel.getByRole('heading',{level:2}).evaluate(el=>el===document.activeElement),true);assert.ok(await panel.getByRole('heading',{level:2}).evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));};
  await open(b,'A renamed assistant');
  const drawer=f.page.getByRole('dialog',{name:'Assistant access controls'}),close=f.page.getByRole('button',{name:'Close access controls'});
  assert.equal(await drawer.evaluate(el=>el.matches(':modal')),true);
  await drawer.evaluate(el=>new Promise(resolve=>{el.addEventListener('close',()=>setTimeout(resolve,0),{once:true});el.close();el.showModal();}));assert.equal(await drawer.evaluate(el=>el.matches(':modal')),true);
  assert.ok(await drawer.evaluate(el=>{const r=el.getBoundingClientRect();return Math.abs(r.right-innerWidth)<1&&r.top===0&&r.bottom===innerHeight;}));
  await f.page.keyboard.press('Tab');assert.equal(await drawer.evaluate(el=>el.contains(document.activeElement)),true);
- await f.page.getByRole('button',{name:'Claude Code',exact:true}).evaluate(el=>el.focus());assert.equal(await drawer.evaluate(el=>el.contains(document.activeElement)),true);
+ await f.page.getByRole('tab',{name:'Claude Code',exact:true}).evaluate(el=>el.focus());assert.equal(await drawer.evaluate(el=>el.contains(document.activeElement)),true);
  await f.page.keyboard.press('Escape');await drawer.waitFor({state:'hidden'});assert.equal(await review.evaluate(el=>el===document.activeElement),true);
- await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();await open(a,'Z renamed assistant');
+ await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await open(a,'Z renamed assistant');
  await panel.getByLabel('Maximum value access').selectOption('Blocked');
  for(let i=0;i<5;i++){f.page.once('dialog',dialog=>dialog.dismiss());await f.page.keyboard.press('Escape');assert.equal(await drawer.evaluate(el=>el.matches(':modal')),true);assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');}await panel.getByText('Instance '+a+'.',{exact:false}).waitFor();
  f.page.once('dialog',dialog=>dialog.dismiss());await drawer.evaluate(el=>el.close());await f.page.waitForFunction(()=>document.querySelector('dialog')?.matches(':modal'));
@@ -402,10 +402,10 @@ test('Review access opens the selected assistant exact permissions and preserves
  for(let i=0;i<5;i++){await f.page.keyboard.press('Escape');assert.equal(await drawer.evaluate(el=>el.matches(':modal')),true);}await drawer.evaluate(el=>el.close());await f.page.waitForFunction(()=>document.querySelector('dialog')?.matches(':modal'));await f.page.mouse.click(10,100);assert.equal(await drawer.isVisible(),true);
  release();await panel.getByText('Permissions saved',{exact:true}).waitFor();await close.click();await drawer.waitFor({state:'hidden'});
  await f.page.setViewportSize({width:390,height:844});await open(a,'Z renamed assistant');assert.ok(await drawer.evaluate(el=>el.getBoundingClientRect().width<=innerWidth));await close.click();await f.page.setViewportSize({width:1280,height:900});
- await f.page.getByRole('button',{name:'Claude Code',exact:true}).click();
+ await f.page.getByRole('tab',{name:'Claude Code',exact:true}).click();
  const card=f.page.locator('.demo-client-card').filter({has:f.page.getByRole('button',{name:'Edit permissions '+a,exact:true})});await card.locator('summary').click();await card.getByRole('button',{name:'Rename '+a,exact:true}).click();assert.equal(await review.isDisabled(),true);await f.page.getByRole('button',{name:'Cancel rename',exact:true}).click();
  const revoked=JSON.parse(f.cli('local-mcp.js','list').stdout).result.find(client=>client.revoked).id;
- for(const id of [undefined,'missing-client',revoked]){codexId=id;await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();await f.page.getByText('Choose a project once.',{exact:false}).waitFor();assert.equal(await review.isDisabled(),true);assert.equal(await panel.count(),0);await f.page.getByRole('button',{name:'Claude Code',exact:true}).click();}
+ for(const id of [undefined,'missing-client',revoked]){codexId=id;await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await f.page.getByText('Choose a project once.',{exact:false}).waitFor();assert.equal(await review.isDisabled(),true);assert.equal(await panel.count(),0);await f.page.getByRole('tab',{name:'Claude Code',exact:true}).click();}
 });
 
 test('passive context refresh keeps automatic selection and layout stable through reorder and removal', {timeout:60000},async t=>{
@@ -450,7 +450,7 @@ for(const client of ['claude','codex'])test(`${client} lost launch reply clears 
  const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);let opens=0,state={available:true,state:'exited',busy:false,request:'a'.repeat(32)};
  await f.page.route(`**/api/local/demo/${client}/status`,route=>route.fulfill({json:state}));
  await f.page.route(`**/api/local/demo/${client}/open`,route=>{opens++;return route.abort();});
- await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();if(client==='codex')await f.page.getByRole('button',{name:'Codex CLI',exact:true}).click();await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();
+ await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();if(client==='codex')await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();
  await f.page.getByRole('button',{name:client==='codex'?'Open Codex':'Open Claude Code',exact:true}).click();const error=f.page.getByText('Launch could not be confirmed.',{exact:false});await error.waitFor();
  await f.page.waitForTimeout(2300);assert.equal(await error.isVisible(),true);assert.equal(opens,1);
  state={...state,state:'starting',request:'b'.repeat(32)};await f.page.getByText('Your latest chat is opening', {exact:false}).waitFor();assert.equal(await error.count(),0);assert.equal(opens,1);
@@ -474,4 +474,94 @@ test('drawer save result is visible and closing during list refresh restores its
  await f.page.getByRole('button',{name:'Close access controls',exact:true}).click();await f.page.getByRole('dialog').waitFor({state:'hidden'});
  assert.equal(await review.isDisabled(),true);release();await f.page.waitForFunction(()=>document.activeElement?.textContent==='Review access');
  assert.equal(await f.page.evaluate(()=>document.body.style.overflow),'');
+});
+
+async function accessPolishFixture(t) {
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);
+ const {readFile}=await import('node:fs/promises'),receipt=JSON.parse(await readFile(f.root+'/demo/generation.json'));
+ for(const [name,id] of [['claude',receipt.clients.agentB],['codex',receipt.clients.agentA]])await f.page.route(`**/api/local/demo/${name}/status`,route=>route.fulfill({json:{available:true,clientId:id,state:'starting',busy:false,startedAt:'2026-01-01T00:00:00Z'}}));
+ await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ return {...f,a:receipt.clients.agentA,b:receipt.clients.agentB};
+}
+
+test('assistant selection survives Activity Back and reload, and legacy naming stays exact-client bound', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);
+ f.cli('local-mcp.js','rename','--id',f.a,'--label','Demo agent A — writer');f.cli('local-mcp.js','rename','--id',f.b,'--label','Demo agent A — writer');
+ await f.page.getByRole('button',{name:'Refresh connections',exact:true}).click();
+ await f.page.getByRole('tab',{name:'Codex',exact:true}).click();assert.equal(await f.page.evaluate(()=>sessionStorage.getItem('context-router.demo-assistant.v1')),'codex');
+ const card=id=>f.page.locator('.demo-client-card').filter({has:f.page.getByRole('button',{name:'Edit permissions '+id,exact:true})});
+ await card(f.a).getByText('Codex — writer',{exact:true}).waitFor();await card(f.b).getByText('Demo agent A — writer',{exact:true}).waitFor();
+ await f.page.getByRole('region',{name:'Connect Codex'}).getByRole('link',{name:'View activity',exact:true}).click();await f.page.getByRole('heading',{name:'Activity',exact:true}).waitFor();
+ await f.page.goBack();await f.page.getByRole('heading',{name:'Your context, in Codex',exact:true}).waitFor();await f.page.reload();await f.page.getByRole('heading',{name:'Your context, in Codex',exact:true}).waitFor();
+ assert.equal(await f.page.getByRole('tab',{name:'Codex',exact:true}).getAttribute('aria-selected'),'true');
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Context',exact:true}).click();await f.page.getByRole('heading',{name:'Your context',exact:true}).waitFor();await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();await f.page.getByRole('heading',{name:'Your context, in Codex',exact:true}).waitFor();
+ await f.page.getByRole('button',{name:'Review access',exact:true}).click();await f.page.getByRole('heading',{name:/Codex access —/}).waitFor();
+ await f.page.getByRole('region',{name:'Edit permissions',exact:true}).getByText('Instance '+f.a+'.',{exact:false}).waitFor();
+});
+
+test('drawer refresh coalesces changes during a read, preserves drafts and keeps actions visible', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await f.page.getByRole('button',{name:'Review access',exact:true}).click();
+ const panel=f.page.getByRole('region',{name:'Edit permissions',exact:true}),preview=panel.getByRole('button',{name:'Preview resulting access',exact:true});
+ await panel.getByLabel('Maximum value access').selectOption('Blocked');await panel.getByText('Reading and changing values is blocked.',{exact:false}).waitFor();
+ assert.equal(await panel.getByLabel('Manage context fields',{exact:true}).isChecked(),true);
+ let release,seen,reads=0;const hold=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve);t.after(()=>release?.());
+ await f.page.route('**/api/local/mcp/inspect',async route=>{reads++;const response=await route.fetch();if(reads===1){seen();await hold;}await route.fulfill({response});});
+ await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await waiting;
+ f.cli('local-mcp.js','permissions','--id',f.a,'--capabilities','preferences:write,preferences:define','--targets','work.*');
+ await f.page.evaluate(()=>{window.dispatchEvent(new Event('focus'));window.dispatchEvent(new Event('focus'));});release();
+ await panel.getByText('Advanced: categories, fields and rules',{exact:true}).click();await panel.getByRole('button',{name:'Remove maximum target work.*',exact:true}).waitFor();assert.equal(reads,2);
+ assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');
+ for(const [width,height] of [[1280,720],[390,600]]){await f.page.setViewportSize({width,height});await panel.getByLabel('Search categories or fields').scrollIntoViewIfNeeded();assert.ok(await preview.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));}
+ await preview.click();await panel.getByRole('region',{name:'Resulting access preview'}).waitFor();
+ const save=panel.getByRole('button',{name:'Save permissions',exact:true});assert.ok(await save.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));
+ await save.click();await panel.getByText('Permissions saved',{exact:true}).waitFor();await f.page.getByRole('button',{name:'Close access controls'}).click();
+ const card=f.page.locator('.demo-client-card').filter({has:f.page.getByRole('button',{name:'Edit permissions '+f.a,exact:true})});await card.getByText('Field management is enabled separately, within its scope and rules.',{exact:false}).waitFor();
+});
+
+test('failed list refresh cannot steal focus on a later explicit retry', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);const review=f.page.getByRole('button',{name:'Review access',exact:true});await review.click();
+ const panel=f.page.getByRole('region',{name:'Edit permissions',exact:true});await panel.getByLabel('Maximum value access').waitFor();
+ let fail=true,release,seen,retryRelease;const hold=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve),retryHold=new Promise(resolve=>retryRelease=resolve);t.after(()=>{release?.();retryRelease?.();});
+ await f.page.route('**/api/local/mcp/list',async route=>{if(!fail){await retryHold;return route.continue();}seen();await hold;await route.fulfill({status:503,json:{}});});
+ await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await waiting;await f.page.getByRole('button',{name:'Close access controls'}).click();release();
+ await f.page.getByText('Unable to load connections. Refresh to continue.',{exact:true}).waitFor();fail=false;
+ const refresh=f.page.getByRole('button',{name:'Refresh connections',exact:true});await refresh.click();const tab=f.page.getByRole('tab',{name:'Claude Code',exact:true});await tab.focus();retryRelease();await f.page.waitForFunction(()=>!Array.from(document.querySelectorAll('button')).find(el=>el.textContent==='Review access')?.disabled);
+ assert.equal(await review.evaluate(el=>el===document.activeElement),false);assert.equal(await tab.evaluate(el=>el===document.activeElement),true);
+});
+
+test('demo Activity updates live and pauses while filter drafts or details are open', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t),{connect,call}=await import('../../backend/scripts/demo/mcp-import.mjs');
+ const peer=await connect(Number(new URL(f.ready.mcpOrigin).port),f.root+'/demo/exports/agent-a.token');t.after(()=>peer.close());
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();await f.page.getByRole('heading',{name:'Activity',exact:true}).waitFor();
+ await call(peer,'searchPreferences',{query:'work.demo001.'});const row=f.page.getByRole('button').filter({hasText:'searched context'}).first();await row.waitFor();
+ await row.click();let polls=0;f.page.on('request',req=>{if(req.url().endsWith('/graphql')&&req.postDataJSON()?.query.includes('McpAccessHistoryForTab'))polls++;});
+ await f.page.waitForTimeout(3400);assert.equal(polls,0);assert.equal(await row.getAttribute('aria-expanded'),'true');await row.click();
+ const activity=f.page.getByRole('tabpanel',{name:'Assistant access'});await activity.getByText('Filter activity',{exact:true}).click();await activity.getByLabel('Operation',{exact:true}).fill('unfinished');await f.page.waitForTimeout(3400);assert.equal(polls,0);assert.equal(await activity.getByLabel('Operation',{exact:true}).inputValue(),'unfinished');
+});
+
+test('latest exact-assistant denial is visible without masking a later successful read', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);let denied=false,recovered=false;
+ const event=(id,outcome,seconds)=>({clientKey:`local:${id}`,operationName:'searchPreferences',outcome,occurredAt:`2026-11-22T18:00:${seconds}Z`,responseMetadata:{activeCount:outcome==='SUCCESS'?1:0}});
+ await f.page.route('**/graphql',route=>route.request().postDataJSON().query.includes('DemoClaudeRead')?route.fulfill({json:{data:{mcpAccessHistory:{items:[...(recovered?[{...event(f.a,'SUCCESS','30'),responseMetadata:{activeCount:0}}]:[]),...(denied?[event(f.a,'DENY','20')]:[]),event(f.b,'DENY','10'),event(f.a,'SUCCESS','00')]}}}}):route.continue());
+ await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await f.page.getByText(/^Context read at /).waitFor();assert.equal(await f.page.getByText('Your latest context read was denied.',{exact:false}).count(),0);
+ denied=true;await f.page.getByText('Your latest context read was denied.',{exact:false}).waitFor();recovered=true;await f.page.getByText(/^Context read at /).waitFor();assert.equal(await f.page.getByText('Your latest context read was denied.',{exact:false}).count(),0);
+ await f.page.route('**/api/local/demo/codex/status',route=>route.fulfill({json:{available:true,clientId:f.a,state:'failed',busy:false}}));await f.page.getByRole('alert').filter({hasText:'Setup did not finish.'}).waitFor();
+});
+
+test('Activity polling preserves paginated browsing even with short pages', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);let requests=0;
+ const event=(n,operationName)=>({id:`poll-test-${n}`,clientKey:`local:${f.a}`,occurredAt:'2026-11-22T18:00:00Z',surface:'TOOLS_CALL',operationName,outcome:'SUCCESS',correlationId:null,latencyMs:1,requestMetadata:{},responseMetadata:{activeCount:1},errorMetadata:null});
+ await f.page.route('**/graphql',route=>{const body=route.request().postDataJSON();if(!body.query.includes('McpAccessHistoryForTab'))return route.continue();requests++;return route.fulfill({json:{data:{mcpAccessHistory:body.variables.input.after?{items:[event(3,'listPreferenceSlugs')],hasNextPage:false,nextCursor:null}:{items:[event(1,'searchPreferences'),event(2,'searchPreferences')],hasNextPage:true,nextCursor:'next'}}}});});
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();await f.page.getByRole('button',{name:'Load more',exact:true}).click();await f.page.getByRole('button').filter({hasText:'listPreferenceSlugs'}).waitFor();
+ const before=requests;await f.page.waitForTimeout(3400);assert.equal(requests,before);assert.equal(await f.page.locator('.demo-history-row').count(),3);
+});
+
+test('an in-flight Activity poll cannot replace details opened while it was waiting', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);let holdPoll=false,release,seen,done;
+ const hold=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve),settled=new Promise(resolve=>done=resolve);t.after(()=>release?.());
+ const event=id=>({id,clientKey:`local:${f.a}`,occurredAt:'2026-11-22T18:00:00Z',surface:'TOOLS_CALL',operationName:id==='original'?'searchPreferences':'listPreferenceSlugs',outcome:'SUCCESS',correlationId:null,latencyMs:1,requestMetadata:{},responseMetadata:{activeCount:1},errorMetadata:null});
+ await f.page.route('**/graphql',async route=>{if(!route.request().postDataJSON().query.includes('McpAccessHistoryForTab'))return route.continue();const held=holdPoll;if(held){seen();await hold;}try{await route.fulfill({json:{data:{mcpAccessHistory:{items:[event(held?'replacement':'original')],hasNextPage:false,nextCursor:null}}}});}catch{}finally{if(held)done();}});
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();const row=f.page.getByRole('button').filter({hasText:'searched context'});await row.waitFor();holdPoll=true;await waiting;
+ await row.click();assert.equal(await row.getAttribute('aria-expanded'),'true');release();await settled;await f.page.waitForTimeout(300);
+ assert.equal(await row.getAttribute('aria-expanded'),'true');assert.equal(await f.page.getByRole('button').filter({hasText:'listPreferenceSlugs'}).count(),0);
 });

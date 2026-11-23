@@ -265,3 +265,47 @@ actual button and both assistant options in a disposable demo installation, then
 update the same launcher without touching running apps or stored sign-in. The
 artifact receipt records this narrower retest; CI and human acceptance remain
 pending. No full local migration gate or repeated unrelated suites are selected.
+
+## Follow-up demo usability review
+
+The owner requested fixes for the second Claude review of `42628373`. Accept
+assistant-selection persistence, explicit independent definition access, refreshed
+drawer permissions on return, bounded focus restoration, fixed drawer actions,
+clearer Codex naming and current walkthrough. Also improve the tab presentation,
+failure/denied-read feedback, quiet visible Activity refresh, and collapse detailed
+scope/rule controls under Advanced while retaining the main policy choices.
+
+Do not silently remove definition-management authority when value access is set
+to Blocked. Explain the remaining capability in both draft and saved summaries.
+New samples use Codex's name; only the old default demo label gets a display alias,
+without rewriting stored custom names or using display names for authorization.
+Exact client IDs continue to own status, access and activity. Per-tab assistant selection must
+survive Back/reload and sidebar return. Passive reads preserve edits/conflicts and never race a save;
+Activity refresh preserves filter drafts, expanded details and paginated browsing.
+
+Root remains sole writer. Request independent plan and final diff review (sensitive
+Extra High for read/save coordination, High for presentation; inherited effective
+settings unverified). Backend seed label test first. Checkpoints: bounded source
+changes and focused seed/browser checks; integrated affected-consumer validation
+and review; one frozen source-bound package with actual demo checks. Reuse the
+current launcher/state only after verification. No provider sessions, personal
+state changes, schema changes or broad local migration gate are selected.
+
+Plan review approved. The local HTTP boundary intentionally rejects page query
+parameters other than Next's RSC token; a real-browser probe confirmed query-based
+selection is unsuitable. Use guarded per-tab session storage with a neutral initial
+loading state instead, preserving route admission and existing URLs. Coalesce one
+trailing permissions read after in-flight invalidations, and gate legacy-label
+aliasing by verified demo-A client ID. Activity polling pauses after pagination.
+
+Follow-up source checkpoint: production build and both seed/MCP tests passed.
+All seven new review regressions passed (six together, then the held-poll case
+with its initial-load fixture corrected); retained drawer/personal/expiry checks
+also passed during iteration. Independent final diff review approved, including
+aborting an in-flight quiet poll when details/filters become active and clearing
+old denial feedback after a newer empty successful search. Contract census,
+Markdown links, test discovery and whitespace passed. Freeze this source and run
+the full UI suite for the shared consumers alongside isolated packaging. The
+artifact receipt will record final suite and actual-app checks. Earlier native
+process/guard coverage carries forward for unchanged inputs; no new live provider
+session is selected. Targeted checks passed; final validation pending.

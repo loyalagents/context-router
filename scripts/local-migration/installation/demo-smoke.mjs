@@ -95,24 +95,26 @@ try{
  await page.goto(ready.origin+'/dashboard/permissions');
  // Exercise the actual HTTP → application → guardian bridge without opening a provider.
  await page.getByRole('button',{name:'Open Claude Code',exact:true}).waitFor();
- for(const [assistant,id] of [['Claude Code',demoReceipt.clients.agentB],['Codex CLI',demoReceipt.clients.agentA]]){
-  await page.getByRole('button',{name:assistant,exact:true}).click();
+ for(const [assistant,id] of [['Claude Code',demoReceipt.clients.agentB],['Codex',demoReceipt.clients.agentA]]){
+  await page.getByRole('tab',{name:assistant,exact:true}).click();
   await page.getByRole('button',{name:'Review access',exact:true}).click();
   const editor=page.getByRole('region',{name:'Edit permissions',exact:true});await editor.getByText('Instance '+id+'.',{exact:false}).waitFor();
-  assert.equal(await editor.getByRole('heading').evaluate(el=>el===document.activeElement),true);
+  assert.equal(await editor.getByRole('heading',{level:2}).evaluate(el=>el===document.activeElement),true);
   assert.equal(await page.getByRole('dialog',{name:'Assistant access controls'}).evaluate(el=>{const r=el.getBoundingClientRect();return el.matches(':modal')&&r.top===0&&r.bottom===innerHeight;}),true);
-  if(assistant==='Codex CLI')await page.screenshot({path:path.join(root,'codex-access-drawer.png')});
+  await editor.getByLabel('Maximum value access').waitFor();
+  assert.ok(await editor.getByRole('button',{name:'Preview resulting access',exact:true}).evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));
+  if(assistant==='Codex')await page.screenshot({path:path.join(root,'codex-access-drawer.png')});
   await page.getByRole('button',{name:'Close access controls',exact:true}).click();
   assert.equal(await page.getByRole('button',{name:'Review access',exact:true}).evaluate(el=>el===document.activeElement),true);
  }
- await page.getByRole('button',{name:'Claude Code',exact:true}).click();
+ await page.getByRole('tab',{name:'Claude Code',exact:true}).click();
  phase('review-access-opens-exact-selected-assistant-editor');
  await page.screenshot({path:path.join(root,'claude-connections.png'),fullPage:true});
  const claudeBefore=current.events.length;
  await page.getByRole('button',{name:'Open Claude Code',exact:true}).click();
  const claudeRequest=await current.event('demo-claude-open',claudeBefore);
  assert.equal(claudeRequest.chooseProject,false);assert.match(claudeRequest.request,/^[a-f0-9]{32}$/);
- await page.getByRole('button',{name:'Codex CLI',exact:true}).click();
+ await page.getByRole('tab',{name:'Codex',exact:true}).click();
  const codexBefore=current.events.length;await page.getByRole('button',{name:'Open Codex',exact:true}).click();
  const codexRequest=await current.event('demo-codex-open',codexBefore);assert.notEqual(codexRequest.request,claudeRequest.request);
  current.child.stdin.write(JSON.stringify({version:1,generation:ready.generation,command:'demo-codex-status',request:claudeRequest.request,state:'failed'})+'\n');

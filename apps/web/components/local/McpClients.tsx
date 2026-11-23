@@ -59,7 +59,8 @@ function accessSummary(client: Client) {
     : level === 'Suggest changes' ? `Can suggest changes to ${counts.suggest} fields.`
     : level === 'Blocked' ? 'Current fields are blocked.'
     : total === 0 ? 'No current fields in scope.' : `Mixed access across ${total} fields.`;
-  return text + (total > 0 && counts.suggest === 0 && counts.write === 0 && counts.define === 0 ? ' Cannot change current fields.' : '');
+  const definitions=client.policy.capabilities.includes('preferences:define')?' Field management is enabled separately, within its scope and rules.':'';
+  return text + definitions + (total > 0 && counts.suggest === 0 && counts.write === 0 && counts.define === 0 ? ' Cannot change current fields.' : '');
 }
 
 export default function McpClients() {
@@ -70,6 +71,7 @@ export default function McpClients() {
   const inspectionPanel = useRef<HTMLDivElement>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [editing,setEditing]=useState<Client|null>(null);
+  const [assistantName,setAssistantName]=useState<string|undefined>();
   const permissionTrigger=useRef<{id:string;button:HTMLButtonElement}|null>(null);
   const editButtons=useRef(new Map<string,HTMLButtonElement>());
   const [items, setItems] = useState<Client[]>([]);
@@ -88,6 +90,12 @@ export default function McpClients() {
     const target=button.isConnected&&!button.disabled?button:editButtons.current.get(id);
     if(target&&!target.disabled){permissionTrigger.current=null;target.focus({preventScroll:demo});}
   },[editing,busy,demo]);
+  useEffect(()=>{
+    if(editing)return;
+    const cancel=()=>{permissionTrigger.current=null;};
+    window.addEventListener('pointerdown',cancel,true);window.addEventListener('keydown',cancel,true);
+    return()=>{window.removeEventListener('pointerdown',cancel,true);window.removeEventListener('keydown',cancel,true);};
+  },[editing]);
   const [outcome, setOutcome] = useState<ChangeOutcome | null>(null);
   const outcomePanel = useRef<HTMLDivElement | null>(null);
   const handledOutcome = useRef<ChangeOutcome | null>(null);
@@ -371,8 +379,8 @@ export default function McpClients() {
         </div>
       </form>;
   const editableClient = (id:string) => !busy&&!editing&&(!demo||!renameDraft) ? items.find(client=>client.id===id&&!client.revoked) : undefined;
-  const openPermissions = (id:string,trigger:HTMLButtonElement) => {const client=editableClient(id);if(client){permissionTrigger.current={id,button:trigger};setEditing(client);}};
-  const permissionsPanel = editing&&<McpPermissionsEditor key={editing.id} client={editing} drawer={demo} onChanged={()=>{channel.current?.postMessage('invalidate');invalidate();}} onClose={()=>setEditing(null)}/>;
+  const openPermissions = (id:string,trigger:HTMLButtonElement,name?:string) => {const client=editableClient(id);if(client){permissionTrigger.current={id,button:trigger};setAssistantName(name);setEditing(client);}};
+  const permissionsPanel = editing&&<McpPermissionsEditor key={editing.id} client={editing} drawer={demo} assistantName={assistantName} onChanged={()=>{channel.current?.postMessage('invalidate');invalidate();}} onClose={()=>setEditing(null)}/>;
   const authorityPanel = snapshot && (
         <section
           className="space-y-4 border-t pt-4"

@@ -182,8 +182,8 @@ processes such as dev servers; Context Router Quit does not stop them. This flow
 is a synthetic demo preview; live sign-in and coding acceptance remain a human
 trial, not broader personal-mode onboarding qualification.
 
-The Codex demo follow-up adds a **Codex CLI** selector alongside **Claude Code**
-in Connections. **Open Codex** remembers a separate project choice, checks the
+Connections has **Codex** and **Claude Code** tabs. The browser tab remembers its
+selected assistant across navigation and reload. **Open Codex** remembers a separate project choice, checks the
 isolated demo ChatGPT sign-in, signs in only when needed and opens normal coding
 in Terminal. It requires the qualified native Codex 0.160.0 executable. Coding
 uses workspace-write sandboxing and on-request approvals; context mutation also
@@ -197,6 +197,14 @@ The native picker/inspection remains one operation at a
 time; switching assistants never transfers a launch result or login profile.
 The same picker validation, retained short per-chat temporary directory, interruption
 feedback and persistent launch-error behavior apply to both assistants.
+
+Review access opens the exact assistant's drawer with fixed Preview, Save and
+Cancel actions. Returning to the window refreshes saved permissions while preserving
+the draft; detailed scope and rules are under Advanced. **Blocked** is the value
+access maximum, not revocation of the separate field-management maximum. Its
+remaining capability is shown explicitly and still obeys scope and database rules.
+Visible Assistant access activity refreshes automatically on the first page,
+pausing while filters are edited, details are expanded or older pages are loaded.
 
 The latest chat's confirmed exit and interruption have separate dashboard
 messages. Uncertain invocation guard evidence remains retained; interruption

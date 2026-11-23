@@ -538,7 +538,7 @@ for (const demo of [false, true]) test(
     });
     const panel = await open(f), maximum = panel.getByLabel("Maximum value access");
     await maximum.selectOption(await maximum.inputValue() === "Blocked" ? "Read" : "Blocked");
-    if (demo) assert.equal(await f.page.locator("dialog:modal").count(), 1);
+    if (demo) {assert.equal(await f.page.locator("dialog:modal").count(), 1);await panel.getByText("Advanced: categories, fields and rules",{exact:true}).click();}
     await panel
       .getByLabel("Search categories or fields")
       .fill("secret-editor-draft");
@@ -656,6 +656,7 @@ test(
       await replacement.getByLabel("Maximum value access").inputValue(),
       "Read",
     );
+    await replacement.getByText("Advanced: categories, fields and rules",{exact:true}).click();
     assert.equal(
       await replacement.getByLabel("Search categories or fields").inputValue(),
       "",

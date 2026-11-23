@@ -54,7 +54,7 @@ export async function seedDemo({ configuration, directory, seed, storeId, instal
     check(); stage = 'revoke'; await checkpoint('before-revoke'); credentials.revoke(importer.id); revoked = true;
     check(); stage = 'clients'; const clients = {};
     for (const [role, expected] of Object.entries(baseline(plan))) {
-      check(); const c = credentials.provision(role === 'agentA' ? 'Demo agent A — writer' : role === 'agentB' ? 'Claude Code — reader' : 'Demo agent C — Desktop reader', path.join(directory, 'exports', `agent-${role.at(-1).toLowerCase()}.token`));
+      check(); const c = credentials.provision(role === 'agentA' ? 'Codex — writer' : role === 'agentB' ? 'Claude Code — reader' : 'Demo agent C — Desktop reader', path.join(directory, 'exports', `agent-${role.at(-1).toLowerCase()}.token`));
       clients[role] = c.id; credentials.permissions(c.id, expected.policy);
       for (const grant of expected.grants) credentials.grant(c.id, grant.target, grant.action, grant.effect);
     }
