@@ -39,7 +39,7 @@ for (const fault of ['revoke-once', 'revoke-persistent', 'close-once', 'receipt-
       t.mock.method(fs, 'open', async (file, ...args) => {
         const handle = await realOpen(file, ...args);
         const receipt = file === path.join(directory, 'generation.json');
-        const receiptDirectory = file === directory && fault === 'receipt-directory-sync' && completed === 189 && fired === 0;
+        const receiptDirectory = file === directory && fault === 'receipt-directory-sync' && completed === 192 && fired === 0;
         // Directory sync is armed only after the receipt itself has been written.
         if ((receipt && fault !== 'receipt-directory-sync') || (receiptDirectory && await fs.access(path.join(directory, 'generation.json')).then(() => true, () => false))) {
           const method = fault === 'receipt-write' ? 'writeFile' : 'sync', real = handle[method].bind(handle);
@@ -55,7 +55,7 @@ for (const fault of ['revoke-once', 'revoke-persistent', 'close-once', 'receipt-
       checkpoint: async point => { if (fault.startsWith('after-receipt') && point === 'after-receipt') { fired++; if (fault.endsWith('-abort')) controller.abort(); else throw new Error('owned failed terminal after receipt'); } },
     }), /never be replayed/);
     await b.waitForNativeOwners(); // No DB/receipt inspection until the exact seed owners have exited.
-    assert.equal(completed, 189);
+    assert.equal(completed, 192);
     assert.equal(fired, fault === 'revoke-persistent' ? 2 : 1, 'the intended fault must fire exactly');
     if (fault.startsWith('revoke')) assert.equal(revocations, 2, 'cleanup retries only the revocation, never the import');
     if (fault === 'close-once') assert.equal(serviceCloses, 2, 'finally settles the failed close');
