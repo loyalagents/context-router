@@ -341,3 +341,44 @@ launchers; auth isolation, token exclusion, lifecycle guards, concurrent chats a
 UI behavior remain intact. The five affected browser cases, native compilation,
 Markdown links, contract census and whitespace checks passed. Seed/recovery/helper
 run results will be recorded in PR 216 when settled, without a result-only commit.
+
+## Combined Activity and connection demo delivery
+
+The owner now requests main `195a5421` (PR 215) merged and a combined app for
+local testing, ending the rebuild deferral. Root remains sole writer. Independent
+integration-plan review identified the overlap between live refresh and session
+permission details. Retain the two-stream Activity fetch, same-filter failed-read
+preservation, session-only limits and exact change links. Quiet polling must pause
+for either request details or permission details, including linked auto-reveal,
+and abort a waiting poll if details open. Preserve synchronous toggle capture.
+
+Keep one coalesced trailing permission inspection after invalidation during a
+read, and incorporate the separate preview controller so its cancelled completion
+cannot clear the newer inspection's busy state. Focus/pageshow/broadcast use one
+refresh path; no inspection races Save. Adapt the incoming held-read regression
+to assert that both the pending and trailing read keep Preview disabled. Retain
+all source/backend tests and add a combined permission-detail/poll race regression.
+No permission enforcement, state reset or provider-session behavior changes.
+
+Requested sensitive plan/diff review Extra High; inherited effective settings
+unverified. Checkpoints: merge and focused backend/browser checks; independent
+integrated-diff review and a frozen pushed candidate; full merged UI suite plus
+isolated package with pinned inputs; actual packaged demo smoke covering Activity,
+drawers, retained-state behavior and both assistants' overlapping offline chats.
+A bounded local test build is the handoff milestone; human provider login/coding,
+real native interactions and any incomplete exact-candidate CI stay explicit.
+No full local migration gate is selected: no new aggregate lifecycle gap beyond
+the affected source and actual-artifact evidence has been identified. Preserve
+all existing gates. Update the existing demo shortcut only after artifact checks,
+keeping its current state/sign-in and prior bundles. Do not reset existing data
+or configure personal clients. Fresh stores use the new 192-memory seed; retained
+stores keep their current contents.
+
+Combined checkpoint: independent complete-diff review approved without blockers.
+Backend and web production builds passed, as did all 69 management/HTTP tests
+(from their required backend working directory), seven focused combined UI race
+cases, links, contract census and test discovery. The initial API invocation used
+the repository root and failed fixture initialization; the correctly located run
+passed without source changes. Freeze the merged source for full serial UI and
+packaging/artifact checks. Their final receipts and CI status belong in PR 216
+and the artifact handoff, not a result-only source commit.

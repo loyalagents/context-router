@@ -1521,3 +1521,17 @@ test('Codex demo native actions require injected capability, session, origin and
   assert.equal((await noNative.request('/api/local/demo/codex/status',{token:other})).json().available,false);
   assert.equal((await noNative.request('/api/local/demo/codex/open',{token:other,body:{chooseProject:false}})).status,503);
 });
+
+test('session permission activity uses strict browser auth and session-bound clearing',async t=>{
+ const f=await fixture(t),{token}=await f.unlock();
+ const read='/api/local/mcp/changes',clear='/api/local/mcp/changes/clear';
+ const page=(await f.request(read,{token})).json();assert.equal(page.items.length,0);assert.match(page.sessionId,/^[a-f0-9]{32}$/);
+ for(const route of [read,clear]){
+  for(const wrong of [undefined,f.identity.credential,f.mcpToken])assert.equal((await f.request(route,{token:wrong})).status,401);
+  assert.equal((await f.request(route,{token,method:'GET'})).status,405);
+  assert.equal((await f.request(route,{token,headers:{origin:'http://attacker.invalid'}})).status,403);
+  assert.equal((await f.request(route,{token,body:{principalId:f.identity.principalId}})).status,400);
+ }
+ assert.equal((await f.request(clear,{token,body:{sessionId:'0'.repeat(32),throughSequence:0}})).status,409);
+ assert.equal((await f.request(clear,{token,body:{sessionId:page.sessionId,throughSequence:0}})).status,200);
+});

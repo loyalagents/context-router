@@ -12,6 +12,8 @@ import {
   type PermissionConflict,
 } from "./permissions-draft";
 import { useDemoDraft } from "./DemoDrafts";
+import Link from "next/link";
+import {useLocalSession} from "./LocalSession";
 import { ClientName } from "./ClientNames";
 
 export type McpPolicy = {
@@ -184,6 +186,8 @@ export default function McpPermissionsEditor({
     refreshAgain: false,
     controllers: new Set<AbortController>(),
   });
+  const readRequest = useRef<AbortController | null>(null);
+  const previewRequest = useRef<AbortController | null>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const backdropPress = useRef(false);
@@ -199,6 +203,8 @@ export default function McpPermissionsEditor({
   });
   const previewRef = useRef<HTMLDivElement>(null);
   useEffect(()=>{if(drawer&&preview){previewRef.current?.focus({preventScroll:true});previewRef.current?.scrollIntoView({block:"nearest"});}},[drawer,preview]);
+  const demo = useLocalSession()?.capabilities.runtime?.mode === "demo";
+  const [changeId,setChangeId] = useState<string|null>(null);
   const outcomeRef = useRef<HTMLDivElement>(null);
   const interacted = useRef(false);
   useDemoDraft(!!intent.current?.intents.length, saving);
@@ -233,10 +239,12 @@ export default function McpPermissionsEditor({
   async function readCurrent(initial = false) {
     const s = life.current;
     if (!s.mounted || s.submitting) return;
+    previewRequest.current?.abort(); previewRequest.current = null;
     if (s.reading) { s.refreshAgain=true; return; }
     s.reading=true;
     const read = ++s.read,
       c = controller();
+    readRequest.current = c;
     setBusy(true);
     setError("");
     setPreview(null);
@@ -270,6 +278,7 @@ export default function McpPermissionsEditor({
         );
     } finally {
       s.controllers.delete(c);
+      if (readRequest.current === c) readRequest.current = null;
       if (s.mounted && read === s.read) {
         s.reading=false;setBusy(false);
         if(s.refreshAgain&&!s.submitting){s.refreshAgain=false;void readCurrent();}
@@ -291,7 +300,7 @@ export default function McpPermissionsEditor({
       s.version++;
       setPreview(null);
       setStale(true);
-      if(drawer&&!s.submitting){if(s.reading)s.refreshAgain=true;else void readCurrent();}
+      if(drawer&&!s.submitting)void readCurrent();
     };
     const activity = () => {
       if (s.submitting) interacted.current = true;
@@ -412,6 +421,7 @@ export default function McpPermissionsEditor({
     const version = s.version,
       c = controller(),
       body = proposedBody();
+    previewRequest.current = c;
     setBusy(true);
     setPreview(null);
     setError("");
@@ -442,7 +452,10 @@ export default function McpPermissionsEditor({
       }
     } finally {
       s.controllers.delete(c);
-      if (s.mounted) setBusy(false);
+      if (previewRequest.current === c) {
+        previewRequest.current = null;
+        if (s.mounted) setBusy(false);
+      }
     }
   }
   async function save() {
@@ -464,10 +477,12 @@ export default function McpPermissionsEditor({
     setSaving(true);
     setPreview(null);
     setOutcome(null);
+    setChangeId(null);
     setError("");
     try {
       const result = await localJson<{
         changed: boolean;
+        changeId?: string|null;
         client: Client;
         revision: string;
       }>("/api/local/mcp/save", body, c.signal);
@@ -489,10 +504,11 @@ export default function McpPermissionsEditor({
           grants: acknowledgedGrants,
         }),
       );
+      setChangeId(typeof result.changeId === "string" && /^[a-f0-9]{32}$/.test(result.changeId) ? result.changeId : null);
       setOutcome({
         kind: "confirmed",
         message:
-          "Permissions saved. The server acknowledged the complete change. A separate read checks current authority.",
+          demo ? "Saved. Applies to new requests." : "Permissions saved. The server acknowledged the complete change. A separate read checks current authority.",
       });
     } catch (err) {
       if (s.mounted && !c.signal.aborted)
@@ -559,6 +575,7 @@ export default function McpPermissionsEditor({
                 : "Save not confirmed"}
           </strong>
           <p>{outcome.message}</p>
+          {demo && outcome.kind === "confirmed" && changeId && <Link prefetch={false} className="mt-2 inline-block underline" href={`/dashboard/history#mcp-client=${client.id}&change=${changeId}`}>View change in Activity</Link>}
         </div>
       )}
       {error && <p role="alert">{error}</p>}

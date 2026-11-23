@@ -622,6 +622,59 @@
         "maxCatalogProjectedBytes": 2097152,
         "maxGrantEdits": 512
       }
+    },
+    "localMcpChanges": {
+      "mode": "local-ui",
+      "method": "POST",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "sharedBoundary": "localBrowser",
+      "path": "/api/local/mcp/changes",
+      "request": {
+        "required": [],
+        "additionalFields": false
+      },
+      "success": {
+        "status": 200,
+        "required": [
+          "sessionId",
+          "latestSequence",
+          "limit",
+          "truncated",
+          "items"
+        ]
+      },
+      "bounds": {
+        "maxItems": 50,
+        "maxEventBytes": 8192
+      },
+      "semantics": "Dashboard permission changes in the current store/principal app session only; no durable completeness claim; no credentials or memory values"
+    },
+    "localMcpChangesClear": {
+      "mode": "local-ui",
+      "method": "POST",
+      "auth": "browser-session",
+      "contentType": "application/json",
+      "sharedBoundary": "localBrowser",
+      "path": "/api/local/mcp/changes/clear",
+      "request": {
+        "required": [
+          "sessionId",
+          "throughSequence"
+        ],
+        "additionalFields": false
+      },
+      "success": {
+        "status": 200,
+        "required": [
+          "cleared"
+        ]
+      },
+      "conflict": {
+        "status": 409,
+        "semantics": "App session changed; no clear"
+      },
+      "semantics": "Clears only observed session events through the cutoff; newer events, stored history and permissions remain"
     }
   },
   "supportRoutes": [

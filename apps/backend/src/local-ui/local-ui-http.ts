@@ -51,6 +51,8 @@ const apiRoutes = new Set([
   '/api/local/mcp/targets',
   '/api/local/mcp/preview',
   '/api/local/mcp/save',
+  '/api/local/mcp/changes',
+  '/api/local/mcp/changes/clear',
 ]);
 const securityHeaders = new Set([
   'host',
