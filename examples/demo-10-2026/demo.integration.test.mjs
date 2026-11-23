@@ -18,7 +18,7 @@ test('fresh demo uses real SQLite/MCP: complete import, independent clients, por
   });
   const root = path.join(parent, 'demo');
   const manifest = await prepareDemo({ out: root, input: defaultInput });
-  assert.equal(manifest.active, 189);
+  assert.equal(manifest.active, 192);
   assert.equal(manifest.inactiveSkipped, 9);
   assert.deepEqual(await readManifest(root), manifest);
   await fs.chmod(path.join(root, 'manifest.json'), 0o644);
@@ -49,8 +49,8 @@ test('fresh demo uses real SQLite/MCP: complete import, independent clients, por
     aTotal += found.active.count;
     bTotal += (await call(reader, 'searchPreferences', { query: `${category}.demo001.` })).active.count;
   }
-  assert.equal(aTotal, 189); assert.equal(bTotal, 145);
-  assert.equal(Math.max(...Object.values(manifest.categories)), 31);
+  assert.equal(aTotal, 192); assert.equal(bTotal, 148);
+  assert.equal(Math.max(...Object.values(manifest.categories)), 32);
   const slug = plan.entries.find(e => e.preference.value.includes('phone-free Sunday')).definition.slug;
   const before = await call(reader, 'searchPreferences', { query: slug });
   assert.equal(before.active.count, 1);
