@@ -72,8 +72,10 @@ state that blocks launch. Freeing a port does not clear an uncertain generation.
 ## Historical Demo Mode
 
 This candidate implements a separate persistent demo inside the same managed
-envelope. **CR → Enter demo mode…** prepares the frozen historical 2024–2025
-sample on first entry, then reopens that store on later entries. The menu-bar
+envelope. **CR → Enter demo mode…** prepares its bundled historical 2024–2025
+sample on first entry, then reopens that store on later entries. Current source
+builds also include the [fictional I-9 supplement](../../examples/demo-10-2026/README.md#richards-fictional-i-9-demo-details);
+older installed bundles keep their old seed until updated. The menu-bar
 title stays compact as **CR** in both modes. Its tooltip and accessibility label,
 the menu's status line and the authenticated dashboard banner identify demo mode;
 startup descriptions stay neutral until the mode is admitted. Verified model weights
@@ -106,8 +108,9 @@ identify the mode. **Demo walkthrough (optional)** below the dashboard is closed
 by default; expand it for the five-step script and copyable prompts. It does not
 replace the homepage or add a second navigation menu.
 
-**Reset sample data…** confirms creation of a new store/principal with 189
-active memories, original definitions/import history and fresh A/B/C credentials.
+**Reset sample data…** confirms creation of a new store/principal with the
+bundled sample (192 active memories in current source), definitions/import history
+and fresh A/B/C credentials.
 Later changes, custom clients and grants do not carry forward. Old stores/exports
 and isolated provider login profiles remain retained. Reset is not secure erasure.
 Use Clear memory or Clear history only for their separately described behavior.

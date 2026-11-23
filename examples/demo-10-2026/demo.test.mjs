@@ -29,11 +29,11 @@ async function fixture(t, rows) {
 
 test('all supplied records parse; only active memories become values, preserving original evidence', async () => {
   const plan = await loadDemoPlan(source);
-  assert.equal(plan.total, 198);
-  assert.equal(plan.entries.length, 189);
+  assert.equal(plan.total, 201);
+  assert.equal(plan.entries.length, 192);
   assert.equal(plan.skipped.length, 9);
   assert.equal(plan.sources.length, 11);
-  assert.equal(new Set(plan.entries.map(e => e.definition.slug)).size, 189);
+  assert.equal(new Set(plan.entries.map(e => e.definition.slug)).size, 192);
   for (const entry of plan.entries) {
     assert.equal(entry.preference.value, JSON.stringify(entry.preference.evidence.sourceRecord.memory));
     assert.equal(entry.definition.slug.split('.')[0], entry.preference.evidence.sourceRecord.category);

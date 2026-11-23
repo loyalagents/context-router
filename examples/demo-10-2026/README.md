@@ -9,8 +9,43 @@ No product code or installed Context Router state changes are required.
 
 All demo data, credentials, receipts and assistant transcripts are private.
 Cloud assistants may send retrieved context to their providers. Do not publish
-the demo home or paste credentials into prompts. The supplied context describes
-2024–2025; it is not a claim about anyone's current circumstances.
+the demo home or paste credentials into prompts. The supplied context is a
+2024–2025 snapshot with the fictional I-9 supplement below; it is not a claim
+about anyone's current circumstances.
+
+## Richard's fictional I-9 demo details
+
+The default corpus includes a November 22, 2026 authored supplement: three
+existing memories are updated and three are added. These are fictional demo
+facts, not extracted conversations or verified identity information. Their
+provenance is `synthetic-i9-demo`, with empty conversation IDs. Updated records
+keep their UUIDs and increment their versions; unrelated records stay unchanged.
+
+| Memory | Change |
+| --- | --- |
+| Legal name (career) | Richard James Miller; no other last names used |
+| Residential address (home) | 104 Village Dr, Wexford, PA 15090; no apartment/unit; also the delivery address |
+| Commute (work) | Wexford to 1 PPG Place, Pittsburgh, resolving the old Upper St. Clair ambiguity |
+| Date of birth (family) | April 16, 1978 |
+| Personal contact (home) | richard.miller@example.com; 412-555-0147 |
+| Citizenship (career) | Citizen of the United States |
+
+No SSN is included. The existing Claude reader can retrieve all six memories
+under its current category grants; health and finance remain restricted.
+Use the [existing I-9 PDF](../eval/forms/i-9/form.pdf) and a task such as:
+
+> Use Context Router to read Richard's saved context and prefill employee
+> Section 1 of this I-9 as a fictional demo draft for review. Leave the SSN,
+> employee signature, signature date, and all employer Section 2 fields blank.
+> Do not invent missing information, sign, or submit the form. Save a separate
+> filled PDF and summarize any fields left for human completion.
+
+Fresh source demos and newly built app bundles include this supplement. Existing
+stores are not rewritten on reopen. An existing demo can receive these six edits
+through the normal Context editor or authorized MCP mutations without resetting
+its history, clients or grants. An older installed app still resets to its older
+bundled seed until that app is updated. The full seed-manifest digest identifies
+the revised corpus; its `historical-2024-2025-v1` format/version family is unchanged.
 
 ## First time on macOS
 
@@ -191,13 +226,13 @@ reset there, is a separate later operation.
    then set an explicitly supplied value. Confirm each intended mutation.
    A fresh read by B/C demonstrates that definitions and values share the store.
 
-For the default snapshot, A can READ/WRITE all 189 active values and DEFINE
-within its dataset category prefixes. B and C can each READ 145 values excluding
+For the default snapshot, A can READ/WRITE all 192 active values and DEFINE
+within its dataset category prefixes. B and C can each READ 148 values excluding
 health and finance; each also has an explicit `health.*` READ DENY. They cannot
 WRITE/DEFINE and do not discover the mutation tool. Direct SDK tests prove a
 write denial and persisted typed access event. Empty filtered results do not
 establish that no records exist. Category-prefix reads avoid the response cap
-(largest category: 31); search matches schema metadata, not full value text.
+(largest category: 32); search matches schema metadata, not full value text.
 
 Use the existing dashboard **MCP Clients** grant controls and
 [MCP administration](../../docs/useful/MCP_LOCAL_SETUP.md) for deliberate changes.
@@ -248,8 +283,10 @@ Claude role per legacy root. Use durable mode for separate A/B Claude profiles.
 
 ## Data, recovery and reusable pieces
 
-The 11 original JSONL files contain 198 records: 189 active values and nine
-inactive records retained in `import-plan.json`. Original bytes stay unchanged.
+The 11 JSONL files contain 201 records: 192 active values and nine
+inactive records retained in `import-plan.json`. This includes the authored I-9
+supplement above; the original 198-record snapshot remains available in Git history.
+Import preserves the supplied source bytes and records their hashes.
 Identity is `<category>.<dataset>.memory_<UUID without hyphens>` and sentences
 become sensitive user-owned STRING definitions/values. GLOBAL means location
 independent, not public. Full source records, filename, line and SHA-256 remain
