@@ -207,10 +207,14 @@ export default function McpAccessHistoryTab({
   });
   const requestVersionRef = useRef(0);
   const pendingRef = useRef<AbortController | null>(null);
+  const priorClientFilter = useRef(clientFilter);
+  const loadedFilters = useRef<string | null>(null);
   useEffect(() => () => { requestVersionRef.current++; pendingRef.current?.abort(); }, []);
 
   useEffect(() => {
-    if (clientFilter === undefined) return;
+    if (clientFilter === undefined || clientFilter === priorClientFilter.current) return;
+    priorClientFilter.current = clientFilter;
+    loadedFilters.current = null;
     requestVersionRef.current++; pendingRef.current?.abort();
     setItems([]); setPermissionPage(null); setPermissionError(false); setNextCursor(null); setHasNextPage(false); setExpandedIds({});
     setDraftFilters(previous => ({...previous, clientKey: clientFilter}));
@@ -289,6 +293,10 @@ export default function McpAccessHistoryTab({
       setIsLoadingMore(true);
     }
 
+    const filterKey = JSON.stringify(sanitizedAppliedFilters);
+    if (reset && loadedFilters.current !== filterKey) {
+      setItems([]); setHasNextPage(false); setNextCursor(null); setExpandedIds({});
+    }
     setError(null);
     setRevealReady(false);
 
@@ -334,17 +342,15 @@ export default function McpAccessHistoryTab({
       setPermissionError(permissions.status === 'rejected');
       if (requests.status === 'fulfilled') {
         const page = requests.value;
+        loadedFilters.current = filterKey;
         setItems(previous => reset ? page.items : [...previous, ...page.items]);
         setHasNextPage(page.hasNextPage);
         setNextCursor(page.nextCursor ?? null);
       } else {
-        if (reset) { setItems([]); setHasNextPage(false); setNextCursor(null); }
         setError(requests.reason instanceof Error ? requests.reason.message : 'Failed to load MCP access history.');
       }
 
-      if (reset) {
-        setExpandedIds({});
-      }
+      if (reset && requests.status === 'fulfilled') setExpandedIds({});
     } catch (loadError) {
       if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setError(
@@ -412,15 +418,17 @@ export default function McpAccessHistoryTab({
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
         <div>
-          <h2 className="text-lg font-semibold">{demo ? 'Assistant activity' : 'MCP Access'}</h2>
+          <h2 className="text-lg font-semibold">{demo ? 'Assistant access' : 'MCP Access'}</h2>
           <p className="text-sm text-gray-600 mt-1">
             {demo ? 'See dashboard permission changes and requests made by your assistants.' : 'Review request-level MCP tool and resource access by connected clients.'}
           </p>
         </div>
 
         {demo && <div className="mt-3 text-sm text-gray-600">
+          <details><summary className="cursor-pointer">About this list</summary>
           <p>Up to 50 recent dashboard permission changes from this app session. They disappear when Context Router restarts; CLI changes are not recorded here.</p>
           <p>Ordered by recorded time. Requests already running may finish under earlier access.</p>
+          </details>
           <button type="button" className="mt-2 underline" disabled={!shouldLoad || isLoadingInitial || isLoadingMore} onClick={() => void loadHistory(true)}>Refresh activity</button>
           {permissionPage?.truncated && <p>Older permission changes have been dropped from this session log.</p>}
           {requestOnlyFilters && <p>Permission changes are hidden while request-specific filters are active.</p>}
@@ -578,7 +586,7 @@ export default function McpAccessHistoryTab({
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-xs text-gray-700"
               >
                 <span className="font-medium">{chip.label}:</span>
-                {chip.key === 'clientKey' ? <ClientName clientKey={chip.value} fullId /> : <span>{chip.value}</span>}
+                {chip.key === 'clientKey' ? <ClientName clientKey={chip.value} fullId={!demo} showId={!demo} /> : <span>{chip.value}</span>}
                 {chip.key === 'clientKey' && onClientFilterChange && <button type="button" aria-label="Remove client filter" className="underline ml-1" onClick={() => onClientFilterChange('')}>Remove</button>}
               </span>
             ))}
@@ -594,6 +602,7 @@ export default function McpAccessHistoryTab({
                 Failed to load MCP access history.
               </p>
               <p className="text-sm text-red-600 mt-1">{error}</p>
+              {items.length > 0 && <p className="mt-1 text-sm text-red-600">Previously loaded requests are shown.</p>}
             </div>
             <button
               type="button"
@@ -614,7 +623,7 @@ export default function McpAccessHistoryTab({
               />
             ))}
           </div>
-        ) : rows.length === 0 ? (
+        ) : rows.length === 0 && (error || permissionError) ? null : rows.length === 0 ? (
           <div className="p-10 text-center text-gray-500">
             {demo ? (isFiltered ? 'No assistant activity matches these filters.' : 'No assistant activity yet. Change permissions or use your connected assistant, then return here.') : (isFiltered ? 'No MCP access events match the current filters.' : 'No MCP access history yet.')}
           </div>
@@ -636,7 +645,7 @@ export default function McpAccessHistoryTab({
                     {demo ? <div className="demo-history-row">
                       <div><p><strong><ClientName clientKey={item.clientKey} showId={false}/></strong>{' '}
                         {item.outcome !== 'SUCCESS' && 'attempted to '}
-                        {item.operationName === 'searchPreferences' || item.operationName === 'smartSearchPreferences' ? (item.outcome === 'SUCCESS' ? 'searched context' : 'search context') : item.operationName === 'mutatePreferences' ? (item.outcome === 'SUCCESS' ? 'requested a memory change' : 'request a memory change') : item.operationName}
+                        {item.operationName === 'searchPreferences' || item.operationName === 'smartSearchPreferences' ? (item.outcome === 'SUCCESS' ? 'searched context' : 'search context') : item.operationName === 'listPreferenceSlugs' ? (item.outcome === 'SUCCESS' ? 'listed available context fields' : 'list available context fields') : item.operationName === 'mutatePreferences' ? (item.outcome === 'SUCCESS' ? 'requested a memory change' : 'request a memory change') : item.operationName}
                       </p><p className="demo-history-meta">
                         {(() => {
                           const metadata = item.responseMetadata;

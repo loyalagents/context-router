@@ -133,7 +133,7 @@ try{
  await activityLink.click();const activityPanel=page.getByRole('tabpanel',{name:'Assistant access',exact:true});
  await activityPanel.locator('[data-permission-change]').first().waitFor();assert.equal(await activityPanel.locator('[data-permission-change]').count(),2);
  const highlightedChange=activityPanel.locator('[data-permission-change="'+activityHref.split('&change=')[1]+'"]');
- assert.equal(await highlightedChange.getAttribute('open'),'');assert.match(await highlightedChange.innerText(),/Blocked.*Read/s);
+ assert.equal(await highlightedChange.getAttribute('open'),'');assert.match(await highlightedChange.innerText(),/to Read \(was Blocked\)/);
  await page.reload();await highlightedChange.waitFor();assert.equal(await activityPanel.locator('[data-permission-change]').count(),2);
  await page.screenshot({path:path.join(root,'demo-permission-activity.png'),fullPage:true});
  phase('packaged-session-permission-activity-save-link-and-reload');

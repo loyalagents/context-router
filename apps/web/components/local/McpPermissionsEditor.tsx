@@ -180,6 +180,8 @@ export default function McpPermissionsEditor({
     submitting: false,
     controllers: new Set<AbortController>(),
   });
+  const readRequest = useRef<AbortController | null>(null);
+  const previewRequest = useRef<AbortController | null>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const draft = useRef<{ policy: McpPolicy | null; edits: Edit[] }>({
     policy: null,
@@ -220,9 +222,12 @@ export default function McpPermissionsEditor({
   }
   async function readCurrent(initial = false) {
     const s = life.current;
-    if (!s.mounted) return;
+    if (!s.mounted || s.submitting) return;
+    readRequest.current?.abort();
+    previewRequest.current?.abort(); previewRequest.current = null;
     const read = ++s.read,
       c = controller();
+    readRequest.current = c;
     setBusy(true);
     setError("");
     setPreview(null);
@@ -256,6 +261,7 @@ export default function McpPermissionsEditor({
         );
     } finally {
       s.controllers.delete(c);
+      if (readRequest.current === c) readRequest.current = null;
       if (s.mounted && read === s.read) setBusy(false);
     }
   }
@@ -269,13 +275,17 @@ export default function McpPermissionsEditor({
       setPreview(null);
       setStale(true);
     };
+    const refresh = () => {
+      invalidate();
+      if (demo && !s.submitting) void readCurrent();
+    };
     const activity = () => {
       if (s.submitting) interacted.current = true;
     };
     const channel = new BroadcastChannel("context-router.mcp-management.v1");
     channel.onmessage = invalidate;
-    window.addEventListener("focus", invalidate);
-    window.addEventListener("pageshow", invalidate);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("pageshow", refresh);
     for (const event of ["pointerdown", "keydown", "input", "focusin"])
       document.addEventListener(event, activity, true);
     return () => {
@@ -288,8 +298,8 @@ export default function McpPermissionsEditor({
       draft.current = { policy: null, edits: [] };
       intent.current = null;
       channel.close();
-      window.removeEventListener("focus", invalidate);
-      window.removeEventListener("pageshow", invalidate);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("pageshow", refresh);
       for (const event of ["pointerdown", "keydown", "input", "focusin"])
         document.removeEventListener(event, activity, true);
     };
@@ -383,6 +393,7 @@ export default function McpPermissionsEditor({
     const version = s.version,
       c = controller(),
       body = proposedBody();
+    previewRequest.current = c;
     setBusy(true);
     setPreview(null);
     setError("");
@@ -413,7 +424,10 @@ export default function McpPermissionsEditor({
       }
     } finally {
       s.controllers.delete(c);
-      if (s.mounted) setBusy(false);
+      if (previewRequest.current === c) {
+        previewRequest.current = null;
+        if (s.mounted) setBusy(false);
+      }
     }
   }
   async function save() {
@@ -466,7 +480,7 @@ export default function McpPermissionsEditor({
       setOutcome({
         kind: "confirmed",
         message:
-          "Permissions saved. The server acknowledged the complete change. A separate read checks current authority.",
+          demo ? "Saved. Applies to new requests." : "Permissions saved. The server acknowledged the complete change. A separate read checks current authority.",
       });
     } catch (err) {
       if (s.mounted && !c.signal.aborted)

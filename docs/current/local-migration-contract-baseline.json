@@ -5520,6 +5520,12 @@
       "contract": "mcp",
       "kind": "tool",
       "reference": "searchPreferences"
+    },
+    {
+      "path": "apps/web/app/dashboard/history/McpAccessHistoryTab.tsx",
+      "contract": "mcp",
+      "kind": "tool",
+      "reference": "listPreferenceSlugs"
     }
   ],
   "outboundSinkInventory": [

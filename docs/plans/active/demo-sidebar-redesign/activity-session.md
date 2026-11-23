@@ -149,3 +149,27 @@ now records the toggle synchronously, with the native toggle handler retained as
 a fallback. The regression covers passive focus, explicit Back reveal, keyboard
 toggling, delayed streams and failures in either stream. Independent review
 approved this correction; final focused browser results are recorded separately.
+
+## Follow-up review corrections (2026-11-22)
+
+Accept the failed-refresh regression, duplicate mount read/weak race tests and
+CSS accent finding. Keep prior request rows, pagination and expansion only for
+the same normalized filters; suppress contradictory empty states after failure.
+Hold a later explicit refresh in race tests and verify it is live before clear,
+client switch or lock. Strengthen computed-color coverage for every change row.
+
+For the demo, compact single-setting rows lead with the maximum-access change;
+retain multi-setting tables and all truncation/failure/gap notices. Move general
+limitations into About this list, shorten demo client chips and Save wording, and
+label field-list reads in ordinary language. Maximum access is not an effective
+field-access claim. Independent plan review approved demo-only focus/page-show
+re-reading with dedicated inspect/preview cancellation, latest-draft rebasing,
+and no inspection during Save. Keep explicit preview and mutation confirmation.
+
+Defer live polling/remount replacement, effective field-count records, per-category
+controls and automatic previews. These need a cohesive follow-up, especially where
+existing deny rules override a newly included scope. Root remains sole writer;
+renew affected browser/editor checks, web build, contract census and docs checks,
+then obtain independent review. No backend/schema/native changes or CI monitoring.
+The existing verified `6e484950` bundle and launcher remain unchanged in this source
+correction round; a later replacement needs its own artifact verification.
