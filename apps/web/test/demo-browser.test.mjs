@@ -288,29 +288,27 @@ test('Claude launch is explicit, remembers in-flight state on reload, and report
  state={...state,state:'exited',busy:false};await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();await f.page.getByRole('button',{name:'Change project',exact:true}).click();assert.equal(opens,3);assert.deepEqual(requests[2],{chooseProject:true});
 });
 
-test('Codex launch is explicit, remembers in-flight state on reload, and reports only recent exact-client reads', {timeout:60000},async t=>{
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);
- const fs=await import('node:fs'),path=await import('node:path'),{createRequire}=await import('node:module');
- const require=createRequire(new URL('../../backend/package.json',import.meta.url));
- const {Client}=require('@modelcontextprotocol/sdk/client/index.js'),{StreamableHTTPClientTransport}=require('@modelcontextprotocol/sdk/client/streamableHttp.js');
- const receipt=JSON.parse(fs.readFileSync(path.join(f.root,'demo/generation.json'),'utf8'));const peers=[];t.after(async()=>{for(const peer of peers)await peer.close();});
- async function read(role){const peer=new Client({name:'synthetic-connect-test',version:'1'},{capabilities:{}});peers.push(peer);await peer.connect(new StreamableHTTPClientTransport(new URL(f.ready.mcpOrigin),{requestInit:{headers:{Authorization:'Bearer '+fs.readFileSync(path.join(f.root,`demo/exports/agent-${role}.token`),'utf8').trim()}}}));const result=await peer.callTool({name:'searchPreferences',arguments:{query:'work.demo001.'}});assert.ok(!result.isError,JSON.stringify(result));}
- await read('a');
- let state={available:true,clientId:receipt.clients.agentA,state:'idle',busy:false},opens=0;const requests=[];
- await f.page.route('**/api/local/demo/codex/status',route=>route.fulfill({json:state}));
- await f.page.route('**/api/local/demo/codex/open',route=>{opens++;requests.push(route.request().postDataJSON());state={...state,state:'checking',busy:true,request:'d'.repeat(32),startedAt:new Date().toISOString()};return route.fulfill({json:state});});
- await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
- await f.page.getByRole('tab',{name:'Codex',exact:true}).click();
- const button=f.page.getByRole('button',{name:'Open Codex',exact:true});await button.waitFor();await f.page.getByText('Choose a project once.',{exact:false}).waitFor();assert.equal(opens,0);
- await button.click();assert.equal(opens,1);assert.deepEqual(requests,[{chooseProject:false}]);assert.equal(await button.isDisabled(),true);
- state={...state,state:'terminal-opened'};await f.page.getByText('Terminal opened.',{exact:false}).waitFor();assert.equal(await f.page.getByText(/^Context read at /).count(),0);
- await f.page.reload();await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await f.page.getByText('Terminal opened.',{exact:false}).waitFor();assert.equal(opens,1);
- await read('b');await f.page.waitForTimeout(2200);assert.equal(await f.page.getByText(/^Context read at /).count(),0);
- await read('a');const history=(await f.graphql('query($input:McpAccessHistoryInput!){mcpAccessHistory(input:$input){items{clientKey occurredAt outcome operationName responseMetadata}}}',{input:{first:20,clientKey:`local:${receipt.clients.agentA}`}})).mcpAccessHistory.items;assert.ok(history.some(item=>item.operationName==='searchPreferences'&&item.responseMetadata?.activeCount>0),JSON.stringify(history));await f.page.getByText(/^Context read at /).waitFor();
- const activity=f.page.getByRole('region',{name:'Connect Codex'}).getByRole('link',{name:'View activity'});assert.ok((await activity.getAttribute('href')).endsWith('#mcp-client='+receipt.clients.agentA));
- state={...state,state:'starting',busy:false};await f.page.getByText('Your latest chat is opening', {exact:false}).waitFor();assert.equal(await button.isDisabled(),false);
- await button.click();assert.equal(opens,2);assert.deepEqual(requests[1],{chooseProject:false});assert.equal(await button.isDisabled(),true);
- state={...state,state:'exited',busy:false};await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();await f.page.getByRole('button',{name:'Change project',exact:true}).click();assert.equal(opens,3);assert.deepEqual(requests[2],{chooseProject:true});
+// Full launch/reload/read behavior is covered above through the shared component.
+// This compact matrix keeps the vendor-specific browser wiring explicit.
+test('both assistant tabs launch only their selected client and link its exact activity', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t),opens=[],statuses=[];
+ for(const [client,id] of [['claude',f.b],['codex',f.a]]){
+  await f.page.route(`**/api/local/demo/${client}/status`,route=>{statuses.push(client);return route.fulfill({json:{available:true,clientId:id,state:'idle',busy:false}});});
+  await f.page.route(`**/api/local/demo/${client}/open`,route=>{opens.push({client,method:route.request().method(),body:route.request().postDataJSON()});return route.fulfill({json:{available:true,clientId:id,state:'starting',busy:false}});});
+ }
+ await f.page.reload();
+ for(const [client,name,id] of [['claude','Claude Code',f.b],['codex','Codex',f.a]]){
+  await f.page.getByRole('tab',{name,exact:true}).click();
+  const section=f.page.getByRole('region',{name:'Connect '+name,exact:true});
+  const opened=f.page.waitForResponse(response=>response.url().endsWith(`/api/local/demo/${client}/open`));
+  await section.getByRole('button',{name:'Open '+name,exact:true}).click();await opened;
+  await section.getByText('Your latest chat is opening',{exact:false}).waitFor();
+  assert.ok(statuses.includes(client));
+  assert.equal(await section.getByRole('link',{name:'View activity',exact:true}).getAttribute('href'),'/dashboard/history#mcp-client='+id);
+  const changed=f.page.waitForResponse(response=>response.url().endsWith(`/api/local/demo/${client}/open`)&&response.request().postDataJSON().chooseProject===true);
+  await section.getByRole('button',{name:'Change project',exact:true}).click();await changed;
+ }
+ assert.deepEqual(opens,['claude','codex'].flatMap(client=>[false,true].map(chooseProject=>({client,method:'POST',body:{chooseProject}}))));
 });
 
 test('demo context refreshes external changes on focus without replacing active or newly opened drafts', {timeout:60000},async t=>{
@@ -330,15 +328,15 @@ test('demo context refreshes external changes on focus without replacing active 
  await f.page.getByRole('button',{name:'Edit context',exact:true}).click();await editor.fill('Draft wins over passive response');release();await f.page.waitForTimeout(300);assert.equal(await editor.inputValue(),'Draft wins over passive response');
 });
 
-for(const client of ['claude','codex'])test(`${client} demo launch errors remain visible across polls without automatic replay and permit explicit retry`, {timeout:60000},async t=>{
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);let opens=0,polls=0;
+test(`shared demo launch errors remain visible across polls without automatic replay and permit explicit retry`, {timeout:60000},async t=>{
+ const client='claude',f=await browserFixture(t);f.page.setDefaultTimeout(10000);let opens=0,polls=0;
  await f.page.route(`**/api/local/demo/${client}/status`,route=>{polls++;return route.fulfill({json:{available:true,state:'idle',busy:false}});});
  await f.page.route(`**/api/local/demo/${client}/open`,route=>{opens++;return opens===1?route.fulfill({status:503,json:{}}):route.fulfill({json:{available:true,state:'checking',busy:true}});});
  await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
- if(client==='codex')await f.page.getByRole('tab',{name:'Codex',exact:true}).click();
- const button=f.page.getByRole('button',{name:client==='codex'?'Open Codex':'Open Claude Code',exact:true});await button.click();const error=f.page.getByText('Launch could not be confirmed. Check Terminal before retrying.',{exact:true});await error.waitFor();
+
+ const button=f.page.getByRole('button',{name:'Open Claude Code',exact:true});await button.click();const error=f.page.getByText('Launch could not be confirmed. Check Terminal before retrying.',{exact:true});await error.waitFor();
  const before=polls;await f.page.waitForTimeout(4500);assert.ok(polls>=before+2);assert.equal(await error.isVisible(),true);assert.equal(opens,1);assert.equal(await button.isDisabled(),false);
- await button.click();await f.page.getByText(client==='codex'?'Checking Codex on this Mac…':'Checking Claude Code on this Mac…',{exact:true}).waitFor();assert.equal(opens,2);
+ await button.click();await f.page.getByText('Checking Claude Code on this Mac…',{exact:true}).waitFor();assert.equal(opens,2);
 });
 
 test('demo sidebar clears the Activity client filter and Back restores it', {timeout:60000},async t=>{
@@ -478,22 +476,19 @@ test('failed passive refresh is a quiet stale-data notice with an explicit read 
  fail=false;await f.page.getByRole('button',{name:'Retry saved preferences refresh',exact:true}).click();await f.page.getByText('Context may be out of date.',{exact:false}).waitFor({state:'hidden'});
 });
 
-for(const client of ['claude','codex'])test(`${client} lost launch reply clears only when a new request is observed without replay`, {timeout:60000},async t=>{
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);let opens=0,state={available:true,state:'exited',busy:false,request:'a'.repeat(32)};
+test(`shared lost launch reply clears only when a new request is observed without replay`, {timeout:60000},async t=>{
+ const client='claude',f=await browserFixture(t);f.page.setDefaultTimeout(10000);let opens=0,state={available:true,state:'exited',busy:false,request:'a'.repeat(32)};
  await f.page.route(`**/api/local/demo/${client}/status`,route=>route.fulfill({json:state}));
  await f.page.route(`**/api/local/demo/${client}/open`,route=>{opens++;return route.abort();});
- await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();if(client==='codex')await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();
- await f.page.getByRole('button',{name:client==='codex'?'Open Codex':'Open Claude Code',exact:true}).click();const error=f.page.getByText('Launch could not be confirmed.',{exact:false});await error.waitFor();
+ await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();
+ await f.page.getByRole('button',{name:'Open Claude Code',exact:true}).click();const error=f.page.getByText('Launch could not be confirmed.',{exact:false});await error.waitFor();
  await f.page.waitForTimeout(2300);assert.equal(await error.isVisible(),true);assert.equal(opens,1);
  state={...state,state:'starting',request:'b'.repeat(32)};await f.page.getByText('Your latest chat is opening', {exact:false}).waitFor();assert.equal(await error.count(),0);assert.equal(opens,1);
  state={...state,state:'login-interrupted'};await f.page.getByText('Sign-in was interrupted.',{exact:false}).waitFor();assert.equal(await f.page.getByText('Setup did not finish.',{exact:false}).count(),0);
 });
 
 test('drawer save result is visible and closing during list refresh restores its trigger afterward', {timeout:60000},async t=>{
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);
- const {readFile}=await import('node:fs/promises'),receipt=JSON.parse(await readFile(f.root+'/demo/generation.json'));
- await f.page.route('**/api/local/demo/claude/status',route=>route.fulfill({json:{available:true,clientId:receipt.clients.agentB,state:'idle',busy:false}}));
- await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ const f=await accessPolishFixture(t);
  const review=f.page.getByRole('button',{name:'Review access',exact:true});await review.click();
  const panel=f.page.getByRole('region',{name:'Edit permissions',exact:true});await panel.getByLabel('Maximum value access').selectOption('Blocked');
  await panel.getByRole('button',{name:'Preview resulting access',exact:true}).click();await panel.getByRole('region',{name:'Resulting access preview'}).waitFor();
@@ -508,12 +503,28 @@ test('drawer save result is visible and closing during list refresh restores its
  assert.equal(await f.page.evaluate(()=>document.body.style.overflow),'');
 });
 
-async function accessPolishFixture(t) {
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);
- const {readFile}=await import('node:fs/promises'),receipt=JSON.parse(await readFile(f.root+'/demo/generation.json'));
- for(const [name,id] of [['claude',receipt.clients.agentB],['codex',receipt.clients.agentA]])await f.page.route(`**/api/local/demo/${name}/status`,route=>route.fulfill({json:{available:true,clientId:id,state:'starting',busy:false,startedAt:'2026-01-01T00:00:00Z'}}));
+// UI-only checks need real clients/permissions, not a full historical import.
+// The live MCP journey explicitly opts into the retained full demo seed.
+async function demoClientsFixture(t, {seeded=false}={}) {
+ const f=await browserFixture(t,{demo:seeded});f.page.setDefaultTimeout(10000);
+ if(seeded){
+  const {readFile}=await import('node:fs/promises'),receipt=JSON.parse(await readFile(f.root+'/demo/generation.json'));
+  return {...f,a:receipt.clients.agentA,b:receipt.clients.agentB};
+ }
+ const a=JSON.parse(f.cli('local-mcp.js','list').stdout).result[0].id;
+ f.cli('local-mcp.js','rename','--id',a,'--label','Codex — writer');
+ f.cli('local-mcp.js','permissions','--id',a,'--capabilities','preferences:write,preferences:define','--targets','*');
+ f.cli('local-mcp.js','provision','--label','Claude Code — reader','--out',f.root+'/second.token');
+ const b=JSON.parse(f.cli('local-mcp.js','list').stdout).result.find(client=>client.id!==a).id;
+ f.cli('local-mcp.js','permissions','--id',b,'--capabilities','preferences:read','--targets','*');
+ return {...f,a,b};
+}
+async function accessPolishFixture(t, options) {
+ const f=await demoClientsFixture(t,options);
+ for(const [name,id] of [['claude',f.b],['codex',f.a]])await f.page.route(`**/api/local/demo/${name}/status`,route=>route.fulfill({json:{available:true,clientId:id,state:'starting',busy:false,startedAt:'2026-01-01T00:00:00Z'}}));
  await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
- return {...f,a:receipt.clients.agentA,b:receipt.clients.agentB};
+ await f.page.getByRole('heading',{name:'Connections',exact:true}).waitFor();
+ return f;
 }
 
 test('assistant selection survives Activity Back and reload, and legacy naming stays exact-client bound', {timeout:60000},async t=>{
@@ -562,10 +573,19 @@ test('failed list refresh cannot steal focus on a later explicit retry', {timeou
 });
 
 test('demo Activity updates live and pauses while filter drafts or details are open', {timeout:60000},async t=>{
- const f=await accessPolishFixture(t),{connect,call}=await import('../../backend/scripts/demo/mcp-import.mjs');
+ const f=await accessPolishFixture(t,{seeded:true}),{connect,call}=await import('../../backend/scripts/demo/mcp-import.mjs');
  const peer=await connect(Number(new URL(f.ready.mcpOrigin).port),f.root+'/demo/exports/agent-a.token');t.after(()=>peer.close());
- await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();await f.page.getByRole('heading',{name:'Activity',exact:true}).waitFor();
- await call(peer,'searchPreferences',{query:'work.demo001.'});const row=f.page.getByRole('button').filter({hasText:'searched context'}).first();await row.waitFor();
+ const historyResponse=response=>response.url().endsWith('/graphql')&&response.request().postDataJSON().query.includes('McpAccessHistoryForTab');
+ const initial=f.page.waitForResponse(historyResponse);
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();
+ const initialItems=(await (await initial).json()).data.mcpAccessHistory.items;
+ assert.equal(initialItems.some(item=>item.clientKey==='local:'+f.a&&item.operationName==='searchPreferences'),false);
+ const row=f.page.getByRole('button').filter({hasText:'searched context'}).filter({has:f.page.locator('[title="local:'+f.a+'"]')});
+ assert.equal(await row.count(),0);
+ await f.page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(button=>button.textContent==='Refresh activity'&&!button.disabled));
+ await call(peer,'searchPreferences',{query:'work.demo001.'});
+ const polled=await f.page.waitForResponse(async response=>historyResponse(response)&&(await response.json()).data.mcpAccessHistory.items.some(item=>item.clientKey==='local:'+f.a&&item.operationName==='searchPreferences'&&!initialItems.some(previous=>previous.id===item.id)));
+ assert.equal(polled.status(),200);await row.waitFor();
  await row.click();let polls=0;f.page.on('request',req=>{if(req.url().endsWith('/graphql')&&req.postDataJSON()?.query.includes('McpAccessHistoryForTab'))polls++;});
  await f.page.waitForTimeout(3400);assert.equal(polls,0);assert.equal(await row.getAttribute('aria-expanded'),'true');await row.click();
  const activity=f.page.getByRole('tabpanel',{name:'Assistant access'});await activity.getByText('Filter activity',{exact:true}).click();await activity.getByLabel('Operation',{exact:true}).fill('unfinished');await f.page.waitForTimeout(3400);assert.equal(polls,0);assert.equal(await activity.getByLabel('Operation',{exact:true}).inputValue(),'unfinished');
@@ -599,13 +619,12 @@ test('an in-flight Activity poll cannot replace details opened while it was wait
 });
 
 async function permissionActivityFixture(t) {
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
- const fs=await import('node:fs/promises'),receipt=JSON.parse(await fs.readFile(f.root+'/demo/generation.json','utf8')),id=receipt.clients.agentB;
+ const f=await demoClientsFixture(t),id=f.b;await openDemo(f);
  await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
  await f.page.getByRole('button',{name:'Edit permissions '+id,exact:true}).click();const editor=f.page.getByRole('region',{name:'Edit permissions',exact:true});
  await editor.getByLabel('Maximum value access').selectOption('Blocked');await editor.getByRole('button',{name:'Preview resulting access',exact:true}).click();await editor.getByRole('region',{name:'Resulting access preview'}).waitFor();await editor.getByRole('button',{name:'Save permissions',exact:true}).click();
  const link=editor.getByRole('link',{name:'View change in Activity',exact:true});await link.waitFor();const href=await link.getAttribute('href'),eventId=href.split('&change=')[1];
- return {...f,id,otherId:receipt.clients.agentA,href,eventId,link,panel:f.page.getByRole('tabpanel',{name:'Assistant access',exact:true})};
+ return {...f,id,otherId:f.a,href,eventId,link,panel:f.page.getByRole('tabpanel',{name:'Assistant access',exact:true})};
 }
 function deferredActivityReply(t) {
  let release,seen;const hold=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve);t.after(()=>release());return{hold,waiting,release,seen};
@@ -667,8 +686,7 @@ test('activity clear distinguishes stored history and refreshes after an uncerta
 });
 
 test('demo permission focus refresh coalesces old reads, preserves drafts and cannot race Save', {timeout:60000},async t=>{
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
- const fs=await import('node:fs/promises'),receipt=JSON.parse(await fs.readFile(f.root+'/demo/generation.json','utf8')),id=receipt.clients.agentB;
+ const f=await demoClientsFixture(t),id=f.b;await openDemo(f);
  await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();await f.page.getByRole('button',{name:'Edit permissions '+id,exact:true}).click();const editor=f.page.getByRole('region',{name:'Edit permissions',exact:true});
  await editor.getByLabel('Maximum value access').selectOption('Blocked');let reads=0,saves=0;const readGate=deferredActivityReply(t),trailingGate=deferredActivityReply(t),previewGate=deferredActivityReply(t),saveGate=deferredActivityReply(t);
  await f.page.route('**/api/local/mcp/inspect',async route=>{reads++;const response=await route.fetch();if(reads===1){readGate.seen();await readGate.hold;}if(reads===2){trailingGate.seen();await trailingGate.hold;}await route.fulfill({response}).catch(()=>{});});

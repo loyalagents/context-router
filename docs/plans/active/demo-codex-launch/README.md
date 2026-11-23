@@ -382,3 +382,30 @@ the repository root and failed fixture initialization; the correctly located run
 passed without source changes. Freeze the merged source for full serial UI and
 packaging/artifact checks. Their final receipts and CI status belong in PR 216
 and the artifact handoff, not a result-only source commit.
+
+## Test simplification after UI CI timeout
+
+The owner authorized simplifying expensive tests and removing unhelpful repetition
+following the read-only test-value audit. Root remains sole writer; the audit
+reviewer independently approved this bounded plan (requested GPT-6 Astra xhigh;
+effective settings not independently exposed). No product code, CI selection,
+timeout, installed app or user state changes are selected.
+
+Use small real authenticated client fixtures for mocked UI/drawer scenarios,
+retaining the full seeded real-MCP journeys and actual permission-save/history
+APIs. Replace repeated long vendor browser journeys with one shared behavior
+journey and compact exact-vendor route/client/open-body checks. Keep both native
+process journeys, credential/guard tests and artifact coverage. Remove the
+self-comparison of dispatcher arguments against its own implementation; strengthen
+transport requests and the distinction between initial Activity load and a live
+update. Consider controlled timing only where it stays simpler than the existing
+race gates; do not add a test framework merely to shorten this round.
+
+Checkpoints: affected browser/helper checks; independent complete round-diff
+review; frozen full web umbrella at its existing concurrency of two using private
+temporary state, plus documentation/discovery checks. Compare named-case timings
+with the previous serial log without presenting unlike concurrency runs as a
+controlled speed benchmark. Existing application builds and artifact evidence
+carry forward only because runtime/build inputs are unchanged. Final exact-source
+CI remains required; no full local migration gate or new app build is selected
+for this tests-only round. Preserve diagnostics for any fixture failure.
