@@ -17,6 +17,8 @@ const routes = new Set([
   '/api/local/mcp/targets',
   '/api/local/mcp/preview',
   '/api/local/mcp/save',
+  '/api/local/mcp/changes',
+  '/api/local/mcp/changes/clear',
 ]);
 
 /** No ambient browser authority, redirects, external destinations or write retries. */

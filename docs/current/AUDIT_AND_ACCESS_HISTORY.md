@@ -194,3 +194,29 @@ cannot restore the cleared view. Lock/unmount also discards late results.
 **Clear memory** remains history-preserving. This clear removes logical rows from
 the live pair; it is not disk erasure and does not modify old backups. Restoring
 an older matching pair restores its history. See [local dashboard](../useful/LOCAL_UI.md).
+
+## Demo session permission activity
+
+The demo Assistant access view also shows up to 50 recent dashboard permission
+changes from the current local app session, interleaved by recorded time. These
+are temporary presentation records, separate from the two durable history streams.
+Restart loses them; CLI edits and failures with uncertain storage acknowledgement
+are not recorded. A request's time does not prove which permissions it used.
+
+The main permission editor records one event after an effective successful Save;
+advanced grant edits and client revocation are included. Preview, no-op and failed
+changes do not create rows. Records identify the affected assistant separately
+from the dashboard human actor and contain bounded setting/rule differences, not
+memory values or credentials. Truncated details are marked. A lost browser reply
+can leave a real session event without a confirmed Save message. These entries
+are not a durable audit or an HCP audit implementation.
+
+After confirmed Save, View change in Activity opens the exact assistant/event.
+Expired or evicted links say the record is unavailable. Client/date filters apply;
+request-specific filters hide permission entries. New entries appear even with no
+assistant requests. Older entries are included as request pages are loaded.
+
+Clear stored history retains these temporary entries. The separate Clear session
+permission changes action removes only entries through the confirmed cutoff,
+bound to the current app-session ID; later changes survive. Neither action alters
+current permissions. Other windows refresh through the existing history channel.

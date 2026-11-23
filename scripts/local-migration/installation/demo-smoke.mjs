@@ -128,6 +128,15 @@ try{
  assert.deepEqual((await authority()).map(({summary,ruleCount,...row})=>row),permissionBefore.map(({summary,ruleCount,...row})=>row));
  await permissionPanel.screenshot({path:path.join(root,'demo-permissions-save.png')});
  phase('installed-demo-permissions-save-selected-client-only-personal-receipt-preservation-and-real-mcp');
+ const activityLink=permissionPanel.getByRole('link',{name:'View change in Activity',exact:true});
+ const activityHref=await activityLink.getAttribute('href');assert.match(activityHref,new RegExp('#mcp-client='+selectedId+'&change=[a-f0-9]{32}$'));
+ await activityLink.click();const activityPanel=page.getByRole('tabpanel',{name:'Assistant access',exact:true});
+ await activityPanel.locator('[data-permission-change]').first().waitFor();assert.equal(await activityPanel.locator('[data-permission-change]').count(),2);
+ const highlightedChange=activityPanel.locator('[data-permission-change="'+activityHref.split('&change=')[1]+'"]');
+ assert.equal(await highlightedChange.getAttribute('open'),'');assert.match(await highlightedChange.innerText(),/to Read \(was Blocked\)/);
+ await page.reload();await highlightedChange.waitFor();assert.equal(await activityPanel.locator('[data-permission-change]').count(),2);
+ await page.screenshot({path:path.join(root,'demo-permission-activity.png'),fullPage:true});
+ phase('packaged-session-permission-activity-save-link-and-reload');
  assert.deepEqual(outbound,[]);await context.close();await browser.close();browser=undefined;phase('real-packaged-sidebar-context-edit-persistence-and-reused-views');
  // Run the shipped wrapper/helper with an owned offline CLI, never a real account.
  const codingProject=path.join(root,'coding-project'),codingClient=path.join(root,'claude-connect-client');

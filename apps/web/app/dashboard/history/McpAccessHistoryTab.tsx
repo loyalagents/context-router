@@ -1,12 +1,13 @@
 'use client';
 
-import { authenticatedFetch } from '@/lib/authenticated-fetch';
+import { PermissionActivityRow, type PermissionActivityPage, type PermissionRevealState } from '@/components/local/SessionPermissionActivity';
+import { authenticatedFetch, localJson } from '@/lib/authenticated-fetch';
 import { ClientName } from '@/components/local/ClientNames';
 import { useLocalSession } from '@/components/local/LocalSession';
 
 import { gql } from '@apollo/client';
 import { print } from 'graphql';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { McpAccessHistoryForTabQuery } from '@/lib/generated/graphql';
 import { GRAPHQL_URL } from '@/lib/runtime-config';
 
@@ -89,6 +90,8 @@ interface McpAccessHistoryTabProps {
   invalidationSignal?: AbortSignal;
   clientFilter?: string;
   onClientFilterChange?: (value: string) => void;
+  highlightChangeId?: string | null;
+  permissionReveal?: RefObject<PermissionRevealState>;
 }
 
 function formatAbsoluteTimestamp(value: string): string {
@@ -181,12 +184,17 @@ export default function McpAccessHistoryTab({
   invalidationSignal,
   clientFilter,
   onClientFilterChange,
+  highlightChangeId,
+  permissionReveal,
 }: McpAccessHistoryTabProps) {
   const demo = useLocalSession()?.capabilities.runtime?.mode === 'demo';
   const FilterContainer = demo ? 'details' : 'div';
   const [draftFilters, setDraftFilters] = useState<McpAccessFilters>({...DEFAULT_FILTERS, clientKey: clientFilter ?? ''});
   const [appliedFilters, setAppliedFilters] = useState<McpAccessFilters>({...DEFAULT_FILTERS, clientKey: clientFilter ?? ''});
   const [items, setItems] = useState<McpAccessHistoryItem[]>([]);
+  const [permissionPage,setPermissionPage] = useState<PermissionActivityPage|null>(null);
+  const [permissionError,setPermissionError] = useState(false);
+  const [revealReady,setRevealReady] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState(false);
@@ -199,12 +207,16 @@ export default function McpAccessHistoryTab({
   });
   const requestVersionRef = useRef(0);
   const pendingRef = useRef<AbortController | null>(null);
+  const priorClientFilter = useRef(clientFilter);
+  const loadedFilters = useRef<string | null>(null);
   useEffect(() => () => { requestVersionRef.current++; pendingRef.current?.abort(); }, []);
 
   useEffect(() => {
-    if (clientFilter === undefined) return;
+    if (clientFilter === undefined || clientFilter === priorClientFilter.current) return;
+    priorClientFilter.current = clientFilter;
+    loadedFilters.current = null;
     requestVersionRef.current++; pendingRef.current?.abort();
-    setItems([]); setNextCursor(null); setHasNextPage(false); setExpandedIds({});
+    setItems([]); setPermissionPage(null); setPermissionError(false); setNextCursor(null); setHasNextPage(false); setExpandedIds({});
     setDraftFilters(previous => ({...previous, clientKey: clientFilter}));
     setAppliedFilters(previous => ({...previous, clientKey: clientFilter}));
   }, [clientFilter]);
@@ -267,6 +279,7 @@ export default function McpAccessHistoryTab({
   }, [sanitizedAppliedFilters]);
 
   const loadHistory = useCallback(async (reset: boolean, cursor: string | null = null) => {
+    if (!shouldLoad) return;
     pendingRef.current?.abort();
     const controller = new AbortController(); pendingRef.current = controller;
     const signal = invalidationSignal ? AbortSignal.any([invalidationSignal, controller.signal]) : controller.signal;
@@ -280,7 +293,12 @@ export default function McpAccessHistoryTab({
       setIsLoadingMore(true);
     }
 
+    const filterKey = JSON.stringify(sanitizedAppliedFilters);
+    if (reset && loadedFilters.current !== filterKey) {
+      setItems([]); setHasNextPage(false); setNextCursor(null); setExpandedIds({});
+    }
     setError(null);
+    setRevealReady(false);
 
     try {
       const input: Record<string, unknown> = {
@@ -312,21 +330,27 @@ export default function McpAccessHistoryTab({
         input.occurredTo = new Date(sanitizedAppliedFilters.occurredTo).toISOString();
       }
 
-      const page = await fetchMcpAccessHistory(accessToken, input, signal);
+      const [requests, permissions] = await Promise.allSettled([
+        fetchMcpAccessHistory(accessToken, input, signal),
+        demo ? localJson<PermissionActivityPage>('/api/local/mcp/changes', {}, signal) : Promise.resolve(null),
+      ]);
+      if (signal.aborted || requestVersion !== requestVersionRef.current) return;
 
-      if (signal.aborted || requestVersion !== requestVersionRef.current) {
-        return;
+      // Publish both streams in one render so pagination and linked-row reveal
+      // use the settled request page, while either stream can fail independently.
+      setPermissionPage(permissions.status === 'fulfilled' ? permissions.value : null);
+      setPermissionError(permissions.status === 'rejected');
+      if (requests.status === 'fulfilled') {
+        const page = requests.value;
+        loadedFilters.current = filterKey;
+        setItems(previous => reset ? page.items : [...previous, ...page.items]);
+        setHasNextPage(page.hasNextPage);
+        setNextCursor(page.nextCursor ?? null);
+      } else {
+        setError(requests.reason instanceof Error ? requests.reason.message : 'Failed to load MCP access history.');
       }
 
-      setItems((previous) =>
-        reset ? page.items : [...previous, ...page.items],
-      );
-      setHasNextPage(page.hasNextPage);
-      setNextCursor(page.nextCursor ?? null);
-
-      if (reset) {
-        setExpandedIds({});
-      }
+      if (reset && requests.status === 'fulfilled') setExpandedIds({});
     } catch (loadError) {
       if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setError(
@@ -339,12 +363,14 @@ export default function McpAccessHistoryTab({
       if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setIsLoadingInitial(false);
         setIsLoadingMore(false);
+        setRevealReady(true);
       }
     }
-  }, [accessToken, sanitizedAppliedFilters, invalidationSignal]);
+  }, [accessToken, sanitizedAppliedFilters, invalidationSignal, demo, shouldLoad]);
 
   useEffect(() => {
     if (!shouldLoad) {
+      requestVersionRef.current++; pendingRef.current?.abort(); setRevealReady(false);
       return;
     }
 
@@ -366,6 +392,19 @@ export default function McpAccessHistoryTab({
     void loadHistory(lastRequestRef.current.reset, lastRequestRef.current.cursor);
   };
 
+  const requestOnlyFilters = !!(sanitizedAppliedFilters.surface || sanitizedAppliedFilters.operationName || sanitizedAppliedFilters.outcome || sanitizedAppliedFilters.correlationId);
+  const visibleChanges = demo && !requestOnlyFilters ? (permissionPage?.items ?? []).filter(event => {
+    const time=Date.parse(event.occurredAt), oldest=items.at(-1)?.occurredAt;
+    return (!sanitizedAppliedFilters.clientKey || event.clientKey===sanitizedAppliedFilters.clientKey)
+      && (!sanitizedAppliedFilters.occurredFrom || time>=Date.parse(sanitizedAppliedFilters.occurredFrom))
+      && (!sanitizedAppliedFilters.occurredTo || time<=Date.parse(sanitizedAppliedFilters.occurredTo))
+      && (!hasNextPage || !oldest || time>=Date.parse(oldest) || event.id===highlightChangeId);
+  }) : [];
+  const rows = [
+    ...items.map(item=>({kind:'request' as const,item})),
+    ...visibleChanges.map(item=>({kind:'permission' as const,item})),
+  ].sort((a,b)=>Date.parse(b.item.occurredAt)-Date.parse(a.item.occurredAt) || b.item.id.localeCompare(a.item.id));
+
   const toggleExpanded = (id: string) => {
     setExpandedIds((previous) => ({
       ...previous,
@@ -381,10 +420,21 @@ export default function McpAccessHistoryTab({
         <div>
           <h2 className="text-lg font-semibold">{demo ? 'Assistant access' : 'MCP Access'}</h2>
           <p className="text-sm text-gray-600 mt-1">
-            {demo ? 'See when an assistant used your context, and what was returned.' : 'Review request-level MCP tool and resource access by connected clients.'}
+            {demo ? 'See dashboard permission changes and requests made by your assistants.' : 'Review request-level MCP tool and resource access by connected clients.'}
           </p>
         </div>
 
+        {demo && <div className="mt-3 text-sm text-gray-600">
+          <details><summary className="cursor-pointer">About this list</summary>
+          <p>Up to 50 recent dashboard permission changes from this app session. They disappear when Context Router restarts; CLI changes are not recorded here.</p>
+          <p>Ordered by recorded time. Requests already running may finish under earlier access.</p>
+          </details>
+          <button type="button" className="mt-2 underline" disabled={!shouldLoad || isLoadingInitial || isLoadingMore} onClick={() => void loadHistory(true)}>Refresh activity</button>
+          {permissionPage?.truncated && <p>Older permission changes have been dropped from this session log.</p>}
+          {requestOnlyFilters && <p>Permission changes are hidden while request-specific filters are active.</p>}
+          {permissionError && <p role="status">Session permission changes could not load. Request history is shown separately; use Refresh to retry.</p>}
+          {highlightChangeId && permissionPage && !permissionError && !permissionPage.items.some(event=>event.id===highlightChangeId && (!sanitizedAppliedFilters.clientKey || event.clientKey===sanitizedAppliedFilters.clientKey)) && <p role="status">This permission change is no longer available in this app session.</p>}
+        </div>}
         <FilterContainer className={demo ? 'demo-activity-filters mt-3' : ''}>
         {demo && <summary>Filter activity</summary>}
         <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2 lg:grid-cols-4">
@@ -536,7 +586,7 @@ export default function McpAccessHistoryTab({
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-xs text-gray-700"
               >
                 <span className="font-medium">{chip.label}:</span>
-                {chip.key === 'clientKey' ? <ClientName clientKey={chip.value} fullId /> : <span>{chip.value}</span>}
+                {chip.key === 'clientKey' ? <ClientName clientKey={chip.value} fullId={!demo} showId={!demo} /> : <span>{chip.value}</span>}
                 {chip.key === 'clientKey' && onClientFilterChange && <button type="button" aria-label="Remove client filter" className="underline ml-1" onClick={() => onClientFilterChange('')}>Remove</button>}
               </span>
             ))}
@@ -552,6 +602,7 @@ export default function McpAccessHistoryTab({
                 Failed to load MCP access history.
               </p>
               <p className="text-sm text-red-600 mt-1">{error}</p>
+              {items.length > 0 && <p className="mt-1 text-sm text-red-600">Previously loaded requests are shown.</p>}
             </div>
             <button
               type="button"
@@ -563,7 +614,7 @@ export default function McpAccessHistoryTab({
           </div>
         )}
 
-        {isLoadingInitial && items.length === 0 ? (
+        {isLoadingInitial && rows.length === 0 ? (
           <div className="p-6 space-y-3">
             {[0, 1, 2].map((index) => (
               <div
@@ -572,13 +623,15 @@ export default function McpAccessHistoryTab({
               />
             ))}
           </div>
-        ) : items.length === 0 ? (
+        ) : rows.length === 0 && (error || permissionError) ? null : rows.length === 0 ? (
           <div className="p-10 text-center text-gray-500">
-            {demo ? (isFiltered ? 'No assistant activity matches these filters.' : 'No assistant activity yet. Use your connected assistant, then return here.') : (isFiltered ? 'No MCP access events match the current filters.' : 'No MCP access history yet.')}
+            {demo ? (isFiltered ? 'No assistant activity matches these filters.' : 'No assistant activity yet. Change permissions or use your connected assistant, then return here.') : (isFiltered ? 'No MCP access events match the current filters.' : 'No MCP access history yet.')}
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {items.map((item) => {
+            {rows.map((row) => {
+              if (row.kind === 'permission') return <PermissionActivityRow key={'permission:'+row.item.id} event={row.item} highlight={row.item.id===highlightChangeId} active={shouldLoad && revealReady && !isLoadingInitial && !isLoadingMore} revealState={permissionReveal} olderThanLoaded={hasNextPage && !!items.at(-1) && Date.parse(row.item.occurredAt)<Date.parse(items.at(-1)!.occurredAt)} relativeTime={formatRelativeTimestamp(row.item.occurredAt)} absoluteTime={formatAbsoluteTimestamp(row.item.occurredAt)}/>;
+              const item=row.item;
               const isExpanded = Boolean(expandedIds[item.id]);
 
               return (
@@ -592,7 +645,7 @@ export default function McpAccessHistoryTab({
                     {demo ? <div className="demo-history-row">
                       <div><p><strong><ClientName clientKey={item.clientKey} showId={false}/></strong>{' '}
                         {item.outcome !== 'SUCCESS' && 'attempted to '}
-                        {item.operationName === 'searchPreferences' || item.operationName === 'smartSearchPreferences' ? (item.outcome === 'SUCCESS' ? 'searched context' : 'search context') : item.operationName === 'mutatePreferences' ? (item.outcome === 'SUCCESS' ? 'requested a memory change' : 'request a memory change') : item.operationName}
+                        {item.operationName === 'searchPreferences' || item.operationName === 'smartSearchPreferences' ? (item.outcome === 'SUCCESS' ? 'searched context' : 'search context') : item.operationName === 'listPreferenceSlugs' ? (item.outcome === 'SUCCESS' ? 'listed available context fields' : 'list available context fields') : item.operationName === 'mutatePreferences' ? (item.outcome === 'SUCCESS' ? 'requested a memory change' : 'request a memory change') : item.operationName}
                       </p><p className="demo-history-meta">
                         {(() => {
                           const metadata = item.responseMetadata;

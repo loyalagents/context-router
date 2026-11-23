@@ -331,6 +331,10 @@ The full native suite and separate package trial receipts complete the handoff
 without changing these frozen inputs. The running demo, chats and state remain
 untouched; installing the trial is an explicit user restart.
 
+The owner separately activated [session permission activity](activity-session.md)
+in the Activity-focused fork. It keeps a bounded temporary dashboard-change log,
+without a database migration or changes to the HCP backend.
+
 
 ## Final demo polish after the second Claude review
 
