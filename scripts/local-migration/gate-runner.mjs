@@ -1076,6 +1076,9 @@ export function combineFailures(primaryError, secondaryErrors = [], context = "o
   combined.exitCode = primaryError?.exitCode ?? secondary[0]?.exitCode ?? 1;
   combined.signal = primaryError?.signal ?? secondary[0]?.signal ?? null;
   combined.phase = primaryError?.phase ?? null;
+  // Keep the primary command's captured diagnostics when cleanup also fails.
+  // Phase rendering still bounds/redacts this tail or suppresses it for projections.
+  if (typeof primaryError?.outputTail === "string") combined.outputTail = primaryError.outputTail;
   return combined;
 }
 

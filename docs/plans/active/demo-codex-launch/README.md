@@ -409,3 +409,25 @@ controlled speed benchmark. Existing application builds and artifact evidence
 carry forward only because runtime/build inputs are unchanged. Final exact-source
 CI remains required; no full local migration gate or new app build is selected
 for this tests-only round. Preserve diagnostics for any fixture failure.
+
+## Repeated CI timeout: preserve command diagnostics
+
+The simplified suite passed locally (171 cases, 340.9 seconds with the unchanged
+2-worker command), but Linux CI again exhausted the shared web-phase budget.
+The timeout also triggered owned-process-group cleanup failure. `combineFailures`
+preserved status and causes but dropped the primary command's captured output,
+so the public phase report lost the browser progress needed for diagnosis.
+
+Restore only the primary string output tail; leave budgets, process cleanup,
+CI selection and coverage unchanged. Existing phase rendering still bounds and
+redacts the tail, and structured failure projections continue to suppress it.
+A timeout-plus-cleanup regression reproduced the omission before the fix and now
+checks retained diagnostics, redaction/bounds, exit 124, failed/skipped phases,
+cleanup and projection behavior. Secondary/non-string tails are never promoted.
+Root remains sole writer; independent plan/diff review uses the existing requested
+xhigh reviewer (effective settings unverified). Publish this diagnostic correction
+for a Linux rerun before guessing at another suite restructuring. Because the
+shared local runner changes, select the policy-required full local migration gate
+on the frozen candidate as well as focused runner tests and complete CI. Docker
+and the cached PostgreSQL image are available. Keep the delivered app/state intact;
+this is an investigation checkpoint, not a claim the UI timeout is fixed.
