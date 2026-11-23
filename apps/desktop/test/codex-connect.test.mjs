@@ -10,7 +10,7 @@ test('Codex coding enables real tools and project instructions with ordinary app
  for(const feature of ['shell_tool','unified_exec','view_image'])assert.ok(next.args.includes(`features.${feature}=true`));
  assert.ok(next.args.includes('project_doc_max_bytes=32768'));assert.ok(next.args.includes('mcp_servers.context_router_demo.tools.mutatePreferences.approval_mode="prompt"'));assert.ok(next.args.includes('--strict-config'));assert.ok(next.args.includes('--no-daemon'));
  assert.ok(base.args.includes('features.shell_tool=false'));assert.ok(!next.args.includes('danger-full-access'));assert.ok(!next.args.includes('--dangerously-bypass-approvals-and-sandbox'));
- assert.ok(next.args.includes('project_root_markers=[]'));
+ assert.ok(next.args.includes('project_root_markers=[]'));assert.ok(next.args.includes('shell_environment_policy.exclude=["CR_DEMO_TOKEN"]'));
  assert.deepEqual(codexLoginSpec(next).args,['-c','cli_auth_credentials_store="file"','-c','project_root_markers=[]','login']);assert.equal(codexLoginSpec(next).cwd,next.env.HOME);
 });
 test('only known Codex auth status permits reuse or login; unknown failures never trigger login',()=>{
@@ -25,4 +25,18 @@ test('selected Codex project config is refused without modifying it, including s
  await validateCodexProject(root);await fs.mkdir(path.join(root,'.codex'));const file=path.join(root,'.codex/config.toml');
  await fs.writeFile(file,'[mcp_servers.unrelated]');await assert.rejects(validateCodexProject(root),/project.*Codex config/);assert.equal(await fs.readFile(file,'utf8'),'[mcp_servers.unrelated]');
  await fs.unlink(file);await fs.symlink(path.join(root,'missing'),file);await assert.rejects(validateCodexProject(root),/project.*Codex config/);
+});
+
+for(const interrupted of [false,true])test(`Codex status ${interrupted?'signal retains':'unknown completed output releases'} its setup guard`,async t=>{
+ const fs=await import('node:fs/promises'),path=await import('node:path'),os=await import('node:os');
+ const {withClientGuard}=await import('../../backend/scripts/demo/installed-clients.mjs');
+ const {codexAuthStatus}=await import('../../backend/scripts/demo/codex-connect.mjs');
+ const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'cr-codex-status-')));t.after(()=>fs.rm(root,{recursive:true,force:true}));await fs.mkdir(path.join(root,'demo'),{mode:0o700});
+ const executable=path.join(root,'fake-codex');await fs.writeFile(executable,interrupted?'#!/bin/sh\nkill -TERM $$\n':'#!/bin/sh\necho "Extra warning" >&2\necho "Logged in using ChatGPT" >&2\nexit 0\n',{mode:0o700});
+ const launch={...base,executable,env:{...base.env,HOME:root,CODEX_HOME:path.join(root,'config')}};
+ const run=()=>withClientGuard(root,'a-setup',guard=>codexAuthStatus(launch,guard));
+ await assert.rejects(run(),interrupted?/interrupted/:/Could not verify/);
+ const record=path.join(root,'demo/client-guards/a-setup.json');
+ if(interrupted){assert.ok(await fs.stat(record));await assert.rejects(run(),/active or uncertain/);}
+ else{await assert.rejects(fs.stat(record),{code:'ENOENT'});await assert.rejects(run(),/Could not verify/);await assert.rejects(fs.stat(record),{code:'ENOENT'});}
 });

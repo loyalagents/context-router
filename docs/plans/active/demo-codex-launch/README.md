@@ -210,3 +210,44 @@ helper/runtime checks and 2 affected native overlapping-chat cases remain valid;
 unchanged broader native evidence is carried forward explicitly. Freeze this
 candidate for the separate packaged trial. Targeted checks passed; final
 validation pending.
+
+## Claude review correction round
+
+The owner requested assessment and fixes for the external review. The actual
+built UI reproduced the third-Escape native close and 24-pixel drawer offset.
+Accept all six confirmed findings: settle completed Codex status probes before
+strict parsing (still refuse unknown output), intercept Escape and reconcile
+unexpected native close, keep save outcomes below the sticky toolbar, override
+ancestor spacing on the fixed drawer, restore personal focus/rename behavior,
+and document both legacy native-panel roles' full-chat setup lock. Connections
+remains the overlapping-chat path; no legacy lifetime redesign is selected.
+
+Also exclude the MCP bearer token from Codex coding shell inheritance. This is
+bounded protection against accidental environment disclosure, not complete
+same-user secret isolation. Preserve real signal/uncertain-login guards and
+user-owned labels. Real signed-in Codex and Ctrl-C login behavior remain manual
+evidence gaps; no provider session is started for automated validation.
+
+Root remains sole writer. Independent correction-plan review approved; requested
+sensitive Extra High/UI High, effective inherited settings unverified. Guard/token
+regressions were written first and failed against the prior helper. New tests use
+real guards/child exits and actual browser repeated Escape, unexpected native
+close, exact drawer bounds, visible save outcome, delayed list/focus settlement,
+personal rename/scroll and forced expiry. Renew affected helper/native, pinned
+Codex offline preflight and demo/permission/name browser suites. Carry forward
+unaffected coverage from the 152-test full UI pass; do not duplicate that broad
+run for unrelated context consumers. The first drawer bundle remains untouched
+and is superseded for handoff by a new corrected source-bound bundle. Verify that
+new artifact before switching the existing launcher; preserve state and sign-in.
+
+Correction checkpoint: independent complete-diff review approved, including the
+additional stale queued-close guard. Final production build and all five focused
+browser regressions passed, as did 31 helper/guard tests, both native overlapping
+chat cases and pinned Codex 0.160.0 offline config/auth preflight. The affected
+67-case browser run passed 66; its new native-close focus assertion raced the
+queued close event. The test now waits for editor detachment/focus and passed on
+the final build. Renew that affected suite on this frozen candidate alongside the
+isolated package (tests use disposable resources and do not change build inputs).
+The package receipt will bind the final renewed suite and actual-artifact results.
+No source changes follow this freeze without affected revalidation. Targeted
+checks passed; final validation pending.

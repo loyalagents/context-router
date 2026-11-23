@@ -6,7 +6,7 @@ import {safeError} from './files.mjs';
 
 export function codexCodingLaunchSpec(launch,project){
  const args=launch.args.map(value=>value==='read-only'?'workspace-write':/^features\.(shell_tool|unified_exec|view_image)=false$/.test(value)?value.replace('=false','=true'):value==='project_doc_max_bytes=0'?'project_doc_max_bytes=32768':value);
- args.splice(args.length-1,0,'-c','project_root_markers=[]');
+ args.splice(args.length-1,0,'-c','project_root_markers=[]','-c','shell_environment_policy.exclude=["CR_DEMO_TOKEN"]');
  return {...launch,args,cwd:project};
 }
 export function codexLoginSpec(launch){
@@ -31,5 +31,6 @@ export function codexAuthStatus(launch,guard){
  const spec=codexLoginSpec(launch);
  const result=spawnSync(spec.executable,[...spec.args,'status'],{cwd:spec.cwd,env:spec.env,input:'',encoding:'utf8',timeout:15000,maxBuffer:65536});
  if(result.error||result.signal!==null)throw safeError('Codex sign-in check was interrupted. Invocation evidence is retained.');
- const signedIn=parseCodexAuthStatus(result,launch.env.CODEX_HOME);guard.settled();return signedIn;
+ // The child exited; unknown output still refuses launch but is not an uncertain lifetime.
+ guard.settled();return parseCodexAuthStatus(result,launch.env.CODEX_HOME);
 }

@@ -174,9 +174,9 @@ isolated demo sign-in and B credential. Setup/sign-in is serialized, while each
 foreground chat has its own invocation guard. After restarting Context Router,
 open a fresh session from Connections for the current endpoint. Requests cannot
 be replayed. Interrupted/uncertain invocation guards remain retained; uncertain
-setup blocks further setup. A retained older B guard allows only an already
+setup blocks further setup. A retained older A or B guard allows only an already
 initialized, verified signed-in profile to be reused, never new login or profile
-creation. Legacy native-panel B actions still hold the setup lock for their full
+creation. Legacy native-panel A and B actions still hold the setup lock for their full
 invocation; use Connections for overlapping chats. Normal coding can create independent project
 processes such as dev servers; Context Router Quit does not stop them. This flow
 is a synthetic demo preview; live sign-in and coding acceptance remain a human
@@ -187,7 +187,9 @@ in Connections. **Open Codex** remembers a separate project choice, checks the
 isolated demo ChatGPT sign-in, signs in only when needed and opens normal coding
 in Terminal. It requires the qualified native Codex 0.160.0 executable. Coding
 uses workspace-write sandboxing and on-request approvals; context mutation also
-requires approval and the current Agent A grants. Several fresh Codex chats can
+requires approval and the current Agent A grants. Shell commands exclude the MCP
+bearer token from their inherited environment; this is not a same-user filesystem
+isolation guarantee. Several fresh Codex chats can
 stay open together. Their recent Activity uses the A credential, separately from
 Claude's B credential. Choose a project without its own `.codex/config.toml`;
 the demo ignores parent project configuration and never edits existing settings.

@@ -71,12 +71,6 @@ export default function McpClients() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [editing,setEditing]=useState<Client|null>(null);
   const permissionTrigger=useRef<{id:string;button:HTMLButtonElement}|null>(null);
-  useEffect(()=>{
-    if(editing || !permissionTrigger.current)return;
-    const {id,button}=permissionTrigger.current;permissionTrigger.current=null;
-    const target=button.isConnected&&!button.disabled?button:editButtons.current.get(id);
-    if(target&&!target.disabled)target.focus({preventScroll:true});
-  },[editing]);
   const editButtons=useRef(new Map<string,HTMLButtonElement>());
   const [items, setItems] = useState<Client[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
@@ -88,6 +82,12 @@ export default function McpClients() {
   const [action, setAction] = useState('READ');
   const [effect, setEffect] = useState('DENY');
   const [busy, setBusy] = useState(false);
+  useEffect(()=>{
+    if(editing || busy || !permissionTrigger.current)return;
+    const {id,button}=permissionTrigger.current;
+    const target=button.isConnected&&!button.disabled?button:editButtons.current.get(id);
+    if(target&&!target.disabled){permissionTrigger.current=null;target.focus({preventScroll:demo});}
+  },[editing,busy,demo]);
   const [outcome, setOutcome] = useState<ChangeOutcome | null>(null);
   const outcomePanel = useRef<HTMLDivElement | null>(null);
   const handledOutcome = useRef<ChangeOutcome | null>(null);
@@ -370,7 +370,7 @@ export default function McpClients() {
           <button type="button" className={button} disabled={busy} onClick={()=>{cancelledRename.current=renameDraft.client.id;setRenameDraft(null);setRenameError('');}}>Cancel rename</button>
         </div>
       </form>;
-  const editableClient = (id:string) => !busy&&!editing&&!renameDraft ? items.find(client=>client.id===id&&!client.revoked) : undefined;
+  const editableClient = (id:string) => !busy&&!editing&&(!demo||!renameDraft) ? items.find(client=>client.id===id&&!client.revoked) : undefined;
   const openPermissions = (id:string,trigger:HTMLButtonElement) => {const client=editableClient(id);if(client){permissionTrigger.current={id,button:trigger};setEditing(client);}};
   const permissionsPanel = editing&&<McpPermissionsEditor key={editing.id} client={editing} drawer={demo} onChanged={()=>{channel.current?.postMessage('invalidate');invalidate();}} onClose={()=>setEditing(null)}/>;
   const authorityPanel = snapshot && (

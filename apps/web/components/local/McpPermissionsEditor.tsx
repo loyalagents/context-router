@@ -184,9 +184,10 @@ export default function McpPermissionsEditor({
   const dialog = useRef<HTMLDialogElement>(null);
   const backdropPress = useRef(false);
   function requestClose() {
-    if (life.current.submitting || saving) return;
-    if (drawer && intent.current?.intents.length && !window.confirm("Discard unsaved access changes?")) return;
+    if (life.current.submitting || saving) return false;
+    if (drawer && intent.current?.intents.length && !window.confirm("Discard unsaved access changes?")) return false;
     onClose();
+    return true;
   }
   const draft = useRef<{ policy: McpPolicy | null; edits: Edit[] }>({
     policy: null,
@@ -290,11 +291,11 @@ export default function McpPermissionsEditor({
     for (const event of ["pointerdown", "keydown", "input", "focusin"])
       document.addEventListener(event, activity, true);
     return () => {
+      s.mounted = false;
       if (drawer) {
         modal?.close();
         document.body.style.overflow = previousOverflow;
       }
-      s.mounted = false;
       s.version++;
       s.read++;
       s.search++;
@@ -1030,7 +1031,12 @@ export default function McpPermissionsEditor({
     return event.target === event.currentTarget && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom);
   };
   return <dialog ref={dialog} className="demo-access-drawer" aria-label="Assistant access controls"
+    onKeyDown={event => { if(event.key === "Escape") { event.preventDefault(); event.stopPropagation(); requestClose(); } }}
     onCancel={event => { event.preventDefault(); requestClose(); }}
+    onClose={() => {
+      if (!life.current.mounted || dialog.current?.open) return;
+      if (!requestClose()) { dialog.current?.showModal(); title.current?.focus(); }
+    }}
     onPointerDown={event => { backdropPress.current = outside(event); }}
     onClick={event => { const dismiss = backdropPress.current && outside(event); backdropPress.current = false; if (dismiss) requestClose(); }}>
     <div className="demo-access-drawer-toolbar"><span>Assistant access</span><button className="demo-button" aria-label="Close access controls" disabled={saving} onClick={requestClose}>Close ×</button></div>

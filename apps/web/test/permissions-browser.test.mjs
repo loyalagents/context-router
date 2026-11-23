@@ -989,3 +989,14 @@ test(
     assert.deepEqual(clients(f)[0].policy.targets, ["synthetic.*"]);
   },
 );
+
+test('personal inline access remains available during rename and closing scrolls its trigger into view', {timeout:60000},async t=>{
+ const f=await browserFixture(t),id=clients(f)[0].id,panel=await open(f,id);
+ await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ await f.page.getByRole('button',{name:'Rename '+id,exact:true}).click();
+ const trigger=f.page.getByRole('button',{name:'Edit permissions '+id,exact:true});assert.equal(await trigger.isDisabled(),false);await trigger.click();
+ await panel.getByLabel('Maximum value access').waitFor();assert.equal(await f.page.locator('dialog').count(),0);
+ await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ assert.equal(await trigger.evaluate(el=>el===document.activeElement),true);
+ assert.ok(await trigger.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));
+});
