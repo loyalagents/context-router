@@ -177,13 +177,37 @@ isolated demo sign-in and B credential. Setup/sign-in is serialized, while each
 foreground chat has its own invocation guard. After restarting Context Router,
 open a fresh session from Connections for the current endpoint. Requests cannot
 be replayed. Interrupted/uncertain invocation guards remain retained; uncertain
-setup blocks further setup. A retained older B guard allows only an already
+setup blocks further setup. A retained older A or B guard allows only an already
 initialized, verified signed-in profile to be reused, never new login or profile
-creation. Legacy native-panel B actions still hold the setup lock for their full
+creation. Legacy native-panel A and B actions still hold the setup lock for their full
 invocation; use Connections for overlapping chats. Normal coding can create independent project
 processes such as dev servers; Context Router Quit does not stop them. This flow
 is a synthetic demo preview; live sign-in and coding acceptance remain a human
 trial, not broader personal-mode onboarding qualification.
+
+Connections has **Codex** and **Claude Code** tabs. The browser tab remembers its
+selected assistant across navigation and reload. **Open Codex** remembers a separate project choice, checks the
+isolated demo ChatGPT sign-in, signs in only when needed and opens normal coding
+in Terminal. It requires the qualified native Codex 0.160.0 executable. Coding
+uses workspace-write sandboxing and on-request approvals; context mutation also
+requires approval and the current Agent A grants. Shell commands exclude the MCP
+bearer token from their inherited environment; this is not a same-user filesystem
+isolation guarantee. Several fresh Codex chats can
+stay open together. Their recent Activity uses the A credential, separately from
+Claude's B credential. Choose a project without its own `.codex/config.toml`;
+the demo ignores parent project configuration and never edits existing settings.
+The native picker/inspection remains one operation at a
+time; switching assistants never transfers a launch result or login profile.
+The same picker validation, retained short per-chat temporary directory, interruption
+feedback and persistent launch-error behavior apply to both assistants.
+
+Review access opens the exact assistant's drawer with fixed Preview, Save and
+Cancel actions. Returning to the window refreshes saved permissions while preserving
+the draft; detailed scope and rules are under Advanced. **Blocked** is the value
+access maximum, not revocation of the separate field-management maximum. Its
+remaining capability is shown explicitly and still obeys scope and database rules.
+Visible Assistant access activity refreshes automatically on the first page,
+pausing while filters are edited, details are expanded or older pages are loaded.
 
 The latest chat's confirmed exit and interruption have separate dashboard
 messages. Uncertain invocation guard evidence remains retained; interruption

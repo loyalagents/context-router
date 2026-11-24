@@ -525,12 +525,20 @@ test(
     assert.deepEqual(clients(f)[0].policy.capabilities, ["preferences:write"]);
   },
 );
-test(
-  "permissions expiry discards private editor state",
+for (const demo of [false, true]) test(
+  `permissions expiry discards private editor state (demo=${demo})`,
   { timeout: 60000 },
   async (t) => {
-    const f = await browserFixture(t),
-      panel = await open(f);
+    const f = await browserFixture(t);
+    // Presentation metadata selects the drawer; this fixture stays isolated.
+    if (demo) await f.page.route("**/api/local/capabilities", async route => {
+      const response = await route.fetch(), body = await response.json();
+      body.runtime = {mode:"demo", launcher:"native", generation:"c".repeat(32), storeId:"b".repeat(32)};
+      await route.fulfill({response, json:body});
+    });
+    const panel = await open(f), maximum = panel.getByLabel("Maximum value access");
+    await maximum.selectOption(await maximum.inputValue() === "Blocked" ? "Read" : "Blocked");
+    if (demo) {assert.equal(await f.page.locator("dialog:modal").count(), 1);await panel.getByText("Advanced: categories, fields and rules",{exact:true}).click();}
     await panel
       .getByLabel("Search categories or fields")
       .fill("secret-editor-draft");
@@ -543,6 +551,8 @@ test(
     );
     await f.page.evaluate(() => window.dispatchEvent(new Event("focus")));
     await f.page.getByLabel("Unlock token").waitFor();
+    assert.equal(await f.page.locator("dialog:modal").count(), 0);
+    assert.equal(await f.page.evaluate(() => document.body.style.overflow), "");
     assert.equal(
       await f.page
         .getByRole("region", { name: "Edit permissions", exact: true })
@@ -646,6 +656,7 @@ test(
       await replacement.getByLabel("Maximum value access").inputValue(),
       "Read",
     );
+    await replacement.getByText("Advanced: categories, fields and rules",{exact:true}).click();
     assert.equal(
       await replacement.getByLabel("Search categories or fields").inputValue(),
       "",
@@ -979,3 +990,14 @@ test(
     assert.deepEqual(clients(f)[0].policy.targets, ["synthetic.*"]);
   },
 );
+
+test('personal inline access remains available during rename and closing scrolls its trigger into view', {timeout:60000},async t=>{
+ const f=await browserFixture(t),id=clients(f)[0].id,panel=await open(f,id);
+ await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ await f.page.getByRole('button',{name:'Rename '+id,exact:true}).click();
+ const trigger=f.page.getByRole('button',{name:'Edit permissions '+id,exact:true});assert.equal(await trigger.isDisabled(),false);await trigger.click();
+ await panel.getByLabel('Maximum value access').waitFor();assert.equal(await f.page.locator('dialog').count(),0);
+ await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ assert.equal(await trigger.evaluate(el=>el===document.activeElement),true);
+ assert.ok(await trigger.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));
+});

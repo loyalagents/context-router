@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { authenticateClaude, startClaude, codingLaunchSpec } from '../../backend/scripts/demo/claude-connect.mjs';
+import { authenticateClient, startClient, codingLaunchSpec } from '../../backend/scripts/demo/claude-connect.mjs';
 import { clientLaunchSpec } from '../../backend/scripts/demo/clients.mjs';
 
-const connectClaude=async(launch,options)=>{const code=await authenticateClaude(launch,options);return code===0?startClaude(launch,options):code;};
+const connectClaude=async(launch,options)=>{const code=await authenticateClient(launch,options);return code===0?startClient(launch,options):code;};
 const launch = clientLaunchSpec({command:'claude',auth:'subscription',agent:'b',root:'/demo',mcpPort:8790,dataset:'demo001'},{executable:'/native/claude'});
 for (const signedIn of [true,false]) test(`connect checks isolated auth, ${signedIn?'reuses login':'signs in once'}, then opens coding session`,async()=>{
   const events=[];let authenticated=signedIn;
@@ -38,17 +38,17 @@ test('progress is private, request-bound, immutable and cannot replay a retained
 
 test('a retained legacy invocation can reuse login but cannot initiate sign-in',async()=>{
  let runs=0;
- await assert.rejects(authenticateClaude(launch,{check:async()=>{},authStatus:async()=>false,run:async()=>runs++,state:async()=>{},allowLogin:false}),/earlier demo invocation/);
+ await assert.rejects(authenticateClient(launch,{check:async()=>{},authStatus:async()=>false,run:async()=>runs++,state:async()=>{},allowLogin:false}),/earlier demo invocation/);
  assert.equal(runs,0);
- assert.equal(await authenticateClaude(launch,{check:async()=>{},authStatus:async()=>true,run:async()=>runs++,state:async()=>{},allowLogin:false}),0);
+ assert.equal(await authenticateClient(launch,{check:async()=>{},authStatus:async()=>true,run:async()=>runs++,state:async()=>{},allowLogin:false}),0);
  assert.equal(runs,0);
 });
 
-test('a chat interruption is distinct from setup failure and never claims confirmed exit',async()=>{
+for(const command of ['claude','codex'])test(`${command} chat interruption is distinct from setup failure and never claims confirmed exit`,async()=>{
  const states=[];
- await assert.rejects(startClaude(launch,{check:async()=>{},run:async()=>{throw Error('lost child');},state:async s=>states.push(s),credential:()=> 'fixture-token'}),/lost child/);
+ await assert.rejects(startClient({...launch,command},{check:async()=>{},run:async()=>{throw Error('lost child');},state:async s=>states.push(s),credential:()=> 'fixture-token'}),/lost child/);
  assert.deepEqual(states,['starting','interrupted']);
- const ended=[];assert.equal(await startClaude(launch,{check:async()=>{},run:async()=>129,state:async s=>ended.push(s),credential:()=> 'fixture-token'}),129);
+ const ended=[];assert.equal(await startClient({...launch,command},{check:async()=>{},run:async()=>129,state:async s=>ended.push(s),credential:()=> 'fixture-token'}),129);
  assert.deepEqual(ended,['starting','interrupted']);
 });
 test('confirmed exit progress outranks a late generic helper failure',async t=>{
@@ -72,15 +72,16 @@ test('coding preapproves only the two context reads before the permission flag a
  assert.deepEqual(args.slice(args.indexOf('--allowedTools'),args.indexOf('--permission-mode')+2),['--allowedTools','mcp__context_router_demo__searchPreferences,mcp__context_router_demo__listPreferenceSlugs','--permission-mode','default']);
  assert.deepEqual([...args,'auth','status','--json'].slice(-5),['--permission-mode','default','auth','status','--json']);
 });
-test('lost sign-in child reports interrupted sign-in without reading credentials or starting coding',async()=>{
+for(const command of ['claude','codex'])test(`${command} lost sign-in child reports interrupted sign-in without reading credentials or starting coding`,async()=>{
  const states=[];let runs=0;
- await assert.rejects(connectClaude(launch,{check:async()=>{},authStatus:async()=>false,run:async()=>{runs++;throw Error('lost sign-in child');},state:async state=>states.push(state),credential:()=>{throw Error('must not read');}}),/lost sign-in child/);
+ const client=command==='codex'?clientLaunchSpec({command,agent:'a',root:'/demo',mcpPort:8790,dataset:'demo001'},{executable:'/native/codex'}):launch;
+ await assert.rejects(connectClaude(client,{check:async()=>{},authStatus:async()=>false,run:async()=>{runs++;throw Error('lost sign-in child');},state:async state=>states.push(state),credential:()=>{throw Error('must not read');}}),/lost sign-in child/);
  assert.equal(runs,1);assert.deepEqual(states,['signing-in','login-interrupted']);
 });
-for(const specific of ['login-failed','login-interrupted'])test(`${specific} progress outranks generic helper failure`,async t=>{
+for(const role of ['a','b'])for(const specific of ['login-failed','login-interrupted'])test(`${role} ${specific} progress outranks generic helper failure`,async t=>{
  const fs=await import('node:fs/promises'),os=await import('node:os'),path=await import('node:path');
  const {beginConnectProgress,readConnectProgress}=await import('../../backend/scripts/demo/claude-connect.mjs');
  const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'cr-login-progress-')));t.after(()=>fs.rm(root,{recursive:true,force:true}));await fs.mkdir(path.join(root,'demo'),{mode:0o700});
- const spec={root,installationId:'a'.repeat(32),store:'b'.repeat(32),generation:'c'.repeat(32)},id='d'.repeat(32),state=await beginConnectProgress(spec,id);
+ const spec={root,role,installationId:'a'.repeat(32),store:'b'.repeat(32),generation:'c'.repeat(32)},id='d'.repeat(32),state=await beginConnectProgress(spec,id);
  await state('signing-in');await state(specific);await state('failed');assert.equal(await readConnectProgress(spec,id),specific);
 });

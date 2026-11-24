@@ -33,6 +33,8 @@ const pages = new Set([
 const apiRoutes = new Set([
   '/api/local/demo/claude/open',
   '/api/local/demo/claude/status',
+  '/api/local/demo/codex/open',
+  '/api/local/demo/codex/status',
   '/graphql',
   '/api/preferences/analysis',
   '/api/form-fill/pdf',
@@ -164,6 +166,7 @@ export class LocalUiBoundary {
     private readonly management?: LocalUiManagement,
     private readonly aiPolicy?: LocalUiAiPolicy,
     private readonly demoClaude?: DemoClaudeActions,
+    private readonly demoCodex?: DemoClaudeActions,
   ) {}
 
   middleware = (
@@ -365,7 +368,8 @@ export class LocalUiBoundary {
       route === '/api/local/capabilities' ||
       route === '/api/local/session' ||
       route.startsWith('/api/local/mcp/') ||
-      route.startsWith('/api/local/demo/claude/')
+      route.startsWith('/api/local/demo/claude/') ||
+      route.startsWith('/api/local/demo/codex/')
     ) {
       const chunks: Buffer[] = [];
       for await (const chunk of req) {
@@ -385,16 +389,17 @@ export class LocalUiBoundary {
       }
       if (!body || typeof body !== 'object' || Array.isArray(body))
         return rejectUiRequest(res);
-      if (route.startsWith('/api/local/demo/claude/')) {
+      if (route.startsWith('/api/local/demo/claude/') || route.startsWith('/api/local/demo/codex/')) {
+        const demoClient = route.startsWith('/api/local/demo/codex/') ? this.demoCodex : this.demoClaude;
         req[UI_REVALIDATE]();
         const open = route.endsWith('/open');
         if (open ? Object.keys(body).join() !== 'chooseProject' || typeof body.chooseProject !== 'boolean' : Object.keys(body).length !== 0)
           return rejectUiRequest(res);
-        if (!this.demoClaude) {
+        if (!demoClient) {
           if (open) return rejectUiRequest(res, 503);
           return reply(res, 200, { available: false });
         }
-        const result = await (open ? this.demoClaude.open(body.chooseProject) : this.demoClaude.status());
+        const result = await (open ? demoClient.open(body.chooseProject) : demoClient.status());
         req[UI_REVALIDATE]();
         return reply(res, 200, result);
       }

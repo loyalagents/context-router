@@ -36,7 +36,7 @@ export default function DemoContextLibrary({ preferences, definitions, accessTok
   useEffect(() => { if (!interacting && selectedId !== resolvedId) setSelectedId(resolvedId); }, [interacting, selectedId, resolvedId]);
   const choose = (id: string) => { if (!interacting) setSelectedId(id); };
   return <main className={`demo-page demo-context-page${toolsOpen ? ' demo-tools-open' : ''}`}>
-    <header className="demo-page-header"><div><h1>Your context</h1><p>Memories your connected assistants can read, within the access you allow.</p></div><Link prefetch={false} className="demo-button demo-primary" href="/dashboard/permissions"><DemoIcon name="connections"/>Connect Claude Code</Link></header>
+    <header className="demo-page-header"><div><h1>Your context</h1><p>Memories your connected assistants can read, within the access you allow.</p></div><Link prefetch={false} className="demo-button demo-primary" href="/dashboard/permissions"><DemoIcon name="connections"/>Connect to AI</Link></header>
     <div className="demo-toolbar">
       <label className="demo-search"><DemoIcon name="search"/><input aria-label="Search your context" placeholder="Search your context" value={search} disabled={interacting} onChange={event => { setSearch(event.target.value); setSelectedId(null); }}/></label>
       <select className="demo-category-select" aria-label="Context category" value={category} disabled={interacting} onChange={event => {setCategory(event.target.value);setSelectedId(null);}}><option value="">All categories</option>{categories.map(name => <option key={name} value={name}>{name}</option>)}</select>

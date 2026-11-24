@@ -9,12 +9,13 @@ import { privateJson, privatePath, safeError } from './files.mjs';
 import { trustedDirectory, trustedBytes, ensurePrivateDirectory, writeSyncedJson, syncDirectory, exists } from './trusted-files.mjs';
 import { activeDemo } from './active.mjs';
 import { clientLaunchSpec, loginSpec, preflightClient } from './clients.mjs';
-import { codingLaunchSpec, codingTemporaryDirectory, validateDemoProject, claudeAuthStatus, authenticateClaude, startClaude, beginConnectProgress } from './claude-connect.mjs';
+import { codingLaunchSpec, codingTemporaryDirectory, validateDemoProject, claudeAuthStatus, authenticateClient, startClient, beginConnectProgress } from './claude-connect.mjs';
+import {codexAuthStatus,validateCodexProject} from './codex-connect.mjs';
 import { readCredential } from '../mcp-bridge/credential.mjs';
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export async function withClientGuard(root,role,action){
-  if(!['a','b','desktop','b-setup'].includes(role)&&!/^b-session-[a-f0-9]{32}$/.test(role))throw safeError('Unknown demo role.');
+  if(!['a','b','desktop','a-setup','b-setup'].includes(role)&&!/^[ab]-session-[a-f0-9]{32}$/.test(role))throw safeError('Unknown demo role.');
   const signals=['SIGINT','SIGTERM','SIGHUP'];let cancelled=false;
   const cancel=()=>{cancelled=true;},check=()=>{if(cancelled)throw safeError('Demo command cancelled. Any uncertain invocation evidence is retained.');};
   // A signal only latches cancellation. The owned action must unwind before its
@@ -74,7 +75,7 @@ export async function inspectInstalledClient(spec,{coding=false,command='codex',
     try{
       const probeSpec=clientLaunchSpec({command,root:probe,profileRoot:probe,mcpPort:Number(new URL(spec.endpoint).port),dataset:'demo001',agent:role,auth},{executable:executable.path});
       for(const value of new Set([probeSpec.cwd,probeSpec.env.TMPDIR,probeSpec.env.CODEX_HOME,probeSpec.env.CLAUDE_CONFIG_DIR].filter(Boolean)))await fs.mkdir(value,{mode:0o700});
-      preflightClient(coding?codingLaunchSpec(probeSpec,probeSpec.cwd):probeSpec,{versionGuidance:'Use Choose executable… in Demo setup to select an existing qualified native executable, or install this version.'});
+      preflightClient(coding?codingLaunchSpec(probeSpec,probeSpec.cwd):probeSpec,{coding,versionGuidance:'Use Choose executable… in Demo setup to select an existing qualified native executable, or install this version.'});
     }finally{await fs.rm(probe,{recursive:true,force:true});}
     if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed during preflight.');
     await activeDemo(spec);
@@ -82,8 +83,8 @@ export async function inspectInstalledClient(spec,{coding=false,command='codex',
 }
 export async function launchInstalledClient(spec,{role,command='codex',login=false,connect=false,project,request,executable:explicit,auth=command==='claude'?'subscription':undefined}){
   if(!['a','b'].includes(role))throw safeError('Choose Agent A or B.');
-  if(connect&&(role!=='b'||command!=='claude'||auth!=='subscription'||login))throw safeError('Unsupported demo connection.');
-  if(connect){const active=await activeDemo(spec);spec={...spec,installationId:active.installationId};}
+  if(connect&&(login||!((role==='a'&&command==='codex'&&auth===undefined)||(role==='b'&&command==='claude'&&auth==='subscription'))))throw safeError('Unsupported demo connection.');
+  if(connect){const active=await activeDemo(spec);spec={...spec,installationId:active.installationId,role};}
   const state=connect?await beginConnectProgress(spec,request):undefined;
   const prepare=async guard=>{
     process.stdout.write('Checking the qualified client and isolated preflight settings…\n');
@@ -94,26 +95,26 @@ export async function launchInstalledClient(spec,{role,command='codex',login=fal
     const profile=await profileFor(spec.root,receipt.installationId,role,guard);
     const launch=clientLaunchSpec({command,root:path.join(spec.root,'demo',spec.store),profileRoot:profile,mcpPort:Number(new URL(spec.endpoint).port),dataset:'demo001',agent:role,auth},{executable:executable.path});
     for(const value of new Set([launch.cwd,launch.env.TMPDIR,launch.env.CODEX_HOME,launch.env.CLAUDE_CONFIG_DIR].filter(Boolean)))await privatePath(value,true);
-    const check=async invocation=>{await invocation.checkpoint();await activeDemo(spec);if(connect)await validateDemoProject(project,spec.root);if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed before launch.');};
+    const check=async invocation=>{await invocation.checkpoint();await activeDemo(spec);if(connect){await validateDemoProject(project,spec.root);if(command==='codex')await validateCodexProject(project);}if(digest(await executableBytes(executable.path,command))!==executable.sha256)throw safeError('Client executable changed before launch.');};
     return {launch,check,executable};
   };
   try{
     if(connect){
-      const prepared=await withClientGuard(spec.root,'b-setup',async guard=>{
-        const legacy=await exists(path.join(spec.root,'demo/client-guards/b.json'));
-        // Older helpers held b.json across setup AND the chat. Retain it; only
+      const prepared=await withClientGuard(spec.root,role+'-setup',async guard=>{
+        const legacy=await exists(path.join(spec.root,'demo/client-guards',role+'.json'));
+        // Older helpers held the role guard across setup AND the chat. Retain it; only
         // reuse a complete signed-in profile, never replay its uncertain setup.
-        if(legacy&&!await exists(path.join(spec.root,'demo/profiles/b/profile.json')))throw safeError('An earlier demo setup is retained. Finish it before opening another chat.');
-        const prepared=await prepare(guard);await validateDemoProject(project,spec.root);
+        if(legacy&&!await exists(path.join(spec.root,'demo/profiles',role,'profile.json')))throw safeError('An earlier demo setup is retained. Finish it before opening another chat.');
+        const prepared=await prepare(guard);await validateDemoProject(project,spec.root);if(command==='codex')await validateCodexProject(project);
         prepared.launch=codingLaunchSpec(prepared.launch,project);
-        prepared.code=await authenticateClaude(prepared.launch,{check:()=>prepared.check(guard),authStatus:value=>claudeAuthStatus(value,guard),run:value=>runForeground(value,guard),state,allowLogin:!legacy});
+        prepared.code=await authenticateClient(prepared.launch,{check:()=>prepared.check(guard),authStatus:value=>(command==='codex'?codexAuthStatus:claudeAuthStatus)(value,guard),run:value=>runForeground(value,guard),state,allowLogin:!legacy});
         return prepared;
       });
       if(prepared.code!==0)return prepared.code;
-      return await withClientGuard(spec.root,'b-session-'+request,async guard=>{
+      return await withClientGuard(spec.root,role+'-session-'+request,async guard=>{
         await prepared.check(guard);
         prepared.launch.env.TMPDIR=await codingTemporaryDirectory();
-        return startClaude(prepared.launch,{check:()=>prepared.check(guard),run:value=>runForeground(value,guard),state,credential:()=>readCredential(prepared.launch.credentialFile)});
+        return startClient(prepared.launch,{check:()=>prepared.check(guard),run:value=>runForeground(value,guard),state,credential:()=>readCredential(prepared.launch.credentialFile)});
       });
     }
     const legacy=()=>withClientGuard(spec.root,role,async guard=>{
@@ -132,8 +133,8 @@ export async function launchInstalledClient(spec,{role,command='codex',login=fal
       process.stdout.write(login?'Starting explicit login in the isolated demo profile.\n':'Starting a fresh demo client. Its provider may receive retrieved demo context.\n');
       return runForeground(launch,guard);
     });
-    // Legacy B actions share the setup lock; their existing b guard is preserved.
-    return await (role==='b'?withClientGuard(spec.root,'b-setup',legacy):legacy());
+    // Legacy actions share their role setup lock; invocation evidence is preserved.
+    return await withClientGuard(spec.root,role+'-setup',legacy);
   }catch(error){await state?.('failed').catch(()=>{});throw error;}
 }
 

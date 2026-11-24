@@ -10,9 +10,11 @@ import {
   type ReactNode,
 } from "react";
 import { localJson } from "@/lib/authenticated-fetch";
+import { useLocalSession } from "./LocalSession";
 import { localClientId, usableClientName } from "@/lib/local-client-name";
 
 type Names = {
+  codexId?: string;
   names: Record<string, string>;
   register: (id: string) => () => void;
 };
@@ -20,6 +22,17 @@ const Context = createContext<Names | null>(null);
 
 /** A cache owned by this authenticated page; never shared across sessions. */
 export function ClientNamesProvider({ children }: { children: ReactNode }) {
+  const demo=useLocalSession()?.capabilities.runtime?.mode==='demo';
+  const [codexId,setCodexId]=useState<string>();
+  useEffect(()=>{
+    setCodexId(undefined);
+    if(!demo)return;
+    const controller=new AbortController();
+    void localJson<{clientId?:string}>('/api/local/demo/codex/status',{},controller.signal).then(value=>{
+      if(!controller.signal.aborted&&value.clientId&&localClientId(`local:${value.clientId}`))setCodexId(value.clientId);
+    }).catch(()=>{});
+    return()=>controller.abort();
+  },[demo]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [failed, setFailed] = useState(false);
   const state = useRef({
@@ -113,7 +126,7 @@ export function ClientNamesProvider({ children }: { children: ReactNode }) {
     };
   }, [flush, invalidate]);
   return (
-    <Context.Provider value={{ names, register }}>
+    <Context.Provider value={{ names, register, codexId }}>
       {failed && (
         <p role="status" className="px-10 pt-4">
           Client names unavailable; instance IDs remain visible.{" "}
@@ -154,7 +167,7 @@ export function ClientName({
     );
   return (
     <span title={clientKey} className="[overflow-wrap:anywhere]">
-      <bdi dir="auto">{name}</bdi>{" "}
+      <bdi dir="auto">{id===context?.codexId&&name==="Demo agent A — writer"?"Codex — writer":name}</bdi>{" "}
       <code aria-hidden="true" hidden={!showId}>
         <bdi dir="ltr">· {id.slice(-8)}</bdi>
       </code>

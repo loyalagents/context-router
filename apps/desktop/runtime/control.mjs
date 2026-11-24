@@ -44,14 +44,14 @@ export class ControlProtocol {
         this.#buffer = Buffer.concat([this.#buffer, bytes.subarray(cursor, limit)]);
         if (end < 0) return;
         const frame = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(this.#buffer)); this.#buffer = Buffer.alloc(0);
-        const claudeStatus=frame?.command==='demo-claude-status';
+        const claudeStatus=['demo-claude-status','demo-codex-status'].includes(frame?.command);
         if (!frame || Object.keys(frame).sort().join() !== (claudeStatus?'command,generation,request,state,version':'command,generation,version') || frame.version !== 1 || frame.generation !== this.generation) throw failure();
         if (!this.#ready) {
           if (frame.command !== 'start') throw failure();
           this.#ready = true; clearTimeout(this.#timer); this.#start();
         } else {
           if(claudeStatus&&(!/^[a-f0-9]{32}$/.test(frame.request)||!['choosing-project','checking','terminal-opened','cancelled','failed','busy','client-unavailable'].includes(frame.state)))throw failure();
-          if (!['unlock','quit','model-unavailable','demo-claude-status'].includes(frame.command)) throw failure();
+          if (!['unlock','quit','model-unavailable','demo-claude-status','demo-codex-status'].includes(frame.command)) throw failure();
           if (frame.command === 'quit') this.#quitRequested = true;
           this.#onCommand(frame.command,frame);
           if (frame.command === 'quit') { this.end(); if (end + 1 < bytes.length) this.fail(); return; }

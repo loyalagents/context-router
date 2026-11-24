@@ -168,7 +168,8 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger per
     NSInteger mcpPort=[owner.installation[@"mode"] isEqual:@"demo"]?demoMcpPort:personalMcpPort;
     requestedPortAvailable(uiPort);
     @try{requestedPortAvailable(mcpPort);}@catch(NSException *e){(void)e;if(![owner.installation[@"mode"] isEqual:@"demo"])CRFail();if(!unavailableDemo(owner,shell,output,personalMcpPort))return 0;again=YES;continue;}
-    NSString *modeAction=nil,*claudeRequest=nil;
+    NSString *modeAction=nil;
+    NSMutableDictionary *cliRequests=[NSMutableDictionary dictionary];
     NSDictionary *cap=[owner beginRole:@"prepare" operation:owner.fresh?@"initialize":@"verify" store:owner.installation[@"selectedStore"]];
     NSString *generation=owner.generation,*session=[[root stringByAppendingPathComponent:@"sessions"] stringByAppendingPathComponent:generation],*exports=[[root stringByAppendingPathComponent:@"exports"] stringByAppendingPathComponent:generation];
     NSMutableArray<CRChild *> *children=[NSMutableArray array];CRChild *prepare=nil,*app=nil,*model=nil,*download=nil;
@@ -218,9 +219,9 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger per
               if(stopping)continue;
               if(!CRUnlockFileAvailable(record[@"unlockFile"]))continue;
               emit(output,generation,@"unlock",@{@"origin":record[@"origin"],@"unlockFile":record[@"unlockFile"]});
-            }else if(child==app&&[type isEqual:@"demo-claude-open"]){
+            }else if(child==app&&[@[@"demo-claude-open",@"demo-codex-open"] containsObject:type]){
               if(!ready||![owner.installation[@"mode"] isEqual:@"demo"]||!CRExact(record,@[@"version",@"generation",@"type",@"request",@"chooseProject"])||!CRPattern(record[@"request"],@"[a-f0-9]{32}")||CFGetTypeID((__bridge CFTypeRef)record[@"chooseProject"])!=CFBooleanGetTypeID())CRFail();
-              if(!stopping){claudeRequest=record[@"request"];emit(output,generation,@"demo-claude-open",@{@"request":claudeRequest,@"chooseProject":record[@"chooseProject"]});}
+              if(!stopping){cliRequests[type]=record[@"request"];emit(output,generation,type,@{@"request":record[@"request"],@"chooseProject":record[@"chooseProject"]});}
             }else if(child==app&&[type isEqual:@"model-status"]){
               if(!ready||!CRExact(record,@[@"version",@"generation",@"type",@"state"])||![@[@"available",@"busy",@"unavailable",@"loading"] containsObject:record[@"state"]])CRFail();if(!stopping)emit(output,generation,@"model-status",@{@"state":record[@"state"]});
             }else if(child==download&&[type isEqual:@"download-progress"]){
@@ -266,9 +267,9 @@ int CRRunGuardian(NSString *bundle,NSString *root,NSInteger uiPort,NSInteger per
           if(downloadStage>=3)CRFail();[download signal:downloadStage==1?SIGTERM:SIGKILL];downloadStage++;downloadDeadline=CRLifecycleNow()+5;
         }
         for(NSDictionary *command in [shell readFrom:0]){
-          if([command[@"command"] isEqual:@"demo-claude-status"]){
+          if([@[@"demo-claude-status",@"demo-codex-status"] containsObject:command[@"command"]]){
             if(!CRExact(command,@[@"version",@"generation",@"command",@"request",@"state"])||!CRInteger(command[@"version"],1,1)||!CRPattern(command[@"request"],@"[a-f0-9]{32}")||![@[@"choosing-project",@"checking",@"terminal-opened",@"cancelled",@"failed",@"busy",@"client-unavailable"] containsObject:command[@"state"]])CRFail();
-            if(!stopping&&ready&&[owner.installation[@"mode"] isEqual:@"demo"]&&[command[@"generation"] isEqual:generation]&&[command[@"request"] isEqual:claudeRequest])[app claudeStatus:command];
+            if(!stopping&&ready&&[owner.installation[@"mode"] isEqual:@"demo"]&&[command[@"generation"] isEqual:generation]&&[command[@"request"] isEqual:cliRequests[[command[@"command"] isEqual:@"demo-codex-status"]?@"demo-codex-open":@"demo-claude-open"]])[app claudeStatus:command];
             continue;
           }
           if(!CRExact(command,@[@"version",@"generation",@"command"])||!CRInteger(command[@"version"],1,1)||![command[@"generation"] isEqual:generation]||![@[@"unlock",@"restart",@"quit",@"model-unavailable",@"download",@"cancel-download",@"enter-demo",@"leave-demo",@"reset-demo"] containsObject:command[@"command"]])CRFail();

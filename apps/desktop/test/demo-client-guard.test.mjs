@@ -73,3 +73,10 @@ test('cancellation during setup guard release prevents the following foreground 
   assert.equal(started,false);
  }finally{fs.unlink=unlink;}
 });
+
+test('uncertain Codex setup remains blocked while Claude setup stays independent',async t=>{
+ const root=await fixture(t);
+ await assert.rejects(withClientGuard(root,'a-setup',async guard=>{guard.mutating();throw Error('uncertain Codex login');}),/uncertain Codex login/);
+ await assert.rejects(withClientGuard(root,'a-setup',()=>{}),/active or uncertain invocation/);
+ await withClientGuard(root,'b-setup',()=>{});
+});

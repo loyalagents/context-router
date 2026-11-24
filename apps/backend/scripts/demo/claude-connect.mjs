@@ -2,19 +2,22 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
+import {codexCodingLaunchSpec,codexLoginSpec} from './codex-connect.mjs';
 import { safeError, privateJson } from './files.mjs';
 import { trustedDirectory, trustedBytes, ensurePrivateDirectory, writeSyncedJson } from './trusted-files.mjs';
 
 export const connectStates = ['checking', 'signing-in', 'starting', 'failed', 'login-failed', 'login-interrupted', 'exited', 'interrupted'];
 export function codingLaunchSpec(launch, project) {
-  const args = [...launch.args];
-  // --restricted requires explicit tool names; its 'default' alias omits Bash/WebFetch.
-  args[args.indexOf('--tools') + 1] = 'Bash,Edit,Glob,Grep,NotebookEdit,Read,Task,WebFetch,WebSearch,Write,AskUserQuestion,EnterPlanMode,ExitPlanMode';
-  // Terminate the variadic tool list before auth subcommands are appended.
-  args.push('--allowedTools','mcp__context_router_demo__searchPreferences,mcp__context_router_demo__listPreferenceSlugs','--permission-mode','default');
+  const args = launch.command==='codex'?[...codexCodingLaunchSpec(launch,project).args]:[...launch.args];
+  if(launch.command==='claude'){
+    // --restricted requires explicit tool names; its default alias omits Bash/WebFetch.
+    args[args.indexOf('--tools') + 1] = 'Bash,Edit,Glob,Grep,NotebookEdit,Read,Task,WebFetch,WebSearch,Write,AskUserQuestion,EnterPlanMode,ExitPlanMode';
+    // Terminate the variadic read allowlist before appended auth subcommands.
+    args.push('--allowedTools','mcp__context_router_demo__searchPreferences,mcp__context_router_demo__listPreferenceSlugs','--permission-mode','default');
+  }
   return {...launch, args, cwd:project, env:{...launch.env,PATH:[launch.env.PATH,path.join(os.userInfo().homedir,'.nvm/versions/node/v24.21.0/bin'),path.join(os.userInfo().homedir,'.local/bin'),'/opt/homebrew/bin','/usr/local/bin'].join(path.delimiter)}};
 }
-/** Retained for coding jobs that may outlive their foreground Claude chat. */
+/** Retained for coding jobs that may outlive their foreground chat. */
 export async function codingTemporaryDirectory() {
   const base=process.platform==='darwin'?'/private/tmp':await fs.realpath(os.tmpdir());
   const directory=await fs.mkdtemp(path.join(base,'cr-code-'));
@@ -39,15 +42,15 @@ export function claudeAuthStatus(launch, guard) {
   return value.loggedIn;
 }
 /** Serialized setup; a legacy invocation may reuse a verified login but never repeat it. */
-export async function authenticateClaude(launch,{check,authStatus,run,state,allowLogin=true}) {
+export async function authenticateClient(launch,{check,authStatus,run,state,allowLogin=true}) {
   await check();
   if(!await authStatus(launch)) {
     if(!allowLogin)throw safeError('An earlier demo invocation is retained. Finish that invocation before signing in again.');
     await state('signing-in');
-    process.stdout.write('Sign in to the separate Claude demo profile. Claude will open automatically afterward.\n');
+    process.stdout.write(`Sign in to the separate ${launch.command==='codex'?'Codex':'Claude'} demo profile. Your project will open automatically afterward.\n`);
     await check();
     let code;
-    try { code=await run({...launch,args:[...launch.args,'auth','login']}); }
+    try { code=await run(launch.command==='codex'?codexLoginSpec(launch):{...launch,args:[...launch.args,'auth','login']}); }
     catch(error) { await state('login-interrupted');throw error; }
     if(code!==0){await state('login-failed');return code;}
     await check();
@@ -56,11 +59,11 @@ export async function authenticateClaude(launch,{check,authStatus,run,state,allo
   return 0;
 }
 /** Each fresh foreground chat has its own invocation guard. */
-export async function startClaude(launch,{check,run,state,credential}) {
+export async function startClient(launch,{check,run,state,credential}) {
   await check();
   const session={...launch,env:{...launch.env,CR_DEMO_TOKEN:credential()}};
   await state('starting');
-  process.stdout.write('Opening Claude Code with Context Router configured. You can open another chat from Connections without closing this one.\n');
+  process.stdout.write(`Opening ${launch.command==='codex'?'Codex':'Claude Code'} with Context Router configured. You can open another chat from Connections without closing this one.\n`);
   try{
     const code=await run(session);
     await state(code===0?'exited':'interrupted');
@@ -69,16 +72,17 @@ export async function startClaude(launch,{check,run,state,credential}) {
 }
 
 function progressDirectory(spec, request) {
+  if(spec.role!==undefined&&!['a','b'].includes(spec.role))throw safeError('Invalid demo connection role.');
   if(!/^[a-f0-9]{32}$/.test(request))throw safeError('Invalid demo launch request.');
   return path.join(spec.root,'demo','connect-requests',request);
 }
-function binding(spec,request) {return {version:1,installationId:spec.installationId,store:spec.store,generation:spec.generation,request,role:'b'};}
+function binding(spec,request) {return {version:1,installationId:spec.installationId,store:spec.store,generation:spec.generation,request,role:spec.role??'b'};}
 export async function beginConnectProgress(spec,request) {
   await trustedDirectory(path.join(spec.root,'demo'));
   const directory=progressDirectory(spec,request);
   await ensurePrivateDirectory(path.dirname(directory));
   // Exclusive request claim: retained Terminal commands cannot replay a launch.
-  try{await fs.mkdir(directory,{mode:0o700});}catch{throw safeError('This launch request was already used. Open Claude Code from Connections for a fresh request.');}
+  try{await fs.mkdir(directory,{mode:0o700});}catch{throw safeError('This launch request was already used. Open a new chat from Connections for a fresh request.');}
   const state=async value=>{
     if(!connectStates.includes(value))throw safeError('Invalid demo launch state.');
     await writeSyncedJson(path.join(directory,value+'.json'),{...binding(spec,request),state:value});

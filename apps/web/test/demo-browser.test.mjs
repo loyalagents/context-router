@@ -195,7 +195,7 @@ test('demo navigation retains its shell, protects edits and makes memory selecti
  const top=(await list.boundingBox()).y;await f.page.getByRole('button',{name:'Edit context',exact:true}).click();
  const editor=f.page.locator('.demo-inspector textarea');await editor.fill('Unsaved navigation fixture');
  assert.equal((await list.boundingBox()).y,top,'edit notice must not shift the list');
- for(const link of [nav.getByRole('link',{name:'Connections',exact:true}), f.page.getByRole('link',{name:'Context Router',exact:true}), f.page.getByRole('link',{name:'Connect Claude Code',exact:true})]){
+ for(const link of [nav.getByRole('link',{name:'Connections',exact:true}), f.page.getByRole('link',{name:'Context Router',exact:true}), f.page.getByRole('link',{name:'Connect to AI',exact:true})]){
   f.page.once('dialog',dialog=>dialog.dismiss());await link.click();assert.equal(await editor.inputValue(),'Unsaved navigation fixture');
  }
  f.page.once('dialog',dialog=>dialog.accept());await nav.getByRole('link',{name:'Activity',exact:true}).click();await f.page.getByRole('heading',{name:'Activity',exact:true}).waitFor();
@@ -221,7 +221,7 @@ test('demo connection details, inspect focus and current labels stay attached to
  await panel.getByRole('heading',{name:'CLI maximum policy',exact:true}).waitFor();
  assert.equal(await rows.nth(1).getByRole('region',{name:'Connection inspection'}).count(),0);
  await f.page.getByText('Demo walkthrough (optional)',{exact:true}).click();await f.page.getByRole('button',{name:'Copy step 1 prompt',exact:true}).waitFor();
- await f.page.getByRole('button',{name:'Review access',exact:true}).click();assert.equal(await f.page.getByRole('list',{name:'Connections',exact:true}).evaluate(el=>el===document.activeElement),true);
+ assert.equal(await f.page.getByRole('button',{name:'Review access',exact:true}).isDisabled(),true); // Source-only demo has no bound native client.
 });
 
 test('demo preserves permission drafts during passive refresh and keeps a tab stop after a filtered memory edit', {timeout:60000}, async t=>{
@@ -233,8 +233,8 @@ test('demo preserves permission drafts during passive refresh and keeps a tab st
  await panel.getByLabel('Maximum value access').selectOption('Blocked');
  await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));
  await f.page.locator('.demo-client-card').first().waitFor();assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');
- f.page.once('dialog',dialog=>dialog.dismiss());await nav.getByRole('link',{name:'Context',exact:true}).click();assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');
- await panel.getByRole('button',{name:'Cancel',exact:true}).click();
+ f.page.once('dialog',dialog=>dialog.dismiss());await f.page.keyboard.press('Escape');assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');
+ f.page.once('dialog',dialog=>dialog.accept());await panel.getByRole('button',{name:'Cancel',exact:true}).click();
  await nav.getByRole('link',{name:'Context',exact:true}).click();await f.page.getByLabel('Search your context').fill('project');
  const list=f.page.getByRole('region',{name:'Saved context'});assert.ok(await list.getByRole('button').count()>1);
  await list.getByRole('button').first().click();await f.page.getByRole('button',{name:'Edit context',exact:true}).click();await f.page.locator('.demo-inspector textarea').fill('Synthetic updated memory without the search term');
@@ -288,6 +288,29 @@ test('Claude launch is explicit, remembers in-flight state on reload, and report
  state={...state,state:'exited',busy:false};await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();await f.page.getByRole('button',{name:'Change project',exact:true}).click();assert.equal(opens,3);assert.deepEqual(requests[2],{chooseProject:true});
 });
 
+// Full launch/reload/read behavior is covered above through the shared component.
+// This compact matrix keeps the vendor-specific browser wiring explicit.
+test('both assistant tabs launch only their selected client and link its exact activity', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t),opens=[],statuses=[];
+ for(const [client,id] of [['claude',f.b],['codex',f.a]]){
+  await f.page.route(`**/api/local/demo/${client}/status`,route=>{statuses.push(client);return route.fulfill({json:{available:true,clientId:id,state:'idle',busy:false}});});
+  await f.page.route(`**/api/local/demo/${client}/open`,route=>{opens.push({client,method:route.request().method(),body:route.request().postDataJSON()});return route.fulfill({json:{available:true,clientId:id,state:'starting',busy:false}});});
+ }
+ await f.page.reload();
+ for(const [client,name,id] of [['claude','Claude Code',f.b],['codex','Codex',f.a]]){
+  await f.page.getByRole('tab',{name,exact:true}).click();
+  const section=f.page.getByRole('region',{name:'Connect '+name,exact:true});
+  const opened=f.page.waitForResponse(response=>response.url().endsWith(`/api/local/demo/${client}/open`));
+  await section.getByRole('button',{name:'Open '+name,exact:true}).click();await opened;
+  await section.getByText('Your latest chat is opening',{exact:false}).waitFor();
+  assert.ok(statuses.includes(client));
+  assert.equal(await section.getByRole('link',{name:'View activity',exact:true}).getAttribute('href'),'/dashboard/history#mcp-client='+id);
+  const changed=f.page.waitForResponse(response=>response.url().endsWith(`/api/local/demo/${client}/open`)&&response.request().postDataJSON().chooseProject===true);
+  await section.getByRole('button',{name:'Change project',exact:true}).click();await changed;
+ }
+ assert.deepEqual(opens,['claude','codex'].flatMap(client=>[false,true].map(chooseProject=>({client,method:'POST',body:{chooseProject}}))));
+});
+
 test('demo context refreshes external changes on focus without replacing active or newly opened drafts', {timeout:60000},async t=>{
  const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
  const selected=(await f.graphql('query { activePreferences { id slug value } }')).activePreferences.find(p=>p.slug.startsWith('work.demo001.')&&typeof p.value==='string');
@@ -305,11 +328,12 @@ test('demo context refreshes external changes on focus without replacing active 
  await f.page.getByRole('button',{name:'Edit context',exact:true}).click();await editor.fill('Draft wins over passive response');release();await f.page.waitForTimeout(300);assert.equal(await editor.inputValue(),'Draft wins over passive response');
 });
 
-test('demo launch errors remain visible across polls without automatic replay and permit explicit retry', {timeout:60000},async t=>{
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);let opens=0,polls=0;
- await f.page.route('**/api/local/demo/claude/status',route=>{polls++;return route.fulfill({json:{available:true,state:'idle',busy:false}});});
- await f.page.route('**/api/local/demo/claude/open',route=>{opens++;return opens===1?route.fulfill({status:503,json:{}}):route.fulfill({json:{available:true,state:'checking',busy:true}});});
+test(`shared demo launch errors remain visible across polls without automatic replay and permit explicit retry`, {timeout:60000},async t=>{
+ const client='claude',f=await browserFixture(t);f.page.setDefaultTimeout(10000);let opens=0,polls=0;
+ await f.page.route(`**/api/local/demo/${client}/status`,route=>{polls++;return route.fulfill({json:{available:true,state:'idle',busy:false}});});
+ await f.page.route(`**/api/local/demo/${client}/open`,route=>{opens++;return opens===1?route.fulfill({status:503,json:{}}):route.fulfill({json:{available:true,state:'checking',busy:true}});});
  await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+
  const button=f.page.getByRole('button',{name:'Open Claude Code',exact:true});await button.click();const error=f.page.getByText('Launch could not be confirmed. Check Terminal before retrying.',{exact:true});await error.waitFor();
  const before=polls;await f.page.waitForTimeout(4500);assert.ok(polls>=before+2);assert.equal(await error.isVisible(),true);assert.equal(opens,1);assert.equal(await button.isDisabled(),false);
  await button.click();await f.page.getByText('Checking Claude Code on this Mac…',{exact:true}).waitFor();assert.equal(opens,2);
@@ -337,6 +361,50 @@ test('demo profile drafts warn on navigation and a completed save clears the war
  await connections.click();await f.page.getByRole('heading',{name:'Connections',exact:true}).waitFor();assert.equal(dialogs,1);
 });
 
+
+test('Review access opens the selected assistant exact permissions and preserves existing drafts', {timeout:60000},async t=>{
+ const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);
+ const {readFile}=await import('node:fs/promises'),receipt=JSON.parse(await readFile(f.root+'/demo/generation.json'));
+ const a=receipt.clients.agentA,b=receipt.clients.agentB;
+ f.cli('local-mcp.js','rename','--id',a,'--label','Z renamed assistant');
+ f.cli('local-mcp.js','rename','--id',b,'--label','A renamed assistant');
+ let codexId=a;
+ await f.page.route('**/api/local/demo/claude/status',route=>route.fulfill({json:{available:true,clientId:b,state:'idle',busy:false}}));
+ await f.page.route('**/api/local/demo/codex/status',route=>route.fulfill({json:{available:true,clientId:codexId,state:'idle',busy:false}}));
+ await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ const review=f.page.getByRole('button',{name:'Review access',exact:true}),panel=f.page.getByRole('region',{name:'Edit permissions',exact:true});
+ const open=async(id,label)=>{await review.click();await panel.getByText('Instance '+id+'.',{exact:false}).waitFor();assert.match(await panel.getByRole('heading',{level:2}).innerText(),new RegExp(label));assert.equal(await panel.getByRole('heading',{level:2}).evaluate(el=>el===document.activeElement),true);assert.ok(await panel.getByRole('heading',{level:2}).evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));};
+ await open(b,'A renamed assistant');
+ const drawer=f.page.getByRole('dialog',{name:'Assistant access controls'}),close=f.page.getByRole('button',{name:'Close access controls'});
+ assert.equal(await drawer.evaluate(el=>el.matches(':modal')),true);
+ await drawer.evaluate(el=>new Promise(resolve=>{el.addEventListener('close',()=>setTimeout(resolve,0),{once:true});el.close();el.showModal();}));assert.equal(await drawer.evaluate(el=>el.matches(':modal')),true);
+ assert.ok(await drawer.evaluate(el=>{const r=el.getBoundingClientRect();return Math.abs(r.right-innerWidth)<1&&r.top===0&&r.bottom===innerHeight;}));
+ await f.page.keyboard.press('Tab');assert.equal(await drawer.evaluate(el=>el.contains(document.activeElement)),true);
+ await f.page.getByRole('tab',{name:'Claude Code',exact:true}).evaluate(el=>el.focus());assert.equal(await drawer.evaluate(el=>el.contains(document.activeElement)),true);
+ await f.page.keyboard.press('Escape');await drawer.waitFor({state:'hidden'});assert.equal(await review.evaluate(el=>el===document.activeElement),true);
+ await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await open(a,'Z renamed assistant');
+ await panel.getByLabel('Maximum value access').selectOption('Blocked');
+ for(let i=0;i<5;i++){f.page.once('dialog',dialog=>dialog.dismiss());await f.page.keyboard.press('Escape');assert.equal(await drawer.evaluate(el=>el.matches(':modal')),true);assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');}await panel.getByText('Instance '+a+'.',{exact:false}).waitFor();
+ f.page.once('dialog',dialog=>dialog.dismiss());await drawer.evaluate(el=>el.close());await f.page.waitForFunction(()=>document.querySelector('dialog')?.matches(':modal'));
+ f.page.once('dialog',dialog=>dialog.dismiss());await f.page.mouse.click(10,100);assert.equal(await drawer.isVisible(),true);
+ f.page.once('dialog',dialog=>dialog.accept());await close.click();await drawer.waitFor({state:'hidden'});assert.equal(await review.evaluate(el=>el===document.activeElement),true);
+ await open(a,'Z renamed assistant');await f.page.mouse.click(10,100);await drawer.waitFor({state:'hidden'});
+ await open(a,'Z renamed assistant');await drawer.evaluate(el=>el.close());await panel.waitFor({state:'detached'});await f.page.waitForFunction(()=>document.activeElement?.textContent==='Review access');
+ // A pending save cannot be dismissed, and a confirmed save leaves no dirty warning.
+ await open(a,'Z renamed assistant');await panel.getByLabel('Maximum value access').selectOption('Blocked');
+ await panel.getByRole('button',{name:'Preview resulting access',exact:true}).click();await panel.getByRole('region',{name:'Resulting access preview'}).waitFor();
+ let release,seen;const pending=new Promise(resolve=>seen=resolve),hold=new Promise(resolve=>release=resolve);t.after(()=>release?.());
+ await f.page.route('**/api/local/mcp/save',async route=>{seen();await hold;await route.continue();});
+ await panel.getByRole('button',{name:'Save permissions',exact:true}).click();await pending;
+ assert.equal(await close.isDisabled(),true);assert.equal(await panel.getByRole('button',{name:'Cancel',exact:true}).isDisabled(),true);
+ for(let i=0;i<5;i++){await f.page.keyboard.press('Escape');assert.equal(await drawer.evaluate(el=>el.matches(':modal')),true);}await drawer.evaluate(el=>el.close());await f.page.waitForFunction(()=>document.querySelector('dialog')?.matches(':modal'));await f.page.mouse.click(10,100);assert.equal(await drawer.isVisible(),true);
+ release();await panel.getByText('Permissions saved',{exact:true}).waitFor();await close.click();await drawer.waitFor({state:'hidden'});
+ await f.page.setViewportSize({width:390,height:844});await open(a,'Z renamed assistant');assert.ok(await drawer.evaluate(el=>el.getBoundingClientRect().width<=innerWidth));await close.click();await f.page.setViewportSize({width:1280,height:900});
+ await f.page.getByRole('tab',{name:'Claude Code',exact:true}).click();
+ const card=f.page.locator('.demo-client-card').filter({has:f.page.getByRole('button',{name:'Edit permissions '+a,exact:true})});await card.locator('summary').click();await card.getByRole('button',{name:'Rename '+a,exact:true}).click();assert.equal(await review.isDisabled(),true);await f.page.getByRole('button',{name:'Cancel rename',exact:true}).click();
+ const revoked=JSON.parse(f.cli('local-mcp.js','list').stdout).result.find(client=>client.revoked).id;
+ for(const id of [undefined,'missing-client',revoked]){codexId=id;await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await f.page.getByText('Choose a project once.',{exact:false}).waitFor();assert.equal(await review.isDisabled(),true);assert.equal(await panel.count(),0);await f.page.getByRole('tab',{name:'Claude Code',exact:true}).click();}
+});
 
 test('demo session permission change links to Activity without requests, survives reload, and interleaves a real denied request', {timeout:60000},async t=>{
  const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
@@ -408,10 +476,10 @@ test('failed passive refresh is a quiet stale-data notice with an explicit read 
  fail=false;await f.page.getByRole('button',{name:'Retry saved preferences refresh',exact:true}).click();await f.page.getByText('Context may be out of date.',{exact:false}).waitFor({state:'hidden'});
 });
 
-test('lost launch reply clears only when a new request is observed without replay', {timeout:60000},async t=>{
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);let opens=0,state={available:true,state:'exited',busy:false,request:'a'.repeat(32)};
- await f.page.route('**/api/local/demo/claude/status',route=>route.fulfill({json:state}));
- await f.page.route('**/api/local/demo/claude/open',route=>{opens++;return route.abort();});
+test(`shared lost launch reply clears only when a new request is observed without replay`, {timeout:60000},async t=>{
+ const client='claude',f=await browserFixture(t);f.page.setDefaultTimeout(10000);let opens=0,state={available:true,state:'exited',busy:false,request:'a'.repeat(32)};
+ await f.page.route(`**/api/local/demo/${client}/status`,route=>route.fulfill({json:state}));
+ await f.page.route(`**/api/local/demo/${client}/open`,route=>{opens++;return route.abort();});
  await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();await f.page.getByText('Your latest chat has closed.',{exact:false}).waitFor();
  await f.page.getByRole('button',{name:'Open Claude Code',exact:true}).click();const error=f.page.getByText('Launch could not be confirmed.',{exact:false});await error.waitFor();
  await f.page.waitForTimeout(2300);assert.equal(await error.isVisible(),true);assert.equal(opens,1);
@@ -419,14 +487,144 @@ test('lost launch reply clears only when a new request is observed without repla
  state={...state,state:'login-interrupted'};await f.page.getByText('Sign-in was interrupted.',{exact:false}).waitFor();assert.equal(await f.page.getByText('Setup did not finish.',{exact:false}).count(),0);
 });
 
+test('drawer save result is visible and closing during list refresh restores its trigger afterward', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);
+ const review=f.page.getByRole('button',{name:'Review access',exact:true});await review.click();
+ const panel=f.page.getByRole('region',{name:'Edit permissions',exact:true});await panel.getByLabel('Maximum value access').selectOption('Blocked');
+ await panel.getByRole('button',{name:'Preview resulting access',exact:true}).click();await panel.getByRole('region',{name:'Resulting access preview'}).waitFor();
+ let release,seen;const held=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve);t.after(()=>release?.());
+ await f.page.route('**/api/local/mcp/list',async route=>{seen();await held;await route.continue();});
+ await panel.getByRole('button',{name:'Save permissions',exact:true}).click();await waiting;
+ const outcome=panel.getByText('Permissions saved',{exact:true});await outcome.waitFor();
+ await f.page.waitForFunction(()=>{const result=document.querySelector('dialog [tabindex="-1"][role]');return result===document.activeElement;});
+ assert.ok(await outcome.evaluate(el=>{const r=el.getBoundingClientRect(),toolbar=document.querySelector('.demo-access-drawer-toolbar').getBoundingClientRect();return r.top>=toolbar.bottom&&r.bottom<=innerHeight;}));
+ await f.page.getByRole('button',{name:'Close access controls',exact:true}).click();await f.page.getByRole('dialog').waitFor({state:'hidden'});
+ assert.equal(await review.isDisabled(),true);release();await f.page.waitForFunction(()=>document.activeElement?.textContent==='Review access');
+ assert.equal(await f.page.evaluate(()=>document.body.style.overflow),'');
+});
+
+// UI-only checks need real clients/permissions, not a full historical import.
+// The live MCP journey explicitly opts into the retained full demo seed.
+async function demoClientsFixture(t, {seeded=false}={}) {
+ const f=await browserFixture(t,{demo:seeded});f.page.setDefaultTimeout(10000);
+ if(seeded){
+  const {readFile}=await import('node:fs/promises'),receipt=JSON.parse(await readFile(f.root+'/demo/generation.json'));
+  return {...f,a:receipt.clients.agentA,b:receipt.clients.agentB};
+ }
+ const a=JSON.parse(f.cli('local-mcp.js','list').stdout).result[0].id;
+ f.cli('local-mcp.js','rename','--id',a,'--label','Codex — writer');
+ f.cli('local-mcp.js','permissions','--id',a,'--capabilities','preferences:write,preferences:define','--targets','*');
+ f.cli('local-mcp.js','provision','--label','Claude Code — reader','--out',f.root+'/second.token');
+ const b=JSON.parse(f.cli('local-mcp.js','list').stdout).result.find(client=>client.id!==a).id;
+ f.cli('local-mcp.js','permissions','--id',b,'--capabilities','preferences:read','--targets','*');
+ return {...f,a,b};
+}
+async function accessPolishFixture(t, options) {
+ const f=await demoClientsFixture(t,options);
+ for(const [name,id] of [['claude',f.b],['codex',f.a]])await f.page.route(`**/api/local/demo/${name}/status`,route=>route.fulfill({json:{available:true,clientId:id,state:'starting',busy:false,startedAt:'2026-01-01T00:00:00Z'}}));
+ await openDemo(f);await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
+ await f.page.getByRole('heading',{name:'Connections',exact:true}).waitFor();
+ return f;
+}
+
+test('assistant selection survives Activity Back and reload, and legacy naming stays exact-client bound', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);
+ f.cli('local-mcp.js','rename','--id',f.a,'--label','Demo agent A — writer');f.cli('local-mcp.js','rename','--id',f.b,'--label','Demo agent A — writer');
+ await f.page.getByRole('button',{name:'Refresh connections',exact:true}).click();
+ await f.page.getByRole('tab',{name:'Codex',exact:true}).click();assert.equal(await f.page.evaluate(()=>sessionStorage.getItem('context-router.demo-assistant.v1')),'codex');
+ const card=id=>f.page.locator('.demo-client-card').filter({has:f.page.getByRole('button',{name:'Edit permissions '+id,exact:true})});
+ await card(f.a).getByText('Codex — writer',{exact:true}).waitFor();await card(f.b).getByText('Demo agent A — writer',{exact:true}).waitFor();
+ await f.page.getByRole('region',{name:'Connect Codex'}).getByRole('link',{name:'View activity',exact:true}).click();await f.page.getByRole('heading',{name:'Activity',exact:true}).waitFor();
+ await f.page.goBack();await f.page.getByRole('heading',{name:'Your context, in Codex',exact:true}).waitFor();await f.page.reload();await f.page.getByRole('heading',{name:'Your context, in Codex',exact:true}).waitFor();
+ assert.equal(await f.page.getByRole('tab',{name:'Codex',exact:true}).getAttribute('aria-selected'),'true');
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Context',exact:true}).click();await f.page.getByRole('heading',{name:'Your context',exact:true}).waitFor();await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();await f.page.getByRole('heading',{name:'Your context, in Codex',exact:true}).waitFor();
+ await f.page.getByRole('button',{name:'Review access',exact:true}).click();await f.page.getByRole('heading',{name:/Codex access —/}).waitFor();
+ await f.page.getByRole('region',{name:'Edit permissions',exact:true}).getByText('Instance '+f.a+'.',{exact:false}).waitFor();
+});
+
+test('drawer refresh coalesces changes during a read, preserves drafts and keeps actions visible', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await f.page.getByRole('button',{name:'Review access',exact:true}).click();
+ const panel=f.page.getByRole('region',{name:'Edit permissions',exact:true}),preview=panel.getByRole('button',{name:'Preview resulting access',exact:true});
+ await panel.getByLabel('Maximum value access').selectOption('Blocked');await panel.getByText('Reading and changing values is blocked.',{exact:false}).waitFor();
+ assert.equal(await panel.getByLabel('Manage context fields',{exact:true}).isChecked(),true);
+ let release,seen,reads=0;const hold=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve);t.after(()=>release?.());
+ await f.page.route('**/api/local/mcp/inspect',async route=>{reads++;const response=await route.fetch();if(reads===1){seen();await hold;}await route.fulfill({response});});
+ await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await waiting;
+ f.cli('local-mcp.js','permissions','--id',f.a,'--capabilities','preferences:write,preferences:define','--targets','work.*');
+ await f.page.evaluate(()=>{window.dispatchEvent(new Event('focus'));window.dispatchEvent(new Event('focus'));});release();
+ await panel.getByText('Advanced: categories, fields and rules',{exact:true}).click();await panel.getByRole('button',{name:'Remove maximum target work.*',exact:true}).waitFor();assert.equal(reads,2);
+ assert.equal(await panel.getByLabel('Maximum value access').inputValue(),'Blocked');
+ for(const [width,height] of [[1280,720],[390,600]]){await f.page.setViewportSize({width,height});await panel.getByLabel('Search categories or fields').scrollIntoViewIfNeeded();assert.ok(await preview.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));}
+ await preview.click();await panel.getByRole('region',{name:'Resulting access preview'}).waitFor();
+ const save=panel.getByRole('button',{name:'Save permissions',exact:true});assert.ok(await save.evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}));
+ await save.click();await panel.getByText('Permissions saved',{exact:true}).waitFor();await f.page.getByRole('button',{name:'Close access controls'}).click();
+ const card=f.page.locator('.demo-client-card').filter({has:f.page.getByRole('button',{name:'Edit permissions '+f.a,exact:true})});await card.getByText('Field management is enabled separately, within its scope and rules.',{exact:false}).waitFor();
+});
+
+test('failed list refresh cannot steal focus on a later explicit retry', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);const review=f.page.getByRole('button',{name:'Review access',exact:true});await review.click();
+ const panel=f.page.getByRole('region',{name:'Edit permissions',exact:true});await panel.getByLabel('Maximum value access').waitFor();
+ let fail=true,release,seen,retryRelease;const hold=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve),retryHold=new Promise(resolve=>retryRelease=resolve);t.after(()=>{release?.();retryRelease?.();});
+ await f.page.route('**/api/local/mcp/list',async route=>{if(!fail){await retryHold;return route.continue();}seen();await hold;await route.fulfill({status:503,json:{}});});
+ await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await waiting;await f.page.getByRole('button',{name:'Close access controls'}).click();release();
+ await f.page.getByText('Unable to load connections. Refresh to continue.',{exact:true}).waitFor();fail=false;
+ const refresh=f.page.getByRole('button',{name:'Refresh connections',exact:true});await refresh.click();const tab=f.page.getByRole('tab',{name:'Claude Code',exact:true});await tab.focus();retryRelease();await f.page.waitForFunction(()=>!Array.from(document.querySelectorAll('button')).find(el=>el.textContent==='Review access')?.disabled);
+ assert.equal(await review.evaluate(el=>el===document.activeElement),false);assert.equal(await tab.evaluate(el=>el===document.activeElement),true);
+});
+
+test('demo Activity updates live and pauses while filter drafts or details are open', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t,{seeded:true}),{connect,call}=await import('../../backend/scripts/demo/mcp-import.mjs');
+ const peer=await connect(Number(new URL(f.ready.mcpOrigin).port),f.root+'/demo/exports/agent-a.token');t.after(()=>peer.close());
+ const historyResponse=response=>response.url().endsWith('/graphql')&&response.request().postDataJSON().query.includes('McpAccessHistoryForTab');
+ const initial=f.page.waitForResponse(historyResponse);
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();
+ const initialItems=(await (await initial).json()).data.mcpAccessHistory.items;
+ assert.equal(initialItems.some(item=>item.clientKey==='local:'+f.a&&item.operationName==='searchPreferences'),false);
+ const row=f.page.getByRole('button').filter({hasText:'searched context'}).filter({has:f.page.locator('[title="local:'+f.a+'"]')});
+ assert.equal(await row.count(),0);
+ await f.page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(button=>button.textContent==='Refresh activity'&&!button.disabled));
+ await call(peer,'searchPreferences',{query:'work.demo001.'});
+ const polled=await f.page.waitForResponse(async response=>historyResponse(response)&&(await response.json()).data.mcpAccessHistory.items.some(item=>item.clientKey==='local:'+f.a&&item.operationName==='searchPreferences'&&!initialItems.some(previous=>previous.id===item.id)));
+ assert.equal(polled.status(),200);await row.waitFor();
+ await row.click();let polls=0;f.page.on('request',req=>{if(req.url().endsWith('/graphql')&&req.postDataJSON()?.query.includes('McpAccessHistoryForTab'))polls++;});
+ await f.page.waitForTimeout(3400);assert.equal(polls,0);assert.equal(await row.getAttribute('aria-expanded'),'true');await row.click();
+ const activity=f.page.getByRole('tabpanel',{name:'Assistant access'});await activity.getByText('Filter activity',{exact:true}).click();await activity.getByLabel('Operation',{exact:true}).fill('unfinished');await f.page.waitForTimeout(3400);assert.equal(polls,0);assert.equal(await activity.getByLabel('Operation',{exact:true}).inputValue(),'unfinished');
+});
+
+test('latest exact-assistant denial is visible without masking a later successful read', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);let denied=false,recovered=false;
+ const event=(id,outcome,seconds)=>({clientKey:`local:${id}`,operationName:'searchPreferences',outcome,occurredAt:`2026-11-22T18:00:${seconds}Z`,responseMetadata:{activeCount:outcome==='SUCCESS'?1:0}});
+ await f.page.route('**/graphql',route=>route.request().postDataJSON().query.includes('DemoClaudeRead')?route.fulfill({json:{data:{mcpAccessHistory:{items:[...(recovered?[{...event(f.a,'SUCCESS','30'),responseMetadata:{activeCount:0}}]:[]),...(denied?[event(f.a,'DENY','20')]:[]),event(f.b,'DENY','10'),event(f.a,'SUCCESS','00')]}}}}):route.continue());
+ await f.page.getByRole('tab',{name:'Codex',exact:true}).click();await f.page.getByText(/^Context read at /).waitFor();assert.equal(await f.page.getByText('Your latest context read was denied.',{exact:false}).count(),0);
+ denied=true;await f.page.getByText('Your latest context read was denied.',{exact:false}).waitFor();recovered=true;await f.page.getByText(/^Context read at /).waitFor();assert.equal(await f.page.getByText('Your latest context read was denied.',{exact:false}).count(),0);
+ await f.page.route('**/api/local/demo/codex/status',route=>route.fulfill({json:{available:true,clientId:f.a,state:'failed',busy:false}}));await f.page.getByRole('alert').filter({hasText:'Setup did not finish.'}).waitFor();
+});
+
+test('Activity polling preserves paginated browsing even with short pages', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);let requests=0;
+ const event=(n,operationName)=>({id:`poll-test-${n}`,clientKey:`local:${f.a}`,occurredAt:'2026-11-22T18:00:00Z',surface:'TOOLS_CALL',operationName,outcome:'SUCCESS',correlationId:null,latencyMs:1,requestMetadata:{},responseMetadata:{activeCount:1},errorMetadata:null});
+ await f.page.route('**/graphql',route=>{const body=route.request().postDataJSON();if(!body.query.includes('McpAccessHistoryForTab'))return route.continue();requests++;return route.fulfill({json:{data:{mcpAccessHistory:body.variables.input.after?{items:[event(3,'listPreferenceSlugs')],hasNextPage:false,nextCursor:null}:{items:[event(1,'searchPreferences'),event(2,'searchPreferences')],hasNextPage:true,nextCursor:'next'}}}});});
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();await f.page.getByRole('button',{name:'Load more',exact:true}).click();await f.page.getByRole('button').filter({hasText:'listed available context fields'}).waitFor();
+ const before=requests;await f.page.waitForTimeout(3400);assert.equal(requests,before);assert.equal(await f.page.locator('.demo-history-row').count(),3);
+});
+
+test('an in-flight Activity poll cannot replace details opened while it was waiting', {timeout:60000},async t=>{
+ const f=await accessPolishFixture(t);let holdPoll=false,release,seen,done;
+ const hold=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve),settled=new Promise(resolve=>done=resolve);t.after(()=>release?.());
+ const event=id=>({id,clientKey:`local:${f.a}`,occurredAt:'2026-11-22T18:00:00Z',surface:'TOOLS_CALL',operationName:id==='original'?'searchPreferences':'listPreferenceSlugs',outcome:'SUCCESS',correlationId:null,latencyMs:1,requestMetadata:{},responseMetadata:{activeCount:1},errorMetadata:null});
+ await f.page.route('**/graphql',async route=>{if(!route.request().postDataJSON().query.includes('McpAccessHistoryForTab'))return route.continue();const held=holdPoll;if(held){seen();await hold;}try{await route.fulfill({json:{data:{mcpAccessHistory:{items:[event(held?'replacement':'original')],hasNextPage:false,nextCursor:null}}}});}catch{}finally{if(held)done();}});
+ await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Activity',exact:true}).click();const row=f.page.getByRole('button').filter({hasText:'searched context'});await row.waitFor();holdPoll=true;await waiting;
+ await row.click();assert.equal(await row.getAttribute('aria-expanded'),'true');release();await settled;await f.page.waitForTimeout(300);
+ assert.equal(await row.getAttribute('aria-expanded'),'true');assert.equal(await f.page.getByRole('button').filter({hasText:'listed available context fields'}).count(),0);
+});
+
 async function permissionActivityFixture(t) {
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
- const fs=await import('node:fs/promises'),receipt=JSON.parse(await fs.readFile(f.root+'/demo/generation.json','utf8')),id=receipt.clients.agentB;
+ const f=await demoClientsFixture(t),id=f.b;await openDemo(f);
  await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();
  await f.page.getByRole('button',{name:'Edit permissions '+id,exact:true}).click();const editor=f.page.getByRole('region',{name:'Edit permissions',exact:true});
  await editor.getByLabel('Maximum value access').selectOption('Blocked');await editor.getByRole('button',{name:'Preview resulting access',exact:true}).click();await editor.getByRole('region',{name:'Resulting access preview'}).waitFor();await editor.getByRole('button',{name:'Save permissions',exact:true}).click();
  const link=editor.getByRole('link',{name:'View change in Activity',exact:true});await link.waitFor();const href=await link.getAttribute('href'),eventId=href.split('&change=')[1];
- return {...f,id,otherId:receipt.clients.agentA,href,eventId,link,panel:f.page.getByRole('tabpanel',{name:'Assistant access',exact:true})};
+ return {...f,id,otherId:f.a,href,eventId,link,panel:f.page.getByRole('tabpanel',{name:'Assistant access',exact:true})};
 }
 function deferredActivityReply(t) {
  let release,seen;const hold=new Promise(resolve=>release=resolve),waiting=new Promise(resolve=>seen=resolve);t.after(()=>release());return{hold,waiting,release,seen};
@@ -487,18 +685,17 @@ test('activity clear distinguishes stored history and refreshes after an uncerta
  f.page.once('dialog',dialog=>dialog.accept());await f.page.getByRole('button',{name:'Clear session permission changes',exact:true}).click();await f.page.getByText('Session clear was not confirmed.',{exact:false}).waitFor();await row.waitFor({state:'hidden'});await f.panel.getByText('This permission change is no longer available in this app session.',{exact:true}).waitFor();assert.equal(clears,1);
 });
 
-test('demo permission focus refresh replaces old reads, preserves drafts and cannot race Save', {timeout:60000},async t=>{
- const f=await browserFixture(t,{demo:true});f.page.setDefaultTimeout(10000);await openDemo(f);
- const fs=await import('node:fs/promises'),receipt=JSON.parse(await fs.readFile(f.root+'/demo/generation.json','utf8')),id=receipt.clients.agentB;
+test('demo permission focus refresh coalesces old reads, preserves drafts and cannot race Save', {timeout:60000},async t=>{
+ const f=await demoClientsFixture(t),id=f.b;await openDemo(f);
  await f.page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Connections',exact:true}).click();await f.page.getByRole('button',{name:'Edit permissions '+id,exact:true}).click();const editor=f.page.getByRole('region',{name:'Edit permissions',exact:true});
- await editor.getByLabel('Maximum value access').selectOption('Blocked');let reads=0,saves=0;const readGate=deferredActivityReply(t),previewGate=deferredActivityReply(t),saveGate=deferredActivityReply(t);
- await f.page.route('**/api/local/mcp/inspect',async route=>{reads++;const response=await route.fetch();if(reads===1){readGate.seen();await readGate.hold;}await route.fulfill({response}).catch(()=>{});});
+ await editor.getByLabel('Maximum value access').selectOption('Blocked');let reads=0,saves=0;const readGate=deferredActivityReply(t),trailingGate=deferredActivityReply(t),previewGate=deferredActivityReply(t),saveGate=deferredActivityReply(t);
+ await f.page.route('**/api/local/mcp/inspect',async route=>{reads++;const response=await route.fetch();if(reads===1){readGate.seen();await readGate.hold;}if(reads===2){trailingGate.seen();await trailingGate.hold;}await route.fulfill({response}).catch(()=>{});});
  await f.page.route('**/api/local/mcp/preview',async route=>{const response=await route.fetch();previewGate.seen();await previewGate.hold;await route.fulfill({response}).catch(()=>{});});
  await editor.getByRole('button',{name:'Preview resulting access',exact:true}).click();await previewGate.waiting;
  await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await readGate.waiting;previewGate.release();
  assert.equal(await editor.getByRole('button',{name:'Preview resulting access',exact:true}).isDisabled(),true,'cancelled preview must not finish the newer read');
  await f.page.evaluate(()=>window.dispatchEvent(new Event('focus')));await editor.getByRole('button',{name:'Preview resulting access',exact:true}).waitFor({state:'visible'});
- await f.page.waitForFunction(()=>!Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Preview resulting access')?.disabled);assert.equal(reads,2);readGate.release();
+ assert.equal(reads,1);readGate.release();await trailingGate.waiting;assert.equal(await editor.getByRole('button',{name:'Preview resulting access',exact:true}).isDisabled(),true);trailingGate.release();await f.page.waitForFunction(()=>!Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Preview resulting access')?.disabled);assert.equal(reads,2);
  assert.equal(await editor.getByLabel('Maximum value access').inputValue(),'Blocked');assert.equal(await editor.getByRole('region',{name:'Resulting access preview'}).count(),0);
  await editor.getByRole('button',{name:'Preview resulting access',exact:true}).click();await editor.getByRole('region',{name:'Resulting access preview'}).waitFor();
  await f.page.route('**/api/local/mcp/save',async route=>{saves++;const response=await route.fetch();saveGate.seen();await saveGate.hold;await route.fulfill({response});});
@@ -508,4 +705,14 @@ test('demo permission focus refresh replaces old reads, preserves drafts and can
  await editor.getByRole('link',{name:'View change in Activity',exact:true}).waitFor();
  await f.page.waitForFunction(()=>!Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Read current permissions')?.disabled);
  await f.page.unrouteAll({behavior:'wait'});
+});
+
+
+test('live Activity pauses for permission details and aborts a poll when they reopen', {timeout:60000},async t=>{
+ const f=await permissionActivityFixture(t);await f.link.click();const row=f.panel.locator('[data-permission-change="'+f.eventId+'"]');await row.waitFor();
+ let polls=0;const gate=deferredActivityReply(t);let settled;const done=new Promise(resolve=>settled=resolve);
+ await f.page.route('**/api/local/mcp/changes',async route=>{polls++;const response=await route.fetch(),body=await response.json();gate.seen();await gate.hold;try{await route.fulfill({response,json:{...body,items:[]}});}catch{}finally{settled();}});
+ await f.page.waitForTimeout(3400);assert.equal(polls,0,'linked open permission details pause polling');
+ await row.locator('summary').click();await gate.waiting;await row.locator('summary').click();assert.equal(await row.getAttribute('open'),'');gate.release();await done;
+ await f.page.waitForTimeout(3400);assert.equal(polls,1);assert.equal(await row.getAttribute('open'),'','in-flight reply must not remove reopened details');
 });

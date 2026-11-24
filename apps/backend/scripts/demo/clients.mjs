@@ -108,7 +108,7 @@ function checkClaudeSubscriptionStartup(spec) {
   } finally { rmSync(root, { recursive: true, force: true }); }
 }
 
-export function preflightClient(spec, { versionGuidance = 'Install this version. The source launcher selects the first executable in this search order: running Node executable directory, ~/.local/bin, /opt/homebrew/bin, /usr/local/bin, /usr/bin, /bin.' } = {}) {
+export function preflightClient(spec, { coding = false, versionGuidance = 'Install this version. The source launcher selects the first executable in this search order: running Node executable directory, ~/.local/bin, /opt/homebrew/bin, /usr/local/bin, /usr/bin, /bin.' } = {}) {
   const run = args => {
     const result = spawnSync(spec.executable, args, { cwd: spec.cwd, env: spec.env, encoding: 'utf8', timeout: 10000, maxBuffer: 1024 * 1024 });
     if (result.status !== 0) throw safeError('Unsupported client or isolation settings. No assistant was started.');
@@ -132,9 +132,13 @@ export function preflightClient(spec, { versionGuidance = 'Install this version.
     const servers = JSON.parse(run([...offline, 'mcp', 'list', '--json']));
     if (servers.length !== 1 || servers[0].name !== 'context_router_demo' || servers[0].transport.bearer_token_env_var !== 'CR_DEMO_TOKEN') throw safeError('Unexpected Codex MCP configuration.');
     const output = run([...offline, 'features', 'list']);
+    if(coding){
+      for(const name of ['shell_tool','unified_exec','view_image'])if(!new RegExp(`^${name}\\s+[^\\n]*\\strue$`,'m').test(output))throw safeError('Codex coding tools are unavailable.');
+      if(spec.args[spec.args.indexOf('--sandbox')+1]!=='workspace-write'||spec.args[spec.args.indexOf('--ask-for-approval')+1]!=='on-request'||!spec.args.includes('mcp_servers.context_router_demo.tools.mutatePreferences.approval_mode="prompt"'))throw safeError('Codex coding approvals are unavailable.');
+    }
     // unified_exec selects the execution transport; documented user opt-outs are ignored.
     // shell_tool is the command-execution exposure gate and must actually be false.
-    for (const name of disabled.filter(name => name !== 'unified_exec')) if (!new RegExp(`^${name}\\s+[^\\n]*\\sfalse$`, 'm').test(output)) throw safeError('Unsupported Codex native-tool controls.');
+    for (const name of disabled.filter(name => name !== 'unified_exec' && !(coding&&['shell_tool','view_image'].includes(name)))) if (!new RegExp(`^${name}\\s+[^\\n]*\\sfalse$`, 'm').test(output)) throw safeError('Unsupported Codex native-tool controls.');
   }
-  return { client: spec.command, version: spec.version, offlineControls: 'passed', ...(spec.command === 'codex' ? { unifiedExec: 'User opt-out may be ignored; shell_tool exposure is disabled.' } : {}) };
+  return { client: spec.command, version: spec.version, offlineControls: 'passed', ...(spec.command === 'codex' ? { unifiedExec: coding?'Coding tools enabled with workspace-write sandbox and user approvals.':'User opt-out may be ignored; shell_tool exposure is disabled.' } : {}) };
 }

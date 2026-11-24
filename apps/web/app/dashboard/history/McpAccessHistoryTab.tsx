@@ -200,6 +200,7 @@ export default function McpAccessHistoryTab({
   const [isLoadingInitial, setIsLoadingInitial] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [browsingOlder,setBrowsingOlder]=useState(false);
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const lastRequestRef = useRef<{ reset: boolean; cursor: string | null }>({
     reset: true,
@@ -207,6 +208,7 @@ export default function McpAccessHistoryTab({
   });
   const requestVersionRef = useRef(0);
   const pendingRef = useRef<AbortController | null>(null);
+  const quietRequestRef = useRef<AbortController | null>(null);
   const priorClientFilter = useRef(clientFilter);
   const loadedFilters = useRef<string | null>(null);
   useEffect(() => () => { requestVersionRef.current++; pendingRef.current?.abort(); }, []);
@@ -278,20 +280,18 @@ export default function McpAccessHistoryTab({
     return chips;
   }, [sanitizedAppliedFilters]);
 
-  const loadHistory = useCallback(async (reset: boolean, cursor: string | null = null) => {
-    if (!shouldLoad) return;
+  const loadHistory = useCallback(async (reset: boolean, cursor: string | null = null, quiet = false) => {
+    if (!shouldLoad || (quiet && pendingRef.current)) return;
+    if (!quiet) setBrowsingOlder(!reset);
     pendingRef.current?.abort();
     const controller = new AbortController(); pendingRef.current = controller;
+    if(quiet)quietRequestRef.current=controller;
     const signal = invalidationSignal ? AbortSignal.any([invalidationSignal, controller.signal]) : controller.signal;
     const requestVersion = requestVersionRef.current + 1;
     requestVersionRef.current = requestVersion;
     lastRequestRef.current = { reset, cursor };
 
-    if (reset) {
-      setIsLoadingInitial(true);
-    } else {
-      setIsLoadingMore(true);
-    }
+    if (!quiet) { if (reset) setIsLoadingInitial(true); else setIsLoadingMore(true); }
 
     const filterKey = JSON.stringify(sanitizedAppliedFilters);
     if (reset && loadedFilters.current !== filterKey) {
@@ -350,7 +350,9 @@ export default function McpAccessHistoryTab({
         setError(requests.reason instanceof Error ? requests.reason.message : 'Failed to load MCP access history.');
       }
 
-      if (reset && requests.status === 'fulfilled') setExpandedIds({});
+      if (reset && !quiet && requests.status === 'fulfilled') {
+        setExpandedIds(previous => Object.fromEntries(Object.entries(previous).filter(([key]) => key.startsWith('permission:'))));
+      }
     } catch (loadError) {
       if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setError(
@@ -360,6 +362,8 @@ export default function McpAccessHistoryTab({
         );
       }
     } finally {
+      if(pendingRef.current===controller)pendingRef.current=null;
+      if(quietRequestRef.current===controller)quietRequestRef.current=null;
       if (!signal.aborted && requestVersion === requestVersionRef.current) {
         setIsLoadingInitial(false);
         setIsLoadingMore(false);
@@ -376,6 +380,13 @@ export default function McpAccessHistoryTab({
 
     void loadHistory(true);
   }, [loadHistory, shouldLoad]);
+
+  useEffect(()=>{
+    if(!demo||!shouldLoad||browsingOlder||Object.values(expandedIds).some(Boolean)||JSON.stringify(draftFilters)!==JSON.stringify(appliedFilters))return;
+    let stopped=false,timer:ReturnType<typeof setTimeout>;
+    const poll=async()=>{if(document.visibilityState==='visible')await loadHistory(true,null,true);if(!stopped)timer=setTimeout(poll,3000);};
+    timer=setTimeout(poll,3000);return()=>{stopped=true;clearTimeout(timer);quietRequestRef.current?.abort();};
+  },[demo,shouldLoad,browsingOlder,expandedIds,draftFilters,appliedFilters,loadHistory]);
 
   const handleApplyFilters = () => {
     setAppliedFilters({ ...draftFilters });
@@ -405,6 +416,10 @@ export default function McpAccessHistoryTab({
     ...visibleChanges.map(item=>({kind:'permission' as const,item})),
   ].sort((a,b)=>Date.parse(b.item.occurredAt)-Date.parse(a.item.occurredAt) || b.item.id.localeCompare(a.item.id));
 
+  const permissionExpanded = useCallback((id:string,open:boolean)=>{
+    const key='permission:'+id;
+    setExpandedIds(previous=>previous[key]===open?previous:{...previous,[key]:open});
+  },[]);
   const toggleExpanded = (id: string) => {
     setExpandedIds((previous) => ({
       ...previous,
@@ -630,7 +645,7 @@ export default function McpAccessHistoryTab({
         ) : (
           <div className="divide-y divide-gray-200">
             {rows.map((row) => {
-              if (row.kind === 'permission') return <PermissionActivityRow key={'permission:'+row.item.id} event={row.item} highlight={row.item.id===highlightChangeId} active={shouldLoad && revealReady && !isLoadingInitial && !isLoadingMore} revealState={permissionReveal} olderThanLoaded={hasNextPage && !!items.at(-1) && Date.parse(row.item.occurredAt)<Date.parse(items.at(-1)!.occurredAt)} relativeTime={formatRelativeTimestamp(row.item.occurredAt)} absoluteTime={formatAbsoluteTimestamp(row.item.occurredAt)}/>;
+              if (row.kind === 'permission') return <PermissionActivityRow key={'permission:'+row.item.id} event={row.item} onExpandedChange={permissionExpanded} highlight={row.item.id===highlightChangeId} active={shouldLoad && revealReady && !isLoadingInitial && !isLoadingMore} revealState={permissionReveal} olderThanLoaded={hasNextPage && !!items.at(-1) && Date.parse(row.item.occurredAt)<Date.parse(items.at(-1)!.occurredAt)} relativeTime={formatRelativeTimestamp(row.item.occurredAt)} absoluteTime={formatAbsoluteTimestamp(row.item.occurredAt)}/>;
               const item=row.item;
               const isExpanded = Boolean(expandedIds[item.id]);
 

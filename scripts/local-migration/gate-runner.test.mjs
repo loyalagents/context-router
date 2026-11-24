@@ -21,6 +21,7 @@ import {
   copyWorkspaceFiles,
   cloneCorepackCache,
   cloneDependencyTrees,
+  combineFailures,
   createResourceLifecycleJournal,
   createStreamingRedactor,
   prepareOwnedTemporaryDirectory,
@@ -950,6 +951,68 @@ test("phase failures preserve bounded, redacted command diagnostics", async () =
       return true;
     },
   );
+});
+
+test("timeout diagnostics survive process-group cleanup failure without changing phase results", async (t) => {
+  if (process.platform === "win32") return t.skip("POSIX process-group regression");
+  for (const projected of [false, true]) {
+    const child = new EventEmitter();
+    child.pid = 424_242;
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.stdout.setEncoding = child.stderr.setEncoding = () => {};
+    let groupLive = true, cleanups = 0, summary;
+    const signals = [];
+    // runCommand's deadline is unref'd because real children keep the loop alive.
+    const keepAlive = setInterval(() => {}, 1000);
+    try {
+      await assert.rejects(runPhaseSequence([
+        { id: "ui", commands: [{ argv: ["synthetic-browser-tests"] }] },
+        { id: "later", commands: [] },
+      ], {
+        execute: ({ argv }) => runCommand(argv, {
+          cwd: os.tmpdir(), timeoutMs: 20, terminationGraceMs: 100, closeDeadlineMs: 10,
+          spawnProcess: () => {
+            setImmediate(() => child.stdout.emit("data", "old-output\n".repeat(2000) +
+              "browser last completed case: 42\nAuthorization: Bearer diagnostic-secret\n"));
+            return child;
+          },
+          inspectProcessGroup: async () => groupLive,
+          signalProcess: (_pid, signal) => {
+            signals.push(signal);
+            if (signal === "SIGTERM") setImmediate(() => child.emit("close", null, signal));
+            if (signal === "SIGKILL") groupLive = false;
+          },
+        }),
+        projectFailureMessage: projected ? () => "structured evidence only" : undefined,
+        onSummary: value => { summary = value; },
+        onCleanup: () => { cleanups++; },
+      }), error => {
+        assert.equal(error.exitCode, 124);
+        assert.equal(error.signal, "SIGTERM");
+        assert.match(error.cause.message, /leader exited while its owned process group remained/);
+        if (projected) assert.equal(error.message, "phase ui failed: structured evidence only");
+        else {
+          assert.match(error.message, /browser last completed case: 42/);
+          assert.match(error.message, /command timed out/);
+          assert.match(error.message, /leader exited while its owned process group remained/);
+          assert.doesNotMatch(error.message, /diagnostic-secret/);
+          assert.ok(error.message.length < 17_000);
+        }
+        return true;
+      });
+      assert.deepEqual(summary.map(row => row.status), ["failed", "skipped"]);
+      assert.equal(cleanups, 1);
+      assert.deepEqual(signals, ["SIGTERM", "SIGKILL"]);
+    } finally { clearInterval(keepAlive); }
+  }
+});
+
+test("combined failures never promote secondary or non-string diagnostic tails", () => {
+  const secondary = Object.assign(new Error("cleanup"), { outputTail: "secondary output" });
+  for (const primary of [null, new Error("primary"), Object.assign(new Error("primary"), { outputTail: { secret: true } })]) {
+    assert.equal(combineFailures(primary, [secondary]).outputTail, undefined);
+  }
 });
 
 test("phase runner reports failed/skipped states and preserves cleanup failure", async () => {

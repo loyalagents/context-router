@@ -1,8 +1,8 @@
 import {randomBytes} from 'node:crypto';
 const busy = new Set(['checking','choosing-project','terminal-opened','signing-in']);
 /** Native capability injected only by the managed demo composition. No shell arguments cross HTTP. */
-export function createDemoClaude({cap,send,readProgress,readClient,assertActive=()=>{}}) {
-  if(cap?.mode!=='demo')throw new Error('Demo launcher unavailable');
+export function createDemoClaude({cap,send,readProgress,readClient,assertActive=()=>{},client='claude'}) {
+  if(cap?.mode!=='demo'||!['claude','codex'].includes(client))throw new Error('Demo launcher unavailable');
   let current,phaseStartedAt=0,phase;
   const transition=state=>{if(state!==phase){phase=state;phaseStartedAt=Date.now();}current.state=state;};
   async function status() {
@@ -23,7 +23,7 @@ export function createDemoClaude({cap,send,readProgress,readClient,assertActive=
       assertActive();if(typeof chooseProject!=='boolean')throw new Error('Invalid request');
       if(current&&busy.has(current.state))return status();
       const requested={request:randomBytes(16).toString('hex'),startedAt:new Date().toISOString(),state:'checking'};current=requested;phase='checking';phaseStartedAt=Date.now();
-      try{await send('demo-claude-open',{request:requested.request,chooseProject});}catch{if(current===requested)requested.state='failed';}
+      try{await send(`demo-${client}-open`,{request:requested.request,chooseProject});}catch{if(current===requested)requested.state='failed';}
       return status();
     },
     accept({request,state}){if(current?.request===request)transition(state);},

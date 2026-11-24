@@ -13,22 +13,25 @@ const value = (change:PermissionChange, text:string) => change.kind === 'maximum
 const label = (change:PermissionChange) => change.kind === 'maximum' ? 'Maximum access' : change.kind === 'sensitive' ? 'Sensitive context' : change.kind === 'connection' ? 'Connection' : change.kind === 'scope' ? `Allowed scope · ${change.target}` : `${change.action} rule · ${change.target}`;
 
 export type PermissionRevealState = {revealed:boolean;open:boolean};
-export function PermissionActivityRow({event,highlight,active,revealState,olderThanLoaded,relativeTime,absoluteTime}:{event:PermissionActivity;highlight:boolean;active:boolean;revealState?:RefObject<PermissionRevealState>;olderThanLoaded:boolean;relativeTime:string;absoluteTime:string}) {
+export function PermissionActivityRow({event,highlight,active,revealState,olderThanLoaded,relativeTime,absoluteTime,onExpandedChange}:{event:PermissionActivity;highlight:boolean;active:boolean;revealState?:RefObject<PermissionRevealState>;olderThanLoaded:boolean;relativeTime:string;absoluteTime:string;onExpandedChange:(id:string,open:boolean)=>void}) {
   const element=useRef<HTMLDetailsElement>(null);
   const single=event.changes.length===1 && !event.omittedChanges ? event.changes[0] : null;
   useEffect(()=>{
     if(highlight && active && revealState && !revealState.current.revealed && element.current){
-      revealState.current.revealed=true;revealState.current.open=true;element.current.open=true;
+      revealState.current.revealed=true;revealState.current.open=true;element.current.open=true;onExpandedChange(event.id,true);
       element.current.scrollIntoView({block:'nearest'});element.current.focus({preventScroll:true});
     }
-  },[highlight,active,revealState]);
-  return <details ref={element} tabIndex={highlight?-1:undefined} open={highlight ? revealState?.current.open : undefined} onToggle={() => { if(highlight && revealState && element.current) revealState.current.open=element.current.open; }} data-permission-change={event.id} className={`m-3 rounded-lg border-l-4 !border-l-violet-500 bg-violet-50 p-4 ${highlight?'ring-2 ring-violet-300':''}`}>
+  },[highlight,active,revealState,event.id,onExpandedChange]);
+  useEffect(()=>{onExpandedChange(event.id,!!element.current?.open);return()=>onExpandedChange(event.id,false);},[event.id,onExpandedChange]);
+  return <details ref={element} tabIndex={highlight?-1:undefined} open={highlight ? revealState?.current.open : undefined} onToggle={() => { onExpandedChange(event.id,!!element.current?.open); if(highlight && revealState && element.current) revealState.current.open=element.current.open; }} data-permission-change={event.id} className={`m-3 rounded-lg border-l-4 !border-l-violet-500 bg-violet-50 p-4 ${highlight?'ring-2 ring-violet-300':''}`}>
     <summary className="cursor-pointer" onClick={click => {
-      if(highlight && revealState && element.current){
+      if(element.current){
         // Native toggle is queued; save the choice before a focus refresh can remount us.
         click.preventDefault();
-        revealState.current.open = !element.current.open;
-        element.current.open = revealState.current.open;
+        const open = !element.current.open;
+        if(highlight && revealState)revealState.current.open = open;
+        element.current.open = open;
+        onExpandedChange(event.id,open);
       }
     }}><strong>{single?.kind==='maximum' ? <>You set maximum access for <ClientName clientKey={event.clientKey} showId={false}/> to {value(single,single.after)} (was {value(single,single.before)})</> : <>You {event.action==='revoke'?'revoked access for':'changed permissions for'} <ClientName clientKey={event.clientKey} showId={false}/></>}</strong>
       {single?.kind!=='maximum' && <span className="mt-1 block text-sm text-gray-600">{event.changes.slice(0,2).map(change=>`${label(change)}: ${value(change,change.before)} → ${value(change,change.after)}`).join(' · ')}{event.changes.length>2?' · More changes':''}</span>}

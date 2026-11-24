@@ -27,20 +27,29 @@ test('a running chat allows a fresh request while setup still deduplicates and o
  assert.equal((await flow.status()).state,'checking');assert.equal((await flow.status()).busy,true);
 });
 
-test('an open native project picker never ages into a new overlapping request',async()=>{
+test('Codex and Claude launch/status stay separate while each supports multiple chats',async()=>{
+ const sent=[],progress=new Map();const make=client=>createDemoClaude({cap,client,send:async(type,payload)=>sent.push({type,...payload}),readProgress:async id=>progress.get(id),readClient:async()=>client==='codex'?'exact-a':'exact-b'});
+ const codex=make('codex'),claude=make('claude');const a=await codex.open(false),b=await claude.open(false);
+ assert.equal(sent[0].type,'demo-codex-open');assert.equal(sent[1].type,'demo-claude-open');assert.equal(a.clientId,'exact-a');assert.equal(b.clientId,'exact-b');
+ codex.accept({request:b.request,state:'failed'});assert.equal((await codex.status()).state,'checking');
+ progress.set(a.request,'starting');await codex.status();await codex.open(false);assert.equal(sent.length,3);assert.equal((await claude.status()).busy,true);
+ assert.throws(()=>make('unknown'));
+});
+
+for(const client of ['claude','codex'])test(`${client} native project picker never ages into a new overlapping request`,async()=>{
  const sent=[],now=Date.now;let time=now();Date.now=()=>time;
  try{
- const flow=createDemoClaude({cap,send:async(_,value)=>sent.push(value),readProgress:async()=>null,readClient:async()=> 'exact-b'});
+ const flow=createDemoClaude({cap,client,send:async(_,value)=>sent.push(value),readProgress:async()=>null,readClient:async()=> 'exact-b'});
  const first=await flow.open(false);flow.accept({request:first.request,state:'choosing-project'});time+=240000;
  assert.equal((await flow.status()).state,'choosing-project');assert.equal((await flow.status()).busy,true);await flow.open(false);assert.equal(sent.length,1);
  flow.accept({request:first.request,state:'terminal-opened'});assert.equal((await flow.status()).state,'terminal-opened');
  }finally{Date.now=now;}
 });
 
-test('unchanged helper progress cannot renew a timed-out launch on the next poll',async()=>{
+for(const client of ['claude','codex'])test(`${client} unchanged helper progress cannot renew a timed-out launch on the next poll`,async()=>{
  const now=Date.now;let time=now();Date.now=()=>time;
  try{
- const flow=createDemoClaude({cap,send:async()=>{},readProgress:async()=> 'checking',readClient:async()=> 'exact-b'});
+ const flow=createDemoClaude({cap,client,send:async()=>{},readProgress:async()=> 'checking',readClient:async()=> 'exact-b'});
  await flow.open(false);time+=240000;
  for(let i=0;i<3;i++){const status=await flow.status();assert.equal(status.state,'unconfirmed');assert.equal(status.busy,false);}
  }finally{Date.now=now;}
