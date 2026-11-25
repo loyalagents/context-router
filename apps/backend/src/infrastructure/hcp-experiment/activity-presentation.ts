@@ -20,7 +20,7 @@ const titles: Record<string, string> = {
   "context.confirmed": "Memory confirmation recorded",
   "context.expired": "Memory expired",
   "context.exported": "Export attempt recorded",
-  "context.imported": "Memories imported",
+  "context.imported": "Import completed",
   "context.shared": "Client sharing report recorded",
   "conflict.detected": "Memory conflict detected",
   "conflict.proposed": "Conflict resolution proposed",
@@ -135,8 +135,12 @@ function row(event: any, association: AuditAssociation = {}): string {
     summary += `<p>Client-reported sharing; not independently confirmed. ${d.permitted === false ? "The reported sharing was not permitted." : "No additional permission is established by this report."}</p>`;
   if (event.eventType === "context.exported")
     summary += "<p>Export attempt recorded. Receipt is unconfirmed.</p>";
+  if (event.eventType === "context.imported") {
+    const outcomes = Array.isArray(d.outcomes) ? d.outcomes : [];
+    summary += `<p>${["imported", "skipped", "rejected"].map((outcome) => `${outcomes.filter((item: any) => item?.outcome === outcome).length} ${outcome}`).join("; ")}. Counts describe the recorded entry outcomes.</p>`;
+  }
   if (event.eventType === "revocation.notified")
-    summary += `<p>${d.outcome === "delivered" ? "The notification endpoint acknowledged delivery." : d.outcome === "abandoned" ? "Notification delivery was abandoned; the client was not notified by this delivery." : "Notification outcome is not recorded."} This is not evidence of remote erasure.</p><dl>${field("Attempts", d.attempts)}${field("Last possible copy use-until", d.lastUseUntil)}</dl>`;
+    summary += `<p>${d.outcome === "delivered" ? "The notification endpoint acknowledged delivery." : d.outcome === "abandoned" ? "Notification attempts stopped without a delivery acknowledgement; client receipt is unknown." : "Notification outcome is not recorded."} This is not evidence of remote erasure.</p><dl>${field("Attempts", d.attempts)}${field("Last possible copy use-until", d.lastUseUntil)}</dl>`;
   if (titles[event.eventType]) {
     details += `<dl>${!["context.created", "context.revised", "context.expired", "context.confirmed"].includes(event.eventType) || d.version === undefined ? "" : field("Version", d.version)}${!["context.expired", "grant.expired"].includes(event.eventType) || d.effectiveAt === undefined ? "" : field("Effective at", d.effectiveAt)}${event.categories === undefined ? "" : field("Recorded categories", list(event.categories))}${event.eventType !== "context.confirmed" || d.disposition === undefined ? "" : field("Disposition", d.disposition)}${event.eventType !== "conflict.resolved" || d.transition === undefined ? "" : field("Transition", d.transition)}</dl>`;
   }
@@ -163,7 +167,7 @@ export function activityPage(page: ActivityPage, limit: number): string {
     `<label>${escape(label)} <input name="${name}" value="${escape(filters[name] ?? "")}" maxlength="512"></label>`;
   const active = Object.keys(filters).length > 0;
   return `<p class="intro">Permission changes, memory changes and recorded use of context. History is retained across restart. Disclosure events record attempts; they cannot confirm remote receipt or erasure.</p><p>${link("/manage", "Inspect current access")} · ${link("/manage/policy", "Inspect current rules and directives")} · ${link("/manage/disclosures", "Possible disclosure summary")}</p>
-  ${exact ? `<p>${link("/manage/audit", "All activity")} · Exact recorded event</p>` : `<form method="get" action="/manage/audit" aria-label="Activity filters"><div class="activity-filters">${control("client", "Client ID")}${control("category", "Category")}${control("eventType", "Event type")}${control("from", "From (RFC3339, inclusive)")}${control("to", "To (RFC3339, inclusive)")}</div><button>Apply filters</button> ${link("/manage/audit", "Reset filters")}</form><p class="muted">Oldest first, in recorded append order. Next pages retain this snapshot for ten minutes. Open Activity again for newly recorded events.</p><p class="muted">Client filters include the recorded grant beneficiary or initiator, and grants matching a policy's recorded scope. They do not prove that a policy changed effective access or was used.</p>`}
+  ${exact ? `<p>${link("/manage/audit", "All activity")} · Exact recorded event</p>` : `<form method="get" action="/manage/audit" aria-label="Activity filters"><div class="activity-filters">${control("client", "Client ID")}${control("category", "Category")}${control("eventType", "Event type")}${control("from", "From (RFC3339, inclusive)")}${control("to", "To (RFC3339, inclusive)")}${filters.grantId ? control("grantId", "Grant ID") : ""}${filters.entryId ? control("entryId", "Entry ID") : ""}</div><button>Apply filters</button> ${link("/manage/audit", "Reset filters")}</form><p class="muted">Oldest first, in recorded append order. Next pages retain this snapshot for ten minutes. Open Activity again for newly recorded events.</p><p class="muted">Client filters include the recorded grant beneficiary or initiator, and grants matching a policy's recorded scope. They do not prove that a policy changed effective access or was used.</p>`}
   ${page.events.length ? page.events.map((e, i) => row(e, page.associations[i])).join("") : `<section><h2>${exact ? "Recorded event unavailable" : active ? "No events match these filters" : "No recorded activity"}</h2><p>${exact ? "No event with this identifier is available in this workspace." : "This view contains no recorded events."} ${link("/manage/audit", "Start a fresh activity view")}</p></section>`}
   ${page.nextCursor ? `<p>${link(`/manage/audit?${new URLSearchParams({ ...filters, limit: String(limit), cursor: page.nextCursor })}`, "Next activity page (newer events)")}</p>` : ""}`;
 }

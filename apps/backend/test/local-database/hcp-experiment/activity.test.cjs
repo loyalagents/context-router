@@ -334,3 +334,182 @@ test("C7c write-result disclosure is presented separately from a read and omits 
   assert.match(page.text, /Recorded disclosure attempt of the write result/);
   assert.doesNotMatch(page.text, /PRIVATE-WRITE-CONTENT|Read attempt recorded/);
 });
+
+for (const malformed of [false, true])
+  test(`C7c reviewed imported policy extensions (${malformed ? "objects" : "arrays"}) cannot break or fabricate history matches`, async (t) => {
+    const f = await fixture(t, { approveFixtures: true }),
+      browser = await signedIn(f);
+    const bundle = (await f.management("/v2/export")).json;
+    bundle.entries = [];
+    const unrelated = `urn:uuid:${randomUUID()}`;
+    bundle.rules = [
+      {
+        ruleId: `urn:uuid:${randomUUID()}`,
+        setBy: "context-subject",
+        createdAt: new Date().toISOString(),
+        effect: "deny",
+        categories: ["work_context"],
+        operators: ["unrelated.example"],
+        categoriesSearched: malformed ? {} : ["general_preferences"],
+        relatedTransitions: malformed ? {} : [{ id: unrelated }],
+      },
+    ];
+    const review = await f.management("/experiment/import/review", {
+      method: "POST",
+      json: { export: bundle },
+    });
+    assert.equal(review.status, 200);
+    assert.equal(
+      (
+        await f.management("/v2/import", {
+          method: "POST",
+          json: {
+            reviewId: review.json.reviewId,
+            csrf: review.json.csrf,
+            subjects: review.json.subjects,
+          },
+        })
+      ).status,
+      200,
+    );
+    assert.equal((await browser.request("/manage/audit")).status, 200);
+    const policy = (
+      await f.management("/v2/audit?eventType=rule.set")
+    ).json.events.at(-1);
+    assert.equal((await browser.request(exact(policy.eventId))).status, 200);
+    for (const suffix of [
+      `category=general_preferences&eventType=rule.set`,
+      `entryId=${unrelated}`,
+    ]) {
+      assert.deepEqual(
+        (await f.management(`/v2/audit?${suffix}`)).json.events,
+        [],
+      );
+      assert.match(
+        (await browser.request(`/manage/audit?${suffix}`)).text,
+        /No events match/,
+      );
+    }
+    assert.equal(
+      (
+        await f.management(
+          "/v2/audit/export?category=work_context&eventType=rule.set",
+        )
+      ).json.events.length,
+      1,
+    );
+    assert.equal((await f.management("/v2/rules")).status, 200);
+  });
+
+test("C7c a reviewed mapped import is filterable by its foreign source and local destination categories", async (t) => {
+  const f = await fixture(t, { approveFixtures: true }),
+    browser = await signedIn(f);
+  const bundle = (await f.management("/v2/export")).json;
+  bundle.subject.id = "urn:example:foreign-subject";
+  const entry = bundle.entries.find((e) => e.record.status === "active");
+  entry.id = `urn:uuid:${randomUUID()}`;
+  entry.subject.id = bundle.subject.id;
+  entry.record.version = 1;
+  entry.record.relationships = [];
+  entry.classification.categories = ["urn:example:foreign-category"];
+  bundle.entries = [entry];
+  const review = await f.management("/experiment/import/review", {
+    method: "POST",
+    json: {
+      export: bundle,
+      categoryMap: { "urn:example:foreign-category": "work_context" },
+    },
+  });
+  assert.equal(review.status, 200);
+  assert.equal(
+    (
+      await f.management("/v2/import", {
+        method: "POST",
+        json: {
+          reviewId: review.json.reviewId,
+          csrf: review.json.csrf,
+          subjects: review.json.subjects,
+        },
+      })
+    ).status,
+    200,
+  );
+  let id;
+  for (const category of ["urn:example:foreign-category", "work_context"]) {
+    const suffix = new URLSearchParams({
+      category,
+      eventType: "context.recategorized",
+      entryId: entry.id,
+    });
+    const result = await f.management(`/v2/audit?${suffix}`);
+    assert.equal(result.status, 200);
+    assert.equal(result.json.events.length, 1);
+    id ??= result.json.events[0].eventId;
+    assert.equal(result.json.events[0].eventId, id);
+    assert.deepEqual(
+      ids((await browser.request(`/manage/audit?${suffix}`)).text),
+      [id],
+    );
+  }
+});
+
+test("C7c management initiators and applied grant/entry filters remain visible and sticky", async (t) => {
+  const f = await fixture(t, { approveFixtures: true }),
+    browser = await signedIn(f),
+    token = await authorize(f);
+  const grant = (await f.context("/v2/grants", token)).json.grants[0];
+  await f.management(`/v2/grants/${grant.grantId}`, { method: "DELETE" });
+  const manager = "urn:context-router:synthetic-management";
+  assert.equal(
+    (
+      await f.management(
+        `/v2/audit?client=${encodeURIComponent(manager)}&eventType=grant.revoked`,
+      )
+    ).json.events.length,
+    1,
+  );
+  for (const [key, value] of [
+    ["grantId", grant.grantId],
+    ["entryId", `urn:uuid:${randomUUID()}`],
+  ]) {
+    const page = await browser.request(
+      `/manage/audit?${key}=${encodeURIComponent(value)}`,
+    );
+    assert.equal(inputs(page.text)[key], value);
+    const submitted = await browser.request(
+      `/manage/audit?${new URLSearchParams(inputs(page.text))}`,
+    );
+    assert.equal(inputs(submitted.text)[key], value);
+  }
+});
+
+test("C7c anonymous exact bookmarks return to that event after sign-in without allowing arbitrary redirects", async (t) => {
+  const f = await fixture(t, { approveFixtures: true });
+  const event = (await f.management("/v2/audit")).json.events[0];
+  const browser = new OAuthDriver(f, "a"),
+    login = await browser.request(exact(event.eventId));
+  const fields = inputs(login.text);
+  assert.equal(fields.activityEvent, event.eventId);
+  for (const value of ["//foreign.example", "/manage/export", "urn:uuid:bad"]) {
+    assert.equal(
+      (
+        await browser.request("/manage/login", {
+          method: "POST",
+          headers: { origin: f.issuer },
+          form: { ...fields, activityEvent: value, credential: f.human },
+        })
+      ).status,
+      400,
+    );
+  }
+  const signed = await browser.request("/manage/login", {
+    method: "POST",
+    headers: { origin: f.issuer },
+    form: { ...fields, credential: f.human },
+  });
+  assert.equal(signed.status, 303);
+  assert.equal(signed.headers.location, exact(event.eventId));
+  assert.deepEqual(ids((await browser.request(signed.headers.location)).text), [
+    event.eventId,
+  ]);
+});

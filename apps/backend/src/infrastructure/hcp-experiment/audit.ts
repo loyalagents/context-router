@@ -5,6 +5,7 @@ import {
   privateId,
   deniedCategories,
   matchingDirectives,
+  uri,
 } from "./policy";
 
 export interface AuditGrant {
@@ -119,7 +120,9 @@ export function auditFilters(input: any): any {
       result[key] = value;
     }
   }
-  if (result.category) categories([result.category]);
+  // Historical imports can record a foreign URI before mapping it to a supported
+  // local category. This is a history filter, not a grant/read category admission.
+  if (result.category && !uri(result.category)) categories([result.category]);
   if (result.entryId && !privateId(result.entryId)) invalid();
   if (result.grantId && !privateId(result.grantId)) invalid();
   if (result.eventId && !privateId(result.eventId)) invalid();
@@ -158,51 +161,81 @@ export function matchesAudit(
   grants: Map<string, any>,
   association?: AuditAssociation,
 ): boolean {
-  const policy = /^(rule|directive)\./.test(e.eventType),
+  const policy = /^(rule|directive)\.(set|removed)$/.test(e.eventType),
     lifecycle = [
       "grant.issued",
       "grant.revoked",
       "grant.expired",
       "revocation.notified",
     ].includes(e.eventType);
+  const data = e.data ?? {},
+    array = (value: any): any[] => (Array.isArray(value) ? value : []),
+    stringArray = (value: any): string[] =>
+      array(value).filter((v) => typeof v === "string"),
+    copies = ["context.read", "context.created", "context.revised"].includes(
+      e.eventType,
+    )
+      ? array(e.disclosed)
+      : [],
+    transitions = [
+      "context.created",
+      "context.revised",
+      "context.withdrawn",
+      "context.expired",
+      "context.confirmed",
+      "context.recategorized",
+      "context.restricted",
+    ].includes(e.eventType)
+      ? array(data.relatedTransitions)
+      : [],
+    recordedGrant =
+      association === undefined ? grants.get(e.grantId) : association.grant;
   const recordedCategories = [
-    ...(e.categories ?? []),
+    ...stringArray(e.categories),
     ...(e.eventType === "context.recategorized"
-      ? [...(e.data.from ?? []), ...(e.data.to ?? [])]
+      ? [...stringArray(data.from), ...stringArray(data.to)]
       : []),
-    ...(e.data.categoriesSearched ?? []),
-    ...(e.disclosed ?? []).flatMap((d: any) => d.categories ?? []),
-    ...(policy ? (e.data.categories ?? []) : []),
+    ...(e.eventType === "context.read"
+      ? stringArray(data.categoriesSearched)
+      : []),
+    ...copies.flatMap((d: any) => stringArray(d?.categories)),
+    ...(policy ? stringArray(data.categories) : []),
     ...(lifecycle
-      ? (grants.get(e.grantId)?.categories ??
-        (e.data.access ?? []).flatMap((d: any) => d.categories ?? []))
+      ? association === undefined
+        ? stringArray(recordedGrant?.categories)
+        : array(recordedGrant?.access).flatMap((d) =>
+            stringArray(d?.categories),
+          )
+      : []),
+    ...(e.eventType === "grant.issued"
+      ? array(data.access).flatMap((d) => stringArray(d?.categories))
       : []),
     ...(e.eventType === "context.shared"
-      ? (e.data.possibleCategories ?? [])
+      ? stringArray(data.possibleCategories)
       : []),
   ];
   return (
     (!filter.client ||
-      (association?.grant?.client?.id ??
-        grants.get(e.grantId)?.client?.id ??
-        e.participants?.initiator?.id) === filter.client ||
-      association?.policyGrants?.some((g) => g.client.id === filter.client)) &&
+      recordedGrant?.client?.id === filter.client ||
+      e.participants?.initiator?.id === filter.client ||
+      (association?.policyGrants?.some((g) => g.client.id === filter.client) ??
+        false)) &&
     (!filter.grantId || e.grantId === filter.grantId) &&
     (!filter.eventId || e.eventId === filter.eventId) &&
     (!filter.entryId ||
       e.entryId === filter.entryId ||
       e.relatedEntryId === filter.entryId ||
-      e.disclosed?.some((d: any) => d.entryId === filter.entryId) ||
-      e.data.relatedTransitions?.some((t: any) => t.id === filter.entryId) ||
+      copies.some((d: any) => d?.entryId === filter.entryId) ||
+      transitions.some((t: any) => t?.id === filter.entryId) ||
       (e.eventType === "context.shared" &&
-        e.data.entries?.some((t: any) => t.id === filter.entryId)) ||
+        array(data.entries).some((t: any) => t?.id === filter.entryId)) ||
       (e.eventType === "context.imported" &&
-        e.data.outcomes?.some((t: any) => t.id === filter.entryId))) &&
+        array(data.outcomes).some((t: any) => t?.id === filter.entryId))) &&
     (!filter.eventType || e.eventType === filter.eventType) &&
     (!filter.from || e.timestamp >= filter.from) &&
     (!filter.to || e.timestamp <= filter.to) &&
     (!filter.category ||
-      (policy && e.data.categories === undefined) ||
+      (policy && data.categories === undefined) ||
       recordedCategories.includes(filter.category))
   );
 }

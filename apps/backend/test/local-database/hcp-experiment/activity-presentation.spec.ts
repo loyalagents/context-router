@@ -93,3 +93,37 @@ it("does not promote imported policy extension names into interpreted fields", (
     expect(html).not.toContain("PRIVATE-EXTENSION");
   }
 });
+
+it("describes notification acknowledgements and zero-import outcomes without claiming receipt or added memories", () => {
+  const render = (eventType: string, data: any) =>
+    activityPage(
+      {
+        events: [
+          { eventId: "id", eventType, timestamp: "2026-11-25T12:00:00Z", data },
+        ],
+        associations: [{}],
+        filters: {},
+        nextCursor: null,
+      },
+      20,
+    );
+  expect(
+    render("revocation.notified", { outcome: "abandoned", attempts: 5 }),
+  ).toContain("without a delivery acknowledgement");
+  expect(
+    render("revocation.notified", { outcome: "abandoned", attempts: 5 }),
+  ).not.toContain("client was not notified");
+  expect(
+    render("revocation.notified", { outcome: "delivered", attempts: 1 }),
+  ).toContain("endpoint acknowledged delivery");
+  expect(
+    render("context.imported", {
+      outcomes: [{ id: "entry", outcome: "skipped" }],
+    }),
+  ).not.toContain("Memories imported");
+  expect(
+    render("context.imported", {
+      outcomes: [{ id: "entry", outcome: "skipped" }],
+    }),
+  ).toContain("0 imported");
+});

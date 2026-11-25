@@ -132,6 +132,16 @@ test(
       await f.restart();
       await page.goto(exactUrl);
       assert.equal(await page.locator("[data-activity-event]").count(), 1);
+      await context.clearCookies();
+      await page.goto(exactUrl);
+      assert.equal(
+        await page.locator('input[name="activityEvent"]').inputValue(),
+        new URL(exactUrl).searchParams.get("eventId"),
+      );
+      await page.getByLabel("Human management credential").fill(f.human);
+      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      assert.equal(page.url(), exactUrl);
+      assert.equal(await page.locator("[data-activity-event]").count(), 1);
       await page.goto(f.issuer + "/manage/audit?client=a");
       const reopenedIds = await page
         .locator("[data-activity-event]")
@@ -161,9 +171,44 @@ test(
         .fill(event.timestamp);
       await page.getByRole("button", { name: "Apply filters" }).click();
       assert.equal(await page.locator("[data-activity-event]").count(), 1);
+      await page.goto(
+        f.issuer +
+          "/manage/audit?" +
+          new URLSearchParams({
+            grantId: grant.grantId,
+            entryId: event.disclosed[0].entryId,
+          }),
+      );
+      assert.equal(
+        await page.getByLabel("Grant ID", { exact: true }).inputValue(),
+        grant.grantId,
+      );
+      assert.equal(
+        await page.getByLabel("Entry ID", { exact: true }).inputValue(),
+        event.disclosed[0].entryId,
+      );
+      await page.getByRole("button", { name: "Apply filters" }).click();
+      assert.equal(
+        new URL(page.url()).searchParams.get("grantId"),
+        grant.grantId,
+      );
+      assert.equal(
+        new URL(page.url()).searchParams.get("entryId"),
+        event.disclosed[0].entryId,
+      );
+      assert.equal(await page.locator("[data-activity-event]").count(), 1);
       await page
         .getByRole("link", { name: "Reset filters", exact: true })
         .click();
+      assert.equal(new URL(page.url()).search, "");
+      assert.equal(
+        await page.getByLabel("Grant ID", { exact: true }).count(),
+        0,
+      );
+      assert.equal(
+        await page.getByLabel("Entry ID", { exact: true }).count(),
+        0,
+      );
       assert.equal(
         await page.getByLabel("Client ID", { exact: true }).inputValue(),
         "",

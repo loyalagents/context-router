@@ -254,3 +254,52 @@ it("joins policy scope to prior recorded grant epochs, operator and claims, neve
   ]);
   expect(partial.get("unknown").policyGrants).toEqual([]);
 });
+
+it("matches initiator and beneficiary independently and never fills missing prior issuance with future facts", () => {
+  const early = {
+    eventId: "early",
+    eventType: "grant.revoked",
+    timestamp: at(0),
+    grantId: "late",
+    participants: { initiator: { id: "manager" } },
+    data: {},
+  };
+  const later = {
+    ...issued("late"),
+    eventId: "later",
+    data: { client, access: [{ categories: ["general_preferences"] }] },
+  };
+  const events = [early, later],
+    grants = audit.grantFacts(events),
+    associations = audit.auditAssociations(events);
+  expect(
+    audit.matchesAudit(
+      early,
+      { client: "a" },
+      grants,
+      associations.get("early"),
+    ),
+  ).toBe(false);
+  expect(
+    audit.matchesAudit(
+      early,
+      { category: "general_preferences" },
+      grants,
+      associations.get("early"),
+    ),
+  ).toBe(false);
+  expect(
+    audit.matchesAudit(
+      early,
+      { client: "manager" },
+      grants,
+      associations.get("early"),
+    ),
+  ).toBe(true);
+  const revoke = { ...early, eventId: "after" },
+    context = audit.auditAssociations([later, revoke]).get("after");
+  for (const id of ["a", "manager"])
+    expect(audit.matchesAudit(revoke, { client: id }, grants, context)).toBe(
+      true,
+    );
+});

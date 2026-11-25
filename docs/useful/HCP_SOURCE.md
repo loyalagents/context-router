@@ -1,6 +1,6 @@
 # Synthetic HCP Source Dashboard
 
-- Status: bounded C6/C7a source experiment; the [C7b subscription trial](../plans/active/hcp-alignment/c7b-host-brief.md) passed its separately authorized bounded live query/get, scope-denial and manual-revocation journey. Receipts and limitations are recorded in its brief; publication/CI and broader qualification remain outstanding.
+- Status: bounded C6/C7a source experiment; the [C7b subscription trial](../plans/active/hcp-alignment/c7b-host-brief.md) passed its separately authorized bounded live query/get, scope-denial and manual-revocation journey and merged in PR #217. Receipts and limitations are recorded in its brief; C7b CI qualification is recorded separately, and broader qualification remains outstanding.
 - This command uses synthetic data only. Do not paste personal information. A real host is permitted only within the separately reviewed and approved C7b trial.
 - This is separate from the installed Mac application, its documents, identities, models and client settings. It does not establish HCP conformance or complete the C6 roadmap.
 
@@ -193,10 +193,14 @@ changes, memory changes and disclosure attempts share one timeline. Expand
 **Recorded details** for event IDs, participants, exact grant references,
 categories, purposes, copy deadlines and recorded before/after classification.
 **Link to this event** opens that event directly, including after restart and
-when it falls outside the first page. Missing identifiers show an unavailable
+when it falls outside the first page. If sign-in is required, the exact event is
+retained through sign-in. Missing identifiers show an unavailable
 record; they do not reconstruct an event from current permissions.
 
 Client, category, exact event-type and inclusive RFC3339 date filters combine.
+Grant and entry filters opened from a scoped link remain visible and applied;
+**Reset filters** removes them. Historical category filters also accept a foreign
+category URI recorded before a reviewed import mapping.
 Rows follow oldest-first append order, including when timestamps tie. **Next
 activity page** advances within the same snapshot; its cursor lasts ten minutes.
 Start a fresh view for newer events or an expired cursor. Pagination is a display
@@ -212,8 +216,10 @@ recorded old and new categories; later state does not rewrite their details.
 Grant cards show **Approved scope**. Current rules and entry restrictions may
 further limit it; current grant/rule inspection is linked separately. A grant
 event does not establish a read. Disclosures, including write-result copies and
-interrupted responses, remain attempts with unconfirmed receipt. Notification
-acknowledgement never proves remote erasure. The view presents supported recorded
+interrupted responses, remain attempts with unconfirmed receipt. Abandoned
+notifications establish no acknowledgement, not absence of client receipt;
+acknowledgement never proves remote erasure. Completed imports show recorded
+imported/skipped/rejected entry counts. The view presents supported recorded
 fields, excluding arbitrary extensions, raw request text, free-text task/reason
 descriptions and memory content; authenticated audit export retains its separate
 full-record contract. The Activity page and exact-event view require management

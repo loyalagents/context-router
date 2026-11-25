@@ -25,6 +25,7 @@ import {
   keys,
   scopeAccess,
   validateAccess,
+  privateId,
 } from "./policy";
 import { authorizationProvider, validateAuthorization } from "./oauth";
 import { COMPLETION_ONLY, WriteConflict } from "./writes";
@@ -213,12 +214,17 @@ export function authorizationHandler(
     if (req.headers.origin !== issuer || typeof value !== "string") denied();
     return authority.browserSession(cookie(req), value);
   };
-  const loginPage = (res: ServerResponse, action: string, s: any) =>
+  const loginPage = (
+    res: ServerResponse,
+    action: string,
+    s: any,
+    activityEvent?: string,
+  ) =>
     page(
       res,
       "login",
       "Sign in to manage synthetic context",
-      `<p>Synthetic data only. Signing in does not approve a context grant or authorize a content write. Each correction requires its own exact approval.</p><form method="post" action="${escape(action)}">${hidden("csrf", s.csrf)}<label>Human management credential <input name="credential" type="password" autocomplete="off" required></label><button>Sign in</button></form>`,
+      `<p>Synthetic data only. Signing in does not approve a context grant or authorize a content write. Each correction requires its own exact approval.</p><form method="post" action="${escape(action)}">${hidden("csrf", s.csrf)}${activityEvent ? hidden("activityEvent", activityEvent) : ""}<label>Human management credential <input name="credential" type="password" autocomplete="off" required></label><button>Sign in</button></form>`,
       undefined,
       action.startsWith("/manage"),
     );
@@ -501,7 +507,9 @@ export function authorizationHandler(
       const s = browser(req, res);
       if (route === "/manage/login" && req.method === "POST") {
         const form = await body(req);
-        keys(form, ["csrf", "credential"]);
+        keys(form, ["csrf", "credential", "activityEvent"]);
+        if (form.activityEvent !== undefined && !privateId(form.activityEvent))
+          invalid();
         csrf(req, form.csrf);
         const authenticated = authority.loginBrowser(
           cookie(req),
@@ -509,11 +517,24 @@ export function authorizationHandler(
           form.credential,
         );
         setCookie(res, authenticated.token);
-        res.writeHead(303, { location: "/manage" });
+        res.writeHead(303, {
+          location: form.activityEvent
+            ? `/manage/audit?eventId=${encodeURIComponent(form.activityEvent)}`
+            : "/manage",
+        });
         res.end();
         return;
       }
-      if (!s.authenticated) return loginPage(res, "/manage/login", s);
+      if (!s.authenticated) {
+        const activityEvent =
+          route === "/manage/audit" &&
+          req.method === "GET" &&
+          url.searchParams.size === 1 &&
+          privateId(url.searchParams.get("eventId"))
+            ? url.searchParams.get("eventId")!
+            : undefined;
+        return loginPage(res, "/manage/login", s, activityEvent);
+      }
       if (route === "/manage/audit" && req.method === "GET") {
         for (const key of url.searchParams.keys())
           if (url.searchParams.getAll(key).length !== 1) invalid();

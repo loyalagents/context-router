@@ -175,6 +175,38 @@ existing CI supply the required source evidence. Installed artifacts, new human
 host acceptance and C8/C9 qualification remain separate. Publish one cohesive PR;
 do not merge automatically.
 
+#### C7c Implementation And Review Record (2026-11-25)
+
+The implementation retains the durable store and existing producers. Activity
+uses event-time grant associations, allowlisted readable fields, snapshot pages
+and exact-event inspection. Targeted tests were written first; the initial frozen
+candidate `fd22d0830ecfff867958ee409a4b48198beb70e6` passed six focused Jest suites
+(91 tests), eight HTTP/recovery consumer files (161 tests) and all 15 source/OAuth
+browser tests on the target Mac. No live provider trial or installed artifact was
+run or delivered. Contract baseline, Markdown links and maintained-document reader
+checks passed; the full local migration gate was not selected under the policy.
+
+Fresh read-only complete-diff reviewers `final_authority` (requested
+gpt-6.2-astra/xhigh) and `final_surface` (requested gpt-6.2-astra/high) reviewed
+the base-to-candidate diff. The tool accepted those settings; runtime settings
+remain independently unverified. All findings were accepted in one correction
+batch: type-gate imported extensions before audit matching; admit historical
+foreign category URIs only in history filters; match beneficiary and initiator
+independently without later grant facts; retain visible entry/grant filters and
+exact bookmarks through sign-in; make notification and zero-import outcomes
+truthful; correct stale C7b publication wording. Actual reviewed-import, HTTP,
+mapping, presentation and fresh-session browser regressions reproduce the issues.
+
+These corrections renew filtering, presentation and sign-in review and affected
+local checks. Unchanged append-only producers, snapshot ordering and final HTML
+authorization coverage carry forward explicitly, with their affected consumers
+also exercised. The final candidate, reviewer rechecks, exact tested CI merge
+identity and qualification results are recorded in
+[PR #218](https://github.com/loyalagents/context-router/pull/218). The PR remains
+draft until those gates pass; publication is not merge authorization. C8 owns
+adoption follow-up and C9 owns broader qualification. `hcp-spec`, both specification
+pins, the demo checkout and retained C6/C7b trial evidence remain unchanged.
+
 ## C7b Isolated Host Preparation (2026-11-21)
 
 This preparation record is historical; the [November 25 completion](#c7b-completion-2026-11-25)
