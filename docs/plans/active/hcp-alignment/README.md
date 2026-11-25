@@ -1,6 +1,6 @@
 # HCP Alignment Plan
 
-- Status: C1–C5, bounded C6 source/UI slices and C7a/C7b merged; C7b implementation and bounded live trial complete, CI qualification separate; C7c Activity implemented in PR #218, with candidate review/validation receipts in the PR; C8–C9 remain; no conformance claim
+- Status: C1–C5, bounded C6 source/UI slices and C7a/C7b merged; C7b implementation and bounded live trial complete, CI qualification separate; C7c Activity implemented in PR #218, with candidate review/validation evidence in the PR; C8–C9 remain; no conformance claim
 - Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` owns sequencing and assigns the next sole writer at activation
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
@@ -15,6 +15,12 @@ following the [C6 UI merge](#c6-demo-ui-merge-and-c7a-planning-2026-11-21) and
 writer, pending/draft and freeze-time passages below are historical. The current
 status and checkpoint map supersede their routing; old “C8 qualification” means
 current C9. Historical C7 references retain their original bounded MCP/host scope.
+
+Current candidate validation follows the [Product CI policy](../../../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles)
+adopted in PR #219. Earlier checkpoint references to separate standard CI and
+three qualification receipts describe their historical validation; they do not
+add requirements to current C7c CI. Selected job outcomes and the final aggregate
+still must pass on the final candidate. Installed-artifact evidence remains separate.
 
 ## C7 Sequence And Activity Visibility (2026-11-22)
 
