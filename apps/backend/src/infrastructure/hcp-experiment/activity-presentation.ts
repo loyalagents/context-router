@@ -78,7 +78,10 @@ function row(event: any, association: AuditAssociation = {}): string {
   if (event.eventType === "grant.issued") {
     summary = `<p>This grant approved access; it does not show that the client used it.</p>`;
   } else if (event.eventType === "grant.revoked") {
-    summary = `<p>Future access under this grant was revoked. This does not prove remote copies were erased.</p>`;
+    const deadlineReached =
+      grant?.expiresAt != null &&
+      Date.parse(grant.expiresAt) <= Date.parse(event.timestamp);
+    summary = `<p>${deadlineReached ? "The approved deadline had already been reached when revocation was recorded." : "Revocation was recorded for this grant."} This does not prove remote copies were erased.</p>`;
   } else if (event.eventType === "grant.expired") {
     summary = `<p>This grant ended automatically at its recorded deadline. The event time records when expiry was recorded.</p>`;
   }

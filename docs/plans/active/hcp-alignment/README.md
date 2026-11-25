@@ -1,6 +1,6 @@
 # HCP Alignment Plan
 
-- Status: C1–C5, bounded C6 source/UI slices and C7a/C7b merged; C7b implementation and bounded live trial complete, CI qualification separate; C7c Activity implemented, candidate review/validation in progress; C8–C9 remain; no conformance claim
+- Status: C1–C5, bounded C6 source/UI slices and C7a/C7b merged; C7b implementation and bounded live trial complete, CI qualification separate; C7c Activity implemented in PR #218, with candidate review/validation receipts in the PR; C8–C9 remain; no conformance claim
 - Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` owns sequencing and assigns the next sole writer at activation
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
@@ -206,6 +206,28 @@ identity and qualification results are recorded in
 draft until those gates pass; publication is not merge authorization. C8 owns
 adoption follow-up and C9 owns broader qualification. `hcp-spec`, both specification
 pins, the demo checkout and retained C6/C7b trial evidence remain unchanged.
+
+**External review follow-up:** Lucas supplied a read-only Claude review and its
+separately authorized isolated reproduction, then authorized worthwhile fixes.
+The review found no blocking authorization or store-safety issue. The accepted
+follow-up documents the intentional shared JSON/export client-filter semantics
+and the separate raw-history privacy boundary; it corrects revocation wording
+when the recorded deadline had already passed. The expired current-grant card
+keeps explicit revocation available and describes its already-expired access.
+The journey test now requires a successful revoke, denied subsequent read and
+an independently expected event sequence; a newly issued matching grant proves
+snapshot exclusion across restart. A focused API/export test pins exact expected
+events for beneficiary, initiator and policy-scope matches. The stale Activity
+fault-hook operation label is corrected. New wording and status assertions failed
+before fixes. The existing read-only authority reviewer approved this bounded plan
+with the same requested settings and observability limits recorded above.
+
+No filter rollback, raw-history removal, speculative malformed-grant hardening
+or general error-page redesign was selected. Those would change separate contracts
+or address no demonstrated reachable bug. This follow-up changes presentation,
+tests and documentation only; producer, storage, authorization and pagination
+mechanisms are unchanged. Final delta review, affected checks and exact-candidate
+CI are renewed in PR #218; unchanged earlier coverage is carried forward explicitly.
 
 ## C7b Isolated Host Preparation (2026-11-21)
 

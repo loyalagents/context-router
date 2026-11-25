@@ -1,4 +1,51 @@
 import { activityPage } from "../../../src/infrastructure/hcp-experiment/activity-presentation";
+
+it.each([
+  ["2026-11-25T11:59:59Z", true],
+  ["2026-11-25T12:00:00Z", true],
+  ["2026-11-25T12:00:01Z", false],
+  [null, false],
+  [undefined, false],
+])(
+  "describes revocation using the recorded deadline %s",
+  (expiresAt, elapsed) => {
+    const grant =
+      expiresAt === undefined
+        ? undefined
+        : {
+            grantId: "grant",
+            client: {},
+            access: [],
+            issuedAt: "2026-11-25T11:00:00Z",
+            expiresAt,
+            grantType: expiresAt === null ? "persistent" : "temporary",
+          };
+    const html = activityPage(
+      {
+        events: [
+          {
+            eventId: "event",
+            eventType: "grant.revoked",
+            grantId: "grant",
+            timestamp: "2026-11-25T12:00:00Z",
+          },
+        ],
+        associations: [{ grant }],
+        filters: {},
+        nextCursor: null,
+      },
+      20,
+    );
+    expect(html).not.toContain("Future access under this grant was revoked");
+    expect(
+      html.includes(
+        "approved deadline had already been reached when revocation was recorded",
+      ),
+    ).toBe(elapsed);
+    if (!elapsed)
+      expect(html).toContain("Revocation was recorded for this grant");
+  },
+);
 it("renders only allowlisted activity facts, escaped, with no unknown or free-text payload dump", () => {
   const event = {
     eventId: "urn:uuid:00000000-0000-4000-8000-000000000001",

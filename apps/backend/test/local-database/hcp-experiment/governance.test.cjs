@@ -56,13 +56,99 @@ test("C5 audit cursor binds filters and its snapshot across restart and concurre
   }
   assert.deepEqual(ids, expected);
 });
+test("C7c JSON audit and export share documented beneficiary, initiator and historical policy-scope client filters", async (t) => {
+  const f = await fixture(t, { approveFixtures: true }),
+    tokenA = await authorize(f, "a", [
+      detail(["general_preferences", "work_context"]),
+    ]),
+    grantA = (await f.context("/v2/grants", tokenA)).json.grants[0],
+    tokenB = await authorize(f, "b", [detail(["general_preferences"])]),
+    grantB = (await f.context("/v2/grants", tokenB)).json.grants[0];
+  assert.equal(
+    (await query(f, tokenA, { categories: ["general_preferences"] })).status,
+    200,
+  );
+  const rule = await f.management("/v2/rules", {
+    method: "POST",
+    json: {
+      operators: [grantA.client.operator.id],
+      categories: ["work_context"],
+    },
+  });
+  assert.equal(rule.status, 201);
+  assert.equal(
+    (await f.management(`/v2/rules/${rule.json.ruleId}`, { method: "DELETE" }))
+      .status,
+    204,
+  );
+  assert.equal(
+    (await f.management(`/v2/grants/${grantA.grantId}`, { method: "DELETE" }))
+      .status,
+    204,
+  );
+  const recorded = (await f.management("/v2/audit?limit=100")).json.events;
+  const find = (eventType, match) => {
+    const matches = recorded.filter(
+      (e) => e.eventType === eventType && match(e),
+    );
+    assert.equal(matches.length, 1);
+    return matches[0];
+  };
+  const a = (e) => e.grantId === grantA.grantId,
+    policy = (e) => e.data.ruleId === rule.json.ruleId,
+    issued = find("grant.issued", a),
+    read = find("context.read", a),
+    set = find("rule.set", policy),
+    removed = find("rule.removed", policy),
+    revoked = find("grant.revoked", a);
+  for (const e of [set, removed]) {
+    assert.equal(e.grantId, null);
+    assert.equal(
+      e.participants.initiator.id,
+      "urn:context-router:synthetic-management",
+    );
+  }
+  for (const [filter, expected] of [
+    [{ client: "a" }, [issued, read, set, removed, revoked]],
+    [
+      { client: "b" },
+      [find("grant.issued", (e) => e.grantId === grantB.grantId)],
+    ],
+    [
+      {
+        client: "urn:context-router:synthetic-management",
+        eventType: "grant.revoked",
+      },
+      [revoked],
+    ],
+  ]) {
+    const selected = [];
+    let cursor;
+    do {
+      const response = await f.management(
+        `/v2/audit?${new URLSearchParams({ ...filter, limit: "2", ...(cursor ? { cursor } : {}) })}`,
+      );
+      assert.equal(response.status, 200);
+      selected.push(...response.json.events);
+      cursor = response.json.nextCursor;
+    } while (cursor);
+    assert.deepEqual(selected, expected);
+    // Export appends its own attempted-release event after selecting its rows.
+    const exported = await f.management(
+      `/v2/audit/export?${new URLSearchParams(filter)}`,
+    );
+    assert.equal(exported.status, 200);
+    assert.deepEqual(exported.json.events, expected);
+  }
+});
+
 for (const [path, operation, browser] of [
   ["/v2/audit", "audit", false],
   ["/v2/grants", "listGrants", false],
   ["/v2/disclosures", "disclosures", false],
   ["/v2/rules", "listPolicy", false],
   ["/v2/directives", "listPolicy", false],
-  ["/manage/audit", "audit", true],
+  ["/manage/audit", "activity", true],
   ["/manage/disclosures", "disclosures", true],
   ["/v2/export", "exportContext", false],
   ["entry", "audit", true],

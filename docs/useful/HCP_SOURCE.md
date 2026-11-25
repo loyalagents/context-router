@@ -198,8 +198,10 @@ retained through sign-in. Missing identifiers show an unavailable
 record; they do not reconstruct an event from current permissions.
 
 Client, category, exact event-type and inclusive RFC3339 date filters combine.
-Grant and entry filters opened from a scoped link remain visible and applied;
-**Reset filters** removes them. Historical category filters also accept a foreign
+Opening `/manage/audit?grantId=…` or `/manage/audit?entryId=…` applies a visible
+grant or entry filter; **Reset filters** removes it. These scoped URLs are supported
+directly; current grant and memory links open their separate inspection pages.
+Historical category filters also accept a foreign
 category URI recorded before a reviewed import mapping.
 Rows follow oldest-first append order, including when timestamps tie. **Next
 activity page** advances within the same snapshot; its cursor lasts ten minutes.
@@ -221,9 +223,28 @@ notifications establish no acknowledgement, not absence of client receipt;
 acknowledgement never proves remote erasure. Completed imports show recorded
 imported/skipped/rejected entry counts. The view presents supported recorded
 fields, excluding arbitrary extensions, raw request text, free-text task/reason
-descriptions and memory content; authenticated audit export retains its separate
-full-record contract. The Activity page and exact-event view require management
+descriptions and memory content. This display restriction applies to Activity
+(`/manage/audit`), including its exact-event view. Linked grant and memory
+inspection pages retain escaped **Full recorded audit events**, including recorded
+free-text fields. Authenticated JSON audit and export also return full records.
+These are separate management-only inspection surfaces, not extensions of
+Activity's field allowlist. The Activity page and exact-event view require management
 authority again at final HTML handoff. Context-client tokens cannot read them.
+
+The JSON endpoints `GET /v2/audit` and `GET /v2/audit/export` share Activity's
+client-filter semantics: a match can be the recorded grant beneficiary, the
+recorded initiator, or a grant matching a policy's recorded scope at that append
+position. For example, `client=a` can include a `rule.set` without a grant ID
+when its selectors matched A's recorded grant; the management client's filter
+can include a revocation it initiated for A. This is broader than the earlier
+beneficiary-first filter. Policy matches do not establish effective access, use
+or delivery. JSON and export preserve the original event shape; they do not add
+derived participants or a match-reason field. The readable policy-match labels
+belong to Activity. Consumers must not interpret every matching row as an action
+by or an exact grant reference to the filtered client. An exact `grantId` filter
+matches recorded grant references and therefore excludes policy-scope matches.
+Export uses the same predicates without pagination, then records its own export
+attempt; that new event is outside the exported snapshot.
 
 Focused C7c checks after the backend build:
 

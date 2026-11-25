@@ -30,10 +30,13 @@ test("C7c durable Activity joins exact grants, policy scopes and readable change
   const grant = (await f.context("/v2/grants", token)).json.grants[0];
   await authorize(f, "b", [detail(["general_preferences"])]);
   const requestText = "C7C-PRIVATE-QUERY-CANARY";
-  await query(f, token, {
+  const purposeDescription = "C7C-PRIVATE-PURPOSE-CANARY";
+  const readResult = await query(f, token, {
     query: requestText,
+    purposeDescription,
     categories: ["general_preferences"],
   });
+  assert.equal(readResult.status, 200);
   const rule = await f.management("/v2/rules", {
     method: "POST",
     json: {
@@ -49,6 +52,8 @@ test("C7c durable Activity joins exact grants, policy scopes and readable change
   assert.match(current.text, /current rules/i);
   assert.match(current.text, /href="\/manage\/policy"/);
   assert.match(current.text, />active</);
+  assert.match(current.text, /Full recorded audit events/);
+  assert.ok(current.text.includes(purposeDescription));
   await f.management(`/v2/rules/${rule.json.ruleId}`, { method: "DELETE" });
   const entry = (await f.management("/v2/export")).json.entries.find(
     (e) =>
@@ -67,12 +72,22 @@ test("C7c durable Activity joins exact grants, policy scopes and readable change
       method: "PUT",
       json: { expectedVersion: entry.record.version, permittedPurposes },
     });
-  await f.management(`/v2/grants/${encodeURIComponent(grant.grantId)}`, {
+  const revoked = await f.management(`/v2/grants/${grant.grantId}`, {
     method: "DELETE",
   });
+  assert.equal(revoked.status, 204);
+  assert.equal((await query(f, token)).status, 401);
   const audit = (await f.management("/v2/audit?client=a")).json.events;
-  assert.ok(audit.some((e) => e.eventType === "rule.set"));
-  assert.ok(audit.some((e) => e.eventType === "rule.removed"));
+  assert.deepEqual(
+    audit.map((e) => e.eventType),
+    [
+      "grant.issued",
+      "context.read",
+      "rule.set",
+      "rule.removed",
+      "grant.revoked",
+    ],
+  );
   const expected = audit.map((e) => e.eventId);
   const page = await browser.request("/manage/audit?client=a&limit=2");
   assert.equal(page.status, 200);
@@ -84,7 +99,8 @@ test("C7c durable Activity joins exact grants, policy scopes and readable change
   assert.ok(
     !page.text.includes(f.human) &&
       !page.text.includes(token) &&
-      !page.text.includes(requestText),
+      !page.text.includes(requestText) &&
+      !page.text.includes(purposeDescription),
   );
   const read = audit.find((e) => e.eventType === "context.read");
   const readPage = await browser.request(exact(read.eventId));
@@ -96,10 +112,15 @@ test("C7c durable Activity joins exact grants, policy scopes and readable change
     (await browser.request(exact(selected.eventId))).text,
     /Recorded grants matching this policy scope/,
   );
-  await f.management("/v2/rules", {
-    method: "POST",
-    json: { operators: ["later.example"] },
-  });
+  const laterToken = await authorize(f, "a");
+  const laterGrant = (await f.context("/v2/grants", laterToken)).json.grants[0];
+  const fresh = (await f.management("/v2/audit?client=a")).json.events;
+  assert.deepEqual(
+    fresh.slice(0, -1).map((e) => e.eventId),
+    expected,
+  );
+  assert.equal(fresh.at(-1).eventType, "grant.issued");
+  assert.equal(fresh.at(-1).grantId, laterGrant.grantId);
   await f.restart();
   const seen = ids(page.text);
   let link = next(page.text);
@@ -110,6 +131,7 @@ test("C7c durable Activity joins exact grants, policy scopes and readable change
     link = next(response.text);
   }
   assert.deepEqual(seen, expected);
+  assert.ok(!seen.includes(fresh.at(-1).eventId));
   assert.deepEqual(ids((await browser.request(exact(read.eventId))).text), [
     read.eventId,
   ]);
@@ -223,6 +245,39 @@ test("C7c expiry uses the recorded reconciliation time and effective deadline, n
   assert.match(response.text, /Effective at/);
   assert.ok(response.text.includes(grant.expiresAt));
   assert.doesNotMatch(response.text, /Permission revoked/);
+});
+
+test("C7c revocation after expiry describes the recorded deadline without claiming access just ended", async (t) => {
+  const f = await fixture(t, { approveFixtures: true, childProcess: true }),
+    browser = await signedIn(f),
+    token = await authorize(f),
+    grant = (await f.context("/v2/grants", token)).json.grants[0];
+  await f.clock(Date.parse(grant.expiresAt) + 1000);
+  const current = await browser.request(
+    `/manage?grantId=${encodeURIComponent(grant.grantId)}`,
+  );
+  assert.match(current.text, />expired</);
+  assert.match(current.text, /Access has already expired/);
+  assert.match(current.text, /Revoke grant/);
+  assert.equal(
+    (await f.management(`/v2/grants/${grant.grantId}`, { method: "DELETE" }))
+      .status,
+    204,
+  );
+  const audit = (await f.management("/v2/audit?client=a")).json.events;
+  assert.deepEqual(
+    audit.map((e) => e.eventType),
+    ["grant.issued", "grant.expired", "grant.revoked"],
+  );
+  await f.restart();
+  const page = await browser.request(exact(audit.at(-1).eventId));
+  assert.match(
+    page.text,
+    /approved deadline had already been reached when revocation was recorded/,
+  );
+  assert.doesNotMatch(page.text, /Future access under this grant was revoked/);
+  assert.match(page.text, /does not prove remote copies were erased/);
+  assert.equal((await query(f, token)).status, 401);
 });
 
 test("C7c more than fifty events remain reachable through page links and exact links after restart", async (t) => {

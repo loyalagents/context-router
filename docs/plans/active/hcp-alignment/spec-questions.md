@@ -49,7 +49,11 @@ matches derived from prior issuance/lifecycle records and labels them separately
 from effective access and actual use. An example could help adopters avoid joining
 old events to current registrations or interpreting arbitrary imported extension
 fields as provider-authored attribution. The concrete regressions live in
-`audit-summary.spec.ts` and `activity-presentation.spec.ts`; the smallest potential
+`audit-summary.spec.ts`, `activity-presentation.spec.ts` and `governance.test.cjs`.
+CR's JSON audit and export share this client relevance filter, while returning
+original records without derived participants or match-reason metadata. A policy
+match must not be interpreted as an action by that client or an exact grant link;
+the readable attribution labels are specific to Activity. The smallest potential
 upstream change is an explanatory example, not a new event or authority field.
 C8's orchestrator owns its relevance/disposition alongside the existing questions.
 No normative amendment, reusable framework or upstream publication is justified
