@@ -9,7 +9,7 @@ import {
 
 class UsageError extends Error {}
 const USAGE =
-  "Usage: hcp-source initialize --sandbox <absolute-private-empty-directory> --port <1024-65535> | serve --sandbox <absolute-directory> | open --sandbox <absolute-directory> [--headless true]";
+  "Usage: hcp-source initialize --sandbox <absolute-private-empty-directory> --port <1024-65535> [--profile claude-code --callback-port <1024-65535>] | serve --sandbox <absolute-directory> | open --sandbox <absolute-directory> [--headless true]";
 function reportFailure(error: unknown) {
   // Refusal never prints private values, fixture contents from errors, or child diagnostics.
   process.stderr.write(
@@ -38,7 +38,9 @@ async function main() {
     if (
       ![
         "--sandbox",
-        ...(command === "initialize" ? ["--port"] : []),
+        ...(command === "initialize"
+          ? ["--port", "--profile", "--callback-port"]
+          : []),
         ...(command === "open" ? ["--headless"] : []),
       ].includes(args[i]) ||
       values[args[i]] !== undefined
@@ -56,6 +58,16 @@ async function main() {
   )
     throw new UsageError();
   if (values["--headless"] !== undefined && values["--headless"] !== "true")
+    throw new UsageError();
+  if (
+    (values["--profile"] !== undefined ||
+      values["--callback-port"] !== undefined) &&
+    (values["--profile"] !== "claude-code" ||
+      !/^\d+$/.test(values["--callback-port"] ?? "") ||
+      Number(values["--callback-port"]) < 1024 ||
+      Number(values["--callback-port"]) > 65535 ||
+      Number(values["--callback-port"]) === Number(values["--port"]))
+  )
     throw new UsageError();
   if (command === "initialize") {
     const result = await initializeSource(
@@ -79,6 +91,12 @@ async function main() {
           input.close();
         }
       },
+      values["--profile"]
+        ? {
+            profile: "claude-code",
+            callbackPort: Number(values["--callback-port"]),
+          }
+        : {},
     );
     process.stdout.write(
       `Initialized ${result.issuer}\nHuman credential file: ${result.credentialFile}\n`,

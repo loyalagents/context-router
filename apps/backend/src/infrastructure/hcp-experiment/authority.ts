@@ -262,13 +262,14 @@ export class AuthorizationRepository {
     )
       invalid();
     const issuer = new URL(configuration.issuer);
+    const hostTrial = issuer.hostname === "localhost";
     if (
       issuer.protocol !== "https:" ||
-      issuer.hostname !== "as.hcp.test" ||
+      !["as.hcp.test", "localhost"].includes(issuer.hostname) ||
       issuer.origin !== configuration.issuer ||
       configuration.resource !== configuration.issuer ||
       !Array.isArray(configuration.clients) ||
-      configuration.clients.length !== 2 ||
+      configuration.clients.length !== (hostTrial ? 1 : 2) ||
       typeof human !== "string" ||
       !/^[A-Za-z0-9_-]{43,}$/.test(human)
     )
@@ -285,7 +286,7 @@ export class AuthorizationRepository {
       ]);
       keys(client.operator, ["id", "name"]);
       if (
-        !["a", "b"].includes(client.id) ||
+        !(hostTrial ? ["claude-code-c7b"] : ["a", "b"]).includes(client.id) ||
         !client.name?.trim() ||
         !client.operator.name?.trim() ||
         !uri(client.operator.id)
@@ -294,11 +295,25 @@ export class AuthorizationRepository {
       const callback = new URL(client.redirectUri);
       if (
         callback.protocol !== "https:" ||
-        callback.hostname !== `client-${client.id}.hcp.test` ||
+        callback.hostname !==
+          (hostTrial ? "127.0.0.1" : `client-${client.id}.hcp.test`) ||
         callback.username ||
         callback.password ||
         callback.hash ||
         callback.search
+      )
+        invalid();
+      if (
+        hostTrial &&
+        (callback.pathname !== "/callback" ||
+          !/^\d+$/.test(callback.port) ||
+          Number(callback.port) < 1024 ||
+          callback.port === issuer.port ||
+          client.name !== "Claude Code C7b synthetic trial" ||
+          client.operator.id !== "https://www.anthropic.com" ||
+          client.operator.name !== "Anthropic" ||
+          client.notificationEndpoint !== undefined ||
+          client.legalRetention !== undefined)
       )
         invalid();
       if (
@@ -322,7 +337,11 @@ export class AuthorizationRepository {
             invalid();
       }
     }
-    if (new Set(configuration.clients.map((c) => c.id)).size !== 2) invalid();
+    if (
+      new Set(configuration.clients.map((c) => c.id)).size !==
+      (hostTrial ? 1 : 2)
+    )
+      invalid();
     this.configuration = structuredClone(configuration);
     const existing = kernel.read(settings);
     if (existing) {

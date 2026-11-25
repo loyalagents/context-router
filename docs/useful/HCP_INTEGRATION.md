@@ -12,8 +12,8 @@ an interface through which applications and assistants exchange personal context
 under the person's control. Context Router provides a practical setting for
 implementing that interface and testing the specification's assumptions.
 
-| Repository | Owns |
-| --- | --- |
+| Repository       | Owns                                                                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `context-router` | The application, its current behavior and interface contracts, its HCP assessment and implementation plans, and evidence for any future conformance claims. |
 | `hcp-spec` | Normative protocol requirements and schemas; general implementation guides, skills, and tooling as adoption experience makes them useful. |
 
@@ -112,10 +112,18 @@ An issue list alone is not completion. Lightweight checkpoint findings feed this
 phase; no upstream PR is mandatory at every checkpoint and no speculative skill
 is required. D3 erasure resolution and implementation precede **any personal-data
 extension**; CR-Q9 resolution and explicit adoption precede sensitive real data.
-The later [C7a activation](../plans/active/hcp-alignment/c7-read-brief.md) selects
-synthetic query/get implementation and controlled clients only. Actual host/model,
-native/personal-state activity and upstream publication remain unactivated. Both
-pins and `hcp-spec` remain unchanged.
+The later [C7a slice](../plans/active/hcp-alignment/c7-read-brief.md) merged synthetic
+query/get and controlled clients. [C7b preparation](../plans/active/hcp-alignment/c7b-host-brief.md)
+now selects an isolated localhost profile and exact-host checks against a local
+fake model. The concrete reviewed subscription/model and off-device synthetic
+trial and actual synthetic fixture were approved. The first live attempt exposed
+a mistyped get-entry ref and an HTTP-only checker defect; the repaired semantic
+checks passed local provider/pinned-host tests and independent review. A separately
+authorized November 25 repeat then passed live query/get, scope denial and explicit
+revocation/read denial, confirmed by receipt and provider audit. The host/browser
+closed and no active grants remain. This completes the bounded C7b live handoff;
+source publication/CI, broader qualification, personal-state activity and upstream
+publication remain outstanding or unactivated. Both pins and `hcp-spec` remain unchanged.
 
 Lucas's bounded C4 publication authorization produced permission-cache feedback
 on [#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594),
