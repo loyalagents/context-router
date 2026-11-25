@@ -46,9 +46,10 @@ function lanesForChange(change) {
         (status === 'D' && regular(oldMode) && newMode === '000000'))) return CI_LANES;
   if (file.startsWith('apps/backend/')) {
     // Even backend fixtures are browser/native inputs. Keep broad product coverage.
-    const restart = /^apps\/backend\/(?:prisma\/|src\/(?:bootstrap\/|composition\/|config\/|mcp\/|common\/guards\/|modules\/(?:auth|external-identity)\/|main\.ts$|app\.module\.ts$))/.test(file);
+    const restart = file.split('/').length === 3 || /^apps\/backend\/(?:prisma\/|test\/(?:contracts|local-model)\/fixtures\/|src\/(?:bootstrap\/|composition\/|config\/|mcp\/|common\/guards\/|modules\/(?:auth|external-identity)\/|main\.ts$|app\.module\.ts$|schema\.gql$))/.test(file);
     return [...PRODUCT_LANES, ...(restart ? ['restart'] : [])];
   }
+  if (/^apps\/web\/test\/[^/]+\.test\.mjs$/.test(file)) return ['web'];
   if (file.startsWith('apps/web/')) {
     const lanes = ['web', 'packaging'];
     // Root launchers/configuration are consumed by backend and native fixtures.
@@ -58,7 +59,12 @@ function lanesForChange(change) {
   }
   if (file.startsWith('apps/desktop/') || file.startsWith('examples/demo-10-2026/')) return DESKTOP_LANES;
   if (file.startsWith('apps/local-orchestrator/')) return ['orchestrator'];
-  if (file.startsWith('examples/eval/')) return ['backend', 'eval', 'postgres'];
+  if (file.startsWith('examples/eval/')) {
+    const lanes = ['backend', 'eval', 'postgres'];
+    if (file === 'examples/eval/forms/i-9/form.pdf') lanes.push('packaging', 'restart');
+    if (/^examples\/eval\/users\/maya-chen-newhire\/corpora\/[^/]+\/validation-report\.json$/.test(file)) lanes.push('harbor');
+    return lanes;
+  }
   if (file.startsWith('examples/eval-harbor/') || file.startsWith('examples/eval_harbor_agents/')) return ['harbor'];
   // CI, gate/install/HCP helpers, frozen evidence, shared dependencies/toolchain,
   // new top-level owners and unrecognized inputs require complete coverage.

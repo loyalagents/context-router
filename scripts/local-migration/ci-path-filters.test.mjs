@@ -61,13 +61,15 @@ const product = ['backend', 'desktop', 'eval', 'packaging', 'postgres', 'web'];
 test('fixed routing covers direct and cross-package consumers without unrelated tooling', () => {
   const cases = [
     ['apps/backend/src/domains/preferences/service.ts', product],
-    ['apps/backend/test/local-model/fixtures/session-fixture.mjs', product],
+    ['apps/backend/test/local-model/fixtures/session-fixture.mjs', [...product, 'restart']],
     ['apps/backend/src/mcp/auth/oauth-metadata.controller.ts', [...product, 'restart']],
     ['apps/backend/src/modules/auth/auth.service.ts', [...product, 'restart']],
     ['apps/backend/src/bootstrap/hosted-bootstrap.ts', [...product, 'restart']],
     ['apps/backend/src/config/preferences.catalog.json', [...product, 'restart']],
+    ...['apps/backend/src/schema.gql', 'apps/backend/package.json', 'apps/backend/nest-cli.json', 'apps/backend/test/contracts/fixtures/http-contracts.v1.json', 'apps/backend/test/contracts/fixtures/mcp-contract-baseline.json', 'apps/backend/test/local-model/fixtures/qwen35-template.txt'].map(file => [file, [...product, 'restart']]),
     ['apps/web/app/dashboard/page.tsx', ['packaging', 'web']],
     ['apps/web/app/globals.css', ['packaging', 'web']],
+    ['apps/web/test/hcp-source-browser.test.mjs', ['web']],
     ['apps/web/lib/auth0.ts', ['packaging', 'restart', 'web']],
     ['apps/web/app/api/debug/token/route.ts', ['packaging', 'restart', 'web']],
     ['apps/web/middleware.ts', ['backend', 'desktop', 'packaging', 'restart', 'web']],
@@ -80,6 +82,8 @@ test('fixed routing covers direct and cross-package consumers without unrelated 
     ['examples/eval/scripts/generate.mjs', ['backend', 'eval', 'postgres']],
     ['examples/eval/users/elena-marquez/profile.json', ['backend', 'eval', 'postgres']],
     ['examples/eval/prompts/mcp-known-schema.md', ['backend', 'eval', 'postgres']],
+    ['examples/eval/forms/i-9/form.pdf', ['backend', 'eval', 'packaging', 'postgres', 'restart']],
+    ['examples/eval/users/maya-chen-newhire/corpora/packet-small/validation-report.json', ['backend', 'eval', 'harbor', 'postgres']],
     ['examples/eval-harbor/scripts/check_static.sh', ['harbor']],
     ['examples/eval_harbor_agents/agent.py', ['harbor']],
   ];
@@ -313,6 +317,13 @@ test('runtime jobs retain finite real suites, prepared builds and local-only env
   for (const command of ['typecheck:seed', 'test:integration', 'test:e2e:tests-only']) assert.ok(commands('postgres').includes('pnpm --filter backend ' + command));
   for (const scenario of ['samir-desai-i9-template-smoke', 'elena-marquez-i9-template-smoke']) assert.ok(commands('postgres').includes('pnpm eval:run --scenario ' + scenario));
   assert.equal(jobs.postgres.services.postgres.image, 'postgres:15-alpine');
+  const scenario = jobs.postgres.steps.find(step => step.run?.includes('pnpm eval:run'));
+  assert.equal(scenario.env.NODE_ENV, 'test');
+  // The eval harness starts plain Node; unlike Jest it does not set NODE_ENV.
+  await execFileAsync(process.execPath, ['-r', 'ts-node/register', 'test/setup/env.ts'], {
+    cwd: path.join(repositoryRoot, 'apps/backend'), timeout: 30000,
+    env: { ...process.env, ...scenario.env },
+  });
   assert.ok(commands('web').includes('pnpm --filter web test:local-ui'));
   assert.ok(commands('web').includes('node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs'));
   for (const command of ['test', 'build:native', 'test:native']) assert.ok(commands('desktop').includes('pnpm --filter desktop ' + command));

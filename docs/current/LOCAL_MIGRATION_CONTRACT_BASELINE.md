@@ -245,7 +245,7 @@ mechanism tests. Independent jobs run affected suites once:
 | Job | Evidence and selection |
 | --- | --- |
 | Backend | Generate/build once, unit tests, complete SQLite persistence/worker, local model, MCP and browser-boundary suites. SQLite uses the existing `test:local-database:tests-only` entry after the build. No hosted database/admin environment or PostgreSQL service. Backend changes retain browser/native coverage because their fixtures are shared. |
-| PostgreSQL | Retained reference integration/e2e, seed typecheck and both deterministic stored-state I-9 scenarios against an isolated migrated fixture. Selected by backend or evaluation inputs. These are real database tests, not live model evaluations. |
+| PostgreSQL | Retained reference integration/e2e, seed typecheck and both deterministic stored-state I-9 scenarios against an isolated migrated fixture with explicit `NODE_ENV=test` for the plain Node eval harness. Selected by backend or evaluation inputs. These are real database tests, not live model evaluations. |
 | Web | Backend/web production builds, complete authenticated browser/helper umbrella, bounded historical demo foundation and one generated-client determinism check. Its expected tracked SDL hash comes from the immutable Git checkout before generation; logs stay in runner temp. |
 | Packaging | Supported standalone sealed-package smoke, including relocated production dependency closure, all six compositions, retained state, process ownership, cleanup and caller integrity. Product/runtime changes still select it because changed imports can affect deployed closure. |
 | Desktop | Portable contracts plus real headless Apple Silicon macOS native build/tests. Desktop, backend and web launcher/configuration inputs select it; ordinary web presentation changes do not. |
@@ -256,11 +256,16 @@ mechanism tests. Independent jobs run affected suites once:
 the exact mapping. Shared dependencies/toolchain, CI/gate/install/HCP helper
 scripts, frozen evidence, unknown inputs and uncertain comparisons select all
 jobs. Evaluation inputs also select backend tests because model and package
-closure fixtures consume them. Mixed changes take the union. This is a small
+closure fixtures consume them. The I-9 PDF additionally selects both smokes;
+Maya corpus validation reports select Harbor. Direct source-smoke contract/SDL
+and model fixtures select restart. Edits confined to web `test/*.test.mjs`
+entrypoints run the complete web suite without the unrelated packaged smoke.
+Mixed changes take the union. This is a small
 fixed mapping, not per-test impact inference or a generic scheduler.
 
-Each job checks out the same immutable `github.sha`, uses pinned Node 24.21.0 /
-pnpm 10.25.0 and frozen dependencies, and owns separate runner resources. No
+Each job checks out the same immutable `github.sha` and owns separate runner
+resources. Node jobs use pinned Node 24.21.0; jobs using packages select pnpm
+10.25.0 and frozen dependencies. Harbor uses Python 3.12. No
 build outputs move between jobs. PostgreSQL URLs are synthetic loopback fixtures
 and scoped to the jobs/steps needing them. Browser/client fixtures retain pinned
 Chromium/private Node; smoke jobs retain private caches, offline Corepack and

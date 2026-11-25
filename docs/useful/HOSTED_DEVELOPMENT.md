@@ -265,13 +265,14 @@ script does not filter its explicit file list.
 Focused commands do not replace required final CI or the
 [validation policy](AGENT_WORKFLOW.md#default-and-exceptions).
 
-The migration gate retains a bounded structured report for its `test:local-database`
-command. In the GitHub Actions run, open **Artifacts →
-local-database-failure-evidence-&lt;run ID&gt;-&lt;attempt&gt;** and download
-`local-migration-database-failures.json` (seven-day retention). The job summary's
-`databaseTests` and `databaseTestsExport` fields show collection and publication
-availability. Artifact transport is optional; its own step shows upload failures.
-The required gate keeps its original exit, cancellation and cleanup behavior.
+For current main Product CI failures, open **backend-tests → SQLite persistence
+and workers** in the Actions run. The direct Jest command reports failures in
+that step's log. Main no longer uploads the former seven-day
+`local-database-failure-evidence` artifact or publishes the old gate summary.
+
+The full local migration gate still retains its bounded structured report for
+`test:local-database`; the following reporter details apply to that command and
+the retained legacy CI profiles, not to ordinary Product CI.
 For a local failed/incomplete database command, the gate prints a separate private
 temporary report path that survives disposable workspace/diagnostics cleanup.
 Delete that report directory after investigating; no automatic local expiry is set.
@@ -326,9 +327,8 @@ unsafe/replaced files are rejected. Reporting errors do not turn passing tests
 into failures or replace an existing failure. Failed local publication removes
 only files/directories with matching owned identities; if cleanup cannot safely
 finish, the gate prints the retained private directory and reports that status.
-The CI upload accepts only the freshly published exact JSON file, never the
-diagnostics directory. Uncatchable termination can prevent final export; the
-workflow then records missing evidence. Direct Jest/database commands outside
+The former CI upload accepted only the freshly published exact JSON file, never
+the diagnostics directory. Uncatchable termination can prevent final export. Direct Jest/database commands outside
 the migration gate do not enable this reporter.
 
 Test database details:
@@ -342,8 +342,11 @@ CI currently validates:
 - Backend unit tests
 - Backend integration tests
 - Backend e2e tests against the test database
-- Standalone local database tests plus the twelve-phase migration gate, including both PostgreSQL reference and SQLite source/relocated-package restart evidence
+- Complete local database tests; staged-package lifecycle checks for affected product inputs and source restart for affected hosted contracts/compositions
 - Frontend production build and authenticated local dashboard browser coverage
+- Affected macOS native and developer-tool suites
+
+See the [Product CI selection policy](../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles). The full local twelve-phase gate remains separately available.
 
 ## Docs
 

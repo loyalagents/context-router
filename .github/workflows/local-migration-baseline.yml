@@ -149,22 +149,28 @@ jobs:
       - name: Migrate isolated fixture
         run: pnpm --filter backend exec prisma migrate deploy
         timeout-minutes: 3
-        env: &a1
+        env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/context_router_test
       - name: PostgreSQL integration
         run: pnpm --filter backend test:integration
         timeout-minutes: 8
-        env: *a1
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/context_router_test
       - name: Hosted HTTP end-to-end
         run: pnpm --filter backend test:e2e:tests-only
         timeout-minutes: 5
-        env: *a1
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/context_router_test
       - name: Deterministic stored-state scenarios
         run: |-
           pnpm eval:run --scenario samir-desai-i9-template-smoke
           pnpm eval:run --scenario elena-marquez-i9-template-smoke
         timeout-minutes: 3
-        env: *a1
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/context_router_test
     name: postgres-tests
     services:
       postgres:
