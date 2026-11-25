@@ -681,6 +681,7 @@ const documentReaderInventory = {
   'scripts/check-markdown-links.test.mjs': {
     step: 'Test documentation consumers and validation policy', target: 'scripts/check-markdown-links.test.mjs',
   },
+  'scripts/hcp/host-boundary.mjs': { reason: 'Requires managed and ancestor CLAUDE.md files to be absent; no document content read.' },
   'scripts/local-migration/check-contract-baseline.mjs': {
     step: 'Check contracts against the verified base and whitespace', target: 'scripts/local-migration/check-nonruntime.mjs',
   },
