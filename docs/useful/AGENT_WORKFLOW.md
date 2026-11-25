@@ -153,9 +153,10 @@ This policy applies to backend, web, native, packaging, and documentation work.
 The default is sufficient focused local checks plus all applicable exact-candidate
 CI, with remaining platform, artifact and manual evidence explicitly identified.
 A runtime PR does **not** automatically require a duplicate full local
-`pnpm migration:gate`. The command and its coverage remain unchanged and available;
-tests-first requirements, CI triggers/checks, independent reviews and human safety
-boundaries remain in force.
+`pnpm migration:gate`. The command and its coverage remain available;
+tests-first requirements, affected Product CI checks, independent reviews and human
+safety boundaries remain in force. Main CI executes each affected suite once under
+the [current CI policy](../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles).
 
 ### Default And Exceptions
 
@@ -170,7 +171,7 @@ full run would add beyond applicable CI and focused checks.
 | --- | --- | --- |
 | Every runtime change (baseline) | Backend tests first; focused tests for changed behavior and affected consumers, including real integration/browser/native/persistence/recovery coverage as needed; all applicable CI on the final candidate. | When another row identifies additional evidence the full run supplies, or a current scoped commitment below requires it. No automatic local duplicate of full CI. |
 | Mac filesystem, process, persistence, native dependency, toolchain, packaging or composition behavior | Identify what CI does and does not prove on the target Mac; run supported affected Mac checks below and record remaining platform evidence. | When a named gap requires aggregate lifecycle/cross-phase evidence or other Mac coverage supplied by the full run beyond those checks and CI. |
-| Gate or CI mechanism | Focused tests of the changed mechanism and required full CI qualification; retain routing, receipt and failure semantics. | When the local runner or its coverage is affected, or a named gap needs its aggregate evidence. A CI-only delta with unchanged local inputs does not by itself require a full local run. |
+| Gate or CI mechanism | Focused tests of changed routing, selection, failure handling and affected consumers; all final Product CI jobs for CI/gate/shared-input changes. Retired requirements need explicit rationale and review; preserve evidence meanings for retained checks. | When local runner behavior/coverage changes need its aggregate evidence beyond focused checks and CI, or another named gap needs that evidence. A CI-only delta with unchanged local inputs does not by itself require a full local run. |
 | Artifact delivered for testing or release | Verify the actual artifact and compare its source/build inputs with the source CI tested, as specified below; perform applicable installed, replacement, recovery and manual acceptance checks. Green source CI does not qualify a delivered artifact. | Apply the other relevant rows and current scoped delivery commitments; installed-artifact qualification remains separate. |
 | Documentation or tests only | Affected readers/checkers/tests, links and whitespace, plus exact-candidate CI under existing routing. Carry forward only evidence with unchanged relevant inputs and an explicit impact assessment. | When an exception above applies; otherwise no full local gate or application build beyond what the affected tests require. |
 
@@ -187,8 +188,7 @@ operation-specific runbook requirements still apply. Generic instructions to run
 a full local gate for every runtime PR are superseded by this matrix. Plans should
 record only scoped additions and link here; preserve historical receipts.
 
-Linux migration CI and a Mac full local run are not interchangeable just because
-they share twelve phase IDs. Mac-specific staged dependencies, filesystem/process
+Linux Product CI and a Mac full local run are not interchangeable. Mac-specific staged dependencies, filesystem/process
 behavior and browser execution need relevant target-platform evidence. The existing
 macOS native CI lane remains required when applicable; the full local migration
 gate does not itself run `build:native`/`test:native` or qualify the real installed
@@ -217,8 +217,8 @@ Select supported Mac checks for the named gap, with isolated state and prerequis
 Standalone packaging smoke is supported target-native staged evidence with its
 own source, lifecycle, cleanup and integrity checks. It does not supply the
 full local gate's independent outer lifecycle verification or terminal summary with
-source binding and merge-base comparison. Lane qualification receipts are produced
-only by the CI profiles.
+source binding and merge-base comparison. Legacy lane qualification receipts are produced
+only by the explicit CI profiles; ordinary Product CI uses job outcomes instead.
 If the change needs that boundary or cross-phase Mac evidence, require the full
 local gate and name what it adds. Do not invent arbitrary phase skipping or treat
 every web/docs edit included in a package as a change to that boundary.
@@ -298,8 +298,10 @@ that full local evidence. Unrelated prose does not invalidate it. Explicitly car
 forward only unaffected coverage; do not require a full rerun merely because a
 migration runtime file changed. Cover affected
 consumers and applicable artifact qualification, not just the formerly failing
-test. Existing CI triggers still run during iteration; do not skip/cancel required
-checks or change CI rules to implement this policy.
+test. Existing CI triggers still run during iteration. Superseded PR runs may be
+cancelled by the reviewed concurrency policy; only the final candidate can qualify.
+Do not change routing or tests merely to hide failures. Evidence-based changes to
+CI requirements need explicit task scope, rationale, focused tests and review.
 
 CI green means every applicable required job/status and receipt succeeds for the
 final PR head and actual tested merge/source identity. Record those identities
@@ -332,29 +334,20 @@ never present an older pass for changed inputs. Do not repeat valid identical
 checks solely for each reviewer. Broaden focused checks/review when impact is
 uncertain; that alone does not select a full local run.
 
-For the three migration CI profiles, a durable passed summary is committed only
-after bounded finalization and required receipt publication. A pending or failed
-summary cannot confer qualification; when full qualification is selected, all three
-workflow jobs and same-attempt receipts must succeed. The narrow approved
-[nonruntime CI policy](../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#nonruntime-ci-selection)
-instead requires its documentation/contract consumers and an independently
-verified not-applicable decision. It produces no source/UI/package qualification
-receipt and does not change the full local gate or human-review obligations.
-The maintained Markdown category covers content-only edits in the named root
-files and `docs/IMPORTANT`, `docs/current`, `docs/useful` and `docs/plans`, subject
-to the policy's path/type/mode constraints and preserved exact-file exemptions.
-Its fixed lane includes the backend launch-topology, web runtime and orchestrator
-operator-document consumers. A new consumer must join that lane or the affected
-document must lose its exemption before the consumer ships. These roots hold
-prose, not runtime/evaluation inputs. Frozen evidence, registries, other paths,
-structural changes and mixed changes still receive full migration CI. Receipt
-semantics and standard CI routing are unchanged.
-CI/gate changes receive full final CI qualification; their local requirement is
-determined by the matrix above.
-Compare runner identities using the explicit
-[CI compatibility policy](../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles):
-retain actual release/patch values, allow only supported patch drift, and require
-matching image family, pinned runtimes and browser identity.
+Product CI binds every job to the immutable Actions checkout and independently
+checks selection and actual job outcomes in `local-migration-baseline`. Require
+all selected jobs and contracts checks to succeed on the final candidate. Unknown,
+shared and CI/gate inputs run all jobs. Maintained prose additions, deletions,
+renames and content edits can use the contracts/documentation job; it must retain
+actual document consumers. Failure, cancellation and missing outcomes never mean
+not applicable. See the [selection and evidence policy](../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles).
+
+Routine main CI has no three-receipt transport or same-attempt requirement; a
+failed-job rerun can retain successful jobs within the same immutable run. The
+legacy profiles' receipts and full local aggregate evidence retain their original
+meanings when explicitly used. Installed-artifact evidence stays separate from
+source CI. CI/gate changes receive all final Product CI jobs; their local evidence
+is selected by the matrix above, not a reflexive duplicate full local run.
 
 Before an expensive run, state its command/purpose, what relevant inputs changed
 since the previous pass, and why it is needed now, including any approved-plan

@@ -223,223 +223,115 @@ user-owned data, and installs the required provider-neutral keys atomically.
 
 ## Local Migration Baseline Gate
 
-`pnpm migration:gate` is the authoritative aggregate compatibility command for
-later migration checkpoints. Its lifecycle is checked into
-[`gate-phases.json`](../../scripts/local-migration/gate-phases.json) and validated
-against a strict schema plus semantic ownership, predecessor, retirement, and
-supported-mode rules. All six modes share `contract-baseline`, `documentation`,
-`backend-unit-build`, `backend-database`, `restart-smoke`,
-`packaged-composition-smoke`, and `repository-integrity`.
-The web-production phase additionally names `local-ui` and runs authenticated
-browser tests after its build. `local-orchestrator`, evaluation and Harbor phases
-remain hosted-only. All twelve phase IDs/order remain. Step 08 P3 increases only
-the expanded packaging phase from fifteen to twenty-five minutes; other phase
-allowances remain unchanged, and active phase budgets now total 104 minutes.
-Each dedicated CI execution lane retains the bounded ten-minute pinned Chromium
-prerequisite and two-minute optional sanitized database-evidence upload, and adds
-a two-minute required qualification receipt upload. A one-minute runner step
-initializes private caches before package setup. The packaging lane additionally
-prepares its pinned Prisma native engine with `pnpm --filter backend exec prisma
---version` before the gate copies and snapshots dependencies; no generated source
-or build is reused. Inside the owned copied workspace, only `ci-packaging`
-repeats that fixed version command during preflight to prepare Prisma's
-absolute-path-keyed config cache before dependency integrity is captured. It
-uses the isolated gate environment, owned log, 120-second subprocess bound and
-existing shared T+3 preflight deadline; failure or cancellation prevents phases.
-The full, source and smoke-only paths do not perform this extra preparation.
-Step/job budgets are 178/188 minutes for source and 180/190
-minutes for packaging, preserving ten minutes of workflow overhead. Absolute
-gate deadlines are preflight T+3, phase cancellation
-T+107, child settlement T+110 and final cleanup T+113 minutes. The 118-minute
-gate-step fail-safe preserves five additional minutes. Every supported mode must retain active contract, build, state,
-restart, and integrity evidence. Each mode records active/retired status and at
-most one successor; a retired mode must name exactly one active successor. The
-command allowlist pins the exact six-mode matrix and rejects added modes,
-phases, or command substitutions.
-The aggregate runner requires a verified merge-base comparison for every
-contract-baseline phase command and fails if the bound artifact directory is
-missing. Direct checker runs remain useful for current-tree validation and
-report `baseComparison=skipped`; aggregate runs report
-`baseComparison=performed` so the comparison cannot disappear silently.
+`pnpm migration:gate` remains a supported full local diagnostic and scoped
+qualification command. Its twelve-phase manifest, six supported compositions,
+command allowlist, source copying, verified-base comparison, resource ownership,
+cleanup and integrity checks are unchanged. Program closure did not remove
+hosted/reference surfaces. The [validation policy](../useful/AGENT_WORKFLOW.md#default-and-exceptions)
+selects when the full local command adds necessary evidence; it is not the routine
+PR execution strategy.
 
 ### CI Qualification Profiles
 
-When full qualification is selected, the workflow starts three independent jobs with full-history
-checkout, dependencies, writable stores/caches, PostgreSQL service, browser
-prerequisites and disposable gate workspace. The fixed `--ci-source` profile runs
-phases 1–7, 9 and 10 in their existing order followed by repository-integrity;
-`--ci-packaging` runs packaged-composition-smoke followed by its own integrity
-check. The fixed `--ci-ui` profile runs web-production-build followed by its own
-integrity check. Its web phase first generates Prisma and builds the backend in
-that lane's copied workspace, then runs the unchanged web production build and
-complete authenticated browser/helper umbrella. All four commands share the
-existing 600-second phase work budget; builds do not run in the three-minute
-preflight. Partition version 2 binds those exact prerequisite commands in the
-receipt census. The source restart smoke retains its independent backend/web
-rebuilds. No writable build outputs are shared between lanes.
-Full manifest/schema, exact commands, all six modes and
-retirement rules remain validated before every selection. There is no arbitrary
-phase-skipping option. The default local `pnpm migration:gate` still runs all
-twelve phases sequentially; restart smoke-only behavior is retained.
-This describes command coverage, not a requirement to invoke it locally on every
-PR. The [validation policy](../useful/AGENT_WORKFLOW.md#default-and-exceptions)
-determines when a full local run is needed; required CI remains unchanged.
+Main uses one [Product CI workflow](../../.github/workflows/local-migration-baseline.yml).
+The historical `local-migration-baseline` job name is the final verdict. The
+[standard workflow](../../.github/workflows/ci.yml) now serves only
+`hosted-v1-maintenance`; it no longer repeats main's suites.
 
-All three profiles preserve the outer smoke lifecycle validators, bounded settlement,
-caller/generated integrity, owned-resource cleanup and successful finalization.
-Required versioned receipts are published only after the finalizer and bounded
-stage runner return successfully. For CI profiles, the external summary remains
-`running` with `cleanupPending=required-receipt-publication` until the required
-receipt has been published. The passed summary is then staged privately; all
-writes, sync/close, ownership and final cancellation/deadline checks precede one
-synchronous atomic rename. That rename is the terminal commit, followed immediately
-by signal-handler disposal and return without further verdict work. Earlier
-failure leaves a failed/cancelled or nonterminal summary even if failure-summary
-persistence also fails. Both success and failure publication retain the captured
-parent/target ownership and use the same guarded atomic path. A replaced target or
-parent is left untouched; a downgrade is skipped when ownership or the cleanup
-deadline is lost. Read-only no-follow descriptors pin the original parent, target
-and stage inodes throughout awaited work, preventing unlink/recreate inode reuse.
-The stage pin is acquired while its writer remains open. The synchronous commit
-checks all live descriptor/path identities, attempts every checked descriptor close,
-then checks cancellation/deadline and renames without yielding. Once publication
-ownership is released, failure paths cannot downgrade the target or unlink a stage
-using stale identities; pending evidence and a private diagnostic stage may remain.
-Close failures fail qualification, preserving the first error while attempting all
-releases once. This retains the existing external-process path-check/rename race;
-it does not claim hostile-process atomicity. Default full/smoke finalization is unchanged.
+Every main PR and push runs the public-contract checker against a verified base,
+Markdown/overview checks, actual maintained-document consumers and the gate's
+mechanism tests. Independent jobs run affected suites once:
 
-The stable `local-migration-baseline` combined job always evaluates selection and
-actual dependency results. For full qualification it requires explicit success and
-exactly three current-run/current-attempt receipts, and independently reconstructs
-the clean copied source and verified base bindings. It checks the actual checkout
-SHA (the test-merge SHA on PR runs), separate PR head, source digest, base bundle,
-manifest/partition, commands/modes/evidence coverage, observed toolchain and all
-required integrity/lifecycle/finalization/cleanup outcomes. For a PR, actual HEAD
-must equal the workflow checkout SHA and have exactly two parents, with the second
-equal to the event PR-head SHA. The validated base retains its ancestor requirement;
-it need not equal the first parent of a regenerated test merge. Push checkouts have
-no merge-shape requirement.
+| Job | Evidence and selection |
+| --- | --- |
+| Backend | Generate/build once, unit tests, complete SQLite persistence/worker, local model, MCP and browser-boundary suites. SQLite uses the existing `test:local-database:tests-only` entry after the build. No hosted database/admin environment or PostgreSQL service. Backend changes retain browser/native coverage because their fixtures are shared. |
+| PostgreSQL | Retained reference integration/e2e, seed typecheck and both deterministic stored-state I-9 scenarios against an isolated migrated fixture. Selected by backend or evaluation inputs. These are real database tests, not live model evaluations. |
+| Web | Backend/web production builds, complete authenticated browser/helper umbrella, bounded historical demo foundation and one generated-client determinism check. Its expected tracked SDL hash comes from the immutable Git checkout before generation; logs stay in runner temp. |
+| Packaging | Supported standalone sealed-package smoke, including relocated production dependency closure, all six compositions, retained state, process ownership, cleanup and caller integrity. Product/runtime changes still select it because changed imports can affect deployed closure. |
+| Desktop | Portable contracts plus real headless Apple Silicon macOS native build/tests. Desktop, backend and web launcher/configuration inputs select it; ordinary web presentation changes do not. |
+| Source restart | Complete existing source restart smoke for hosted boot/composition/config/catalog/MCP/authentication and web auth/middleware/support-route changes. It adds hosted OAuth/MCP response and Auth0 redirect/discovery assertions beyond the staged package's probes. Unrelated runtime edits no longer run this additional matrix/rebuild. |
+| Developer tools | Orchestrator tests/lint/build, eval fixture verification and Harbor static checks have separate affected jobs. They do not run for unrelated application changes. |
 
-Each lane must report Linux/X64 and a bounded Ubuntu image-family/release identity.
-Image family and exact Node 24.21.0, pnpm 10.25.0, Playwright 1.63.0 and Chromium
-identity must match across lanes. Image build releases, Python 3.12 patch versions
-and PostgreSQL 15 patch/distribution versions may differ; all observed values remain
-in the receipts. Each gate still verifies Chromium against the locked Playwright
-metadata. This explicit compatibility policy permits supported runner updates
-without accepting a different platform, image family or browser.
+[The fixed selector](../../scripts/local-migration/ci-validation-policy.mjs) owns
+the exact mapping. Shared dependencies/toolchain, CI/gate/install/HCP helper
+scripts, frozen evidence, unknown inputs and uncertain comparisons select all
+jobs. Evaluation inputs also select backend tests because model and package
+closure fixtures consume them. Mixed changes take the union. This is a small
+fixed mapping, not per-test impact inference or a generic scheduler.
 
-Missing, stale, mismatched, incomplete, failed, cancelled or skipped evidence fails
-closed. Public combiner failures expose only typed, allowlisted categories; unknown,
-parse and filesystem failures use a generic category without echoing receipt values.
-Required upload/download names bind the same run and attempt, and all three download
-actions are pinned to the reviewed v4.3.0 commit.
-Required artifact transport failure is a gate failure; optional sanitized
-diagnostics and timings do not confer or revoke qualification.
+Each job checks out the same immutable `github.sha`, uses pinned Node 24.21.0 /
+pnpm 10.25.0 and frozen dependencies, and owns separate runner resources. No
+build outputs move between jobs. PostgreSQL URLs are synthetic loopback fixtures
+and scoped to the jobs/steps needing them. Browser/client fixtures retain pinned
+Chromium/private Node; smoke jobs retain private caches, offline Corepack and
+Prisma engine prerequisites. macOS and Linux remain distinct evidence.
 
-A partial failed-job rerun can leave only one receipt for the new attempt;
-use GitHub's **Re-run all jobs** when all three lanes must produce matching evidence.
-No incompatible attempt is silently combined. Neither sibling failure nor a new
-push automatically cancels the other lane's cleanup. The combined job has a
-22-minute bound (21 minutes of step budgets). Local qualification records its
-own actual source and does not claim to have tested the PR merge checkout.
+The aggregate independently recomputes selection from Git and requires success
+from selection, contracts and every selected job; every unselected job must be
+skipped. Failure, cancellation, missing results or unexplained skips fail. It
+reports the checkout/base identities and selection binding. The PR head and actual
+test-merge SHA remain distinct; final PR reporting records both. Successful jobs
+from an earlier attempt of the same immutable Actions run may be retained by a
+failed-job rerun. Results from another run/candidate cannot substitute.
+
+Routine CI no longer copies the entire checkout/dependencies into an outer gate
+workspace for ordinary source/browser tests, transports three qualification
+receipts, compares runner-image releases across independent jobs, or repeats
+client generation in every lane. Those assertions added little protection for
+fresh isolated hosted runners without shared build artifacts. The standalone
+package smoke still performs its own isolation, integrity and lifecycle checks;
+removing the outer wrapper is not removal of those protections. Optional gate
+JSON failure-artifact uploads are also retired from routine CI; direct test
+failures remain visible in the failing Actions step. A green result is source CI,
+not installed-artifact qualification or a full local gate receipt.
+
+The old fixed `--ci-source`, `--ci-ui` and `--ci-packaging` runner profiles and
+receipt validator remain available to their existing code/tests; their receipt
+meaning has not changed. They are no longer main's required execution or artifact
+transport protocol. Historical receipts stay historical. The local full command
+still has its independent outer lifecycle/source/cleanup proof when a scoped
+risk calls for it.
+
+Superseded runs of the same PR/workflow are cancelled. Push runs use unique
+concurrency groups so GitHub cannot coalesce pending pushes. Cancellation cannot
+qualify a candidate; fixture cleanup remains bounded and hosted ephemeral runners
+are disposed even if cancellation interrupts cleanup. No personal state or
+persistent self-hosted runner is part of these jobs.
 
 ### Nonruntime CI Selection
 
-Policy v2 permits a separate nonruntime check lane only for a nonempty diff of
-content modifications to maintained Markdown plus the original exact-file
-exemptions listed below:
+Policy v3 permits maintained Markdown additions, deletions, renames and content
+changes to use only the always-running contracts/documentation job. Maintained
+prose is the named root documentation and `.md` files under `docs/IMPORTANT`,
+`docs/current`, `docs/useful` and `docs/plans`. Regular non-executable files and
+bounded ASCII paths are required; the original exact-file content exemptions
+retain their regular/executable modes. Type/permission changes and unusual names
+conservatively run all jobs. Both endpoints of a rename are classified with rename
+detection disabled. Frozen evidence, registry/config files and evaluation prompts
+are not prose exemptions.
 
-- root `README.md`, `AGENTS.md`, `CLAUDE.md` and `docs/README.md`;
-- `.md` files under `docs/IMPORTANT/`, `docs/current/`, `docs/useful/` and
-  `docs/plans/`, including nested directories.
+All paths still trigger the workflow. Selection requires a clean full-history
+checkout matching the event. PRs compare both branch changes from their unique
+merge base and the actual tested merge from the event base. Advanced or ambiguous
+bases select all jobs. Pushes require the verified ancestor `before` and actual
+`after`. Unsupported events, unavailable/shallow history, malformed or incomplete
+Git output and failed commands fail selection and the final verdict. A failed
+selector does not authorize skipping expensive jobs.
 
-The new category requires unchanged regular non-executable mode `100644`. Paths
-are at most 240 ASCII characters; each component starts with a letter or digit
-and otherwise uses letters, digits, dots, underscores or hyphens. Hidden,
-whitespace/control, non-ASCII and Markdown-syntax names conservatively select
-full qualification. Existing exact exemptions retain their prior unchanged
-regular-file modes (`100644` or `100755`): `AGENTS.md`, `CLAUDE.md`,
-`docs/README.md`, `docs/plans/README.md`,
-`docs/plans/backlog/stabilization/README.md` and `agent-efficiency.md` in that
-directory, `docs/useful/AGENT_WORKFLOW.md`, `print-repo-structure.sh` and
-`scripts/print-repo-structure.test.mjs`. Permission or type changes never qualify.
-The policy version is part of the classification binding so the expanded
-eligibility cannot reuse a v1 selection.
+Actual document consumers remain mandatory: the backend runtime-composition
+suite, web runtime-config suite, orchestrator operator-doc suite, public-contract
+checker and strict Markdown links. The old repository-wide README-basename
+inventory heuristic and tests pinning exact retired workflow layout/budget/receipt
+transport strings were removed. They produced maintenance work without reliably
+finding new document readers. New prose readers still require adding their real
+check to the contracts job or excluding their input from prose routing. Test the
+behavior and dependencies rather than preserving obsolete topology assertions.
 
-All other paths, mixed changes, additions, deletions, copies, renames and empty
-diffs require full CI qualification. There is no blanket Markdown, `docs/**` or
-`scripts/**` exemption: `docs/evidence/`, examples/evaluation prompts, registries,
-JSON/configuration, source, CI, gate/checker, dependency and toolchain changes
-remain full. The maintained roots contain prose, not runtime or evaluation inputs.
-Adding a consumer of an exempt document requires adding its checks to the fixed
-nonruntime lane or excluding the affected document before that consumer ships.
-Guidance prose does not authorize executable gate changes or remove human review.
-
-The routing suite includes a heuristic reader-inventory tripwire in both lanes.
-It scans tracked regular files in an explicit code/configuration text-format set,
-excluding frozen evidence and binary content, for maintained paths, document
-basenames and split quoted root components. Each matching file has a reviewed
-fixed-lane check or a reason it does not consume maintained prose; checked readers
-are tied to actual workflow commands. New or disappearing matches require review.
-This is not complete dependency discovery: computed paths, generic walkers, new
-reads inside an inventoried file and unsupported text formats can escape it.
-Common names such as `README.md` also match generated files, comments and metadata;
-those matches need context review. The consumer-maintenance rule still applies.
-
-The workflow still runs on every PR to main and push to main. Selection requires
-a clean full-history checkout matching the event. PRs compare both the branch
-from its unique merge base and the actual test merge from the event base; an
-advanced merge first parent selects full qualification. Multiple valid merge
-bases also select full qualification, bind the complete sorted ancestor set and
-retain the event base for contract/receipt comparison. Pushes compare the
-verified ancestor `before` to the actual `after` checkout. NUL-delimited Git
-changes include modes and both endpoints of moves by disabling rename detection.
-Invalid metadata, unsupported events, missing/shallow history, malformed merge
-bases, non-UTF-8 Git output, failed Git commands or incomplete output fail selection.
-Merge queues and manual dispatch are not supported events. Failed selection
-starts the full lanes unless the workflow is cancelled, but also fails the final
-result; it cannot become an implicit success. All three heavy jobs honor explicit
-workflow cancellation; the aggregate retains `always()` and rejects cancelled or
-unexpectedly skipped dependencies.
-
-The nonruntime lane requires the pinned toolchain, frozen dependencies, complete
-Markdown/overview, routing and contract-checker test suites, plus these complete
-existing document-consumer suites:
-
-- backend `test/contracts/runtime-composition.spec.ts`, invoked through
-  `pnpm --fail-if-no-match --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts`
-  to avoid the package pretest/build hook;
-- `node --test scripts/local-migration/web-runtime-config.test.mjs`;
-- `pnpm --fail-if-no-match --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts`.
-
-Both filtered commands fail if their package selection matches nothing.
-Strict Markdown links, whitespace and the actual contract checker with a verified
-base bundle remain required, preserving the maintained-document reference census.
-The fixed lane runs no application build, database, browser or model and produces
-no qualification receipt. The orchestrator's app README is outside the exemption;
-its separate README test does not join this lane.
-
-The always-running `local-migration-baseline` job independently recomputes the
-selection and verifies the exported binding and every dependency result. The
-nonruntime branch requires its checks to succeed and all three qualification lanes to
-be skipped, then explicitly reports source/UI/package qualification **not applicable**
-with up to ten eligible paths, the remaining path count and comparison identities.
-The full branch requires all three lanes to succeed and verifies their complete matching receipt set. Failed, cancelled,
-missing or unexpectedly skipped results fail. A skipped job is not itself proof
-of non-applicability; workflow-level path filters are not used.
-
-A nonruntime success attests neither full qualification of that checkout nor a
-successful qualification of its base or any ancestor. Release or pilot claims
-requiring qualified source/artifacts must retain their full qualification
-evidence for the actual inputs. Naming a previously qualified ancestor records
-provenance; it does not transfer qualification to a different head or artifact.
-
-This changes CI acceptance selection, not receipt meanings or the default local
-twelve-phase gate. Standard CI routing remains unchanged. GitHub API inspection
-on 2026-10-15 found no main branch protection or applicable rulesets: repository
-policy still requires the final aggregate and applicable standard checks before
-human merge, but these are not currently server-enforced required checks.
+Nonruntime success does not attest a runtime run on this candidate or transfer
+another candidate's qualification. Release/pilot claims still require applicable
+platform, source and actual-artifact evidence. No branch-protection, repository
+admin setting, hosted adapter, supported product surface or human safety approval
+is changed by this CI policy.
 
 The Step 03 restart and sealed-package evidence starts the compiled local
 preview twice around a credential rotation, preserves one principal and its
@@ -506,7 +398,7 @@ final-head evidence; an informational Vercel status cannot replace it. No
 repository `vercel.json` branch allowlist is added for this infrequent hosted
 deployment topology. The checker is not bypassed or silently loosened.
 
-The dedicated workflow also selects Python 3.12 and PostgreSQL 15. A run
+The local aggregate runner requires Python 3.12 and PostgreSQL 15. A run
 requires installed frozen dependencies, an offline Corepack cache containing
 pnpm 10.25.0, and full Git history containing the selected base SHA. Supply a
 safe loopback or local Unix-socket administration connection through
@@ -626,7 +518,7 @@ disposable workspace and exact generated database/container. No production
 database or persisted user state is a gate target.
 
 Step 08 P3 retains the Step 02E cooperative signal-aware design with its internal
-budget at T+113. The dedicated workflow's 118-minute gate-step timeout is the
+budget at T+113. The legacy full CI profile used a 118-minute gate-step timeout as its
 hard process-execution fail-safe; it does not claim that arbitrary in-process
 code which ignores cancellation can still complete scoped cleanup. Cleanup
 never races resource-owning work that has not settled, and any outer-timeout
