@@ -2,7 +2,7 @@
 
 - Status: relationship and design reference; source gaps documented, conformance not established
 - Read when: planning HCP alignment or changing an HCP mapping or conformance claim
-- Last reviewed: 2026-11-19
+- Last reviewed: 2026-11-25
 
 ## Relationship And Ownership
 
@@ -86,11 +86,12 @@ its scope; human Ctrl-C/full stop-reopen remain deferred. The
 [source runbook](HCP_SOURCE.md) describes the isolated synthetic dashboard.
 This is partial C6, not installed-artifact or conformance qualification.
 
-The current sequence is early C6 app-development handoff and polished synthetic
-source demo; optional overlapping C7 integration with one selected host/version;
+The current sequence is the C6 source UI handoff; C7a controlled MCP reads
+(merged); C7b's merged implementation and completed bounded real-host trial; planned
+[C7c activity and permission visibility](../plans/active/hcp-alignment/README.md#c7c-activity-and-permission-visibility);
 C8 concrete protocol fixes **and CR adoption/realignment**; C9 selected capability
-completion and package/profile qualification. Old “C8 qualification” records map
-to C9. Existing management/write/release services support UI work without a new
+completion and package/profile qualification, including C7c coverage. Old “C8
+qualification” records map to C9. Existing management/write/release services support UI work without a new
 framework or completion of every spec issue first. Broader C6 workflows and
 mandatory C5 gaps remain owned; installed Mac packaging is a separate selected
 milestone if needed. No legacy compatibility, conversion or migration history is
@@ -112,18 +113,21 @@ An issue list alone is not completion. Lightweight checkpoint findings feed this
 phase; no upstream PR is mandatory at every checkpoint and no speculative skill
 is required. D3 erasure resolution and implementation precede **any personal-data
 extension**; CR-Q9 resolution and explicit adoption precede sensitive real data.
-The later [C7a slice](../plans/active/hcp-alignment/c7-read-brief.md) merged synthetic
-query/get and controlled clients. [C7b preparation](../plans/active/hcp-alignment/c7b-host-brief.md)
-now selects an isolated localhost profile and exact-host checks against a local
-fake model. The concrete reviewed subscription/model and off-device synthetic
-trial and actual synthetic fixture were approved. The first live attempt exposed
-a mistyped get-entry ref and an HTTP-only checker defect; the repaired semantic
-checks passed local provider/pinned-host tests and independent review. A separately
-authorized November 25 repeat then passed live query/get, scope denial and explicit
-revocation/read denial, confirmed by receipt and provider audit. The host/browser
-closed and no active grants remain. This completes the bounded C7b live handoff;
-source publication/CI, broader qualification, personal-state activity and upstream
-publication remain outstanding or unactivated. Both pins and `hcp-spec` remain unchanged.
+The [C7a brief](../plans/active/hcp-alignment/c7-read-brief.md) records controlled
+query/get evidence. The [C7b handoff](../plans/active/hcp-alignment/c7b-host-brief.md#completion-and-merge-2026-11-25)
+records merged PR #217 and the successful bounded November 25 query/get,
+scope-denial and explicit-revocation/read-denial trial. It preserves the initial
+failed get, repaired semantic checks, stopped host/browser and revoked HCP grants;
+final CI qualification is separate. C7c reuses the
+demo Activity presentation patterns over the existing durable HCP grant/rule/disclosure
+audit foundation, closing event-mapping/coverage gaps and verifying retained history.
+The demo's temporary dashboard permission events supply a UX baseline; they do not
+establish HCP durability or complete event coverage. C7c distinguishes permission
+granted from used and recorded disclosure
+attempts from confirmed receipt or erasure. Pinned §8 already requires the core
+permission events; this UI checkpoint needs no upstream amendment in advance.
+C7c is planned, not activated, and does not change the retained trial evidence or the other
+agent's existing-app demo. Both pins and `hcp-spec` remain unchanged.
 
 Lucas's bounded C4 publication authorization produced permission-cache feedback
 on [#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594),

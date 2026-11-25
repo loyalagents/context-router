@@ -1,11 +1,34 @@
 # C7b Isolated Claude Code Trial
 
-- Status: the separately authorized November 25 repeat passed the bounded live query/get, scope-denial and explicit-revocation/read-denial sequence. Owned processes stopped and no active grants remain. C7b live handoff complete; publication/CI and broader qualification remain outstanding.
-- Sole writer: C7b chat `01a200ed-ae48-78f0-a7a6-31fa72e895d6`; orchestrator `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` retains sequencing/publication. Reviewers are read-only.
+- Status: merged in PR #217; bounded implementation and November 25 live query/get, scope-denial and explicit-revocation/read-denial trial complete. Owned processes stopped and retained HCP grants revoked; final CI and broader qualification are separate.
+- Implementation owner: C7b chat `01a200ed-ae48-78f0-a7a6-31fa72e895d6` retains its worktree and trial evidence; orchestrator `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` retains sequencing. Earlier sole-writer/publication wording below records the completed assignment.
 - Checkout: `/Users/lucasnovak/.codex/worktrees/25a5/context-router`, branch `codex/hcp-c7b-host-trial`, clean starting base `7381ba9d70a9d3597543ae033451920631fab028` (merged C7a, PR #212).
 - Requested coordinator/writer and boundary reviewer: Astra/xhigh. Chat creation requested `gpt-6-astra`/`xhigh`; actual execution settings are unverified.
 - Target: HCP `2.0-draft-3`, normative `2e2939c9bebcefb3bed7bb3522231c0e4d65a315`, adoption baseline `b764a058eac15a4cd843892e60473089b2e835bb`. No target adoption or upstream change.
 - Parent: [C7a contracts and evidence](c7-read-brief.md), [alignment](README.md), [source runbook](../../../useful/HCP_SOURCE.md).
+
+## Completion And Merge (2026-11-25)
+
+Lucas merged [PR #217](https://github.com/loyalagents/context-router/pull/217),
+final head `318a2793de44674fd669997710f01b9a18f79e37`, as
+`609b00c49a470cf9d15a7db6528ab28d34a91bb8`. The successful separately authorized
+Claude Code 2.1.299 / Sonnet 4.6 repeat verified the allowed synthetic query, get
+using the exact returned ref, `work_context` scope denial and denied access after
+explicit human revocation. Semantic receipt and provider audit agree. The earlier
+failed get and observer repair remain part of the evidence below.
+
+The owned host/browser stopped and all retained HCP grants were revoked; this
+does not assert revocation of the separate subscription token. Preserve the trial
+roots and receipts. No additional live run is needed for the bounded milestone.
+
+At handoff, standard CI, desktop-native, UI and packaging qualification had passed,
+while [source qualification](https://github.com/loyalagents/context-router/actions/runs/45695052287)
+was still in progress. This completion record does not recheck or assert all-green
+final CI. Earlier pending-publication/execution statements are historical;
+implementation and live acceptance are complete, while broader HCP, installed-app
+and personal-data qualification remain outside this result. The next planned
+checkpoint is [C7c](README.md#c7c-activity-and-permission-visibility), with separate
+activation and ownership; C8/C9 obligations remain unchanged.
 
 ## Outcome And Isolation
 
@@ -366,10 +389,12 @@ whitespace checks passed. An independent read-only review verified the receipt
 hash, wire outcomes, audit/grant correlation and stopped ownership, found no
 blocking issue, and corrected one stale pending-status sentence. Requested
 reviewer setting was Astra/xhigh; actual execution settings remain unverified.
-The bounded C7b live journey has passed. Source publication and exact-candidate CI remain with the
-orchestrator; no merge, installed artifact, broader C6/C7 capability acceptance,
-HCP conformance, remote-copy deletion, personal-data extension or C8–C9 execution
-is implied. The earlier failed attempt and preparation checkpoints below retain
+The bounded C7b live journey has passed. At this pre-publication handoff, source
+publication and exact-candidate CI remained with the orchestrator; the later
+[merge record](#completion-and-merge-2026-11-25) supersedes that publication status.
+No installed artifact, broader C6/C7 capability acceptance, HCP conformance,
+remote-copy deletion, personal-data extension or C8–C9 execution is implied.
+The earlier failed attempt and preparation checkpoints below retain
 their historical scope and are superseded only for current live-trial status.
 
 ### November 25 Partial Live Result — Stopped

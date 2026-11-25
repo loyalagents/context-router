@@ -1,11 +1,20 @@
 # C7a Synthetic MCP Read Brief
 
-- Status: PR #212 published; Claude review corrections independently approved, final validation pending; controlled synthetic clients only, no host trial
+- Status: merged in PR #212; controlled synthetic clients only; later C7b/C7c scope is recorded in the current alignment plan
 - Base: merged main `f92260060152b6872b5732587027bd161bc4f590`; publication branch `codex/hcp-c7-read-plan`
-- Sequencing: original orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; implementation chat `01a20029-3e43-7d70-9e84-4dcc8acd73e7` is sole checkout writer/integrator (including docs/builds/disposable fixtures); orchestrator and reviewers read-only
+- Sequencing: original orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0`; C7a implementation chat `01a20029-3e43-7d70-9e84-4dcc8acd73e7` and its ownership records below describe the completed C7a assignment
 - Profile: sensitive authority/transport work; coordinator/writer and scoped read-only reviewers requested Astra / `xhigh`; actual execution settings unverified
 - Target: HCP `2.0-draft-3` at `2e2939c9bebcefb3bed7bb3522231c0e4d65a315`; adoption baseline `b764a058eac15a4cd843892e60473089b2e835bb`, not sibling HEAD
 - Parent: [current alignment status](README.md), [gap analysis](gap-analysis.md), [local questions](spec-questions.md)
+
+Current routing is [C7a → C7b → C7c](README.md#c7-sequence-and-activity-visibility-2026-11-22).
+PR #212 merged at `7381ba9d70a9d3597543ae033451920631fab028`; [C7b's bounded host work](c7b-host-brief.md#completion-and-merge-2026-11-25)
+is complete and merged in PR #217, with separate evidence and CI-qualification status.
+Planned C7c adapts the demo Activity patterns
+to durable HCP permission/access history and closes remaining event-mapping/coverage
+gaps without expanding the completed trial's scope. Pending/publication and
+no-C7b-activation wording below retains its original C7a scope and evidence; this
+routing note does not assert additional CI, host or conformance qualification.
 
 ## Selected Outcome And Limits
 
