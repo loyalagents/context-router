@@ -22,6 +22,162 @@ const root = path.resolve(import.meta.dirname, "../../..");
 const secret = () => randomBytes(32).toString("base64url");
 
 test(
+  "C7c browser Activity filters, details, exact links, current access and restart retain recorded history",
+  { timeout: 120_000 },
+  async (t) => {
+    const {
+      authorize,
+      detail,
+      query,
+    } = require("../../backend/test/local-database/hcp-experiment/read-helpers.cjs");
+    const f = await fixture(t, { approveFixtures: true, childProcess: true });
+    const token = await authorize(f, "a", [
+      detail(["general_preferences", "work_context"]),
+    ]);
+    const grant = (await f.context("/v2/grants", token)).json.grants[0];
+    assert.equal(
+      (await query(f, token, { categories: ["general_preferences"] })).status,
+      200,
+    );
+    const rule = await f.management("/v2/rules", {
+      method: "POST",
+      json: {
+        categories: ["work_context"],
+        operators: [grant.client.operator.id],
+      },
+    });
+    assert.equal(rule.status, 201);
+    const context = await trustedBrowser(f, async () => {});
+    try {
+      const unexpected = [];
+      await context.route("**/*", (route) => {
+        if (new URL(route.request().url()).origin === f.issuer)
+          return route.continue();
+        unexpected.push(route.request().url());
+        return route.abort();
+      });
+      const page = await context.newPage();
+      await page.goto(f.issuer + "/manage/audit");
+      await page.getByLabel("Human management credential").fill(f.human);
+      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await page
+        .getByRole("navigation", { name: "Main navigation" })
+        .getByRole("link", { name: "Activity", exact: true })
+        .click();
+      await page.getByLabel("Client ID", { exact: true }).fill("a");
+      await page.getByRole("button", { name: "Apply filters" }).click();
+      assert.equal(
+        await page.getByLabel("Client ID", { exact: true }).inputValue(),
+        "a",
+      );
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Permission granted", exact: true })
+          .count(),
+        1,
+      );
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Read attempt recorded", exact: true })
+          .count(),
+        1,
+      );
+      const policy = page.locator('article[data-event-type="rule.set"]');
+      await policy.getByText("Recorded details", { exact: true }).click();
+      assert.match(
+        await policy.innerText(),
+        /Recorded grants matching this policy scope/,
+      );
+      assert.ok((await policy.innerText()).includes(grant.grantId));
+      const recordedIds = await page
+        .locator("[data-activity-event]")
+        .evaluateAll((els) =>
+          els.map((el) => el.getAttribute("data-activity-event")),
+        );
+      for (const width of [1280, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+          true,
+        );
+        if (process.env.C7C_SCREENSHOT_DIR)
+          await page.screenshot({
+            path: path.join(
+              process.env.C7C_SCREENSHOT_DIR,
+              `activity-${width}.png`,
+            ),
+            fullPage: true,
+          });
+      }
+      const read = page.locator('article[data-event-type="context.read"]');
+      await read.getByRole("link", { name: "Link to this event" }).click();
+      const exactUrl = page.url();
+      assert.equal(await page.locator("[data-activity-event]").count(), 1);
+      await page.getByText("Recorded details", { exact: true }).click();
+      assert.match(
+        await page.locator("body").innerText(),
+        /Receipt is unconfirmed/,
+      );
+      await page
+        .getByRole("link", { name: "Inspect current grant", exact: true })
+        .click();
+      assert.match(await page.locator("body").innerText(), /Approved scope/);
+      assert.match(await page.locator("body").innerText(), /Current rules/);
+      await page
+        .getByRole("button", { name: "Revoke grant", exact: true })
+        .click();
+      assert.equal((await query(f, token)).status, 401);
+      await f.restart();
+      await page.goto(exactUrl);
+      assert.equal(await page.locator("[data-activity-event]").count(), 1);
+      await page.goto(f.issuer + "/manage/audit?client=a");
+      const reopenedIds = await page
+        .locator("[data-activity-event]")
+        .evaluateAll((els) =>
+          els.map((el) => el.getAttribute("data-activity-event")),
+        );
+      assert.deepEqual(reopenedIds.slice(0, recordedIds.length), recordedIds);
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "Permission revoked", exact: true })
+          .count(),
+        1,
+      );
+      await page.getByLabel("Event type", { exact: true }).fill("context.read");
+      await page
+        .getByLabel("Category", { exact: true })
+        .fill("general_preferences");
+      await page.getByRole("button", { name: "Apply filters" }).click();
+      assert.equal(await page.locator("[data-activity-event]").count(), 1);
+      const event = (await f.management("/v2/audit?eventType=context.read"))
+        .json.events[0];
+      await page
+        .getByLabel("From (RFC3339, inclusive)", { exact: true })
+        .fill(event.timestamp);
+      await page
+        .getByLabel("To (RFC3339, inclusive)", { exact: true })
+        .fill(event.timestamp);
+      await page.getByRole("button", { name: "Apply filters" }).click();
+      assert.equal(await page.locator("[data-activity-event]").count(), 1);
+      await page
+        .getByRole("link", { name: "Reset filters", exact: true })
+        .click();
+      assert.equal(
+        await page.getByLabel("Client ID", { exact: true }).inputValue(),
+        "",
+      );
+      const html = await page.content();
+      assert.ok(!html.includes(token) && !html.includes(f.human));
+      assert.deepEqual(unexpected, []);
+    } finally {
+      await context.close();
+    }
+  },
+);
+
+test(
   "C5 browser separately elects persistence and reviews governance and exact-subject portability",
   { timeout: 120_000 },
   async (t) => {

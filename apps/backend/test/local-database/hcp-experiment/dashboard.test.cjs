@@ -385,7 +385,7 @@ for (const [stage, title] of [
   ["review", "Review your statement"],
   ["saved", "Statement saved"],
   ["grants", "Human grant controls"],
-  ["audit", "Disclosure and audit history"],
+  ["audit", "Activity"],
 ])
   test(`C6 ${stage} withholds protected details at the final HTML render deadline`, async (t) => {
     const f = await fixture(t, { approveFixtures: true, childProcess: true }),

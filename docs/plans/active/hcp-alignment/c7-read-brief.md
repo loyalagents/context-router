@@ -10,7 +10,7 @@
 Current routing is [C7a → C7b → C7c](README.md#c7-sequence-and-activity-visibility-2026-11-22).
 PR #212 merged at `7381ba9d70a9d3597543ae033451920631fab028`; [C7b's bounded host work](c7b-host-brief.md#completion-and-merge-2026-11-25)
 is complete and merged in PR #217, with separate evidence and CI-qualification status.
-Planned C7c adapts the demo Activity patterns
+Activated C7c adapts the demo Activity patterns
 to durable HCP permission/access history and closes remaining event-mapping/coverage
 gaps without expanding the completed trial's scope. Pending/publication and
 no-C7b-activation wording below retains its original C7a scope and evidence; this

@@ -185,6 +185,47 @@ loses the response entirely, use **Memories** or reopen the browser for a fresh 
 then inspect current state and history. A known committed result with withheld
 details still says committed; it does not invite another save.
 
+### Activity And Permission History
+
+Choose **Activity** in the main navigation (`/manage/audit`) to inspect durable
+HCP events. Permission grants, revocations and expiry, access-rule/directive
+changes, memory changes and disclosure attempts share one timeline. Expand
+**Recorded details** for event IDs, participants, exact grant references,
+categories, purposes, copy deadlines and recorded before/after classification.
+**Link to this event** opens that event directly, including after restart and
+when it falls outside the first page. Missing identifiers show an unavailable
+record; they do not reconstruct an event from current permissions.
+
+Client, category, exact event-type and inclusive RFC3339 date filters combine.
+Rows follow oldest-first append order, including when timestamps tie. **Next
+activity page** advances within the same snapshot; its cursor lasts ten minutes.
+Start a fresh view for newer events or an expired cursor. Pagination is a display
+limit, not retention: there is no 50-event cap or session/whole-history clear.
+
+Actor and affected client are distinct. Client filters also include policies
+whose recorded selectors matched that client's then-active recorded grants,
+using the issuance snapshot's operator/claims and expiry. These are scope matches,
+not proof of changed effective access, causal revocation, actual use or delivery.
+Missing historical facts do not create associations. Category changes match both
+recorded old and new categories; later state does not rewrite their details.
+
+Grant cards show **Approved scope**. Current rules and entry restrictions may
+further limit it; current grant/rule inspection is linked separately. A grant
+event does not establish a read. Disclosures, including write-result copies and
+interrupted responses, remain attempts with unconfirmed receipt. Notification
+acknowledgement never proves remote erasure. The view presents supported recorded
+fields, excluding arbitrary extensions, raw request text, free-text task/reason
+descriptions and memory content; authenticated audit export retains its separate
+full-record contract. The Activity page and exact-event view require management
+authority again at final HTML handoff. Context-client tokens cannot read them.
+
+Focused C7c checks after the backend build:
+
+```sh
+node --test --test-concurrency=1 apps/backend/test/local-database/hcp-experiment/activity.test.cjs
+node --test --test-concurrency=1 --test-name-pattern=C7c apps/web/test/hcp-oauth-browser.test.mjs
+```
+
 ### Small View And Action Contract
 
 The UI owner can edit

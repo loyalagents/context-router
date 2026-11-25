@@ -71,8 +71,8 @@ records C7b's implementation and bounded live trial complete in merged
 [PR #217](https://github.com/loyalagents/context-router/pull/217). The
 [C7b handoff](active/hcp-alignment/c7b-host-brief.md#completion-and-merge-2026-11-25)
 retains the successful query/get, scope-denial and explicit-revocation/read-denial
-evidence, the earlier failed get and separate CI-qualification status. Next is
-planned [C7c activity and permission visibility](active/hcp-alignment/README.md#c7c-activity-and-permission-visibility).
+evidence, the earlier failed get and separate CI-qualification status. Lucas activated
+[C7c activity and permission visibility](active/hcp-alignment/README.md#c7c-activity-and-permission-visibility).
 C7c reuses the demo Activity presentation patterns for a durable HCP timeline of
 access granted, changed, used, revoked and expired, closing event-mapping/coverage
 gaps and verifying retained history. It leaves the completed trial evidence and
@@ -83,8 +83,8 @@ Broader C6 workflows and mandatory C5 gaps remain owned. Installed Mac delivery
 is a separate selected milestone if needed; D3 erasure precedes any personal-data
 extension and CR-Q9 resolution/adoption precedes sensitive real data. The
 orchestrator retains sequencing; the C7b chat retains its separately scoped worktree
-and trial evidence. C7c implementation is not activated or assigned by this plan
-update; personal-state changes and C8–C9 execution remain outside it. No full C6,
+and trial evidence. C7c has its own sole writer and reviewed implementation contract in PR #218;
+personal-state changes and C8–C9 execution remain outside it. No full C6,
 artifact or conformance claim is made.
 
 C4/C5 upstream issue submissions are proposals, not adopted normative resolutions.

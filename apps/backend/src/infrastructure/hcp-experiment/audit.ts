@@ -1,4 +1,83 @@
-import { categories, invalid, keys, privateId } from "./policy";
+import {
+  categories,
+  invalid,
+  keys,
+  privateId,
+  deniedCategories,
+  matchingDirectives,
+} from "./policy";
+
+export interface AuditGrant {
+  grantId: string;
+  client: any;
+  access: any[];
+  issuedAt: string;
+  expiresAt: string | null;
+  grantType: string;
+}
+export interface AuditAssociation {
+  grant?: AuditGrant;
+  policyGrants?: AuditGrant[];
+}
+/** Exact recorded links and selector relevance, never current state or causal inference.
+ * Call with the whole append-ordered snapshot, before filtering or pagination.
+ */
+export function auditAssociations(
+  events: any[],
+): Map<string, AuditAssociation> {
+  const issued = new Map<string, AuditGrant>(),
+    ended = new Set<string>(),
+    result = new Map<string, AuditAssociation>();
+  const strings = (v: any) =>
+    Array.isArray(v) && v.every((s) => typeof s === "string");
+  for (const e of events) {
+    if (e.eventType === "grant.issued")
+      issued.set(e.grantId, {
+        grantId: e.grantId,
+        client: e.data.client,
+        access: e.data.access,
+        issuedAt: e.timestamp,
+        expiresAt: e.data.expiresAt,
+        grantType: e.data.grantType,
+      });
+    const association: AuditAssociation = { grant: issued.get(e.grantId) };
+    if (/^(rule|directive)\.(set|removed)$/.test(e.eventType)) {
+      const policy = e.data;
+      association.policyGrants = [...issued.values()].filter((g) => {
+        if (
+          ended.has(g.grantId) ||
+          !g.client?.id ||
+          !g.client?.operator?.id ||
+          g.client.id === "urn:context-router:synthetic-management" ||
+          !(
+            g.expiresAt === null ||
+            Date.parse(g.expiresAt) > Date.parse(e.timestamp)
+          ) ||
+          !Array.isArray(g.access) ||
+          !g.access.every((a) => strings(a.categories)) ||
+          (g.client.claims !== undefined && !strings(g.client.claims)) ||
+          [
+            policy.categories,
+            policy.operators,
+            ...(e.eventType.startsWith("rule.") ? [policy.requires] : []),
+          ].some((v) => v !== undefined && !strings(v))
+        )
+          return false;
+        return e.eventType.startsWith("rule.")
+          ? deniedCategories(
+              g.client,
+              g.access.flatMap((a) => a.categories),
+              [policy],
+            ).length > 0
+          : matchingDirectives(g, [policy]).length > 0;
+      });
+    }
+    result.set(e.eventId, association);
+    if (["grant.revoked", "grant.expired"].includes(e.eventType))
+      ended.add(e.grantId);
+  }
+  return result;
+}
 export function dateTime(value: any): string {
   if (typeof value !== "string") invalid();
   const match =
@@ -29,6 +108,7 @@ export function auditFilters(input: any): any {
     "to",
     "grantId",
     "entryId",
+    "eventId",
   ]);
   const result: any = {};
   for (const [key, value] of Object.entries(input)) {
@@ -42,6 +122,7 @@ export function auditFilters(input: any): any {
   if (result.category) categories([result.category]);
   if (result.entryId && !privateId(result.entryId)) invalid();
   if (result.grantId && !privateId(result.grantId)) invalid();
+  if (result.eventId && !privateId(result.eventId)) invalid();
   if (result.from && result.to && result.from > result.to) invalid();
   return result;
 }
@@ -75,6 +156,7 @@ export function matchesAudit(
   e: any,
   filter: any,
   grants: Map<string, any>,
+  association?: AuditAssociation,
 ): boolean {
   const policy = /^(rule|directive)\./.test(e.eventType),
     lifecycle = [
@@ -85,6 +167,9 @@ export function matchesAudit(
     ].includes(e.eventType);
   const recordedCategories = [
     ...(e.categories ?? []),
+    ...(e.eventType === "context.recategorized"
+      ? [...(e.data.from ?? []), ...(e.data.to ?? [])]
+      : []),
     ...(e.data.categoriesSearched ?? []),
     ...(e.disclosed ?? []).flatMap((d: any) => d.categories ?? []),
     ...(policy ? (e.data.categories ?? []) : []),
@@ -98,9 +183,12 @@ export function matchesAudit(
   ];
   return (
     (!filter.client ||
-      (grants.get(e.grantId)?.client?.id ?? e.participants?.initiator?.id) ===
-        filter.client) &&
+      (association?.grant?.client?.id ??
+        grants.get(e.grantId)?.client?.id ??
+        e.participants?.initiator?.id) === filter.client ||
+      association?.policyGrants?.some((g) => g.client.id === filter.client)) &&
     (!filter.grantId || e.grantId === filter.grantId) &&
+    (!filter.eventId || e.eventId === filter.eventId) &&
     (!filter.entryId ||
       e.entryId === filter.entryId ||
       e.relatedEntryId === filter.entryId ||

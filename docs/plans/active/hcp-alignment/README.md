@@ -1,6 +1,6 @@
 # HCP Alignment Plan
 
-- Status: C1–C5, bounded C6 source/UI slices and C7a/C7b merged; C7b implementation and bounded live trial complete, CI qualification separate; C7c activity and permission visibility planned, not activated; C8–C9 remain; no conformance claim
+- Status: C1–C5, bounded C6 source/UI slices and C7a/C7b merged; C7b implementation and bounded live trial complete, CI qualification separate; C7c Activity implemented, candidate review/validation in progress; C8–C9 remain; no conformance claim
 - Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` owns sequencing and assigns the next sole writer at activation
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
@@ -26,10 +26,9 @@ claim. C7b's implementation and bounded live trial are now complete; its chat
 `01a200ed-ae48-78f0-a7a6-31fa72e895d6` retains the separately owned worktree and
 trial evidence. The original orchestrator retains sequencing.
 
-The separately owned urgent app demo uses the existing connection. C7c is the next
-planned HCP app checkpoint after C7b and does not reopen C6 or delay the demo.
-This documentation update activates no implementation or new live trial and
-changes neither owner's work.
+The separately owned urgent app demo uses the existing connection. Lucas activated
+C7c implementation after C7b; the scoped ownership and reviewed contract are below.
+This does not reopen C6, delay the demo or authorize a new live trial.
 
 ### C7b Completion (2026-11-25)
 
@@ -50,9 +49,10 @@ qualification, HCP conformance or personal-data approval.
 ### C7c: Activity And Permission Visibility
 
 **Outcome:** a person can understand who has access, how that access changed,
-and how it was used, through one readable activity timeline. Implementation is
-not yet assigned; the orchestrator will name its writer, surface and integration
-order at activation. C9 verifies this checkpoint's coverage before qualification.
+and how it was used, through one readable activity timeline. Lucas activated
+C7c on November 25: this step chat owns plan refinement, implementation, independent
+review and publication through the existing PR #218; the original orchestrator
+retains sequencing. C9 verifies this checkpoint's coverage before qualification.
 
 **Activity baseline reviewed on 2026-11-24:** main at
 `0e1c9f379c5fa799341e0f84db21affcd1f22a55` includes the demo Activity work from
@@ -109,6 +109,71 @@ Internal implementation checkpoints and acceptance:
 The work remains synthetic unless separately extended under D3/CR-Q9 prerequisites.
 It adds no permissions, MCP tools, retention/erasure changes or conformance claim.
 Capture adoption findings locally for C8; leave `hcp-spec` unchanged.
+
+#### C7c Activation And Reviewed Implementation Contract (2026-11-25)
+
+The sole writer owns the existing `codex/hcp-c7c-plan` checkout, starting at
+`5473725bf35216e900f9b99b37556f5e30a67b5b`, with base
+`609b00c49a470cf9d15a7db6528ab28d34a91bb8`. PR #218 is draft during implementation.
+The app attachment attempt reported another chat's registration; commands use the
+explicit dedicated worktree. The default demo checkout and all retained C6/C7b
+trial roots are outside this assignment. No upstream changes or new live runs.
+
+Requested coordinator/writer: Astra/xhigh. Read-only plan reviewers
+`plan_authority` (gpt-6.2-astra/xhigh) and `plan_surface` (gpt-6.2-astra/high)
+reviewed the starting revision. The tool accepted the reviewer settings; actual
+runtime settings, including the coordinator's, are not independently observable.
+Their required refinements are adopted below; fresh complete-diff reviewers follow
+implementation. One writer owns source, tests, docs and publication.
+
+- **Surface:** retain provider-rendered `GET /manage/audit`, now Activity, and
+  the existing management session/final HTML authorization boundary. Reuse readable
+  rows, expandable details, filters and exact links, without importing the Next.js
+  demo's session store, clear controls, framework or retention limit.
+  `/manage/disclosures` remains a separate aggregate view.
+- **Recorded facts:** the named grant, rule/directive, classification, memory
+  and disclosure events already have durable producers. No recording/schema change
+  is selected. Fix old-category filtering from recategorization's recorded
+  `from`/`to`. Join a row to its exact prior `grant.issued` snapshot; do not use
+  current registrations, grant status, memory content or neighboring timestamps.
+- **Policy relevance:** derive and explicitly label recorded grants matching the
+  recorded policy scope. Replay grant issuance/revocation/expiry in append order,
+  also applying the recorded expiry deadline. Use canonical selector semantics,
+  including operator, categories, conditional claims and omitted versus empty
+  selectors; exclude the exempt management grant. Missing facts yield no inferred
+  association. This is neither evidence of effective access change nor use/delivery.
+  Ignore arbitrary imported extension fields. Never infer causal revocation from
+  an adjacent policy event.
+- **Navigation:** oldest-first append sequence, with snapshot-bound next/newer
+  pages and the existing ten-minute cursor expiry. Client/category/event-type/date
+  filters remain applied and visible; reset drops the cursor. Exact `eventId`
+  inspection is management-only, independent of pagination and survives restart.
+  Missing events, no matches and unavailable/expired requests have distinct honest
+  outcomes. Current grant/rule inspection remains reachable; grant cards label
+  approved scope and explain that current rules can restrict it further.
+- **Presentation privacy:** map allowlisted event fields into readable actor,
+  affected client or policy scope, purpose, duration, categories and selected-entry
+  facts. Show recorded before/after only; never reconstruct old memory values.
+  Do not dump unknown extensions, query text, credentials or free-text request
+  descriptions. Render attempts as unconfirmed and notification delivery as no
+  proof of remote erasure. Detailed fields stay behind the same final authorization.
+- **Tests first and evidence:** focused mapping/query tests precede changes;
+  synthetic HTTPS and pinned Chromium cover grant/read/partial rule/remove/revoke/
+  expiry, old/new categories, multiple grants and selector claims, exact links,
+  empty/unavailable states, filters/pagination across append/restart, escaping and
+  credential/query canaries. Renew actual HTML render-expiry tests when replacing
+  JSON rendering; preserve separate JSON/aggregate authorization tests. Run affected
+  governance/read/source consumers and maintained-doc readers. No producer change
+  means existing acknowledged event durability contracts are unchanged; restart
+  and interrupted-read evidence still verifies the displayed history.
+
+Finalization is the implemented scoped journey, known findings resolved, focused
+Mac/browser/persistence evidence and contributor docs ready, followed by a frozen
+candidate, fresh complete-diff review and all applicable exact-candidate CI.
+No full local migration gate is selected: focused affected target-Mac checks plus
+existing CI supply the required source evidence. Installed artifacts, new human
+host acceptance and C8/C9 qualification remain separate. Publish one cohesive PR;
+do not merge automatically.
 
 ## C7b Isolated Host Preparation (2026-11-21)
 
@@ -372,7 +437,7 @@ spec defect was found. This is partial C6, not installed-artifact or full qualif
 | C6 continuation: source UI handoff delivered | Bounded navigation, retained-entry/version inspection, correction/review/history/grant views and contributor contracts merged in PR #211. Broader workflows and selected add acceptance remain owned; `/manage/person/new` exists but was outside the human correction pass. Later visual/workflow iterations require their own scope; no C7 or spec-resolution dependency for the delivered UI handoff. |
 | C7a: controlled synthetic MCP reads | [Query/get implementation](c7-read-brief.md) merged in PR #212 with controlled-client evidence and provisional output/error, query-default and N4 contracts. Actual host evidence is separate; writes/report tools remain outside this slice. |
 | C7b: one real host/version — complete | [Merged PR #217 and bounded live acceptance](#c7b-completion-2026-11-25): exact-host query/get, scope denial and explicit-revocation/read denial. Retain the isolated trial evidence; final CI qualification is separate. |
-| C7c: activity and permission visibility | [Next planned checkpoint](#c7c-activity-and-permission-visibility): reuse the demo Activity presentation patterns over durable HCP memory, access and permission events; close event-mapping/coverage gaps and verify retained history. Separate activation after completed C7b; it does not change trial evidence or block the independently owned demo. |
+| C7c: activity and permission visibility | [Activated implementation](#c7c-activity-and-permission-visibility): reuse the demo Activity presentation patterns over durable HCP memory, access and permission events; close event-mapping/coverage gaps and verify retained history. Activated after completed C7b; it does not change trial evidence or block the independently owned demo. |
 | C8: protocol resolution and CR adoption | Use demo/client evidence to resolve prioritized questions, produce the smallest justified spec/schema/example/check/guidance/tooling fixes, then explicitly adopt the selected revision and realign affected CR/consumer contracts and tests. Submission, upstream review/merge, and CR adoption are distinct outcomes; an issue list alone does not complete C8. |
 | C9: selected capability completion and qualification | Complete remaining selected C5/C6/C7 capabilities, including C7c activity/permission coverage, close all mandatory package/profile gaps and the requirement/evidence matrix, then freeze and qualify the complete candidate. Source, installed-artifact (if selected), host, Mac and manual evidence remain distinct. |
 
@@ -1006,7 +1071,7 @@ technical exit evidence.
 | C6. App handoff, synthetic demo and selected workflows | Early UI handoff over existing management/write services, then polished source demo; later selected document/model, profile, location/category/schema, seed/reset and optional installed delivery. | Shared contracts/path ownership before runtime UI; focused browser/workflow and full access-path exclusion checks; exact consent, final release, new-store history/recovery. No C7/spec-merge prerequisite. Broader selected workflows remain owned for completion by C9. Addresses G06–G15/G18. |
 | C7a. Controlled HCP MCP reads | Read-only query/get over the shared authority and release services; merged PR #212. | Provisional CR-Q7 output/error, CR-Q8 query-default and N4 parsing contracts; HTTP/MCP parity and controlled-client evidence. Useful writes remain a separate extension needing committed/uncertain/retry evidence. Addresses G16–G18. |
 | C7b. One selected real host — complete | [Merged bounded implementation and live trial](#c7b-completion-2026-11-25), isolated from the existing app demo. | Exact host/version, TLS/profile, credential separation, narrow grants, permitted/denied reads and revocation evidence. Final CI qualification is separate; §18.3 remains unsatisfied until complete Provider Interop. Addresses G16–G18 within the bounded experiment. |
-| C7c. Activity and permission visibility | [Unified readable activity](#c7c-activity-and-permission-visibility): adapt the demo's presentation patterns to durable HCP events, with any demonstrated recording gaps closed. | Grant/rule lifecycle, memory and access events; actor/client/time/scope, filters and details; permission granted distinct from used, truthful disclosure outcomes, management-only access and history retained across restart. Next planned checkpoint after completed C7b; independently owned demo unaffected. Addresses G14/G15/G18. |
+| C7c. Activity and permission visibility | [Unified readable activity](#c7c-activity-and-permission-visibility): adapt the demo's presentation patterns to durable HCP events, with any demonstrated recording gaps closed. | Grant/rule lifecycle, memory and access events; actor/client/time/scope, filters and details; permission granted distinct from used, truthful disclosure outcomes, management-only access and history retained across restart. Activated after completed C7b; independently owned demo unaffected. Addresses G14/G15/G18. |
 | C8. Spec resolution and CR adoption | Resolve #36/#34/CR-Q7/CR-Q8/#38 and feature-relevant findings; deliver smallest justified upstream fixes and explicit CR contract realignment. | Concrete cases/options/decisions; reviewed fixes; separate upstream merge and target adoption; affected app/consumer tests and review. Nonrelevant deferrals have owner/revisit; no issue-only closeout or forced protocol changes to match CR. |
 | C9. Capability completion and selected-package qualification | Finish selected C5/C6/C7 work, verify C7c activity/permission coverage and close mandatory gaps; freeze candidate, close requirement/evidence matrix, independently review full diff, publish only fully supported discovery claims. | Focused local checks, all applicable exact-candidate CI, named Mac/host/manual and installed-artifact evidence if selected. §18.3 Provider Interop and applicable profiles fully satisfied; no incomplete-Part or schema-only certification. Addresses all selected requirements. |
 

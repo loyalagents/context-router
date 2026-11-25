@@ -21,8 +21,8 @@ including deferred human Ctrl-C/full stop-reopen checks. Historical candidate an
 writer records below retain their original scope. No full C6 or conformance claim
 is made. C6's bounded UI continuation subsequently merged in PR #211; the
 [current merge/planning record](README.md#c6-demo-ui-merge-and-c7a-planning-2026-11-21)
-supersedes historical pending prose. [C7a implementation](c7-read-brief.md) is now
-activated for controlled synthetic clients; C7b/C8–C9 remain unactivated. This work leaves
+supersedes historical pending prose. [C7a implementation](c7-read-brief.md) and bounded C7b are merged; C7c Activity
+is activated, while C8–C9 remain unactivated. This work leaves
 `hcp-spec` unchanged and neither pin changes. Prior publication permissions do not
 carry forward. Normative text continues to govern examples and schemas.
 
@@ -33,6 +33,28 @@ question is not a prerequisite for C6 UI work or a bounded C7 experiment. If no
 safe contract can be selected, block that capability and escalate earlier.
 D3 erasure resolution/implementation precedes any personal-data extension;
 CR-Q9 resolution and explicit adoption precede sensitive real data.
+
+### C7c Activity Adoption Findings (2026-11-25)
+
+**Application adaptation:** pinned §8.1–8.4 and §3.9 already specify the selected
+event families, participants, person-facing filters and append-only durability.
+The existing producers cover this slice. C7c maps them to readable management
+Activity without new recording or retention semantics. Focused tests exercise
+exact grant joins, old/new classification, retained pagination and interrupted
+read attempts; see the [C7c implementation contract](README.md#c7c-activation-and-reviewed-implementation-contract-2026-11-25).
+
+**Guidance opportunity for C8:** a standing rule identifies operator/category/claim
+selectors rather than one affected client. CR presents historical grant-selector
+matches derived from prior issuance/lifecycle records and labels them separately
+from effective access and actual use. An example could help adopters avoid joining
+old events to current registrations or interpreting arbitrary imported extension
+fields as provider-authored attribution. The concrete regressions live in
+`audit-summary.spec.ts` and `activity-presentation.spec.ts`; the smallest potential
+upstream change is an explanatory example, not a new event or authority field.
+C8's orchestrator owns its relevance/disposition alongside the existing questions.
+No normative amendment, reusable framework or upstream publication is justified
+as a prerequisite here; `hcp-spec` and both pins remain unchanged. C9 still owns
+complete selected-package evidence, including full audit/export/retention duties.
 
 ### Current Question Routing
 

@@ -12,6 +12,7 @@ import {
   grantList,
   managementError,
 } from "./management-presentation";
+import { activityPage } from "./activity-presentation";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { AuthorizationRepository, random } from "./authority";
 import {
@@ -513,19 +514,43 @@ export function authorizationHandler(
         return;
       }
       if (!s.authenticated) return loginPage(res, "/manage/login", s);
-      if (
-        ["/manage/disclosures", "/manage/audit"].includes(route) &&
-        req.method === "GET"
-      ) {
+      if (route === "/manage/audit" && req.method === "GET") {
+        for (const key of url.searchParams.keys())
+          if (url.searchParams.getAll(key).length !== 1) invalid();
+        const query: any = Object.fromEntries(
+          [...url.searchParams].filter(([, value]) => value !== ""),
+        );
+        keys(query, [
+          "client",
+          "category",
+          "eventType",
+          "from",
+          "to",
+          "limit",
+          "cursor",
+          "eventId",
+          "entryId",
+          "grantId",
+        ]);
+        if (query.eventId !== undefined) keys(query, ["eventId"]);
+        query.limit = query.limit === undefined ? 20 : Number(query.limit);
+        const result = authority.activity(s.token, query);
+        return managementPage(
+          s.token,
+          res,
+          "history",
+          "Activity",
+          activityPage(result, query.limit),
+        );
+      }
+      if (route === "/manage/disclosures" && req.method === "GET") {
         for (const key of url.searchParams.keys())
           if (url.searchParams.getAll(key).length !== 1) invalid();
         const query: any = Object.fromEntries(
           [...url.searchParams].filter(([, value]) => value !== ""),
         );
         if (query.limit !== undefined) query.limit = Number(query.limit);
-        const result = route.endsWith("disclosures")
-          ? authority.disclosures(s.token, query)
-          : authority.audit(s.token, query);
+        const result = authority.disclosures(s.token, query);
         return managementPage(
           s.token,
           res,

@@ -92,7 +92,11 @@ for (const [path, operation, browser] of [
     }
     await f.arm({
       operation,
-      point: "during-management-serialization",
+      point:
+        path === "/manage/audit"
+          ? "during-management-page-render"
+          : "during-management-serialization",
+      ...(path === "/manage/audit" ? { title: "Activity" } : {}),
       action: "advance",
       now: Date.now() + 12 * 3600_000 + 1000,
     });
