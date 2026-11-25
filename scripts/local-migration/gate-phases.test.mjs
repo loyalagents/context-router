@@ -56,7 +56,6 @@ const manifest = JSON.parse(
 );
 const require = createRequire(new URL("../../package.json", import.meta.url));
 const Ajv2020 = require("ajv/dist/2020").default;
-const { parse: parseYaml } = require("yaml");
 const schema = JSON.parse(
   await readFile(new URL("./gate-phases.schema.json", import.meta.url), "utf8"),
 );
@@ -1185,66 +1184,6 @@ test("checked-in gate manifest contains the complete approved lifecycle in order
   );
 });
 
-test("dedicated CI seeds the exact offline pnpm Corepack cache before invoking the gate", async () => {
-  const workflow = await readFile(
-    new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
-    "utf8",
-  );
-  const seed = workflow.indexOf("corepack prepare pnpm@10.25.0 --activate");
-  const gate = workflow.indexOf("run: pnpm migration:gate");
-  assert.ok(seed >= 0, "workflow must seed the pnpm 10.25.0 Corepack cache");
-  assert.ok(gate > seed, "workflow must seed Corepack before running the gate");
-});
-
-test("dedicated CI lanes preserve gate deadlines with reviewed source 178/188 and packaging 180/190 budgets", async () => {
-  const workflow = parseYaml(
-    await readFile(
-      new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
-      "utf8",
-    ),
-  );
-  for (const jobId of ["source-qualification", "packaging-qualification"]) {
-  const job = workflow.jobs[jobId];
-  const packagingPrerequisite = jobId === "packaging-qualification" ? 2 : 0;
-  assert.equal(job["timeout-minutes"], 188 + packagingPrerequisite);
-  const expected = [
-    ["actions/checkout@v4", 5],
-    ["Initialize private runner caches", 1],
-    ["pnpm/action-setup@v6.0.8", 5],
-    ["actions/setup-node@v4", 5],
-    ["actions/setup-python@v5", 5],
-    ["Verify toolchain and seed offline Corepack runtime", 5],
-    ["Install dependencies", 15],
-    ...(packagingPrerequisite ? [["Prepare pinned Prisma engine prerequisite", 2]] : []),
-    ["Install pinned Chromium prerequisite", 10],
-    ["Run the Local Migration Baseline Gate", 118],
-    ["Persist sanitized gate evidence", 5],
-    ["actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", 2],
-    ["actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", 2],
-  ];
-  assert.deepEqual(
-    job.steps.map((step) => [step.uses ?? step.name, step["timeout-minutes"]]),
-    expected,
-  );
-  assert.equal(
-    job.steps.reduce((sum, step) => sum + step["timeout-minutes"], 0),
-    178 + packagingPrerequisite,
-  );
-  assert.equal(job["timeout-minutes"] - (178 + packagingPrerequisite), 10);
-  const evidence = job.steps.find((step) => step.name === "Persist sanitized gate evidence");
-  assert.equal(evidence.if, "always()");
-  assert.equal(
-    job.steps.find((step) => step.id === "migration-gate").env.MIGRATION_GATE_CI_SUMMARY_PATH,
-    "${{ runner.temp }}/local-migration-gate-summary.json",
-  );
-  assert.match(
-    evidence.run,
-    /\$RUNNER_TEMP\/local-migration-gate-summary\.json/,
-  );
-  assert.match(evidence.run, /\$GITHUB_STEP_SUMMARY/);
-  }
-});
-
 test("external CI evidence is restricted to the exact runner-temp path and sanitized", async () => {
   const root = await mkdtemp("/tmp/local-migration-summary-test-");
   const requested = `${root}/local-migration-gate-summary.json`;
@@ -1809,19 +1748,6 @@ test("non-cooperative work is not abandoned and remains bounded only by the work
   const outcome = await running;
   assert.match(outcome.primaryError.message, /cooperative internal budget exceeded/);
   assert.equal(cleanupRan, true);
-
-  const workflow = parseYaml(
-    await readFile(
-      new URL("../../.github/workflows/local-migration-baseline.yml", import.meta.url),
-      "utf8",
-    ),
-  );
-  for (const job of ["source-qualification", "packaging-qualification"]) {
-    const gateStep = workflow.jobs[job].steps.find(
-      ({ name }) => name === "Run the Local Migration Baseline Gate",
-    );
-    assert.equal(gateStep["timeout-minutes"], 118);
-  }
 });
 
 test("production gate orchestration bounds cleanup and preserves settlement errors", async () => {

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 // Adding a consumer of one of these files requires adding its checks to the
-// nonruntime lane or removing the exemption. Policy/checker edits are full.
+// contracts job or removing the exemption. Policy/checker edits are full.
 // These original exact exemptions retain their regular/executable mode semantics.
 export const NONRUNTIME_PATHS = Object.freeze([
   'AGENTS.md', 'CLAUDE.md', 'docs/README.md', 'docs/plans/README.md',
@@ -17,15 +17,63 @@ export const NONRUNTIME_PATHS = Object.freeze([
   'docs/useful/AGENT_WORKFLOW.md', 'print-repo-structure.sh',
   'scripts/print-repo-structure.test.mjs',
 ]);
-const POLICY_VERSION = 2;
+const POLICY_VERSION = 3;
+// Fixed job coverage, not commands or a general dependency scheduler.
+export const CI_LANES = Object.freeze(['backend', 'postgres', 'web', 'packaging', 'desktop', 'orchestrator', 'eval', 'harbor', 'restart']);
+const PRODUCT_LANES = ['backend', 'postgres', 'web', 'packaging', 'desktop', 'eval'];
+const DESKTOP_LANES = ['backend', 'web', 'packaging', 'desktop'];
+const allLanes = () => Object.fromEntries(CI_LANES.map(lane => [lane, true]));
 // Maintained prose only: no hidden/traversal components, whitespace, control
 // characters or Markdown syntax. Unusual names conservatively select full CI.
 const maintainedMarkdown = /^(?:README\.md|docs\/(?:IMPORTANT|current|useful|plans)\/(?:[A-Za-z0-9][A-Za-z0-9._-]*\/)*[A-Za-z0-9][A-Za-z0-9._-]*\.md)(?![\s\S])/;
-function eligibleContentChange(change) {
+function eligibleDocumentationChange(change) {
   const { file, status, oldMode, newMode, oldBlob, newBlob } = change;
-  if (status !== 'M' || oldMode !== newMode || oldBlob === newBlob) return false;
-  if (NONRUNTIME_PATHS.includes(file)) return ['100644', '100755'].includes(oldMode);
-  return oldMode === '100644' && file.length <= 240 && maintainedMarkdown.test(file);
+  if (oldBlob === newBlob) return false;
+  if (NONRUNTIME_PATHS.includes(file) && status === 'M' && oldMode === newMode && ['100644', '100755'].includes(oldMode)) return true;
+  const markdown = ['AGENTS.md', 'CLAUDE.md', 'docs/README.md'].includes(file) || maintainedMarkdown.test(file);
+  return markdown && file.length <= 240 && (
+    (status === 'M' && oldMode === '100644' && newMode === '100644') ||
+    (status === 'A' && oldMode === '000000' && newMode === '100644') ||
+    (status === 'D' && oldMode === '100644' && newMode === '000000'));
+}
+function lanesForChange(change) {
+  if (eligibleDocumentationChange(change)) return [];
+  const { file, status, oldMode, newMode } = change;
+  const regular = mode => ['100644', '100755'].includes(mode);
+  if (!/^[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*$/.test(file) || file.length > 240 ||
+      !((status === 'M' && regular(oldMode) && oldMode === newMode) ||
+        (status === 'A' && oldMode === '000000' && regular(newMode)) ||
+        (status === 'D' && regular(oldMode) && newMode === '000000'))) return CI_LANES;
+  if (file.startsWith('apps/backend/')) {
+    // Even backend fixtures are browser/native inputs. Keep broad product coverage.
+    const restart = file.split('/').length === 3 || /^apps\/backend\/(?:prisma\/|test\/(?:contracts|local-model)\/fixtures\/|src\/(?:bootstrap\/|composition\/|config\/|mcp\/|common\/guards\/|modules\/(?:auth|external-identity)\/|main\.ts$|app\.module\.ts$|schema\.gql$))/.test(file);
+    return [...PRODUCT_LANES, ...(restart ? ['restart'] : [])];
+  }
+  if (/^apps\/web\/test\/[^/]+\.test\.mjs$/.test(file)) return ['web'];
+  if (file.startsWith('apps/web/')) {
+    const lanes = ['web', 'packaging'];
+    // Root launchers/configuration are consumed by backend and native fixtures.
+    if (!/^apps\/web\/(?:app|components|lib|test)\//.test(file)) lanes.push('backend', 'desktop');
+    if (/^apps\/web\/(?:middleware\.ts$|next\.config\.mjs$|lib\/(?:auth0|runtime-config)\.ts$|app\/api\/)/.test(file)) lanes.push('restart');
+    return lanes;
+  }
+  if (file.startsWith('apps/desktop/') || file.startsWith('examples/demo-10-2026/')) return DESKTOP_LANES;
+  if (file.startsWith('apps/local-orchestrator/')) return ['orchestrator'];
+  if (file.startsWith('examples/eval/')) {
+    const lanes = ['backend', 'eval', 'postgres'];
+    if (file === 'examples/eval/forms/i-9/form.pdf') lanes.push('packaging', 'restart');
+    if (/^examples\/eval\/users\/maya-chen-newhire\/corpora\/[^/]+\/validation-report\.json$/.test(file)) lanes.push('harbor');
+    return lanes;
+  }
+  if (file.startsWith('examples/eval-harbor/') || file.startsWith('examples/eval_harbor_agents/')) return ['harbor'];
+  // CI, gate/install/HCP helpers, frozen evidence, shared dependencies/toolchain,
+  // new top-level owners and unrecognized inputs require complete coverage.
+  return CI_LANES;
+}
+export function classifyChanges(changes) {
+  if (!changes.length) return allLanes();
+  const required = new Set(changes.flatMap(lanesForChange));
+  return Object.fromEntries(CI_LANES.map(lane => [lane, required.has(lane)]));
 }
 const exec = promisify(execFile);
 const MAX_GIT_BYTES = 8 * 1024 * 1024;
@@ -112,23 +160,22 @@ export async function selectValidation({ cwd, environment = process.env, event, 
     changes.push(...parseDiff(await git(['diff', '--raw', '--no-renames', '--no-abbrev', '--no-ext-diff', '--no-textconv', '-z', from, to, '--'])));
   }
   const paths = [...new Set(changes.map(c => c.file))].sort();
-  const eligible = changes.length > 0 && changes.every(eligibleContentChange);
-  const reason = ambiguousBaseShas.length ? 'ambiguous-base' : advancedBase ? 'advanced-base' : !changes.length ? 'empty-diff' : eligible ? 'allowlisted-content' : 'full-required';
-  const profile = reason === 'allowlisted-content' ? 'nonruntime' : 'full';
-  const identity = { policyVersion: POLICY_VERSION, eventName, checkoutSha, baseSha, branchBaseSha, ambiguousBaseShas, pullRequestHeadSha, profile, reason, changes };
-  return { policyVersion: POLICY_VERSION, profile, reason, baseSha, checkoutSha, paths,
+  const lanes = ambiguousBaseShas.length || advancedBase ? allLanes() : classifyChanges(changes);
+  const profile = Object.values(lanes).every(Boolean) ? 'full' : Object.values(lanes).some(Boolean) ? 'selective' : 'nonruntime';
+  const reason = ambiguousBaseShas.length ? 'ambiguous-base' : advancedBase ? 'advanced-base' : !changes.length ? 'empty-diff' : profile === 'full' ? 'full-required' : 'affected-consumers';
+  const identity = { policyVersion: POLICY_VERSION, eventName, checkoutSha, baseSha, branchBaseSha, ambiguousBaseShas, pullRequestHeadSha, profile, reason, lanes, changes };
+  return { policyVersion: POLICY_VERSION, profile, reason, lanes, baseSha, checkoutSha, paths,
     binding: createHash('sha256').update(JSON.stringify(identity)).digest('hex') };
 }
 
 export function validateSelectionResults(selection, exported, outcomes) {
-  if (!['full', 'nonruntime'].includes(selection.profile) || !/^[a-f0-9]{64}$/.test(selection.binding)) fail('classification');
+  if (!['full', 'selective', 'nonruntime'].includes(selection.profile) || !/^[a-f0-9]{64}$/.test(selection.binding)) fail('classification');
   try {
-    assert.deepEqual(exported, { profile: selection.profile, binding: selection.binding });
-    assert.deepEqual(outcomes, {
-      selection: 'success', nonruntime: selection.profile === 'nonruntime' ? 'success' : 'skipped',
-      source: selection.profile === 'full' ? 'success' : 'skipped',
-      packaging: selection.profile === 'full' ? 'success' : 'skipped',
-      ui: selection.profile === 'full' ? 'success' : 'skipped',
+    assert.deepEqual(Object.keys(selection.lanes), CI_LANES);
+    assert.ok(Object.values(selection.lanes).every(value => typeof value === 'boolean'));
+    assert.deepEqual(exported, { profile: selection.profile, binding: selection.binding, lanes: selection.lanes });
+    assert.deepEqual(outcomes, { selection: 'success', contracts: 'success',
+      ...Object.fromEntries(CI_LANES.map(lane => [lane, selection.lanes[lane] ? 'success' : 'skipped'])),
     });
   } catch { fail('job outcomes or classification mismatch'); }
 }
@@ -139,23 +186,23 @@ async function main() {
   const eventBytes = await readFile(process.env.GITHUB_EVENT_PATH);
   if (eventBytes.length > MAX_GIT_BYTES) fail('event');
   const selection = await selectValidation({ cwd: process.cwd(), event: JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(eventBytes)) });
-  if (mode === '--aggregate') validateSelectionResults(selection,
-    { profile: process.env.SELECTION_PROFILE, binding: process.env.SELECTION_BINDING }, {
-      selection: process.env.SELECTION_RESULT, nonruntime: process.env.NONRUNTIME_RESULT,
-      source: process.env.SOURCE_RESULT, packaging: process.env.PACKAGING_RESULT, ui: process.env.UI_RESULT,
-    });
-  const reportedPaths = selection.paths.slice(0, 10).join(', ');
-  const additionalPaths = selection.paths.length > 10 ? `; ${selection.paths.length - 10} additional paths` : '';
-  const message = selection.profile === 'nonruntime'
-    ? `${mode === '--aggregate' ? 'Nonruntime checks passed; source/UI/package qualification not applicable' : 'Selected nonruntime checks'}: policy v${selection.policyVersion}, verified content-only changes to ${reportedPaths}${additionalPaths}.`
-    : `Full source/UI/package qualification required: ${selection.reason}${mode === '--aggregate' ? '; execution lanes succeeded, receipt verification follows' : ''}.`;
-  // Only finite categories and bounded, ASCII-safe eligible paths enter logs.
-  // Full-profile paths are never printed; Actions outputs remain fixed fields.
+  if (mode === '--aggregate') {
+    const needs = JSON.parse(process.env.NEEDS_JSON ?? '{}');
+    const exported = needs['validation-selection']?.outputs ?? {};
+    validateSelectionResults(selection,
+      { profile: exported.profile, binding: exported.binding, lanes: JSON.parse(exported.lanes ?? 'null') },
+      { selection: needs['validation-selection']?.result, contracts: needs.contracts?.result,
+        ...Object.fromEntries(CI_LANES.map(lane => [lane, needs[lane]?.result])) });
+  }
+  const required = CI_LANES.filter(lane => selection.lanes[lane]);
+  const message = `${mode === '--aggregate' ? 'Selected checks passed' : 'Selected checks'}: contracts${required.length ? ', ' + required.join(', ') : ' only; runtime checks not applicable'}; policy v${POLICY_VERSION}, ${selection.reason}.`;
+  // Fixed lane names and verified hashes only; never print raw diff paths.
   console.log(message);
   if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY,
     `${message}\n\nCheckout: ${selection.checkoutSha}; base: ${selection.baseSha}; selection: ${selection.binding}.\n`);
   if (process.env.GITHUB_OUTPUT) await appendFile(process.env.GITHUB_OUTPUT,
-    `profile=${selection.profile}\nbinding=${selection.binding}\n`);
+    `profile=${selection.profile}\nbinding=${selection.binding}\nlanes=${JSON.stringify(selection.lanes)}\n`);
+
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

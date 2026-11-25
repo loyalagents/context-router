@@ -155,7 +155,7 @@ test('MCP success requires two qualified generations, exact network controls and
   );
 });
 
-test('authoritative gate and standard CI retain the local MCP suite', async () => {
+test('local gate and product CI retain the local MCP suite', async () => {
   const manifest = JSON.parse(
     await readFile(new URL('./gate-phases.json', import.meta.url)),
   );
@@ -168,10 +168,10 @@ test('authoritative gate and standard CI retain the local MCP suite', async () =
   assert.ok(validateApprovedPhaseCommands(manifest).length > 0);
   assert.match(
     await readFile(
-      new URL('../../.github/workflows/ci.yml', import.meta.url),
+      new URL('../../.github/workflows/local-migration-baseline.yml', import.meta.url),
       'utf8',
     ),
-    /run: pnpm test:local-mcp/,
+    /run: pnpm --filter backend test:local-mcp/,
   );
 });
 

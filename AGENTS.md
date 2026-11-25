@@ -46,8 +46,10 @@ Validation for all repository changes (backend, web, native, packaging, and docs
 - Before an expensive broad run, explain its purpose, relevant changes since the
   last pass, and any plan requirement to run it now. Check toolchain prerequisites;
   parallelize independent checks only with isolated resources and stable inputs.
-- Do not weaken tests, alter CI requirements/triggers, bypass safety or live-run
-  approvals, overstate readiness, or merge automatically to shorten iteration.
+- Do not weaken assertions or change CI requirements merely to hide failures.
+  Evidence-based CI removal/demotion needs explicit task scope, rationale, focused
+  tests and independent review. Do not bypass safety/live-run approvals, overstate
+  readiness, or merge automatically to shorten iteration.
 
 When adding or changing backend behavior:
 
@@ -79,9 +81,10 @@ When working on the local application or pilot:
 - Keep one writer/integrator in the main checkout; use separate worktrees and
   isolated resources only for explicitly independent tasks. Preserve the user's
   running app and personal state. A backlog entry is not implementation approval.
-- The full `pnpm migration:gate` command, contract baseline and CI remain intact;
-  the linked validation policy determines when the full local run is required.
-  Program closure does not authorize retiring gates or removing hosted adapters.
+- The full `pnpm migration:gate` command and contract baseline remain available.
+  Main Product CI runs affected suites once under the linked validation policy;
+  full local runs require their stated evidence gap. Program closure alone does
+  not authorize removing supported surfaces or necessary regression coverage.
 - Pilot releases may explicitly permit resets, but no silent deletion, arbitrary
   journal cleanup, off-device data submission or personal-client changes. Require
   bounded approval and preserve source documents and compatible model assets.

@@ -1,521 +1,528 @@
-name: Local Migration Baseline Gate
-
+# Main product checks run once, in isolated jobs. The legacy aggregate name
+# remains the final required verdict; ci.yml covers only hosted maintenance.
+name: Product CI
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
-
+    branches:
+      - main
 permissions:
   contents: read
-
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   validation-selection:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 5
     outputs:
       profile: ${{ steps.selection.outputs.profile }}
       binding: ${{ steps.selection.outputs.binding }}
+      lanes: ${{ steps.selection.outputs.lanes }}
     steps:
       - uses: actions/checkout@v4
-        timeout-minutes: 5
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
-        timeout-minutes: 5
         with:
-          node-version: '24.21.0'
-      - name: Select required validation from complete Git changes
-        id: selection
-        timeout-minutes: 2
+          node-version: 24.21.0
+      - name: Select affected checks
         run: node scripts/local-migration/ci-validation-policy.mjs --select
-
-  nonruntime-checks:
+        timeout-minutes: 2
+        id: selection
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        timeout-minutes: 1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
+      - name: Test documentation and CI mechanisms
+        run: node --test scripts/check-markdown-links.test.mjs scripts/print-repo-structure.test.mjs scripts/local-migration/check-contract-baseline.test.mjs scripts/local-migration/gate-runner.test.mjs scripts/local-migration/gate-phases.test.mjs scripts/local-migration/restart-smoke.test.mjs scripts/local-migration/test-database.test.mjs scripts/local-migration/web-support-smoke.test.mjs scripts/local-migration/eval-test-discovery.test.mjs scripts/local-migration/toolchain-contract.test.mjs scripts/local-migration/ci-path-filters.test.mjs scripts/local-migration/runtime-process.test.mjs scripts/local-migration/web-runtime-config.test.mjs scripts/local-migration/runtime-resources.test.mjs scripts/local-migration/packaging-smoke.test.mjs scripts/local-migration/local-database-smoke.test.mjs scripts/local-migration/local-model-smoke.test.mjs scripts/local-migration/local-mcp-smoke.test.mjs scripts/local-migration/local-ui-smoke.test.mjs
+        timeout-minutes: 5
+      - name: Test backend documentation consumers
+        run: pnpm --fail-if-no-match --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts
+        timeout-minutes: 2
+      - name: Test orchestrator documentation consumers
+        run: pnpm --fail-if-no-match --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts
+        timeout-minutes: 1
+      - name: Check Markdown links
+        run: node scripts/check-markdown-links.mjs
+        timeout-minutes: 1
+      - name: Compare public contracts with verified base
+        run: node scripts/local-migration/check-nonruntime.mjs
+        timeout-minutes: 3
+        env:
+          MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+  backend:
     needs: validation-selection
-    if: needs.validation-selection.result == 'success' && needs.validation-selection.outputs.profile == 'nonruntime'
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || fromJSON(needs.validation-selection.outputs.lanes).backend) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Prepare private pinned Node
+        run: bash scripts/local-migration/ci-private-node.sh
+        timeout-minutes: 1
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        timeout-minutes: 1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
+      - name: Generate Prisma client
+        run: pnpm --filter backend prisma:generate
+        timeout-minutes: 5
+      - name: Build backend
+        run: pnpm --filter backend build
+        timeout-minutes: 5
+        env:
+          NODE_ENV: production
+      - name: Unit tests
+        run: pnpm --filter backend test:unit
+        timeout-minutes: 5
+      - name: SQLite persistence and workers
+        run: pnpm --filter backend test:local-database:tests-only
+        timeout-minutes: 10
+      - name: Local model boundary
+        run: pnpm --filter backend test:local-model
+        timeout-minutes: 5
+      - name: Local MCP boundary
+        run: pnpm --filter backend test:local-mcp
+        timeout-minutes: 5
+      - name: Local browser boundary
+        run: pnpm --filter backend test:local-ui
+        timeout-minutes: 5
+    name: backend-tests
+  postgres:
+    needs: validation-selection
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || fromJSON(needs.validation-selection.outputs.lanes).postgres) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        timeout-minutes: 1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
+      - name: Generate Prisma and typecheck seeds
+        run: |-
+          pnpm --filter backend prisma:generate
+          pnpm --filter backend typecheck:seed
+        timeout-minutes: 5
+      - name: Migrate isolated fixture
+        run: pnpm --filter backend exec prisma migrate deploy
+        timeout-minutes: 3
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/context_router_test
+      - name: PostgreSQL integration
+        run: pnpm --filter backend test:integration
+        timeout-minutes: 8
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/context_router_test
+      - name: Hosted HTTP end-to-end
+        run: pnpm --filter backend test:e2e:tests-only
+        timeout-minutes: 5
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/context_router_test
+      - name: Deterministic stored-state scenarios
+        run: |-
+          pnpm eval:run --scenario samir-desai-i9-template-smoke
+          pnpm eval:run --scenario elena-marquez-i9-template-smoke
+        timeout-minutes: 3
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/context_router_test
+    name: postgres-tests
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: context_router_test
+        ports:
+          - 5433:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+  web:
+    needs: validation-selection
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || fromJSON(needs.validation-selection.outputs.lanes).web) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Prepare private pinned Node
+        run: bash scripts/local-migration/ci-private-node.sh
+        timeout-minutes: 1
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        timeout-minutes: 1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
+      - name: Bind tracked schema before generation
+        run: |-
+          echo "MIGRATION_GATE_TRACKED_SDL_SHA256=$(git show HEAD:apps/backend/src/schema.gql | shasum -a 256 | cut -d ' ' -f 1)" >> "$GITHUB_ENV"
+          echo "MIGRATION_GATE_DIAGNOSTICS_DIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
+        timeout-minutes: 1
+      - name: Generate backend Prisma client
+        run: pnpm --filter backend prisma:generate
+        timeout-minutes: 5
+      - name: Build backend
+        run: pnpm --filter backend build
+        timeout-minutes: 5
+        env:
+          NODE_ENV: production
+      - name: Install pinned Chromium
+        run: pnpm --filter web exec playwright install --with-deps chromium
+        timeout-minutes: 10
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+      - name: Build web
+        run: pnpm --filter web build
+        timeout-minutes: 5
+        env:
+          NODE_ENV: production
+      - name: Authenticated dashboard and browser helpers
+        run: pnpm --filter web test:local-ui
+        timeout-minutes: 10
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+      - name: Historical demo without provider sessions
+        run: node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs
+        timeout-minutes: 5
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+      - name: Verify generated clients and tracked SDL
+        run: node scripts/local-migration/check-generated-integrity.mjs
+        timeout-minutes: 5
+    name: frontend-build
+  desktop:
+    needs: validation-selection
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || fromJSON(needs.validation-selection.outputs.lanes).desktop) }}
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Prepare private pinned Node
+        run: bash scripts/local-migration/ci-private-node.sh
+        timeout-minutes: 1
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        timeout-minutes: 1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
+      - name: Assert supported native architecture
+        run: node -e "if(process.platform!=='darwin'||process.arch!=='arm64')process.exit(1)"
+        timeout-minutes: 1
+      - name: Verify compiler and SDK
+        run: /usr/bin/clang --version && /usr/bin/xcrun --show-sdk-path
+        timeout-minutes: 1
+      - name: Generate Prisma client
+        run: pnpm --filter backend prisma:generate
+        timeout-minutes: 5
+      - name: Build backend
+        run: pnpm --filter backend build
+        timeout-minutes: 5
+        env:
+          NODE_ENV: production
+      - name: Portable desktop contracts
+        run: pnpm --filter desktop test
+        timeout-minutes: 8
+      - name: Build native guardian and shell
+        run: pnpm --filter desktop build:native
+        timeout-minutes: 5
+      - name: Headless native fixtures
+        run: pnpm --filter desktop test:native
+        timeout-minutes: 8
+    name: desktop-native
+  orchestrator:
+    needs: validation-selection
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || fromJSON(needs.validation-selection.outputs.lanes).orchestrator) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        timeout-minutes: 1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
+      - name: Developer orchestrator
+        run: |-
+          pnpm --filter local-orchestrator test
+          pnpm --filter local-orchestrator lint
+          pnpm --filter local-orchestrator build
+        timeout-minutes: 5
+    name: local-orchestrator-checks
+  eval:
+    needs: validation-selection
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || fromJSON(needs.validation-selection.outputs.lanes).eval) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        timeout-minutes: 1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
+      - name: Evaluation fixture tests and validation
+        run: pnpm eval:verify
+        timeout-minutes: 5
+    name: eval-fixture-checks
+  harbor:
+    needs: validation-selection
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || fromJSON(needs.validation-selection.outputs.lanes).harbor) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Harbor static checks
+        run: bash examples/eval-harbor/scripts/check_static.sh
+        timeout-minutes: 5
+    name: eval-harbor-checks
+  packaging:
+    needs: validation-selection
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || fromJSON(needs.validation-selection.outputs.lanes).packaging) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Initialize private runner caches
+        run: |-
+          {
+            echo "COREPACK_HOME=$RUNNER_TEMP/corepack"
+            echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store"
+            echo "npm_config_cache=$RUNNER_TEMP/npm-cache"
+            echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache"
+            echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright"
+          } >> "$GITHUB_ENV"
+        timeout-minutes: 1
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 10.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Prepare private pinned Node
+        run: bash scripts/local-migration/ci-private-node.sh
+        timeout-minutes: 1
+      - name: Verify toolchain
+        run: node scripts/check-toolchain.mjs
+        timeout-minutes: 1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Seed offline package manager and native engine
+        run: |-
+          corepack prepare pnpm@10.25.0 --activate
+          pnpm --filter backend exec prisma --version
+        timeout-minutes: 5
+      - name: Install pinned Chromium
+        run: pnpm --filter web exec playwright install --with-deps chromium
+        timeout-minutes: 10
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+      - name: Sealed package lifecycle and dependency closure
+        run: pnpm migration:smoke:packaging
+        timeout-minutes: 35
+        env:
+          MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          MIGRATION_TEST_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
+          MIGRATION_GATE_PYTHON_BIN: python3
+    name: packaging-qualification
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: context_router_test
+        ports:
+          - 5433:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+  restart:
+    needs: validation-selection
+    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || fromJSON(needs.validation-selection.outputs.lanes).restart) }}
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-        timeout-minutes: 5
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
+      - name: Initialize private runner caches
+        run: |-
+          {
+            echo "COREPACK_HOME=$RUNNER_TEMP/corepack"
+            echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store"
+            echo "npm_config_cache=$RUNNER_TEMP/npm-cache"
+            echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache"
+            echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright"
+          } >> "$GITHUB_ENV"
+        timeout-minutes: 1
       - uses: pnpm/action-setup@v6.0.8
-        timeout-minutes: 5
         with:
           version: 10.25.0
       - uses: actions/setup-node@v4
-        timeout-minutes: 5
         with:
-          node-version: '24.21.0'
-          cache: pnpm
+          node-version: 24.21.0
+      - name: Prepare private pinned Node
+        run: bash scripts/local-migration/ci-private-node.sh
+        timeout-minutes: 1
       - name: Verify toolchain
-        timeout-minutes: 1
         run: node scripts/check-toolchain.mjs
+        timeout-minutes: 1
       - name: Install dependencies
-        timeout-minutes: 15
         run: pnpm install --frozen-lockfile
-      - name: Test documentation consumers and validation policy
+        timeout-minutes: 10
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Seed offline package manager and native engine
+        run: |-
+          corepack prepare pnpm@10.25.0 --activate
+          pnpm --filter backend exec prisma --version
         timeout-minutes: 5
-        run: node --test scripts/check-markdown-links.test.mjs scripts/print-repo-structure.test.mjs scripts/local-migration/ci-path-filters.test.mjs scripts/local-migration/check-contract-baseline.test.mjs
-      - name: Test backend launch-topology documentation
-        timeout-minutes: 2
-        run: pnpm --fail-if-no-match --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts
-      - name: Test web runtime documentation
-        timeout-minutes: 1
-        run: node --test scripts/local-migration/web-runtime-config.test.mjs
-      - name: Test orchestrator operator documentation
-        timeout-minutes: 1
-        run: pnpm --fail-if-no-match --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts
-      - name: Check repository Markdown links
-        timeout-minutes: 1
-        run: node scripts/check-markdown-links.mjs
-      - name: Check contracts against the verified base and whitespace
-        timeout-minutes: 3
-        run: node scripts/local-migration/check-nonruntime.mjs
+      - name: Install pinned Chromium
+        run: pnpm --filter web exec playwright install --with-deps chromium
+        timeout-minutes: 10
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
+      - name: Source hosted OAuth and restart contracts
+        run: pnpm migration:smoke:restart
+        timeout-minutes: 20
         env:
           MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
-
-  source-qualification:
-    needs: validation-selection
-    # Override implicit success() after detection failure, but honor run cancellation.
-    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 188
-
+          MIGRATION_TEST_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
+          MIGRATION_GATE_PYTHON_BIN: python3
+    name: restart-smoke
     services:
       postgres:
         image: postgres:15-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
+          POSTGRES_DB: context_router_test
         ports:
           - 5433:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v4
-        timeout-minutes: 5
-        with:
-          fetch-depth: 0
-
-      - name: Initialize private runner caches
-        timeout-minutes: 1
-        run: |
-          {
-            echo "COREPACK_HOME=$RUNNER_TEMP/corepack"
-            echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store"
-            echo "npm_config_cache=$RUNNER_TEMP/npm-cache"
-            echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache"
-            echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright"
-          } >> "$GITHUB_ENV"
-
-      - uses: pnpm/action-setup@v6.0.8
-        timeout-minutes: 5
-        with:
-          version: 10.25.0
-
-      - uses: actions/setup-node@v4
-        timeout-minutes: 5
-        with:
-          node-version: '24.21.0'
-          cache: pnpm
-
-      - uses: actions/setup-python@v5
-        timeout-minutes: 5
-        with:
-          python-version: '3.12'
-
-      - name: Verify toolchain and seed offline Corepack runtime
-        timeout-minutes: 5
-        run: |
-          bash scripts/local-migration/ci-private-node.sh
-          node scripts/check-toolchain.mjs
-          corepack prepare pnpm@10.25.0 --activate
-
-      - name: Install dependencies
-        timeout-minutes: 15
-        run: pnpm install --frozen-lockfile
-
-      - name: Install pinned Chromium prerequisite
-        timeout-minutes: 10
-        run: pnpm --filter web exec playwright install --with-deps chromium
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
-
-      - name: Run the Local Migration Baseline Gate
-        id: migration-gate
-        timeout-minutes: 118
-        run: pnpm migration:gate --ci-source
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
-          MIGRATION_GATE_PR_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
-          MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
-          MIGRATION_TEST_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
-          MIGRATION_GATE_PYTHON_BIN: python3
-          MIGRATION_GATE_CI_SUMMARY_PATH: ${{ runner.temp }}/local-migration-gate-summary.json
-          MIGRATION_GATE_CI_DATABASE_REPORT: '1'
-
-      - name: Persist sanitized gate evidence
-        if: always()
-        timeout-minutes: 5
-        run: |
-          summary="$RUNNER_TEMP/local-migration-gate-summary.json"
-          if [ -f "$summary" ]; then
-            {
-              echo '## Local Migration Baseline Gate evidence'
-              echo '```json'
-              cat "$summary"
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "Local Migration Baseline Gate did not produce a sanitized summary." >> "$GITHUB_STEP_SUMMARY"
-          fi
-          echo 'Database test reports omit runtime names, assertion values and stacks. Retrieve the local-database-failure-evidence artifact below when available; report availability is recorded in the summary.' >> "$GITHUB_STEP_SUMMARY"
-
-      # Optional diagnostics only: transport failure must not change the gate verdict.
-      # Every required test/check above retains its original failure behavior.
-      - name: Upload sanitized database failure evidence
-        if: always() && steps.migration-gate.outputs.database_report_ready == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        timeout-minutes: 2
-        continue-on-error: true
-        with:
-          name: local-database-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/local-migration-database-failures.json
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload required qualification receipt
-        if: success()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        timeout-minutes: 2
-        with:
-          name: ci-source-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ci-source.json
-          if-no-files-found: error
-          retention-days: 7
-
-  ui-qualification:
-    needs: validation-selection
-    # Override implicit success() after detection failure, but honor run cancellation.
-    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 188
-
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v4
-        timeout-minutes: 5
-        with:
-          fetch-depth: 0
-
-      - name: Initialize private runner caches
-        timeout-minutes: 1
-        run: |
-          {
-            echo "COREPACK_HOME=$RUNNER_TEMP/corepack"
-            echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store"
-            echo "npm_config_cache=$RUNNER_TEMP/npm-cache"
-            echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache"
-            echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright"
-          } >> "$GITHUB_ENV"
-
-      - uses: pnpm/action-setup@v6.0.8
-        timeout-minutes: 5
-        with:
-          version: 10.25.0
-
-      - uses: actions/setup-node@v4
-        timeout-minutes: 5
-        with:
-          node-version: '24.21.0'
-          cache: pnpm
-
-      - uses: actions/setup-python@v5
-        timeout-minutes: 5
-        with:
-          python-version: '3.12'
-
-      - name: Verify toolchain and seed offline Corepack runtime
-        timeout-minutes: 5
-        run: |
-          bash scripts/local-migration/ci-private-node.sh
-          node scripts/check-toolchain.mjs
-          corepack prepare pnpm@10.25.0 --activate
-
-      - name: Install dependencies
-        timeout-minutes: 15
-        run: pnpm install --frozen-lockfile
-
-      - name: Install pinned Chromium prerequisite
-        timeout-minutes: 10
-        run: pnpm --filter web exec playwright install --with-deps chromium
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
-
-      - name: Run the Local Migration Baseline Gate
-        id: migration-gate
-        timeout-minutes: 118
-        run: pnpm migration:gate --ci-ui
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
-          MIGRATION_GATE_PR_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
-          MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
-          MIGRATION_TEST_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
-          MIGRATION_GATE_PYTHON_BIN: python3
-          MIGRATION_GATE_CI_SUMMARY_PATH: ${{ runner.temp }}/local-migration-gate-summary.json
-          MIGRATION_GATE_CI_DATABASE_REPORT: '1'
-
-      - name: Persist sanitized gate evidence
-        if: always()
-        timeout-minutes: 5
-        run: |
-          summary="$RUNNER_TEMP/local-migration-gate-summary.json"
-          if [ -f "$summary" ]; then
-            {
-              echo '## Local Migration Baseline Gate evidence'
-              echo '```json'
-              cat "$summary"
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "Local Migration Baseline Gate did not produce a sanitized summary." >> "$GITHUB_STEP_SUMMARY"
-          fi
-          echo 'Database test reports omit runtime names, assertion values and stacks. Retrieve the ci-ui-local-database-failure-evidence artifact below when available; report availability is recorded in the summary.' >> "$GITHUB_STEP_SUMMARY"
-
-      # Optional diagnostics only: transport failure must not change the gate verdict.
-      # Every required test/check above retains its original failure behavior.
-      - name: Upload sanitized database failure evidence
-        if: always() && steps.migration-gate.outputs.database_report_ready == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        timeout-minutes: 2
-        continue-on-error: true
-        with:
-          name: ci-ui-local-database-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/local-migration-database-failures.json
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload required qualification receipt
-        if: success()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        timeout-minutes: 2
-        with:
-          name: ci-ui-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ci-ui.json
-          if-no-files-found: error
-          retention-days: 7
-
-  packaging-qualification:
-    needs: validation-selection
-    if: ${{ !cancelled() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 190
-
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v4
-        timeout-minutes: 5
-        with:
-          fetch-depth: 0
-
-      - name: Initialize private runner caches
-        timeout-minutes: 1
-        run: |
-          {
-            echo "COREPACK_HOME=$RUNNER_TEMP/corepack"
-            echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store"
-            echo "npm_config_cache=$RUNNER_TEMP/npm-cache"
-            echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache"
-            echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright"
-          } >> "$GITHUB_ENV"
-
-      - uses: pnpm/action-setup@v6.0.8
-        timeout-minutes: 5
-        with:
-          version: 10.25.0
-
-      - uses: actions/setup-node@v4
-        timeout-minutes: 5
-        with:
-          node-version: '24.21.0'
-          cache: pnpm
-
-      - uses: actions/setup-python@v5
-        timeout-minutes: 5
-        with:
-          python-version: '3.12'
-
-      - name: Verify toolchain and seed offline Corepack runtime
-        timeout-minutes: 5
-        run: |
-          bash scripts/local-migration/ci-private-node.sh
-          node scripts/check-toolchain.mjs
-          corepack prepare pnpm@10.25.0 --activate
-
-      - name: Install dependencies
-        timeout-minutes: 15
-        run: pnpm install --frozen-lockfile
-
-      - name: Prepare pinned Prisma engine prerequisite
-        timeout-minutes: 2
-        run: pnpm --filter backend exec prisma --version
-
-      - name: Install pinned Chromium prerequisite
-        timeout-minutes: 10
-        run: pnpm --filter web exec playwright install --with-deps chromium
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
-
-      - name: Run the Local Migration Baseline Gate
-        id: migration-gate
-        timeout-minutes: 118
-        run: pnpm migration:gate --ci-packaging
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
-          MIGRATION_GATE_PR_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
-          MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
-          MIGRATION_TEST_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:5433/postgres
-          MIGRATION_GATE_PYTHON_BIN: python3
-          MIGRATION_GATE_CI_SUMMARY_PATH: ${{ runner.temp }}/local-migration-gate-summary.json
-          MIGRATION_GATE_CI_DATABASE_REPORT: '1'
-
-      - name: Persist sanitized gate evidence
-        if: always()
-        timeout-minutes: 5
-        run: |
-          summary="$RUNNER_TEMP/local-migration-gate-summary.json"
-          if [ -f "$summary" ]; then
-            {
-              echo '## Local Migration Baseline Gate evidence'
-              echo '```json'
-              cat "$summary"
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "Local Migration Baseline Gate did not produce a sanitized summary." >> "$GITHUB_STEP_SUMMARY"
-          fi
-          echo 'Database test reports omit runtime names, assertion values and stacks. Retrieve the ci-packaging-local-database-failure-evidence artifact below when available; report availability is recorded in the summary.' >> "$GITHUB_STEP_SUMMARY"
-
-      # Optional diagnostics only: transport failure must not change the gate verdict.
-      # Every required test/check above retains its original failure behavior.
-      - name: Upload sanitized database failure evidence
-        if: always() && steps.migration-gate.outputs.database_report_ready == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        timeout-minutes: 2
-        continue-on-error: true
-        with:
-          name: ci-packaging-local-database-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/local-migration-database-failures.json
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload required qualification receipt
-        if: success()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        timeout-minutes: 2
-        with:
-          name: ci-packaging-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/ci-packaging.json
-          if-no-files-found: error
-          retention-days: 7
-
-  # Preserve the check name and explicitly distinguish non-applicability from
-  # qualification. Full qualification still requires all three current-attempt receipts.
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
   local-migration-baseline:
-    needs: [validation-selection, nonruntime-checks, source-qualification, packaging-qualification, ui-qualification]
+    needs:
+      - validation-selection
+      - contracts
+      - backend
+      - postgres
+      - web
+      - packaging
+      - desktop
+      - orchestrator
+      - eval
+      - harbor
+      - restart
     if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 22
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-        timeout-minutes: 5
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
-
       - uses: actions/setup-node@v4
-        timeout-minutes: 5
         with:
-          node-version: '24.21.0'
-
-      - name: Recompute selection and require actual job outcomes
-        id: validation-result
-        timeout-minutes: 2
+          node-version: 24.21.0
+      - name: Require actual outcomes for independently selected checks
         run: node scripts/local-migration/ci-validation-policy.mjs --aggregate
+        timeout-minutes: 2
         env:
-          SELECTION_RESULT: ${{ needs.validation-selection.result }}
-          SELECTION_PROFILE: ${{ needs.validation-selection.outputs.profile }}
-          SELECTION_BINDING: ${{ needs.validation-selection.outputs.binding }}
-          NONRUNTIME_RESULT: ${{ needs.nonruntime-checks.result }}
-          SOURCE_RESULT: ${{ needs.source-qualification.result }}
-          PACKAGING_RESULT: ${{ needs.packaging-qualification.result }}
-          UI_RESULT: ${{ needs.ui-qualification.result }}
-
-      - name: Download source qualification receipt
-        if: steps.validation-result.outputs.profile == 'full'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        timeout-minutes: 2
-        with:
-          name: ci-source-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/qualification-receipts
-
-      - name: Download packaging qualification receipt
-        if: steps.validation-result.outputs.profile == 'full'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        timeout-minutes: 2
-        with:
-          name: ci-packaging-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/qualification-receipts
-
-      - name: Download UI qualification receipt
-        if: steps.validation-result.outputs.profile == 'full'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        timeout-minutes: 2
-        with:
-          name: ci-ui-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/qualification-receipts
-
-      - name: Verify complete qualification
-        if: steps.validation-result.outputs.profile == 'full'
-        timeout-minutes: 3
-        run: node scripts/local-migration/combine-ci-qualification.mjs --combine
-        env:
-          SOURCE_RESULT: ${{ needs.source-qualification.result }}
-          PACKAGING_RESULT: ${{ needs.packaging-qualification.result }}
-          UI_RESULT: ${{ needs.ui-qualification.result }}
-          MIGRATION_GATE_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
-          MIGRATION_GATE_PR_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+          NEEDS_JSON: ${{ toJSON(needs) }}

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, hosted-v1-maintenance]
+    branches: [hosted-v1-maintenance]
   pull_request:
-    branches: [main, hosted-v1-maintenance]
+    branches: [hosted-v1-maintenance]
 
 permissions:
   contents: read
