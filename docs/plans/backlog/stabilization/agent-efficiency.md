@@ -1,8 +1,8 @@
 # Agent workflow efficiency
 
-- Status: overview/workflow clarifications and approved maintained-document CI selection implemented; eligible-run timing unmeasured
+- Status: workflow clarifications implemented; CI execution consolidated in the current Product CI policy
 - Owner: the product owner selects the next implementation slice
-- Updated: 2026-10-17
+- Updated: 2026-11-25
 - Policy: [agent workflow](../../../useful/AGENT_WORKFLOW.md)
 
 Reduce repeated orientation and invalidated qualification while preserving
@@ -63,60 +63,21 @@ byte-identical; the stub is never called. The original fallback count includes
 the added test file, explaining the difference from the earlier observation.
 Output bytes fell about 83%; billed-token and elapsed-task savings remain unproved.
 
-## Other options
+## CI execution follow-up
 
-The product owner approved a modification-only, nine-file migration CI exception
-on 2026-10-15 and expanded it to maintained Markdown on 2026-10-17. Policy v2
-includes the named root documents and Markdown under `docs/IMPORTANT`,
-`docs/current`, `docs/useful` and `docs/plans`, with conservative path/type/mode
-constraints. The existing exact exemptions retain their original permissions.
-The fixed lane adds the complete backend launch-topology, web runtime and
-orchestrator operator-document suites; it requires dependencies but no application
-build. New document consumers must join that lane or the affected document must
-be excluded. Maintained prose does not include runtime/evaluation inputs, frozen
-evidence, registries or arbitrary Markdown. Structural, mixed and CI/checker
-changes still select full qualification. The exact boundaries, mandatory
-consumers, failure handling and unchanged receipt distinction live in the existing
-[contract policy](../../../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#nonruntime-ci-selection).
-No general dependency graph, caching or runtime-test deduplication is added.
-Standard CI and the full local command remain unchanged; the
+The earlier maintained-document exception has been superseded by the reviewed
+[Product CI policy](../../../current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles).
+Main no longer duplicates standard backend/browser/tool checks and the sequential
+migration source/UI profiles. Fixed affected jobs, scoped source restart and
+PR-only supersession cancellation replace that arrangement; maintenance-branch
+checks and the full local command remain available. Structural maintained-prose
+changes now use actual document consumers without application builds.
+
+Historical measurements above remain scoped evidence, not estimates of the new
+workflow. The CI-streamlining PR records the final candidate's measured elapsed
+and summed job durations, review dispositions and limits. The ongoing
 [validation matrix](../../../useful/AGENT_WORKFLOW.md#default-and-exceptions)
-now selects local checks without an automatic full local run for ordinary PRs. Separating
-documentation CI definitions is deferred: that could avoid application-suite
-dispatch for documentation-test definition edits, but leaves the migration
-critical path and adds another workflow boundary. Keeping routing unchanged has
-no selection-maintenance cost but retains the observed qualification cost.
-
-Measured from the naturally occurring #186 runs (not performance experiments):
-
-| Run/check | Event-to-final-job elapsed | Summed runner occupancy |
-| --- | ---: | ---: |
-| [Regular CI](https://github.com/loyalagents/context-router/actions/runs/38698847195) | 8m25s | 26m36s |
-| Documentation job within regular CI | 12s job duration | 12s |
-| [Migration](https://github.com/loyalagents/context-router/actions/runs/38698846895) | 17m11s | 32m06s |
-
-Source took 15m00s, packaging 16m48s and aggregation 18s; packaging was the
-critical path. Both workflows totalled 58m42s occupancy (50m36s Linux, 8m06s
-macOS), not billed minutes or dollar costs. Recent completed migration runs
-[38694303197](https://github.com/loyalagents/context-router/actions/runs/38694303197)
-and [38695450063](https://github.com/loyalagents/context-router/actions/runs/38695450063)
-took 15m54s–17m36s elapsed and 26m38s–34m04s runner occupancy.
-
-Estimate, not measurement: a 1–3 minute lightweight path would save roughly
-13–17 minutes elapsed and 24–33 runner-minutes per eligible run. Actual eligible
-Actions duration remains unmeasured, including the expanded v2 lane and its
-additional consumers. Standard suites already skipped for the original nine
-paths, so their #186 cost was not an additional saving. #186 itself remains
-ineligible because it changed CI and added files. Confirm scheduling and summaries
-on the first naturally occurring eligible run; no metrics subsystem is added.
-
-The implementation builds on #185's separate database timing fixes. CI selection
-changes require full CI qualification and local checks under that matrix.
-Reverting the cohesive selection change
-restores unconditional lanes; receipt meanings never change. Revision-specific
-model settings, review decisions and validation evidence belong in
-[PR #188](https://github.com/loyalagents/context-router/pull/188), rather than
-temporary review status or pass-announcement commits in this durable note.
+selects focused local evidence and all applicable exact-candidate CI.
 
 | Option | Hypothesized benefit | Boundary or cost |
 | --- | --- | --- |

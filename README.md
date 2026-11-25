@@ -75,5 +75,6 @@ Backend behavior changes are tests first. Validate affected behavior during
 iteration, then qualify a frozen candidate under the
 [policy for focused local checks and CI](docs/useful/AGENT_WORKFLOW.md#default-and-exceptions).
 The full `pnpm migration:gate` command remains available for its stated exceptions;
-contract fixtures and CI remain in force despite the completed program.
+contract fixtures and [affected Product CI checks](docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles)
+remain in force despite the completed program.
 See [scoped closeout/evidence](docs/current/LOCAL_MIGRATION_CLOSEOUT.md).

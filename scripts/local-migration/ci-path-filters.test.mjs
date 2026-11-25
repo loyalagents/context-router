@@ -52,135 +52,76 @@ async function policyFixture(operation) {
   } finally { await rm(cwd, { recursive: true, force: true }); }
 }
 
-test('selection preserves the original exact-path content exemptions', async () => {
-  await policyFixture(async f => {
-    const policy = await import('./ci-validation-policy.mjs');
-    assert.deepEqual([...policy.NONRUNTIME_PATHS], eligiblePaths);
-    assert.equal((await f.detect()).profile, 'full', 'empty diffs are conservative');
-    for (const file of eligiblePaths) await f.put(file, 'modified\n');
-    await f.commit();
-    const result = await f.detect();
-    assert.equal(result.profile, 'nonruntime'); assert.equal(result.baseSha, f.base);
-    assert.equal(result.policyVersion, 2); assert.match(result.binding, /^[a-f0-9]{64}$/);
-    assert.deepEqual(result.paths, [...eligiblePaths].sort());
-    await f.put('apps/backend/source.ts', 'runtime\n'); await f.commit();
-    assert.equal((await f.detect()).profile, 'full', 'mixed changes');
-  });
-});
+import { CI_LANES, classifyChanges, validateSelectionResults } from './ci-validation-policy.mjs';
 
-const maintainedDocs = [
-  'README.md', 'docs/IMPORTANT/CURRENT_STATE.md', 'docs/current/LOCAL_APPLICATION.md',
-  'docs/current/LOCAL_MIGRATION_CLOSEOUT.md', 'docs/useful/LOCAL_UI.md',
-  'docs/plans/backlog/local-ai-scheduling/README.md',
-  'docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md', 'docs/useful/HOSTED_DEVELOPMENT.md',
-  'docs/useful/local-orchestrator-commands.md', 'docs/plans/active/colleague-pilot/plan.md',
-  'docs/plans/backlog/stabilization/README.md', 'docs/plans/active/new-area/nested/guide.v2_1.md',
-];
+const changed = (file, extra = {}) => ({ file, status: 'M', oldMode: '100644', newMode: '100644', oldBlob: 'a'.repeat(40), newBlob: 'b'.repeat(40), ...extra });
+const selected = changes => Object.entries(classifyChanges(changes)).filter(([, value]) => value).map(([lane]) => lane).sort();
+const product = ['backend', 'desktop', 'eval', 'packaging', 'postgres', 'web'];
 
-test('maintained Markdown content changes include the PR 190 documentation mix', async () => {
-  await policyFixture(async f => {
-    for (const file of maintainedDocs) await f.put(file);
-    f.event.before = await f.commit();
-    const pr190Docs = ['AGENTS.md', 'CLAUDE.md', 'README.md', 'docs/IMPORTANT/CURRENT_STATE.md',
-      'docs/current/LOCAL_MIGRATION_CLOSEOUT.md', 'docs/current/LOCAL_MIGRATION_CONTRACT_BASELINE.md',
-      'docs/plans/README.md', 'docs/plans/backlog/local-ai-scheduling/README.md',
-      'docs/plans/backlog/stabilization/agent-efficiency.md', 'docs/useful/AGENT_WORKFLOW.md', 'docs/useful/LOCAL_UI.md'];
-    for (const file of pr190Docs) await f.put(file, 'updated prose\n');
-    await f.commit();
-    assert.equal((await f.detect()).profile, 'nonruntime');
-    assert.deepEqual((await f.detect()).paths, pr190Docs.sort());
-    for (const file of [...eligiblePaths, ...maintainedDocs]) await f.put(file, 'updated prose\n');
-    await f.commit();
-    const result = await f.detect();
-    assert.equal(result.profile, 'nonruntime'); assert.equal(result.policyVersion, 2);
-    assert.deepEqual(result.paths, [...new Set([...eligiblePaths, ...maintainedDocs])].sort());
-    await f.put('apps/backend/source.ts', 'runtime change\n'); await f.commit();
-    assert.equal((await f.detect()).profile, 'full');
-  });
-});
-
-test('new maintained Markdown requires non-executable files and rejects structural changes', async () => {
-  const file = 'docs/current/guide.md';
-  for (const kind of ['add', 'delete', 'copy', 'rename', 'symlink', 'mode', 'executable-content']) {
-    await policyFixture(async f => {
-      if (kind !== 'add') {
-        await f.put(file);
-        if (kind === 'executable-content') await chmod(path.join(f.cwd, file), 0o755);
-        f.event.before = await f.commit();
-      }
-      if (kind === 'add' || kind === 'executable-content') await f.put(file, 'changed\n');
-      if (kind === 'delete') await rm(path.join(f.cwd, file));
-      if (kind === 'copy') await cp(path.join(f.cwd, file), path.join(f.cwd, 'docs/current/copied.md'));
-      if (kind === 'rename') await rename(path.join(f.cwd, file), path.join(f.cwd, 'docs/current/moved.md'));
-      if (kind === 'symlink') { await rm(path.join(f.cwd, file)); await symlink('../../README.md', path.join(f.cwd, file)); }
-      if (kind === 'mode') await chmod(path.join(f.cwd, file), 0o755);
-      await f.commit(); assert.equal((await f.detect()).profile, 'full', kind);
-    });
-  }
-  // Existing exact exemptions keep their prior regular/executable mode semantics.
-  await policyFixture(async f => {
-    for (const file of eligiblePaths) await chmod(path.join(f.cwd, file), 0o755);
-    f.event.before = await f.commit();
-    for (const file of eligiblePaths) await f.put(file, 'changed\n');
-    await f.commit(); assert.equal((await f.detect()).profile, 'nonruntime');
-  });
-});
-
-test('maintained path boundaries reject unsafe and lookalike raw Git paths', async () => {
-  await policyFixture(async f => {
-    await f.put('AGENTS.md', 'changed\n'); await f.commit(); await f.detect();
-    const policy = await import('./ci-validation-policy.mjs');
-    for (const file of ['docs/currently/guide.md', 'other/docs/current/guide.md', 'docs/current/guide.md.js',
-      'docs/current/guide.MD', 'docs/current//guide.md', 'docs/current/.hidden.md',
-      'docs/current/guide.md\n', 'docs/current/guide.md\r', 'docs/current/guide name.md', 'docs/current/naïve.md', 'docs/current/[link](evil).md',
-      'docs/current/`command`.md', 'docs/current/guide\n::warning::injected.md',
-      'docs/current/guide\r##[add-mask]injected.md', 'docs/current/guide\t.md',
-      'docs/current/' + 'a'.repeat(240) + '.md']) {
-      const git = args => args.includes('--raw')
-        ? Promise.resolve(':100644 100644 ' + 'a'.repeat(40) + ' ' + 'b'.repeat(40) + ' M\0' + file + '\0')
-        : policy.runGit(f.cwd, args);
-      assert.equal((await policy.selectValidation({ cwd: f.cwd, environment: f.environment, event: f.event, git })).profile, 'full', file);
-    }
-    for (const file of ['/docs/current/guide.md', 'docs/current/../guide.md', 'docs/current/./guide.md']) {
-      const git = args => args.includes('--raw')
-        ? Promise.resolve(':100644 100644 ' + 'a'.repeat(40) + ' ' + 'b'.repeat(40) + ' M\0' + file + '\0')
-        : policy.runGit(f.cwd, args);
-      await assert.rejects(policy.selectValidation({ cwd: f.cwd, environment: f.environment, event: f.event, git }), /diff/);
-    }
-  });
-});
-
-test('excluded content modifications remain full qualification', async () => {
-  for (const file of ['docs/evidence/fixture.md', 'docs/evidence/fixture.json',
-    'examples/eval/prompts/mcp-known-schema.md', 'docs/useful/runtime.json',
-    'apps/local-orchestrator/README.md', 'docs/current/README.mdx',
-    'docs/current/local-migration-contract-baseline.json', '.github/workflows/ci.yml',
-    'scripts/check-markdown-links.mjs', 'package.json', '.npmrc', 'new-unknown.md']) {
-    await policyFixture(async f => {
-      await f.put(file); f.event.before = await f.commit();
-      await f.put(file, 'changed\n'); await f.commit();
-      assert.equal((await f.detect()).profile, 'full', file);
-    });
-  }
-});
-
-test('additions, deletions, renames, copies, type and mode changes cannot exempt', async () => {
+test('fixed routing covers direct and cross-package consumers without unrelated tooling', () => {
   const cases = [
-    async f => { await rm(path.join(f.cwd, 'AGENTS.md')); },
-    async f => { await rename(path.join(f.cwd, 'AGENTS.md'), path.join(f.cwd, 'moved.md')); },
-    async f => { await rm(path.join(f.cwd, 'CLAUDE.md')); await rename(path.join(f.cwd, 'AGENTS.md'), path.join(f.cwd, 'CLAUDE.md')); },
-    async f => { await rm(path.join(f.cwd, 'AGENTS.md')); await rename(path.join(f.cwd, 'README.md'), path.join(f.cwd, 'AGENTS.md')); },
-    async f => { await cp(path.join(f.cwd, 'AGENTS.md'), path.join(f.cwd, 'new.md')); },
-    async f => { await chmod(path.join(f.cwd, 'AGENTS.md'), 0o755); },
-    async f => { await rm(path.join(f.cwd, 'AGENTS.md')); await symlink('README.md', path.join(f.cwd, 'AGENTS.md')); },
+    ['apps/backend/src/domains/preferences/service.ts', product],
+    ['apps/backend/test/local-model/fixtures/session-fixture.mjs', [...product, 'restart']],
+    ['apps/backend/src/mcp/auth/oauth-metadata.controller.ts', [...product, 'restart']],
+    ['apps/backend/src/modules/auth/auth.service.ts', [...product, 'restart']],
+    ['apps/backend/src/bootstrap/hosted-bootstrap.ts', [...product, 'restart']],
+    ['apps/backend/src/config/preferences.catalog.json', [...product, 'restart']],
+    ...['apps/backend/src/schema.gql', 'apps/backend/package.json', 'apps/backend/nest-cli.json', 'apps/backend/test/contracts/fixtures/http-contracts.v1.json', 'apps/backend/test/contracts/fixtures/mcp-contract-baseline.json', 'apps/backend/test/local-model/fixtures/qwen35-template.txt'].map(file => [file, [...product, 'restart']]),
+    ['apps/web/app/dashboard/page.tsx', ['packaging', 'web']],
+    ['apps/web/app/globals.css', ['packaging', 'web']],
+    ['apps/web/test/hcp-source-browser.test.mjs', ['web']],
+    ['apps/web/lib/auth0.ts', ['packaging', 'restart', 'web']],
+    ['apps/web/app/api/debug/token/route.ts', ['packaging', 'restart', 'web']],
+    ['apps/web/middleware.ts', ['backend', 'desktop', 'packaging', 'restart', 'web']],
+    ['apps/web/hcp-source-browser.mjs', ['backend', 'desktop', 'packaging', 'web']],
+    ['apps/web/local-ui.mjs', ['backend', 'desktop', 'packaging', 'web']],
+    ['apps/desktop/native/guardian.m', ['backend', 'desktop', 'packaging', 'web']],
+    ['examples/demo-10-2026/001_user_001/home.jsonl', ['backend', 'desktop', 'packaging', 'web']],
+    ['apps/local-orchestrator/test/readme.test.ts', ['orchestrator']],
+    ['apps/local-orchestrator/README.md', ['orchestrator']],
+    ['examples/eval/scripts/generate.mjs', ['backend', 'eval', 'postgres']],
+    ['examples/eval/users/elena-marquez/profile.json', ['backend', 'eval', 'postgres']],
+    ['examples/eval/prompts/mcp-known-schema.md', ['backend', 'eval', 'postgres']],
+    ['examples/eval/forms/i-9/form.pdf', ['backend', 'eval', 'packaging', 'postgres', 'restart']],
+    ['examples/eval/users/maya-chen-newhire/corpora/packet-small/validation-report.json', ['backend', 'eval', 'harbor', 'postgres']],
+    ['examples/eval-harbor/scripts/check_static.sh', ['harbor']],
+    ['examples/eval_harbor_agents/agent.py', ['harbor']],
   ];
-  for (const change of cases) await policyFixture(async f => {
-    await change(f); await f.commit(); assert.equal((await f.detect()).profile, 'full');
-  });
+  for (const [file, lanes] of cases) assert.deepEqual(selected([changed(file)]), [...lanes].sort(), file);
+  assert.deepEqual(selected([changed('apps/web/app/globals.css'), changed('apps/local-orchestrator/src/index.ts')]), ['orchestrator', 'packaging', 'web']);
+});
+
+test('unknown/shared/mechanism inputs and unsafe path/type/mode changes run every lane', () => {
+  for (const file of ['.github/workflows/ci.yml', '.github/workflows/local-migration-baseline.yml', '.nvmrc', '.npmrc',
+    'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'scripts/check-toolchain.mjs',
+    'scripts/local-migration/installation/artifact-preflight.mjs', 'scripts/hcp/host-boundary.mjs',
+    'docs/current/local-migration-contract-baseline.json', 'docs/evidence/fixture.md', 'unknown.md',
+    'docs/current/guide.md.js', 'docs/current/guide name.md', 'docs/current/bad\n::warning::injected.md']) {
+    assert.deepEqual(selected([changed(file)]), [...CI_LANES].sort(), file);
+  }
+  for (const extra of [{ status: 'T', newMode: '120000' }, { newMode: '100755' }, { oldMode: '160000', newMode: '160000' }]) {
+    assert.deepEqual(selected([changed('apps/web/app/page.tsx', extra)]), [...CI_LANES].sort());
+  }
+  assert.deepEqual(selected([]), [...CI_LANES].sort());
+});
+
+test('maintained documentation additions, deletion and both move endpoints need only consumers', async () => {
+  for (const file of [...eligiblePaths, 'README.md', 'docs/current/new.md', 'docs/plans/active/area/README.md']) {
+    assert.deepEqual(selected([changed(file)]), [], file);
+  }
+  for (const extra of [{ status: 'A', oldMode: '000000', oldBlob: '0'.repeat(40) }, { status: 'D', newMode: '000000', newBlob: '0'.repeat(40) }]) {
+    assert.deepEqual(selected([changed('docs/current/guide.md', extra)]), []);
+  }
+  assert.deepEqual(selected([changed('docs/current/guide.md', { oldMode: '100755', newMode: '100755' })]), [...CI_LANES].sort());
   await policyFixture(async f => {
-    await rm(path.join(f.cwd, 'AGENTS.md')); f.event.before = await f.commit();
-    await f.put('AGENTS.md', 'added\n'); await f.commit();
-    assert.equal((await f.detect()).profile, 'full', 'allowlisted additions');
+    await f.put('docs/current/new.md'); await f.commit();
+    assert.equal((await f.detect()).profile, 'nonruntime');
+    f.event.before = await f.git('rev-parse', 'HEAD');
+    await rename(path.join(f.cwd, 'docs/current/new.md'), path.join(f.cwd, 'docs/current/moved.md')); await f.commit();
+    assert.equal((await f.detect()).profile, 'nonruntime');
+    f.event.before = await f.git('rev-parse', 'HEAD');
+    await rename(path.join(f.cwd, 'docs/current/moved.md'), path.join(f.cwd, 'runtime.md')); await f.commit();
+    assert.equal((await f.detect()).profile, 'full');
   });
 });
 
@@ -193,7 +134,7 @@ test('PR comparison includes both branch changes and the actual test merge', asy
     assert.equal((await f.detect()).profile, 'nonruntime');
     await f.put('apps/backend/source.ts', 'merge-only change\n');
     await f.git('add', '-A'); await f.git('commit', '--amend', '-qm', 'merge result');
-    assert.equal((await f.detect()).profile, 'full');
+    assert.equal((await f.detect()).profile, 'selective');
     f.event.pull_request.head.sha = f.base;
     await assert.rejects(f.detect, /checkout/);
   });
@@ -237,10 +178,10 @@ test('valid criss-cross PR history requires full qualification and binds every m
       git: args => args[0] === 'merge-base' && args[1] === '--all' ? Promise.resolve(bases.join('\n') + '\n') : policy.runGit(f.cwd, args) });
     assert.equal((await withBases([right, left])).binding, selected.binding, 'ordering is not identity');
     assert.notEqual((await withBases([right, f.base])).binding, selected.binding, 'different bases change identity');
-    const exported = { profile: selected.profile, binding: selected.binding };
-    const outcomes = { selection: 'success', nonruntime: 'skipped', source: 'success', packaging: 'success', ui: 'success' };
+    const exported = { profile: selected.profile, binding: selected.binding, lanes: selected.lanes };
+    const outcomes = { selection: 'success', contracts: 'success', ...Object.fromEntries(policy.CI_LANES.map(lane => [lane, 'success'])) };
     assert.doesNotThrow(() => policy.validateSelectionResults(selected, exported, outcomes));
-    for (const lane of ['source', 'packaging', 'ui']) assert.throws(() => policy.validateSelectionResults(selected, exported, { ...outcomes, [lane]: 'skipped' }));
+    for (const lane of policy.CI_LANES) assert.throws(() => policy.validateSelectionResults(selected, exported, { ...outcomes, [lane]: 'skipped' }));
   });
 });
 
@@ -315,556 +256,133 @@ test('invalid UTF-8 Git output fails with a safe encoding category', async () =>
   });
 });
 
-test('aggregation requires actual expected outcomes and the identical classification binding', async () => {
-  const { validateSelectionResults } = await import('./ci-validation-policy.mjs');
-  for (const profile of ['nonruntime', 'full']) {
-    const selection = { profile, binding: 'a'.repeat(64) };
-    const outcomes = { selection: 'success', nonruntime: profile === 'nonruntime' ? 'success' : 'skipped', source: profile === 'full' ? 'success' : 'skipped', packaging: profile === 'full' ? 'success' : 'skipped', ui: profile === 'full' ? 'success' : 'skipped' };
-    const exported = { profile, binding: selection.binding };
-    assert.doesNotThrow(() => validateSelectionResults(selection, exported, outcomes));
+
+test('aggregate rejects failed/cancelled/missing/unexpected outcomes and changed selection', () => {
+  for (const changes of [[changed('README.md')], [changed('apps/web/app/page.tsx')], []]) {
+    const lanes = classifyChanges(changes);
+    const profile = Object.values(lanes).every(Boolean) ? 'full' : Object.values(lanes).some(Boolean) ? 'selective' : 'nonruntime';
+    const selection = { profile, lanes, binding: 'a'.repeat(64) };
+    const outcomes = { selection: 'success', contracts: 'success', ...Object.fromEntries(CI_LANES.map(lane => [lane, lanes[lane] ? 'success' : 'skipped'])) };
+    assert.doesNotThrow(() => validateSelectionResults(selection, selection, outcomes));
     for (const key of Object.keys(outcomes)) for (const result of ['failure', 'cancelled', 'skipped', 'success', '', undefined, 'neutral']) {
-      if (result !== outcomes[key]) assert.throws(() => validateSelectionResults(selection, exported, { ...outcomes, [key]: result }));
+      if (result !== outcomes[key]) assert.throws(() => validateSelectionResults(selection, selection, { ...outcomes, [key]: result }));
     }
-    for (const changed of [{}, { profile }, { ...exported, binding: 'b'.repeat(64) }, { ...exported, profile: profile === 'full' ? 'nonruntime' : 'full' }]) {
-      assert.throws(() => validateSelectionResults(selection, changed, outcomes));
-    }
-  }
-});
-
-test("only fresh, explicitly exported database evidence is uploaded with bounded retention", async () => {
-  const workflow = parse(await readFile(dedicatedPath, "utf8"));
-  for (const [jobId, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"], ["ui-qualification", "ci-ui"]]) {
-  const steps = workflow.jobs[jobId].steps;
-  const gate = steps.find((step) => step.id === "migration-gate");
-  assert.equal(gate.run, "pnpm migration:gate --" + profile);
-  assert.equal(gate["continue-on-error"], undefined);
-  assert.equal(gate.env.MIGRATION_GATE_CI_DATABASE_REPORT, "1");
-  const uploads = steps.filter((step) => step.name === "Upload sanitized database failure evidence");
-  assert.equal(uploads.length, 1);
-  assert.deepEqual(uploads[0].with, {
-    name: (profile === "ci-source" ? "" : profile + "-") + "local-database-failure-evidence-${{ github.run_id }}-${{ github.run_attempt }}",
-    path: "${{ runner.temp }}/local-migration-database-failures.json",
-    "if-no-files-found": "warn", "retention-days": 7,
-  });
-  assert.equal(uploads[0].if, "always() && steps.migration-gate.outputs.database_report_ready == 'true'");
-  assert.equal(uploads[0]["continue-on-error"], true);
-  assert.equal(uploads[0]["timeout-minutes"], 2);
-  assert.equal(steps.filter((step) => step["continue-on-error"]).length, 1);
-  }
-});
-
-function selectedFilters(filters, relativePath) {
-  return Object.entries(filters)
-    .filter(([, globs]) =>
-      globs.some((glob) => path.matchesGlob(relativePath, glob)),
-    )
-    .map(([name]) => name)
-    .sort();
-}
-
-test("toolchain and aggregate-gate files select the required standard CI jobs", async () => {
-  const workflow = parse(await readFile(ciPath, "utf8"));
-  const filters = parse(
-    workflow.jobs.changes.steps.find((step) => step.id === "filter").with
-      .filters,
-  );
-  const buildJobs = [
-    "backend",
-    "desktop",
-    "eval_fixtures",
-    "frontend",
-    "local_orchestrator",
-  ];
-  const aggregateJobs = [...buildJobs, "eval_harbor"].sort();
-
-  for (const relativePath of [
-    ".nvmrc",
-    ".npmrc",
-    "scripts/check-toolchain.mjs",
-    "package.json",
-    "pnpm-lock.yaml",
-    "pnpm-workspace.yaml",
-  ]) {
-    assert.deepEqual(
-      selectedFilters(filters, relativePath),
-      buildJobs,
-      relativePath,
-    );
-  }
-
-  for (const relativePath of [
-    "scripts/local-migration/packaging-smoke.mjs",
-    ".github/workflows/local-migration-baseline.yml",
-    "docs/current/local-migration-contract-baseline.json",
-  ]) {
-    assert.deepEqual(
-      selectedFilters(filters, relativePath),
-      aggregateJobs,
-      relativePath,
-    );
-  }
-});
-
-test("the dedicated migration gate runs on every pull request to main", async () => {
-  const workflow = parse(await readFile(dedicatedPath, "utf8"));
-  const pullRequest = workflow.on.pull_request;
-
-  assert.deepEqual(pullRequest.branches, ["main"]);
-  assert.equal("paths" in pullRequest, false);
-  assert.equal("paths-ignore" in pullRequest, false);
-});
-
-test("CI provisions the PostgreSQL image required by offline TLS fixtures", async () => {
-  for (const [workflowPath, job] of [
-    [ciPath, "backend-tests"],
-    [dedicatedPath, "source-qualification"],
-    [dedicatedPath, "packaging-qualification"],
-  ]) {
-    const workflow = parse(await readFile(workflowPath, "utf8"));
-    assert.equal(
-      workflow.jobs[job].services.postgres.image,
-      "postgres:15-alpine",
-      `${job} must preload the image used with --pull=never`,
-    );
-  }
-});
-
-test("standard CI discovers the standalone SQLite suite and its compiled-worker prerequisite without a database URL", async () => {
-  const workflow = parse(await readFile(ciPath, "utf8"));
-  const steps = workflow.jobs["backend-tests"].steps;
-  const local = steps.filter((step) => step.run === "pnpm test:local-database");
-  assert.equal(local.length, 1);
-  assert.equal(local[0].env?.DATABASE_URL, undefined);
-  const manifest = JSON.parse(
-    await readFile(
-      new URL("../../apps/backend/package.json", import.meta.url),
-      "utf8",
-    ),
-  );
-  assert.equal(
-    manifest.scripts["pretest:local-database"],
-    "pnpm prisma:generate && pnpm build",
-  );
-  assert.match(
-    manifest.scripts["test:local-database"],
-    /--selectProjects local-database/,
-  );
-  assert.equal(manifest.scripts["test:local-database:tests-only"], manifest.scripts["test:local-database"]);
-  assert.equal(manifest.scripts["pretest:local-database:tests-only"], undefined);
-});
-
-test("default backend test routes build compiled CLI and workers without dropping projects", async () => {
-  const manifest = JSON.parse(
-    await readFile(
-      new URL("../../apps/backend/package.json", import.meta.url),
-      "utf8",
-    ),
-  );
-  const root = JSON.parse(
-    await readFile(new URL("../../package.json", import.meta.url), "utf8"),
-  );
-  const { default: jest } = await import("../../apps/backend/jest.config.js");
-  assert.equal(manifest.scripts.pretest, "pnpm prisma:generate && pnpm build");
-  assert.equal(manifest.scripts.test, "jest --runInBand");
-  assert.equal(root.scripts.test, "pnpm -r test");
-  assert.equal(root.scripts["test:backend"], "pnpm --filter backend test");
-  assert.deepEqual(
-    jest.projects.map((project) => project.displayName),
-    ["unit", "local-database", "integration", "e2e"],
-  );
-});
-
-test('local UI consumers select both build owners and pinned Chromium coverage', async () => {
-  const workflow = parse(await readFile(ciPath, 'utf8'));
-  const filters = parse(workflow.jobs.changes.steps.find((s) => s.id === 'filter').with.filters);
-  assert.ok(selectedFilters(filters, 'apps/web/local-ui.mjs').includes('backend'));
-  assert.ok(selectedFilters(filters, 'apps/backend/src/local-ui/local-ui-http.ts').includes('frontend'));
-  const steps = workflow.jobs['frontend-build'].steps;
-  const commands = steps.map((s) => s.run);
-  assert.ok(commands.indexOf('pnpm --filter backend build') < commands.indexOf('pnpm build'));
-  assert.ok(commands.includes('pnpm test:local-ui'));
-  for (const [file, job] of [[ciPath, 'frontend-build'], [dedicatedPath, 'source-qualification'], [dedicatedPath, 'packaging-qualification'], [dedicatedPath, 'ui-qualification']]) {
-    const browserSteps = parse(await readFile(file, 'utf8')).jobs[job].steps;
-    const install = browserSteps.find((s) => s.run === 'pnpm --filter web exec playwright install --with-deps chromium');
-    assert.ok(install); assert.equal(install['timeout-minutes'], 10);
-    assert.equal(install.env.PLAYWRIGHT_BROWSERS_PATH, '${{ runner.temp }}/playwright');
-  }
-});
-
-test('desktop changes select native CI plus both shared product owners with exact prerequisites', async () => {
-  const workflow = parse(await readFile(ciPath, 'utf8'));
-  const filters = parse(workflow.jobs.changes.steps.find(s => s.id === 'filter').with.filters);
-  for (const file of ['apps/desktop/native/guardian.m', 'apps/desktop/src/prepare.mjs', 'apps/desktop/package.json']) {
-    assert.deepEqual(selectedFilters(filters, file), ['backend', 'desktop', 'frontend']);
-  }
-  for (const file of ['apps/backend/src/main.ts', 'apps/web/local-ui.mjs']) assert.ok(selectedFilters(filters, file).includes('desktop'));
-  assert.equal(workflow.jobs.changes.outputs.desktop, '${{ steps.filter.outputs.desktop }}');
-  const job = workflow.jobs['desktop-native'];
-  assert.equal(job.needs, 'changes');
-  assert.equal(job.if, "needs.changes.outputs.desktop == 'true'");
-  assert.equal(job['runs-on'], 'macos-15');
-  assert.equal(job.steps.find(s => s.uses === 'pnpm/action-setup@v6.0.8').with.version, '10.25.0');
-  assert.equal(job.steps.find(s => s.uses === 'actions/setup-node@v4').with['node-version'], '24.21.0');
-  const commands = job.steps.map(s => s.run).filter(Boolean);
-  assert.deepEqual(commands, [
-    `node -e "if(process.platform!=='darwin'||process.arch!=='arm64')process.exit(1)"`,
-    'bash scripts/local-migration/ci-private-node.sh', 'node scripts/check-toolchain.mjs', '/usr/bin/clang --version && /usr/bin/xcrun --show-sdk-path',
-    'pnpm install --frozen-lockfile', 'pnpm --filter backend prisma:generate', 'pnpm --filter backend build',
-    'pnpm --filter desktop test', 'pnpm --filter desktop build:native', 'pnpm --filter desktop test:native',
-  ]);
-  const manifest = JSON.parse(await readFile(new URL('../../apps/desktop/package.json', import.meta.url), 'utf8'));
-  assert.equal(manifest.scripts.test, 'node --test --test-concurrency=1 test/*.test.mjs');
-  assert.equal(manifest.scripts['test:native'], 'node --test --test-concurrency=1 test/native/*.test.mjs');
-  const native = await readFile(new URL('../../apps/desktop/test/native/admission.test.mjs', import.meta.url), 'utf8');
-  assert.match(native, /assert.equal\(process.platform, 'darwin'/);
-  assert.match(native, /assert.equal\(process.arch, 'arm64'/);
-  assert.doesNotMatch(native, /skip:/);
-});
-
-
-test("CI lanes retain prerequisites and run unless successful selection explicitly exempts them", async () => {
-  const workflow = parse(await readFile(dedicatedPath, "utf8"));
-  assert.deepEqual(Object.keys(workflow.jobs).sort(), ["local-migration-baseline", "nonruntime-checks", "packaging-qualification", "source-qualification", "ui-qualification", "validation-selection"]);
-  assert.equal(workflow.concurrency, undefined);
-  for (const [jobId, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"], ["ui-qualification", "ci-ui"]]) {
-    const job = workflow.jobs[jobId];
-    assert.equal(job.needs, 'validation-selection');
-    assert.equal(job.if, "${{ !cancelled() && (needs.validation-selection.result != 'success' || needs.validation-selection.outputs.profile != 'nonruntime') }}");
-    assert.equal(job.strategy, undefined);
-    assert.equal(job["runs-on"], "ubuntu-latest");
-    assert.equal(job.services.postgres.image, "postgres:15-alpine");
-    assert.equal(job.steps[0].with["fetch-depth"], 0);
-    const gate = job.steps.find(s => s.id === "migration-gate");
-    assert.equal(gate.run, "pnpm migration:gate --" + profile);
-    assert.equal(gate["continue-on-error"], undefined);
-    assert.equal(gate["timeout-minutes"], 118);
-    const required = job.steps.find(s => s.name === "Upload required qualification receipt");
-    assert.ok(required);
-    assert.equal(required.if, "success()");
-    assert.equal(required["continue-on-error"], undefined);
-    assert.equal(required.with["if-no-files-found"], "error");
-    assert.equal(required.with.name, profile + "-${{ github.run_id }}-${{ github.run_attempt }}");
-    assert.equal(required.with.path, "${{ runner.temp }}/" + profile + ".json");
-  }
-  const combined = workflow.jobs["local-migration-baseline"];
-  assert.deepEqual(combined.needs, ['validation-selection', 'nonruntime-checks', 'source-qualification', 'packaging-qualification', 'ui-qualification']);
-  assert.equal(combined.if, "always()");
-  const verdict = combined.steps.find(s => s.id === 'validation-result');
-  assert.equal(verdict.run, 'node scripts/local-migration/ci-validation-policy.mjs --aggregate');
-  assert.equal(verdict.if, undefined);
-  assert.deepEqual(verdict.env, {
-    SELECTION_RESULT: '${{ needs.validation-selection.result }}',
-    SELECTION_PROFILE: '${{ needs.validation-selection.outputs.profile }}',
-    SELECTION_BINDING: '${{ needs.validation-selection.outputs.binding }}',
-    NONRUNTIME_RESULT: '${{ needs.nonruntime-checks.result }}',
-    SOURCE_RESULT: '${{ needs.source-qualification.result }}',
-    PACKAGING_RESULT: '${{ needs.packaging-qualification.result }}',
-    UI_RESULT: '${{ needs.ui-qualification.result }}',
-  });
-  assert.equal(combined.steps.filter(s => s.uses?.startsWith("actions/download-artifact@")).length, 3);
-  for (const step of combined.steps.filter(s => s.uses?.startsWith('actions/download-artifact@') || s.name === 'Verify complete qualification')) {
-    assert.equal(step.if, "steps.validation-result.outputs.profile == 'full'");
-    assert.ok(combined.steps.indexOf(step) > combined.steps.indexOf(verdict));
-  }
-  for (const step of combined.steps) assert.equal(step["continue-on-error"], undefined);
-});
-
-test('qualification conditions honor cancellation while detection failures still require all three lanes', async () => {
-  const workflow = parse(await readFile(dedicatedPath, 'utf8'));
-  for (const lane of ['source-qualification', 'packaging-qualification', 'ui-qualification']) {
-    const expression = workflow.jobs[lane].if.replace(/^\$\{\{\s*|\s*\}\}$/g, '')
-      .replaceAll('needs.validation-selection.result', 'result')
-      .replaceAll('needs.validation-selection.outputs.profile', 'profile');
-    // Evaluate the actual YAML condition for the supported status/string subset;
-    // platform cancellation delivery itself remains GitHub's responsibility.
-    const condition = new Function('cancelled', 'always', 'result', 'profile', `return (${expression});`);
-    for (const cancelled of [false, true]) for (const result of ['success', 'failure', 'cancelled', 'skipped', '', undefined, 'neutral']) {
-      for (const profile of ['nonruntime', 'full', '', undefined]) {
-        assert.equal(condition(() => cancelled, () => true, result, profile),
-          !cancelled && (result !== 'success' || profile !== 'nonruntime'), `${lane}: ${cancelled}/${result}/${profile}`);
-      }
+    for (const exported of [{}, { ...selection, binding: 'b'.repeat(64) }, { ...selection, lanes: {} }]) {
+      assert.throws(() => validateSelectionResults(selection, exported, outcomes));
     }
   }
-  assert.equal(workflow.jobs['local-migration-baseline'].if, 'always()');
 });
 
-test('nonruntime checks and classification retain complete consumers and always-on workflow triggers', async () => {
+test('main workflow routes every lane, binds immutable checkout and aggregates all outcomes', async () => {
   const workflow = parse(await readFile(dedicatedPath, 'utf8'));
   assert.deepEqual(workflow.on, { push: { branches: ['main'] }, pull_request: { branches: ['main'] } });
-  assert.deepEqual(workflow.permissions, { contents: 'read' });
-  const select = workflow.jobs['validation-selection'];
-  assert.equal(select.needs, undefined); assert.equal(select.if, undefined);
-  assert.deepEqual(select.outputs, { profile: '${{ steps.selection.outputs.profile }}', binding: '${{ steps.selection.outputs.binding }}' });
-  assert.equal(select.steps.find(s => s.id === 'selection').run, 'node scripts/local-migration/ci-validation-policy.mjs --select');
-  const checks = workflow.jobs['nonruntime-checks'];
-  assert.equal(checks.needs, 'validation-selection');
-  assert.equal(checks.if, "needs.validation-selection.result == 'success' && needs.validation-selection.outputs.profile == 'nonruntime'");
-  assert.deepEqual(checks.steps.map(s => s.run).filter(Boolean), [
-    'node scripts/check-toolchain.mjs', 'pnpm install --frozen-lockfile',
-    'node --test scripts/check-markdown-links.test.mjs scripts/print-repo-structure.test.mjs scripts/local-migration/ci-path-filters.test.mjs scripts/local-migration/check-contract-baseline.test.mjs',
-    'pnpm --fail-if-no-match --filter backend exec jest --selectProjects unit --runInBand --runTestsByPath test/contracts/runtime-composition.spec.ts',
-    'node --test scripts/local-migration/web-runtime-config.test.mjs',
-    'pnpm --fail-if-no-match --filter local-orchestrator exec node --import tsx --test test/operator-docs.test.ts',
-    'node scripts/check-markdown-links.mjs', 'node scripts/local-migration/check-nonruntime.mjs',
-  ]);
-  assert.equal(checks.steps.at(-1).env.MIGRATION_GATE_BASE_SHA, "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}");
-  assert.equal(checks.services, undefined);
-  for (const job of [select, checks, workflow.jobs['local-migration-baseline']]) {
-    assert.equal(job.steps[0].with['fetch-depth'], 0);
-    for (const step of job.steps) assert.equal(step['continue-on-error'], undefined);
+  assert.deepEqual(Object.keys(workflow.jobs).sort(), ['validation-selection', 'contracts', ...CI_LANES, 'local-migration-baseline'].sort());
+  for (const lane of CI_LANES) {
+    const job = workflow.jobs[lane];
+    assert.equal(job.needs, 'validation-selection');
+    assert.equal(job.if, "${{ !cancelled() && (needs.validation-selection.result != 'success' || fromJSON(needs.validation-selection.outputs.lanes)." + lane + ") }}");
+    assert.ok(job['timeout-minutes'] > 0);
   }
+  for (const job of Object.values(workflow.jobs)) {
+    assert.equal(job.steps.find(step => step.uses?.startsWith('actions/checkout@')).with.ref, '${{ github.sha }}');
+    assert.ok(job.steps.every(step => !step['continue-on-error']));
+  }
+  const aggregate = workflow.jobs['local-migration-baseline'];
+  assert.equal(aggregate.if, 'always()');
+  assert.deepEqual(aggregate.needs, ['validation-selection', 'contracts', ...CI_LANES]);
+  const verdict = aggregate.steps.find(step => step.run === 'node scripts/local-migration/ci-validation-policy.mjs --aggregate');
+  assert.equal(verdict.env.NEEDS_JSON, '${{ toJSON(needs) }}');
+  const maintenance = parse(await readFile(ciPath, 'utf8'));
+  assert.deepEqual(maintenance.on.push.branches, ['hosted-v1-maintenance']);
+  assert.deepEqual(maintenance.on.pull_request.branches, ['hosted-v1-maintenance']);
 });
 
-test('filtered nonruntime commands select their package and reject missing packages', async () => {
+test('concurrency cancels only superseded PRs and cannot coalesce pending pushes', async () => {
   const workflow = parse(await readFile(dedicatedPath, 'utf8'));
-  const commands = workflow.jobs['nonruntime-checks'].steps
-    .map(step => step.run).filter(command => command?.startsWith('pnpm ') && command.includes('--filter '));
-  assert.equal(commands.length, 2);
-  for (const command of commands) {
-    // Use the actual workflow's package-selection arguments; replace only the
-    // consumer with a cheap probe so removing the flag makes this test fail.
-    const words = command.split(/\s+/);
-    const args = words.slice(1, words.indexOf('exec'));
-    const filterIndex = args.indexOf('--filter') + 1;
-    assert.ok(filterIndex > 0);
-    const packageName = args[filterIndex];
-    const probe = ['exec', 'node', '-e', 'process.stdout.write(JSON.stringify({name:require("./package.json").name,cwd:process.cwd()}))'];
-    const options = { cwd: repositoryRoot, timeout: 30000, encoding: 'utf8' };
-    const selected = await execFileAsync(words[0], [...args, ...probe], options);
-    assert.deepEqual(JSON.parse(selected.stdout), {
-      name: packageName, cwd: path.join(repositoryRoot, 'apps', packageName),
-    });
-    const missing = [...args]; missing[filterIndex] = 'nonexistent-document-consumer-fixture';
-    await assert.rejects(execFileAsync(words[0], [...missing, ...probe], options), error => {
-      assert.equal(error.code, 1);
-      assert.match(error.stdout + error.stderr, /No projects matched the filters/);
-      return true;
-    });
-  }
+  assert.equal(workflow.concurrency.group, "${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}");
+  assert.equal(workflow.concurrency['cancel-in-progress'], "${{ github.event_name == 'pull_request' }}");
 });
 
-// This is a review tripwire, not a dependency graph or proof of complete coverage.
-// Computed paths, generic walkers and new reads inside an inventoried file can
-// escape it. README/AGENTS/CLAUDE and other basename matches need context review.
-function findMaintainedDocumentReferences(files, documents) {
-  const basenames = [...new Set(documents.map(file => path.posix.basename(file)))];
-  return [...files].filter(([, source]) =>
-    /docs\/(?:IMPORTANT|current|useful|plans)\/[^\s"'`]*\.md/.test(source) ||
-    basenames.some(name => source.includes(name)) ||
-    (/["']docs["']/.test(source) && /["'](?:IMPORTANT|current|useful|plans)["']/.test(source)),
-  ).map(([file]) => file).sort();
-}
-function requireReviewedDocumentReaders(found, inventory) {
-  assert.deepEqual(found, Object.keys(inventory).sort(), 'Update the reviewed document reader inventory and its lane coverage');
-}
-
-// Each match is either covered by a fixed lane command or has a reviewed reason
-// it does not consume maintained prose. Matching comments/metadata are not readers.
-const documentReaderInventory = {
-  'apps/backend/src/hcp-source.ts': { reason: 'Diagnostic runbook pointer; no document content read.' },
-  'apps/backend/test/contracts/runtime-composition.spec.ts': {
-    step: 'Test backend launch-topology documentation', target: 'test/contracts/runtime-composition.spec.ts',
-  },
-  'apps/desktop/test/native/claude-connect.test.mjs': { reason: 'Writes a synthetic project README in an owned temporary fixture; does not read maintained prose.' },
-  'apps/local-orchestrator/test/operator-docs.test.ts': {
-    step: 'Test orchestrator operator documentation', target: 'test/operator-docs.test.ts',
-  },
-  'apps/local-orchestrator/test/readme.test.ts': { reason: 'Reads the app README, outside the exemption.' },
-  'cloudbuild.yaml': { reason: 'Deployment-doc pointer in a comment; no document input.' },
-  'docs/current/local-migration-contract-baseline.json': {
-    step: 'Check contracts against the verified base and whitespace', target: 'scripts/local-migration/check-nonruntime.mjs',
-  },
-  'examples/eval-harbor/scripts/build_dynamicmem_task.py': { reason: 'Writes a generated task README; does not read maintained prose.' },
-  'examples/eval/scripts/direct-open-schema-packet.mjs': { reason: 'Generated evaluation-workspace CLAUDE instructions, outside the exemption.' },
-  'examples/eval/scripts/e2e-mcp-agent.mjs': { reason: 'Generated evaluation-workspace AGENTS/CLAUDE instructions, outside the exemption.' },
-  'examples/eval/scripts/e2e-mcp-packet.mjs': { reason: 'Generated evaluation-workspace AGENTS/CLAUDE instructions, outside the exemption.' },
-  'pnpm-lock.yaml': { reason: 'Upstream README URL in dependency deprecation metadata.' },
-  'scripts/check-markdown-links.test.mjs': {
-    step: 'Test documentation consumers and validation policy', target: 'scripts/check-markdown-links.test.mjs',
-  },
-  'scripts/hcp/host-boundary.mjs': { reason: 'Requires managed and ancestor CLAUDE.md files to be absent; no document content read.' },
-  'scripts/local-migration/check-contract-baseline.mjs': {
-    step: 'Check contracts against the verified base and whitespace', target: 'scripts/local-migration/check-nonruntime.mjs',
-  },
-  'scripts/local-migration/check-contract-baseline.test.mjs': {
-    step: 'Test documentation consumers and validation policy', target: 'scripts/local-migration/check-contract-baseline.test.mjs',
-  },
-  'scripts/local-migration/ci-path-filters.test.mjs': {
-    step: 'Test documentation consumers and validation policy', target: 'scripts/local-migration/ci-path-filters.test.mjs',
-  },
-  'scripts/local-migration/ci-validation-policy.mjs': { reason: 'Path eligibility metadata; no document content read.' },
-  'scripts/local-migration/gate-phases.test.mjs': { reason: 'Overwrites a fixture README to test integrity, independent of its original prose.' },
-  'scripts/local-migration/installation/bundle-feasibility.mjs': { reason: 'Sandbox-denial probe asserts reading README is forbidden; no prose assertion.' },
-  'scripts/local-migration/installation/demo-smoke.mjs': { reason: 'Sandbox-denial probe asserts reading README is forbidden; no prose assertion.' },
-  'scripts/local-migration/installation/installed-smoke.mjs': { reason: 'Sandbox-denial probe asserts reading README is forbidden; no prose assertion.' },
-  'scripts/local-migration/local-model-pdf-closure-probe.mjs': { reason: 'Sandbox-denial file inventory; README content is not consumed.' },
-  'scripts/local-migration/web-runtime-config.test.mjs': {
-    step: 'Test web runtime documentation', target: 'scripts/local-migration/web-runtime-config.test.mjs',
-  },
-};
-
-test('maintained document reader inventory requires review and actual lane coverage', async () => {
-  const result = await execFileAsync('git', ['ls-files', '--stage', '-z'], {
-    cwd: repositoryRoot, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, timeout: 30000,
+test('runtime jobs retain finite real suites, prepared builds and local-only environment', async () => {
+  const { jobs } = parse(await readFile(dedicatedPath, 'utf8'));
+  const commands = lane => jobs[lane].steps.flatMap(step => step.run?.trim().split('\n') ?? []);
+  const backend = commands('backend');
+  for (const command of ['prisma:generate', 'build', 'test:unit', 'test:local-database:tests-only', 'test:local-model', 'test:local-mcp', 'test:local-ui']) {
+    assert.ok(backend.includes('pnpm --filter backend ' + command), command);
+  }
+  assert.ok(backend.indexOf('pnpm --filter backend build') < backend.indexOf('pnpm --filter backend test:local-database:tests-only'));
+  assert.ok(!backend.includes('pnpm --filter backend test:local-database'), 'no repeated pretest build');
+  assert.doesNotMatch(JSON.stringify(jobs.backend), /DATABASE_URL|MIGRATION_TEST_ADMIN_URL/);
+  assert.equal(jobs.backend.services, undefined);
+  for (const command of ['typecheck:seed', 'test:integration', 'test:e2e:tests-only']) assert.ok(commands('postgres').includes('pnpm --filter backend ' + command));
+  for (const scenario of ['samir-desai-i9-template-smoke', 'elena-marquez-i9-template-smoke']) assert.ok(commands('postgres').includes('pnpm eval:run --scenario ' + scenario));
+  assert.equal(jobs.postgres.services.postgres.image, 'postgres:15-alpine');
+  const scenario = jobs.postgres.steps.find(step => step.run?.includes('pnpm eval:run'));
+  assert.equal(scenario.env.NODE_ENV, 'test');
+  // The eval harness starts plain Node; unlike Jest it does not set NODE_ENV.
+  await execFileAsync(process.execPath, ['-r', 'ts-node/register', 'test/setup/env.ts'], {
+    cwd: path.join(repositoryRoot, 'apps/backend'), timeout: 30000,
+    env: { ...process.env, ...scenario.env },
   });
-  const tracked = result.stdout.split('\0').filter(Boolean).flatMap(entry => {
-    const match = /^(100644|100755) [a-f0-9]{40} 0\t(.+)$/.exec(entry);
-    return match ? [match[2]] : [];
-  });
-  const documents = tracked.filter(file => ['README.md', 'AGENTS.md', 'CLAUDE.md', 'docs/README.md'].includes(file) ||
-    /^docs\/(?:IMPORTANT|current|useful|plans)\/.+\.md$/.test(file));
-  // Explicit text-source/config scope avoids media and binary assets. New or
-  // unknown text formats need scope review; this does not scan every file type.
-  const textExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.yaml', '.yml',
-    '.sh', '.bash', '.zsh', '.py', '.c', '.h', '.m', '.sql', '.gql', '.graphql', '.prisma', '.toml', '.html', '.css', '.scss']);
-  const textNames = new Set(['Dockerfile', 'Makefile', '.npmrc', '.gitignore', '.gitattributes']);
-  const files = new Map();
-  for (const file of tracked) {
-    if (file.startsWith('docs/evidence/') ||
-      !(textExtensions.has(path.posix.extname(file)) || textNames.has(path.posix.basename(file)))) continue;
-    const absolute = path.join(repositoryRoot, file);
-    if (!(await lstat(absolute)).isFile()) continue; // Never follow symlink inputs.
-    const bytes = await readFile(absolute);
-    if (bytes.includes(0)) continue;
-    let source;
-    try { source = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
-    catch { continue; } // Non-text assets are outside this heuristic.
-    files.set(file, source);
+  assert.ok(commands('web').includes('pnpm --filter web test:local-ui'));
+  assert.ok(commands('web').includes('node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs'));
+  for (const command of ['test', 'build:native', 'test:native']) assert.ok(commands('desktop').includes('pnpm --filter desktop ' + command));
+  assert.equal(jobs.desktop['runs-on'], 'macos-15');
+  assert.ok(commands('packaging').includes('pnpm migration:smoke:packaging'));
+  assert.ok(commands('restart').includes('pnpm migration:smoke:restart'));
+  for (const lane of ['web', 'packaging', 'restart']) {
+    assert.ok(commands(lane).includes('pnpm --filter web exec playwright install --with-deps chromium'));
   }
-  requireReviewedDocumentReaders(findMaintainedDocumentReferences(files, documents), documentReaderInventory);
-  const workflow = parse(await readFile(dedicatedPath, 'utf8'));
-  for (const [file, entry] of Object.entries(documentReaderInventory)) {
-    if (entry.reason) { assert.ok(entry.reason.length > 0, file); continue; }
-    const step = workflow.jobs['nonruntime-checks'].steps.find(step => step.name === entry.step);
-    assert.ok(step?.run?.split(/\s+/).includes(entry.target), `${file}: fixed lane must execute ${entry.target}`);
+  for (const lane of ['backend', 'web', 'desktop', 'packaging', 'restart']) {
+    assert.ok(commands(lane).includes('bash scripts/local-migration/ci-private-node.sh'));
   }
+  for (const lane of ['packaging', 'restart']) {
+    const all = commands(lane);
+    assert.ok(all.includes('corepack prepare pnpm@10.25.0 --activate'));
+    assert.ok(all.includes('pnpm --filter backend exec prisma --version'));
+    assert.equal(jobs[lane].services.postgres.image, 'postgres:15-alpine');
+    assert.ok(all.indexOf('pnpm --filter backend exec prisma --version') < all.findIndex(command => command.startsWith('pnpm migration:smoke:')));
+  }
+  assert.ok(commands('web').some(command => command.includes('git show HEAD:apps/backend/src/schema.gql')));
+  assert.ok(commands('web').includes('node scripts/local-migration/check-generated-integrity.mjs'));
 });
 
-test('maintained document reader tripwire catches literal, split, basename and moved readers', () => {
-  const documents = ['README.md', 'docs/useful/LOCAL_UI.md'];
-  const current = 'apps/web/test/existing-reader.test.mjs';
-  const original = new Map([[current, 'read("docs/useful/LOCAL_UI.md")']]);
-  const inventory = { [current]: { reason: 'fixture consumer' } };
-  assert.doesNotThrow(() => requireReviewedDocumentReaders(findMaintainedDocumentReferences(original, documents), inventory));
-  for (const source of ['read("docs/useful/LOCAL_UI.md")',
-    'read(join(root, "docs", "useful", requestedName))', 'read(join(directory, "LOCAL_UI.md"))',
-    'read("docs/current/FUTURE_REFERENCE.md")', 'read("README.md")']) {
-    const added = new Map([...original, ['apps/web/test/new-reader.test.mjs', source]]);
-    assert.throws(() => requireReviewedDocumentReaders(findMaintainedDocumentReferences(added, documents), inventory),
-      /reviewed document reader inventory/);
-  }
-  const moved = new Map([[current, 'assert.equal(1, 1)'],
-    ['apps/web/test/moved-reader.test.mjs', original.get(current)]]);
-  assert.throws(() => requireReviewedDocumentReaders(findMaintainedDocumentReferences(moved, documents), inventory),
-    /reviewed document reader inventory/);
-  assert.throws(() => requireReviewedDocumentReaders([], inventory), /reviewed document reader inventory/);
+test('contracts always execute actual documentation consumers and gate behavior tests', async () => {
+  const job = parse(await readFile(dedicatedPath, 'utf8')).jobs.contracts;
+  assert.equal(job.if, undefined);
+  const commands = job.steps.map(step => step.run ?? '').join('\n');
+  for (const target of ['scripts/check-markdown-links.test.mjs', 'scripts/print-repo-structure.test.mjs',
+    'scripts/local-migration/ci-path-filters.test.mjs', 'scripts/local-migration/check-contract-baseline.test.mjs',
+    'scripts/local-migration/gate-phases.test.mjs', 'scripts/local-migration/gate-runner.test.mjs',
+    'scripts/local-migration/check-nonruntime.mjs', 'scripts/check-markdown-links.mjs',
+    'test/contracts/runtime-composition.spec.ts', 'scripts/local-migration/web-runtime-config.test.mjs', 'test/operator-docs.test.ts']) assert.ok(commands.includes(target), target);
+  assert.doesNotMatch(commands, /pnpm --filter (?:backend|web) build/);
 });
 
-test('selection CLI explains non-applicability without receipts and rejects failed outcomes', async () => {
+test('selection CLI binds lane outputs and actual needs without exposing raw filenames', async () => {
   await policyFixture(async f => {
-    await f.put('AGENTS.md', 'changed\n'); await f.commit(); const selected = await f.detect();
-    const io = await mkdtemp(path.join(os.tmpdir(), 'ci-selection-io-'));
+    await f.put('docs/current/bad\n::warning::injected.md'); await f.commit();
+    const selection = await f.detect();
+    const io = await mkdtemp(path.join(os.tmpdir(), 'ci-output-'));
     try {
-      const eventFile = path.join(io, 'event.json'), output = path.join(io, 'output'), summary = path.join(io, 'summary');
-      await writeFile(eventFile, JSON.stringify(f.event));
-      const env = { ...process.env, ...f.environment, GITHUB_EVENT_PATH: eventFile, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary,
-        SELECTION_RESULT: 'success', SELECTION_PROFILE: selected.profile, SELECTION_BINDING: selected.binding,
-        NONRUNTIME_RESULT: 'success', SOURCE_RESULT: 'skipped', PACKAGING_RESULT: 'skipped', UI_RESULT: 'skipped' };
+      const eventPath = path.join(io, 'event.json'), output = path.join(io, 'output'), summary = path.join(io, 'summary');
+      await writeFile(eventPath, JSON.stringify(f.event));
+      const needs = { 'validation-selection': { result: 'success', outputs: { profile: selection.profile, lanes: JSON.stringify(selection.lanes), binding: selection.binding } }, contracts: { result: 'success' },
+        ...Object.fromEntries(CI_LANES.map(lane => [lane, { result: selection.lanes[lane] ? 'success' : 'skipped' }])) };
       const run = (mode, extra = {}) => execFileAsync(process.execPath, [path.join(repositoryRoot, 'scripts/local-migration/ci-validation-policy.mjs'), mode], {
-        cwd: f.cwd, env: { ...env, ...extra }, timeout: 30000, encoding: 'utf8',
+        cwd: f.cwd, timeout: 30000, encoding: 'utf8', env: { ...process.env, ...f.environment, GITHUB_EVENT_PATH: eventPath, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary, NEEDS_JSON: JSON.stringify(needs), ...extra },
       });
-      assert.match((await run('--select')).stdout, /Selected nonruntime/);
-      assert.equal(await readFile(output, 'utf8'), `profile=nonruntime\nbinding=${selected.binding}\n`);
-      assert.match((await run('--aggregate')).stdout, /qualification not applicable/);
-      assert.match(await readFile(summary, 'utf8'), /AGENTS.md/);
-      const previousOutput = await readFile(output, 'utf8');
-      for (const extra of [{ NONRUNTIME_RESULT: 'failure' }, { SELECTION_RESULT: 'cancelled' }, { SOURCE_RESULT: 'success' }, { UI_RESULT: 'success' }, { SELECTION_BINDING: '' }]) {
-        await assert.rejects(run('--aggregate', extra), error => error.code === 1 && /job outcomes or classification mismatch.*no exemption/.test(error.stderr));
+      assert.match((await run('--aggregate')).stdout, /Selected checks passed/);
+      const exports = await readFile(output, 'utf8');
+      assert.match(exports, /profile=full/); assert.ok(exports.includes('lanes=' + JSON.stringify(selection.lanes)));
+      for (const result of ['failure', 'cancelled', 'skipped']) {
+        needs.backend.result = result;
+        await assert.rejects(run('--aggregate', { NEEDS_JSON: JSON.stringify(needs) }));
       }
-      await assert.rejects(run('--select', { GITHUB_SHA: f.base }), error => error.code === 1 && /selection: checkout.*no exemption/.test(error.stderr));
-      await writeFile(eventFile, '{malformed');
-      await assert.rejects(run('--select'), error => error.code === 1 && !error.stderr.includes('malformed'));
-      assert.equal(await readFile(output, 'utf8'), previousOutput, 'failures export no routing success');
-      // The fixture has no qualification receipts, dependencies or combiner.
-    } finally { await rm(io, { recursive: true, force: true }); }
-  });
-});
-
-function assertSafeSelectionOutput({ stdout, stderr, summary }) {
-  const unsafeFilenameMarkers = /::warning::|injected|bad/;
-  assert.doesNotMatch(stdout, unsafeFilenameMarkers);
-  assert.doesNotMatch(stderr, unsafeFilenameMarkers);
-  // Hashes can contain "bad". Exempt only the complete, typed provenance lines
-  // emitted to the step summary; filename text and command markers remain checked.
-  const withoutSummaryHashes = summary.replace(
-    /^Checkout: [a-f0-9]{40}; base: [a-f0-9]{40}; selection: [a-f0-9]{64}\.$/gm,
-    'Checkout: <hash>; base: <hash>; selection: <hash>.',
-  );
-  assert.doesNotMatch(withoutSummaryHashes, unsafeFilenameMarkers);
-}
-
-// PR #196, run 40833615997 attempt 1: this valid selection hash hit the old regex.
-const selectionHashWithBad = '7dc7a69cf38be0c91bad3741a069ab534f2fae5a1c432be995f40a2f1f1dacc2';
-const selectionOutputWithBadHashes = {
-  stdout: 'Full source/UI/package qualification required: full-required.\n',
-  stderr: '',
-  summary: `Checkout: ${'bad'.padEnd(40, '0')}; base: ${'bad'.padStart(40, '0')}; selection: ${selectionHashWithBad}.\n`,
-};
-
-test('selection output assertion accepts legitimate hashes containing bad in accumulated summaries', () => {
-  assert.doesNotThrow(() => assertSafeSelectionOutput({ ...selectionOutputWithBadHashes,
-    summary: selectionOutputWithBadHashes.summary.repeat(2) }));
-});
-
-test('selection output assertion rejects filename disclosure and command markers in every channel', () => {
-  const leaks = [
-    'docs/current/bad\n::warning::injected.md', 'docs/current/bad', 'bad', 'injected', '::warning::',
-    `selection: ${selectionHashWithBad}`,
-    selectionOutputWithBadHashes.summary.replace('Checkout:', 'Unknown:'),
-    selectionOutputWithBadHashes.summary.replace(selectionHashWithBad, `${selectionHashWithBad}0`),
-    selectionOutputWithBadHashes.summary.replace(selectionHashWithBad, '::warning::injected'),
-    selectionOutputWithBadHashes.summary.trimEnd() + ' bad',
-  ];
-  for (const channel of ['stdout', 'stderr', 'summary']) {
-    for (const leak of leaks) {
-      assert.throws(() => assertSafeSelectionOutput({ ...selectionOutputWithBadHashes,
-        [channel]: selectionOutputWithBadHashes[channel] + leak + '\n' }),
-      { code: 'ERR_ASSERTION' }, `${channel}: ${JSON.stringify(leak)}`);
-    }
-  }
-  for (const channel of ['stdout', 'stderr']) {
-    assert.throws(() => assertSafeSelectionOutput({ ...selectionOutputWithBadHashes,
-      [channel]: selectionOutputWithBadHashes.summary }), { code: 'ERR_ASSERTION' });
-  }
-});
-
-test('selection CLI bounds safe Markdown paths and never prints unsafe filenames', async () => {
-  await policyFixture(async f => {
-    const paths = Array.from({ length: 15 }, (_, i) => `docs/current/guide-${String(i).padStart(2, '0')}.md`);
-    const unsafe = 'docs/current/bad\n::warning::injected.md';
-    for (const file of [...paths, unsafe]) await f.put(file);
-    f.event.before = await f.commit();
-    for (const file of paths) await f.put(file, 'changed\n');
-    await f.commit(); await f.detect();
-    const io = await mkdtemp(path.join(os.tmpdir(), 'ci-doc-report-'));
-    try {
-      const eventFile = path.join(io, 'event.json'), summary = path.join(io, 'summary');
-      const run = async () => {
-        await f.detect(); await writeFile(eventFile, JSON.stringify(f.event));
-        return execFileAsync(process.execPath, [path.join(repositoryRoot, 'scripts/local-migration/ci-validation-policy.mjs'), '--select'], {
-          cwd: f.cwd, timeout: 30000, encoding: 'utf8',
-          env: { ...process.env, ...f.environment, GITHUB_EVENT_PATH: eventFile, GITHUB_STEP_SUMMARY: summary },
-        });
-      };
-      const selected = await run();
-      assert.match(selected.stdout, /Selected nonruntime checks: policy v2/);
-      assert.match(selected.stdout, /guide-09.md/); assert.doesNotMatch(selected.stdout, /guide-10.md/);
-      assert.match(selected.stdout, /5 additional paths/); assert.ok(selected.stdout.length < 3000);
-      assertSafeSelectionOutput({ ...selected, summary: await readFile(summary, 'utf8') });
-      await f.put(unsafe, 'changed\n'); await f.commit();
-      const full = await run();
-      assert.match(full.stdout, /Full source\/UI\/package qualification required/);
-      assertSafeSelectionOutput({ ...full, summary: await readFile(summary, 'utf8') });
+      await assert.rejects(run('--aggregate', { NEEDS_JSON: '{}' }));
+      await assert.rejects(run('--select', { GITHUB_SHA: f.base }));
+      assert.equal(await readFile(output, 'utf8'), exports, 'failure exports no success');
+      assert.doesNotMatch(await readFile(summary, 'utf8'), /warning|injected|docs\/current/);
     } finally { await rm(io, { recursive: true, force: true }); }
   });
 });
@@ -904,93 +422,4 @@ test('nonruntime checker actually compares the base and rejects changed document
       return true;
     });
   } finally { await rm(scratch, { recursive: true, force: true }); }
-});
-
-// GitHub evaluates job env before a runner exists; runner context is step-only.
-test("CI private caches initialize in a runner step before package setup", async () => {
-  const workflow = parse(await readFile(dedicatedPath, "utf8"));
-  for (const jobId of ["source-qualification", "packaging-qualification"]) {
-    const job = workflow.jobs[jobId];
-    assert.doesNotMatch(JSON.stringify(job.env ?? {}), /\$\{\{\s*runner\./);
-    const initialize = job.steps.findIndex(step => step.name === "Initialize private runner caches");
-    const packageSetup = job.steps.findIndex(step => step.uses?.startsWith("pnpm/action-setup@"));
-    assert.ok(initialize >= 0 && initialize < packageSetup);
-    const step = job.steps[initialize];
-    assert.equal(step["timeout-minutes"], 1);
-    assert.equal(step.if, undefined);
-    assert.equal(step["continue-on-error"], undefined);
-    assert.equal(step.run, [
-      '{',
-      '  echo "COREPACK_HOME=$RUNNER_TEMP/corepack"',
-      '  echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store"',
-      '  echo "npm_config_cache=$RUNNER_TEMP/npm-cache"',
-      '  echo "XDG_CACHE_HOME=$RUNNER_TEMP/xdg-cache"',
-      '  echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/playwright"',
-      '} >> "$GITHUB_ENV"',
-      '',
-    ].join("\n"));
-  }
-});
-
-// A cold install skips Prisma's postinstall; packaging must not hydrate its
-// snapshotted dependencies or create executable files in the private tool home.
-test("packaging seeds its pinned Prisma engine before the gate captures dependencies", async () => {
-  const workflow = parse(await readFile(dedicatedPath, "utf8"));
-  const job = workflow.jobs["packaging-qualification"];
-  const seed = job.steps.findIndex(step => step.name === "Prepare pinned Prisma engine prerequisite");
-  const install = job.steps.findIndex(step => step.run === "pnpm install --frozen-lockfile");
-  const gate = job.steps.findIndex(step => step.id === "migration-gate");
-  assert.ok(seed > install && seed < gate, "cold packaging dependencies must be prepared before gate snapshot");
-  assert.equal(job.steps[seed].run, "pnpm --filter backend exec prisma --version");
-  assert.equal(job.steps[seed]["timeout-minutes"], 2);
-  assert.equal(job.steps[seed].if, undefined);
-  assert.equal(job.steps[seed]["continue-on-error"], undefined);
-  const manifest = JSON.parse(await readFile(path.join(repositoryRoot, "apps/backend/package.json"), "utf8"));
-  const lock = parse(await readFile(path.join(repositoryRoot, "pnpm-lock.yaml"), "utf8"));
-  assert.equal(lock.importers["apps/backend"].devDependencies.prisma.specifier, manifest.devDependencies.prisma);
-  assert.equal(lock.importers["apps/backend"].devDependencies.prisma.version.split("(")[0], "7.4.2");
-  assert.equal(workflow.jobs["source-qualification"].steps.some(step => step.name === job.steps[seed].name), false);
-});
-
-
-test("CI receipt transports and independent provenance use exact matching attempt bindings", async () => {
-  const workflow = parse(await readFile(dedicatedPath, "utf8"));
-  const combined = workflow.jobs["local-migration-baseline"];
-  const verify = combined.steps.find(s => s.name === "Verify complete qualification");
-  const base = "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}";
-  const head = "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}";
-  for (const [job, profile] of [["source-qualification", "ci-source"], ["packaging-qualification", "ci-packaging"], ["ui-qualification", "ci-ui"]]) {
-    const steps = workflow.jobs[job].steps;
-    const gate = steps.find(s => s.id === "migration-gate");
-    const upload = steps.find(s => s.name === "Upload required qualification receipt");
-    const downloads = combined.steps.filter(s => s.uses?.startsWith("actions/download-artifact@") && s.with.name === upload.with.name);
-    assert.equal(downloads.length, 1);
-    assert.equal(downloads[0].uses, "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093");
-    assert.deepEqual(downloads[0].with, { name: profile + "-${{ github.run_id }}-${{ github.run_attempt }}", path: "${{ runner.temp }}/qualification-receipts" });
-    assert.equal(upload.with.path, "${{ runner.temp }}/" + profile + ".json");
-    for (const step of [gate, verify]) {
-      assert.equal(step.env.MIGRATION_GATE_BASE_SHA, base);
-      assert.equal(step.env.MIGRATION_GATE_PR_HEAD_SHA, head);
-    }
-    const artifact = steps.find(s => s.name === "Upload sanitized database failure evidence");
-    const summary = steps.find(s => s.name === "Persist sanitized gate evidence");
-    assert.ok(summary.run.includes(artifact.with.name.split("-${{")[0] + " artifact"));
-  }
-});
-
-test('historical corpus selects shared product lanes and frontend runs the bounded foundation suite',async()=>{
- const workflow=parse(await readFile(ciPath,'utf8')),filters=parse(workflow.jobs.changes.steps.find(step=>step.id==='filter').with.filters);
- for(const file of ['examples/demo-10-2026/001_user_001/home.jsonl','apps/backend/scripts/demo/domain.mjs'])assert.deepEqual(selectedFilters(filters,file),['backend','desktop','frontend']);
- const step=workflow.jobs['frontend-build'].steps.find(step=>step.name==='Test historical demo foundation without provider sessions');
- assert.equal(step.run,'node --test --test-concurrency=1 examples/demo-10-2026/*.test.mjs');
- assert.equal(step['working-directory'],'.');assert.equal(step['timeout-minutes'],5);assert.deepEqual(step.env,{PLAYWRIGHT_BROWSERS_PATH:'${{ runner.temp }}/playwright'});
-});
-
-test('all jobs with trusted client fixtures inherit one private pinned Node before qualification',async()=>{
- for(const [file,job] of [[ciPath,'frontend-build'],[ciPath,'desktop-native'],[dedicatedPath,'source-qualification'],[dedicatedPath,'packaging-qualification'],[dedicatedPath,'ui-qualification']]){
-  const steps=parse(await readFile(file,'utf8')).jobs[job].steps,setup=steps.findIndex(s=>s.uses==='actions/setup-node@v4'),privateNode=steps.findIndex(s=>s.run?.split('\n').includes('bash scripts/local-migration/ci-private-node.sh')),install=steps.findIndex(s=>s.run==='pnpm install --frozen-lockfile');
-  assert.ok(setup<privateNode&&privateNode<install,job);if(file===ciPath){assert.equal(steps[privateNode]['working-directory'],'.');assert.equal(steps[privateNode]['timeout-minutes'],1);}else{assert.equal(steps[privateNode].name,'Verify toolchain and seed offline Corepack runtime');assert.equal(steps[privateNode]['timeout-minutes'],5);}
- }
- const script=await readFile(path.join(repositoryRoot,'scripts/local-migration/ci-private-node.sh'),'utf8');
- assert.ok(script.includes('mktemp -d "$HOME/.context-router-ci-node.XXXXXX"'));assert.ok(script.includes('install -m 700 "$ci_node_source" "$ci_node_root/node"'));assert.ok(script.includes('cmp "$ci_node_source" "$ci_node_root/node"'));assert.ok(script.includes('= v24.21.0'));assert.ok(script.includes('>> "$GITHUB_PATH"'));
 });

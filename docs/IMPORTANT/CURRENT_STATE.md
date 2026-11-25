@@ -62,8 +62,8 @@ One writer owns the main playground checkout; independent worktree tasks need
 isolated resources and an integration order. Keep backend tests first, targeted
 iteration and batch corrections; qualify a frozen candidate only at the agreed
 finalization milestone. Use the workflow's default of focused local checks and CI,
-with exceptions for full local runs; existing commands, contract gates and CI
-remain intact.
+with exceptions for full local runs. Product CI runs affected suites once;
+contract checks and the supported full local command remain available.
 No automatic merge, publication, reset, or weakening of safety/compatibility.
 
 Use runbooks on demand: [installed Mac](../useful/INSTALLED_MAC_APP.md),

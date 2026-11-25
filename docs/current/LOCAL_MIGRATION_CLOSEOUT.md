@@ -85,9 +85,11 @@ history. Activate a named writer in the linked brief before implementation.
 
 ## Gates And Reset Validation
 
-`pnpm migration:gate`, its dedicated workflow, contract checker and supported
-reference modes retain their commands and coverage. Closing the program does not
-retire tests or CI. The [validation policy](../useful/AGENT_WORKFLOW.md#validation-and-context-discipline)
+`pnpm migration:gate`, the contract checker and supported reference modes retain
+their local commands and coverage. The separately reviewed
+[Product CI policy](LOCAL_MIGRATION_CONTRACT_BASELINE.md#ci-qualification-profiles)
+consolidates routine checks and narrows their triggers; program closure itself
+does not retire tests or supported surfaces. The [validation policy](../useful/AGENT_WORKFLOW.md#validation-and-context-discipline)
 owns focused local checks, exceptions for full local runs, independent review, trial
 handoff and final qualification; a full local run is not automatic for every PR.
 
