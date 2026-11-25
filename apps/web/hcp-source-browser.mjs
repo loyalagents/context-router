@@ -238,8 +238,15 @@ export async function openSourceBrowser(sandbox, { headless = false } = {}) {
     }
     await launch();
     const origin = source.descriptor.configuration.issuer;
+    const callback =
+      source.descriptor.profile?.profile === "claude-code"
+        ? source.descriptor.configuration.clients[0].redirectUri
+        : undefined;
     await context.route("**/*", (route) =>
-      new URL(route.request().url()).origin === origin
+      new URL(route.request().url()).origin === origin ||
+      (callback !== undefined &&
+        route.request().url() === callback &&
+        route.request().method() === "POST")
         ? route.continue()
         : route.abort(),
     );

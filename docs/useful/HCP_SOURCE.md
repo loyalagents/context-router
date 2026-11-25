@@ -1,7 +1,7 @@
 # Synthetic HCP Source Dashboard
 
-- Status: bounded C6 source experiment with activated [C7a synthetic MCP reads](../plans/active/hcp-alignment/c7-read-brief.md); final C7a review/validation is recorded in that brief.
-- This command uses synthetic data only. Do not paste personal information or connect real assistants.
+- Status: bounded C6/C7a source experiment; the [C7b subscription trial](../plans/active/hcp-alignment/c7b-host-brief.md) passed its separately authorized bounded live query/get, scope-denial and manual-revocation journey. Receipts and limitations are recorded in its brief; publication/CI and broader qualification remain outstanding.
+- This command uses synthetic data only. Do not paste personal information. A real host is permitted only within the separately reviewed and approved C7b trial.
 - This is separate from the installed Mac application, its documents, identities, models and client settings. It does not establish HCP conformance or complete the C6 roadmap.
 
 Use Node **24.21.0**, pnpm **10.25.0**, the repository's frozen dependencies,
@@ -135,6 +135,21 @@ paths are absent from this source composition. No model executes here. Broader
 import standing/history, notifications/reporting, OAuth/dormancy, real hosts,
 installed delivery and full package/profile qualification remain outside this slice.
 
+## C7b Host Profile
+
+The default profile above remains the controlled `as.hcp.test` A/B experiment.
+The separately activated [C7b brief](../plans/active/hcp-alignment/c7b-host-brief.md)
+defines `initialize --profile claude-code --callback-port 19444 --port 19443` in a
+new empty sandbox. It creates a distinct immutable localhost provider, one Claude
+registration, an IP-host HTTPS callback and exactly two synthetic entries. Existing
+instances are not converted. The owned browser permits only the exact registered
+callback's POST beyond the provider origin; provider cookies must stay on localhost.
+
+Use the brief's reviewed private-terminal instructions for the helper, credential
+pipe, fixed model/destination, human-paced denial/revoke sequence and retention.
+The ordinary `serve`/`open` commands do not start a host or model. Offline probes
+are preparation evidence; they do not authorize or attest live subscription use.
+
 ## UI Contributor Handoff
 
 Start with the initialization/serve/open commands above; **do not use `pnpm dev`**.
@@ -180,14 +195,14 @@ it never opens a store, authenticates, creates authority, generates operation ke
 performs requests or sends responses. Unknown stored members remain inspectable
 in expandable full documents, without acquiring assurance.
 
-| View | Data supplied by the HTTP owner | Supported action |
-| --- | --- | --- |
-| Memories | `managementEntries`; HTTP-computed text-editor eligibility | GET `/manage/entries/:id` |
-| Entry and history | `managementEntry`, `audit`, current/selected versions and session CSRF | GET version/history links; existing reviewed actions |
-| Text editor | Current supported entry and CSRF | POST `/manage/person/review`: `csrf`, `entryId`, `expectedVersion`, `value` |
-| Exact review | Previous entry, `reviewPersonWrite` result, subject, CSRF and generated operation key | POST `/manage/person/approve`: `csrf`, `reviewId`, `reviewCsrf`, `operationKey`; cancel is a GET |
-| Saved | Only the representation supplied inside `releaseWrite`, possibly without an ID | Separate GET inspection; no replay |
-| Grants | `listGrants`, last possible copy deadlines and filtered `audit` | Existing inspect/all/revoke routes, with unchanged authority |
+| View              | Data supplied by the HTTP owner                                                       | Supported action                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Memories          | `managementEntries`; HTTP-computed text-editor eligibility                            | GET `/manage/entries/:id`                                                                        |
+| Entry and history | `managementEntry`, `audit`, current/selected versions and session CSRF                | GET version/history links; existing reviewed actions                                             |
+| Text editor       | Current supported entry and CSRF                                                      | POST `/manage/person/review`: `csrf`, `entryId`, `expectedVersion`, `value`                      |
+| Exact review      | Previous entry, `reviewPersonWrite` result, subject, CSRF and generated operation key | POST `/manage/person/approve`: `csrf`, `reviewId`, `reviewCsrf`, `operationKey`; cancel is a GET |
+| Saved             | Only the representation supplied inside `releaseWrite`, possibly without an ID        | Separate GET inspection; no replay                                                               |
+| Grants            | `listGrants`, last possible copy deadlines and filtered `audit`                       | Existing inspect/all/revoke routes, with unchanged authority                                     |
 
 [`http.ts`](../../apps/backend/src/infrastructure/hcp-experiment/http.ts) remains
 owned by the integrator for route/body validation, eligibility enforcement,

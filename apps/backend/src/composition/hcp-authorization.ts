@@ -14,6 +14,7 @@ export interface AuthorizationExperimentOptions extends ExperimentOptions {
   humanCredential: string;
   clients: ClientRegistration[];
   port?: number;
+  hostname?: "as.hcp.test" | "localhost";
   reopen?: boolean;
   copyLifetimeMs?: number;
   notificationCa?: Buffer;
@@ -28,6 +29,11 @@ export async function createSyntheticAuthorization(
   paths: ExperimentPaths,
   options: AuthorizationExperimentOptions,
 ) {
+  if (
+    options.hostname !== undefined &&
+    !["as.hcp.test", "localhost"].includes(options.hostname)
+  )
+    throw new Error("Unsupported synthetic profile hostname");
   // TLS construction may throw synchronously; acquire no store/lease before it succeeds.
   const server = createServer({
     key: options.tls.key,
@@ -50,7 +56,7 @@ export async function createSyntheticAuthorization(
       server.listen(options.port ?? 0, "127.0.0.1", resolve);
     });
     const port = (server.address() as { port: number }).port,
-      issuer = `https://as.hcp.test:${port}`;
+      issuer = `https://${options.hostname ?? "as.hcp.test"}:${port}`;
     const authority = store.authorization(
       {
         issuer,

@@ -1,6 +1,6 @@
 # HCP Alignment Plan
 
-- Status: C1–C5 and bounded C6 source/UI slices merged; bounded human source journey accepted; C7a PR #212 review corrections approved with final validation pending; C7b/C8–C9 unactivated; no conformance claim
+- Status: C1–C7a bounded slices merged; bounded C6 human source journey accepted; C7b bounded live journey passed, publication/CI pending; C8–C9 unactivated; no conformance claim
 - Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` owns sequencing and assigns the next sole writer at activation
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
@@ -9,12 +9,32 @@
 - Relationship and ownership: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
 - Protocol questions: [local Draft 3 adoption notes][questions]
 
-Current work is the [C7a review correction round](c7-read-brief.md#claude-review-correction-round), following
+Current work is [C7b isolated Claude Code handoff](c7b-host-brief.md), following
 the [C6 UI merge](#c6-demo-ui-merge-and-c7a-planning-2026-11-21) and
 [demo-first continuation](#demo-first-continuation-2026-11-19). Earlier activation, writer, pending/draft and freeze-time passages
 below are historical. The current status and checkpoint map supersede their routing;
 old “C8 qualification” means current C9, and old “C7/C8 unactivated” records retain
 their original scope rather than retroactively describing the new C8.
+
+## C7b Isolated Host Preparation (2026-11-21)
+
+C7a merged as `7381ba9d70a9d3597543ae033451920631fab028`. Its final standard/native
+and three-lane migration CI passed; the [C7b brief](c7b-host-brief.md#preparation-evidence)
+records the separately verified head, base and tested merge. Lucas activated C7b
+in a dedicated worktree, with that chat as sole writer and read-only independent
+reviewers. The orchestrator retains sequencing and publication. This activates
+source preparation, synthetic disposable fixtures and the exact real host against
+a local fake model. A live subscription login, model call and off-device synthetic
+trial were subsequently approved through the reviewed concrete consent packet;
+the actual fixture is approved and initialized. After the initial mistyped-ref
+failure and reviewed semantic-check repair, the separately authorized November 25
+repeat passed live query/get, scope denial, explicit human revocation and denied
+access afterward. Receipt/audit verification found a clean host exit, closed
+browser and no active grants. This completes the bounded C7b live handoff;
+publication/CI remain with the orchestrator. Personal state, the installed app,
+demo work and `hcp-spec` stay untouched.
+The user prefers subscription authentication; the brief records its isolated token
+and relay boundary. C8 adoption and C9 qualification remain separate obligations.
 
 ## C6 Demo UI Merge And C7a Planning (2026-11-21)
 

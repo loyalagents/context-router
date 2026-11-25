@@ -41,11 +41,11 @@ and pending implementation checkpoints are historical.
 
 ## Three Lanes
 
-| Lane | Purpose | Canonical brief |
-| --- | --- | --- |
-| Assisted colleague pilot — first priority | Get a few Git-capable colleagues using their own data, with Claude Desktop and tolerable install/update/reconnect friction | [Pilot](active/colleague-pilot/README.md) |
-| Stabilization | Bounded correctness, recovery, diagnostics and usability fixes; eligible slices can run in parallel worktrees | [Stabilization](backlog/stabilization/README.md), [UI usability](backlog/ui-usability/README.md) |
-| Future capabilities | Wanted features and individually activated experiments | [HCP alignment](active/hcp-alignment/README.md), [MCP onboarding](backlog/mcp-onboarding/README.md), [agent-assisted onboarding](backlog/agent-assisted-onboarding/README.md), [AI scheduling](backlog/local-ai-scheduling/README.md), [provider choice](backlog/model-provider-selection/README.md), [evaluation](backlog/evaluation/README.md), [platform/network/hosting](backlog/platform-and-hosting/README.md) |
+| Lane                                      | Purpose                                                                                                                    | Canonical brief                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Assisted colleague pilot — first priority | Get a few Git-capable colleagues using their own data, with Claude Desktop and tolerable install/update/reconnect friction | [Pilot](active/colleague-pilot/README.md)                                                                                                                                                                                                                                                                                                                                                                            |
+| Stabilization                             | Bounded correctness, recovery, diagnostics and usability fixes; eligible slices can run in parallel worktrees              | [Stabilization](backlog/stabilization/README.md), [UI usability](backlog/ui-usability/README.md)                                                                                                                                                                                                                                                                                                                     |
+| Future capabilities                       | Wanted features and individually activated experiments                                                                     | [HCP alignment](active/hcp-alignment/README.md), [MCP onboarding](backlog/mcp-onboarding/README.md), [agent-assisted onboarding](backlog/agent-assisted-onboarding/README.md), [AI scheduling](backlog/local-ai-scheduling/README.md), [provider choice](backlog/model-provider-selection/README.md), [evaluation](backlog/evaluation/README.md), [platform/network/hosting](backlog/platform-and-hosting/README.md) |
 
 Priority and parallel eligibility are separate attributes. A stabilization item
 can be a pilot blocker; that does not make it safe to implement concurrently.
@@ -65,19 +65,24 @@ and contributor handoff merged in [PR #211](https://github.com/loyalagents/conte
 at `f92260060152b6872b5732587027bd161bc4f590`; its
 [merge record](active/hcp-alignment/README.md#c6-demo-ui-merge-and-c7a-planning-2026-11-21)
 binds final review and green CI without upgrading human/artifact acceptance.
-Current work is the [C7a review correction round](active/hcp-alignment/c7-read-brief.md#claude-review-correction-round)
-in [PR #212](https://github.com/loyalagents/context-router/pull/212): synthetic
-query/get is published; Lucas authorized fixes to the Claude Code findings.
-The corrected source has independent review approval, with final local checks and
-renewed exact-candidate CI recorded in the PR. The separate host trial remains pending. C8 delivers
-protocol fixes **and CR adoption**;
+Current work is [C7b source handoff](active/hcp-alignment/c7b-host-brief.md)
+after [PR #212](https://github.com/loyalagents/context-router/pull/212) merged with
+green standard/native and three-lane migration CI. The dedicated C7b worktree owns
+the source profile, helper and real-host checks against a local fake model.
+After the initial failed get and reviewed semantic-check repair, the separately
+authorized November 25 repeat passed the complete bounded live query/get,
+scope-denial and explicit-revocation/read-denial journey. Receipt and provider
+audit agree; the owned host/browser stopped and no active grants remain. C7b's
+live handoff is complete; source publication and exact-candidate CI remain with
+the orchestrator. C8 delivers protocol fixes **and CR adoption**;
 C9 completes selected capabilities and qualification (formerly C8 qualification).
 Broader C6 workflows and mandatory C5 gaps remain owned. Installed Mac delivery
 is a separate selected milestone if needed; D3 erasure precedes any personal-data
 extension and CR-Q9 resolution/adoption precedes sensitive real data. The
-orchestrator retains sequencing; the C7a implementation chat owns the authorized
-correction/publication step, checkout, tests/builds and disposable synthetic resources. C7b actual host/model
-use, personal-state changes and C8–C9 execution remain unactivated. No full
+orchestrator retains sequencing/publication; the C7b chat is sole writer for its
+isolated checkout and synthetic resources. Only the brief's bounded synthetic
+subscription trial is authorized for live off-device use; personal-state changes
+and C8–C9 execution remain unactivated. No full
 C6, artifact or conformance claim is made.
 
 C4/C5 upstream issue submissions are proposals, not adopted normative resolutions.

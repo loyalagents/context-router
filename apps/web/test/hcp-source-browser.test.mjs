@@ -841,3 +841,126 @@ test(
     assert.deepEqual((await exported()).json, before);
   },
 );
+
+test(
+  "C7b localhost browser sends only the pinned form POST to its IP callback without provider cookies",
+  { timeout: 90000 },
+  async (t) => {
+    const { createHash, randomBytes } = await import("node:crypto");
+    const sandbox = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), "hcp-c7b-browser-")),
+    );
+    fs.chmodSync(sandbox, 0o700);
+    let browser, provider, callback;
+    t.after(async () => {
+      await browser?.close();
+      await provider?.close();
+      if (callback) {
+        callback.closeAllConnections();
+        await new Promise((r) => callback.close(r));
+      }
+      fs.rmSync(sandbox, { recursive: true, force: true });
+    });
+    const probe = net.createServer();
+    await new Promise((r) => probe.listen(0, "127.0.0.1", r));
+    const port = probe.address().port;
+    await new Promise((r) => probe.close(r));
+    // Reserve a distinct callback port before creating the profile.
+    callback = https.createServer();
+    await new Promise((r) => callback.listen(0, "127.0.0.1", r));
+    const callbackPort = callback.address().port;
+    await initializeSource(
+      sandbox,
+      port,
+      async (review) => `approve ${review.digest}`,
+      { profile: "claude-code", callbackPort },
+    );
+    const source = readSource(sandbox),
+      issuer = source.descriptor.configuration.issuer;
+    callback.setSecureContext(source.tls);
+    const callbacks = [];
+    callback.on("request", async (req, res) => {
+      const chunks = [];
+      for await (const b of req) chunks.push(b);
+      callbacks.push({
+        cookie: req.headers.cookie,
+        origin: req.headers.origin,
+        host: req.headers.host,
+        method: req.method,
+        path: req.url,
+        form: new URLSearchParams(Buffer.concat(chunks).toString()),
+      });
+      res
+        .writeHead(200, { "content-type": "text/plain" })
+        .end("Synthetic callback complete");
+    });
+    provider = await serveSource(sandbox);
+    browser = await openSourceBrowser(sandbox, { headless: true });
+    const page = browser.page,
+      redirect = source.descriptor.configuration.clients[0].redirectUri;
+    await page
+      .getByLabel("Human management credential")
+      .fill(source.humanCredential);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    assert.ok(
+      (await browser.context.cookies(issuer)).some(
+        (c) => c.name === "__Host-hcp-human",
+      ),
+    );
+    const deniedPage = await browser.context.newPage();
+    await assert.rejects(deniedPage.goto(redirect)); // GET is never allowed, even to the pinned URL.
+    await deniedPage.close();
+    assert.equal(callbacks.length, 0);
+    const state = randomBytes(32).toString("base64url"),
+      verifier = randomBytes(32).toString("base64url");
+    await page.goto(
+      issuer +
+        "/auth?" +
+        new URLSearchParams({
+          client_id: "claude-code-c7b",
+          redirect_uri: redirect,
+          response_type: "code",
+          response_mode: "form_post",
+          resource: issuer,
+          state,
+          code_challenge_method: "S256",
+          code_challenge: createHash("sha256")
+            .update(verifier)
+            .digest("base64url"),
+          scope: "hcp:general_preferences:read",
+        }),
+    );
+    if (await page.getByLabel("Human management credential").count()) {
+      await page
+        .getByLabel("Human management credential")
+        .fill(source.humanCredential);
+      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    }
+    await page
+      .getByLabel("Choose a purpose")
+      .selectOption("https://example.test/purpose/synthetic-review");
+    await page.locator('[name="durationSeconds"]').fill("900");
+    await page.getByRole("button", { name: "Review exact grant" }).click();
+    await page
+      .getByRole("button", { name: "Approve access", exact: true })
+      .click();
+    await page.waitForURL(redirect, { timeout: 10000 });
+    assert.equal(callbacks.length, 1);
+    assert.equal(callbacks[0].cookie, undefined);
+    assert.equal(callbacks[0].origin, issuer);
+    assert.equal(callbacks[0].host, `127.0.0.1:${callbackPort}`);
+    assert.equal(callbacks[0].method, "POST");
+    assert.equal(callbacks[0].path, "/callback");
+    assert.equal(callbacks[0].form.get("state"), state);
+    assert.equal(callbacks[0].form.get("iss"), issuer);
+    await page.goto(issuer + "/manage/entries");
+    assert.equal(
+      await page.getByLabel("Human management credential").count(),
+      0,
+    );
+    assert.match(
+      await page.locator("body").innerText(),
+      /concise written summary/,
+    );
+  },
+);
