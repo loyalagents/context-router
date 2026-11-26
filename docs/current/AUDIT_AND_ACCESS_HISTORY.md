@@ -11,6 +11,16 @@
   `apps/backend/test/local-database/application.spec.ts`
 - Last reviewed: 2026-10-04
 
+## Separate HCP Source Activity
+
+The isolated synthetic HCP provider has its own append-only audit and readable
+Activity view, separate from all legacy streams and temporary demo events below.
+See [HCP source Activity](../useful/HCP_SOURCE.md#activity-and-permission-history)
+for filters, durable exact-event links, pagination, recorded policy-scope matches,
+management-only access and disclosure-outcome limits. C7c reuses existing events;
+it adds no event store, clear control, retention limit or erasure contract.
+The legacy reset/clear behavior described below does not apply to HCP history.
+
 The application keeps three related but distinct records:
 
 - `PreferenceAuditEvent` records a domain mutation and its provenance.

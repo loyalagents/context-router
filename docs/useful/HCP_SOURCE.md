@@ -1,6 +1,6 @@
 # Synthetic HCP Source Dashboard
 
-- Status: bounded C6/C7a source experiment; the [C7b subscription trial](../plans/active/hcp-alignment/c7b-host-brief.md) passed its separately authorized bounded live query/get, scope-denial and manual-revocation journey. Receipts and limitations are recorded in its brief; publication/CI and broader qualification remain outstanding.
+- Status: bounded C6/C7a source experiment; the [C7b subscription trial](../plans/active/hcp-alignment/c7b-host-brief.md) passed its separately authorized bounded live query/get, scope-denial and manual-revocation journey and merged in PR #217. Receipts and limitations are recorded in its brief; C7b CI qualification is recorded separately, and broader qualification remains outstanding.
 - This command uses synthetic data only. Do not paste personal information. A real host is permitted only within the separately reviewed and approved C7b trial.
 - This is separate from the installed Mac application, its documents, identities, models and client settings. It does not establish HCP conformance or complete the C6 roadmap.
 
@@ -184,6 +184,74 @@ outcome uncertain: do not resubmit to test whether it committed. If the browser
 loses the response entirely, use **Memories** or reopen the browser for a fresh GET,
 then inspect current state and history. A known committed result with withheld
 details still says committed; it does not invite another save.
+
+### Activity And Permission History
+
+Choose **Activity** in the main navigation (`/manage/audit`) to inspect durable
+HCP events. Permission grants, revocations and expiry, access-rule/directive
+changes, memory changes and disclosure attempts share one timeline. Expand
+**Recorded details** for event IDs, participants, exact grant references,
+categories, purposes, copy deadlines and recorded before/after classification.
+**Link to this event** opens that event directly, including after restart and
+when it falls outside the first page. If sign-in is required, the exact event is
+retained through sign-in. Missing identifiers show an unavailable
+record; they do not reconstruct an event from current permissions.
+
+Client, category, exact event-type and inclusive RFC3339 date filters combine.
+Opening `/manage/audit?grantId=…` or `/manage/audit?entryId=…` applies a visible
+grant or entry filter; **Reset filters** removes it. These scoped URLs are supported
+directly; current grant and memory links open their separate inspection pages.
+Historical category filters also accept a foreign
+category URI recorded before a reviewed import mapping.
+Rows follow oldest-first append order, including when timestamps tie. **Next
+activity page** advances within the same snapshot; its cursor lasts ten minutes.
+Start a fresh view for newer events or an expired cursor. Pagination is a display
+limit, not retention: there is no 50-event cap or session/whole-history clear.
+
+Actor and affected client are distinct. Client filters also include policies
+whose recorded selectors matched that client's then-active recorded grants,
+using the issuance snapshot's operator/claims and expiry. These are scope matches,
+not proof of changed effective access, causal revocation, actual use or delivery.
+Missing historical facts do not create associations. Category changes match both
+recorded old and new categories; later state does not rewrite their details.
+
+Grant cards show **Approved scope**. Current rules and entry restrictions may
+further limit it; current grant/rule inspection is linked separately. A grant
+event does not establish a read. Disclosures, including write-result copies and
+interrupted responses, remain attempts with unconfirmed receipt. Abandoned
+notifications establish no acknowledgement, not absence of client receipt;
+acknowledgement never proves remote erasure. Completed imports show recorded
+imported/skipped/rejected entry counts. The view presents supported recorded
+fields, excluding arbitrary extensions, raw request text, free-text task/reason
+descriptions and memory content. This display restriction applies to Activity
+(`/manage/audit`), including its exact-event view. Linked grant and memory
+inspection pages retain escaped **Full recorded audit events**, including recorded
+free-text fields. Authenticated JSON audit and export also return full records.
+These are separate management-only inspection surfaces, not extensions of
+Activity's field allowlist. The Activity page and exact-event view require management
+authority again at final HTML handoff. Context-client tokens cannot read them.
+
+The JSON endpoints `GET /v2/audit` and `GET /v2/audit/export` share Activity's
+client-filter semantics: a match can be the recorded grant beneficiary, the
+recorded initiator, or a grant matching a policy's recorded scope at that append
+position. For example, `client=a` can include a `rule.set` without a grant ID
+when its selectors matched A's recorded grant; the management client's filter
+can include a revocation it initiated for A. This is broader than the earlier
+beneficiary-first filter. Policy matches do not establish effective access, use
+or delivery. JSON and export preserve the original event shape; they do not add
+derived participants or a match-reason field. The readable policy-match labels
+belong to Activity. Consumers must not interpret every matching row as an action
+by or an exact grant reference to the filtered client. An exact `grantId` filter
+matches recorded grant references and therefore excludes policy-scope matches.
+Export uses the same predicates without pagination, then records its own export
+attempt; that new event is outside the exported snapshot.
+
+Focused C7c checks after the backend build:
+
+```sh
+node --test --test-concurrency=1 apps/backend/test/local-database/hcp-experiment/activity.test.cjs
+node --test --test-concurrency=1 --test-name-pattern=C7c apps/web/test/hcp-oauth-browser.test.mjs
+```
 
 ### Small View And Action Contract
 

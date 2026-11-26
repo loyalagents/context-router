@@ -16,6 +16,7 @@ import { relationships } from "./relationships";
 import { controlledProposal } from "./producer";
 import {
   auditFilters,
+  auditAssociations,
   dateTime,
   disclosureSummary,
   grantFacts,
@@ -3291,8 +3292,11 @@ export class AuthorizationRepository {
       (db) => {
         until = this.management(db, credential);
         const events = this.auditEvents(db),
-          grants = grantFacts(events);
-        const selected = events.filter((e) => matchesAudit(e, filter, grants));
+          grants = grantFacts(events),
+          associations = auditAssociations(events);
+        const selected = events.filter((e) =>
+          matchesAudit(e, filter, grants, associations.get(e.eventId)),
+        );
         this.kernel.append(
           db,
           event(
@@ -3667,6 +3671,12 @@ export class AuthorizationRepository {
     denied();
   }
   audit(credential: string, options: any = {}): any {
+    return this.auditPage(credential, options, false);
+  }
+  activity(credential: string, options: any = {}): any {
+    return this.auditPage(credential, options, true);
+  }
+  private auditPage(credential: string, options: any, activity: boolean): any {
     keys(options, [
       "limit",
       "cursor",
@@ -3677,6 +3687,7 @@ export class AuthorizationRepository {
       "eventType",
       "from",
       "to",
+      "eventId",
     ]);
     const { limit = 50, cursor: cursorToken, ...rawFilter } = options;
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) invalid();
@@ -3700,6 +3711,8 @@ export class AuthorizationRepository {
             .get(hash(cursorToken), this.kernel.now());
           if (!row) invalid();
           const cursor = parse(row.document);
+          if ((cursor.view ?? "audit") !== (activity ? "activity" : "audit"))
+            invalid();
           for (const key of Object.keys(supplied))
             if (supplied[key] !== cursor.filter[key]) invalid();
           ({ after, maximum, filter } = cursor);
@@ -3713,10 +3726,19 @@ export class AuthorizationRepository {
             sequence: Number(row.sequence),
             event: parse(row.event),
           }));
-        const grants = grantFacts(snapshot.map((r) => r.event));
+        const events = snapshot.map((r) => r.event),
+          grants = grantFacts(events),
+          associations = auditAssociations(events);
         const rows = snapshot
           .filter(
-            (r) => r.sequence > after && matchesAudit(r.event, filter, grants),
+            (r) =>
+              r.sequence > after &&
+              matchesAudit(
+                r.event,
+                filter,
+                grants,
+                associations.get(r.event.eventId),
+              ),
           )
           .slice(0, limit + 1);
         let nextCursor: string | null = null;
@@ -3726,6 +3748,7 @@ export class AuthorizationRepository {
             after: rows.at(-1)!.sequence,
             maximum,
             filter,
+            view: activity ? "activity" : "audit",
           });
           nextCursor = createHmac(
             "sha256",
@@ -3737,7 +3760,18 @@ export class AuthorizationRepository {
             "INSERT INTO audit_cursors VALUES(?,?,?) ON CONFLICT(id_hash) DO UPDATE SET expires_at=excluded.expires_at",
           ).run(hash(nextCursor), this.kernel.now() + 600_000, continuation);
         }
-        return { events: rows.map((r) => r.event), nextCursor };
+        return {
+          events: rows.map((r) => r.event),
+          nextCursor,
+          ...(activity
+            ? {
+                filters: filter,
+                associations: rows.map((r) =>
+                  associations.get(r.event.eventId),
+                ),
+              }
+            : {}),
+        };
       },
       () => {
         if (this.kernel.now() >= until)

@@ -12,6 +12,7 @@ import {
   grantList,
   managementError,
 } from "./management-presentation";
+import { activityPage } from "./activity-presentation";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { AuthorizationRepository, random } from "./authority";
 import {
@@ -24,6 +25,7 @@ import {
   keys,
   scopeAccess,
   validateAccess,
+  privateId,
 } from "./policy";
 import { authorizationProvider, validateAuthorization } from "./oauth";
 import { COMPLETION_ONLY, WriteConflict } from "./writes";
@@ -212,12 +214,17 @@ export function authorizationHandler(
     if (req.headers.origin !== issuer || typeof value !== "string") denied();
     return authority.browserSession(cookie(req), value);
   };
-  const loginPage = (res: ServerResponse, action: string, s: any) =>
+  const loginPage = (
+    res: ServerResponse,
+    action: string,
+    s: any,
+    activityEvent?: string,
+  ) =>
     page(
       res,
       "login",
       "Sign in to manage synthetic context",
-      `<p>Synthetic data only. Signing in does not approve a context grant or authorize a content write. Each correction requires its own exact approval.</p><form method="post" action="${escape(action)}">${hidden("csrf", s.csrf)}<label>Human management credential <input name="credential" type="password" autocomplete="off" required></label><button>Sign in</button></form>`,
+      `<p>Synthetic data only. Signing in does not approve a context grant or authorize a content write. Each correction requires its own exact approval.</p><form method="post" action="${escape(action)}">${hidden("csrf", s.csrf)}${activityEvent ? hidden("activityEvent", activityEvent) : ""}<label>Human management credential <input name="credential" type="password" autocomplete="off" required></label><button>Sign in</button></form>`,
       undefined,
       action.startsWith("/manage"),
     );
@@ -500,7 +507,9 @@ export function authorizationHandler(
       const s = browser(req, res);
       if (route === "/manage/login" && req.method === "POST") {
         const form = await body(req);
-        keys(form, ["csrf", "credential"]);
+        keys(form, ["csrf", "credential", "activityEvent"]);
+        if (form.activityEvent !== undefined && !privateId(form.activityEvent))
+          invalid();
         csrf(req, form.csrf);
         const authenticated = authority.loginBrowser(
           cookie(req),
@@ -508,24 +517,61 @@ export function authorizationHandler(
           form.credential,
         );
         setCookie(res, authenticated.token);
-        res.writeHead(303, { location: "/manage" });
+        res.writeHead(303, {
+          location: form.activityEvent
+            ? `/manage/audit?eventId=${encodeURIComponent(form.activityEvent)}`
+            : "/manage",
+        });
         res.end();
         return;
       }
-      if (!s.authenticated) return loginPage(res, "/manage/login", s);
-      if (
-        ["/manage/disclosures", "/manage/audit"].includes(route) &&
-        req.method === "GET"
-      ) {
+      if (!s.authenticated) {
+        const activityEvent =
+          route === "/manage/audit" &&
+          req.method === "GET" &&
+          url.searchParams.size === 1 &&
+          privateId(url.searchParams.get("eventId"))
+            ? url.searchParams.get("eventId")!
+            : undefined;
+        return loginPage(res, "/manage/login", s, activityEvent);
+      }
+      if (route === "/manage/audit" && req.method === "GET") {
+        for (const key of url.searchParams.keys())
+          if (url.searchParams.getAll(key).length !== 1) invalid();
+        const query: any = Object.fromEntries(
+          [...url.searchParams].filter(([, value]) => value !== ""),
+        );
+        keys(query, [
+          "client",
+          "category",
+          "eventType",
+          "from",
+          "to",
+          "limit",
+          "cursor",
+          "eventId",
+          "entryId",
+          "grantId",
+        ]);
+        if (query.eventId !== undefined) keys(query, ["eventId"]);
+        query.limit = query.limit === undefined ? 20 : Number(query.limit);
+        const result = authority.activity(s.token, query);
+        return managementPage(
+          s.token,
+          res,
+          "history",
+          "Activity",
+          activityPage(result, query.limit),
+        );
+      }
+      if (route === "/manage/disclosures" && req.method === "GET") {
         for (const key of url.searchParams.keys())
           if (url.searchParams.getAll(key).length !== 1) invalid();
         const query: any = Object.fromEntries(
           [...url.searchParams].filter(([, value]) => value !== ""),
         );
         if (query.limit !== undefined) query.limit = Number(query.limit);
-        const result = route.endsWith("disclosures")
-          ? authority.disclosures(s.token, query)
-          : authority.audit(s.token, query);
+        const result = authority.disclosures(s.token, query);
         return managementPage(
           s.token,
           res,
