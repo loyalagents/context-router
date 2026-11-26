@@ -137,6 +137,47 @@ test("management distinguishes recorded assurance from authority-looking submitt
   assert.doesNotMatch(page.text, /<script>forged/);
 });
 
+for (const deadline of ["copy", "token"])
+  test(`C8 historical key conflict rechecks ${deadline} expiry after serialization`, async (t) => {
+    const f = await fixture(t, { approveFixtures: true, childProcess: true });
+    const { token, body, grant } = await setup(f);
+    body.assertion.validUntil = new Date(Date.now() + 60_000).toISOString();
+    const post = (value) =>
+      f.context("/v2/entries", token, {
+        method: "POST",
+        json: value,
+        headers: { "idempotency-key": "conflict-boundary" },
+      });
+    const original = await post(body);
+    assert.equal(original.status, 201);
+    const changed = { ...body, extension: "changed" };
+    assert.equal((await post(changed)).status, 409);
+    await f.arm({
+      operation: "commitWrite",
+      point: "during-conflict-serialization",
+      action: "advance",
+      now:
+        deadline === "copy"
+          ? Date.parse(original.json.useUntil)
+          : Date.now() + 12 * 3600_000,
+    });
+    const denied = await post(changed);
+    assert.equal(denied.status, deadline === "copy" ? 403 : 401);
+    assert.doesNotMatch(
+      denied.text,
+      /idempotency-conflict|committed|conflict-boundary/,
+    );
+    await f.restart();
+    assert.equal(
+      (
+        await f.management(
+          `/v2/audit?eventType=context.created&grantId=${grant.grantId}`,
+        )
+      ).json.events.length,
+      1,
+    );
+  });
+
 test("C4 actual OAuth/TLS create/revise/withdraw and byte-bound retries", async (t) => {
   const f = await fixture(t, { approveFixtures: true });
   const { token, body } = await setup(f);

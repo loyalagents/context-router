@@ -58,6 +58,48 @@ describe("C5 bounded v2 portability", () => {
       review.subjects,
     );
   };
+  it.each([false, true])(
+    "preserves only original known completion when final disclosure admission is unavailable (empty=%s)",
+    (empty) => {
+      const bundle = foreign();
+      if (empty) {
+        for (const key of [
+          "entries",
+          "versions",
+          "rules",
+          "directives",
+          "delegations",
+          "audit",
+        ])
+          bundle[key] = [];
+      }
+      const review = a.reviewImport(human, { export: bundle }, "browser");
+      const original = a.applyImport(
+        human,
+        review.reviewId,
+        review.csrf,
+        "browser",
+        review.subjects,
+      );
+      const replay = a.applyImport(
+        human,
+        review.reviewId,
+        review.csrf,
+        "browser",
+        review.subjects,
+      );
+      expect(
+        store.inspectAudit().filter((e) => e.eventType === "context.imported"),
+      ).toHaveLength(1);
+      if (empty) expect(original.outcomes).toEqual([]);
+      store.close();
+      expect(a.releaseImport(original)).toBe(false);
+      expect(() => a.releaseImport(replay)).toThrow();
+      expect(() => a.releaseImport(original)).toThrow();
+      expect(() => a.releaseImport({ outcomes: [] })).toThrow();
+    },
+  );
+
   it("indexes every import outcome and snapshots only accepted mapped categories", () => {
     const bundle = foreign(),
       accepted = bundle.entries[0];

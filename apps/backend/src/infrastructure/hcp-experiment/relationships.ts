@@ -2,20 +2,17 @@ import type { DatabaseSync } from "node:sqlite";
 import { denied, invalid, object, strings } from "./policy";
 import { canDiscloseMutation, storedEntry } from "./writes";
 
-/** Resolve all caller names before mutating state. Context refs never accept IDs. */
-export function relationships(
+/** Shared current authorization for a caller's relationship/proposal reference. */
+export function relationshipResolver(
   db: DatabaseSync,
   grant: any,
   document: any,
-  input: any,
   purpose: string,
   rules: any[],
   now: number,
   management: boolean,
-): any[] {
-  const items = input.record?.relationships ?? [];
-  if (!Array.isArray(items) || items.length > 100) invalid();
-  const resolve = (name: any) => {
+): (name: any) => any {
+  return (name: any) => {
     if (typeof name !== "string" || !name) invalid();
     const id = management
       ? name
@@ -32,6 +29,30 @@ export function relationships(
       denied();
     return target;
   };
+}
+
+/** Resolve all caller names before mutating state. Context refs never accept IDs. */
+export function relationships(
+  db: DatabaseSync,
+  grant: any,
+  document: any,
+  input: any,
+  purpose: string,
+  rules: any[],
+  now: number,
+  management: boolean,
+): any[] {
+  const items = input.record?.relationships ?? [];
+  if (!Array.isArray(items) || items.length > 100) invalid();
+  const resolve = relationshipResolver(
+    db,
+    grant,
+    document,
+    purpose,
+    rules,
+    now,
+    management,
+  );
   const actor = {
     role: management ? "management-client" : "context-client",
     id: grant.client.id,

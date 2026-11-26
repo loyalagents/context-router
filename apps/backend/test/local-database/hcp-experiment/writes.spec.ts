@@ -1440,6 +1440,280 @@ describe("C4 durable person writes and original completion", () => {
     expect(release(commit(b.token, otherBody, "policy"))).toEqual(unaffected);
   });
 
+  it("keeps assertion-purpose invalidation after restoration and restart without affecting another purpose", () => {
+    const a = issue("a", [
+        detail(["read", "write"], { purposes: [PURPOSES[1]] }),
+      ]),
+      b = issue("b"),
+      body = input(a.grant),
+      otherBody = input(b.grant),
+      original = commit(a.token, body, "assertion-purpose"),
+      unaffected = release(commit(b.token, otherBody, "assertion-purpose"));
+    const entry = store
+      .inspectEntries()
+      .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
+    // Give B a reference to the same entry, so it is an actual unaffected context.
+    const read = authority.prepareRead(b.token, "query", {
+      query: "private C4 statement",
+      purpose: PURPOSES[0].code,
+    });
+    authority.releaseRead(read, () => {});
+    const preparedReplay = commit(a.token, body, "assertion-purpose");
+    for (const [index, permittedPurposes] of [
+      [PURPOSES[0].code],
+      undefined,
+    ].entries()) {
+      const request = {
+        expectedVersion: index + 1,
+        reason: "Person purpose correction",
+        content: body.content,
+        assertion: {
+          declarationType: "person-declared",
+          ...(permittedPurposes ? { permittedPurposes } : {}),
+        },
+        record: body.record,
+      };
+      const review = authority.reviewPersonWrite(
+        human,
+        "revise",
+        request,
+        entry.id,
+        "browser",
+      );
+      release(
+        authority.commitReviewedPersonWrite(
+          human,
+          review.reviewId,
+          review.csrf,
+          "browser",
+          `purpose-${index}`,
+        ),
+      );
+    }
+    expect(release(original).body).toEqual({
+      outcome: "committed",
+      representation: "not-included",
+    });
+    expect(() => release(preparedReplay)).toThrow(new AuthorityError("denied"));
+    reopen();
+    const audit = store.inspectAudit();
+    expect(() => commit(a.token, body, "assertion-purpose")).toThrow(
+      new AuthorityError("denied"),
+    );
+    expect(release(commit(b.token, otherBody, "assertion-purpose"))).toEqual(
+      unaffected,
+    );
+    expect(store.inspectAudit()).toEqual(audit);
+  });
+
+  it.each(["categories", "purposes"])(
+    "preserves replay across equivalent %s updates",
+    (kind) => {
+      const { grant, token } = issue("a", [
+        detail(["read", "write"], {
+          categories: ["general_preferences", "work_context"],
+        }),
+      ]);
+      const body = input(grant, {
+        classification: { categories: ["general_preferences", "work_context"] },
+      });
+      const original = release(commit(token, body, "unchanged"));
+      const entry = store
+        .inspectEntries()
+        .find((e) => e.record.provenance.authorizedUnder === grant.grantId)!;
+      authority.editClassification(human, entry.id, kind, {
+        expectedVersion: 1,
+        ...(kind === "categories"
+          ? { categories: ["work_context", "general_preferences"] }
+          : { permittedPurposes: null }),
+      });
+      reopen();
+      expect(release(commit(token, body, "unchanged"))).toEqual(original);
+    },
+  );
+
+  it.each(["copy", "token"])(
+    "classifies a %s deadline crossing at the last replay handoff",
+    (deadline) => {
+      const { grant } = issue();
+      const token = tokenFor(grant, deadline === "token" ? 1 : 3600),
+        body = input(grant);
+      release(commit(token, body, "boundary"));
+      const ticket = commit(token, body, "boundary");
+      const representation = authority.writeRepresentation.bind(authority);
+      authority.writeRepresentation = (...args: any[]) => {
+        const result = representation(...args);
+        now = start + 1000;
+        return result;
+      };
+      expect(() => release(ticket)).toThrow(
+        new AuthorityError(deadline === "token" ? "unauthenticated" : "denied"),
+      );
+    },
+  );
+
+  it.each(
+    ["revise", "relationship"].flatMap((kind) =>
+      ["rejected", "deleted"].flatMap((state) =>
+        ["admission", "handoff"].map((boundary) => ({ kind, state, boundary })),
+      ),
+    ),
+  )(
+    "checks the attempted $kind target when $state at conflict $boundary",
+    ({ kind, state, boundary }) => {
+      const { grant, token } = issue(),
+        body = input(grant);
+      release(commit(token, body, "historical-key"));
+      const target = release(
+        commit(
+          token,
+          input(grant, {
+            content: { ...body.content, value: "Other synthetic target" },
+          }),
+          "target-key",
+        ),
+      );
+      const id = store
+        .inspectEntries()
+        .find((e) => e.content.value === "Other synthetic target")!.id;
+      const request =
+        kind === "revise"
+          ? {
+              expectedVersion: 1,
+              content: body.content,
+              reason: "Correction",
+              record: body.record,
+            }
+          : {
+              ...body,
+              record: {
+                ...body.record,
+                relationships: [
+                  { type: "derivedFrom", target: target.body.ref },
+                ],
+              },
+            };
+      const attempt = () =>
+        commit(
+          token,
+          request,
+          "historical-key",
+          kind === "revise" ? "revise" : "create",
+          kind === "revise" ? target.body.ref : undefined,
+        );
+      const conflict = () => {
+        try {
+          attempt();
+        } catch (error) {
+          return error;
+        }
+        throw new Error("Expected a historical conflict");
+      };
+      const live = conflict();
+      expect((live as Error).message).toBe("idempotency-conflict");
+      expect(() => authority.releaseWriteConflict(live)).not.toThrow();
+      const prepared = boundary === "handoff" ? conflict() : undefined;
+      if (state === "rejected")
+        authority.confirmEntry(human, id, {
+          expectedVersion: 1,
+          disposition: "rejected",
+        });
+      else
+        release(
+          commit(
+            token,
+            { reason: "Withdraw target" },
+            "withdraw-target",
+            "withdraw",
+            target.body.ref,
+          ),
+        );
+      const audit = store.inspectAudit();
+      if (boundary === "admission")
+        expect(attempt).toThrow(new AuthorityError("denied"));
+      else
+        expect(() => authority.releaseWriteConflict(prepared)).toThrow(
+          new AuthorityError("denied"),
+        );
+      expect(store.inspectAudit()).toEqual(audit);
+    },
+  );
+
+  it.each(
+    ["rejected", "deleted"].flatMap((state) =>
+      ["admission", "handoff"].map((boundary) => ({ state, boundary })),
+    ),
+  )(
+    "checks an exact retry's related target when $state at $boundary",
+    ({ state, boundary }) => {
+      const { grant, token } = issue(),
+        body = input(grant);
+      const target = release(commit(token, body, "related-target"));
+      const id = store
+        .inspectEntries()
+        .find((e) => e.record.provenance.authorizedUnder === grant.grantId)!.id;
+      const request = input(grant, {
+        content: { ...body.content, value: "Derived synthetic statement" },
+        record: {
+          ...body.record,
+          relationships: [{ type: "derivedFrom", target: target.body.ref }],
+        },
+      });
+      const original = release(commit(token, request, "exact-related"));
+      expect(release(commit(token, request, "exact-related"))).toEqual(
+        original,
+      );
+      const prepared =
+        boundary === "handoff"
+          ? commit(token, request, "exact-related")
+          : undefined;
+      if (state === "rejected")
+        authority.confirmEntry(human, id, {
+          expectedVersion: 1,
+          disposition: "rejected",
+        });
+      else
+        release(
+          commit(
+            token,
+            { reason: "Withdraw target" },
+            "withdraw-related",
+            "withdraw",
+            target.body.ref,
+          ),
+        );
+      const audit = store.inspectAudit();
+      if (prepared)
+        expect(() => release(prepared)).toThrow(new AuthorityError("denied"));
+      reopen();
+      expect(() => commit(token, request, "exact-related")).toThrow(
+        new AuthorityError("denied"),
+      );
+      expect(store.inspectAudit()).toEqual(audit);
+    },
+  );
+
+  it("does not revive an unreadable superseded relationship target through exact retry", () => {
+    const { grant, token } = issue(),
+      body = input(grant);
+    const target = release(commit(token, body, "superseded-target"));
+    const request = input(grant, {
+      content: { ...body.content, value: "Replacement synthetic statement" },
+      record: {
+        ...body.record,
+        relationships: [{ type: "supersedes", target: target.body.ref }],
+      },
+    });
+    expect(release(commit(token, request, "exact-supersedes")).status).toBe(
+      201,
+    );
+    const audit = store.inspectAudit();
+    expect(() => commit(token, request, "exact-supersedes")).toThrow(
+      new AuthorityError("denied"),
+    );
+    expect(store.inspectAudit()).toEqual(audit);
+  });
+
   it("authorizes the original receipt before revealing a changed-body key conflict", () => {
     const a = issue("a", [
       detail(["read", "write"], {
@@ -1500,6 +1774,36 @@ describe("C4 durable person writes and original completion", () => {
     reopen();
     const fresh = tokenFor(grant);
     expect(() => commit(fresh, body, "expired-token")).toThrow(AuthorityError);
+  });
+
+  it("replays a still-live candidate under a refreshed unchanged grant after original minimal completion", () => {
+    const { grant } = issue();
+    now += 500;
+    const token = tokenFor(grant, 1),
+      body = input(grant),
+      before = store.inspectEntries().length;
+    const prepared = commit(token, body, "short-token-live-copy");
+    now += 500; // Token expires at the second boundary; the copy has 500 ms left.
+    expect(release(prepared).body).toEqual({
+      outcome: "committed",
+      representation: "not-included",
+    });
+    reopen();
+    const fresh = tokenFor(grant),
+      events = store.inspectAudit(),
+      replay = release(commit(fresh, body, "short-token-live-copy"));
+    expect(replay.status).toBe(201);
+    expect(replay.body.content).toEqual(body.content);
+    expect(replay.body.useUntil).toBe(new Date(start + 1500).toISOString());
+    expect(replay.body.ref).toMatch(/^r_/);
+    expect(replay.body.id).toBeUndefined();
+    expect(store.inspectEntries()).toHaveLength(before + 1);
+    expect(store.inspectAudit()).toEqual(events);
+    now += 500;
+    expect(() => commit(fresh, body, "short-token-live-copy")).toThrow(
+      AuthorityError,
+    );
+    expect(store.inspectAudit()).toEqual(events);
   });
 
   it.each(["before-commit", "after-data-commit"])(
@@ -1944,6 +2248,123 @@ describe("C4 durable person writes and original completion", () => {
         .filter((e) => e.record.provenance.authorizedUnder === grant.grantId),
     ).toHaveLength(1);
     expect(() => commit(token, body, "known")).toThrow(AuthorityError);
+  });
+
+  it("replays a historical confidence proposal after a readable target changes asserter", () => {
+    const { grant, token } = issue(),
+      body = input(grant);
+    const target = release(commit(token, body, "proposal-target"));
+    const id = store
+      .inspectEntries()
+      .find((e) => e.record.provenance.authorizedUnder === grant.grantId)!.id;
+    const request = input(
+      { subject: { id: authority.accountId() } },
+      {
+        content: { ...body.content, value: "Historical person statement" },
+        record: {
+          ...body.record,
+          relationships: [
+            {
+              type: "contradicts",
+              target: id,
+              proposal: {
+                act: "reject",
+                entry: id,
+                rationale: "Synthetic historical comparison",
+                weighed: ["confidence"],
+              },
+            },
+          ],
+        },
+      },
+    );
+    const review = authority.reviewPersonWrite(
+      human,
+      "create",
+      request,
+      undefined,
+      "browser",
+    );
+    const capability = authority.approvePersonWrite(
+      human,
+      review.reviewId,
+      review.csrf,
+      "browser",
+    );
+    const retry = () =>
+      authority.commitPersonWrite(
+        human,
+        capability,
+        "create",
+        request,
+        JSON.stringify(request),
+        "historical-proposal",
+      );
+    const original = release(retry());
+    const revised = modelInput(grant, "unrelated target", "two");
+    release(
+      commit(
+        token,
+        {
+          expectedVersion: 1,
+          reason: "New model assertion",
+          content: revised.content,
+          assertion: revised.assertion,
+          record: revised.record,
+        },
+        "new-asserter",
+        "revise",
+        target.body.ref,
+      ),
+    );
+    expect(
+      authority.managementEntry(human, id).entry.record.provenance.assertedBy
+        .id,
+    ).not.toBe(original.body.record.provenance.assertedBy.id);
+    const audit = store.inspectAudit();
+    expect(release(retry())).toEqual(original);
+    expect(store.inspectAudit()).toEqual(audit);
+  });
+
+  it("retains authorized management recovery after assertion expiry and one-use approval consumption", () => {
+    const request = input(
+      { subject: { id: authority.accountId() } },
+      {
+        assertion: {
+          declarationType: "person-declared",
+          validUntil: new Date(start + 1000).toISOString(),
+        },
+      },
+    );
+    const review = authority.reviewPersonWrite(
+      human,
+      "create",
+      request,
+      undefined,
+      "browser",
+    );
+    const capability = authority.approvePersonWrite(
+      human,
+      review.reviewId,
+      review.csrf,
+      "browser",
+    );
+    const retry = () =>
+      authority.commitPersonWrite(
+        human,
+        capability,
+        "create",
+        request,
+        JSON.stringify(request),
+        "management-expired-assertion",
+      );
+    const original = release(retry());
+    now = start + 1000;
+    reopen();
+    const audit = store.inspectAudit();
+    expect(release(retry())).toEqual(original);
+    expect(store.inspectAudit()).toEqual(audit);
+    expect(store.inspectEntry(original.body.id)!.record.status).toBe("expired");
   });
 
   it("requires an exact affirmative person-write review; one-use capability preserves only same-key recovery", () => {

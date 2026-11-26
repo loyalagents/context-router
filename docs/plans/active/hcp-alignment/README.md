@@ -1,6 +1,6 @@
 # HCP Alignment Plan
 
-- Status: C1–C5, bounded C6 source/UI slices and C7a/C7b merged; C7b implementation and bounded live trial complete, CI qualification separate; C7c Activity implemented in PR #218, with candidate review/validation evidence in the PR; C8–C9 remain; no conformance claim
+- Status: C1–C5, bounded C6 source/UI slices and C7a–C7c merged; C8 protocol resolution and adoption active; C9 capability completion/qualification remains; no conformance claim
 - Outcome owner: product owner; orchestrator chat `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` owns sequencing and assigns the next sole writer at activation
 - Priority: future capability; does not change the assisted pilot's priority
 - Risk: authorization, disclosure, persisted history, erasure, and client interoperability
@@ -9,7 +9,8 @@
 - Relationship and ownership: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
 - Protocol questions: [local Draft 3 adoption notes][questions]
 
-Current sequencing is [C7a → C7b → C7c](#c7-sequence-and-activity-visibility-2026-11-22),
+Current work is [C8 protocol resolution and CR adoption](c8-resolution-brief.md),
+following [C7a → C7b → C7c](#c7-sequence-and-activity-visibility-2026-11-22),
 following the [C6 UI merge](#c6-demo-ui-merge-and-c7a-planning-2026-11-21) and
 [demo-first continuation](#demo-first-continuation-2026-11-19). Earlier activation,
 writer, pending/draft and freeze-time passages below are historical. The current
@@ -21,6 +22,30 @@ adopted in PR #219. Earlier checkpoint references to separate standard CI and
 three qualification receipts describe their historical validation; they do not
 add requirements to current C7c CI. Selected job outcomes and the final aggregate
 still must pass on the final candidate. Installed-artifact evidence remains separate.
+
+## C8 Activation And C7c Merge (2026-11-25)
+
+C7c merged in [PR #218](https://github.com/loyalagents/context-router/pull/218)
+at `98fe60ffb21c678b0d955a042ccd034db49299dd`, from head
+`09d45b5d4392d402aa7f958ffc54607a51f0add8`, base
+`01b79aee3732832a101699eafb165678841ffd77`. Final
+[Product CI](https://github.com/loyalagents/context-router/actions/runs/45725599387)
+passed on that head and test merge `b89e5bd`: selected contracts, backend,
+PostgreSQL, frontend, native, eval and packaging jobs plus the final aggregate.
+Orchestrator/Harbor/restart were intentional selection skips. Candidate-era pending
+review/CI passages below remain historical. No installed-artifact or new host claim.
+
+Lucas activated C8 with separate spec and CR ownership. The
+[C8 brief](c8-resolution-brief.md) reconciles upstream questions, records selected
+and pending decisions, review findings, batch scope and explicit adoption gates.
+Current upstream spec `b790561…` has not resolved the priority normative questions;
+both CR pins remain unchanged. First batch: #36 committed completion and #34 replay,
+including a CR correction that distinguishes original and consumed import responses.
+CR-Q8's whole-query denial after partial standing-rule denial was reaffirmed;
+Lucas also selected explicit current purpose on every write and an otherwise-
+authorized person's save with no permitted future purposes and completion only.
+Those next-batch choices are not yet implemented or adopted.
+C8 owns follow-through; C9 retains mandatory capability/profile gaps. No automatic merge.
 
 ## C7 Sequence And Activity Visibility (2026-11-22)
 

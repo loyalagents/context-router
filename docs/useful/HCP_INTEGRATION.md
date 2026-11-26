@@ -87,9 +87,9 @@ its scope; human Ctrl-C/full stop-reopen remain deferred. The
 This is partial C6, not installed-artifact or conformance qualification.
 
 The current sequence is the C6 source UI handoff; C7a controlled MCP reads
-(merged); C7b's merged implementation and completed bounded real-host trial; activated
+(merged); C7b's merged implementation and completed bounded real-host trial; merged
 [C7c activity and permission visibility](../plans/active/hcp-alignment/README.md#c7c-activity-and-permission-visibility);
-C8 concrete protocol fixes **and CR adoption/realignment**; C9 selected capability
+active [C8 concrete protocol fixes and CR adoption/realignment](../plans/active/hcp-alignment/c8-resolution-brief.md); C9 selected capability
 completion and package/profile qualification, including C7c coverage. Old “C8
 qualification” records map to C9. Existing management/write/release services support UI work without a new
 framework or completion of every spec issue first. Broader C6 workflows and
@@ -126,8 +126,11 @@ establish HCP durability or complete event coverage. C7c distinguishes permissio
 granted from used and recorded disclosure
 attempts from confirmed receipt or erasure. Pinned §8 already requires the core
 permission events; this UI checkpoint needs no upstream amendment in advance.
-C7c implementation is activated in its dedicated worktree and does not change the retained trial evidence or the other
-agent's existing-app demo. Both pins and `hcp-spec` remain unchanged.
+C7c merged in PR #218 with final selected Product CI and aggregate passed. Its
+freeze-time records retain their original scope. C8 now owns separately isolated
+spec changes and CR adoption; both current pins remain unchanged until an explicit
+post-merge adoption decision. Retained trial evidence and the existing-app demo
+remain untouched.
 
 Lucas's bounded C4 publication authorization produced permission-cache feedback
 on [#34](https://github.com/loyalagents/hcp-spec/issues/34#issuecomment-6817416594),

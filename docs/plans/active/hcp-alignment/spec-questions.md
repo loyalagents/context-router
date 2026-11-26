@@ -1,5 +1,16 @@
 # HCP Draft 3 Adoption Questions
 
+Current reconciliation and owned dispositions are in the [C8 resolution brief](c8-resolution-brief.md).
+On November 25, all published questions remained open and upstream main
+`b790561830702c067cd7810c96ee78dd3d84741c` retained the relevant pinned normative
+clauses and schemas. C8's first proposed fix addresses #36/#34; submission and merge
+are not adoption. Lucas reaffirmed CR-Q8's whole-query denial. For CR-Q11, he
+selected an explicit required current purpose for every write and an otherwise-
+authorized person's ability to save an assertion with no permitted future purpose,
+receiving completion only. Those choices still require a reviewed implementation
+and explicit adoption in the next batch.
+The earlier baseline, findings and decisions below retain their historical scope.
+
 - Status: CR read-revocation contract selected; dormant-expiry deadline discrepancy open; C1 evidence/guidance and later portability issues submitted; no adopted spec resolutions
 - Recorded: 2026-11-07
 - Draft: **2.0-draft-3**, normative baseline

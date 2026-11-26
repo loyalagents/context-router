@@ -452,6 +452,14 @@ state, model, installed delivery or upstream change is activated by this plan.
 
 ## Assessment Boundary And Next Use
 
+C8 is now active under its [resolution/adoption brief](c8-resolution-brief.md).
+Batch A renews C4-R07 and C5-R11/R12/R14 for completion, duplicate suppression,
+current authority and consumed-import recovery. It does not qualify write-only
+grants, hard deletion, the full MCP binding or additional governance completion
+contracts. Both pins remain unchanged pending an explicitly recorded upstream
+merge and adoption. The matrix's historical evidence is not relabelled against an
+unmerged revision; C9 retains every mandatory selected capability/profile gap.
+
 The [alignment plan](README.md) owns architecture choices, activation decisions,
 checkpoint order, adoption evaluation, and validation. The [local question record][questions]
 owns open protocol questions and example/tooling findings while we test the current

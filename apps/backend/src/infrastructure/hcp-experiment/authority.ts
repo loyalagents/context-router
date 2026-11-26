@@ -12,7 +12,7 @@ import { insertFixtures } from "./seed";
 import { assertReadResult, validCore } from "./core-contract";
 import * as conflicts from "./conflict-graph";
 import { contradicts } from "./conflicts";
-import { relationships } from "./relationships";
+import { relationships, relationshipResolver } from "./relationships";
 import { controlledProposal } from "./producer";
 import {
   auditFilters,
@@ -228,6 +228,26 @@ export function expireGrants(
 }
 
 export class AuthorizationRepository {
+  private readonly imports = new WeakMap<
+    object,
+    { original: boolean; credential: string; reviewUntil: number }
+  >();
+  private readonly writeConflicts = new WeakMap<
+    object,
+    {
+      credential: string;
+      grantId: string;
+      binding: any;
+      attempt: {
+        operation: WriteOperation;
+        input: any;
+        entryId?: string;
+        purpose: string;
+        capacity: string;
+        proposalId?: string;
+      };
+    }
+  >();
   private readonly writes = new WeakMap<
     object,
     {
@@ -236,6 +256,7 @@ export class AuthorizationRepository {
       original: boolean;
       binding: any;
       response: { status: number; bytes: string };
+      replayInput?: any;
     }
   >();
   private readonly reads = new WeakMap<
@@ -1385,15 +1406,44 @@ export class AuthorizationRepository {
             binding.target !== target ||
             binding.fingerprint !== fingerprint ||
             (binding.proposalId ?? null) !== (proposalId ?? null)
-          )
-            throw new WriteConflict("idempotency-conflict");
+          ) {
+            this.validateWriteAttempt(
+              db,
+              grant,
+              operation,
+              input,
+              current,
+              purpose,
+              capacity === "management",
+              now,
+              false,
+            );
+            if (proposal && proposal.state !== "pending") denied();
+            const error = new WriteConflict("idempotency-conflict");
+            this.writeConflicts.set(error, {
+              credential,
+              grantId: grant.grantId,
+              binding,
+              attempt: {
+                operation,
+                input,
+                entryId: current?.id,
+                purpose,
+                capacity,
+                proposalId,
+              },
+            });
+            throw error;
+          }
           const response = parse(existing.response);
+          this.replayRelationships(db, grant, binding, input, now);
           return {
             credential,
             grantId: grant.grantId,
             original: false,
             binding,
             response,
+            replayInput: input,
           };
         }
         if (cap?.consumed) denied();
@@ -1410,50 +1460,17 @@ export class AuthorizationRepository {
         )
           denied();
         if (proposal && proposal.state !== "pending") denied();
-        if (
-          current &&
-          operation !== "withdraw" &&
-          !["active", "conflicted", "expired", "deprecated"].includes(
-            current.record.status,
-          )
-        )
-          denied();
-        if (
-          capacity === "context" &&
-          current &&
-          operation === "revise" &&
-          current.record.provenance.confirmations.at(-1)?.disposition ===
-            "rejected"
-        )
-          denied();
-        const document = mutationDocument(
+        const { document, assertions } = this.validateWriteAttempt(
           db,
           grant,
           operation,
           input,
-          now,
           current,
+          purpose,
           capacity === "management",
+          now,
+          true,
         );
-        assertNewPurpose(document, purpose);
-        if (
-          operation === "revise" &&
-          input.expectedVersion !== current.record.version
-        )
-          throw new WriteConflict("version-conflict");
-        const assertions =
-          operation === "withdraw"
-            ? []
-            : relationships(
-                db,
-                grant,
-                document,
-                input,
-                purpose,
-                capacity === "management" ? [] : policies(db, "rules"),
-                now,
-                capacity === "management",
-              );
         const relationshipTargetsBefore = [
           ...new Set<string>(
             [...assertions, ...(current?.record.relationships ?? [])].map(
@@ -1465,6 +1482,8 @@ export class AuthorizationRepository {
           before: storedEntry(db, id)?.record.status ?? null,
         }));
         applyMutation(db, operation, document, current);
+        if (operation === "revise")
+          this.invalidateEntryPermissions(db, current, document);
         const graphActor = {
           role: "hcp-provider",
           id: metadata(db).provider_id,
@@ -1657,13 +1676,117 @@ export class AuthorizationRepository {
     this.writes.set(ticket, committed);
     return ticket;
   }
+  /** Read-only attempted-operation checks; historical conflicts never execute optimistic checks. */
+  private validateWriteAttempt(
+    db: DatabaseSync,
+    grant: any,
+    operation: WriteOperation,
+    input: any,
+    current: any,
+    purpose: string,
+    managed: boolean,
+    now: number,
+    checkVersion: boolean,
+  ): { document: any; assertions: any[]; disclosureUntil: number } {
+    if (
+      current &&
+      operation !== "withdraw" &&
+      !["active", "conflicted", "expired", "deprecated"].includes(
+        current.record.status,
+      )
+    )
+      denied();
+    if (
+      !managed &&
+      current &&
+      operation === "revise" &&
+      current.record.provenance.confirmations.at(-1)?.disposition === "rejected"
+    )
+      denied();
+    const document = mutationDocument(
+      db,
+      grant,
+      operation,
+      input,
+      now,
+      current,
+      managed,
+    );
+    assertNewPurpose(document, purpose);
+    if (
+      checkVersion &&
+      operation === "revise" &&
+      input.expectedVersion !== current.record.version
+    )
+      throw new WriteConflict("version-conflict");
+    const assertions =
+      operation === "withdraw"
+        ? []
+        : relationships(
+            db,
+            grant,
+            document,
+            input,
+            purpose,
+            managed ? [] : policies(db, "rules"),
+            now,
+            managed,
+          );
+    const disclosureUntil = managed
+      ? Infinity
+      : Math.min(
+          ...assertions.map((r) => {
+            const target = storedEntry(db, r.target);
+            return target.assertion.validUntil == null
+              ? Infinity
+              : Date.parse(target.assertion.validUntil);
+          }),
+        );
+    return { document, assertions, disclosureUntil };
+  }
+  private replayRelationships(
+    db: DatabaseSync,
+    grant: any,
+    binding: any,
+    input: any,
+    now: number,
+  ): number {
+    if (binding.operation === "withdraw") return Infinity;
+    const managed = binding.capacity === "management";
+    // The input was validated before the original commit. Recheck current names
+    // and authority without treating old deadlines or one-use effects as a new write.
+    const document = storedEntry(db, binding.entryId, binding.version);
+    if (!document) denied();
+    const resolve = relationshipResolver(
+      db,
+      grant,
+      document,
+      binding.purpose,
+      managed ? [] : policies(db, "rules"),
+      now,
+      managed,
+    );
+    const targets = (input.record?.relationships ?? []).flatMap((item: any) => [
+      resolve(item.target),
+      ...(item.proposal ? [resolve(item.proposal.entry)] : []),
+    ]);
+    return managed
+      ? Infinity
+      : Math.min(
+          ...targets.map((target: any) => {
+            return target.assertion.validUntil == null
+              ? Infinity
+              : Date.parse(target.assertion.validUntil);
+          }),
+        );
+  }
   private writeRepresentation(
     db: DatabaseSync,
     credential: string,
     grantId: string,
     binding: any,
     original: boolean,
-  ): number {
+  ): { authorityUntil: number; disclosureUntil: number } {
     const managed = binding.capacity === "management";
     const { grant, tokenUntil } = managed
       ? {
@@ -1680,7 +1803,8 @@ export class AuthorizationRepository {
     const current = storedEntry(db, binding.entryId),
       selected = storedEntry(db, binding.entryId, binding.version);
     if (!current || !selected) denied();
-    if (managed) return Math.min(tokenUntil, grantExpiry(grant));
+    const authorityUntil = Math.min(tokenUntil, grantExpiry(grant));
+    if (managed) return { authorityUntil, disclosureUntil: Infinity };
     if (binding.operation !== "withdraw") {
       // Only this transaction's immediate result may survive its own quarantine.
       const ownQuarantine =
@@ -1731,18 +1855,90 @@ export class AuthorizationRepository {
       )
         denied();
     }
-    return Math.min(
-      tokenUntil,
-      grantExpiry(grant),
-      ...(binding.operation === "withdraw"
-        ? []
-        : [current, selected].map((e) =>
-            e.assertion.validUntil == null
-              ? Infinity
-              : Date.parse(e.assertion.validUntil),
-          )),
-      binding.operation !== "withdraw" ? binding.copyUntil : Infinity,
-    );
+    return {
+      authorityUntil,
+      disclosureUntil: Math.min(
+        ...(binding.operation === "withdraw"
+          ? []
+          : [current, selected].map((e) =>
+              e.assertion.validUntil == null
+                ? Infinity
+                : Date.parse(e.assertion.validUntil),
+            )),
+        binding.operation !== "withdraw" ? binding.copyUntil : Infinity,
+      ),
+    };
+  }
+  private checkWriteRelease(
+    context: { credential: string; grantId: string; binding: any },
+    original: boolean,
+    attempted?: (db: DatabaseSync) => number,
+  ): void {
+    const deadlines = this.kernel.read((db) => {
+      const result = this.writeRepresentation(
+        db,
+        context.credential,
+        context.grantId,
+        context.binding,
+        original,
+      );
+      if (attempted)
+        result.disclosureUntil = Math.min(
+          result.disclosureUntil,
+          attempted(db),
+        );
+      return result;
+    });
+    const now = this.kernel.now();
+    if (now >= deadlines.authorityUntil)
+      throw new AuthorityError("unauthenticated");
+    if (now >= deadlines.disclosureUntil) denied();
+  }
+  /** A conflict also reveals a historical key, so authorize after its body is prepared. */
+  releaseWriteConflict(error: unknown): void {
+    if (
+      !(error instanceof WriteConflict) ||
+      error.conflict !== "idempotency-conflict"
+    )
+      return;
+    const context = this.writeConflicts.get(error);
+    this.writeConflicts.delete(error);
+    if (!context) denied();
+    this.checkWriteRelease(context, false, (db) => {
+      const attempt = context.attempt,
+        grant = this.active(db, context.grantId),
+        current = attempt.entryId
+          ? storedEntry(db, attempt.entryId)
+          : undefined,
+        managed = attempt.capacity === "management";
+      if (attempt.entryId && !current) denied();
+      const purpose = mutationPurpose(
+        grant,
+        current?.classification ?? attempt.input.classification,
+        managed ? [] : policies(db, "rules"),
+        current,
+        managed && attempt.operation === "revise",
+      );
+      if (purpose !== attempt.purpose) denied();
+      if (
+        attempt.proposalId &&
+        db
+          .prepare("SELECT state FROM staged_proposals WHERE id=?")
+          .get(attempt.proposalId)?.state !== "pending"
+      )
+        denied();
+      return this.validateWriteAttempt(
+        db,
+        grant,
+        attempt.operation,
+        attempt.input,
+        current,
+        purpose,
+        managed,
+        this.kernel.now(),
+        false,
+      ).disclosureUntil;
+    });
   }
   releaseWrite(
     ticket: object,
@@ -1757,17 +1953,20 @@ export class AuthorizationRepository {
     let bytes = render(committed.response.bytes);
     const completion = render(COMPLETION_ONLY);
     try {
-      const until = this.kernel.read((db) =>
-        this.writeRepresentation(
-          db,
-          committed.credential,
-          committed.grantId,
-          committed.binding,
-          committed.original,
-        ),
+      this.checkWriteRelease(
+        committed,
+        committed.original,
+        committed.original
+          ? undefined
+          : (db) =>
+              this.replayRelationships(
+                db,
+                this.active(db, committed.grantId),
+                committed.binding,
+                committed.replayInput,
+                this.kernel.now(),
+              ),
       );
-      if (this.kernel.now() >= until)
-        throw new AuthorityError("unauthenticated");
     } catch (error) {
       if (!committed.original) throw error;
       bytes = completion;
@@ -2248,6 +2447,35 @@ export class AuthorizationRepository {
     )
       invalid();
   }
+  private invalidateEntryPermissions(
+    db: DatabaseSync,
+    before: any,
+    after: any,
+  ): void {
+    const categoriesChanged =
+      canonical([...before.classification.categories].sort()) !==
+      canonical([...after.classification.categories].sort());
+    for (const row of db
+      .prepare(
+        "SELECT DISTINCT g.* FROM grants g JOIN grant_refs r ON r.grant_id=g.id WHERE r.entry_id=?",
+      )
+      .all(before.id)) {
+      const grant = assembled(row);
+      const purposes = [
+        ...new Set<string>(
+          grant.access.flatMap((d: any) => d.purposes.map((p: any) => p.code)),
+        ),
+      ];
+      if (
+        categoriesChanged ||
+        purposes.some(
+          (purpose) =>
+            permitsPurpose(before, purpose) !== permitsPurpose(after, purpose),
+        )
+      )
+        invalidateResponses(db, grant.grantId);
+    }
+  }
   private classificationIn(
     db: DatabaseSync,
     id: string,
@@ -2292,10 +2520,10 @@ export class AuthorizationRepository {
       );
     // Classification governs historical representations too. Invalidate each affected
     // grant once; restoration must never restore its old response candidate.
-    for (const row of db
-      .prepare("SELECT DISTINCT grant_id FROM grant_refs WHERE entry_id=?")
-      .all(id))
-      invalidateResponses(db, String(row.grant_id));
+    this.invalidateEntryPermissions(db, current, {
+      ...current,
+      classification,
+    });
     const audit = event(
       db,
       kind === "categories" ? "context.recategorized" : "context.restricted",
@@ -3375,8 +3603,10 @@ export class AuthorizationRepository {
     subjects: any,
   ): any {
     let until = Infinity,
-      authorityUntil = Infinity;
-    return this.kernel.write(
+      authorityUntil = Infinity,
+      reviewUntil = Infinity,
+      original = false;
+    const result = this.kernel.write(
       (db) => {
         authorityUntil = until = this.management(db, credential);
         const row: any = db
@@ -3397,7 +3627,8 @@ export class AuthorizationRepository {
             canonical(reviewed.preview.subjects)
         )
           denied();
-        until = Math.min(until, Number(row.expires_at));
+        reviewUntil = Number(row.expires_at);
+        until = Math.min(until, reviewUntil);
         if (row.consumed) return reviewed.result;
         const now = this.kernel.now(),
           interpreted = interpretImport(db, reviewed.input, now);
@@ -3547,6 +3778,7 @@ export class AuthorizationRepository {
         db.prepare(
           "UPDATE management_reviews SET consumed=1,document=? WHERE id=?",
         ).run(JSON.stringify({ ...reviewed, result }), reviewId);
+        original = true;
         until = Math.min(
           until,
           ...interpreted.accepted
@@ -3565,6 +3797,28 @@ export class AuthorizationRepository {
         if (this.kernel.now() >= until) denied();
       },
     );
+    // Register only after durable return, privately bound to this request's authority.
+    this.imports.set(result, { original, credential, reviewUntil });
+    return result;
+  }
+  releaseImport(result: object): boolean {
+    const context = this.imports.get(result);
+    this.imports.delete(result);
+    if (!context) denied();
+    try {
+      return this.kernel.snapshot((db) => {
+        const authorityUntil = this.management(db, context.credential),
+          now = this.kernel.now();
+        if (now >= authorityUntil) throw new AuthorityError("unauthenticated");
+        if (!context.original && now >= context.reviewUntil) denied();
+        return true;
+      });
+    } catch (error) {
+      // A known original commit survives loss of disclosure admission. A new
+      // recovery request gets neither its representation nor that entitlement.
+      if (!context.original) throw error;
+      return false;
+    }
   }
   private auditEvents(db: DatabaseSync): any[] {
     return db

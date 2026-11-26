@@ -657,13 +657,12 @@ export function authorizationHandler(
           subjects,
         );
         const details = `<pre>${escape(JSON.stringify(result, null, 2))}</pre><p><a href="/manage/entries">Inspect retained entries</a></p>`;
-        // Apply returned a known committed result. Authorize its representation
-        // after serialization, but retain a content-free completion acknowledgement.
-        return page(res, "import-result", "Import recorded", details, () =>
-          authority.isManagement(s.token)
-            ? undefined
-            : "<p>Your import was committed. Sign in again to inspect retained history.</p>",
-        );
+        // Only a new successful commit retains completion on this original path.
+        // A consumed review's response remains subject to final authorization.
+        return page(res, "import-result", "Import recorded", details, () => {
+          if (!authority.releaseImport(result))
+            return "<p>Your import was committed. Sign in again to inspect retained history.</p>";
+        });
       }
       if (route === "/manage/policy" && !url.search) {
         if (req.method === "POST") {
@@ -1337,17 +1336,15 @@ export function authorizationHandler(
         }
         if (url.search) invalid();
         keys(input, ["reviewId", "csrf", "subjects"]);
-        return managementMutationJson(
+        const result = authority.applyImport(
           credential,
-          res,
-          200,
-          authority.applyImport(
-            credential,
-            input.reviewId,
-            input.csrf,
-            credential,
-            input.subjects,
-          ),
+          input.reviewId,
+          input.csrf,
+          credential,
+          input.subjects,
+        );
+        return json(res, 200, result, "application/ld+json", () =>
+          authority.releaseImport(result) ? undefined : COMPLETION_ONLY,
         );
       }
       if (route === "/v2/disclosures" && req.method === "GET") {
@@ -1458,7 +1455,7 @@ export function authorizationHandler(
     json(res, 404, { error: "not_found" }, "application/json");
   }
   return (req, res) => {
-    void handle(req, res).catch((error) => {
+    const refuse = (error: unknown) => {
       if (res.headersSent) {
         res.destroy();
         return;
@@ -1499,7 +1496,7 @@ export function authorizationHandler(
           "management-error",
           failure.title,
           failure.body,
-          undefined,
+          () => authority.releaseWriteConflict(error),
           true,
         );
       }
@@ -1516,7 +1513,15 @@ export function authorizationHandler(
               : "The request does not satisfy this operation's authorization or input requirements.",
         },
         "application/problem+json",
+        () => authority.releaseWriteConflict(error),
       );
+    };
+    void handle(req, res).catch((error) => {
+      try {
+        refuse(error);
+      } catch (releaseError) {
+        refuse(releaseError);
+      }
     });
   };
 }

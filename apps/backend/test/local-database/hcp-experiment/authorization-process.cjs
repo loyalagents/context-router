@@ -1,8 +1,15 @@
 // Test-only owned child. Secrets arrive over private IPC, never argv/env/stdout.
 const fs = require("node:fs");
 const realNow = Date.now;
-let fixedTime, armed, phase, resumeRead;
-Date.now = () => fixedTime ?? realNow();
+let fixedTime, nextTime, armed, phase, resumeRead;
+Date.now = () => {
+  const now = fixedTime ?? realNow();
+  if (nextTime !== undefined) {
+    fixedTime = nextTime;
+    nextTime = undefined;
+  }
+  return now;
+};
 const {
   AuthorizationRepository,
 } = require("../../../dist/infrastructure/hcp-experiment/authority.js");
@@ -175,6 +182,7 @@ function fault(point) {
   armed = undefined;
   if (action.action === "advance") {
     fixedTime = action.now;
+    nextTime = action.nextNow;
     return;
   }
   if (action.action === "throw")
@@ -186,6 +194,15 @@ function fault(point) {
 const stringify = JSON.stringify;
 JSON.stringify = function (value, ...args) {
   const bytes = stringify.call(JSON, value, ...args);
+  if (value?.type === "https://hcp.example/problems/idempotency-conflict") {
+    const previous = phase;
+    phase = "commitWrite";
+    try {
+      fault("during-conflict-serialization");
+    } finally {
+      phase = previous;
+    }
+  }
   if (
     value?.jsonrpc === "2.0" &&
     value.result?.structuredContent &&
