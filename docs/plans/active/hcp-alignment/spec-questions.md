@@ -11,6 +11,26 @@ receiving completion only. Those choices still require a reviewed implementation
 and explicit adoption in the next batch.
 The earlier baseline, findings and decisions below retain their historical scope.
 
+**Later C8 selections (2026-11-27):** Lucas approved the
+[current #49 plan](spec-49-focused-revision-plan.md) returning the exact HTTP 200
+completion result on an authorized exact retry when original copy expiry is the
+sole failed eligibility condition. He also approved optional conservative
+invalidation of retained results within a grant affected by a genuine permission
+or applicable governing-policy change. Unrelated grants, mandatory invalidation,
+no revival after restoration and release ordering remain protected. These choices
+supersede the older blanket expired-copy denial and precise-only retained-result
+rules for the planned revision; they do not revise historical observations or
+claim implementation, upstream merge or CR adoption.
+
+**Dependent implementation:** CR #221 now targets the still-unmerged #49 candidate
+`be930499` under the [updated application plan](c8-resolution-brief.md#updated-49-application-plan-2026-11-27).
+It requires current purpose and POST soft withdrawal, distinguishes completion from
+role-specific content disclosure, and applies the selected copy-expiry and affected-
+grant rules. Current tests/reviews are recorded in that brief; no adopted pin has
+changed. Management disclosure remains independently authorized, so an authorized
+person's no-use assertion can have a full management result even when the UI shows
+only a saved message. #38's other target/correction/category questions stay open.
+
 - Status: CR read-revocation contract selected; dormant-expiry deadline discrepancy open; C1 evidence/guidance and later portability issues submitted; no adopted spec resolutions
 - Recorded: 2026-11-07
 - Draft: **2.0-draft-3**, normative baseline
@@ -300,6 +320,13 @@ omit resource-specific Location/ETag headers too. It says the operation committe
 not that its result remains active or accessible. Do not expose this entitlement
 as a reusable credential, lookup endpoint or authority on a subsequent request.
 No success is promised when commit is uncertain or the channel has been lost.
+
+**Subsequent C8 decision, recorded 2026-11-27:** Lucas later selected HTTP 200 for
+the exact completion-only variant, including create/revise. Ordinary authorized
+create/revise retain 201. The paragraph above records C4's historical selection;
+this annotation records its later supersession in the
+[current #49 plan](spec-49-focused-revision-plan.md). This planning edit does not
+implement or adopt the revised mapping.
 
 Authorize representation release separately under the same original grant and
 approved purpose, current read reach/policy/narrowing and token/grant/version/copy

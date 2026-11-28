@@ -71,6 +71,7 @@ test("C7 invalid and provider-owned writes reject before persistence while valid
   ]);
   const grant = (await f.context("/v2/grants", writer)).json.grants[0];
   const body = {
+    purpose: "https://example.test/purpose/synthetic-review",
     schema: "https://hcp.example/spec/entry/2.0",
     subject: grant.subject,
     content: {

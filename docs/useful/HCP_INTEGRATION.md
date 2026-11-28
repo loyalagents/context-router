@@ -43,6 +43,14 @@ record later changes rather than silently following the spec's default branch.
 Both repositories can be checked out independently. A sibling `hcp-spec` checkout
 is useful for exploration but is not a build or runtime dependency.
 
+The current C8 dependent patch ([CR #221](https://github.com/loyalagents/context-router/pull/221))
+targets the unmerged [spec #49](https://github.com/loyalagents/hcp-spec/pull/49)
+candidate `be930499c50bea7c8d551f391cb159c01ed1785d`: required mutation purpose,
+POST soft withdrawal, role-specific write completion and authorized retry recovery.
+The [C8 brief](../plans/active/hcp-alignment/c8-resolution-brief.md) owns current
+implementation/review evidence. Neither the normative pin nor the adoption-material
+pin has changed; merge verification and explicit adoption remain required.
+
 ## Assessment And Proposed Alignment
 
 The detailed [source gap analysis](../plans/active/hcp-alignment/gap-analysis.md)

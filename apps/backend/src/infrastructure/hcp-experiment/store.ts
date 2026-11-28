@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { withConfirmations } from "./entry-state";
 import { evaluateWrite, causalTransitions } from "./conflict-graph";
-import { storedEntry } from "./writes";
+import { storedEntry, CommitOutcomeUncertain } from "./writes";
 import {
   regular,
   pin,
@@ -144,6 +144,12 @@ export class SyntheticExperiment {
   #failed = false;
   #clock: () => number;
   #fault?: Fault;
+  // In-flight originals are ephemeral; durable retry receipts keep their separate epoch.
+  #pendingWriteDisclosures = new Set<{
+    invalidated: boolean;
+    until: number;
+    eligible: (db: DatabaseSync) => boolean;
+  }>();
   readonly storeId: string;
   private constructor(
     db: DatabaseSync,
@@ -245,18 +251,21 @@ export class SyntheticExperiment {
       throw e;
     }
   }
-  #assert(): void {
-    if (this.#closed || this.#failed)
-      throw new Error("HCP experiment admission closed");
-    try {
-      this.#lease.assertHeld();
-      if (
-        !samePin(
-          regular(path.join(this.#lease.root.path, DATA_FILE)),
-          this.#filePin,
-        )
+  #assertOwner(): void {
+    if (this.#closed) throw new Error("HCP store closed");
+    this.#lease.assertHeld();
+    if (
+      !samePin(
+        regular(path.join(this.#lease.root.path, DATA_FILE)),
+        this.#filePin,
       )
-        throw new Error("HCP data pin lost");
+    )
+      throw new Error("HCP data pin lost");
+  }
+  #assert(): void {
+    if (this.#failed) throw new Error("HCP experiment admission closed");
+    try {
+      this.#assertOwner();
     } catch (e) {
       this.#failed = true;
       throw e;
@@ -431,6 +440,19 @@ export class SyntheticExperiment {
     // Method-only infrastructure boundary; no database handle reaches the HTTP composition.
     return new AuthorizationRepository(
       {
+        assertUnchangedOwner: () => {
+          this.#assertOwner();
+        },
+        observeWriteDisclosure: (eligible, until) => {
+          const decision = { eligible, until, invalidated: false };
+          this.#pendingWriteDisclosures.add(decision);
+          return {
+            get invalidated() {
+              return decision.invalidated;
+            },
+            release: () => this.#pendingWriteDisclosures.delete(decision),
+          };
+        },
         snapshot: (operation) => {
           this.#assert();
           return operation(this.#db);
@@ -442,6 +464,8 @@ export class SyntheticExperiment {
         write: (operation, beforeCommit) => {
           this.reconcile();
           this.#db.exec("BEGIN IMMEDIATE");
+          let commitAttempted = false,
+            commitConfirmed = false;
           try {
             const result = operation(this.#db);
             if (result && typeof (result as any).then === "function")
@@ -450,7 +474,20 @@ export class SyntheticExperiment {
             this.#assert();
             if (beforeCommit) this.#fault?.("before-authorized-commit");
             beforeCommit?.();
+            commitAttempted = true;
             this.#db.exec("COMMIT");
+            commitConfirmed = true;
+            for (const decision of this.#pendingWriteDisclosures) {
+              try {
+                decision.invalidated ||=
+                  this.#clock() >= decision.until ||
+                  !decision.eligible(this.#db);
+              } catch {
+                decision.invalidated = true;
+              }
+              if (decision.invalidated)
+                this.#pendingWriteDisclosures.delete(decision);
+            }
             this.#fault?.("after-data-commit");
             return result;
           } catch (error) {
@@ -459,7 +496,19 @@ export class SyntheticExperiment {
               !(error instanceof ReadResultError)
             )
               this.#failed = true;
-            if (this.#db.isTransaction) this.#db.exec("ROLLBACK");
+            let rolledBack = false;
+            if (this.#db.isTransaction) {
+              try {
+                this.#db.exec("ROLLBACK");
+                rolledBack = true;
+              } catch {
+                /* Admission remains closed; reopen must establish the outcome. */
+              }
+            }
+            if (commitAttempted && !commitConfirmed && !rolledBack)
+              throw new CommitOutcomeUncertain(
+                "Native commit outcome unresolved",
+              );
             throw error;
           }
         },
@@ -486,6 +535,9 @@ export class SyntheticExperiment {
     this.#failed = true;
     this.#lease.close();
     this.#closed = true;
+    for (const decision of this.#pendingWriteDisclosures)
+      decision.invalidated = true;
+    this.#pendingWriteDisclosures.clear();
   }
 }
 

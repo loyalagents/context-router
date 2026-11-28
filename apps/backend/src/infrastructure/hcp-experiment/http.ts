@@ -28,7 +28,7 @@ import {
   privateId,
 } from "./policy";
 import { authorizationProvider, validateAuthorization } from "./oauth";
-import { COMPLETION_ONLY, WriteConflict } from "./writes";
+import { COMPLETION_ONLY, WriteConflict, WriteUnresolved } from "./writes";
 import { CONFLICT_DETECTION } from "./conflicts";
 import { GENERAL_PROFILE } from "./fixtures";
 import { requestJson, RequestJsonError } from "./request-json";
@@ -881,7 +881,14 @@ export function authorizationHandler(
         !url.search
       ) {
         const form = await body(req);
-        keys(form, ["csrf", "value", "category", "entryId", "expectedVersion"]);
+        keys(form, [
+          "csrf",
+          "value",
+          "category",
+          "entryId",
+          "expectedVersion",
+          "purpose",
+        ]);
         csrf(req, form.csrf);
         if (typeof form.value !== "string" || !form.value.trim()) invalid();
         const target = form.entryId || undefined;
@@ -890,6 +897,7 @@ export function authorizationHandler(
           : undefined;
         if (current && !editableStatement(current)) denied();
         const request = {
+          purpose: form.purpose,
           ...(current
             ? {
                 expectedVersion: Number(form.expectedVersion),
@@ -952,7 +960,12 @@ export function authorizationHandler(
           res,
           "person-editor",
           current ? "Edit as your own statement" : "Add your own statement",
-          renderPersonEditor(current, s.csrf, Object.keys(CATEGORIES)),
+          renderPersonEditor(
+            current,
+            s.csrf,
+            Object.keys(CATEGORIES),
+            PURPOSES,
+          ),
         );
       }
       if (
@@ -1125,6 +1138,9 @@ export function authorizationHandler(
         : authority.protocolFind("AccessToken", credential);
       if (!human && !token) throw new AuthorityError("unauthenticated");
       const revisionRoute = /^\/v2\/entries\/([^/]+)\/revisions$/.exec(route);
+      const withdrawalRoute = /^\/v2\/entries\/([^/]+)\/withdrawal$/.exec(
+        route,
+      );
       if (route === "/v2/shares" && req.method === "POST" && !url.search) {
         if (human) denied();
         authority.reportSharing(credential, await body(req));
@@ -1148,21 +1164,15 @@ export function authorizationHandler(
           "application/problem+json",
         );
       }
-      if (
-        route === "/v2/entries" ||
-        revisionRoute ||
-        (/^\/v2\/entries\/[^/]+$/.test(route) && req.method === "DELETE")
-      ) {
+      if (route === "/v2/entries" || revisionRoute || withdrawalRoute) {
         if (human) denied();
+        if (url.search || req.method !== "POST") invalid();
         if (
-          url.search ||
-          ((route === "/v2/entries" || revisionRoute) && req.method !== "POST")
-        )
-          invalid();
-        if (
-          !["application/json", "application/ld+json"].includes(
-            String(req.headers["content-type"]),
-          )
+          !(
+            withdrawalRoute
+              ? ["application/json"]
+              : ["application/json", "application/ld+json"]
+          ).includes(String(req.headers["content-type"]))
         )
           invalid();
         if (
@@ -1181,7 +1191,9 @@ export function authorizationHandler(
           input = JSON.parse(raw);
           if (route !== "/v2/entries")
             ref = decodeURIComponent(
-              revisionRoute?.[1] ?? route.slice("/v2/entries/".length),
+              revisionRoute?.[1] ??
+                withdrawalRoute?.[1] ??
+                route.slice("/v2/entries/".length),
             );
         } catch {
           invalid();
@@ -1461,8 +1473,15 @@ export function authorizationHandler(
         return;
       }
       const hcp = req.url?.startsWith("/v2/");
-      const kind =
-        error instanceof WriteConflict
+      const unresolved = error instanceof WriteUnresolved;
+      const releaseError = () => {
+        authority.releaseWriteConflict(error);
+        authority.releaseWriteUnresolved(error);
+        if (hcp && unresolved) res.setHeader("retry-after", "1");
+      };
+      const kind = unresolved
+        ? "idempotency-unresolved"
+        : error instanceof WriteConflict
           ? error.conflict
           : error instanceof UnsupportedVersion
             ? "unsupported-version"
@@ -1496,7 +1515,7 @@ export function authorizationHandler(
           "management-error",
           failure.title,
           failure.body,
-          () => authority.releaseWriteConflict(error),
+          releaseError,
           true,
         );
       }
@@ -1506,14 +1525,19 @@ export function authorizationHandler(
         {
           type: hcp ? `https://hcp.example/problems/${kind}` : "about:blank",
           status,
-          title: status === 503 ? "Authority unavailable" : "Request refused",
-          detail:
-            status === 503
+          title: unresolved
+            ? "Idempotency outcome unresolved"
+            : status === 503
+              ? "Authority unavailable"
+              : "Request refused",
+          detail: unresolved
+            ? "Retry the same request and key after the indicated delay."
+            : status === 503
               ? "The experiment cannot safely admit this request."
               : "The request does not satisfy this operation's authorization or input requirements.",
         },
         "application/problem+json",
-        () => authority.releaseWriteConflict(error),
+        releaseError,
       );
     };
     void handle(req, res).catch((error) => {

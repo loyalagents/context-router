@@ -1,6 +1,6 @@
 # C8 Protocol Resolution And Context Router Adoption
 
-- Status: Batch A implemented locally; targeted checks passed, final validation pending; no new normative target adopted
+- Status: dependent CR adaptation to updated spec #49 in progress; spec merge and explicit adoption pending
 - Owner: C8 step chat is sole writer in each isolated checkout; the original
   orchestrator `01a1b827-ae7c-7b23-9160-d7b69d0ee2b0` retains sequencing
 - Source base: CR `98fe60ffb21c678b0d955a042ccd034db49299dd` (merged C7c #218)
@@ -9,6 +9,250 @@
   adoption materials `b764a058eac15a4cd843892e60473089b2e835bb`
 - Parent: [alignment plan](README.md), [questions](spec-questions.md),
   [requirement/evidence matrix](gap-analysis.md), [integration reference](../../../useful/HCP_INTEGRATION.md)
+
+## Updated #49 Application Plan (2026-11-27)
+
+Lucas authorized continuation of CR #221 before upstream merge. The managed C8
+checkout was reattached; existing uncommitted plans and review snapshots are
+preserved. CR source starts at `e737a4cfc899c7ecae547a98259b5372d16d271e`.
+The implementation candidate is spec #49 at
+`be930499c50bea7c8d551f391cb159c01ed1785d`, still open/unmerged when checked;
+its exact-head spec CI run `46093275359` passed. The previously recorded CR CI
+covers the earlier contract and does not qualify this revision.
+
+The current normative/material pins above remain adopted baselines. Candidate
+compatibility, upstream merge and explicit adoption are separate milestones.
+The following checkpoints supersede the older implementation directions below,
+without rewriting the dated observations and review records.
+
+1. **Named execution purpose.** Require and validate request `purpose` on create,
+   revise and soft withdrawal; authorize action/category/target/purpose together.
+   Strip that request metadata from stored entries and record it in the existing
+   operation audit. Update explicit person review/approval, its purpose selector
+   and controlled staged producers. Keep bounded single-purpose read/write grant
+   issuance as a declared C9 residual. Preserve provisional revision/withdrawal
+   target-purpose and person-correction policies pending #38.
+2. **Completion and recovery.** Establish an ordinary or fixed minimal candidate
+   at commit under the caller's role and named purpose; record copy disclosure
+   only when a content candidate exists. An otherwise authorized create with
+   empty future purposes may commit. Context Client completion is exact HTTP 200;
+   authorized management representations retain independent management authority.
+   Original known completion and later current-authority recovery stay distinct.
+   Exact copy-only expiry yields completion; other ineligibility and expired
+   mismatches deny. Preserve current affected-grant invalidation, unrelated-grant
+   isolation and permanent invalidation through restoration/restart. A withdrawal's
+   own deleted transition is consumed, not a reason to reject its exact retry.
+3. **Bindings and uncertainty.** Move soft withdrawal to POST
+   `/v2/entries/{entryId}/withdrawal`, updating actual callers. Hard deletion stays
+   separately unsupported. Use the existing single-owner synchronous SQLite
+   transaction/recovery boundary to distinguish confirmed no effect from unresolved
+   keyed outcomes. Typed HTTP 503 `idempotency-unresolved` plus `Retry-After` requires
+   applicable authority; it cannot leak a key when authority cannot be established.
+   No speculative pending-operation journal, new retention service or retry SDK.
+4. **Evidence and adoption.** Backend regressions first, focused consumer/browser
+   and crash/restart checks at each checkpoint, candidate schema checks on actual
+   outputs, then fresh complete-diff authority/privacy/durability and
+   architecture/adoption/testability reviews. Keep read MCP descriptors and
+   provisional read/error behavior unchanged. After actual upstream merge, verify
+   merged content and intervening changes, explicitly update old/new pins and
+   consumed schemas, renew affected checks and exact-candidate Product CI. Keep
+   #221 draft until adoption and required validation are complete; no automatic merge.
+
+The coordinator is sole writer. Fresh read-only plan reviewers
+`c8_updated_authority_plan` and `c8_updated_adoption_plan` were requested as
+`gpt-6.2-astra` at `xhigh` and `high`, respectively; the tool accepted those
+settings, with actual runtime settings unobservable. Review dispositions and
+checkpoint evidence will be recorded here. Full write-only/multi-purpose issuance,
+MCP writes/Provider Interop and qualification remain C9. Remaining #38, #2,
+#23/#39/D3 and CR-Q9 questions keep their existing owners and data gates.
+
+**Implementation-plan review:** Both new reviewers approved the four checkpoints
+before runtime edits, subject to the concrete regressions now in progress. Their
+findings added commit-time role-correct candidate selection and copy audit,
+historical relationship authority on changed-key conflicts, precise permission
+tracking for original replies versus conservative retained-grant invalidation,
+semantic no-op policy comparison, and standing rules on management context-write
+grants. Newly conflicted Context Client results receive completion; the older
+own-quarantine content exception is being removed under the candidate's lifecycle
+rule. A person editor may show a simple saved message, while the authorized
+Management Client wire result retains its own disclosure authority. The spec does
+not settle #38's remaining correction/revision/withdrawal questions.
+
+**Checkpoint evidence:** Three new purpose regressions failed before the source
+fix and then passed; the complete 78-test write suite passed at the named-purpose
+checkpoint. The actual HTTP person editor exercised required selection, the second
+supported purpose, exact approval and audit with no stored purpose extension.
+The new POST withdrawal regression failed on the old DELETE behavior and passed
+after adaptation, including an exact retry with one withdrawal event. Four new
+completion/copy-expiry regressions and six authority/invalidation regressions were
+observed failing and then passed after their fixes. The native-commit uncertainty
+HTTP regression failed on the old generic mapping and passed with both live and
+expired release authority; reopening recovered one mutation/event. These are
+iteration receipts, not final complete-diff review or exact-candidate CI evidence.
+
+**Fresh implementation review and corrections:** `c8_new_authority_review`
+(Astra/xhigh requested) and `c8_new_adoption_review` (Astra/high requested) reviewed
+the full base-to-working candidate read-only; actual model/effort settings were not
+exposed. Both verified all 33 files in the first frozen manifest. The adoption
+review independently compared all 13 test-only schemas with exact spec `be930499`.
+They requested fixes for relationship authority at the last commit/uncertain-result
+boundary, file identity on an uncertain native commit, withdrawal extensions,
+historical classification on held replies, and overly broad invalidation from
+irrelevant directive selectors or old references outside current grant reach.
+The new regressions reproduced these failures before source changes. Corrections
+preserve credential versus disclosure deadline errors, use a recovery-authority
+proof valid in either possible native commit outcome, share the ordinary data-file
+identity check, and compare actual candidate/grant scope. A write that itself
+supersedes a required peer cannot emit a key-revealing uncertain outcome.
+
+Before those corrections, 91 write tests and 150 HTTP/persistence/consumer tests
+passed. Eight new focused repository regressions now pass; the HTTP fault cases
+exercise peer expiry, self-supersession and replaced/missing temporary data files.
+The latter restore only their own synthetic fixture file before cleanup. All
+source work is confined to the managed C8 tree; no retained trial, personal state,
+installed app or OS trust changes are involved. Final correction review, browser
+checks and exact-candidate Product CI remain pending at this checkpoint.
+
+**Correction recheck:** The next independent pass found an interaction between
+historical and current classification: a destination-category directive must also
+invalidate a held result. Both scopes are now compared; full-scope equivalent
+directives remain equivalent across otherwise harmless recategorization. Two
+failing destination-directive regressions and unchanged/no-directive controls cover
+this. Three failing HTTP regressions also required known token/peer expiry during
+an indeterminate native commit to retain 401/403, and prevented the known-commit
+copy-expiry exception from authorizing a typed uncertain outcome. Final uncertainty
+release uses one clock sample. A stale browser conflicted-write expectation was
+updated from content-bearing 201 to the contract's exact minimal 200; a separate
+first-start SIGTERM browser test is being rerun after a failed open. The preceding
+local pass had 151 repository and 154 transport tests green; affected evidence is
+renewed after these final corrections. Unchanged consumer and historical coverage
+is retained, with no broad local migration gate selected.
+
+**Current direction (2026-11-27):** Lucas asked to revise #49 around a small
+contract for authorized requests, truthful outcomes and idempotent writes. The
+[small-contract plan](spec-49-focused-revision-plan.md) separates HCP's observable
+guarantees from provider storage/coordination choices and gives one caller-action
+table. It retains the existing eligible result-candidate recovery promise for this
+batch, with the two expressly selected exceptions below; changing delivered bodies
+or references to optional otherwise is a distinct #34 contract decision.
+HTTP 200 minimal completion remains selected. The
+authorized correction pass specifies a single HTTP-only 503
+`idempotency-unresolved` problem with `Retry-After`, authorized result recovery
+after completion-only success, historical JSON-result equality, and the distinction
+between at least 24 hours of duplicate protection and shorter copy eligibility.
+Lucas subsequently approved completion-only recovery when original copy expiry is
+the sole eligibility obstacle, and optional conservative invalidation of retained
+results within an affected grant. Current authority, other eligibility checks,
+sticky invalidation, release ordering and unrelated grants' recovery remain.
+Reference-only outputs, new write-only handles, further policy relaxations and
+erasure-marker rules remain deferred. The prior
+[nineteen-card guide](spec-49-decision-guide-2026-11-26.md) is historical review
+evidence, preserved unchanged. Neither plan is implemented or adopted by the
+existing PR heads. On November 27 GitHub reconfirmed spec #49 open/unmerged at
+`38d0c73…` and CR #221 draft/open/unmerged at `e737a4c…`.
+
+**Selected-policy plan review (2026-11-27):** Fresh read-only reviewers
+`selected_policy_authority` and `selected_policy_adoption` requested
+`gpt-6.2-astra` / `xhigh` and `high`, respectively. The tool accepted those
+settings; actual runtime settings remain unobservable. Both approved plan SHA-256
+`86557953f195fbadb6b2317dce594006b8b976934cd13705380f9deaa9ae57ef`
+and the associated brief/question annotations before this receipt was added.
+Corrections made the expiry waiver exact-request-only, preserved opaque denial
+before conflict on expired mismatches, scoped the revocation-denial wording to
+retries and aligned the active adoption checkpoint. All material findings are
+closed within their planning remits; implementation and adoption are not verified.
+
+Selected-policy documentation checks passed: Markdown links across 172 files,
+tracked/untracked whitespace and all three preserved review-snapshot hashes.
+Consumer searches found no affected executable reader. No runtime checks or new
+CI qualification were run; the implementation/adoption gates below remain.
+
+**Latest rereview disposition (2026-11-27):** Claude review A (`d2865033…`) and
+review B (`91ccef7f…`) both reviewed the preserved
+[aaf53bd0 baseline](spec-49-review-baseline-aaf53bd0.md) and recommended approval
+with small corrections. B's supplied text ends after its main findings and
+placement recommendations. Neither verdict approves every proposed policy change.
+
+The preceding clarification pass accepted bounded key-reuse guidance after confirmed
+no-effect attempts, discarding replay-only content at copy expiry, explicit
+presented/historical authority checks, the HTTP-only problem-schema distinction,
+and comparison caveats. It preserved required invalidation, duplicate protection,
+the selected `Retry-After` requirement and the D3 gate.
+
+| Review proposal | Disposition / owner |
+| --- | --- |
+| A2 / B1: completion after copy expiry | Selected by Lucas on November 27 for the #49 revision: exact currently authorized retry receives fixed HTTP 200 when original copy expiry is the sole obstacle. This supersedes the earlier selected denial in that case. Completion after restoration or other ineligibility remains unselected. C8 protocol/CR owners implement and adopt it. |
+| A1 / B2: broader invalidation freedom | Lucas selected the bounded affected-grant option on November 27: a genuine grant or applicable governing-policy change may invalidate all retained candidates for that grant. Mandatory affected-result invalidation, unrelated grants, sticky denial and release ordering remain. Person-wide unrelated invalidation and revival are unselected. C8 protocol/CR owners implement and document the chosen application policy. |
+| A3 / B3: reference-only recovery | Keep full eligible results in this batch; #34 owns any replacement guarantee, schema and write-only identifier authority. A favors changing now; B favors deferral. |
+| A5: withdrawal keys become MUST | No change to SHOULD; C8 binding owner revisits before claiming universally recoverable withdrawal. Known support can justify retry; unknown support cannot. This is a new provider obligation, not wording. |
+| A4: a Core error on create, revise or withdraw establishes no effect for that attempt | Not adopted as a blanket claim for those operations; C8 Core/binding owner must resolve uncertain-outcome handling across bindings before any such guarantee. The narrow confirmed-no-effect key-reuse case is clarified. |
+| B4: remove the post-erasure retry-suppression promise | Not adopted as wording; #23/#39 retain the no-resurrection objective, retention decision and combined-capability gate. No marker permission or fingerprint-retention exception is introduced. |
+| B5: authorize only the presented request before non-content replies | Not adopted: it changes the historical-information boundary on mismatches. The existing two authority requirements are made explicit without prescribing internal stages. |
+
+Read-only `rereview_scope_check` and fresh complete-diff reviewer
+`rereview_small_diff` requested `gpt-6.2-astra` / `xhigh` and `high`, respectively;
+the tool accepted these settings, with actual runtime settings unobservable. Both
+approved plan SHA-256
+`db38f60fd6862802eb820a6dfae14c392615df129d2d6c6d25ebb8239def28bd`
+and the associated brief and exact review snapshot. The adoption review's sole
+attribution correction limits A4 to create, revise and withdraw, as supplied;
+that correction and this receipt were added after review. No behavior change or
+implementation, CI or adoption approval is claimed.
+
+For this rereview clarification pass, Markdown links passed across 172 files;
+tracked/untracked whitespace and all three preserved review-snapshot hashes
+passed. Consumer searches found no affected executable reader. No runtime tests
+or new CI were run; publication and implementation retain their applicable gates.
+
+**First correction-pass review (2026-11-27):** Fresh read-only reviewers
+`doc_pass_authority` and `doc_pass_adoption` requested `gpt-6.2-astra` / `xhigh`
+and `high`, respectively. The tool accepted the settings; actual runtime settings
+remain unobservable. Both approved the corrected plan at SHA-256
+`aaf53bd0b441450f379b51041453c0d5941e5318db804ce43bbd7432becbcaa7`.
+The caller table now requires known idempotency support after minimal success;
+the acceptance checkpoint checks original status and historical JSON values;
+and the proposed random/non-content-derived key requirement is explicitly deferred
+to #23/#39. Both reviewers also checked the associated question annotation,
+baseline snapshot and brief before this receipt was added. All findings are closed
+within their planning remits; this is not implementation, CI or adoption approval.
+
+For this documentation pass, Markdown links passed across 171 files; tracked and
+untracked whitespace and both preserved review-snapshot hashes passed. Consumer
+searches found documentation links and no executable reader requiring additional
+tests. Runtime checks and new CI qualification were not run; implementation and
+publication retain their applicable exact-candidate validation requirements.
+
+The earlier read-only `small_contract_authority` and `small_contract_adoption`
+reviewers requested Astra/xhigh and Astra/high, respectively. The tool accepted
+these settings; actual runtime settings are unobservable. They closed material
+findings on their earlier planning candidate. Links (170 files), whitespace and
+historical-guide integrity passed before this correction pass. Those receipts do
+not approve the subsequent corrections. No runtime change, new target adoption or
+renewed implementation CI is claimed. The review records below distinguish the
+proposal versions and candidates.
+Read-only research `independent_protocol_examples` requested Astra/high. Fresh
+plan reviewers `focused_plan_authority_review` and `focused_plan_adoption_review`
+requested Astra/xhigh and Astra/high respectively; explicit `gpt-6.2-astra`
+settings were accepted by the tool, with actual runtime settings unobservable.
+Their initial findings refined first-response versus retry behavior, final authority
+checks for every revealing retry response, inactive-entry exceptions, erasure
+boundaries, client retry instructions and scoped acceptance. Review of the corrected
+planning candidate is separate from later implementation approval.
+
+For the November 26 decision guide, fresh read-only advice `revision_options_advice`
+requested Astra/xhigh and attribution/scope review `revised_guide_review` requested
+Astra/high. The tool accepted those settings; actual runtime settings remain
+unobservable. The initial Claude attachment pair (`abad20f2…` and `4da5e435…`)
+reviewed the preserved earlier proposal `ba125cd0…`. The first small-contract pair (`1de08229…`
+and `d5c8d650…`) both verified the [small-contract baseline](spec-49-small-contract-review-baseline.md)
+`e8259bb0…`. They also report reviewing the intervening nineteen-card guide
+`e812ee7b…`; those intervening Claude reviews were not separately supplied here.
+The guide labels agreement, disagreement and the
+remaining decisions without treating review recommendations as user approval.
+The fresh attribution/scope reviewer closed all material findings after corrections
+to recovery authority, key namespace/binding, crash-uncertainty mapping and review
+attributions. It found no remaining material contradictions in the guide or its
+assigned checks; this is not runtime, spec-implementation or adoption approval.
 
 ## Ownership And Boundaries
 
@@ -75,6 +319,10 @@ handed off, not unassigned upstream issue lists. Separately owned PR #27 adoptio
 guidance and #18 encryption investigation are not absorbed.
 
 ## Batch A Reviewed-Plan Candidate
+
+**Historical candidate:** this section records the earlier implementation plan.
+The November 27 small-contract proposal above guides review of the next revision; this
+record and its evidence are retained without retroactively changing their claims.
 
 **Concrete case:** a create commits once, including its required audit, then its
 grant is revoked before the original reply. The provider must neither return now
@@ -186,8 +434,12 @@ now incorporated above. Both retain fresh implementation review and qualificatio
    Backend behavior changes are tests first. Renew relevant write/replay/authority,
    HTTP/SQLite/recovery and management-result consumer checks; test schemas consumed
    by actual CR outputs. Include refreshed same-grant/unexpired-candidate replay after
-   original minimal completion as a positive control, plus expired candidate denial,
-   no deadline renewal, and first-versus-consumed import expiry at both actual handoffs.
+   original minimal completion as a positive control. Apply the selected
+   [small-contract plan](spec-49-focused-revision-plan.md): exact copy-only expiry
+   returns closed HTTP 200; other ineligibility or mismatch with an expired
+   historical result still denies. Cover both permitted invalidation strategies
+   and unrelated-grant isolation, no deadline renewal, and first-versus-consumed
+   import expiry at both actual handoffs.
    Do not silently bundle unmerged descriptors or broaden tools.
 4. **Final handoff:** known findings closed, agreed bounded behavior and contributor
    documentation ready, then freeze source and run fresh complete-diff reviews plus

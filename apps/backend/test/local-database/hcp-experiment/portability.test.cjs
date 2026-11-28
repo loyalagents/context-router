@@ -1,3 +1,4 @@
+const { validCandidate } = require("./candidate-contract.cjs");
 const { test } = require("node:test"),
   assert = require("node:assert/strict"),
   { randomUUID } = require("node:crypto");
@@ -39,6 +40,7 @@ for (const point of ["before-audit", "before-commit", "after-data-commit"])
       json: decision,
     });
     assert.equal(result.status, 200);
+    validCandidate("operations/import-result.json", result.json);
     assert.equal(result.json.outcomes[0].outcome, "imported");
     assert.equal(
       (await f.management("/v2/export")).json.entries.filter(
@@ -252,11 +254,14 @@ for (const browser of [false, true])
       assert.equal(result.status, point === "before-commit" ? 401 : 200);
       if (point !== "before-commit") {
         if (browser) assert.match(result.text, /Import recorded/);
-        else
+        else {
+          validCandidate("operations/import-result.json", result.json);
+          validCandidate("operations/completion-result.json", result.json);
           assert.deepEqual(result.json, {
             outcome: "committed",
             representation: "not-included",
           });
+        }
       }
       assert.doesNotMatch(
         result.text,

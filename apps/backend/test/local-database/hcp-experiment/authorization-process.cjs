@@ -171,6 +171,19 @@ SyntheticExperiment.open = function (paths, options) {
     sourceFaults ? { ...options, clock: Date.now, fault } : options,
   );
 };
+let uncertainCommit;
+const { DatabaseSync } = require("node:sqlite");
+const nativeExec = DatabaseSync.prototype.exec;
+DatabaseSync.prototype.exec = function (sql) {
+  const result = nativeExec.call(this, sql);
+  if (sql === "COMMIT" && uncertainCommit) {
+    if (uncertainCommit.now !== undefined) fixedTime = uncertainCommit.now;
+    armed = uncertainCommit.nextFault;
+    uncertainCommit = undefined;
+    throw new Error("Synthetic indeterminate native COMMIT acknowledgement");
+  }
+  return result;
+};
 function fault(point) {
   if (
     !armed ||
@@ -180,6 +193,16 @@ function fault(point) {
     return;
   const action = armed;
   armed = undefined;
+  if (action.action === "uncertain-commit") {
+    uncertainCommit = action;
+    return;
+  }
+  if (["replace-data", "remove-data"].includes(action.action)) {
+    fs.renameSync(action.path, action.path + ".old");
+    if (action.action === "replace-data")
+      fs.copyFileSync(action.path + ".old", action.path);
+    return;
+  }
   if (action.action === "advance") {
     fixedTime = action.now;
     nextTime = action.nextNow;
@@ -194,6 +217,15 @@ function fault(point) {
 const stringify = JSON.stringify;
 JSON.stringify = function (value, ...args) {
   const bytes = stringify.call(JSON, value, ...args);
+  if (value?.type === "https://hcp.example/problems/idempotency-unresolved") {
+    const previous = phase;
+    phase = "commitWrite";
+    try {
+      fault("during-unresolved-serialization");
+    } finally {
+      phase = previous;
+    }
+  }
   if (value?.type === "https://hcp.example/problems/idempotency-conflict") {
     const previous = phase;
     phase = "commitWrite";

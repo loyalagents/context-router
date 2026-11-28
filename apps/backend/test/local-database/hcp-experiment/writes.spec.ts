@@ -133,6 +133,9 @@ describe("C4 durable person writes and original completion", () => {
     return { grant, token: tokenFor(grant, Math.min(durationSeconds, 3600)) };
   }
   const input = (grant: any, extra = {}) => ({
+    purpose:
+      grant.access?.find((d: any) => d.actions.includes("write"))?.purposes[0]
+        .code ?? PURPOSES[0].code,
     schema: "https://hcp.example/spec/entry/2.0",
     subject: grant.subject,
     content: {
@@ -144,6 +147,624 @@ describe("C4 durable person writes and original completion", () => {
     record: { provenance: { source: "person-input" } },
     ...extra,
   });
+  it("C8 review: relationship expiry at the last commit check rolls back without closing admission", () => {
+    const { grant, token } = issue();
+    const body = input(grant);
+    const peer = release(
+      commit(
+        token,
+        input(grant, {
+          assertion: {
+            declarationType: "person-declared",
+            validUntil: new Date(start + 1000).toISOString(),
+          },
+        }),
+      ),
+    );
+    const request = input(grant, {
+      content: { ...body.content, value: "Derived after peer expiry" },
+      record: {
+        ...body.record,
+        relationships: [{ type: "derivedFrom", target: peer.body.ref }],
+      },
+    });
+    clockBeforeCommit = start + 1000;
+    expect(() => commit(token, request, "expired-peer")).toThrow(
+      new AuthorityError("denied"),
+    );
+    expect(
+      store
+        .inspectEntries()
+        .some((e) => e.content.value === request.content.value),
+    ).toBe(false);
+    expect(release(commit(token, body)).status).toBe(201);
+  });
+
+  it.each([{ relationships: "extension text" }, 7])(
+    "C8 review: withdrawal record extension %j cannot poison admission",
+    (record) => {
+      const { grant, token } = issue();
+      const created = release(commit(token, input(grant)));
+      const request = { purpose: PURPOSES[0].code, reason: "Withdraw", record };
+      const result = release(
+        commit(
+          token,
+          request,
+          "withdraw-extension",
+          "withdraw",
+          created.body.ref,
+        ),
+      );
+      expect(result.status).toBe(200);
+      expect(
+        release(
+          commit(
+            token,
+            request,
+            "withdraw-extension",
+            "withdraw",
+            created.body.ref,
+          ),
+        ),
+      ).toEqual(result);
+      expect(release(commit(token, input(grant))).status).toBe(201);
+    },
+  );
+
+  it.each([undefined, "held-original"])(
+    "C8 review: historical candidate categories remain protected (%s)",
+    (key) => {
+      const { grant, token } = issue("a", [
+        detail(["read", "write"], {
+          categories: ["general_preferences", "work_context"],
+        }),
+      ]);
+      const ticket = commit(token, input(grant), key);
+      const entry = store
+        .inspectEntries()
+        .find((e) => e.record.provenance.authorizedUnder === grant.grantId)!;
+      authority.editClassification(human, entry.id, "categories", {
+        expectedVersion: 1,
+        categories: ["work_context"],
+      });
+      authority.replacePolicy(human, {
+        rules: [
+          {
+            operators: [config.clients[0].operator.id],
+            categories: ["general_preferences"],
+          },
+        ],
+        directives: [],
+      });
+      expect(release(ticket)).toMatchObject({
+        status: 200,
+        body: { outcome: "committed", representation: "not-included" },
+      });
+    },
+  );
+
+  it.each(["categories", "operators"])(
+    "C8 review: changing irrelevant %s selectors preserves an original and retained result",
+    (selector) => {
+      const { grant, token } = issue();
+      const narrow = {
+        action: "urn:example:action:a",
+        effect: "deny",
+        text: "A",
+        categories: ["general_preferences"],
+        operators: [config.clients[0].operator.id],
+      };
+      const broad = {
+        ...narrow,
+        [selector]:
+          selector === "categories"
+            ? ["general_preferences", "work_context"]
+            : config.clients.map((c) => c.operator.id),
+      };
+      authority.replacePolicy(human, { rules: [], directives: [narrow] });
+      const body = input(grant),
+        original = release(commit(token, body, "effective-directive"));
+      for (const directive of [broad, narrow]) {
+        const pending = commit(token, body);
+        authority.replacePolicy(human, { rules: [], directives: [directive] });
+        expect(release(pending).status).toBe(201);
+        expect(release(commit(token, body, "effective-directive"))).toEqual(
+          original,
+        );
+      }
+    },
+  );
+
+  it("C8 review: a historical reference outside current grant reach does not discard new retained results", () => {
+    const { grant, token } = issue();
+    const body = input(grant);
+    release(commit(token, body, "old-reachable"));
+    const entry = store
+      .inspectEntries()
+      .find((e) => e.record.provenance.authorizedUnder === grant.grantId)!;
+    authority.editClassification(human, entry.id, "categories", {
+      expectedVersion: 1,
+      categories: ["work_context"],
+    });
+    expect(() => commit(token, body, "old-reachable")).toThrow(AuthorityError);
+    const newer = input(grant, {
+      content: { ...body.content, value: "Still reachable" },
+    });
+    const expected = release(commit(token, newer, "new-reachable"));
+    authority.editClassification(human, entry.id, "purposes", {
+      expectedVersion: 1,
+      permittedPurposes: [],
+    });
+    reopen();
+    expect(release(commit(token, newer, "new-reachable"))).toEqual(expected);
+    expect(() => commit(token, body, "old-reachable")).toThrow(AuthorityError);
+  });
+
+  it.each(["none", "broad", "before", "after"])(
+    "C8 recheck: recategorization observes destination directives (%s)",
+    (timing) => {
+      const { grant, token } = issue("a", [
+        detail(["read", "write"], {
+          categories: ["general_preferences", "work_context"],
+        }),
+      ]);
+      const directive = {
+        action: "urn:example:action:a",
+        effect: "ask-first",
+        text: "Confirm the action",
+        categories:
+          timing === "broad"
+            ? ["general_preferences", "work_context"]
+            : ["work_context"],
+      };
+      if (["before", "broad"].includes(timing))
+        authority.replacePolicy(human, { rules: [], directives: [directive] });
+      const ticket = commit(token, input(grant));
+      const entry = store
+        .inspectEntries()
+        .find((e) => e.record.provenance.authorizedUnder === grant.grantId)!;
+      authority.editClassification(human, entry.id, "categories", {
+        expectedVersion: 1,
+        categories: ["work_context"],
+      });
+      if (timing === "after")
+        authority.replacePolicy(human, { rules: [], directives: [directive] });
+      expect(release(ticket).status).toBe(
+        ["none", "broad"].includes(timing) ? 201 : 200,
+      );
+    },
+  );
+
+  it("C8 requires explicit purpose on every context write before any effect", () => {
+    const { grant, token } = issue();
+    const body = input(grant, { purpose: PURPOSES[0].code });
+    const created = release(commit(token, body));
+    const before = store.inspectAudit();
+    for (const operation of ["create", "revise", "withdraw"] as const) {
+      const request: any =
+        operation === "create"
+          ? { ...body }
+          : operation === "revise"
+            ? {
+                purpose: PURPOSES[0].code,
+                expectedVersion: 1,
+                reason: "update",
+                content: body.content,
+                assertion: body.assertion,
+                record: body.record,
+              }
+            : { purpose: PURPOSES[0].code, reason: "withdraw" };
+      for (const purpose of [undefined, null, "", "not a URI"]) {
+        const missing = { ...request, purpose };
+        if (purpose === undefined) delete missing.purpose;
+        expect(() =>
+          commit(
+            token,
+            missing,
+            undefined,
+            operation,
+            operation === "create" ? undefined : created.body.ref,
+          ),
+        ).toThrow(new AuthorityError("invalid"));
+      }
+    }
+    expect(store.inspectAudit()).toEqual(before);
+  });
+
+  it("C8 authorizes the named write purpose and keeps it out of stored metadata", () => {
+    const { grant, token } = issue("a", [
+      detail(["read"], { purposes: [PURPOSES[0]] }),
+      detail(["read", "write"], { purposes: [PURPOSES[1]] }),
+    ]);
+    const before = store.inspectAudit();
+    expect(() =>
+      commit(token, input(grant, { purpose: PURPOSES[0].code })),
+    ).toThrow(new AuthorityError("denied"));
+    expect(store.inspectAudit()).toEqual(before);
+    const body = input(grant, {
+      purpose: PURPOSES[1].code,
+      extension: "retained",
+    });
+    const result = release(commit(token, body, "named-purpose"));
+    expect(result.status).toBe(201);
+    const entry = store
+      .inspectEntries()
+      .find((e) => e.record.provenance.authorizedUnder === grant.grantId)!;
+    expect(entry).not.toHaveProperty("purpose");
+    expect(entry).toHaveProperty("extension", "retained");
+    expect(
+      store
+        .inspectAudit()
+        .find(
+          (e) =>
+            e.eventType === "context.created" && e.grantId === grant.grantId,
+        )?.purpose,
+    ).toBe(PURPOSES[1].code);
+  });
+
+  it("C8 person review binds the explicitly selected purpose rather than choosing one", () => {
+    const { grant } = issue();
+    const body: any = input(grant, {
+      purpose: PURPOSES[1].code,
+      subject: { id: authority.accountId() },
+    });
+    const review = authority.reviewPersonWrite(
+      human,
+      "create",
+      body,
+      undefined,
+      "browser",
+    );
+    expect(review.purpose).toEqual(PURPOSES[1]);
+    const capability = authority.approvePersonWrite(
+      human,
+      review.reviewId,
+      review.csrf,
+      "browser",
+    );
+    const changed = { ...body, purpose: PURPOSES[0].code };
+    expect(() =>
+      authority.commitPersonWrite(
+        human,
+        capability,
+        "create",
+        changed,
+        JSON.stringify(changed),
+        "person-purpose",
+      ),
+    ).toThrow(AuthorityError);
+    const result = release(
+      authority.commitPersonWrite(
+        human,
+        capability,
+        "create",
+        body,
+        JSON.stringify(body),
+        "person-purpose",
+      ),
+    );
+    expect(result.body).not.toHaveProperty("purpose");
+    expect(
+      store
+        .inspectAudit()
+        .find(
+          (e) =>
+            e.eventType === "context.created" && e.entryId === result.body.id,
+        )?.purpose,
+    ).toBe(PURPOSES[1].code);
+  });
+
+  it.each([
+    { permittedPurposes: [] },
+    { permittedPurposes: [PURPOSES[1].code] },
+  ])(
+    "C8 freezes completion when a create cannot disclose for its named purpose (%j)",
+    ({ permittedPurposes }) => {
+      const { grant, token } = issue();
+      const body = input(grant, {
+        assertion: { declarationType: "person-declared", permittedPurposes },
+      });
+      const before = store.inspectEntries().length;
+      const result = release(commit(token, body, "no-use"));
+      expect(result).toMatchObject({
+        status: 200,
+        body: { outcome: "committed", representation: "not-included" },
+      });
+      expect(Object.keys(result.body)).toHaveLength(2);
+      const audit = store
+        .inspectAudit()
+        .find(
+          (e) =>
+            e.eventType === "context.created" && e.grantId === grant.grantId,
+        )!;
+      expect(audit.disclosed).toBeUndefined();
+      expect(
+        authority.lastPossibleCopyUseUntil(human, grant.grantId),
+      ).toBeNull();
+      reopen();
+      expect(release(commit(token, body, "no-use"))).toEqual(result);
+      expect(store.inspectEntries()).toHaveLength(before + 1);
+      expect(
+        store
+          .inspectAudit()
+          .filter(
+            (e) =>
+              e.eventType === "context.created" && e.grantId === grant.grantId,
+          ),
+      ).toHaveLength(1);
+    },
+  );
+
+  it("C8 management create with no future uses retains its independently authorized result", () => {
+    const { grant } = issue();
+    const body = input(grant, {
+      subject: { id: authority.accountId() },
+      assertion: { declarationType: "person-declared", permittedPurposes: [] },
+    });
+    const review = authority.reviewPersonWrite(
+      human,
+      "create",
+      body,
+      undefined,
+      "browser",
+    );
+    const result = release(
+      authority.commitReviewedPersonWrite(
+        human,
+        review.reviewId,
+        review.csrf,
+        "browser",
+        "managed-no-use",
+      ),
+    );
+    expect(result.status).toBe(201);
+    expect(result.body.id).toMatch(/^urn:uuid:/);
+    expect(result.body.assertion.permittedPurposes).toEqual([]);
+    expect(result.body).not.toHaveProperty("useUntil");
+    expect(result.body).not.toHaveProperty("purpose");
+  });
+
+  it("C8 exact copy-only expiry returns completion across restart while mismatches deny", () => {
+    const { grant, token } = issue();
+    const body = input(grant);
+    const first = release(commit(token, body, "copy-only"));
+    expect(first.status).toBe(201);
+    now += 1000;
+    reopen();
+    const before = store.inspectAudit();
+    expect(release(commit(token, body, "copy-only"))).toMatchObject({
+      status: 200,
+      body: { outcome: "committed", representation: "not-included" },
+    });
+    expect(() =>
+      commit(token, { ...body, extension: true }, "copy-only"),
+    ).toThrow(new AuthorityError("denied"));
+    expect(store.inspectAudit()).toEqual(before);
+    const current = store
+      .inspectEntries()
+      .find((e) => e.record.provenance.authorizedUnder === grant.grantId)!;
+    authority.confirmEntry(human, current.id, {
+      expectedVersion: 1,
+      disposition: "rejected",
+    });
+    expect(() => commit(token, body, "copy-only")).toThrow(AuthorityError);
+  });
+
+  it.each([undefined, "held-key"])(
+    "C8 preserves an unaffected original across a different category's rule change (key=%s)",
+    (key) => {
+      const { grant, token } = issue("a", [
+        detail(["read", "write"], {
+          categories: ["general_preferences", "work_context"],
+        }),
+      ]);
+      const body = input(grant),
+        ticket = commit(token, body, key);
+      const otherAuthority = store.authorization(config, human);
+      otherAuthority.replacePolicy(human, {
+        rules: [
+          {
+            operators: [config.clients[0].operator.id],
+            categories: ["work_context"],
+          },
+        ],
+        directives: [],
+      });
+      otherAuthority.replacePolicy(human, { rules: [], directives: [] });
+      expect(release(ticket)).toMatchObject({
+        status: 201,
+        body: { content: body.content },
+      });
+      if (key) expect(() => commit(token, body, key)).toThrow(AuthorityError);
+    },
+  );
+
+  it.each(["admission", "handoff"])(
+    "C8 authorizes historical relationship targets on a changed-key conflict at %s",
+    (boundary) => {
+      const { grant, token } = issue();
+      const body = input(grant);
+      const target = release(commit(token, body));
+      const id = store
+        .inspectEntries()
+        .find((e) => e.record.provenance.authorizedUnder === grant.grantId)!.id;
+      const request = input(grant, {
+        content: { ...body.content, value: "Derived" },
+        record: {
+          ...body.record,
+          relationships: [{ type: "derivedFrom", target: target.body.ref }],
+        },
+      });
+      release(commit(token, request, "historical-peer"));
+      const changed = { ...request, record: body.record };
+      const attempt = () => commit(token, changed, "historical-peer");
+      let conflict: unknown;
+      try {
+        attempt();
+      } catch (e) {
+        conflict = e;
+      }
+      expect((conflict as Error).message).toBe("idempotency-conflict");
+      authority.confirmEntry(human, id, {
+        expectedVersion: 1,
+        disposition: "rejected",
+      });
+      if (boundary === "admission")
+        expect(attempt).toThrow(new AuthorityError("denied"));
+      else
+        expect(() => authority.releaseWriteConflict(conflict)).toThrow(
+          new AuthorityError("denied"),
+        );
+    },
+  );
+
+  it("C8 person context-write review obeys applicable standing rules", () => {
+    const { grant } = issue();
+    const body = input(grant, { subject: { id: authority.accountId() } });
+    authority.replacePolicy(human, {
+      rules: [
+        {
+          operators: ["https://example.test/operators/synthetic"],
+          categories: ["general_preferences"],
+        },
+      ],
+      directives: [],
+    });
+    const before = store.inspectAudit();
+    expect(() =>
+      authority.reviewPersonWrite(human, "create", body, undefined, "browser"),
+    ).toThrow(new AuthorityError("denied"));
+    expect(store.inspectAudit()).toEqual(before);
+    expect(authority.managementEntries(human).entries).toBeDefined();
+  });
+
+  it("C8 equivalent directive replacement preserves original and retained responses", () => {
+    const { grant, token } = issue();
+    const directives = [
+      {
+        action: "urn:example:action:a",
+        effect: "deny",
+        text: "A",
+        categories: ["general_preferences", "work_context"],
+      },
+      {
+        action: "urn:example:action:b",
+        effect: "ask-first",
+        text: "B",
+        operators: [
+          config.clients[0].operator.id,
+          config.clients[1].operator.id,
+        ],
+      },
+    ];
+    authority.replacePolicy(human, { rules: [], directives });
+    const body = input(grant),
+      original = release(commit(token, body, "directive-noop")),
+      pending = commit(token, body);
+    authority.replacePolicy(human, {
+      directives: directives
+        .slice()
+        .reverse()
+        .map((d) => ({
+          ...d,
+          ...(d.categories
+            ? { categories: d.categories.slice().reverse() }
+            : {}),
+          ...(d.operators ? { operators: d.operators.slice().reverse() } : {}),
+        })),
+      rules: [],
+    });
+    expect(release(pending).status).toBe(201);
+    expect(release(commit(token, body, "directive-noop"))).toEqual(original);
+  });
+
+  it.each(["general_preferences", "work_context"])(
+    "C8 tracks original permissions through deny/restore during rendering (%s)",
+    (category) => {
+      const { grant, token } = issue("a", [
+        detail(["read", "write"], {
+          categories: ["general_preferences", "work_context"],
+        }),
+      ]);
+      const body = input(grant),
+        ticket = commit(token, body);
+      let changed = false,
+        result: any;
+      authority.releaseWrite(
+        ticket,
+        (status: number, bytes: string) => {
+          result = { status, body: JSON.parse(bytes) };
+        },
+        (bytes: string) => {
+          if (!changed) {
+            changed = true;
+            authority.replacePolicy(human, {
+              rules: [
+                {
+                  operators: [config.clients[0].operator.id],
+                  categories: [category],
+                },
+              ],
+              directives: [],
+            });
+            authority.replacePolicy(human, { rules: [], directives: [] });
+          }
+          return bytes;
+        },
+      );
+      expect(result.status).toBe(
+        category === "general_preferences" ? 200 : 201,
+      );
+      if (category === "general_preferences")
+        expect(result.body).toEqual({
+          outcome: "committed",
+          representation: "not-included",
+        });
+      else expect(result.body.content).toEqual(body.content);
+    },
+  );
+
+  it("C8 original management disclosure survives execution-grant revocation while retry does not", () => {
+    const { grant } = issue();
+    const body = input(grant, { subject: { id: authority.accountId() } });
+    const review = authority.reviewPersonWrite(
+      human,
+      "create",
+      body,
+      undefined,
+      "browser",
+    );
+    const ticket = authority.commitReviewedPersonWrite(
+      human,
+      review.reviewId,
+      review.csrf,
+      "browser",
+      "management-original",
+    );
+    authority.replacePolicy(human, {
+      rules: [
+        {
+          operators: ["https://example.test/operators/synthetic"],
+          categories: ["general_preferences"],
+        },
+      ],
+      directives: [],
+    });
+    expect(release(ticket)).toMatchObject({
+      status: 201,
+      body: { content: body.content },
+    });
+    expect(() =>
+      authority.commitReviewedPersonWrite(
+        human,
+        review.reviewId,
+        review.csrf,
+        "browser",
+        "management-original",
+      ),
+    ).toThrow(AuthorityError);
+  });
+
   it("refuses non-Core and provider-owned person writes and classification reviews without issuing review authority", () => {
     const { grant } = issue();
     const personInput = (extra = {}) =>
@@ -367,6 +988,7 @@ describe("C4 durable person writes and original completion", () => {
         operation === "create"
           ? { ...body, subject: { id: authority.accountId() } }
           : {
+              purpose: body.purpose,
               expectedVersion: 1,
               reason: "Person correction",
               content: { ...body.content, value: "Updated work statement" },
@@ -426,6 +1048,7 @@ describe("C4 durable person writes and original completion", () => {
       .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
     for (const permittedPurposes of [[], ["urn:example:unsupported-purpose"]]) {
       const request = {
+        purpose: body.purpose,
         expectedVersion: 1,
         reason: "Person correction",
         content: body.content,
@@ -460,6 +1083,7 @@ describe("C4 durable person writes and original completion", () => {
       .inspectEntries()
       .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
     const request = {
+      purpose: PURPOSES[0].code,
       expectedVersion: 1,
       reason: "Person correction",
       content: body.content,
@@ -506,6 +1130,7 @@ describe("C4 durable person writes and original completion", () => {
       permittedPurposes: [PURPOSES[1].code],
     });
     const request = {
+      purpose: body.purpose,
       expectedVersion: 1,
       reason: "Correction",
       content: body.content,
@@ -538,6 +1163,7 @@ describe("C4 durable person writes and original completion", () => {
         .inspectEntries()
         .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
       const request = {
+        purpose: "https://example.test/purpose/synthetic-review",
         expectedVersion: 1,
         reason: "Exact person correction under a new purpose",
         content: { ...body.content, value: "Corrected person statement" },
@@ -641,6 +1267,7 @@ describe("C4 durable person writes and original completion", () => {
       assurance: "unverified",
     });
     const request = {
+      purpose: "https://example.test/purpose/synthetic-review",
       expectedVersion: 1,
       reason: "I am replacing the inference with my statement",
       content: { ...body.content, value: "I prefer email at work" },
@@ -728,7 +1355,7 @@ describe("C4 durable person writes and original completion", () => {
     },
   );
 
-  it("discloses an immediate own-quarantined result only while the exact causal state remains unchanged", () => {
+  it("keeps a quarantined create completion-only on its original response and exact recovery", () => {
     const a = issue();
     const person = input(
       { subject: { id: authority.accountId() } },
@@ -759,18 +1386,21 @@ describe("C4 durable person writes and original completion", () => {
     );
     const body = modelInput(a.grant, "phone");
     const result = release(commit(a.token, body, "model"));
-    expect(result.body.content).toEqual(body.content);
+    expect(result).toMatchObject({
+      status: 200,
+      body: { outcome: "committed", representation: "not-included" },
+    });
     const entry = store
       .inspectEntries()
       .find((e) => e.assertion.declarationType === "model-inferred")!;
     expect(entry.record.status).toBe("conflicted");
-    expect(() => commit(a.token, body, "model")).toThrow(AuthorityError);
+    expect(release(commit(a.token, body, "model"))).toEqual(result);
     expect(() =>
       authority.prepareRead(
         a.token,
         "get",
         { purpose: PURPOSES[0].code },
-        result.body.ref,
+        "r_undisclosed",
       ),
     ).toThrow(AuthorityError);
     const another = modelInput(a.grant, "letter", "two"),
@@ -793,7 +1423,10 @@ describe("C4 durable person writes and original completion", () => {
     release(
       commit(
         a.token,
-        { reason: "Person statement withdrawn" },
+        {
+          purpose: "https://example.test/purpose/synthetic-review",
+          reason: "Person statement withdrawn",
+        },
         undefined,
         "withdraw",
         personRef!,
@@ -995,6 +1628,7 @@ describe("C4 durable person writes and original completion", () => {
       b = issue("b"),
       readOnly = issue("a", [detail(["read"])]);
     const fields = {
+      purpose: "https://example.test/purpose/synthetic-review",
       content: modelInput(a.grant, "email").content,
       classification: { categories: ["general_preferences"] },
       confidence: "medium",
@@ -1144,6 +1778,7 @@ describe("C4 durable person writes and original completion", () => {
       ),
     ).toBe(true);
     const revision = {
+      purpose: "https://example.test/purpose/synthetic-review",
       expectedVersion: 1,
       reason: "new statement",
       content: {
@@ -1274,6 +1909,7 @@ describe("C4 durable person writes and original completion", () => {
       confirmations: [],
     });
     const revision = {
+      purpose: "https://example.test/purpose/synthetic-review",
       expectedVersion: 1,
       content: { ...input(grant).content, value: "revised" },
       reason: "person corrected statement",
@@ -1296,7 +1932,10 @@ describe("C4 durable person writes and original completion", () => {
     const deleted = release(
       commit(
         token,
-        { reason: "withdraw" },
+        {
+          purpose: "https://example.test/purpose/synthetic-review",
+          reason: "withdraw",
+        },
         "withdraw-key",
         "withdraw",
         create.body.ref,
@@ -1333,7 +1972,10 @@ describe("C4 durable person writes and original completion", () => {
     expect(() =>
       commit(
         other.token,
-        { reason: "foreign ref" },
+        {
+          purpose: "https://example.test/purpose/synthetic-review",
+          reason: "foreign ref",
+        },
         undefined,
         "withdraw",
         created.body.ref,
@@ -1376,7 +2018,7 @@ describe("C4 durable person writes and original completion", () => {
     const ticket = commit(token, body, "revoked");
     authority.revoke(human, grant.grantId);
     expect(release(ticket)).toMatchObject({
-      status: 201,
+      status: 200,
       body: { outcome: "committed", representation: "not-included" },
     });
     expect(() => commit(token, body, "revoked")).toThrow(AuthorityError);
@@ -1464,6 +2106,7 @@ describe("C4 durable person writes and original completion", () => {
       undefined,
     ].entries()) {
       const request = {
+        purpose: PURPOSES[0].code,
         expectedVersion: index + 1,
         reason: "Person purpose correction",
         content: body.content,
@@ -1546,9 +2189,15 @@ describe("C4 durable person writes and original completion", () => {
         now = start + 1000;
         return result;
       };
-      expect(() => release(ticket)).toThrow(
-        new AuthorityError(deadline === "token" ? "unauthenticated" : "denied"),
-      );
+      if (deadline === "token")
+        expect(() => release(ticket)).toThrow(
+          new AuthorityError("unauthenticated"),
+        );
+      else
+        expect(release(ticket)).toMatchObject({
+          status: 200,
+          body: { outcome: "committed", representation: "not-included" },
+        });
     },
   );
 
@@ -1579,6 +2228,7 @@ describe("C4 durable person writes and original completion", () => {
       const request =
         kind === "revise"
           ? {
+              purpose: body.purpose,
               expectedVersion: 1,
               content: body.content,
               reason: "Correction",
@@ -1622,7 +2272,10 @@ describe("C4 durable person writes and original completion", () => {
         release(
           commit(
             token,
-            { reason: "Withdraw target" },
+            {
+              purpose: "https://example.test/purpose/synthetic-review",
+              reason: "Withdraw target",
+            },
             "withdraw-target",
             "withdraw",
             target.body.ref,
@@ -1676,7 +2329,10 @@ describe("C4 durable person writes and original completion", () => {
         release(
           commit(
             token,
-            { reason: "Withdraw target" },
+            {
+              purpose: "https://example.test/purpose/synthetic-review",
+              reason: "Withdraw target",
+            },
             "withdraw-related",
             "withdraw",
             target.body.ref,
@@ -1750,7 +2406,7 @@ describe("C4 durable person writes and original completion", () => {
     release(
       commit(
         a.token,
-        { expectedVersion: 1, reason: "withdraw" },
+        { purpose: PURPOSES[0].code, expectedVersion: 1, reason: "withdraw" },
         undefined,
         "withdraw",
         fresh.body.ref,
@@ -1773,7 +2429,10 @@ describe("C4 durable person writes and original completion", () => {
     });
     reopen();
     const fresh = tokenFor(grant);
-    expect(() => commit(fresh, body, "expired-token")).toThrow(AuthorityError);
+    expect(release(commit(fresh, body, "expired-token"))).toMatchObject({
+      status: 200,
+      body: { outcome: "committed", representation: "not-included" },
+    });
   });
 
   it("replays a still-live candidate under a refreshed unchanged grant after original minimal completion", () => {
@@ -1800,8 +2459,11 @@ describe("C4 durable person writes and original completion", () => {
     expect(store.inspectEntries()).toHaveLength(before + 1);
     expect(store.inspectAudit()).toEqual(events);
     now += 500;
-    expect(() => commit(fresh, body, "short-token-live-copy")).toThrow(
-      AuthorityError,
+    expect(release(commit(fresh, body, "short-token-live-copy"))).toMatchObject(
+      {
+        status: 200,
+        body: { outcome: "committed", representation: "not-included" },
+      },
     );
     expect(store.inspectAudit()).toEqual(events);
   });
@@ -1844,7 +2506,7 @@ describe("C4 durable person writes and original completion", () => {
     expect(store.inspectEntries()).toHaveLength(before + 1);
   });
 
-  it("expired original copies use minimal first replies and deny retry without repeating the write", () => {
+  it("expired original copies use minimal original and exact retry replies without repeating the write", () => {
     const { grant, token } = issue();
     const body = input(grant);
     // Copy deadline is shorter than the still-valid token/grant; isolate this release gate.
@@ -1856,7 +2518,10 @@ describe("C4 durable person writes and original completion", () => {
     });
     reopen();
     const events = store.inspectAudit();
-    expect(() => commit(tokenFor(grant), body, "copy")).toThrow(AuthorityError);
+    expect(release(commit(tokenFor(grant), body, "copy"))).toMatchObject({
+      status: 200,
+      body: { outcome: "committed", representation: "not-included" },
+    });
     expect(store.inspectAudit()).toEqual(events);
   });
   it("checks the original copy deadline again when releasing an already prepared retry", () => {
@@ -1867,7 +2532,10 @@ describe("C4 durable person writes and original completion", () => {
     const prepared = commit(token, body, "retry-copy"),
       events = store.inspectAudit();
     now += 500;
-    expect(() => release(prepared)).toThrow(AuthorityError);
+    expect(release(prepared)).toMatchObject({
+      status: 200,
+      body: { outcome: "committed", representation: "not-included" },
+    });
     expect(store.inspectAudit()).toEqual(events);
   });
 
@@ -1886,6 +2554,7 @@ describe("C4 durable person writes and original completion", () => {
       commit(
         token,
         {
+          purpose: body.purpose,
           expectedVersion: 1,
           reason: "fresh statement",
           content: body.content,
@@ -1910,13 +2579,7 @@ describe("C4 durable person writes and original completion", () => {
         ...base,
         classification: { categories: ["general_preferences", "work_context"] },
       },
-      {
-        ...base,
-        assertion: {
-          declarationType: "person-declared",
-          permittedPurposes: [PURPOSES[1].code],
-        },
-      },
+      { ...base, purpose: PURPOSES[1].code },
       { ...base, record: { ...base.record, version: 8 } },
       {
         ...base,
@@ -2016,6 +2679,7 @@ describe("C4 durable person writes and original completion", () => {
       commit(
         token,
         {
+          purpose: body.purpose,
           expectedVersion: 1,
           reason: "new wording",
           content: body.content,
@@ -2132,6 +2796,7 @@ describe("C4 durable person writes and original completion", () => {
     const valid = release(commit(token, body, "validation"));
     expect(valid.body.version).toBe(1);
     const revision = {
+      purpose: body.purpose,
       expectedVersion: 1,
       reason: "new wording",
       content: body.content,
@@ -2306,6 +2971,7 @@ describe("C4 durable person writes and original completion", () => {
       commit(
         token,
         {
+          purpose: "https://example.test/purpose/synthetic-review",
           expectedVersion: 1,
           reason: "New model assertion",
           content: revised.content,
@@ -2439,9 +3105,10 @@ describe("C4 durable person writes and original completion", () => {
       directives: [],
     });
     expect(
-      authority.listGrants(human).find((g: any) => g.grantId === grant.grantId)
-        .status,
-    ).toBe("active");
+      authority
+        .listGrants(human, "all")
+        .find((g: any) => g.grantId === grant.grantId).status,
+    ).toBe("revoked");
     expect(() =>
       authority.commitPersonWrite(
         human,
@@ -2453,18 +3120,19 @@ describe("C4 durable person writes and original completion", () => {
       ),
     ).toThrow(AuthorityError);
     reopen();
-    expect(
-      release(
-        authority.commitPersonWrite(
-          human,
-          capability,
-          "create",
-          request,
-          raw,
-          "person",
-        ),
+    expect(() =>
+      authority.commitPersonWrite(
+        human,
+        capability,
+        "create",
+        request,
+        raw,
+        "person",
       ),
-    ).toEqual(first);
+    ).toThrow(AuthorityError);
+    expect(
+      authority.managementEntry(human, first.body.id).entry.content,
+    ).toEqual(request.content);
     expect(store.inspectEntries()).toHaveLength(before + 1);
     authority.revoke(human, grant.grantId);
     expect(() =>
@@ -2592,6 +3260,7 @@ describe("C4 durable person writes and original completion", () => {
       ),
     );
     const revised = {
+      purpose: body.purpose,
       expectedVersion: 1,
       reason: "context correction",
       content: body.content,
@@ -2637,6 +3306,7 @@ describe("C4 durable person writes and original completion", () => {
         .inspectEntries()
         .find((e) => e.record.provenance.authorizedUnder === a.grant.grantId)!;
       const request = {
+        purpose: "https://example.test/purpose/synthetic-review",
         expectedVersion: 1,
         reason: "My reviewed edit",
         content: { ...body.content, value: "My new statement" },

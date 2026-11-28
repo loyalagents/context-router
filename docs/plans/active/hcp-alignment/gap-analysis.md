@@ -5,6 +5,15 @@
 - Plan and decisions: [HCP alignment brief](README.md)
 - Relationship: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
 
+**Current C8 candidate:** [CR #221](https://github.com/loyalagents/context-router/pull/221)
+is being aligned with unmerged spec #49 at `be930499`. This addresses the selected
+G02/G10/G14 write-purpose, completion and recovery cases; the
+[C8 brief](c8-resolution-brief.md#updated-49-application-plan-2026-11-27) records
+tests and independent review. Runtime/adoption pins remain unchanged. Full grant
+issuance breadth, MCP writes, §18.3 Provider Interop and profile qualification remain
+C9 obligations; remaining #38 correction restrictions, D3 erasure and CR-Q9 data
+gates are unchanged. The historical assessment below is not rewritten by this patch.
+
 ## Baseline And Method
 
 The assessment compared Context Router

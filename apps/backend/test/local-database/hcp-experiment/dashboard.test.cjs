@@ -35,6 +35,7 @@ async function review(
     method: "POST",
     headers: { origin: f.issuer },
     form: {
+      purpose: "https://example.test/purpose/synthetic-review",
       csrf: inputs(editor.text).csrf,
       entryId: entry.id,
       expectedVersion: entry.record.version,
@@ -108,6 +109,7 @@ test("C6 browser denial has safe recovery links without reflecting rejected cont
     method: "POST",
     headers: { origin: f.issuer },
     form: {
+      purpose: "https://example.test/purpose/synthetic-review",
       csrf: "forged",
       value: "private rejected value <script>bad()</script>",
     },
@@ -157,6 +159,7 @@ test("C6 inspection labels current lifecycle and classification; structured and 
         method: "POST",
         headers: { origin: f.issuer },
         form: {
+          purpose: "https://example.test/purpose/synthetic-review",
           csrf:
             inputs(list.text).csrf ||
             inputs((await browser.request("/manage/person/new")).text).csrf,
@@ -180,6 +183,7 @@ test("C6 a client-created model-inferred string can be reviewed as a new person 
   const created = await f.context("/v2/entries", token, {
     method: "POST",
     json: {
+      purpose: "https://example.test/purpose/synthetic-review",
       schema: "https://hcp.example/spec/entry/2.0",
       subject: grant.subject,
       content: { profile: GENERAL_PROFILE, value },
@@ -293,6 +297,7 @@ test("C6 string-valued retained unsupported declarations and profiles remain vie
       method: "POST",
       headers: { origin: f.issuer },
       form: {
+        purpose: "https://example.test/purpose/synthetic-review",
         csrf,
         entryId: entry.id,
         expectedVersion: entry.record.version,
@@ -427,7 +432,7 @@ for (const [stage, title] of [
                       ? `/manage/entries/${encodeURIComponent(entry.id)}`
                       : `/manage/person/${encodeURIComponent(entry.id)}`,
             );
-    assert.equal(response.status, stage === "saved" ? 201 : 401);
+    assert.equal(response.status, stage === "saved" ? 200 : 401);
     assert.ok(!response.text.includes(entry.id));
     assert.ok(!response.text.includes(encodeURIComponent(entry.id)));
     assert.doesNotMatch(
@@ -610,3 +615,52 @@ for (const [point, action] of [
       );
     }
   });
+
+test("C8 person editor requires and reviews the selected current purpose", async (t) => {
+  const f = await fixture(t, { approveFixtures: true });
+  const browser = await signedIn(f);
+  const editor = await browser.request("/manage/person/new");
+  assert.match(editor.text, /<select name="purpose" required>/);
+  assert.match(editor.text, /<option value="">Choose/);
+  const form = {
+    csrf: inputs(editor.text).csrf,
+    category: "general_preferences",
+    value: "Synthetic purpose selection",
+  };
+  const submit = (fields) =>
+    browser.request("/manage/person/review", {
+      method: "POST",
+      headers: { origin: f.issuer },
+      form: fields,
+    });
+  const before = await entries(f);
+  assert.equal((await submit(form)).status, 400);
+  assert.equal(
+    (await submit({ ...form, purpose: "urn:example:unapproved" })).status,
+    403,
+  );
+  const review = await submit({
+    ...form,
+    purpose: "https://example.test/purpose/work-planning",
+  });
+  assert.equal(review.status, 200);
+  assert.match(review.text, /Plan the synthetic person&#39;s work/);
+  assert.match(review.text, /https:\/\/example.test\/purpose\/work-planning/);
+  const fields = inputs(review.text);
+  const saved = await browser.request("/manage/person/approve", {
+    method: "POST",
+    headers: { origin: f.issuer },
+    form: fields,
+  });
+  assert.equal(saved.status, 201);
+  const after = await entries(f);
+  assert.equal(after.entries.length, before.entries.length + 1);
+  const entry = after.entries.find((e) => e.content.value === form.value);
+  assert.ok(entry);
+  assert.equal(Object.hasOwn(entry, "purpose"), false);
+  const history = await f.management(`/v2/audit?entryId=${entry.id}`);
+  assert.equal(
+    history.json.events.find((e) => e.eventType === "context.created").purpose,
+    "https://example.test/purpose/work-planning",
+  );
+});

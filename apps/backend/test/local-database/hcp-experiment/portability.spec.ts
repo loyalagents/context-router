@@ -333,6 +333,7 @@ describe("C5 bounded v2 portability", () => {
     apply(bundle);
     const e = bundle.entries[0];
     const request = {
+      purpose: "https://example.test/purpose/synthetic-review",
       expectedVersion: 1,
       reason: "My correction",
       content: { ...e.content, value: "new wording" },
@@ -500,6 +501,7 @@ describe("C5 bounded v2 portability", () => {
       "skipped",
     );
     const request = {
+      purpose: "https://example.test/purpose/synthetic-review",
       expectedVersion: 1,
       reason: "Correction",
       content: { ...e.content, value: "revised" },

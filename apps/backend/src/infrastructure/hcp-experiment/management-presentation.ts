@@ -120,6 +120,7 @@ export function personEditor(
   current: EntryView | undefined,
   csrf: string,
   categories: string[],
+  purposes: { code: string; description: string }[],
 ): string {
   return `<p>Synthetic data only. This is an explicit person statement. Review the exact wording and replacement effects before saving. Login alone gives no write authority.</p><form method="post" action="/manage/person/review">${hidden("csrf", csrf)}
           ${
@@ -130,6 +131,7 @@ export function personEditor(
                   .map((c) => `<option value="${c}">${escape(c)}</option>`)
                   .join("")}</select></label>`
           }
+          <label>Purpose of this save <select name="purpose" required><option value="">Choose a purpose…</option>${purposes.map((p) => `<option value="${escape(p.code)}">${escape(p.description)}</option>`).join("")}</select></label>
           <label>Your statement <textarea name="value" rows="6" required>${escape(current?.content.value ?? "")}</textarea></label><button>Review my statement</button></form><a href="/manage/entries">Cancel without saving</a>`;
 }
 

@@ -863,6 +863,9 @@ test(
 
       await page.goto(f.issuer + "/manage/person/new");
       await page.getByLabel("Your statement").fill("I prefer a short summary");
+      await page
+        .getByLabel("Purpose of this save")
+        .selectOption("https://example.test/purpose/synthetic-review");
       await page.getByRole("button", { name: "Review my statement" }).click();
       await page.waitForSelector('body[data-stage="person-review"]');
       assert.match(
@@ -892,6 +895,9 @@ test(
       await page
         .getByLabel("Your statement")
         .fill("I prefer a compact email summary");
+      await page
+        .getByLabel("Purpose of this save")
+        .selectOption("https://example.test/purpose/synthetic-review");
       await page.getByRole("button", { name: "Review my statement" }).click();
       await page.waitForSelector('body[data-stage="person-review"]');
       await page
@@ -924,6 +930,7 @@ test(
         },
       });
       const body = {
+        purpose: "https://example.test/purpose/synthetic-review",
         schema: "https://hcp.example/spec/entry/2.0",
         subject: grant.subject,
         content: fact("email"),
@@ -957,7 +964,11 @@ test(
         json: modelBody,
         headers: { "idempotency-key": "browser-model" },
       });
-      assert.equal(model.status, 201);
+      assert.equal(model.status, 200);
+      assert.deepEqual(model.json, {
+        outcome: "committed",
+        representation: "not-included",
+      });
       const events = (await f.management(`/v2/audit?grantId=${grant.grantId}`))
         .json.events;
       const id = events.find(

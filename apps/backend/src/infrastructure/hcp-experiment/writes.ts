@@ -24,6 +24,10 @@ export class WriteConflict extends AuthorityError {
     this.message = conflict;
   }
 }
+/** Internal storage outcome; never a Core/MCP error. */
+export class CommitOutcomeUncertain extends Error {}
+/** HTTP-only, released only with the original invocation's private authority proof. */
+export class WriteUnresolved extends Error {}
 export const COMPLETION_ONLY =
   '{"outcome":"committed","representation":"not-included"}';
 export function canDiscloseMutation(
@@ -33,20 +37,29 @@ export function canDiscloseMutation(
   rules: any[],
   now: number,
   operation: WriteOperation,
-  ownQuarantine = false,
 ): boolean {
   const metadataOnly = operation === "withdraw";
-  const visible =
-    metadataOnly || (ownQuarantine && entry.record.status === "conflicted")
-      ? {
-          ...entry,
-          assertion: metadataOnly
-            ? { ...entry.assertion, validUntil: null }
-            : entry.assertion,
-          record: { ...entry.record, status: "active" },
-        }
-      : entry;
-  return evaluateEntry(grant, visible, purpose, rules, now);
+  const visible = metadataOnly
+    ? {
+        ...entry,
+        assertion: metadataOnly
+          ? { ...entry.assertion, validUntil: null }
+          : entry.assertion,
+        record: { ...entry.record, status: "active" },
+      }
+    : entry;
+  return (
+    evaluateEntry(grant, visible, purpose, rules, now) &&
+    visible.classification.categories.every((category: string) =>
+      grant.access.some(
+        (d: any) =>
+          d.actions.includes("read") &&
+          d.categories.includes(category) &&
+          d.purposes.some((p: any) => p.code === purpose) &&
+          (!d.narrowedTo || d.narrowedTo.entryIds.includes(entry.id)),
+      ),
+    )
+  );
 }
 export const permissionRevision = (db: DatabaseSync, grantId: string): number =>
   Number(
@@ -93,11 +106,15 @@ export const permitsPurpose = (entry: any, purpose: string): boolean =>
  * intentionally separate: revising an expired/deprecated version may be valid. */
 export function mutationPurpose(
   grant: any,
+  purpose: unknown,
   classification: any,
   rules: any[],
   target?: any,
   personCorrection = false,
+  targetRestrictions = true,
 ): string {
+  if (!purposeCode(purpose)) invalid();
+  const named = purpose as string;
   const requested = classification?.categories;
   if (
     !strings(requested) ||
@@ -113,24 +130,25 @@ export function mutationPurpose(
   const write = access!.filter(
     (d) =>
       d.actions.includes("write") &&
+      d.purposes.some((p: any) => p.code === named) &&
       (d.narrowedTo === undefined ||
         (target && d.narrowedTo.entryIds.includes(target.id))),
   );
   if (!write.length) denied();
-  const purpose = write[0].purposes[0].code;
   if (
     requested.some((c: string) => !write.some((d) => d.categories.includes(c)))
   )
     denied();
   if (
     target &&
+    targetRestrictions &&
     !permitsPurpose(
       personCorrection ? { classification: target.classification } : target,
-      purpose,
+      named,
     )
   )
     denied();
-  return purpose;
+  return named;
 }
 function reason(input: any): void {
   if (
@@ -306,7 +324,12 @@ export function mutationDocument(
   const meta = db.prepare("SELECT * FROM store_metadata").get();
   const at = new Date(now).toISOString(),
     version = current ? current.record.version + 1 : 1;
-  const { expectedVersion: _expected, reason: _reason, ...extensions } = input;
+  const {
+    expectedVersion: _expected,
+    reason: _reason,
+    purpose: _purpose,
+    ...extensions
+  } = input;
   const document = {
     ...structuredClone(extensions),
     "@context": ["https://hcp.example/contexts/v2"],
