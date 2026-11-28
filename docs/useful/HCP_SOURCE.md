@@ -14,7 +14,10 @@ Keep the original method, target, key and exact request bytes for bounded recove
 do not substitute a fresh key or grant after a lost reply. A fixed HTTP 200
 completion confirms a committed write without returning its content or identifier.
 An authorized temporary `idempotency-unresolved` response uses HTTP 503 and
-`Retry-After`; generic failures do not establish the earlier outcome. The browser
+`Retry-After`. Generic operational failures use `about:blank` HTTP 503 without
+retry instructions and do not establish the earlier outcome. Older saved write
+receipts lacking the current recovery proof receive an opaque denial; their keys
+remain consumed, while unrelated requests remain usable. The browser
 continues to require an explicit action and never automatically resends a save.
 No MCP write tools or hard-delete support are added by this candidate.
 

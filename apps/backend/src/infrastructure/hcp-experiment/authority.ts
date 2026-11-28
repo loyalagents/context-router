@@ -66,6 +66,7 @@ import {
   invalid,
   keys,
   matchingDirectives,
+  object,
   privateId,
   scopeAccess,
   strings,
@@ -1448,6 +1449,31 @@ export class AuthorizationRepository {
             if (existing.grant_id !== grant.grantId) denied();
             const binding = parse(existing.binding);
             if (existing.invalidated || !existing.response) denied();
+            // Earlier receipt encodings cannot prove current recovery authority.
+            // Deny without freeing the consumed key or closing unrelated admission.
+            if (
+              !object(binding) ||
+              !["ordinary", "completion"].includes(binding.representation) ||
+              !object(binding.relationshipInput?.record) ||
+              !Array.isArray(binding.relationshipInput.record.relationships) ||
+              !binding.relationshipInput.record.relationships.every(
+                (r: any) =>
+                  object(r) &&
+                  typeof r.target === "string" &&
+                  r.target.length > 0 &&
+                  (r.proposal === undefined ||
+                    (object(r.proposal) &&
+                      typeof r.proposal.entry === "string" &&
+                      r.proposal.entry.length > 0)),
+              ) ||
+              (binding.capacity === "context" &&
+                binding.representation === "ordinary" &&
+                !validCore(
+                  "common.json#/$defs/classification",
+                  binding.candidateClassification,
+                ))
+            )
+              denied();
             const exact =
               binding.operation === operation &&
               binding.target === target &&
@@ -2937,7 +2963,8 @@ export class AuthorizationRepository {
     previousDirectives: any[],
   ): void {
     const rules = policies(db, "rules"),
-      directives = policies(db, "directives");
+      directives = policies(db, "directives"),
+      now = this.kernel.now();
     for (const row of db
       .prepare("SELECT * FROM grants WHERE status='active'")
       .all()) {
@@ -2950,9 +2977,35 @@ export class AuthorizationRepository {
           denied: deniedCategories(grant.client, reached, r).sort(),
           directives: directiveSignature(grant, d),
         });
+      // A known peer can be readable through one category while a rule on its
+      // other category denies it. That change also invalidates retained results
+      // which relied on the peer, even if the rule is subsequently removed.
+      const readPurposes = [
+        ...new Set<string>(
+          grant.access
+            .filter((d: any) => d.actions.includes("read"))
+            .flatMap((d: any) => d.purposes.map((p: any) => p.code)),
+        ),
+      ];
+      const referencedVisibilityChanged = () =>
+        db
+          .prepare("SELECT entry_id FROM grant_refs WHERE grant_id=?")
+          .all(grant.grantId)
+          .some((ref) => {
+            const entry = storedEntry(db, String(ref.entry_id));
+            return (
+              entry &&
+              readPurposes.some(
+                (purpose) =>
+                  evaluateEntry(grant, entry, purpose, previousRules, now) !==
+                  evaluateEntry(grant, entry, purpose, rules, now),
+              )
+            );
+          });
       if (
         signature(previousRules, previousDirectives) !==
-        signature(rules, directives)
+          signature(rules, directives) ||
+        referencedVisibilityChanged()
       )
         invalidateResponses(db, grant.grantId);
       if (

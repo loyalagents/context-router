@@ -1,8 +1,9 @@
 import type { DatabaseSync } from "node:sqlite";
-import { denied, invalid, object, strings } from "./policy";
-import { canDiscloseMutation, storedEntry } from "./writes";
+import { denied, evaluateEntry, invalid, object, strings } from "./policy";
+import { storedEntry } from "./writes";
 
-/** Shared current authorization for a caller's relationship/proposal reference. */
+/** A grant-local reference needs current read eligibility, not permission to
+ * disclose every stored category of the target in a whole write result. */
 export function relationshipResolver(
   db: DatabaseSync,
   grant: any,
@@ -23,8 +24,7 @@ export function relationshipResolver(
     if (
       !target ||
       target.id === document.id ||
-      (!management &&
-        !canDiscloseMutation(grant, target, purpose, rules, now, "create"))
+      (!management && !evaluateEntry(grant, target, purpose, rules, now))
     )
       denied();
     return target;

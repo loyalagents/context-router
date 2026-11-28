@@ -10,6 +10,59 @@
 - Parent: [alignment plan](README.md), [questions](spec-questions.md),
   [requirement/evidence matrix](gap-analysis.md), [integration reference](../../../useful/HCP_INTEGRATION.md)
 
+## External Review Follow-up
+
+Lucas authorized three bounded corrections to CR #221 after the independent Claude
+review of `01632b4a7c22ff0b66098bd68afdde487d10f6a3`. The C8 coordinator remains sole
+writer in the same managed tree. Spec #49 and all adopted pins are unchanged.
+
+- An earlier receipt encoding without the current recovery proof is opaque-denied
+  before exact recovery or mismatch disclosure. The key remains consumed; other
+  operations and restart remain usable. No old response is reconstructed and no
+  store migration/reset is added. Authentication and request-purpose validation
+  still precede key lookup.
+- Generic HTTP operational failures use `about:blank` 503 with an outcome-neutral
+  explanation and no retry instruction. `subject-unavailable` remains reserved for
+  its Core encrypted-trust-domain condition. Authorized `idempotency-unresolved`
+  retains its own proof, final release checks and `Retry-After`; MCP is unchanged.
+- Relationship/proposal references use current read eligibility for the peer,
+  including purpose, target narrowing, lifecycle and standing rules across **all**
+  its categories. They do not require permission to reveal every stored category.
+  A rule change affecting a known peer's read eligibility permanently invalidates
+  retained responses for that affected grant, even if the rule is later removed.
+  Unrelated grants retain their responses. The stricter predicate for the written
+  result is unchanged.
+
+The bounded plan reviewer `c8_three_fix_plan` approved this direction (requested
+Astra/xhigh; actual settings unobservable). Three meaningful new regressions cover
+an obsolete receipt through restart, unkeyed uncertainty/closed admission, and a
+query/get-issued partial-category reference through create/retry/restart followed
+by a denial on its withheld category. They failed before source fixes and pass
+afterward; existing uncertain-outcome assertions now require the generic type.
+Only disposable test fixtures manufacture the earlier receipt encoding, restoring
+its exact production immutability trigger before admission.
+
+Fresh read-only reviewers `c8_three_fix_authority` (Astra/xhigh requested) and
+`c8_three_fix_adoption` (Astra/high requested; actual settings unobservable for
+both) approved the first two corrections and independently found that the partial
+peer fix also needed permanent invalidation after a rule was removed. The extended
+HTTP regression reproduced the stale 201 after removal/restart. Policy changes now
+compare previous/current read eligibility of known grant references, including
+purpose and narrowing, and use the existing affected-grant invalidation mechanism.
+The regression now denies exact and changed-body recovery of the consumed key,
+permits a fresh authorized key, preserves an unrelated grant's cached response,
+and verifies no duplicate mutation audit. The broader consumed-precondition
+self-supersession question is not changed. Correction rechecks are part of the
+final review below; the PR records final commit-bound receipts.
+
+Finalization is one follow-up commit in #221 after focused write and HTTP consumer
+checks, fresh independent authority and adoption/testability review, and renewed
+exact-candidate Product CI. Prior browser/source evidence is carried forward only
+for unchanged presentation, launch and normal-flow behavior; CI renews applicable
+coverage. No full local migration gate or installed artifact is selected. Broader
+self-supersession recovery, #38 authority, erasure/directive decisions and C9 remain
+separate, with their existing owners and data gates.
+
 ## Updated #49 Application Plan (2026-11-27)
 
 Lucas authorized continuation of CR #221 before upstream merge. The managed C8

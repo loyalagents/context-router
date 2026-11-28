@@ -147,6 +147,70 @@ describe("C4 durable person writes and original completion", () => {
     record: { provenance: { source: "person-input" } },
     ...extra,
   });
+  it("C8 follow-up: obsolete receipts deny recovery without closing admission or freeing the key", () => {
+    const { grant, token } = issue();
+    const body = input(grant);
+    release(commit(token, body, "obsolete-receipt"));
+    store.close();
+    const db = new DatabaseSync(path.join(paths().root, "entries.sqlite"));
+    try {
+      const row = db
+        .prepare("SELECT key_hash,binding FROM mutation_receipts")
+        .get()!;
+      const binding = JSON.parse(String(row.binding));
+      delete binding.relationshipInput;
+      delete binding.representation;
+      delete binding.candidateClassification;
+      binding.resultStatus = "active";
+      binding.causalSequence = 0;
+      // Manufacture an earlier on-disk encoding only in this disposable fixture;
+      // restore the exact production trigger before normal store admission.
+      const trigger = db
+        .prepare(
+          "SELECT sql FROM sqlite_schema WHERE name='receipt_binding_immutable'",
+        )
+        .get()!;
+      db.exec("BEGIN; DROP TRIGGER receipt_binding_immutable");
+      db.prepare("UPDATE mutation_receipts SET binding=? WHERE key_hash=?").run(
+        JSON.stringify(binding),
+        row.key_hash,
+      );
+      db.exec(String(trigger.sql));
+      db.exec("COMMIT");
+    } finally {
+      db.close();
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      reopen();
+      const before = store.inspectAudit();
+      for (const request of [body, { ...body, extension: "different request" }])
+        expect(() => commit(token, request, "obsolete-receipt")).toThrow(
+          new AuthorityError("denied"),
+        );
+      expect(store.inspectAudit()).toEqual(before);
+      expect(authority.managementEntries(human).entries).toBeDefined();
+      expect(
+        release(
+          commit(
+            token,
+            input(grant, {
+              content: {
+                ...body.content,
+                value: `Unrelated current write ${attempt}`,
+              },
+            }),
+            `current-${attempt}`,
+          ),
+        ).status,
+      ).toBe(201);
+    }
+    expect(
+      store
+        .inspectEntries()
+        .filter((e) => e.content.value === body.content.value),
+    ).toHaveLength(1);
+  });
+
   it("C8 review: relationship expiry at the last commit check rolls back without closing admission", () => {
     const { grant, token } = issue();
     const body = input(grant);

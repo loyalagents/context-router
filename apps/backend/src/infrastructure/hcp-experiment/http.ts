@@ -1491,7 +1491,7 @@ export function authorizationHandler(
                   unauthenticated: "invalid-token",
                   denied: "scope-denied",
                 }[error.kind]
-              : "subject-unavailable";
+              : undefined;
       const status =
         error instanceof WriteConflict
           ? 409
@@ -1523,17 +1523,20 @@ export function authorizationHandler(
         res,
         status,
         {
-          type: hcp ? `https://hcp.example/problems/${kind}` : "about:blank",
+          type:
+            hcp && kind
+              ? `https://hcp.example/problems/${kind}`
+              : "about:blank",
           status,
           title: unresolved
             ? "Idempotency outcome unresolved"
             : status === 503
-              ? "Authority unavailable"
+              ? "Service Unavailable"
               : "Request refused",
           detail: unresolved
             ? "Retry the same request and key after the indicated delay."
             : status === 503
-              ? "The experiment cannot safely admit this request."
+              ? "The experiment cannot determine or report this request's outcome."
               : "The request does not satisfy this operation's authorization or input requirements.",
         },
         "application/problem+json",

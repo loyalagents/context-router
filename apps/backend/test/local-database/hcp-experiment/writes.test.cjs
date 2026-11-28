@@ -967,10 +967,7 @@ for (const expiresAtRelease of [false, true])
     // Closed admission cannot freshly authorize or disclose a match, conflict or pending key.
     const later = await post({ ...body, extension: "changed" });
     assert.equal(later.status, 503);
-    assert.notEqual(
-      later.json.type,
-      "https://hcp.example/problems/idempotency-unresolved",
-    );
+    assert.equal(later.json.type, "about:blank");
     assert.equal(later.headers["retry-after"], undefined);
     await f.restart();
     const recovered = await post();
@@ -1099,6 +1096,10 @@ for (const boundary of [
     );
     assert.equal(result.headers["retry-after"], undefined);
     if (boundary === "peer-expiry") assert.equal(result.status, 403);
+    else {
+      assert.equal(result.status, 503);
+      assert.equal(result.json.type, "about:blank");
+    }
   });
 
 for (const deadline of ["token-in-commit", "peer-in-commit", "copy-at-release"])
@@ -1161,3 +1162,152 @@ for (const deadline of ["token-in-commit", "peer-in-commit", "copy-at-release"])
     );
     assert.equal(result.headers["retry-after"], undefined);
   });
+
+test("C8 follow-up: unkeyed uncertainty and closed admission use a generic operational problem", async (t) => {
+  const f = await fixture(t, { approveFixtures: true, childProcess: true });
+  const { token, body, grant } = await setup(f);
+  await f.arm({
+    operation: "commitWrite",
+    point: "before-authorized-commit",
+    action: "uncertain-commit",
+  });
+  const result = await f.context("/v2/entries", token, {
+    method: "POST",
+    json: body,
+  });
+  assert.equal(result.status, 503);
+  assert.equal(result.headers["retry-after"], undefined);
+  assert.deepEqual(result.json, {
+    type: "about:blank",
+    status: 503,
+    title: "Service Unavailable",
+    detail: "The experiment cannot determine or report this request's outcome.",
+  });
+  const closed = await f.context("/v2/grants", token);
+  assert.equal(closed.status, 503);
+  assert.deepEqual(closed.json, result.json);
+  assert.equal(closed.headers["retry-after"], undefined);
+  await f.restart();
+  const events = (
+    await f.management(
+      `/v2/audit?eventType=context.created&grantId=${grant.grantId}`,
+    )
+  ).json.events;
+  assert.equal(events.length, 1);
+});
+
+test("C8 follow-up: a partially classified readable peer can be referenced without disclosing its hidden category", async (t) => {
+  const f = await fixture(t, { approveFixtures: true, childProcess: true });
+  const { token, body, grant } = await setup(f);
+  const creator = await authorize(f, "b", [
+    detail(["general_preferences", "work_context"], undefined, {
+      actions: ["read", "write"],
+    }),
+  ]);
+  const creatorGrant = (await f.context("/v2/grants", creator)).json.grants[0];
+  const peerBody = {
+    ...body,
+    subject: creatorGrant.subject,
+    classification: { categories: ["general_preferences", "work_context"] },
+    content: { ...body.content, value: "Multi-category reference target" },
+  };
+  assert.equal(
+    (
+      await f.context("/v2/entries", creator, {
+        method: "POST",
+        json: peerBody,
+      })
+    ).status,
+    201,
+  );
+  const found = await f.context("/v2/entries/query", token, {
+    method: "POST",
+    json: { purpose: body.purpose, query: peerBody.content.value },
+  });
+  assert.equal(found.status, 200);
+  const peer = found.json.entries.find(
+    (e) => e.content.value === peerBody.content.value,
+  );
+  assert.ok(peer);
+  assert.deepEqual(peer.classification.categories, ["general_preferences"]);
+  const retrieved = await f.context(
+    `/v2/entries/${peer.ref}?purpose=${encodeURIComponent(body.purpose)}`,
+    token,
+  );
+  assert.equal(retrieved.status, 200);
+  const request = {
+    ...body,
+    content: { ...body.content, value: "Derived from a readable peer" },
+    record: {
+      ...body.record,
+      relationships: [{ type: "derivedFrom", target: peer.ref }],
+    },
+  };
+  const post = (key, value = request) =>
+    f.context("/v2/entries", token, {
+      method: "POST",
+      json: value,
+      headers: { "idempotency-key": key },
+    });
+  const created = await post("partial-peer");
+  assert.equal(created.status, 201);
+  assert.deepEqual(created.json.classification.categories, [
+    "general_preferences",
+  ]);
+  assert.deepEqual(created.json.relationships, []);
+  assert.ok(!JSON.stringify(created.json).includes(peer.ref));
+  assert.ok(!JSON.stringify(created.json).includes("work_context"));
+  assert.deepEqual((await post("partial-peer")).json, created.json);
+  await f.restart();
+  assert.deepEqual((await post("partial-peer")).json, created.json);
+  const unrelated = await authorize(f, "a", [writeDetail()]);
+  const unrelatedPost = () =>
+    f.context("/v2/entries", unrelated, {
+      method: "POST",
+      json: {
+        ...body,
+        content: { ...body.content, value: "Unrelated result" },
+      },
+      headers: { "idempotency-key": "unrelated-policy-result" },
+    });
+  const unaffected = await unrelatedPost();
+  assert.equal(unaffected.status, 201);
+  const rule = await f.management("/v2/rules", {
+    method: "POST",
+    json: {
+      categories: ["work_context"],
+      operators: [grant.client.operator.id],
+    },
+  });
+  assert.equal(rule.status, 201);
+  for (const key of ["partial-peer", "new-blocked-peer"]) {
+    const denied = await post(key);
+    assert.equal(denied.status, 403);
+    assert.equal(denied.json.type, "https://hcp.example/problems/scope-denied");
+  }
+  assert.equal(
+    (
+      await f.management(`/v2/rules/${encodeURIComponent(rule.json.ruleId)}`, {
+        method: "DELETE",
+      })
+    ).status,
+    204,
+  );
+  await f.restart();
+  for (const value of [
+    request,
+    { ...request, extension: "otherwise authorized mismatch" },
+  ]) {
+    const denied = await post("partial-peer", value);
+    assert.equal(denied.status, 403);
+    assert.equal(denied.json.type, "https://hcp.example/problems/scope-denied");
+  }
+  assert.deepEqual((await unrelatedPost()).json, unaffected.json);
+  assert.equal((await post("fresh-after-restoration")).status, 201);
+  const events = (
+    await f.management(
+      `/v2/audit?eventType=context.created&grantId=${grant.grantId}`,
+    )
+  ).json.events;
+  assert.equal(events.length, 2);
+});
