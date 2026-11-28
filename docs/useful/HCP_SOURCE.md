@@ -4,6 +4,23 @@
 - This command uses synthetic data only. Do not paste personal information. A real host is permitted only within the separately reviewed and approved C7b trial.
 - This is separate from the installed Mac application, its documents, identities, models and client settings. It does not establish HCP conformance or complete the C6 roadmap.
 
+The C8 source candidate targets unmerged [spec #49](https://github.com/loyalagents/hcp-spec/pull/49)
+at `be930499c50bea7c8d551f391cb159c01ed1785d`; explicit adoption remains pending.
+Create, revise and soft withdrawal require a current `purpose`. The person editor
+asks for it before the exact approval. Soft withdrawal uses POST
+`/v2/entries/{ref}/withdrawal` with JSON `{purpose, reason}`; legacy soft DELETE
+refuses the request. CR supports idempotency keys on these three HTTP writes.
+Keep the original method, target, key and exact request bytes for bounded recovery;
+do not substitute a fresh key or grant after a lost reply. A fixed HTTP 200
+completion confirms a committed write without returning its content or identifier.
+An authorized temporary `idempotency-unresolved` response uses HTTP 503 and
+`Retry-After`. Generic operational failures use `about:blank` HTTP 503 without
+retry instructions and do not establish the earlier outcome. Older saved write
+receipts lacking the current recovery proof receive an opaque denial; their keys
+remain consumed, while unrelated requests remain usable. The browser
+continues to require an explicit action and never automatically resends a save.
+No MCP write tools or hard-delete support are added by this candidate.
+
 Use Node **24.21.0**, pnpm **10.25.0**, the repository's frozen dependencies,
 OpenSSL, and the existing Playwright **1.63.0 / Chromium 153.0.8010.12** prerequisite.
 The commands never download dependencies or a browser. Build the backend once from
@@ -165,7 +182,7 @@ The first demo keeps the existing correction flow:
 1. Sign in, then choose **Memories**. All retained states are visible; open a
    memory to inspect its content, current lifecycle and immutable versions.
 2. On a supported current text entry, choose **Edit as your own statement**.
-   Enter synthetic text and choose **Review my statement**.
+   Enter synthetic text, select its current purpose, and choose **Review my statement**.
 3. Read the exact proposed text and replacement effects, purpose and deadline.
    **Cancel without saving** leaves the content unchanged. Only the person's
    **Approve and save my statement** act authorizes the exact write.
@@ -267,7 +284,7 @@ in expandable full documents, without acquiring assurance.
 | ----------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Memories          | `managementEntries`; HTTP-computed text-editor eligibility                            | GET `/manage/entries/:id`                                                                        |
 | Entry and history | `managementEntry`, `audit`, current/selected versions and session CSRF                | GET version/history links; existing reviewed actions                                             |
-| Text editor       | Current supported entry and CSRF                                                      | POST `/manage/person/review`: `csrf`, `entryId`, `expectedVersion`, `value`                      |
+| Text editor       | Current supported entry and CSRF                                                      | POST `/manage/person/review`: `csrf`, `entryId`, `expectedVersion`, `value`, `purpose`                      |
 | Exact review      | Previous entry, `reviewPersonWrite` result, subject, CSRF and generated operation key | POST `/manage/person/approve`: `csrf`, `reviewId`, `reviewCsrf`, `operationKey`; cancel is a GET |
 | Saved             | Only the representation supplied inside `releaseWrite`, possibly without an ID        | Separate GET inspection; no replay                                                               |
 | Grants            | `listGrants`, last possible copy deadlines and filtered `audit`                       | Existing inspect/all/revoke routes, with unchanged authority                                     |

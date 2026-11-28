@@ -5,6 +5,15 @@
 - Plan and decisions: [HCP alignment brief](README.md)
 - Relationship: [HCP integration reference](../../../useful/HCP_INTEGRATION.md)
 
+**Current C8 candidate:** [CR #221](https://github.com/loyalagents/context-router/pull/221)
+is being aligned with unmerged spec #49 at `be930499`. This addresses the selected
+G02/G10/G14 write-purpose, completion and recovery cases; the
+[C8 brief](c8-resolution-brief.md#updated-49-application-plan-2026-11-27) records
+tests and independent review. Runtime/adoption pins remain unchanged. Full grant
+issuance breadth, MCP writes, §18.3 Provider Interop and profile qualification remain
+C9 obligations; remaining #38 correction restrictions, D3 erasure and CR-Q9 data
+gates are unchanged. The historical assessment below is not rewritten by this patch.
+
 ## Baseline And Method
 
 The assessment compared Context Router
@@ -451,6 +460,14 @@ historical evidence IDs. No continuation, host setup, off-device trial, personal
 state, model, installed delivery or upstream change is activated by this plan.
 
 ## Assessment Boundary And Next Use
+
+C8 is now active under its [resolution/adoption brief](c8-resolution-brief.md).
+Batch A renews C4-R07 and C5-R11/R12/R14 for completion, duplicate suppression,
+current authority and consumed-import recovery. It does not qualify write-only
+grants, hard deletion, the full MCP binding or additional governance completion
+contracts. Both pins remain unchanged pending an explicitly recorded upstream
+merge and adoption. The matrix's historical evidence is not relabelled against an
+unmerged revision; C9 retains every mandatory selected capability/profile gap.
 
 The [alignment plan](README.md) owns architecture choices, activation decisions,
 checkpoint order, adoption evaluation, and validation. The [local question record][questions]

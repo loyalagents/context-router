@@ -1,0 +1,1651 @@
+{
+  "sourceRevision": "be930499c50bea7c8d551f391cb159c01ed1785d",
+  "status": "Unmerged PR #49 candidate; compatibility fixture, not adopted runtime pin",
+  "schemas": {
+    "common.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/common.json",
+      "title": "HCP common definitions",
+      "description": "Definitions shared by the HCP schemas. Defined in the sections cited in each definition of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "$defs": {
+        "dateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:[^\\s]+$"
+        },
+        "urnUuid": {
+          "type": "string",
+          "pattern": "^urn:uuid:[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$",
+          "description": "A urn:uuid: identifier. Any RFC 4122 version (4.2)."
+        },
+        "category": {
+          "type": "string",
+          "description": "A registered category slug, or a custom category: an absolute URI (4.5).",
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            {
+              "format": "uri",
+              "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:"
+            }
+          ]
+        },
+        "purposeCode": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:[^\\s]+$",
+          "description": "A purpose code: an absolute URI (6.1.5.2)."
+        },
+        "purpose": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "$ref": "common.json#/$defs/purposeCode"
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "code",
+            "description"
+          ],
+          "description": "A purpose with a description the person can read (6.1.5.2)."
+        },
+        "declarationType": {
+          "enum": [
+            "person-declared",
+            "model-inferred",
+            "issuer-attested"
+          ],
+          "description": "4.4"
+        },
+        "assurance": {
+          "enum": [
+            "unverified",
+            "authenticated",
+            "cryptographically-verified"
+          ],
+          "description": "3.6"
+        },
+        "entryStatus": {
+          "enum": [
+            "active",
+            "deprecated",
+            "conflicted",
+            "expired",
+            "revoked",
+            "suspended",
+            "deleted"
+          ],
+          "description": "4.2.4"
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low",
+            null
+          ],
+          "description": "4.2"
+        },
+        "relationshipType": {
+          "enum": [
+            "derivedFrom",
+            "supersedes",
+            "contradicts",
+            "duplicates"
+          ],
+          "description": "4.2.3"
+        },
+        "role": {
+          "enum": [
+            "management-client",
+            "context-client",
+            "authorization-service",
+            "hcp-provider"
+          ],
+          "description": "3.9"
+        },
+        "action": {
+          "enum": [
+            "read",
+            "write"
+          ],
+          "description": "6.1.5"
+        },
+        "named": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ]
+        },
+        "clientDescription": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "operator": {
+              "$ref": "common.json#/$defs/named"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "operator"
+          ],
+          "description": "An HCP Client and its Client Operator, as recorded (3.5, 3.2.8)."
+        },
+        "legalRetention": {
+          "type": "object",
+          "properties": {
+            "record": {
+              "type": "string"
+            },
+            "obligation": {
+              "type": "string"
+            },
+            "period": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "record",
+            "obligation",
+            "period"
+          ],
+          "description": "A record the client keeps under a declared legal obligation (6.2.5)."
+        },
+        "credential": {
+          "type": "object",
+          "properties": {
+            "@context": {
+              "type": [
+                "array",
+                "string"
+              ]
+            },
+            "type": {
+              "type": [
+                "array",
+                "string"
+              ]
+            },
+            "issuer": {
+              "type": [
+                "string",
+                "object"
+              ]
+            },
+            "credentialSubject": {
+              "type": [
+                "object",
+                "array"
+              ]
+            }
+          },
+          "required": [
+            "@context",
+            "type",
+            "issuer",
+            "credentialSubject"
+          ],
+          "description": "A W3C Verifiable Credential, held whole as its issuer secured it (4.2.2, 14.2). Its own data model governs its contents."
+        },
+        "verification": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "enum": [
+                "verified",
+                "failed"
+              ]
+            },
+            "at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "by": {
+              "enum": [
+                "provider",
+                "trust-domain"
+              ]
+            }
+          },
+          "required": [
+            "result",
+            "at"
+          ],
+          "description": "The HCP Provider's record of its most recent verification (4.2.2). Set only by the provider."
+        },
+        "evidenceItem": {
+          "type": "object",
+          "description": "An evidence item (4.2.2). An item of a type the provider does not recognize is preserved.",
+          "properties": {
+            "role": {
+              "enum": [
+                "content",
+                "supports"
+              ]
+            },
+            "type": {
+              "type": "string"
+            },
+            "credential": true,
+            "verification": {
+              "$ref": "common.json#/$defs/verification"
+            }
+          },
+          "required": [
+            "role",
+            "type"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "verifiable-credential"
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "credential": {
+                    "$ref": "common.json#/$defs/credential"
+                  }
+                },
+                "required": [
+                  "credential"
+                ]
+              }
+            }
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "common.json#/$defs/evidenceItem"
+          },
+          "contains": {
+            "properties": {
+              "role": {
+                "const": "content"
+              }
+            },
+            "required": [
+              "role"
+            ]
+          },
+          "minContains": 0,
+          "maxContains": 1,
+          "description": "At most one item whose role is content (4.2.2)."
+        },
+        "content": {
+          "type": "object",
+          "description": "What is said about the Context Subject; its shape is named by its profile (4.2, 11, 14).",
+          "properties": {
+            "profile": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:[^\\s]+$"
+            }
+          },
+          "required": [
+            "profile"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "profile": {
+                    "const": "https://hcp.example/spec/profiles/general-context/2.0"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "value": {
+                    "type": [
+                      "string",
+                      "object"
+                    ]
+                  },
+                  "language": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "value"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "profile": {
+                    "const": "https://hcp.example/spec/profiles/vc-evidence/2.0"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "evidence": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "evidence"
+                ],
+                "not": {
+                  "required": [
+                    "value"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "assertion": {
+          "type": "object",
+          "description": "What the submitting client states about the assertion (4.2).",
+          "properties": {
+            "declarationType": {
+              "$ref": "common.json#/$defs/declarationType"
+            },
+            "confidence": {
+              "$ref": "common.json#/$defs/confidence"
+            },
+            "validUntil": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "basis": {
+              "$ref": "common.json#/$defs/basis"
+            },
+            "permittedPurposes": {
+              "type": "array",
+              "items": {
+                "$ref": "common.json#/$defs/purposeCode"
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "declarationType"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "declarationType": {
+                    "const": "model-inferred"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "confidence": {
+                    "enum": [
+                      "high",
+                      "medium",
+                      "low"
+                    ]
+                  }
+                },
+                "required": [
+                  "confidence"
+                ]
+              },
+              "else": {
+                "properties": {
+                  "confidence": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "classification": {
+          "type": "object",
+          "properties": {
+            "categories": {
+              "type": "array",
+              "items": {
+                "$ref": "common.json#/$defs/category"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "dimension": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "permittedPurposes": {
+              "type": "array",
+              "items": {
+                "$ref": "common.json#/$defs/purposeCode"
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "categories"
+          ],
+          "description": "HCP's classification of the entry (4.2, 4.2.6, 4.5)."
+        },
+        "accessDetail": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "https://hcp.example/spec/authorization/context-access"
+            },
+            "actions": {
+              "type": "array",
+              "items": {
+                "$ref": "common.json#/$defs/grantAction"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "categories": {
+              "type": "array",
+              "items": {
+                "$ref": "common.json#/$defs/category"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "purposes": {
+              "type": "array",
+              "items": {
+                "$ref": "common.json#/$defs/purpose"
+              },
+              "minItems": 1
+            },
+            "narrowedTo": {
+              "type": "object",
+              "description": "Implementation-defined; only narrows (6.1.5.1)."
+            },
+            "onwardSharing": {
+              "type": "object",
+              "properties": {
+                "domains": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true
+                },
+                "notTo": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "description": "Elected by the person; only in a detail with read whose categories are all Low (3.12, 6.1.4, 6.1.5)."
+            }
+          },
+          "required": [
+            "type",
+            "actions",
+            "categories",
+            "purposes"
+          ],
+          "description": "An authorization detail (6.1.5); under the OAuth Interop Profile, an RFC 9396 authorization detail (13.3)."
+        },
+        "minimization": {
+          "type": "object",
+          "properties": {
+            "method": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "method"
+          ],
+          "description": "The minimization report (7.5). It MUST NOT carry any measure of what was withheld, which no schema can check by name."
+        },
+        "grantAction": {
+          "enum": [
+            "read",
+            "write",
+            "provenance"
+          ],
+          "description": "6.1.5"
+        },
+        "basis": {
+          "type": "object",
+          "properties": {
+            "drawnFrom": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "task": {
+              "type": "string"
+            },
+            "setting": {
+              "type": "string"
+            },
+            "rationale": {
+              "type": "string"
+            }
+          },
+          "description": "What an assertion was drawn from (4.2.5). It identifies no party but the Context Subject."
+        }
+      }
+    },
+    "disclosure.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/disclosure.json",
+      "title": "HCP disclosure",
+      "description": "An entry as disclosed to a Context Client: never the stored entry. Defined in 7.4 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Grant-scoped, opaque, never the entry id."
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "content": {
+          "$ref": "common.json#/$defs/content"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.json#/$defs/evidenceItem"
+              }
+            ],
+            "properties": {
+              "revealed": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "A JSON Pointer into the stored credential (14.9)."
+                }
+              }
+            }
+          }
+        },
+        "assertion": {
+          "$ref": "common.json#/$defs/assertion"
+        },
+        "classification": {
+          "$ref": "common.json#/$defs/classification"
+        },
+        "standing": {
+          "type": "object",
+          "properties": {
+            "assurance": {
+              "$ref": "common.json#/$defs/assurance"
+            },
+            "confirmed": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "assurance",
+            "confirmed"
+          ]
+        },
+        "useUntil": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "relationships": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "$ref": "common.json#/$defs/relationshipType"
+              },
+              "target": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "target"
+            ]
+          }
+        },
+        "onwardSharing": {
+          "const": true,
+          "description": "The client may share from this entry under 3.12 (7.4)."
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "submittedBy": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "operator": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "operator"
+              ]
+            },
+            "source": {
+              "enum": [
+                "conversation",
+                "document",
+                "person-input",
+                "integration"
+              ]
+            },
+            "assertedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "recordedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "submittedBy",
+            "source",
+            "assertedAt",
+            "recordedAt"
+          ],
+          "description": "Only under a grant with the provenance action; names, never identifiers (7.4.1).",
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "id"
+                ]
+              },
+              {
+                "required": [
+                  "confirmedBy"
+                ]
+              },
+              {
+                "required": [
+                  "authorizedUnder"
+                ]
+              },
+              {
+                "required": [
+                  "submittedByClient"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "ref",
+        "version",
+        "content",
+        "assertion",
+        "classification",
+        "standing",
+        "useUntil"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "id"
+            ]
+          },
+          {
+            "required": [
+              "subject"
+            ]
+          },
+          {
+            "required": [
+              "record"
+            ]
+          },
+          {
+            "required": [
+              "schema"
+            ]
+          }
+        ]
+      },
+      "$comment": "Withheld members (7.4): id, subject, record (status, provenance, conversion, metadata)."
+    },
+    "entry.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/entry.json",
+      "title": "HCP entry",
+      "description": "An HCP entry, in the one form a provider emits. Defined in 4.2 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "type": "object",
+      "properties": {
+        "@context": {
+          "type": [
+            "array",
+            "string"
+          ]
+        },
+        "schema": {
+          "const": "https://hcp.example/spec/entry/2.0"
+        },
+        "id": {
+          "$ref": "common.json#/$defs/urnUuid"
+        },
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "contains": {
+            "const": "ContextEntry"
+          }
+        },
+        "subject": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "relationship": {
+              "type": "null",
+              "description": "Reserved (4.2, 11.3)."
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        "content": {
+          "$ref": "common.json#/$defs/content"
+        },
+        "assertion": {
+          "$ref": "common.json#/$defs/assertion"
+        },
+        "classification": {
+          "$ref": "common.json#/$defs/classification"
+        },
+        "evidence": {
+          "$ref": "common.json#/$defs/evidence"
+        },
+        "record": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "$ref": "common.json#/$defs/entryStatus"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "provenance": {
+              "type": "object",
+              "properties": {
+                "assertedBy": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "assurance": {
+                      "$ref": "common.json#/$defs/assurance"
+                    },
+                    "via": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "authorization-credential",
+                            "arrangement"
+                          ]
+                        },
+                        "id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "assurance"
+                  ]
+                },
+                "assertedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "submittedByClient": {
+                  "$ref": "common.json#/$defs/clientDescription"
+                },
+                "authorizedUnder": {
+                  "type": "string"
+                },
+                "recordedByProvider": {
+                  "type": "string"
+                },
+                "recordedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "confirmations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "disposition": {
+                        "enum": [
+                          "confirmed",
+                          "rejected"
+                        ]
+                      },
+                      "confirmedBy": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ]
+                      },
+                      "confirmedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "disposition",
+                      "confirmedBy",
+                      "confirmedAt"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "assertedBy",
+                "assertedAt",
+                "source",
+                "submittedByClient",
+                "authorizedUnder",
+                "recordedByProvider",
+                "recordedAt"
+              ],
+              "description": "Who asserted, submitted, authorized, recorded and confirmed this version (3.5-3.8)."
+            },
+            "relationships": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "$ref": "common.json#/$defs/relationshipType"
+                  },
+                  "target": {
+                    "type": "string"
+                  },
+                  "assertedBy": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "$ref": "common.json#/$defs/role"
+                      },
+                      "id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "role",
+                      "id"
+                    ]
+                  },
+                  "recordedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "proposal": {
+                    "type": "object",
+                    "properties": {
+                      "act": {
+                        "enum": [
+                          "reject",
+                          "accept",
+                          "supersede"
+                        ]
+                      },
+                      "entry": {
+                        "type": "string"
+                      },
+                      "rationale": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "weighed": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      },
+                      "proposedBy": {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "$ref": "common.json#/$defs/role"
+                          },
+                          "id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "role",
+                          "id"
+                        ]
+                      },
+                      "proposedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "act",
+                      "entry",
+                      "rationale",
+                      "weighed",
+                      "proposedBy",
+                      "proposedAt"
+                    ],
+                    "description": "A proposal for resolving a conflict; it changes nothing until the Context Subject acts (4.7.4)."
+                  }
+                },
+                "required": [
+                  "type",
+                  "target",
+                  "assertedBy",
+                  "recordedAt"
+                ],
+                "allOf": [
+                  {
+                    "if": {
+                      "not": {
+                        "properties": {
+                          "type": {
+                            "const": "contradicts"
+                          }
+                        }
+                      }
+                    },
+                    "then": {
+                      "not": {
+                        "required": [
+                          "proposal"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "conversion": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "convertedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "convertedBy": {
+                  "type": "string"
+                },
+                "unmapped": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "from",
+                "convertedAt",
+                "convertedBy"
+              ]
+            },
+            "metadata": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "status",
+            "version",
+            "provenance"
+          ]
+        }
+      },
+      "required": [
+        "schema",
+        "id",
+        "type",
+        "subject",
+        "content",
+        "assertion",
+        "classification",
+        "record"
+      ]
+    },
+    "error.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/error.json",
+      "title": "HCP Core error",
+      "description": "A Core error as a binding carries it: the MCP Binding's structuredContent of a tool execution error (10.4). Defined in 5.5, 10.4 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "malformed-request",
+            "invalid-token",
+            "scope-denied",
+            "idempotency-conflict",
+            "version-conflict",
+            "credential-invalid",
+            "rate-limited",
+            "unsupported-version",
+            "subject-unavailable"
+          ]
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "detail"
+      ]
+    },
+    "operations/completion-result.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/operations/completion-result.json",
+      "title": "Completion-only result",
+      "description": "Exactly the successful completion fact. Only permitted by the operation contract or authorized HTTP retry rules after known successful commit and required durable audit; no resource representation or extra members. Defined in 5.6, 9.6 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "type": "object",
+      "properties": {
+        "outcome": {
+          "const": "committed"
+        },
+        "representation": {
+          "const": "not-included"
+        }
+      },
+      "required": [
+        "outcome",
+        "representation"
+      ],
+      "additionalProperties": false
+    },
+    "operations/create-request.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/operations/create-request.json",
+      "title": "Create request",
+      "description": "Create request. Defined in 5.2.3, 9.4.3 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "type": "object",
+      "properties": {
+        "purpose": {
+          "$ref": "../common.json#/$defs/purposeCode"
+        },
+        "schema": {
+          "const": "https://hcp.example/spec/entry/2.0"
+        },
+        "subject": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        "content": {
+          "$ref": "../common.json#/$defs/content"
+        },
+        "evidence": {
+          "$ref": "../common.json#/$defs/evidence"
+        },
+        "classification": {
+          "$ref": "../common.json#/$defs/classification"
+        },
+        "assertion": {
+          "$ref": "../common.json#/$defs/assertion"
+        },
+        "record": {
+          "type": "object",
+          "properties": {
+            "provenance": {
+              "type": "object",
+              "properties": {
+                "assertedBy": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                },
+                "assertedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "source": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "source"
+              ]
+            },
+            "relationships": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "$ref": "../common.json#/$defs/relationshipType"
+                  },
+                  "target": {
+                    "type": "string"
+                  },
+                  "proposal": {
+                    "type": "object",
+                    "properties": {
+                      "act": {
+                        "enum": [
+                          "reject",
+                          "accept",
+                          "supersede"
+                        ]
+                      },
+                      "entry": {
+                        "type": "string"
+                      },
+                      "rationale": {
+                        "type": "string"
+                      },
+                      "weighed": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "required": [
+                      "act",
+                      "entry",
+                      "rationale",
+                      "weighed"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "target"
+                ]
+              }
+            }
+          },
+          "required": [
+            "provenance"
+          ]
+        }
+      },
+      "required": [
+        "schema",
+        "subject",
+        "content",
+        "classification",
+        "assertion",
+        "record",
+        "purpose"
+      ],
+      "$comment": "purpose is request metadata, not a stored entry member (6.1.5.2). An entry in the form of 4.2 carrying the fields of 5.2.3 and omitting those the provider assigns (9.4.3). assertedBy.id is required except for person-declared entries and credential content (5.2.3); that rule depends on content and is checked by the provider."
+    },
+    "operations/create-result.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/operations/create-result.json",
+      "title": "Create result",
+      "description": "Create result. Defined in 5.2.3, 5.6 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "../disclosure.json"
+            },
+            {
+              "$ref": "../entry.json"
+            }
+          ],
+          "description": "A disclosure where the requester is a Context Client (7.4); otherwise the entry."
+        },
+        {
+          "$ref": "completion-result.json"
+        }
+      ],
+      "$comment": "5.6 and 9.6 govern when completion is permitted. Schema validity alone does not establish commit or authority; dry-run import and hard deletion do not gain this alternative."
+    },
+    "operations/import-result.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/operations/import-result.json",
+      "title": "Import result",
+      "description": "Import result. Defined in 5.4.3, 5.6, 9.4.11 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "outcomes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "outcome": {
+                    "enum": [
+                      "imported",
+                      "converted",
+                      "skipped",
+                      "rejected"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "outcome"
+                ],
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "outcome": {
+                          "const": "rejected"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "reason"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "dryRun": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "outcomes"
+          ]
+        },
+        {
+          "$ref": "completion-result.json"
+        }
+      ],
+      "$comment": "5.6 and 9.6 govern when completion is permitted. Schema validity alone does not establish commit or authority; dry-run import and hard deletion do not gain this alternative."
+    },
+    "operations/revise-request.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/operations/revise-request.json",
+      "title": "Revise request",
+      "description": "Revise request. Defined in 5.2.4, 9.4.4 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "entryId": {
+          "$ref": "../common.json#/$defs/urnUuid"
+        },
+        "purpose": {
+          "$ref": "../common.json#/$defs/purposeCode"
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "content": {
+          "$ref": "../common.json#/$defs/content"
+        },
+        "evidence": {
+          "$ref": "../common.json#/$defs/evidence"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "assertion": {
+          "type": "object",
+          "properties": {
+            "declarationType": {
+              "$ref": "../common.json#/$defs/declarationType"
+            },
+            "confidence": {
+              "$ref": "../common.json#/$defs/confidence"
+            },
+            "validUntil": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "record": {
+          "type": "object",
+          "properties": {
+            "provenance": {
+              "type": "object",
+              "properties": {
+                "assertedBy": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ]
+                },
+                "assertedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "source": {
+                  "type": "string"
+                }
+              }
+            },
+            "relationships": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "$ref": "../common.json#/$defs/relationshipType"
+                  },
+                  "target": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "target"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "expectedVersion",
+        "content",
+        "reason",
+        "purpose"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "subject"
+            ]
+          },
+          {
+            "required": [
+              "classification"
+            ]
+          }
+        ]
+      },
+      "$comment": "A revision does not change subject or classification (5.2.4). The HTTP Binding names the entry in the path (9.4.4)."
+    },
+    "operations/revise-result.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/operations/revise-result.json",
+      "title": "Revise result",
+      "description": "Revise result. Defined in 5.2.4, 5.6 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "../disclosure.json"
+            },
+            {
+              "$ref": "../entry.json"
+            }
+          ],
+          "description": "A disclosure where the requester is a Context Client (7.4); otherwise the entry."
+        },
+        {
+          "$ref": "completion-result.json"
+        }
+      ],
+      "$comment": "5.6 and 9.6 govern when completion is permitted. Schema validity alone does not establish commit or authority; dry-run import and hard deletion do not gain this alternative."
+    },
+    "operations/withdraw-request.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/operations/withdraw-request.json",
+      "title": "Withdraw request",
+      "description": "Withdraw request. Defined in 5.2.5 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "entryId": {
+          "$ref": "../common.json#/$defs/urnUuid"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "$ref": "../common.json#/$defs/purposeCode"
+        }
+      },
+      "required": [
+        "reason",
+        "purpose"
+      ]
+    },
+    "operations/withdraw-result.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/operations/withdraw-result.json",
+      "title": "Withdraw result",
+      "description": "Withdraw result. Defined in 5.2.5, 5.6, 9.4.5 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string"
+            },
+            "entryId": {
+              "$ref": "../common.json#/$defs/urnUuid"
+            },
+            "status": {
+              "const": "deleted"
+            },
+            "hardDeleted": {
+              "type": "boolean"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "status",
+            "timestamp"
+          ],
+          "oneOf": [
+            {
+              "required": [
+                "ref"
+              ]
+            },
+            {
+              "required": [
+                "entryId"
+              ]
+            }
+          ]
+        },
+        {
+          "$ref": "completion-result.json"
+        }
+      ],
+      "$comment": "5.6 and 9.6 govern when completion is permitted. Schema validity alone does not establish commit or authority; dry-run import and hard deletion do not gain this alternative."
+    },
+    "problem.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "https://hcp.example/schemas/2.0-draft-3/problem.json",
+      "title": "HCP problem details",
+      "description": "An HTTP Binding problem, including mapped Core errors and the binding-only idempotency-unresolved condition: RFC 9457 problem details (9.7). Defined in 9.7 of the HCP v2 specification (2.0-draft-3); where this schema and the text differ, the text governs.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "https://hcp.example/problems/malformed-request",
+            "https://hcp.example/problems/invalid-token",
+            "https://hcp.example/problems/scope-denied",
+            "https://hcp.example/problems/idempotency-conflict",
+            "https://hcp.example/problems/version-conflict",
+            "https://hcp.example/problems/credential-invalid",
+            "https://hcp.example/problems/rate-limited",
+            "https://hcp.example/problems/unsupported-version",
+            "https://hcp.example/problems/subject-unavailable",
+            "https://hcp.example/problems/idempotency-unresolved"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            400,
+            401,
+            403,
+            409,
+            422,
+            429,
+            503
+          ]
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "status",
+        "detail"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "https://hcp.example/problems/idempotency-unresolved"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": 503
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

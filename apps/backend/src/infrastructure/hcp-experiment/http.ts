@@ -28,7 +28,7 @@ import {
   privateId,
 } from "./policy";
 import { authorizationProvider, validateAuthorization } from "./oauth";
-import { COMPLETION_ONLY, WriteConflict } from "./writes";
+import { COMPLETION_ONLY, WriteConflict, WriteUnresolved } from "./writes";
 import { CONFLICT_DETECTION } from "./conflicts";
 import { GENERAL_PROFILE } from "./fixtures";
 import { requestJson, RequestJsonError } from "./request-json";
@@ -657,13 +657,12 @@ export function authorizationHandler(
           subjects,
         );
         const details = `<pre>${escape(JSON.stringify(result, null, 2))}</pre><p><a href="/manage/entries">Inspect retained entries</a></p>`;
-        // Apply returned a known committed result. Authorize its representation
-        // after serialization, but retain a content-free completion acknowledgement.
-        return page(res, "import-result", "Import recorded", details, () =>
-          authority.isManagement(s.token)
-            ? undefined
-            : "<p>Your import was committed. Sign in again to inspect retained history.</p>",
-        );
+        // Only a new successful commit retains completion on this original path.
+        // A consumed review's response remains subject to final authorization.
+        return page(res, "import-result", "Import recorded", details, () => {
+          if (!authority.releaseImport(result))
+            return "<p>Your import was committed. Sign in again to inspect retained history.</p>";
+        });
       }
       if (route === "/manage/policy" && !url.search) {
         if (req.method === "POST") {
@@ -882,7 +881,14 @@ export function authorizationHandler(
         !url.search
       ) {
         const form = await body(req);
-        keys(form, ["csrf", "value", "category", "entryId", "expectedVersion"]);
+        keys(form, [
+          "csrf",
+          "value",
+          "category",
+          "entryId",
+          "expectedVersion",
+          "purpose",
+        ]);
         csrf(req, form.csrf);
         if (typeof form.value !== "string" || !form.value.trim()) invalid();
         const target = form.entryId || undefined;
@@ -891,6 +897,7 @@ export function authorizationHandler(
           : undefined;
         if (current && !editableStatement(current)) denied();
         const request = {
+          purpose: form.purpose,
           ...(current
             ? {
                 expectedVersion: Number(form.expectedVersion),
@@ -953,7 +960,12 @@ export function authorizationHandler(
           res,
           "person-editor",
           current ? "Edit as your own statement" : "Add your own statement",
-          renderPersonEditor(current, s.csrf, Object.keys(CATEGORIES)),
+          renderPersonEditor(
+            current,
+            s.csrf,
+            Object.keys(CATEGORIES),
+            PURPOSES,
+          ),
         );
       }
       if (
@@ -1126,6 +1138,9 @@ export function authorizationHandler(
         : authority.protocolFind("AccessToken", credential);
       if (!human && !token) throw new AuthorityError("unauthenticated");
       const revisionRoute = /^\/v2\/entries\/([^/]+)\/revisions$/.exec(route);
+      const withdrawalRoute = /^\/v2\/entries\/([^/]+)\/withdrawal$/.exec(
+        route,
+      );
       if (route === "/v2/shares" && req.method === "POST" && !url.search) {
         if (human) denied();
         authority.reportSharing(credential, await body(req));
@@ -1149,21 +1164,15 @@ export function authorizationHandler(
           "application/problem+json",
         );
       }
-      if (
-        route === "/v2/entries" ||
-        revisionRoute ||
-        (/^\/v2\/entries\/[^/]+$/.test(route) && req.method === "DELETE")
-      ) {
+      if (route === "/v2/entries" || revisionRoute || withdrawalRoute) {
         if (human) denied();
+        if (url.search || req.method !== "POST") invalid();
         if (
-          url.search ||
-          ((route === "/v2/entries" || revisionRoute) && req.method !== "POST")
-        )
-          invalid();
-        if (
-          !["application/json", "application/ld+json"].includes(
-            String(req.headers["content-type"]),
-          )
+          !(
+            withdrawalRoute
+              ? ["application/json"]
+              : ["application/json", "application/ld+json"]
+          ).includes(String(req.headers["content-type"]))
         )
           invalid();
         if (
@@ -1182,7 +1191,9 @@ export function authorizationHandler(
           input = JSON.parse(raw);
           if (route !== "/v2/entries")
             ref = decodeURIComponent(
-              revisionRoute?.[1] ?? route.slice("/v2/entries/".length),
+              revisionRoute?.[1] ??
+                withdrawalRoute?.[1] ??
+                route.slice("/v2/entries/".length),
             );
         } catch {
           invalid();
@@ -1337,17 +1348,15 @@ export function authorizationHandler(
         }
         if (url.search) invalid();
         keys(input, ["reviewId", "csrf", "subjects"]);
-        return managementMutationJson(
+        const result = authority.applyImport(
           credential,
-          res,
-          200,
-          authority.applyImport(
-            credential,
-            input.reviewId,
-            input.csrf,
-            credential,
-            input.subjects,
-          ),
+          input.reviewId,
+          input.csrf,
+          credential,
+          input.subjects,
+        );
+        return json(res, 200, result, "application/ld+json", () =>
+          authority.releaseImport(result) ? undefined : COMPLETION_ONLY,
         );
       }
       if (route === "/v2/disclosures" && req.method === "GET") {
@@ -1458,14 +1467,21 @@ export function authorizationHandler(
     json(res, 404, { error: "not_found" }, "application/json");
   }
   return (req, res) => {
-    void handle(req, res).catch((error) => {
+    const refuse = (error: unknown) => {
       if (res.headersSent) {
         res.destroy();
         return;
       }
       const hcp = req.url?.startsWith("/v2/");
-      const kind =
-        error instanceof WriteConflict
+      const unresolved = error instanceof WriteUnresolved;
+      const releaseError = () => {
+        authority.releaseWriteConflict(error);
+        authority.releaseWriteUnresolved(error);
+        if (hcp && unresolved) res.setHeader("retry-after", "1");
+      };
+      const kind = unresolved
+        ? "idempotency-unresolved"
+        : error instanceof WriteConflict
           ? error.conflict
           : error instanceof UnsupportedVersion
             ? "unsupported-version"
@@ -1475,7 +1491,7 @@ export function authorizationHandler(
                   unauthenticated: "invalid-token",
                   denied: "scope-denied",
                 }[error.kind]
-              : "subject-unavailable";
+              : undefined;
       const status =
         error instanceof WriteConflict
           ? 409
@@ -1499,7 +1515,7 @@ export function authorizationHandler(
           "management-error",
           failure.title,
           failure.body,
-          undefined,
+          releaseError,
           true,
         );
       }
@@ -1507,16 +1523,32 @@ export function authorizationHandler(
         res,
         status,
         {
-          type: hcp ? `https://hcp.example/problems/${kind}` : "about:blank",
+          type:
+            hcp && kind
+              ? `https://hcp.example/problems/${kind}`
+              : "about:blank",
           status,
-          title: status === 503 ? "Authority unavailable" : "Request refused",
-          detail:
-            status === 503
-              ? "The experiment cannot safely admit this request."
+          title: unresolved
+            ? "Idempotency outcome unresolved"
+            : status === 503
+              ? "Service Unavailable"
+              : "Request refused",
+          detail: unresolved
+            ? "Retry the same request and key after the indicated delay."
+            : status === 503
+              ? "The experiment cannot determine or report this request's outcome."
               : "The request does not satisfy this operation's authorization or input requirements.",
         },
         "application/problem+json",
+        releaseError,
       );
+    };
+    void handle(req, res).catch((error) => {
+      try {
+        refuse(error);
+      } catch (releaseError) {
+        refuse(releaseError);
+      }
     });
   };
 }

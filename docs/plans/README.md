@@ -71,20 +71,20 @@ records C7b's implementation and bounded live trial complete in merged
 [PR #217](https://github.com/loyalagents/context-router/pull/217). The
 [C7b handoff](active/hcp-alignment/c7b-host-brief.md#completion-and-merge-2026-11-25)
 retains the successful query/get, scope-denial and explicit-revocation/read-denial
-evidence, the earlier failed get and separate CI-qualification status. Lucas activated
-[C7c activity and permission visibility](active/hcp-alignment/README.md#c7c-activity-and-permission-visibility).
-C7c reuses the demo Activity presentation patterns for a durable HCP timeline of
-access granted, changed, used, revoked and expired, closing event-mapping/coverage
-gaps and verifying retained history. It leaves the completed trial evidence and
-the other agent's existing-app demo unchanged. C8 delivers
+evidence, the earlier failed get and separate CI-qualification status.
+[C7c activity and permission visibility](active/hcp-alignment/README.md#c8-activation-and-c7c-merge-2026-11-25)
+merged in PR #218 at `98fe60f`, with final selected Product CI jobs and aggregate
+passed. Its durable timeline preserves historical grant attribution, policy-scope
+relevance, filters and restart-stable navigation. Completed trial evidence and the
+existing-app demo remain unchanged. [C8 is active](active/hcp-alignment/c8-resolution-brief.md) and delivers
 protocol fixes **and CR adoption**; C9 verifies C7c coverage and completes selected
 capabilities and qualification (formerly C8 qualification).
 Broader C6 workflows and mandatory C5 gaps remain owned. Installed Mac delivery
 is a separate selected milestone if needed; D3 erasure precedes any personal-data
 extension and CR-Q9 resolution/adoption precedes sensitive real data. The
 orchestrator retains sequencing; the C7b chat retains its separately scoped worktree
-and trial evidence. C7c has its own sole writer and reviewed implementation contract in PR #218;
-personal-state changes and C8–C9 execution remain outside it. No full C6,
+and trial evidence. C8 uses fresh managed spec and CR worktrees; the completed C7c
+branch and separately owned spec encryption work remain untouched. No full C6,
 artifact or conformance claim is made.
 
 C4/C5 upstream issue submissions are proposals, not adopted normative resolutions.

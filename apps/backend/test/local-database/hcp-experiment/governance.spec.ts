@@ -377,6 +377,7 @@ describe("C5 exact governance and immutable disclosure facts", () => {
     const { g, t } = grant();
     const create = (category: string, value: string) => {
       const input = {
+        purpose: "https://example.test/purpose/synthetic-review",
         schema: "https://hcp.example/spec/entry/2.0",
         subject: g.subject,
         content: {
@@ -488,6 +489,7 @@ describe("C5 exact governance and immutable disclosure facts", () => {
   it("rejects classification consequences if entry validity crosses before commit", () => {
     const { g, t } = grant();
     const input = {
+      purpose: "https://example.test/purpose/synthetic-review",
       schema: "https://hcp.example/spec/entry/2.0",
       subject: g.subject,
       content: {
@@ -542,6 +544,7 @@ describe("C5 exact governance and immutable disclosure facts", () => {
     const { g, t } = grant();
     const create = (category: string, value: string, expires: boolean) => {
       const input = {
+        purpose: "https://example.test/purpose/synthetic-review",
         schema: "https://hcp.example/spec/entry/2.0",
         subject: g.subject,
         content: {
@@ -593,6 +596,7 @@ describe("C5 exact governance and immutable disclosure facts", () => {
     const { g, t } = grant();
     const create = (model: boolean, target?: string) => {
       const input = {
+        purpose: "https://example.test/purpose/synthetic-review",
         schema: "https://hcp.example/spec/entry/2.0",
         subject: g.subject,
         content: {

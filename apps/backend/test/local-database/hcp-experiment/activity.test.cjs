@@ -370,6 +370,7 @@ test("C7c write-result disclosure is presented separately from a read and omits 
   const created = await f.context("/v2/entries", token, {
     method: "POST",
     json: {
+      purpose: "https://example.test/purpose/synthetic-review",
       schema: "https://hcp.example/spec/entry/2.0",
       subject: grant.subject,
       content: {

@@ -1,6 +1,35 @@
 import type { DatabaseSync } from "node:sqlite";
-import { denied, invalid, object, strings } from "./policy";
-import { canDiscloseMutation, storedEntry } from "./writes";
+import { denied, evaluateEntry, invalid, object, strings } from "./policy";
+import { storedEntry } from "./writes";
+
+/** A grant-local reference needs current read eligibility, not permission to
+ * disclose every stored category of the target in a whole write result. */
+export function relationshipResolver(
+  db: DatabaseSync,
+  grant: any,
+  document: any,
+  purpose: string,
+  rules: any[],
+  now: number,
+  management: boolean,
+): (name: any) => any {
+  return (name: any) => {
+    if (typeof name !== "string" || !name) invalid();
+    const id = management
+      ? name
+      : db
+          .prepare("SELECT entry_id FROM grant_refs WHERE grant_id=? AND ref=?")
+          .get(grant.grantId, name)?.entry_id;
+    const target = id && storedEntry(db, String(id));
+    if (
+      !target ||
+      target.id === document.id ||
+      (!management && !evaluateEntry(grant, target, purpose, rules, now))
+    )
+      denied();
+    return target;
+  };
+}
 
 /** Resolve all caller names before mutating state. Context refs never accept IDs. */
 export function relationships(
@@ -15,23 +44,15 @@ export function relationships(
 ): any[] {
   const items = input.record?.relationships ?? [];
   if (!Array.isArray(items) || items.length > 100) invalid();
-  const resolve = (name: any) => {
-    if (typeof name !== "string" || !name) invalid();
-    const id = management
-      ? name
-      : db
-          .prepare("SELECT entry_id FROM grant_refs WHERE grant_id=? AND ref=?")
-          .get(grant.grantId, name)?.entry_id;
-    const target = id && storedEntry(db, String(id));
-    if (
-      !target ||
-      target.id === document.id ||
-      (!management &&
-        !canDiscloseMutation(grant, target, purpose, rules, now, "create"))
-    )
-      denied();
-    return target;
-  };
+  const resolve = relationshipResolver(
+    db,
+    grant,
+    document,
+    purpose,
+    rules,
+    now,
+    management,
+  );
   const actor = {
     role: management ? "management-client" : "context-client",
     id: grant.client.id,

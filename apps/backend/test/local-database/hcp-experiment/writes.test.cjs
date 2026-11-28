@@ -1,3 +1,4 @@
+const { validCandidate } = require("./candidate-contract.cjs");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { fixture, OAuthDriver, inputs } = require("./authorization-fixture.cjs");
@@ -17,6 +18,7 @@ async function setup(f) {
     "hcp:general_preferences:write",
   ]);
   const body = {
+    purpose: "https://example.test/purpose/synthetic-review",
     schema: "https://hcp.example/spec/entry/2.0",
     subject: grant.subject,
     content: {
@@ -137,6 +139,47 @@ test("management distinguishes recorded assurance from authority-looking submitt
   assert.doesNotMatch(page.text, /<script>forged/);
 });
 
+for (const deadline of ["copy", "token"])
+  test(`C8 historical key conflict rechecks ${deadline} expiry after serialization`, async (t) => {
+    const f = await fixture(t, { approveFixtures: true, childProcess: true });
+    const { token, body, grant } = await setup(f);
+    body.assertion.validUntil = new Date(Date.now() + 60_000).toISOString();
+    const post = (value) =>
+      f.context("/v2/entries", token, {
+        method: "POST",
+        json: value,
+        headers: { "idempotency-key": "conflict-boundary" },
+      });
+    const original = await post(body);
+    assert.equal(original.status, 201);
+    const changed = { ...body, extension: "changed" };
+    assert.equal((await post(changed)).status, 409);
+    await f.arm({
+      operation: "commitWrite",
+      point: "during-conflict-serialization",
+      action: "advance",
+      now:
+        deadline === "copy"
+          ? Date.parse(original.json.useUntil)
+          : Date.now() + 12 * 3600_000,
+    });
+    const denied = await post(changed);
+    assert.equal(denied.status, deadline === "copy" ? 403 : 401);
+    assert.doesNotMatch(
+      denied.text,
+      /idempotency-conflict|committed|conflict-boundary/,
+    );
+    await f.restart();
+    assert.equal(
+      (
+        await f.management(
+          `/v2/audit?eventType=context.created&grantId=${grant.grantId}`,
+        )
+      ).json.events.length,
+      1,
+    );
+  });
+
 test("C4 actual OAuth/TLS create/revise/withdraw and byte-bound retries", async (t) => {
   const f = await fixture(t, { approveFixtures: true });
   const { token, body } = await setup(f);
@@ -148,6 +191,9 @@ test("C4 actual OAuth/TLS create/revise/withdraw and byte-bound retries", async 
     });
   const first = await post();
   assert.equal(first.status, 201);
+  validCandidate("operations/create-request.json", body);
+  validCandidate("operations/create-result.json", first.json);
+  validCandidate("disclosure.json", first.json);
   assert.equal(first.json.content.value, body.content.value);
   assert.equal(first.headers["content-type"], "application/ld+json");
   const same = await post();
@@ -156,6 +202,7 @@ test("C4 actual OAuth/TLS create/revise/withdraw and byte-bound retries", async 
   assert.equal(changed.status, 409);
   assert.match(changed.json.type, /idempotency-conflict$/);
   const revise = {
+    purpose: "https://example.test/purpose/synthetic-review",
     expectedVersion: 1,
     reason: "corrected",
     content: { ...body.content, value: "corrected" },
@@ -168,6 +215,12 @@ test("C4 actual OAuth/TLS create/revise/withdraw and byte-bound retries", async 
     headers: { "idempotency-key": "revision" },
   });
   assert.equal(revision.status, 201);
+  validCandidate("operations/revise-request.json", {
+    ...revise,
+    ref: first.json.ref,
+  });
+  validCandidate("operations/revise-result.json", revision.json);
+  validCandidate("disclosure.json", revision.json);
   assert.equal(revision.json.version, 2);
   assert.equal(
     (await f.context(route, token, { method: "PATCH", json: revise })).status,
@@ -179,11 +232,12 @@ test("C4 actual OAuth/TLS create/revise/withdraw and byte-bound retries", async 
   });
   assert.equal(stale.status, 409);
   assert.match(stale.json.type, /version-conflict$/);
-  const withdrawal = await f.context(route, token, {
-    method: "DELETE",
-    json: { reason: "withdraw" },
+  const withdrawal = await f.context(route + "/withdrawal", token, {
+    method: "POST",
+    json: { purpose: body.purpose, reason: "withdraw" },
   });
   assert.equal(withdrawal.status, 200);
+  validCandidate("operations/withdraw-result.json", withdrawal.json);
   assert.equal(withdrawal.json.status, "deleted");
   const readToken = await authorize(f);
   assert.equal(
@@ -226,7 +280,9 @@ test("known commit then revoke sends only original completion; retry gets no cac
   assert.equal(revoked.status, 204);
   resume();
   const response = await request;
-  assert.equal(response.status, 201);
+  assert.equal(response.status, 200);
+  validCandidate("operations/completion-result.json", response.json);
+  validCandidate("operations/create-result.json", response.json);
   assert.deepEqual(response.json, {
     outcome: "committed",
     representation: "not-included",
@@ -337,6 +393,7 @@ test("management login requires an additional exact-content approval before a pe
     method: "POST",
     headers: { origin: f.issuer },
     form: {
+      purpose: "https://example.test/purpose/synthetic-review",
       csrf: inputs(editor.text).csrf,
       value: "I prefer a short summary",
       category: "general_preferences",
@@ -512,6 +569,7 @@ test("C4 concurrent HTTP retries commit once and expected-version revisions have
     f.context(`/v2/entries/${a.json.ref}/revisions`, token, {
       method: "POST",
       json: {
+        purpose: "https://example.test/purpose/synthetic-review",
         expectedVersion: 1,
         reason: "concurrent correction",
         content: { ...body.content, value },
@@ -638,7 +696,7 @@ test("C4 prepared replay remains invalid after policy narrowing/restoration and 
 
 for (const [point, expected] of [
   ["before-authorized-commit", 401],
-  ["after-data-commit", 201],
+  ["after-data-commit", 200],
 ])
   test(`C4 token deadline at ${point} gives ${expected} without unauthorized data`, async (t) => {
     const f = await fixture(t, { childProcess: true, approveFixtures: true });
@@ -660,7 +718,7 @@ for (const [point, expected] of [
     assert.ok(!result.text.includes(body.content.value));
     assert.equal(result.headers.location, undefined);
     assert.equal(result.headers.etag, undefined);
-    if (expected === 201)
+    if (expected === 200)
       assert.deepEqual(result.json, {
         outcome: "committed",
         representation: "not-included",
@@ -716,17 +774,22 @@ test("C4 advertises its bounded detector and keeps model asserter distinct throu
       },
     },
   });
-  assert.equal(model.status, 201);
-  assert.equal(model.json.assertion.confidence, "low");
-  assert.deepEqual(model.json.standing, {
-    assurance: "unverified",
-    confirmed: false,
+  assert.equal(model.status, 200);
+  validCandidate("operations/completion-result.json", model.json);
+  const beforeConfirmation = await f.context("/v2/entries/query", token, {
+    method: "POST",
+    json: { query: "phone", purpose: writeDetail().purposes[0].code },
   });
+  assert.ok(
+    beforeConfirmation.json.entries.every(
+      (e) => e.content.value.value !== "phone",
+    ),
+  );
   const purpose = writeDetail().purposes[0].code;
   assert.equal(
     (
       await f.context(
-        `/v2/entries/${model.json.ref}?${new URLSearchParams({ purpose })}`,
+        `/v2/entries/r_undisclosed?${new URLSearchParams({ purpose })}`,
         token,
       )
     ).status,
@@ -748,10 +811,19 @@ test("C4 advertises its bounded detector and keeps model asserter distinct throu
     confirmed.json.record.provenance.assertedBy.id,
     "https://example.test/models/controlled/1",
   );
+  const visible = await f.context("/v2/entries/query", token, {
+    method: "POST",
+    json: { query: "phone", purpose },
+  });
+  const disclosed = visible.json.entries.find(
+    (e) => e.content.value.value === "phone",
+  );
+  assert.equal(disclosed.assertion.confidence, "low");
+  assert.equal(disclosed.standing.confirmed, true);
   assert.equal(
     (
       await f.context(
-        `/v2/entries/${model.json.ref}?${new URLSearchParams({ purpose })}`,
+        `/v2/entries/${disclosed.ref}?${new URLSearchParams({ purpose })}`,
         token,
       )
     ).status,
@@ -805,4 +877,437 @@ test("C4 mutation parsing rejects invalid UTF-8 and duplicate keys without consu
     ).status,
     409,
   );
+});
+
+test("C8 soft withdrawal uses POST and exact retry preserves its historical acknowledgement", async (t) => {
+  const f = await fixture(t, { approveFixtures: true });
+  const { token, body, grant } = await setup(f);
+  const created = await f.context("/v2/entries", token, {
+    method: "POST",
+    json: body,
+  });
+  assert.equal(created.status, 201);
+  const route = `/v2/entries/${created.json.ref}`;
+  const request = { purpose: body.purpose, reason: "Synthetic withdrawal" };
+  const old = await f.context(route, token, {
+    method: "DELETE",
+    json: request,
+  });
+  assert.ok(old.status >= 400);
+  const options = {
+    method: "POST",
+    json: request,
+    headers: { "idempotency-key": "post-withdrawal" },
+  };
+  const withdrawn = await f.context(route + "/withdrawal", token, options);
+  assert.equal(withdrawn.status, 200);
+  assert.deepEqual(withdrawn.json, {
+    ref: created.json.ref,
+    status: "deleted",
+    timestamp: withdrawn.json.timestamp,
+  });
+  assert.deepEqual(
+    (await f.context(route + "/withdrawal", token, options)).json,
+    withdrawn.json,
+  );
+  const events = await f.management(
+    `/v2/audit?eventType=context.withdrawn&grantId=${grant.grantId}`,
+  );
+  assert.equal(events.json.events.length, 1);
+  assert.equal(events.json.events[0].purpose, body.purpose);
+});
+
+for (const expiresAtRelease of [false, true])
+  test(`C8 uncertain native commit is typed only under unchanged current authority (expires=${expiresAtRelease})`, async (t) => {
+    const f = await fixture(t, { approveFixtures: true, childProcess: true });
+    const { token, body, grant } = await setup(f);
+    const post = (value = body) =>
+      f.context("/v2/entries", token, {
+        method: "POST",
+        json: value,
+        headers: { "idempotency-key": "native-uncertain" },
+      });
+    await f.arm({
+      operation: "commitWrite",
+      point: "before-authorized-commit",
+      action: "uncertain-commit",
+      ...(expiresAtRelease
+        ? {
+            nextFault: {
+              operation: "commitWrite",
+              point: "during-unresolved-serialization",
+              action: "advance",
+              now: Date.now() + 24 * 3600_000,
+            },
+          }
+        : {}),
+    });
+    const uncertain = await post();
+    if (expiresAtRelease) {
+      assert.notEqual(
+        uncertain.json.type,
+        "https://hcp.example/problems/idempotency-unresolved",
+      );
+      assert.equal(uncertain.headers["retry-after"], undefined);
+    } else {
+      assert.equal(uncertain.status, 503);
+      assert.equal(
+        uncertain.json.type,
+        "https://hcp.example/problems/idempotency-unresolved",
+      );
+      assert.equal(uncertain.headers["retry-after"], "1");
+      validCandidate("problem.json", uncertain.json);
+      assert.throws(() =>
+        validCandidate("error.json", {
+          code: "idempotency-unresolved",
+          message: "retry",
+        }),
+      );
+    }
+    // Closed admission cannot freshly authorize or disclose a match, conflict or pending key.
+    const later = await post({ ...body, extension: "changed" });
+    assert.equal(later.status, 503);
+    assert.equal(later.json.type, "about:blank");
+    assert.equal(later.headers["retry-after"], undefined);
+    await f.restart();
+    const recovered = await post();
+    assert.equal(recovered.status, 201);
+    assert.equal(recovered.json.content.value, body.content.value);
+    assert.equal(
+      (
+        await f.management(
+          `/v2/audit?eventType=context.created&grantId=${grant.grantId}`,
+        )
+      ).json.events.length,
+      1,
+    );
+  });
+
+test("C8 no-use create is closed completion on the wire and survives exact recovery", async (t) => {
+  const f = await fixture(t, { approveFixtures: true });
+  const { token, body, grant } = await setup(f);
+  body.assertion.permittedPurposes = [];
+  const post = () =>
+    f.context("/v2/entries", token, {
+      method: "POST",
+      json: body,
+      headers: { "idempotency-key": "completion-candidate" },
+    });
+  const first = await post();
+  assert.equal(first.status, 200);
+  validCandidate("operations/create-request.json", body);
+  validCandidate("operations/create-result.json", first.json);
+  validCandidate("operations/completion-result.json", first.json);
+  assert.equal(first.headers.location, undefined);
+  assert.equal(first.headers.etag, undefined);
+  assert.deepEqual((await post()).json, first.json);
+  assert.throws(() =>
+    validCandidate("operations/completion-result.json", {
+      ...first.json,
+      ref: "r_extra",
+    }),
+  );
+  const events = (
+    await f.management(
+      `/v2/audit?eventType=context.created&grantId=${grant.grantId}`,
+    )
+  ).json.events;
+  assert.equal(events.length, 1);
+  assert.equal(events[0].disclosed, undefined);
+});
+
+for (const boundary of [
+  "peer-expiry",
+  "supersedes",
+  "replace-data",
+  "remove-data",
+])
+  test(`C8 review: uncertain outcome stays opaque after ${boundary}`, async (t) => {
+    const f = await fixture(t, { approveFixtures: true, childProcess: true });
+    const { token, body } = await setup(f);
+    const deadline = Date.now() + 60_000;
+    const peer = await f.context("/v2/entries", token, {
+      method: "POST",
+      json: {
+        ...body,
+        assertion: {
+          ...body.assertion,
+          validUntil: new Date(deadline).toISOString(),
+        },
+      },
+    });
+    assert.equal(peer.status, 201);
+    const request = {
+      ...body,
+      content: { ...body.content, value: "Derived uncertain write" },
+      record: {
+        ...body.record,
+        relationships: [
+          {
+            type: boundary === "supersedes" ? "supersedes" : "derivedFrom",
+            target: peer.json.ref,
+          },
+        ],
+      },
+    };
+    await f.arm({
+      operation: "commitWrite",
+      point: "before-authorized-commit",
+      action: "uncertain-commit",
+      ...(boundary === "supersedes"
+        ? {}
+        : {
+            nextFault: {
+              operation: "commitWrite",
+              point: "during-unresolved-serialization",
+              ...(boundary === "peer-expiry"
+                ? { action: "advance", now: deadline }
+                : {
+                    action: boundary,
+                    path: require("node:path").join(
+                      f.sandbox,
+                      "experiment",
+                      "entries.sqlite",
+                    ),
+                  }),
+            },
+          }),
+    });
+    const result = await f.context("/v2/entries", token, {
+      method: "POST",
+      json: request,
+      headers: { "idempotency-key": "review-uncertain" },
+    });
+    // Restore only this synthetic fixture's path so ordinary cleanup can verify
+    // its pinned file after the disclosure boundary has been exercised.
+    if (["replace-data", "remove-data"].includes(boundary)) {
+      const fs = require("node:fs"),
+        data = require("node:path").join(
+          f.sandbox,
+          "experiment",
+          "entries.sqlite",
+        );
+      fs.rmSync(data, { force: true });
+      fs.renameSync(data + ".old", data);
+    }
+    assert.notEqual(
+      result.json.type,
+      "https://hcp.example/problems/idempotency-unresolved",
+    );
+    assert.equal(result.headers["retry-after"], undefined);
+    if (boundary === "peer-expiry") assert.equal(result.status, 403);
+    else {
+      assert.equal(result.status, 503);
+      assert.equal(result.json.type, "about:blank");
+    }
+  });
+
+for (const deadline of ["token-in-commit", "peer-in-commit", "copy-at-release"])
+  test(`C8 recheck: uncertain outcome preserves the known ${deadline} denial`, async (t) => {
+    const f = await fixture(t, {
+      approveFixtures: true,
+      childProcess: true,
+      copyLifetimeMs: 60_000,
+    });
+    const { token, body } = await setup(f);
+    const expires = Date.now() + 120_000;
+    const peer = await f.context("/v2/entries", token, {
+      method: "POST",
+      json: {
+        ...body,
+        assertion: {
+          ...body.assertion,
+          validUntil: new Date(expires).toISOString(),
+        },
+      },
+    });
+    assert.equal(peer.status, 201);
+    const request = {
+      ...body,
+      content: { ...body.content, value: "Expiry across native commit" },
+      record: {
+        ...body.record,
+        relationships: [{ type: "derivedFrom", target: peer.json.ref }],
+      },
+    };
+    await f.arm({
+      operation: "commitWrite",
+      point: "before-authorized-commit",
+      action: "uncertain-commit",
+      ...(deadline === "copy-at-release"
+        ? {
+            nextFault: {
+              operation: "commitWrite",
+              point: "during-unresolved-serialization",
+              action: "advance",
+              now: Date.now() + 90_000,
+            },
+          }
+        : {
+            now:
+              deadline === "token-in-commit"
+                ? Date.now() + 24 * 3600_000
+                : expires,
+          }),
+    });
+    const result = await f.context("/v2/entries", token, {
+      method: "POST",
+      json: request,
+      headers: { "idempotency-key": "recheck-expiry" },
+    });
+    assert.equal(result.status, deadline === "token-in-commit" ? 401 : 403);
+    assert.notEqual(
+      result.json.type,
+      "https://hcp.example/problems/idempotency-unresolved",
+    );
+    assert.equal(result.headers["retry-after"], undefined);
+  });
+
+test("C8 follow-up: unkeyed uncertainty and closed admission use a generic operational problem", async (t) => {
+  const f = await fixture(t, { approveFixtures: true, childProcess: true });
+  const { token, body, grant } = await setup(f);
+  await f.arm({
+    operation: "commitWrite",
+    point: "before-authorized-commit",
+    action: "uncertain-commit",
+  });
+  const result = await f.context("/v2/entries", token, {
+    method: "POST",
+    json: body,
+  });
+  assert.equal(result.status, 503);
+  assert.equal(result.headers["retry-after"], undefined);
+  assert.deepEqual(result.json, {
+    type: "about:blank",
+    status: 503,
+    title: "Service Unavailable",
+    detail: "The experiment cannot determine or report this request's outcome.",
+  });
+  const closed = await f.context("/v2/grants", token);
+  assert.equal(closed.status, 503);
+  assert.deepEqual(closed.json, result.json);
+  assert.equal(closed.headers["retry-after"], undefined);
+  await f.restart();
+  const events = (
+    await f.management(
+      `/v2/audit?eventType=context.created&grantId=${grant.grantId}`,
+    )
+  ).json.events;
+  assert.equal(events.length, 1);
+});
+
+test("C8 follow-up: a partially classified readable peer can be referenced without disclosing its hidden category", async (t) => {
+  const f = await fixture(t, { approveFixtures: true, childProcess: true });
+  const { token, body, grant } = await setup(f);
+  const creator = await authorize(f, "b", [
+    detail(["general_preferences", "work_context"], undefined, {
+      actions: ["read", "write"],
+    }),
+  ]);
+  const creatorGrant = (await f.context("/v2/grants", creator)).json.grants[0];
+  const peerBody = {
+    ...body,
+    subject: creatorGrant.subject,
+    classification: { categories: ["general_preferences", "work_context"] },
+    content: { ...body.content, value: "Multi-category reference target" },
+  };
+  assert.equal(
+    (
+      await f.context("/v2/entries", creator, {
+        method: "POST",
+        json: peerBody,
+      })
+    ).status,
+    201,
+  );
+  const found = await f.context("/v2/entries/query", token, {
+    method: "POST",
+    json: { purpose: body.purpose, query: peerBody.content.value },
+  });
+  assert.equal(found.status, 200);
+  const peer = found.json.entries.find(
+    (e) => e.content.value === peerBody.content.value,
+  );
+  assert.ok(peer);
+  assert.deepEqual(peer.classification.categories, ["general_preferences"]);
+  const retrieved = await f.context(
+    `/v2/entries/${peer.ref}?purpose=${encodeURIComponent(body.purpose)}`,
+    token,
+  );
+  assert.equal(retrieved.status, 200);
+  const request = {
+    ...body,
+    content: { ...body.content, value: "Derived from a readable peer" },
+    record: {
+      ...body.record,
+      relationships: [{ type: "derivedFrom", target: peer.ref }],
+    },
+  };
+  const post = (key, value = request) =>
+    f.context("/v2/entries", token, {
+      method: "POST",
+      json: value,
+      headers: { "idempotency-key": key },
+    });
+  const created = await post("partial-peer");
+  assert.equal(created.status, 201);
+  assert.deepEqual(created.json.classification.categories, [
+    "general_preferences",
+  ]);
+  assert.deepEqual(created.json.relationships, []);
+  assert.ok(!JSON.stringify(created.json).includes(peer.ref));
+  assert.ok(!JSON.stringify(created.json).includes("work_context"));
+  assert.deepEqual((await post("partial-peer")).json, created.json);
+  await f.restart();
+  assert.deepEqual((await post("partial-peer")).json, created.json);
+  const unrelated = await authorize(f, "a", [writeDetail()]);
+  const unrelatedPost = () =>
+    f.context("/v2/entries", unrelated, {
+      method: "POST",
+      json: {
+        ...body,
+        content: { ...body.content, value: "Unrelated result" },
+      },
+      headers: { "idempotency-key": "unrelated-policy-result" },
+    });
+  const unaffected = await unrelatedPost();
+  assert.equal(unaffected.status, 201);
+  const rule = await f.management("/v2/rules", {
+    method: "POST",
+    json: {
+      categories: ["work_context"],
+      operators: [grant.client.operator.id],
+    },
+  });
+  assert.equal(rule.status, 201);
+  for (const key of ["partial-peer", "new-blocked-peer"]) {
+    const denied = await post(key);
+    assert.equal(denied.status, 403);
+    assert.equal(denied.json.type, "https://hcp.example/problems/scope-denied");
+  }
+  assert.equal(
+    (
+      await f.management(`/v2/rules/${encodeURIComponent(rule.json.ruleId)}`, {
+        method: "DELETE",
+      })
+    ).status,
+    204,
+  );
+  await f.restart();
+  for (const value of [
+    request,
+    { ...request, extension: "otherwise authorized mismatch" },
+  ]) {
+    const denied = await post("partial-peer", value);
+    assert.equal(denied.status, 403);
+    assert.equal(denied.json.type, "https://hcp.example/problems/scope-denied");
+  }
+  assert.deepEqual((await unrelatedPost()).json, unaffected.json);
+  assert.equal((await post("fresh-after-restoration")).status, 201);
+  const events = (
+    await f.management(
+      `/v2/audit?eventType=context.created&grantId=${grant.grantId}`,
+    )
+  ).json.events;
+  assert.equal(events.length, 2);
 });

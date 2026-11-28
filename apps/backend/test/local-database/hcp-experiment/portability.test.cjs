@@ -1,3 +1,4 @@
+const { validCandidate } = require("./candidate-contract.cjs");
 const { test } = require("node:test"),
   assert = require("node:assert/strict"),
   { randomUUID } = require("node:crypto");
@@ -39,6 +40,7 @@ for (const point of ["before-audit", "before-commit", "after-data-commit"])
       json: decision,
     });
     assert.equal(result.status, 200);
+    validCandidate("operations/import-result.json", result.json);
     assert.equal(result.json.outcomes[0].outcome, "imported");
     assert.equal(
       (await f.management("/v2/export")).json.entries.filter(
@@ -252,11 +254,14 @@ for (const browser of [false, true])
       assert.equal(result.status, point === "before-commit" ? 401 : 200);
       if (point !== "before-commit") {
         if (browser) assert.match(result.text, /Import recorded/);
-        else
+        else {
+          validCandidate("operations/import-result.json", result.json);
+          validCandidate("operations/completion-result.json", result.json);
           assert.deepEqual(result.json, {
             outcome: "committed",
             representation: "not-included",
           });
+        }
       }
       assert.doesNotMatch(
         result.text,
@@ -274,6 +279,188 @@ for (const browser of [false, true])
         point === "before-commit" ? 0 : 1,
       );
     });
+for (const browser of [false, true])
+  for (const point of [
+    "during-management-serialization",
+    ...(browser ? ["during-management-page-render"] : []),
+  ])
+    for (const mode of [
+      "session",
+      "review",
+      "original-review",
+      ...(point === "during-management-page-render" ? ["adjacent-clock"] : []),
+    ])
+      test(`C8 ${browser ? "browser" : "API"} import ${mode} expiry at ${point}`, async (t) => {
+        const { OAuthDriver, inputs } = require("./authorization-fixture.cjs");
+        const f = await fixture(t, {
+            approveFixtures: true,
+            childProcess: true,
+          }),
+          d = new OAuthDriver(f, "a");
+        await d.begin();
+        await d.login();
+        const session = d.jar.get("__Host-hcp-human"),
+          { entry } = await transfer(f),
+          bundle = (await f.management("/v2/export")).json;
+        bundle.entries = [entry];
+        let decision;
+        if (browser) {
+          const page = await d.request("/manage/import");
+          const reviewed = await d.request("/manage/import", {
+            method: "POST",
+            headers: { origin: f.issuer },
+            form: {
+              csrf: inputs(page.text).csrf,
+              action: "review",
+              source: JSON.stringify(bundle),
+              mapping: "{}",
+            },
+          });
+          assert.equal(reviewed.status, 200);
+          decision = { ...inputs(reviewed.text), attest: "yes" };
+        } else {
+          const reviewed = await f.context(
+            "/experiment/import/review",
+            session,
+            {
+              method: "POST",
+              json: { export: JSON.stringify(bundle) },
+            },
+          );
+          assert.equal(reviewed.status, 200);
+          const r = reviewed.json;
+          decision = {
+            reviewId: r.reviewId,
+            csrf: r.csrf,
+            subjects: r.subjects,
+          };
+        }
+        const apply = () =>
+          browser
+            ? d.request("/manage/import/approve", {
+                method: "POST",
+                headers: { origin: f.issuer },
+                form: decision,
+              })
+            : f.context("/v2/import", session, {
+                method: "POST",
+                json: decision,
+              });
+        const originalPath = ["original-review", "adjacent-clock"].includes(
+          mode,
+        );
+        if (!originalPath) {
+          const original = await apply(),
+            replay = await apply();
+          assert.equal(original.status, 200);
+          assert.equal(replay.status, 200);
+          if (browser) {
+            assert.match(replay.text, /Import recorded/);
+            assert.ok(replay.text.includes(entry.id));
+          } else {
+            assert.deepEqual(replay.json, original.json);
+            assert.equal(replay.json.outcomes[0].outcome, "imported");
+            assert.equal("original" in replay.json, false);
+          }
+        }
+        await f.arm({
+          operation: "applyImport",
+          point,
+          action: "advance",
+          now:
+            Date.now() +
+            (mode === "adjacent-clock"
+              ? 0
+              : mode === "session"
+                ? 12 * 3600_000 + 1000
+                : 600_001),
+          ...(mode === "adjacent-clock"
+            ? { nextNow: Date.now() + 12 * 3600_000 + 1000 }
+            : {}),
+        });
+        const expired = await apply();
+        assert.equal(
+          expired.status,
+          originalPath ? 200 : mode === "session" ? 401 : 403,
+        );
+        if (mode === "original-review")
+          assert.ok(expired.text.includes(entry.id));
+        else if (mode === "adjacent-clock") {
+          assert.match(expired.text, /committed/);
+          assert.doesNotMatch(expired.text, /urn:uuid|foreign:|outcomes/);
+        } else
+          assert.doesNotMatch(
+            expired.text,
+            /committed|Import recorded|urn:uuid|written notes|foreign:|association|outcomes/,
+          );
+        await f.restart();
+        assert.equal(
+          (await f.management("/v2/audit?eventType=context.imported")).json
+            .events.length,
+          1,
+        );
+        assert.equal(
+          (await f.management("/v2/export")).json.entries.filter(
+            (e) => e.id === entry.id,
+          ).length,
+          1,
+        );
+      });
+
+test("C8 zero-entry import commits one audit event, while dry run commits none", async (t) => {
+  const f = await fixture(t, { approveFixtures: true, childProcess: true });
+  const bundle = (await f.management("/v2/export")).json;
+  for (const key of [
+    "entries",
+    "versions",
+    "rules",
+    "directives",
+    "delegations",
+    "audit",
+  ])
+    bundle[key] = [];
+  const source = JSON.stringify(bundle);
+  const preview = await f.management("/v2/import?dryRun=true", {
+    method: "POST",
+    json: { export: source },
+  });
+  assert.equal(preview.status, 200);
+  assert.deepEqual(preview.json.outcomes, []);
+  assert.equal(
+    (await f.management("/v2/audit?eventType=context.imported")).json.events
+      .length,
+    0,
+  );
+  const review = (
+    await f.management("/experiment/import/review", {
+      method: "POST",
+      json: { export: source },
+    })
+  ).json;
+  const decision = {
+    reviewId: review.reviewId,
+    csrf: review.csrf,
+    subjects: review.subjects,
+  };
+  const original = await f.management("/v2/import", {
+    method: "POST",
+    json: decision,
+  });
+  assert.equal(original.status, 200);
+  assert.deepEqual(original.json.outcomes, []);
+  await f.restart();
+  const replay = await f.management("/v2/import", {
+    method: "POST",
+    json: decision,
+  });
+  assert.deepEqual(replay.json, original.json);
+  assert.equal(
+    (await f.management("/v2/audit?eventType=context.imported")).json.events
+      .length,
+    1,
+  );
+});
+
 for (const [route, operation] of [
   ["/v2/export", "exportContext"],
   ["/v2/audit/export", "exportAudit"],

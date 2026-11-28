@@ -163,6 +163,9 @@ test(
     await page
       .getByLabel("Your statement")
       .fill("Synthetic browser correction prefers bullet points.");
+    await page
+      .getByLabel("Purpose of this save")
+      .selectOption("https://example.test/purpose/synthetic-review");
     await page.getByRole("button", { name: "Review my statement" }).click();
     assert.match(
       await page.locator("body").innerText(),
@@ -182,6 +185,9 @@ test(
     await page
       .getByLabel("Your statement")
       .fill("Synthetic browser correction prefers bullet points.");
+    await page
+      .getByLabel("Purpose of this save")
+      .selectOption("https://example.test/purpose/synthetic-review");
     await page.getByRole("button", { name: "Review my statement" }).click();
     await page
       .getByRole("button", { name: "Approve and save my statement" })
@@ -241,6 +247,9 @@ test(
     await page
       .getByLabel("Your statement")
       .fill("Synthetic pending text must never be auto-submitted.");
+    await page
+      .getByLabel("Purpose of this save")
+      .selectOption("https://example.test/purpose/synthetic-review");
     await page.getByRole("button", { name: "Review my statement" }).click();
     const pendingForm = inputs(await page.content());
     const oldPid = browser.browserPid;

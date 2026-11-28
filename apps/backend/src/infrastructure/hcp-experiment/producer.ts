@@ -1,13 +1,20 @@
 /** Registered controlled fixture producer. This path never invokes a model. */
-import { categories, invalid, keys, object } from "./policy";
+import { categories, invalid, keys, object, purposeCode } from "./policy";
 export const CONTROLLED_PRODUCER = Object.freeze({
   id: "urn:context-router:controlled-synthetic-model:v1",
   source: "urn:context-router:controlled-synthetic-source:v1",
   version: "1",
 });
 export function controlledProposal(input: any, now: number): any {
-  keys(input, ["content", "classification", "confidence", "validUntil"]);
+  keys(input, [
+    "purpose",
+    "content",
+    "classification",
+    "confidence",
+    "validUntil",
+  ]);
   if (
+    !purposeCode(input.purpose) ||
     !object(input.content) ||
     input.content.profile !==
       "https://hcp.example/spec/profiles/general-context/2.0" ||
@@ -33,6 +40,7 @@ export function controlledProposal(input: any, now: number): any {
     producer: CONTROLLED_PRODUCER,
     createdAt: new Date(now).toISOString(),
     request: {
+      purpose: input.purpose,
       schema: "https://hcp.example/spec/entry/2.0",
       content: structuredClone(input.content),
       classification: structuredClone(input.classification),
